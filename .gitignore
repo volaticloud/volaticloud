@@ -1,0 +1,65 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+coverage.out
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Application data
+data/
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Configuration (keep templates)
+config.yaml
+config.yml
+!config.example.yaml
+!config.example.yml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker volumes
+docker-compose.override.yml
+
+# Build artifacts
+*.tar.gz
+*.zip
