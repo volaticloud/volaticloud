@@ -1,0 +1,73 @@
+# Schema files (order matters - schema.graphqls first for scalar declarations)
+schema:
+  - internal/graph/schema.graphqls
+  - internal/graph/ent.graphql
+
+# Generated code locations
+exec:
+  filename: internal/graph/generated.go
+  package: graph
+
+# Skip model generation - using ENT models directly
+model:
+  filename: internal/graph/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/graph
+  package: graph
+  filename_template: "{name}.resolvers.go"
+  omit_template_comment: true
+
+# Autobind ENT types
+autobind:
+  - anytrade/internal/ent
+
+# Type mappings
+models:
+  ID:
+    model:
+      - anytrade/internal/ent/schema/uuidgql.UUID
+
+  UUID:
+    model:
+      - github.com/google/uuid.UUID
+
+  Time:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time
+
+  # Node interface from ENT
+  Node:
+    model:
+      - anytrade/internal/ent.Noder
+
+  # Map ENT types to GraphQL
+  Exchange:
+    model:
+      - anytrade/internal/ent.Exchange
+
+  ExchangeSecret:
+    model:
+      - anytrade/internal/ent.ExchangeSecret
+
+  Strategy:
+    model:
+      - anytrade/internal/ent.Strategy
+
+  Bot:
+    model:
+      - anytrade/internal/ent.Bot
+
+  Backtest:
+    model:
+      - anytrade/internal/ent.Backtest
+
+  HyperOpt:
+    model:
+      - anytrade/internal/ent.HyperOpt
+
+  Trade:
+    model:
+      - anytrade/internal/ent.Trade

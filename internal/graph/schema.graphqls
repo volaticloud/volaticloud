@@ -1,0 +1,41 @@
+# Custom GraphQL schema
+# Scalar type declarations that ENT types depend on
+scalar Time
+
+# Mutations for managing entities
+type Mutation {
+  # Exchange mutations
+  createExchange(input: CreateExchangeInput!): Exchange!
+  updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange!
+  deleteExchange(id: ID!): Boolean!
+
+  # ExchangeSecret mutations
+  createExchangeSecret(input: CreateExchangeSecretInput!): ExchangeSecret!
+  updateExchangeSecret(id: ID!, input: UpdateExchangeSecretInput!): ExchangeSecret!
+  deleteExchangeSecret(id: ID!): Boolean!
+
+  # Strategy mutations
+  createStrategy(input: CreateStrategyInput!): Strategy!
+  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy!
+  deleteStrategy(id: ID!): Boolean!
+
+  # Bot mutations
+  createBot(input: CreateBotInput!): Bot!
+  updateBot(id: ID!, input: UpdateBotInput!): Bot!
+  deleteBot(id: ID!): Boolean!
+
+  # Backtest mutations
+  createBacktest(input: CreateBacktestInput!): Backtest!
+  updateBacktest(id: ID!, input: UpdateBacktestInput!): Backtest!
+  deleteBacktest(id: ID!): Boolean!
+
+  # HyperOpt mutations
+  createHyperOpt(input: CreateHyperOptInput!): HyperOpt!
+  updateHyperOpt(id: ID!, input: UpdateHyperOptInput!): HyperOpt!
+  deleteHyperOpt(id: ID!): Boolean!
+
+  # Trade mutations
+  createTrade(input: CreateTradeInput!): Trade!
+  updateTrade(id: ID!, input: UpdateTradeInput!): Trade!
+  deleteTrade(id: ID!): Boolean!
+}
