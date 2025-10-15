@@ -20,8 +20,6 @@ type Tx struct {
 	Exchange *ExchangeClient
 	// ExchangeSecret is the client for interacting with the ExchangeSecret builders.
 	ExchangeSecret *ExchangeSecretClient
-	// HyperOpt is the client for interacting with the HyperOpt builders.
-	HyperOpt *HyperOptClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
 	// Trade is the client for interacting with the Trade builders.
@@ -161,7 +159,6 @@ func (tx *Tx) init() {
 	tx.Bot = NewBotClient(tx.config)
 	tx.Exchange = NewExchangeClient(tx.config)
 	tx.ExchangeSecret = NewExchangeSecretClient(tx.config)
-	tx.HyperOpt = NewHyperOptClient(tx.config)
 	tx.Strategy = NewStrategyClient(tx.config)
 	tx.Trade = NewTradeClient(tx.config)
 }

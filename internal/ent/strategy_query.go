@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
 	"context"
@@ -29,12 +28,10 @@ type StrategyQuery struct {
 	predicates         []predicate.Strategy
 	withBots           *BotQuery
 	withBacktests      *BacktestQuery
-	withHyperopts      *HyperOptQuery
 	modifiers          []func(*sql.Selector)
 	loadTotal          []func(context.Context, []*Strategy) error
 	withNamedBots      map[string]*BotQuery
 	withNamedBacktests map[string]*BacktestQuery
-	withNamedHyperopts map[string]*HyperOptQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -108,28 +105,6 @@ func (_q *StrategyQuery) QueryBacktests() *BacktestQuery {
 			sqlgraph.From(strategy.Table, strategy.FieldID, selector),
 			sqlgraph.To(backtest.Table, backtest.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, strategy.BacktestsTable, strategy.BacktestsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryHyperopts chains the current query on the "hyperopts" edge.
-func (_q *StrategyQuery) QueryHyperopts() *HyperOptQuery {
-	query := (&HyperOptClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(strategy.Table, strategy.FieldID, selector),
-			sqlgraph.To(hyperopt.Table, hyperopt.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, strategy.HyperoptsTable, strategy.HyperoptsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -331,7 +306,6 @@ func (_q *StrategyQuery) Clone() *StrategyQuery {
 		predicates:    append([]predicate.Strategy{}, _q.predicates...),
 		withBots:      _q.withBots.Clone(),
 		withBacktests: _q.withBacktests.Clone(),
-		withHyperopts: _q.withHyperopts.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -357,17 +331,6 @@ func (_q *StrategyQuery) WithBacktests(opts ...func(*BacktestQuery)) *StrategyQu
 		opt(query)
 	}
 	_q.withBacktests = query
-	return _q
-}
-
-// WithHyperopts tells the query-builder to eager-load the nodes that are connected to
-// the "hyperopts" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *StrategyQuery) WithHyperopts(opts ...func(*HyperOptQuery)) *StrategyQuery {
-	query := (&HyperOptClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withHyperopts = query
 	return _q
 }
 
@@ -449,10 +412,9 @@ func (_q *StrategyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Str
 	var (
 		nodes       = []*Strategy{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [2]bool{
 			_q.withBots != nil,
 			_q.withBacktests != nil,
-			_q.withHyperopts != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -490,13 +452,6 @@ func (_q *StrategyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Str
 			return nil, err
 		}
 	}
-	if query := _q.withHyperopts; query != nil {
-		if err := _q.loadHyperopts(ctx, query, nodes,
-			func(n *Strategy) { n.Edges.Hyperopts = []*HyperOpt{} },
-			func(n *Strategy, e *HyperOpt) { n.Edges.Hyperopts = append(n.Edges.Hyperopts, e) }); err != nil {
-			return nil, err
-		}
-	}
 	for name, query := range _q.withNamedBots {
 		if err := _q.loadBots(ctx, query, nodes,
 			func(n *Strategy) { n.appendNamedBots(name) },
@@ -508,13 +463,6 @@ func (_q *StrategyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Str
 		if err := _q.loadBacktests(ctx, query, nodes,
 			func(n *Strategy) { n.appendNamedBacktests(name) },
 			func(n *Strategy, e *Backtest) { n.appendNamedBacktests(name, e) }); err != nil {
-			return nil, err
-		}
-	}
-	for name, query := range _q.withNamedHyperopts {
-		if err := _q.loadHyperopts(ctx, query, nodes,
-			func(n *Strategy) { n.appendNamedHyperopts(name) },
-			func(n *Strategy, e *HyperOpt) { n.appendNamedHyperopts(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -571,36 +519,6 @@ func (_q *StrategyQuery) loadBacktests(ctx context.Context, query *BacktestQuery
 	}
 	query.Where(predicate.Backtest(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(strategy.BacktestsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.StrategyID
-		node, ok := nodeids[fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "strategy_id" returned %v for node %v`, fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (_q *StrategyQuery) loadHyperopts(ctx context.Context, query *HyperOptQuery, nodes []*Strategy, init func(*Strategy), assign func(*Strategy, *HyperOpt)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Strategy)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(hyperopt.FieldStrategyID)
-	}
-	query.Where(predicate.HyperOpt(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(strategy.HyperoptsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -726,20 +644,6 @@ func (_q *StrategyQuery) WithNamedBacktests(name string, opts ...func(*BacktestQ
 		_q.withNamedBacktests = make(map[string]*BacktestQuery)
 	}
 	_q.withNamedBacktests[name] = query
-	return _q
-}
-
-// WithNamedHyperopts tells the query-builder to eager-load the nodes that are connected to the "hyperopts"
-// edge with the given name. The optional arguments are used to configure the query builder of the edge.
-func (_q *StrategyQuery) WithNamedHyperopts(name string, opts ...func(*HyperOptQuery)) *StrategyQuery {
-	query := (&HyperOptClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	if _q.withNamedHyperopts == nil {
-		_q.withNamedHyperopts = make(map[string]*HyperOptQuery)
-	}
-	_q.withNamedHyperopts[name] = query
 	return _q
 }
 

@@ -56,18 +56,6 @@ func (f ExchangeSecretFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExchangeSecretMutation", m)
 }
 
-// The HyperOptFunc type is an adapter to allow the use of ordinary
-// function as HyperOpt mutator.
-type HyperOptFunc func(context.Context, *ent.HyperOptMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f HyperOptFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.HyperOptMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HyperOptMutation", m)
-}
-
 // The StrategyFunc type is an adapter to allow the use of ordinary
 // function as Strategy mutator.
 type StrategyFunc func(context.Context, *ent.StrategyMutation) (ent.Value, error)

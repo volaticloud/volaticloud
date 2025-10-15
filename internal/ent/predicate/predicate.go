@@ -18,9 +18,6 @@ type Exchange func(*sql.Selector)
 // ExchangeSecret is the predicate function for exchangesecret builders.
 type ExchangeSecret func(*sql.Selector)
 
-// HyperOpt is the predicate function for hyperopt builders.
-type HyperOpt func(*sql.Selector)
-
 // Strategy is the predicate function for strategy builders.
 type Strategy func(*sql.Selector)
 

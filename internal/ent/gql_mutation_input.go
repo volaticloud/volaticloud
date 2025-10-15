@@ -487,166 +487,6 @@ func (c *ExchangeSecretUpdateOne) SetInput(i UpdateExchangeSecretInput) *Exchang
 	return c
 }
 
-// CreateHyperOptInput represents a mutation input for creating hyperopts.
-type CreateHyperOptInput struct {
-	Status             *enum.TaskStatus
-	Epochs             int
-	StartDate          time.Time
-	EndDate            time.Time
-	Timeframe          string
-	StakeAmount        float64
-	StakeCurrency      string
-	OptimizationMetric *enum.OptimizationMetric
-	RuntimeID          *string
-	LogOutput          *string
-	Progress           *float64
-	ErrorMessage       *string
-	CreatedAt          *time.Time
-	UpdatedAt          *time.Time
-	CompletedAt        *time.Time
-	StrategyID         uuid.UUID
-}
-
-// Mutate applies the CreateHyperOptInput on the HyperOptMutation builder.
-func (i *CreateHyperOptInput) Mutate(m *HyperOptMutation) {
-	if v := i.Status; v != nil {
-		m.SetStatus(*v)
-	}
-	m.SetEpochs(i.Epochs)
-	m.SetStartDate(i.StartDate)
-	m.SetEndDate(i.EndDate)
-	m.SetTimeframe(i.Timeframe)
-	m.SetStakeAmount(i.StakeAmount)
-	m.SetStakeCurrency(i.StakeCurrency)
-	if v := i.OptimizationMetric; v != nil {
-		m.SetOptimizationMetric(*v)
-	}
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
-	}
-	if v := i.LogOutput; v != nil {
-		m.SetLogOutput(*v)
-	}
-	if v := i.Progress; v != nil {
-		m.SetProgress(*v)
-	}
-	if v := i.ErrorMessage; v != nil {
-		m.SetErrorMessage(*v)
-	}
-	if v := i.CreatedAt; v != nil {
-		m.SetCreatedAt(*v)
-	}
-	if v := i.UpdatedAt; v != nil {
-		m.SetUpdatedAt(*v)
-	}
-	if v := i.CompletedAt; v != nil {
-		m.SetCompletedAt(*v)
-	}
-	m.SetStrategyID(i.StrategyID)
-}
-
-// SetInput applies the change-set in the CreateHyperOptInput on the HyperOptCreate builder.
-func (c *HyperOptCreate) SetInput(i CreateHyperOptInput) *HyperOptCreate {
-	i.Mutate(c.Mutation())
-	return c
-}
-
-// UpdateHyperOptInput represents a mutation input for updating hyperopts.
-type UpdateHyperOptInput struct {
-	Status             *enum.TaskStatus
-	Epochs             *int
-	StartDate          *time.Time
-	EndDate            *time.Time
-	Timeframe          *string
-	StakeAmount        *float64
-	StakeCurrency      *string
-	OptimizationMetric *enum.OptimizationMetric
-	ClearRuntimeID     bool
-	RuntimeID          *string
-	ClearLogOutput     bool
-	LogOutput          *string
-	Progress           *float64
-	ClearErrorMessage  bool
-	ErrorMessage       *string
-	UpdatedAt          *time.Time
-	ClearCompletedAt   bool
-	CompletedAt        *time.Time
-	StrategyID         *uuid.UUID
-}
-
-// Mutate applies the UpdateHyperOptInput on the HyperOptMutation builder.
-func (i *UpdateHyperOptInput) Mutate(m *HyperOptMutation) {
-	if v := i.Status; v != nil {
-		m.SetStatus(*v)
-	}
-	if v := i.Epochs; v != nil {
-		m.SetEpochs(*v)
-	}
-	if v := i.StartDate; v != nil {
-		m.SetStartDate(*v)
-	}
-	if v := i.EndDate; v != nil {
-		m.SetEndDate(*v)
-	}
-	if v := i.Timeframe; v != nil {
-		m.SetTimeframe(*v)
-	}
-	if v := i.StakeAmount; v != nil {
-		m.SetStakeAmount(*v)
-	}
-	if v := i.StakeCurrency; v != nil {
-		m.SetStakeCurrency(*v)
-	}
-	if v := i.OptimizationMetric; v != nil {
-		m.SetOptimizationMetric(*v)
-	}
-	if i.ClearRuntimeID {
-		m.ClearRuntimeID()
-	}
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
-	}
-	if i.ClearLogOutput {
-		m.ClearLogOutput()
-	}
-	if v := i.LogOutput; v != nil {
-		m.SetLogOutput(*v)
-	}
-	if v := i.Progress; v != nil {
-		m.SetProgress(*v)
-	}
-	if i.ClearErrorMessage {
-		m.ClearErrorMessage()
-	}
-	if v := i.ErrorMessage; v != nil {
-		m.SetErrorMessage(*v)
-	}
-	if v := i.UpdatedAt; v != nil {
-		m.SetUpdatedAt(*v)
-	}
-	if i.ClearCompletedAt {
-		m.ClearCompletedAt()
-	}
-	if v := i.CompletedAt; v != nil {
-		m.SetCompletedAt(*v)
-	}
-	if v := i.StrategyID; v != nil {
-		m.SetStrategyID(*v)
-	}
-}
-
-// SetInput applies the change-set in the UpdateHyperOptInput on the HyperOptUpdate builder.
-func (c *HyperOptUpdate) SetInput(i UpdateHyperOptInput) *HyperOptUpdate {
-	i.Mutate(c.Mutation())
-	return c
-}
-
-// SetInput applies the change-set in the UpdateHyperOptInput on the HyperOptUpdateOne builder.
-func (c *HyperOptUpdateOne) SetInput(i UpdateHyperOptInput) *HyperOptUpdateOne {
-	i.Mutate(c.Mutation())
-	return c
-}
-
 // CreateStrategyInput represents a mutation input for creating strategies.
 type CreateStrategyInput struct {
 	Name        string
@@ -657,7 +497,6 @@ type CreateStrategyInput struct {
 	UpdatedAt   *time.Time
 	BotIDs      []uuid.UUID
 	BacktestIDs []uuid.UUID
-	HyperoptIDs []uuid.UUID
 }
 
 // Mutate applies the CreateStrategyInput on the StrategyMutation builder.
@@ -682,9 +521,6 @@ func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 	if v := i.BacktestIDs; len(v) > 0 {
 		m.AddBacktestIDs(v...)
 	}
-	if v := i.HyperoptIDs; len(v) > 0 {
-		m.AddHyperoptIDs(v...)
-	}
 }
 
 // SetInput applies the change-set in the CreateStrategyInput on the StrategyCreate builder.
@@ -707,9 +543,6 @@ type UpdateStrategyInput struct {
 	ClearBacktests    bool
 	AddBacktestIDs    []uuid.UUID
 	RemoveBacktestIDs []uuid.UUID
-	ClearHyperopts    bool
-	AddHyperoptIDs    []uuid.UUID
-	RemoveHyperoptIDs []uuid.UUID
 }
 
 // Mutate applies the UpdateStrategyInput on the StrategyMutation builder.
@@ -749,15 +582,6 @@ func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	}
 	if v := i.RemoveBacktestIDs; len(v) > 0 {
 		m.RemoveBacktestIDs(v...)
-	}
-	if i.ClearHyperopts {
-		m.ClearHyperopts()
-	}
-	if v := i.AddHyperoptIDs; len(v) > 0 {
-		m.AddHyperoptIDs(v...)
-	}
-	if v := i.RemoveHyperoptIDs; len(v) > 0 {
-		m.RemoveHyperoptIDs(v...)
 	}
 }
 

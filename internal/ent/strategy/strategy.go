@@ -31,8 +31,6 @@ const (
 	EdgeBots = "bots"
 	// EdgeBacktests holds the string denoting the backtests edge name in mutations.
 	EdgeBacktests = "backtests"
-	// EdgeHyperopts holds the string denoting the hyperopts edge name in mutations.
-	EdgeHyperopts = "hyperopts"
 	// Table holds the table name of the strategy in the database.
 	Table = "strategies"
 	// BotsTable is the table that holds the bots relation/edge.
@@ -49,13 +47,6 @@ const (
 	BacktestsInverseTable = "backtests"
 	// BacktestsColumn is the table column denoting the backtests relation/edge.
 	BacktestsColumn = "strategy_id"
-	// HyperoptsTable is the table that holds the hyperopts relation/edge.
-	HyperoptsTable = "hyper_opts"
-	// HyperoptsInverseTable is the table name for the HyperOpt entity.
-	// It exists in this package in order to avoid circular dependency with the "hyperopt" package.
-	HyperoptsInverseTable = "hyper_opts"
-	// HyperoptsColumn is the table column denoting the hyperopts relation/edge.
-	HyperoptsColumn = "strategy_id"
 )
 
 // Columns holds all SQL columns for strategy fields.
@@ -159,20 +150,6 @@ func ByBacktests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBacktestsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
-// ByHyperoptsCount orders the results by hyperopts count.
-func ByHyperoptsCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newHyperoptsStep(), opts...)
-	}
-}
-
-// ByHyperopts orders the results by hyperopts terms.
-func ByHyperopts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newHyperoptsStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
 func newBotsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -185,12 +162,5 @@ func newBacktestsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BacktestsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BacktestsTable, BacktestsColumn),
-	)
-}
-func newHyperoptsStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(HyperoptsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, HyperoptsTable, HyperoptsColumn),
 	)
 }

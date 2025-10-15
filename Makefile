@@ -1,4 +1,4 @@
-.PHONY: help setup dev test lint generate migrate clean build
+.PHONY: help setup dev test coverage lint generate migrate clean build
 
 # Default target
 help:
@@ -11,7 +11,8 @@ help:
 	@echo "Development:"
 	@echo "  make dev          - Run server in development mode"
 	@echo "  make build        - Build binary"
-	@echo "  make test         - Run tests"
+	@echo "  make test         - Run tests with coverage"
+	@echo "  make coverage     - Run tests and open HTML coverage report"
 	@echo "  make lint         - Run linters"
 	@echo ""
 	@echo "Database:"
@@ -54,7 +55,23 @@ test:
 	@echo "Running tests..."
 	go test -v -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report generated: coverage.html"
+	@echo ""
+	@echo "Tests complete!"
+	@echo "Coverage report: coverage.html"
+	@echo ""
+	@echo "GraphQL Resolver Coverage:"
+	@go tool cover -func=coverage.out | grep -E "ent.resolvers.go|schema.resolvers.go" | grep -v generated || echo "  No resolver coverage data"
+
+# Run tests and open coverage report
+coverage: test
+	@echo "Opening coverage report in browser..."
+	@if command -v open > /dev/null; then \
+		open coverage.html; \
+	elif command -v xdg-open > /dev/null; then \
+		xdg-open coverage.html; \
+	else \
+		echo "Please open coverage.html manually"; \
+	fi
 
 # Run linters
 lint:

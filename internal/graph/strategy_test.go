@@ -1,0 +1,108 @@
+package graph
+
+import (
+	"anytrade/internal/ent"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestStrategyMutations(t *testing.T) {
+	resolver := setupTestResolver(t)
+	mutationResolver := resolver.Mutation()
+
+	t.Run("CreateStrategy", func(t *testing.T) {
+		input := ent.CreateStrategyInput{
+			Name:        "MACD Crossover",
+			Description: ptr("Moving average convergence divergence strategy"),
+			Code:        "# MACD strategy code",
+		}
+
+		strategy, err := mutationResolver.CreateStrategy(ctx(), input)
+		require.NoError(t, err)
+		assert.NotNil(t, strategy)
+		assert.Equal(t, "MACD Crossover", strategy.Name)
+		assert.Equal(t, "Moving average convergence divergence strategy", strategy.Description)
+		assert.Equal(t, "# MACD strategy code", strategy.Code)
+	})
+
+	t.Run("UpdateStrategy", func(t *testing.T) {
+		// Create strategy first
+		input := ent.CreateStrategyInput{
+			Name:        "RSI Strategy",
+			Description: ptr("Relative strength index"),
+			Code:        "# RSI code",
+		}
+		strategy, err := mutationResolver.CreateStrategy(ctx(), input)
+		require.NoError(t, err)
+
+		// Update it
+		newDesc := "Updated RSI strategy with dynamic thresholds"
+		updateInput := ent.UpdateStrategyInput{
+			Description: &newDesc,
+		}
+		updated, err := mutationResolver.UpdateStrategy(ctx(), strategy.ID, updateInput)
+		require.NoError(t, err)
+		assert.Equal(t, "Updated RSI strategy with dynamic thresholds", updated.Description)
+		assert.Equal(t, strategy.ID, updated.ID)
+	})
+
+	t.Run("DeleteStrategy", func(t *testing.T) {
+		// Create strategy first
+		input := ent.CreateStrategyInput{
+			Name:        "Delete Me",
+			Description: ptr("To be deleted"),
+			Code:        "# Delete code",
+		}
+		strategy, err := mutationResolver.CreateStrategy(ctx(), input)
+		require.NoError(t, err)
+
+		// Delete it
+		deleted, err := mutationResolver.DeleteStrategy(ctx(), strategy.ID)
+		require.NoError(t, err)
+		assert.True(t, deleted)
+	})
+}
+
+func TestStrategyQueries(t *testing.T) {
+	resolver := setupTestResolver(t)
+	mutationResolver := resolver.Mutation()
+	queryResolver := resolver.Query()
+
+	// Create test data
+	strategies := []ent.CreateStrategyInput{
+		{Name: "Strategy 1", Description: ptr("First"), Code: "# Code 1"},
+		{Name: "Strategy 2", Description: ptr("Second"), Code: "# Code 2"},
+		{Name: "Strategy 3", Description: ptr("Third"), Code: "# Code 3"},
+		{Name: "Strategy 4", Description: ptr("Fourth"), Code: "# Code 4"},
+	}
+
+	for _, input := range strategies {
+		_, err := mutationResolver.CreateStrategy(ctx(), input)
+		require.NoError(t, err)
+	}
+
+	t.Run("QueryStrategies", func(t *testing.T) {
+		first := 10
+		result, err := queryResolver.Strategies(ctx(), nil, &first, nil, nil)
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.GreaterOrEqual(t, result.TotalCount, 4)
+	})
+
+	t.Run("QueryStrategiesWithPagination", func(t *testing.T) {
+		first := 2
+		result, err := queryResolver.Strategies(ctx(), nil, &first, nil, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 2, len(result.Edges))
+		assert.True(t, result.PageInfo.HasNextPage)
+
+		// Get next page
+		cursor := result.PageInfo.EndCursor
+		result2, err := queryResolver.Strategies(ctx(), cursor, &first, nil, nil)
+		require.NoError(t, err)
+		assert.NotNil(t, result2)
+		assert.GreaterOrEqual(t, len(result2.Edges), 1)
+	})
+}

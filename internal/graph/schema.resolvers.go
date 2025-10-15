@@ -76,19 +76,6 @@ func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bo
 	return err == nil, err
 }
 
-func (r *mutationResolver) CreateHyperOpt(ctx context.Context, input ent.CreateHyperOptInput) (*ent.HyperOpt, error) {
-	return r.client.HyperOpt.Create().SetInput(input).Save(ctx)
-}
-
-func (r *mutationResolver) UpdateHyperOpt(ctx context.Context, id uuid.UUID, input ent.UpdateHyperOptInput) (*ent.HyperOpt, error) {
-	return r.client.HyperOpt.UpdateOneID(id).SetInput(input).Save(ctx)
-}
-
-func (r *mutationResolver) DeleteHyperOpt(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.HyperOpt.DeleteOneID(id).Exec(ctx)
-	return err == nil, err
-}
-
 func (r *mutationResolver) CreateTrade(ctx context.Context, input ent.CreateTradeInput) (*ent.Trade, error) {
 	return r.client.Trade.Create().SetInput(input).Save(ctx)
 }

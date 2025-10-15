@@ -7,7 +7,6 @@ import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
 	"context"
@@ -43,11 +42,6 @@ var exchangesecretImplementors = []string{"ExchangeSecret", "Node"}
 
 // IsNode implements the Node interface check for GQLGen.
 func (*ExchangeSecret) IsNode() {}
-
-var hyperoptImplementors = []string{"HyperOpt", "Node"}
-
-// IsNode implements the Node interface check for GQLGen.
-func (*HyperOpt) IsNode() {}
 
 var strategyImplementors = []string{"Strategy", "Node"}
 
@@ -149,15 +143,6 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			Where(exchangesecret.ID(id))
 		if fc := graphql.GetFieldContext(ctx); fc != nil {
 			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, exchangesecretImplementors...); err != nil {
-				return nil, err
-			}
-		}
-		return query.Only(ctx)
-	case hyperopt.Table:
-		query := c.HyperOpt.Query().
-			Where(hyperopt.ID(id))
-		if fc := graphql.GetFieldContext(ctx); fc != nil {
-			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, hyperoptImplementors...); err != nil {
 				return nil, err
 			}
 		}
@@ -305,22 +290,6 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		query := c.ExchangeSecret.Query().
 			Where(exchangesecret.IDIn(ids...))
 		query, err := query.CollectFields(ctx, exchangesecretImplementors...)
-		if err != nil {
-			return nil, err
-		}
-		nodes, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, node := range nodes {
-			for _, noder := range idmap[node.ID] {
-				*noder = node
-			}
-		}
-	case hyperopt.Table:
-		query := c.HyperOpt.Query().
-			Where(hyperopt.IDIn(ids...))
-		query, err := query.CollectFields(ctx, hyperoptImplementors...)
 		if err != nil {
 			return nil, err
 		}

@@ -94,14 +94,6 @@ func (_m *ExchangeSecret) Exchange(ctx context.Context) (*Exchange, error) {
 	return result, err
 }
 
-func (_m *HyperOpt) Strategy(ctx context.Context) (*Strategy, error) {
-	result, err := _m.Edges.StrategyOrErr()
-	if IsNotLoaded(err) {
-		result, err = _m.QueryStrategy().Only(ctx)
-	}
-	return result, err
-}
-
 func (_m *Strategy) Bots(
 	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
 ) (*BotConnection, error) {
@@ -136,24 +128,6 @@ func (_m *Strategy) Backtests(
 		return conn, nil
 	}
 	return _m.QueryBacktests().Paginate(ctx, after, first, before, last, opts...)
-}
-
-func (_m *Strategy) Hyperopts(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
-) (*HyperOptConnection, error) {
-	opts := []HyperOptPaginateOption{}
-	alias := graphql.GetFieldContext(ctx).Field.Alias
-	totalCount, hasTotalCount := _m.Edges.totalCount[2][alias]
-	if nodes, err := _m.NamedHyperopts(alias); err == nil || hasTotalCount {
-		pager, err := newHyperOptPager(opts, last != nil)
-		if err != nil {
-			return nil, err
-		}
-		conn := &HyperOptConnection{Edges: []*HyperOptEdge{}, TotalCount: totalCount}
-		conn.build(nodes, pager, after, first, before, last)
-		return conn, nil
-	}
-	return _m.QueryHyperopts().Paginate(ctx, after, first, before, last, opts...)
 }
 
 func (_m *Trade) Bot(ctx context.Context) (*Bot, error) {

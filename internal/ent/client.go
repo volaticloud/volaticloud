@@ -15,7 +15,6 @@ import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
 
@@ -39,8 +38,6 @@ type Client struct {
 	Exchange *ExchangeClient
 	// ExchangeSecret is the client for interacting with the ExchangeSecret builders.
 	ExchangeSecret *ExchangeSecretClient
-	// HyperOpt is the client for interacting with the HyperOpt builders.
-	HyperOpt *HyperOptClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
 	// Trade is the client for interacting with the Trade builders.
@@ -60,7 +57,6 @@ func (c *Client) init() {
 	c.Bot = NewBotClient(c.config)
 	c.Exchange = NewExchangeClient(c.config)
 	c.ExchangeSecret = NewExchangeSecretClient(c.config)
-	c.HyperOpt = NewHyperOptClient(c.config)
 	c.Strategy = NewStrategyClient(c.config)
 	c.Trade = NewTradeClient(c.config)
 }
@@ -159,7 +155,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Bot:            NewBotClient(cfg),
 		Exchange:       NewExchangeClient(cfg),
 		ExchangeSecret: NewExchangeSecretClient(cfg),
-		HyperOpt:       NewHyperOptClient(cfg),
 		Strategy:       NewStrategyClient(cfg),
 		Trade:          NewTradeClient(cfg),
 	}, nil
@@ -185,7 +180,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Bot:            NewBotClient(cfg),
 		Exchange:       NewExchangeClient(cfg),
 		ExchangeSecret: NewExchangeSecretClient(cfg),
-		HyperOpt:       NewHyperOptClient(cfg),
 		Strategy:       NewStrategyClient(cfg),
 		Trade:          NewTradeClient(cfg),
 	}, nil
@@ -217,8 +211,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Backtest, c.Bot, c.Exchange, c.ExchangeSecret, c.HyperOpt, c.Strategy,
-		c.Trade,
+		c.Backtest, c.Bot, c.Exchange, c.ExchangeSecret, c.Strategy, c.Trade,
 	} {
 		n.Use(hooks...)
 	}
@@ -228,8 +221,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Backtest, c.Bot, c.Exchange, c.ExchangeSecret, c.HyperOpt, c.Strategy,
-		c.Trade,
+		c.Backtest, c.Bot, c.Exchange, c.ExchangeSecret, c.Strategy, c.Trade,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -246,8 +238,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Exchange.mutate(ctx, m)
 	case *ExchangeSecretMutation:
 		return c.ExchangeSecret.mutate(ctx, m)
-	case *HyperOptMutation:
-		return c.HyperOpt.mutate(ctx, m)
 	case *StrategyMutation:
 		return c.Strategy.mutate(ctx, m)
 	case *TradeMutation:
@@ -901,155 +891,6 @@ func (c *ExchangeSecretClient) mutate(ctx context.Context, m *ExchangeSecretMuta
 	}
 }
 
-// HyperOptClient is a client for the HyperOpt schema.
-type HyperOptClient struct {
-	config
-}
-
-// NewHyperOptClient returns a client for the HyperOpt from the given config.
-func NewHyperOptClient(c config) *HyperOptClient {
-	return &HyperOptClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `hyperopt.Hooks(f(g(h())))`.
-func (c *HyperOptClient) Use(hooks ...Hook) {
-	c.hooks.HyperOpt = append(c.hooks.HyperOpt, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `hyperopt.Intercept(f(g(h())))`.
-func (c *HyperOptClient) Intercept(interceptors ...Interceptor) {
-	c.inters.HyperOpt = append(c.inters.HyperOpt, interceptors...)
-}
-
-// Create returns a builder for creating a HyperOpt entity.
-func (c *HyperOptClient) Create() *HyperOptCreate {
-	mutation := newHyperOptMutation(c.config, OpCreate)
-	return &HyperOptCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of HyperOpt entities.
-func (c *HyperOptClient) CreateBulk(builders ...*HyperOptCreate) *HyperOptCreateBulk {
-	return &HyperOptCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *HyperOptClient) MapCreateBulk(slice any, setFunc func(*HyperOptCreate, int)) *HyperOptCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &HyperOptCreateBulk{err: fmt.Errorf("calling to HyperOptClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*HyperOptCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &HyperOptCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for HyperOpt.
-func (c *HyperOptClient) Update() *HyperOptUpdate {
-	mutation := newHyperOptMutation(c.config, OpUpdate)
-	return &HyperOptUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *HyperOptClient) UpdateOne(_m *HyperOpt) *HyperOptUpdateOne {
-	mutation := newHyperOptMutation(c.config, OpUpdateOne, withHyperOpt(_m))
-	return &HyperOptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *HyperOptClient) UpdateOneID(id uuid.UUID) *HyperOptUpdateOne {
-	mutation := newHyperOptMutation(c.config, OpUpdateOne, withHyperOptID(id))
-	return &HyperOptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for HyperOpt.
-func (c *HyperOptClient) Delete() *HyperOptDelete {
-	mutation := newHyperOptMutation(c.config, OpDelete)
-	return &HyperOptDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *HyperOptClient) DeleteOne(_m *HyperOpt) *HyperOptDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *HyperOptClient) DeleteOneID(id uuid.UUID) *HyperOptDeleteOne {
-	builder := c.Delete().Where(hyperopt.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &HyperOptDeleteOne{builder}
-}
-
-// Query returns a query builder for HyperOpt.
-func (c *HyperOptClient) Query() *HyperOptQuery {
-	return &HyperOptQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeHyperOpt},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a HyperOpt entity by its id.
-func (c *HyperOptClient) Get(ctx context.Context, id uuid.UUID) (*HyperOpt, error) {
-	return c.Query().Where(hyperopt.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *HyperOptClient) GetX(ctx context.Context, id uuid.UUID) *HyperOpt {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryStrategy queries the strategy edge of a HyperOpt.
-func (c *HyperOptClient) QueryStrategy(_m *HyperOpt) *StrategyQuery {
-	query := (&StrategyClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(hyperopt.Table, hyperopt.FieldID, id),
-			sqlgraph.To(strategy.Table, strategy.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, hyperopt.StrategyTable, hyperopt.StrategyColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *HyperOptClient) Hooks() []Hook {
-	return c.hooks.HyperOpt
-}
-
-// Interceptors returns the client interceptors.
-func (c *HyperOptClient) Interceptors() []Interceptor {
-	return c.inters.HyperOpt
-}
-
-func (c *HyperOptClient) mutate(ctx context.Context, m *HyperOptMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&HyperOptCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&HyperOptUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&HyperOptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&HyperOptDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown HyperOpt mutation op: %q", m.Op())
-	}
-}
-
 // StrategyClient is a client for the Strategy schema.
 type StrategyClient struct {
 	config
@@ -1183,22 +1024,6 @@ func (c *StrategyClient) QueryBacktests(_m *Strategy) *BacktestQuery {
 			sqlgraph.From(strategy.Table, strategy.FieldID, id),
 			sqlgraph.To(backtest.Table, backtest.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, strategy.BacktestsTable, strategy.BacktestsColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryHyperopts queries the hyperopts edge of a Strategy.
-func (c *StrategyClient) QueryHyperopts(_m *Strategy) *HyperOptQuery {
-	query := (&HyperOptClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(strategy.Table, strategy.FieldID, id),
-			sqlgraph.To(hyperopt.Table, hyperopt.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, strategy.HyperoptsTable, strategy.HyperoptsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1383,10 +1208,9 @@ func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Backtest, Bot, Exchange, ExchangeSecret, HyperOpt, Strategy, Trade []ent.Hook
+		Backtest, Bot, Exchange, ExchangeSecret, Strategy, Trade []ent.Hook
 	}
 	inters struct {
-		Backtest, Bot, Exchange, ExchangeSecret, HyperOpt, Strategy,
-		Trade []ent.Interceptor
+		Backtest, Bot, Exchange, ExchangeSecret, Strategy, Trade []ent.Interceptor
 	}
 )

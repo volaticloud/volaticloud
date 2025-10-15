@@ -143,58 +143,23 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	HyperOpt struct {
-		CompletedAt        func(childComplexity int) int
-		CreatedAt          func(childComplexity int) int
-		EndDate            func(childComplexity int) int
-		Epochs             func(childComplexity int) int
-		ErrorMessage       func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		LogOutput          func(childComplexity int) int
-		OptimizationMetric func(childComplexity int) int
-		Progress           func(childComplexity int) int
-		RuntimeID          func(childComplexity int) int
-		StakeAmount        func(childComplexity int) int
-		StakeCurrency      func(childComplexity int) int
-		StartDate          func(childComplexity int) int
-		Status             func(childComplexity int) int
-		Strategy           func(childComplexity int) int
-		StrategyID         func(childComplexity int) int
-		Timeframe          func(childComplexity int) int
-		UpdatedAt          func(childComplexity int) int
-	}
-
-	HyperOptConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	HyperOptEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
 	Mutation struct {
 		CreateBacktest       func(childComplexity int, input ent.CreateBacktestInput) int
 		CreateBot            func(childComplexity int, input ent.CreateBotInput) int
 		CreateExchange       func(childComplexity int, input ent.CreateExchangeInput) int
 		CreateExchangeSecret func(childComplexity int, input ent.CreateExchangeSecretInput) int
-		CreateHyperOpt       func(childComplexity int, input ent.CreateHyperOptInput) int
 		CreateStrategy       func(childComplexity int, input ent.CreateStrategyInput) int
 		CreateTrade          func(childComplexity int, input ent.CreateTradeInput) int
 		DeleteBacktest       func(childComplexity int, id uuid.UUID) int
 		DeleteBot            func(childComplexity int, id uuid.UUID) int
 		DeleteExchange       func(childComplexity int, id uuid.UUID) int
 		DeleteExchangeSecret func(childComplexity int, id uuid.UUID) int
-		DeleteHyperOpt       func(childComplexity int, id uuid.UUID) int
 		DeleteStrategy       func(childComplexity int, id uuid.UUID) int
 		DeleteTrade          func(childComplexity int, id uuid.UUID) int
 		UpdateBacktest       func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
 		UpdateBot            func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
 		UpdateExchange       func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
 		UpdateExchangeSecret func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeSecretInput) int
-		UpdateHyperOpt       func(childComplexity int, id uuid.UUID, input ent.UpdateHyperOptInput) int
 		UpdateStrategy       func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
 		UpdateTrade          func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
 	}
@@ -211,7 +176,6 @@ type ComplexityRoot struct {
 		Bots            func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		ExchangeSecrets func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		Exchanges       func(childComplexity int) int
-		HyperOpts       func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		Node            func(childComplexity int, id uuid.UUID) int
 		Nodes           func(childComplexity int, ids []uuid.UUID) int
 		Strategies      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
@@ -224,7 +188,6 @@ type ComplexityRoot struct {
 		Code        func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
-		Hyperopts   func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
@@ -292,9 +255,6 @@ type MutationResolver interface {
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
-	CreateHyperOpt(ctx context.Context, input ent.CreateHyperOptInput) (*ent.HyperOpt, error)
-	UpdateHyperOpt(ctx context.Context, id uuid.UUID, input ent.UpdateHyperOptInput) (*ent.HyperOpt, error)
-	DeleteHyperOpt(ctx context.Context, id uuid.UUID) (bool, error)
 	CreateTrade(ctx context.Context, input ent.CreateTradeInput) (*ent.Trade, error)
 	UpdateTrade(ctx context.Context, id uuid.UUID, input ent.UpdateTradeInput) (*ent.Trade, error)
 	DeleteTrade(ctx context.Context, id uuid.UUID) (bool, error)
@@ -306,7 +266,6 @@ type QueryResolver interface {
 	Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotConnection, error)
 	Exchanges(ctx context.Context) ([]*ent.Exchange, error)
 	ExchangeSecrets(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.ExchangeSecretConnection, error)
-	HyperOpts(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.HyperOptConnection, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.TradeConnection, error)
 }
@@ -721,147 +680,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ExchangeSecretEdge.Node(childComplexity), true
 
-	case "HyperOpt.completedAt":
-		if e.complexity.HyperOpt.CompletedAt == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.CompletedAt(childComplexity), true
-	case "HyperOpt.createdAt":
-		if e.complexity.HyperOpt.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.CreatedAt(childComplexity), true
-	case "HyperOpt.endDate":
-		if e.complexity.HyperOpt.EndDate == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.EndDate(childComplexity), true
-	case "HyperOpt.epochs":
-		if e.complexity.HyperOpt.Epochs == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.Epochs(childComplexity), true
-	case "HyperOpt.errorMessage":
-		if e.complexity.HyperOpt.ErrorMessage == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.ErrorMessage(childComplexity), true
-	case "HyperOpt.id":
-		if e.complexity.HyperOpt.ID == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.ID(childComplexity), true
-	case "HyperOpt.logOutput":
-		if e.complexity.HyperOpt.LogOutput == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.LogOutput(childComplexity), true
-	case "HyperOpt.optimizationMetric":
-		if e.complexity.HyperOpt.OptimizationMetric == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.OptimizationMetric(childComplexity), true
-	case "HyperOpt.progress":
-		if e.complexity.HyperOpt.Progress == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.Progress(childComplexity), true
-	case "HyperOpt.runtimeID":
-		if e.complexity.HyperOpt.RuntimeID == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.RuntimeID(childComplexity), true
-	case "HyperOpt.stakeAmount":
-		if e.complexity.HyperOpt.StakeAmount == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.StakeAmount(childComplexity), true
-	case "HyperOpt.stakeCurrency":
-		if e.complexity.HyperOpt.StakeCurrency == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.StakeCurrency(childComplexity), true
-	case "HyperOpt.startDate":
-		if e.complexity.HyperOpt.StartDate == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.StartDate(childComplexity), true
-	case "HyperOpt.status":
-		if e.complexity.HyperOpt.Status == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.Status(childComplexity), true
-	case "HyperOpt.strategy":
-		if e.complexity.HyperOpt.Strategy == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.Strategy(childComplexity), true
-	case "HyperOpt.strategyID":
-		if e.complexity.HyperOpt.StrategyID == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.StrategyID(childComplexity), true
-	case "HyperOpt.timeframe":
-		if e.complexity.HyperOpt.Timeframe == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.Timeframe(childComplexity), true
-	case "HyperOpt.updatedAt":
-		if e.complexity.HyperOpt.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.HyperOpt.UpdatedAt(childComplexity), true
-
-	case "HyperOptConnection.edges":
-		if e.complexity.HyperOptConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.HyperOptConnection.Edges(childComplexity), true
-	case "HyperOptConnection.pageInfo":
-		if e.complexity.HyperOptConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.HyperOptConnection.PageInfo(childComplexity), true
-	case "HyperOptConnection.totalCount":
-		if e.complexity.HyperOptConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.HyperOptConnection.TotalCount(childComplexity), true
-
-	case "HyperOptEdge.cursor":
-		if e.complexity.HyperOptEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.HyperOptEdge.Cursor(childComplexity), true
-	case "HyperOptEdge.node":
-		if e.complexity.HyperOptEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.HyperOptEdge.Node(childComplexity), true
-
 	case "Mutation.createBacktest":
 		if e.complexity.Mutation.CreateBacktest == nil {
 			break
@@ -906,17 +724,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateExchangeSecret(childComplexity, args["input"].(ent.CreateExchangeSecretInput)), true
-	case "Mutation.createHyperOpt":
-		if e.complexity.Mutation.CreateHyperOpt == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createHyperOpt_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateHyperOpt(childComplexity, args["input"].(ent.CreateHyperOptInput)), true
 	case "Mutation.createStrategy":
 		if e.complexity.Mutation.CreateStrategy == nil {
 			break
@@ -983,17 +790,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteExchangeSecret(childComplexity, args["id"].(uuid.UUID)), true
-	case "Mutation.deleteHyperOpt":
-		if e.complexity.Mutation.DeleteHyperOpt == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteHyperOpt_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteHyperOpt(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.deleteStrategy":
 		if e.complexity.Mutation.DeleteStrategy == nil {
 			break
@@ -1060,17 +856,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateExchangeSecret(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateExchangeSecretInput)), true
-	case "Mutation.updateHyperOpt":
-		if e.complexity.Mutation.UpdateHyperOpt == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateHyperOpt_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateHyperOpt(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateHyperOptInput)), true
 	case "Mutation.updateStrategy":
 		if e.complexity.Mutation.UpdateStrategy == nil {
 			break
@@ -1158,17 +943,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Exchanges(childComplexity), true
-	case "Query.hyperOpts":
-		if e.complexity.Query.HyperOpts == nil {
-			break
-		}
-
-		args, err := ec.field_Query_hyperOpts_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.HyperOpts(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -1254,17 +1028,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Description(childComplexity), true
-	case "Strategy.hyperopts":
-		if e.complexity.Strategy.Hyperopts == nil {
-			break
-		}
-
-		args, err := ec.field_Strategy_hyperopts_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Strategy.Hyperopts(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
 	case "Strategy.id":
 		if e.complexity.Strategy.ID == nil {
 			break
@@ -1481,14 +1244,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateBotInput,
 		ec.unmarshalInputCreateExchangeInput,
 		ec.unmarshalInputCreateExchangeSecretInput,
-		ec.unmarshalInputCreateHyperOptInput,
 		ec.unmarshalInputCreateStrategyInput,
 		ec.unmarshalInputCreateTradeInput,
 		ec.unmarshalInputUpdateBacktestInput,
 		ec.unmarshalInputUpdateBotInput,
 		ec.unmarshalInputUpdateExchangeInput,
 		ec.unmarshalInputUpdateExchangeSecretInput,
-		ec.unmarshalInputUpdateHyperOptInput,
 		ec.unmarshalInputUpdateStrategyInput,
 		ec.unmarshalInputUpdateTradeInput,
 	)
@@ -1730,17 +1491,6 @@ func (ec *executionContext) field_Mutation_createExchange_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createHyperOpt_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateHyperOptInput2anytradeᚋinternalᚋentᚐCreateHyperOptInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createStrategy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1797,17 +1547,6 @@ func (ec *executionContext) field_Mutation_deleteExchangeSecret_args(ctx context
 }
 
 func (ec *executionContext) field_Mutation_deleteExchange_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteHyperOpt_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -1897,22 +1636,6 @@ func (ec *executionContext) field_Mutation_updateExchange_args(ctx context.Conte
 	}
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateExchangeInput2anytradeᚋinternalᚋentᚐUpdateExchangeInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateHyperOpt_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateHyperOptInput2anytradeᚋinternalᚋentᚐUpdateHyperOptInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2041,32 +1764,6 @@ func (ec *executionContext) field_Query_exchangeSecrets_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_hyperOpts_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg3
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2168,32 +1865,6 @@ func (ec *executionContext) field_Strategy_backtests_args(ctx context.Context, r
 }
 
 func (ec *executionContext) field_Strategy_bots_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Strategy_hyperopts_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
@@ -2719,8 +2390,6 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
-			case "hyperopts":
-				return ec.fieldContext_Strategy_hyperopts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -3443,8 +3112,6 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
-			case "hyperopts":
-				return ec.fieldContext_Strategy_hyperopts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -4308,749 +3975,6 @@ func (ec *executionContext) fieldContext_ExchangeSecretEdge_cursor(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _HyperOpt_id(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_status(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_status,
-		func(ctx context.Context) (any, error) {
-			return obj.Status, nil
-		},
-		nil,
-		ec.marshalNHyperOptTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HyperOptTaskStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_epochs(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_epochs,
-		func(ctx context.Context) (any, error) {
-			return obj.Epochs, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_epochs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_startDate(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_startDate,
-		func(ctx context.Context) (any, error) {
-			return obj.StartDate, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_startDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_endDate(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_endDate,
-		func(ctx context.Context) (any, error) {
-			return obj.EndDate, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_endDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_timeframe(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_timeframe,
-		func(ctx context.Context) (any, error) {
-			return obj.Timeframe, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_timeframe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_stakeAmount(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_stakeAmount,
-		func(ctx context.Context) (any, error) {
-			return obj.StakeAmount, nil
-		},
-		nil,
-		ec.marshalNFloat2float64,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_stakeAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_stakeCurrency(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_stakeCurrency,
-		func(ctx context.Context) (any, error) {
-			return obj.StakeCurrency, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_stakeCurrency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_optimizationMetric(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_optimizationMetric,
-		func(ctx context.Context) (any, error) {
-			return obj.OptimizationMetric, nil
-		},
-		nil,
-		ec.marshalNHyperOptOptimizationMetric2anytradeᚋinternalᚋenumᚐOptimizationMetric,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_optimizationMetric(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HyperOptOptimizationMetric does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_runtimeID(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_runtimeID,
-		func(ctx context.Context) (any, error) {
-			return obj.RuntimeID, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_runtimeID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_logOutput(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_logOutput,
-		func(ctx context.Context) (any, error) {
-			return obj.LogOutput, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_logOutput(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_progress(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_progress,
-		func(ctx context.Context) (any, error) {
-			return obj.Progress, nil
-		},
-		nil,
-		ec.marshalNFloat2float64,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_progress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_errorMessage(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_errorMessage,
-		func(ctx context.Context) (any, error) {
-			return obj.ErrorMessage, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_errorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_strategyID(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_strategyID,
-		func(ctx context.Context) (any, error) {
-			return obj.StrategyID, nil
-		},
-		nil,
-		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_strategyID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_updatedAt(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_completedAt(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_completedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CompletedAt, nil
-		},
-		nil,
-		ec.marshalOTime2timeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_completedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOpt_strategy(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOpt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOpt_strategy,
-		func(ctx context.Context) (any, error) {
-			return obj.Strategy(ctx)
-		},
-		nil,
-		ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOpt_strategy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOpt",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Strategy_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Strategy_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Strategy_description(ctx, field)
-			case "code":
-				return ec.fieldContext_Strategy_code(ctx, field)
-			case "version":
-				return ec.fieldContext_Strategy_version(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Strategy_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Strategy_updatedAt(ctx, field)
-			case "bots":
-				return ec.fieldContext_Strategy_bots(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
-			case "hyperopts":
-				return ec.fieldContext_Strategy_hyperopts(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOptConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOptConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOptConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalOHyperOptEdge2ᚕᚖanytradeᚋinternalᚋentᚐHyperOptEdge,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOptConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOptConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_HyperOptEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_HyperOptEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type HyperOptEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOptConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOptConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOptConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOptConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOptConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOptConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOptConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOptConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return obj.TotalCount, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOptConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOptConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOptEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOptEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOptEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalOHyperOpt2ᚖanytradeᚋinternalᚋentᚐHyperOpt,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOptEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOptEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_HyperOpt_id(ctx, field)
-			case "status":
-				return ec.fieldContext_HyperOpt_status(ctx, field)
-			case "epochs":
-				return ec.fieldContext_HyperOpt_epochs(ctx, field)
-			case "startDate":
-				return ec.fieldContext_HyperOpt_startDate(ctx, field)
-			case "endDate":
-				return ec.fieldContext_HyperOpt_endDate(ctx, field)
-			case "timeframe":
-				return ec.fieldContext_HyperOpt_timeframe(ctx, field)
-			case "stakeAmount":
-				return ec.fieldContext_HyperOpt_stakeAmount(ctx, field)
-			case "stakeCurrency":
-				return ec.fieldContext_HyperOpt_stakeCurrency(ctx, field)
-			case "optimizationMetric":
-				return ec.fieldContext_HyperOpt_optimizationMetric(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_HyperOpt_runtimeID(ctx, field)
-			case "logOutput":
-				return ec.fieldContext_HyperOpt_logOutput(ctx, field)
-			case "progress":
-				return ec.fieldContext_HyperOpt_progress(ctx, field)
-			case "errorMessage":
-				return ec.fieldContext_HyperOpt_errorMessage(ctx, field)
-			case "strategyID":
-				return ec.fieldContext_HyperOpt_strategyID(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_HyperOpt_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_HyperOpt_updatedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_HyperOpt_completedAt(ctx, field)
-			case "strategy":
-				return ec.fieldContext_HyperOpt_strategy(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type HyperOpt", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HyperOptEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.HyperOptEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_HyperOptEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCursor,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_HyperOptEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HyperOptEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Cursor does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5400,8 +4324,6 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
-			case "hyperopts":
-				return ec.fieldContext_Strategy_hyperopts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -5463,8 +4385,6 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
-			case "hyperopts":
-				return ec.fieldContext_Strategy_hyperopts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -5904,205 +4824,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteBacktest(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createHyperOpt(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_createHyperOpt,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateHyperOpt(ctx, fc.Args["input"].(ent.CreateHyperOptInput))
-		},
-		nil,
-		ec.marshalNHyperOpt2ᚖanytradeᚋinternalᚋentᚐHyperOpt,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createHyperOpt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_HyperOpt_id(ctx, field)
-			case "status":
-				return ec.fieldContext_HyperOpt_status(ctx, field)
-			case "epochs":
-				return ec.fieldContext_HyperOpt_epochs(ctx, field)
-			case "startDate":
-				return ec.fieldContext_HyperOpt_startDate(ctx, field)
-			case "endDate":
-				return ec.fieldContext_HyperOpt_endDate(ctx, field)
-			case "timeframe":
-				return ec.fieldContext_HyperOpt_timeframe(ctx, field)
-			case "stakeAmount":
-				return ec.fieldContext_HyperOpt_stakeAmount(ctx, field)
-			case "stakeCurrency":
-				return ec.fieldContext_HyperOpt_stakeCurrency(ctx, field)
-			case "optimizationMetric":
-				return ec.fieldContext_HyperOpt_optimizationMetric(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_HyperOpt_runtimeID(ctx, field)
-			case "logOutput":
-				return ec.fieldContext_HyperOpt_logOutput(ctx, field)
-			case "progress":
-				return ec.fieldContext_HyperOpt_progress(ctx, field)
-			case "errorMessage":
-				return ec.fieldContext_HyperOpt_errorMessage(ctx, field)
-			case "strategyID":
-				return ec.fieldContext_HyperOpt_strategyID(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_HyperOpt_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_HyperOpt_updatedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_HyperOpt_completedAt(ctx, field)
-			case "strategy":
-				return ec.fieldContext_HyperOpt_strategy(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type HyperOpt", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createHyperOpt_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateHyperOpt(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateHyperOpt,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateHyperOpt(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateHyperOptInput))
-		},
-		nil,
-		ec.marshalNHyperOpt2ᚖanytradeᚋinternalᚋentᚐHyperOpt,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateHyperOpt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_HyperOpt_id(ctx, field)
-			case "status":
-				return ec.fieldContext_HyperOpt_status(ctx, field)
-			case "epochs":
-				return ec.fieldContext_HyperOpt_epochs(ctx, field)
-			case "startDate":
-				return ec.fieldContext_HyperOpt_startDate(ctx, field)
-			case "endDate":
-				return ec.fieldContext_HyperOpt_endDate(ctx, field)
-			case "timeframe":
-				return ec.fieldContext_HyperOpt_timeframe(ctx, field)
-			case "stakeAmount":
-				return ec.fieldContext_HyperOpt_stakeAmount(ctx, field)
-			case "stakeCurrency":
-				return ec.fieldContext_HyperOpt_stakeCurrency(ctx, field)
-			case "optimizationMetric":
-				return ec.fieldContext_HyperOpt_optimizationMetric(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_HyperOpt_runtimeID(ctx, field)
-			case "logOutput":
-				return ec.fieldContext_HyperOpt_logOutput(ctx, field)
-			case "progress":
-				return ec.fieldContext_HyperOpt_progress(ctx, field)
-			case "errorMessage":
-				return ec.fieldContext_HyperOpt_errorMessage(ctx, field)
-			case "strategyID":
-				return ec.fieldContext_HyperOpt_strategyID(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_HyperOpt_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_HyperOpt_updatedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_HyperOpt_completedAt(ctx, field)
-			case "strategy":
-				return ec.fieldContext_HyperOpt_strategy(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type HyperOpt", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateHyperOpt_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteHyperOpt(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteHyperOpt,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteHyperOpt(ctx, fc.Args["id"].(uuid.UUID))
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteHyperOpt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteHyperOpt_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6702,55 +5423,6 @@ func (ec *executionContext) fieldContext_Query_exchangeSecrets(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_hyperOpts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_hyperOpts,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().HyperOpts(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
-		},
-		nil,
-		ec.marshalNHyperOptConnection2ᚖanytradeᚋinternalᚋentᚐHyperOptConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_hyperOpts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_HyperOptConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_HyperOptConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_HyperOptConnection_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type HyperOptConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_hyperOpts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_strategies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7258,55 +5930,6 @@ func (ec *executionContext) fieldContext_Strategy_backtests(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Strategy_hyperopts(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Strategy_hyperopts,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return obj.Hyperopts(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
-		},
-		nil,
-		ec.marshalNHyperOptConnection2ᚖanytradeᚋinternalᚋentᚐHyperOptConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Strategy_hyperopts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Strategy",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_HyperOptConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_HyperOptConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_HyperOptConnection_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type HyperOptConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Strategy_hyperopts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _StrategyConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.StrategyConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7452,8 +6075,6 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
-			case "hyperopts":
-				return ec.fieldContext_Strategy_hyperopts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -10086,138 +8707,6 @@ func (ec *executionContext) unmarshalInputCreateExchangeSecretInput(ctx context.
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateHyperOptInput(ctx context.Context, obj any) (ent.CreateHyperOptInput, error) {
-	var it ent.CreateHyperOptInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"status", "epochs", "startDate", "endDate", "timeframe", "stakeAmount", "stakeCurrency", "optimizationMetric", "runtimeID", "logOutput", "progress", "errorMessage", "createdAt", "updatedAt", "completedAt", "strategyID"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOHyperOptTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Status = data
-		case "epochs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("epochs"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Epochs = data
-		case "startDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
-			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StartDate = data
-		case "endDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
-			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EndDate = data
-		case "timeframe":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeframe"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Timeframe = data
-		case "stakeAmount":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stakeAmount"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StakeAmount = data
-		case "stakeCurrency":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stakeCurrency"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StakeCurrency = data
-		case "optimizationMetric":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("optimizationMetric"))
-			data, err := ec.unmarshalOHyperOptOptimizationMetric2ᚖanytradeᚋinternalᚋenumᚐOptimizationMetric(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OptimizationMetric = data
-		case "runtimeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runtimeID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RuntimeID = data
-		case "logOutput":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logOutput"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LogOutput = data
-		case "progress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("progress"))
-			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Progress = data
-		case "errorMessage":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ErrorMessage = data
-		case "createdAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CreatedAt = data
-		case "updatedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UpdatedAt = data
-		case "completedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("completedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CompletedAt = data
-		case "strategyID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyID"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StrategyID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Context, obj any) (ent.CreateStrategyInput, error) {
 	var it ent.CreateStrategyInput
 	asMap := map[string]any{}
@@ -10225,7 +8714,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code", "version", "createdAt", "updatedAt", "botIDs", "backtestIDs", "hyperoptIDs"}
+	fieldsInOrder := [...]string{"name", "description", "code", "version", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10288,13 +8777,6 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.BacktestIDs = data
-		case "hyperoptIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hyperoptIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HyperoptIDs = data
 		}
 	}
 
@@ -10884,159 +9366,6 @@ func (ec *executionContext) unmarshalInputUpdateExchangeSecretInput(ctx context.
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateHyperOptInput(ctx context.Context, obj any) (ent.UpdateHyperOptInput, error) {
-	var it ent.UpdateHyperOptInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"status", "epochs", "startDate", "endDate", "timeframe", "stakeAmount", "stakeCurrency", "optimizationMetric", "runtimeID", "clearRuntimeID", "logOutput", "clearLogOutput", "progress", "errorMessage", "clearErrorMessage", "updatedAt", "completedAt", "clearCompletedAt", "strategyID"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOHyperOptTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Status = data
-		case "epochs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("epochs"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Epochs = data
-		case "startDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StartDate = data
-		case "endDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EndDate = data
-		case "timeframe":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeframe"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Timeframe = data
-		case "stakeAmount":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stakeAmount"))
-			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StakeAmount = data
-		case "stakeCurrency":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stakeCurrency"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StakeCurrency = data
-		case "optimizationMetric":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("optimizationMetric"))
-			data, err := ec.unmarshalOHyperOptOptimizationMetric2ᚖanytradeᚋinternalᚋenumᚐOptimizationMetric(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OptimizationMetric = data
-		case "runtimeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runtimeID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RuntimeID = data
-		case "clearRuntimeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearRuntimeID"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearRuntimeID = data
-		case "logOutput":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logOutput"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LogOutput = data
-		case "clearLogOutput":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLogOutput"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearLogOutput = data
-		case "progress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("progress"))
-			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Progress = data
-		case "errorMessage":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ErrorMessage = data
-		case "clearErrorMessage":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearErrorMessage"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearErrorMessage = data
-		case "updatedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UpdatedAt = data
-		case "completedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("completedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CompletedAt = data
-		case "clearCompletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCompletedAt"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearCompletedAt = data
-		case "strategyID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StrategyID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Context, obj any) (ent.UpdateStrategyInput, error) {
 	var it ent.UpdateStrategyInput
 	asMap := map[string]any{}
@@ -11044,7 +9373,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests", "addHyperoptIDs", "removeHyperoptIDs", "clearHyperopts"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -11135,27 +9464,6 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearBacktests = data
-		case "addHyperoptIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addHyperoptIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AddHyperoptIDs = data
-		case "removeHyperoptIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeHyperoptIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RemoveHyperoptIDs = data
-		case "clearHyperopts":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearHyperopts"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearHyperopts = data
 		}
 	}
 
@@ -11347,11 +9655,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Strategy(ctx, sel, obj)
-	case *ent.HyperOpt:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._HyperOpt(ctx, sel, obj)
 	case *ent.ExchangeSecret:
 		if obj == nil {
 			return graphql.Null
@@ -12198,236 +10501,6 @@ func (ec *executionContext) _ExchangeSecretEdge(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var hyperOptImplementors = []string{"HyperOpt", "Node"}
-
-func (ec *executionContext) _HyperOpt(ctx context.Context, sel ast.SelectionSet, obj *ent.HyperOpt) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, hyperOptImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("HyperOpt")
-		case "id":
-			out.Values[i] = ec._HyperOpt_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "status":
-			out.Values[i] = ec._HyperOpt_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "epochs":
-			out.Values[i] = ec._HyperOpt_epochs(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "startDate":
-			out.Values[i] = ec._HyperOpt_startDate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "endDate":
-			out.Values[i] = ec._HyperOpt_endDate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "timeframe":
-			out.Values[i] = ec._HyperOpt_timeframe(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "stakeAmount":
-			out.Values[i] = ec._HyperOpt_stakeAmount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "stakeCurrency":
-			out.Values[i] = ec._HyperOpt_stakeCurrency(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "optimizationMetric":
-			out.Values[i] = ec._HyperOpt_optimizationMetric(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "runtimeID":
-			out.Values[i] = ec._HyperOpt_runtimeID(ctx, field, obj)
-		case "logOutput":
-			out.Values[i] = ec._HyperOpt_logOutput(ctx, field, obj)
-		case "progress":
-			out.Values[i] = ec._HyperOpt_progress(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "errorMessage":
-			out.Values[i] = ec._HyperOpt_errorMessage(ctx, field, obj)
-		case "strategyID":
-			out.Values[i] = ec._HyperOpt_strategyID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "createdAt":
-			out.Values[i] = ec._HyperOpt_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._HyperOpt_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "completedAt":
-			out.Values[i] = ec._HyperOpt_completedAt(ctx, field, obj)
-		case "strategy":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._HyperOpt_strategy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var hyperOptConnectionImplementors = []string{"HyperOptConnection"}
-
-func (ec *executionContext) _HyperOptConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.HyperOptConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, hyperOptConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("HyperOptConnection")
-		case "edges":
-			out.Values[i] = ec._HyperOptConnection_edges(ctx, field, obj)
-		case "pageInfo":
-			out.Values[i] = ec._HyperOptConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "totalCount":
-			out.Values[i] = ec._HyperOptConnection_totalCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var hyperOptEdgeImplementors = []string{"HyperOptEdge"}
-
-func (ec *executionContext) _HyperOptEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.HyperOptEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, hyperOptEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("HyperOptEdge")
-		case "node":
-			out.Values[i] = ec._HyperOptEdge_node(ctx, field, obj)
-		case "cursor":
-			out.Values[i] = ec._HyperOptEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -12548,27 +10621,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteBacktest":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteBacktest(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createHyperOpt":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createHyperOpt(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateHyperOpt":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateHyperOpt(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteHyperOpt":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteHyperOpt(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -12813,28 +10865,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "hyperOpts":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_hyperOpts(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "strategies":
 			field := field
 
@@ -12999,42 +11029,6 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Strategy_backtests(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "hyperopts":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Strategy_hyperopts(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -13870,11 +11864,6 @@ func (ec *executionContext) unmarshalNCreateExchangeSecretInput2anytradeᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateHyperOptInput2anytradeᚋinternalᚋentᚐCreateHyperOptInput(ctx context.Context, v any) (ent.CreateHyperOptInput, error) {
-	res, err := ec.unmarshalInputCreateHyperOptInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNCreateStrategyInput2anytradeᚋinternalᚋentᚐCreateStrategyInput(ctx context.Context, v any) (ent.CreateStrategyInput, error) {
 	res, err := ec.unmarshalInputCreateStrategyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -14005,54 +11994,6 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
-}
-
-func (ec *executionContext) marshalNHyperOpt2anytradeᚋinternalᚋentᚐHyperOpt(ctx context.Context, sel ast.SelectionSet, v ent.HyperOpt) graphql.Marshaler {
-	return ec._HyperOpt(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNHyperOpt2ᚖanytradeᚋinternalᚋentᚐHyperOpt(ctx context.Context, sel ast.SelectionSet, v *ent.HyperOpt) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._HyperOpt(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNHyperOptConnection2anytradeᚋinternalᚋentᚐHyperOptConnection(ctx context.Context, sel ast.SelectionSet, v ent.HyperOptConnection) graphql.Marshaler {
-	return ec._HyperOptConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNHyperOptConnection2ᚖanytradeᚋinternalᚋentᚐHyperOptConnection(ctx context.Context, sel ast.SelectionSet, v *ent.HyperOptConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._HyperOptConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNHyperOptOptimizationMetric2anytradeᚋinternalᚋenumᚐOptimizationMetric(ctx context.Context, v any) (enum.OptimizationMetric, error) {
-	var res enum.OptimizationMetric
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNHyperOptOptimizationMetric2anytradeᚋinternalᚋenumᚐOptimizationMetric(ctx context.Context, sel ast.SelectionSet, v enum.OptimizationMetric) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNHyperOptTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, v any) (enum.TaskStatus, error) {
-	var res enum.TaskStatus
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNHyperOptTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v enum.TaskStatus) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v any) (uuid.UUID, error) {
@@ -14264,11 +12205,6 @@ func (ec *executionContext) unmarshalNUpdateExchangeInput2anytradeᚋinternalᚋ
 
 func (ec *executionContext) unmarshalNUpdateExchangeSecretInput2anytradeᚋinternalᚋentᚐUpdateExchangeSecretInput(ctx context.Context, v any) (ent.UpdateExchangeSecretInput, error) {
 	res, err := ec.unmarshalInputUpdateExchangeSecretInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateHyperOptInput2anytradeᚋinternalᚋentᚐUpdateHyperOptInput(ctx context.Context, v any) (ent.UpdateHyperOptInput, error) {
-	res, err := ec.unmarshalInputUpdateHyperOptInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -14841,93 +12777,6 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	_ = sel
 	res := graphql.MarshalFloatContext(*v)
 	return graphql.WrapContextMarshaler(ctx, res)
-}
-
-func (ec *executionContext) marshalOHyperOpt2ᚖanytradeᚋinternalᚋentᚐHyperOpt(ctx context.Context, sel ast.SelectionSet, v *ent.HyperOpt) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._HyperOpt(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOHyperOptEdge2ᚕᚖanytradeᚋinternalᚋentᚐHyperOptEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.HyperOptEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOHyperOptEdge2ᚖanytradeᚋinternalᚋentᚐHyperOptEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOHyperOptEdge2ᚖanytradeᚋinternalᚋentᚐHyperOptEdge(ctx context.Context, sel ast.SelectionSet, v *ent.HyperOptEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._HyperOptEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOHyperOptOptimizationMetric2ᚖanytradeᚋinternalᚋenumᚐOptimizationMetric(ctx context.Context, v any) (*enum.OptimizationMetric, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(enum.OptimizationMetric)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOHyperOptOptimizationMetric2ᚖanytradeᚋinternalᚋenumᚐOptimizationMetric(ctx context.Context, sel ast.SelectionSet, v *enum.OptimizationMetric) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
-func (ec *executionContext) unmarshalOHyperOptTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, v any) (*enum.TaskStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(enum.TaskStatus)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOHyperOptTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v *enum.TaskStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func (ec *executionContext) unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx context.Context, v any) ([]uuid.UUID, error) {

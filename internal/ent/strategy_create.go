@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/strategy"
 	"context"
 	"errors"
@@ -134,21 +133,6 @@ func (_c *StrategyCreate) AddBacktests(v ...*Backtest) *StrategyCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddBacktestIDs(ids...)
-}
-
-// AddHyperoptIDs adds the "hyperopts" edge to the HyperOpt entity by IDs.
-func (_c *StrategyCreate) AddHyperoptIDs(ids ...uuid.UUID) *StrategyCreate {
-	_c.mutation.AddHyperoptIDs(ids...)
-	return _c
-}
-
-// AddHyperopts adds the "hyperopts" edges to the HyperOpt entity.
-func (_c *StrategyCreate) AddHyperopts(v ...*HyperOpt) *StrategyCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddHyperoptIDs(ids...)
 }
 
 // Mutation returns the StrategyMutation object of the builder.
@@ -310,22 +294,6 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.HyperoptsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

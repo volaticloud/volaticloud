@@ -7,7 +7,6 @@ import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
 	"context"
@@ -83,7 +82,6 @@ func checkColumn(t, c string) error {
 			bot.Table:            bot.ValidColumn,
 			exchange.Table:       exchange.ValidColumn,
 			exchangesecret.Table: exchangesecret.ValidColumn,
-			hyperopt.Table:       hyperopt.ValidColumn,
 			strategy.Table:       strategy.ValidColumn,
 			trade.Table:          trade.ValidColumn,
 		})

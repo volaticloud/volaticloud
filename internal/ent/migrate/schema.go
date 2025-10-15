@@ -128,44 +128,6 @@ var (
 			},
 		},
 	}
-	// HyperOptsColumns holds the columns for the "hyper_opts" table.
-	HyperOptsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
-		{Name: "epochs", Type: field.TypeInt},
-		{Name: "start_date", Type: field.TypeTime},
-		{Name: "end_date", Type: field.TypeTime},
-		{Name: "timeframe", Type: field.TypeString},
-		{Name: "stake_amount", Type: field.TypeFloat64},
-		{Name: "stake_currency", Type: field.TypeString},
-		{Name: "pairs", Type: field.TypeJSON},
-		{Name: "optimization_metric", Type: field.TypeEnum, Enums: []string{"sharpe", "profit", "trades", "drawdown"}, Default: "sharpe"},
-		{Name: "spaces", Type: field.TypeJSON},
-		{Name: "results", Type: field.TypeJSON, Nullable: true},
-		{Name: "config", Type: field.TypeJSON, Nullable: true},
-		{Name: "runtime_id", Type: field.TypeString, Nullable: true},
-		{Name: "log_output", Type: field.TypeString, Nullable: true, Size: 2147483647},
-		{Name: "progress", Type: field.TypeFloat64, Default: 0},
-		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
-		{Name: "strategy_id", Type: field.TypeUUID},
-	}
-	// HyperOptsTable holds the schema information for the "hyper_opts" table.
-	HyperOptsTable = &schema.Table{
-		Name:       "hyper_opts",
-		Columns:    HyperOptsColumns,
-		PrimaryKey: []*schema.Column{HyperOptsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "hyper_opts_strategies_hyperopts",
-				Columns:    []*schema.Column{HyperOptsColumns[20]},
-				RefColumns: []*schema.Column{StrategiesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-	}
 	// StrategiesColumns holds the columns for the "strategies" table.
 	StrategiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -240,7 +202,6 @@ var (
 		BotsTable,
 		ExchangesTable,
 		ExchangeSecretsTable,
-		HyperOptsTable,
 		StrategiesTable,
 		TradesTable,
 	}
@@ -251,6 +212,5 @@ func init() {
 	BotsTable.ForeignKeys[0].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[1].RefTable = StrategiesTable
 	ExchangeSecretsTable.ForeignKeys[0].RefTable = ExchangesTable
-	HyperOptsTable.ForeignKeys[0].RefTable = StrategiesTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

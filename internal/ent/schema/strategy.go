@@ -50,8 +50,6 @@ func (Strategy) Edges() []ent.Edge {
 			Annotations(entgql.RelayConnection()),
 		edge.To("backtests", Backtest.Type).
 			Annotations(entgql.RelayConnection()),
-		edge.To("hyperopts", HyperOpt.Type).
-			Annotations(entgql.RelayConnection()),
 	}
 }
 

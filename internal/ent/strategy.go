@@ -42,17 +42,14 @@ type StrategyEdges struct {
 	Bots []*Bot `json:"bots,omitempty"`
 	// Backtests holds the value of the backtests edge.
 	Backtests []*Backtest `json:"backtests,omitempty"`
-	// Hyperopts holds the value of the hyperopts edge.
-	Hyperopts []*HyperOpt `json:"hyperopts,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 	// totalCount holds the count of the edges above.
-	totalCount [3]map[string]int
+	totalCount [2]map[string]int
 
 	namedBots      map[string][]*Bot
 	namedBacktests map[string][]*Backtest
-	namedHyperopts map[string][]*HyperOpt
 }
 
 // BotsOrErr returns the Bots value or an error if the edge
@@ -71,15 +68,6 @@ func (e StrategyEdges) BacktestsOrErr() ([]*Backtest, error) {
 		return e.Backtests, nil
 	}
 	return nil, &NotLoadedError{edge: "backtests"}
-}
-
-// HyperoptsOrErr returns the Hyperopts value or an error if the edge
-// was not loaded in eager-loading.
-func (e StrategyEdges) HyperoptsOrErr() ([]*HyperOpt, error) {
-	if e.loadedTypes[2] {
-		return e.Hyperopts, nil
-	}
-	return nil, &NotLoadedError{edge: "hyperopts"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -173,11 +161,6 @@ func (_m *Strategy) QueryBacktests() *BacktestQuery {
 	return NewStrategyClient(_m.config).QueryBacktests(_m)
 }
 
-// QueryHyperopts queries the "hyperopts" edge of the Strategy entity.
-func (_m *Strategy) QueryHyperopts() *HyperOptQuery {
-	return NewStrategyClient(_m.config).QueryHyperopts(_m)
-}
-
 // Update returns a builder for updating this Strategy.
 // Note that you need to call Strategy.Unwrap() before calling this method if this Strategy
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -267,30 +250,6 @@ func (_m *Strategy) appendNamedBacktests(name string, edges ...*Backtest) {
 		_m.Edges.namedBacktests[name] = []*Backtest{}
 	} else {
 		_m.Edges.namedBacktests[name] = append(_m.Edges.namedBacktests[name], edges...)
-	}
-}
-
-// NamedHyperopts returns the Hyperopts named value or an error if the edge was not
-// loaded in eager-loading with this name.
-func (_m *Strategy) NamedHyperopts(name string) ([]*HyperOpt, error) {
-	if _m.Edges.namedHyperopts == nil {
-		return nil, &NotLoadedError{edge: name}
-	}
-	nodes, ok := _m.Edges.namedHyperopts[name]
-	if !ok {
-		return nil, &NotLoadedError{edge: name}
-	}
-	return nodes, nil
-}
-
-func (_m *Strategy) appendNamedHyperopts(name string, edges ...*HyperOpt) {
-	if _m.Edges.namedHyperopts == nil {
-		_m.Edges.namedHyperopts = make(map[string][]*HyperOpt)
-	}
-	if len(edges) == 0 {
-		_m.Edges.namedHyperopts[name] = []*HyperOpt{}
-	} else {
-		_m.Edges.namedHyperopts[name] = append(_m.Edges.namedHyperopts[name], edges...)
 	}
 }
 

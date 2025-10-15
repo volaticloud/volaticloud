@@ -29,11 +29,6 @@ type Mutation {
   updateBacktest(id: ID!, input: UpdateBacktestInput!): Backtest!
   deleteBacktest(id: ID!): Boolean!
 
-  # HyperOpt mutations
-  createHyperOpt(input: CreateHyperOptInput!): HyperOpt!
-  updateHyperOpt(id: ID!, input: UpdateHyperOptInput!): HyperOpt!
-  deleteHyperOpt(id: ID!): Boolean!
-
   # Trade mutations
   createTrade(input: CreateTradeInput!): Trade!
   updateTrade(id: ID!, input: UpdateTradeInput!): Trade!

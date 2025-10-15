@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
 	"context"
@@ -130,21 +129,6 @@ func (_u *StrategyUpdate) AddBacktests(v ...*Backtest) *StrategyUpdate {
 	return _u.AddBacktestIDs(ids...)
 }
 
-// AddHyperoptIDs adds the "hyperopts" edge to the HyperOpt entity by IDs.
-func (_u *StrategyUpdate) AddHyperoptIDs(ids ...uuid.UUID) *StrategyUpdate {
-	_u.mutation.AddHyperoptIDs(ids...)
-	return _u
-}
-
-// AddHyperopts adds the "hyperopts" edges to the HyperOpt entity.
-func (_u *StrategyUpdate) AddHyperopts(v ...*HyperOpt) *StrategyUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddHyperoptIDs(ids...)
-}
-
 // Mutation returns the StrategyMutation object of the builder.
 func (_u *StrategyUpdate) Mutation() *StrategyMutation {
 	return _u.mutation
@@ -190,27 +174,6 @@ func (_u *StrategyUpdate) RemoveBacktests(v ...*Backtest) *StrategyUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBacktestIDs(ids...)
-}
-
-// ClearHyperopts clears all "hyperopts" edges to the HyperOpt entity.
-func (_u *StrategyUpdate) ClearHyperopts() *StrategyUpdate {
-	_u.mutation.ClearHyperopts()
-	return _u
-}
-
-// RemoveHyperoptIDs removes the "hyperopts" edge to HyperOpt entities by IDs.
-func (_u *StrategyUpdate) RemoveHyperoptIDs(ids ...uuid.UUID) *StrategyUpdate {
-	_u.mutation.RemoveHyperoptIDs(ids...)
-	return _u
-}
-
-// RemoveHyperopts removes "hyperopts" edges to HyperOpt entities.
-func (_u *StrategyUpdate) RemoveHyperopts(v ...*HyperOpt) *StrategyUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveHyperoptIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -379,51 +342,6 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.HyperoptsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedHyperoptsIDs(); len(nodes) > 0 && !_u.mutation.HyperoptsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.HyperoptsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{strategy.Label}
@@ -542,21 +460,6 @@ func (_u *StrategyUpdateOne) AddBacktests(v ...*Backtest) *StrategyUpdateOne {
 	return _u.AddBacktestIDs(ids...)
 }
 
-// AddHyperoptIDs adds the "hyperopts" edge to the HyperOpt entity by IDs.
-func (_u *StrategyUpdateOne) AddHyperoptIDs(ids ...uuid.UUID) *StrategyUpdateOne {
-	_u.mutation.AddHyperoptIDs(ids...)
-	return _u
-}
-
-// AddHyperopts adds the "hyperopts" edges to the HyperOpt entity.
-func (_u *StrategyUpdateOne) AddHyperopts(v ...*HyperOpt) *StrategyUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddHyperoptIDs(ids...)
-}
-
 // Mutation returns the StrategyMutation object of the builder.
 func (_u *StrategyUpdateOne) Mutation() *StrategyMutation {
 	return _u.mutation
@@ -602,27 +505,6 @@ func (_u *StrategyUpdateOne) RemoveBacktests(v ...*Backtest) *StrategyUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBacktestIDs(ids...)
-}
-
-// ClearHyperopts clears all "hyperopts" edges to the HyperOpt entity.
-func (_u *StrategyUpdateOne) ClearHyperopts() *StrategyUpdateOne {
-	_u.mutation.ClearHyperopts()
-	return _u
-}
-
-// RemoveHyperoptIDs removes the "hyperopts" edge to HyperOpt entities by IDs.
-func (_u *StrategyUpdateOne) RemoveHyperoptIDs(ids ...uuid.UUID) *StrategyUpdateOne {
-	_u.mutation.RemoveHyperoptIDs(ids...)
-	return _u
-}
-
-// RemoveHyperopts removes "hyperopts" edges to HyperOpt entities.
-func (_u *StrategyUpdateOne) RemoveHyperopts(v ...*HyperOpt) *StrategyUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveHyperoptIDs(ids...)
 }
 
 // Where appends a list predicates to the StrategyUpdate builder.
@@ -814,51 +696,6 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.HyperoptsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedHyperoptsIDs(); len(nodes) > 0 && !_u.mutation.HyperoptsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.HyperoptsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.HyperoptsTable,
-			Columns: []string{strategy.HyperoptsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(hyperopt.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

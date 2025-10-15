@@ -36,10 +36,6 @@ func (r *queryResolver) ExchangeSecrets(ctx context.Context, after *entgql.Curso
 	return r.client.ExchangeSecret.Query().Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) HyperOpts(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.HyperOptConnection, error) {
-	return r.client.HyperOpt.Query().Paginate(ctx, after, first, before, last)
-}
-
 func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.StrategyConnection, error) {
 	return r.client.Strategy.Query().Paginate(ctx, after, first, before, last)
 }

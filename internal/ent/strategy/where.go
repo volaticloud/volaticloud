@@ -482,29 +482,6 @@ func HasBacktestsWith(preds ...predicate.Backtest) predicate.Strategy {
 	})
 }
 
-// HasHyperopts applies the HasEdge predicate on the "hyperopts" edge.
-func HasHyperopts() predicate.Strategy {
-	return predicate.Strategy(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, HyperoptsTable, HyperoptsColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasHyperoptsWith applies the HasEdge predicate on the "hyperopts" edge with a given conditions (other predicates).
-func HasHyperoptsWith(preds ...predicate.HyperOpt) predicate.Strategy {
-	return predicate.Strategy(func(s *sql.Selector) {
-		step := newHyperoptsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Strategy) predicate.Strategy {
 	return predicate.Strategy(sql.AndPredicates(predicates...))

@@ -1,0 +1,24 @@
+package graph
+
+import (
+	"anytrade/internal/enum"
+	"context"
+)
+
+// Helper functions for creating pointers to values
+func ptr[T any](v T) *T {
+	return &v
+}
+
+// ctx returns a background context
+func ctx() context.Context {
+	return context.Background()
+}
+
+// Common test enum values as pointers
+var (
+	taskStatusPending   = ptr(enum.TaskStatusPending)
+	taskStatusRunning   = ptr(enum.TaskStatusRunning)
+	taskStatusCompleted = ptr(enum.TaskStatusCompleted)
+	taskStatusFailed    = ptr(enum.TaskStatusFailed)
+)

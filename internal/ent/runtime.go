@@ -7,7 +7,6 @@ import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
-	"anytrade/internal/ent/hyperopt"
 	"anytrade/internal/ent/schema"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
@@ -112,58 +111,6 @@ func init() {
 	exchangesecretDescID := exchangesecretFields[0].Descriptor()
 	// exchangesecret.DefaultID holds the default value on creation for the id field.
 	exchangesecret.DefaultID = exchangesecretDescID.Default.(func() uuid.UUID)
-	hyperoptFields := schema.HyperOpt{}.Fields()
-	_ = hyperoptFields
-	// hyperoptDescEpochs is the schema descriptor for epochs field.
-	hyperoptDescEpochs := hyperoptFields[2].Descriptor()
-	// hyperopt.EpochsValidator is a validator for the "epochs" field. It is called by the builders before save.
-	hyperopt.EpochsValidator = hyperoptDescEpochs.Validators[0].(func(int) error)
-	// hyperoptDescTimeframe is the schema descriptor for timeframe field.
-	hyperoptDescTimeframe := hyperoptFields[5].Descriptor()
-	// hyperopt.TimeframeValidator is a validator for the "timeframe" field. It is called by the builders before save.
-	hyperopt.TimeframeValidator = hyperoptDescTimeframe.Validators[0].(func(string) error)
-	// hyperoptDescStakeAmount is the schema descriptor for stake_amount field.
-	hyperoptDescStakeAmount := hyperoptFields[6].Descriptor()
-	// hyperopt.StakeAmountValidator is a validator for the "stake_amount" field. It is called by the builders before save.
-	hyperopt.StakeAmountValidator = hyperoptDescStakeAmount.Validators[0].(func(float64) error)
-	// hyperoptDescStakeCurrency is the schema descriptor for stake_currency field.
-	hyperoptDescStakeCurrency := hyperoptFields[7].Descriptor()
-	// hyperopt.StakeCurrencyValidator is a validator for the "stake_currency" field. It is called by the builders before save.
-	hyperopt.StakeCurrencyValidator = hyperoptDescStakeCurrency.Validators[0].(func(string) error)
-	// hyperoptDescProgress is the schema descriptor for progress field.
-	hyperoptDescProgress := hyperoptFields[15].Descriptor()
-	// hyperopt.DefaultProgress holds the default value on creation for the progress field.
-	hyperopt.DefaultProgress = hyperoptDescProgress.Default.(float64)
-	// hyperopt.ProgressValidator is a validator for the "progress" field. It is called by the builders before save.
-	hyperopt.ProgressValidator = func() func(float64) error {
-		validators := hyperoptDescProgress.Validators
-		fns := [...]func(float64) error{
-			validators[0].(func(float64) error),
-			validators[1].(func(float64) error),
-		}
-		return func(progress float64) error {
-			for _, fn := range fns {
-				if err := fn(progress); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// hyperoptDescCreatedAt is the schema descriptor for created_at field.
-	hyperoptDescCreatedAt := hyperoptFields[18].Descriptor()
-	// hyperopt.DefaultCreatedAt holds the default value on creation for the created_at field.
-	hyperopt.DefaultCreatedAt = hyperoptDescCreatedAt.Default.(func() time.Time)
-	// hyperoptDescUpdatedAt is the schema descriptor for updated_at field.
-	hyperoptDescUpdatedAt := hyperoptFields[19].Descriptor()
-	// hyperopt.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	hyperopt.DefaultUpdatedAt = hyperoptDescUpdatedAt.Default.(func() time.Time)
-	// hyperopt.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	hyperopt.UpdateDefaultUpdatedAt = hyperoptDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// hyperoptDescID is the schema descriptor for id field.
-	hyperoptDescID := hyperoptFields[0].Descriptor()
-	// hyperopt.DefaultID holds the default value on creation for the id field.
-	hyperopt.DefaultID = hyperoptDescID.Default.(func() uuid.UUID)
 	strategyFields := schema.Strategy{}.Fields()
 	_ = strategyFields
 	// strategyDescName is the schema descriptor for name field.

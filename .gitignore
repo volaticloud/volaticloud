@@ -62,4 +62,4 @@ docker-compose.override.yml
 
 # Build artifacts
 *.tar.gz
-*.zip
+*.zip*.iml
