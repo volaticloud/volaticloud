@@ -35,13 +35,9 @@ func (Bot) Fields() []ent.Field {
 			GoType(enum.BotMode("")).
 			Default(string(enum.BotModeDryRun)).
 			Comment("Trading mode (dry-run or live)"),
-		field.Enum("runtime_type").
-			GoType(enum.RuntimeType("")).
-			Default(string(enum.RuntimeDocker)).
-			Comment("Runtime environment type"),
-		field.String("runtime_id").
+		field.String("container_id").
 			Optional().
-			Comment("Runtime-specific identifier"),
+			Comment("Runtime-specific identifier (container ID, pod name, etc.)"),
 		field.JSON("runtime_metadata", map[string]string{}).
 			Optional().
 			Annotations(entgql.Skip(entgql.SkipAll)).
@@ -73,6 +69,8 @@ func (Bot) Fields() []ent.Field {
 			Comment("Foreign key to exchange"),
 		field.UUID("strategy_id", uuid.UUID{}).
 			Comment("Foreign key to strategy"),
+		field.UUID("runtime_id", uuid.UUID{}).
+			Comment("Foreign key to runtime"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -93,6 +91,11 @@ func (Bot) Edges() []ent.Edge {
 		edge.From("strategy", Strategy.Type).
 			Ref("bots").
 			Field("strategy_id").
+			Required().
+			Unique(),
+		edge.From("runtime", BotRuntime.Type).
+			Ref("bots").
+			Field("runtime_id").
 			Required().
 			Unique(),
 		edge.To("trades", Trade.Type).

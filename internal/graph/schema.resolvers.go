@@ -63,6 +63,19 @@ func (r *mutationResolver) DeleteBot(ctx context.Context, id uuid.UUID) (bool, e
 	return err == nil, err
 }
 
+func (r *mutationResolver) CreateBotRuntime(ctx context.Context, input ent.CreateBotRuntimeInput) (*ent.BotRuntime, error) {
+	return r.client.BotRuntime.Create().SetInput(input).Save(ctx)
+}
+
+func (r *mutationResolver) UpdateBotRuntime(ctx context.Context, id uuid.UUID, input ent.UpdateBotRuntimeInput) (*ent.BotRuntime, error) {
+	return r.client.BotRuntime.UpdateOneID(id).SetInput(input).Save(ctx)
+}
+
+func (r *mutationResolver) DeleteBotRuntime(ctx context.Context, id uuid.UUID) (bool, error) {
+	err := r.client.BotRuntime.DeleteOneID(id).Exec(ctx)
+	return err == nil, err
+}
+
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
 	return r.client.Backtest.Create().SetInput(input).Save(ctx)
 }

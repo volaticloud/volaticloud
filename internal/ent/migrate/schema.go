@@ -12,17 +12,8 @@ var (
 	BacktestsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
-		{Name: "start_date", Type: field.TypeTime},
-		{Name: "end_date", Type: field.TypeTime},
-		{Name: "timeframe", Type: field.TypeString},
-		{Name: "stake_amount", Type: field.TypeFloat64},
-		{Name: "stake_currency", Type: field.TypeString},
-		{Name: "pairs", Type: field.TypeJSON},
-		{Name: "results", Type: field.TypeJSON, Nullable: true},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
-		{Name: "runtime_id", Type: field.TypeString, Nullable: true},
-		{Name: "log_output", Type: field.TypeString, Nullable: true, Size: 2147483647},
-		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "result", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
@@ -36,7 +27,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_strategies_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[16]},
+				Columns:    []*schema.Column{BacktestsColumns[7]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -48,8 +39,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
-		{Name: "runtime_type", Type: field.TypeEnum, Enums: []string{"docker", "kubernetes", "local"}, Default: "docker"},
-		{Name: "runtime_id", Type: field.TypeString, Nullable: true},
+		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "runtime_metadata", Type: field.TypeJSON, Nullable: true},
 		{Name: "api_url", Type: field.TypeString, Nullable: true},
 		{Name: "api_username", Type: field.TypeString, Nullable: true},
@@ -60,6 +50,7 @@ var (
 		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "runtime_id", Type: field.TypeUUID},
 		{Name: "exchange_id", Type: field.TypeUUID},
 		{Name: "strategy_id", Type: field.TypeUUID},
 	}
@@ -69,6 +60,12 @@ var (
 		Columns:    BotsColumns,
 		PrimaryKey: []*schema.Column{BotsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "bots_bot_runtimes_bots",
+				Columns:    []*schema.Column{BotsColumns[15]},
+				RefColumns: []*schema.Column{BotRuntimesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
 			{
 				Symbol:     "bots_exchanges_bots",
 				Columns:    []*schema.Column{BotsColumns[16]},
@@ -82,6 +79,21 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+	}
+	// BotRuntimesColumns holds the columns for the "bot_runtimes" table.
+	BotRuntimesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"docker", "kubernetes", "local"}, Default: "docker"},
+		{Name: "config", Type: field.TypeJSON, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// BotRuntimesTable holds the schema information for the "bot_runtimes" table.
+	BotRuntimesTable = &schema.Table{
+		Name:       "bot_runtimes",
+		Columns:    BotRuntimesColumns,
+		PrimaryKey: []*schema.Column{BotRuntimesColumns[0]},
 	}
 	// ExchangesColumns holds the columns for the "exchanges" table.
 	ExchangesColumns = []*schema.Column{
@@ -200,6 +212,7 @@ var (
 	Tables = []*schema.Table{
 		BacktestsTable,
 		BotsTable,
+		BotRuntimesTable,
 		ExchangesTable,
 		ExchangeSecretsTable,
 		StrategiesTable,
@@ -209,8 +222,9 @@ var (
 
 func init() {
 	BacktestsTable.ForeignKeys[0].RefTable = StrategiesTable
-	BotsTable.ForeignKeys[0].RefTable = ExchangesTable
-	BotsTable.ForeignKeys[1].RefTable = StrategiesTable
+	BotsTable.ForeignKeys[0].RefTable = BotRuntimesTable
+	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
+	BotsTable.ForeignKeys[2].RefTable = StrategiesTable
 	ExchangeSecretsTable.ForeignKeys[0].RefTable = ExchangesTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

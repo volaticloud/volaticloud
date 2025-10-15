@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
@@ -29,6 +30,7 @@ type BotQuery struct {
 	predicates      []predicate.Bot
 	withExchange    *ExchangeQuery
 	withStrategy    *StrategyQuery
+	withRuntime     *BotRuntimeQuery
 	withTrades      *TradeQuery
 	modifiers       []func(*sql.Selector)
 	loadTotal       []func(context.Context, []*Bot) error
@@ -106,6 +108,28 @@ func (_q *BotQuery) QueryStrategy() *StrategyQuery {
 			sqlgraph.From(bot.Table, bot.FieldID, selector),
 			sqlgraph.To(strategy.Table, strategy.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, bot.StrategyTable, bot.StrategyColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRuntime chains the current query on the "runtime" edge.
+func (_q *BotQuery) QueryRuntime() *BotRuntimeQuery {
+	query := (&BotRuntimeClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bot.Table, bot.FieldID, selector),
+			sqlgraph.To(botruntime.Table, botruntime.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, bot.RuntimeTable, bot.RuntimeColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -329,6 +353,7 @@ func (_q *BotQuery) Clone() *BotQuery {
 		predicates:   append([]predicate.Bot{}, _q.predicates...),
 		withExchange: _q.withExchange.Clone(),
 		withStrategy: _q.withStrategy.Clone(),
+		withRuntime:  _q.withRuntime.Clone(),
 		withTrades:   _q.withTrades.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -355,6 +380,17 @@ func (_q *BotQuery) WithStrategy(opts ...func(*StrategyQuery)) *BotQuery {
 		opt(query)
 	}
 	_q.withStrategy = query
+	return _q
+}
+
+// WithRuntime tells the query-builder to eager-load the nodes that are connected to
+// the "runtime" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotQuery) WithRuntime(opts ...func(*BotRuntimeQuery)) *BotQuery {
+	query := (&BotRuntimeClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withRuntime = query
 	return _q
 }
 
@@ -447,9 +483,10 @@ func (_q *BotQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bot, err
 	var (
 		nodes       = []*Bot{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withExchange != nil,
 			_q.withStrategy != nil,
+			_q.withRuntime != nil,
 			_q.withTrades != nil,
 		}
 	)
@@ -483,6 +520,12 @@ func (_q *BotQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bot, err
 	if query := _q.withStrategy; query != nil {
 		if err := _q.loadStrategy(ctx, query, nodes, nil,
 			func(n *Bot, e *Strategy) { n.Edges.Strategy = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withRuntime; query != nil {
+		if err := _q.loadRuntime(ctx, query, nodes, nil,
+			func(n *Bot, e *BotRuntime) { n.Edges.Runtime = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -566,6 +609,35 @@ func (_q *BotQuery) loadStrategy(ctx context.Context, query *StrategyQuery, node
 	}
 	return nil
 }
+func (_q *BotQuery) loadRuntime(ctx context.Context, query *BotRuntimeQuery, nodes []*Bot, init func(*Bot), assign func(*Bot, *BotRuntime)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Bot)
+	for i := range nodes {
+		fk := nodes[i].RuntimeID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(botruntime.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "runtime_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *BotQuery) loadTrades(ctx context.Context, query *TradeQuery, nodes []*Bot, init func(*Bot), assign func(*Bot, *Trade)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Bot)
@@ -630,6 +702,9 @@ func (_q *BotQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withStrategy != nil {
 			_spec.Node.AddColumnOnce(bot.FieldStrategyID)
+		}
+		if _q.withRuntime != nil {
+			_spec.Node.AddColumnOnce(bot.FieldRuntimeID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

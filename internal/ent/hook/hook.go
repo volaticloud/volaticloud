@@ -32,6 +32,18 @@ func (f BotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BotMutation", m)
 }
 
+// The BotRuntimeFunc type is an adapter to allow the use of ordinary
+// function as BotRuntime mutator.
+type BotRuntimeFunc func(context.Context, *ent.BotRuntimeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BotRuntimeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BotRuntimeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BotRuntimeMutation", m)
+}
+
 // The ExchangeFunc type is an adapter to allow the use of ordinary
 // function as Exchange mutator.
 type ExchangeFunc func(context.Context, *ent.ExchangeMutation) (ent.Value, error)

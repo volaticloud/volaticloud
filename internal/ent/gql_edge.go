@@ -32,12 +32,20 @@ func (_m *Bot) Strategy(ctx context.Context) (*Strategy, error) {
 	return result, err
 }
 
+func (_m *Bot) Runtime(ctx context.Context) (*BotRuntime, error) {
+	result, err := _m.Edges.RuntimeOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryRuntime().Only(ctx)
+	}
+	return result, err
+}
+
 func (_m *Bot) Trades(
 	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
 ) (*TradeConnection, error) {
 	opts := []TradePaginateOption{}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
-	totalCount, hasTotalCount := _m.Edges.totalCount[2][alias]
+	totalCount, hasTotalCount := _m.Edges.totalCount[3][alias]
 	if nodes, err := _m.NamedTrades(alias); err == nil || hasTotalCount {
 		pager, err := newTradePager(opts, last != nil)
 		if err != nil {
@@ -48,6 +56,24 @@ func (_m *Bot) Trades(
 		return conn, nil
 	}
 	return _m.QueryTrades().Paginate(ctx, after, first, before, last, opts...)
+}
+
+func (_m *BotRuntime) Bots(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+) (*BotConnection, error) {
+	opts := []BotPaginateOption{}
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := _m.Edges.totalCount[0][alias]
+	if nodes, err := _m.NamedBots(alias); err == nil || hasTotalCount {
+		pager, err := newBotPager(opts, last != nil)
+		if err != nil {
+			return nil, err
+		}
+		conn := &BotConnection{Edges: []*BotEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
+	}
+	return _m.QueryBots().Paginate(ctx, after, first, before, last, opts...)
 }
 
 func (_m *Exchange) Bots(

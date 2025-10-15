@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
@@ -59,30 +60,16 @@ func (_c *BotCreate) SetNillableMode(v *enum.BotMode) *BotCreate {
 	return _c
 }
 
-// SetRuntimeType sets the "runtime_type" field.
-func (_c *BotCreate) SetRuntimeType(v enum.RuntimeType) *BotCreate {
-	_c.mutation.SetRuntimeType(v)
+// SetContainerID sets the "container_id" field.
+func (_c *BotCreate) SetContainerID(v string) *BotCreate {
+	_c.mutation.SetContainerID(v)
 	return _c
 }
 
-// SetNillableRuntimeType sets the "runtime_type" field if the given value is not nil.
-func (_c *BotCreate) SetNillableRuntimeType(v *enum.RuntimeType) *BotCreate {
+// SetNillableContainerID sets the "container_id" field if the given value is not nil.
+func (_c *BotCreate) SetNillableContainerID(v *string) *BotCreate {
 	if v != nil {
-		_c.SetRuntimeType(*v)
-	}
-	return _c
-}
-
-// SetRuntimeID sets the "runtime_id" field.
-func (_c *BotCreate) SetRuntimeID(v string) *BotCreate {
-	_c.mutation.SetRuntimeID(v)
-	return _c
-}
-
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_c *BotCreate) SetNillableRuntimeID(v *string) *BotCreate {
-	if v != nil {
-		_c.SetRuntimeID(*v)
+		_c.SetContainerID(*v)
 	}
 	return _c
 }
@@ -195,6 +182,12 @@ func (_c *BotCreate) SetStrategyID(v uuid.UUID) *BotCreate {
 	return _c
 }
 
+// SetRuntimeID sets the "runtime_id" field.
+func (_c *BotCreate) SetRuntimeID(v uuid.UUID) *BotCreate {
+	_c.mutation.SetRuntimeID(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *BotCreate) SetCreatedAt(v time.Time) *BotCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -245,6 +238,11 @@ func (_c *BotCreate) SetExchange(v *Exchange) *BotCreate {
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_c *BotCreate) SetStrategy(v *Strategy) *BotCreate {
 	return _c.SetStrategyID(v.ID)
+}
+
+// SetRuntime sets the "runtime" edge to the BotRuntime entity.
+func (_c *BotCreate) SetRuntime(v *BotRuntime) *BotCreate {
+	return _c.SetRuntimeID(v.ID)
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by IDs.
@@ -305,10 +303,6 @@ func (_c *BotCreate) defaults() {
 		v := bot.DefaultMode
 		_c.mutation.SetMode(v)
 	}
-	if _, ok := _c.mutation.RuntimeType(); !ok {
-		v := bot.DefaultRuntimeType
-		_c.mutation.SetRuntimeType(v)
-	}
 	if _, ok := _c.mutation.FreqtradeVersion(); !ok {
 		v := bot.DefaultFreqtradeVersion
 		_c.mutation.SetFreqtradeVersion(v)
@@ -353,14 +347,6 @@ func (_c *BotCreate) check() error {
 			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "Bot.mode": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.RuntimeType(); !ok {
-		return &ValidationError{Name: "runtime_type", err: errors.New(`ent: missing required field "Bot.runtime_type"`)}
-	}
-	if v, ok := _c.mutation.RuntimeType(); ok {
-		if err := bot.RuntimeTypeValidator(v); err != nil {
-			return &ValidationError{Name: "runtime_type", err: fmt.Errorf(`ent: validator failed for field "Bot.runtime_type": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.FreqtradeVersion(); !ok {
 		return &ValidationError{Name: "freqtrade_version", err: errors.New(`ent: missing required field "Bot.freqtrade_version"`)}
 	}
@@ -369,6 +355,9 @@ func (_c *BotCreate) check() error {
 	}
 	if _, ok := _c.mutation.StrategyID(); !ok {
 		return &ValidationError{Name: "strategy_id", err: errors.New(`ent: missing required field "Bot.strategy_id"`)}
+	}
+	if _, ok := _c.mutation.RuntimeID(); !ok {
+		return &ValidationError{Name: "runtime_id", err: errors.New(`ent: missing required field "Bot.runtime_id"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Bot.created_at"`)}
@@ -381,6 +370,9 @@ func (_c *BotCreate) check() error {
 	}
 	if len(_c.mutation.StrategyIDs()) == 0 {
 		return &ValidationError{Name: "strategy", err: errors.New(`ent: missing required edge "Bot.strategy"`)}
+	}
+	if len(_c.mutation.RuntimeIDs()) == 0 {
+		return &ValidationError{Name: "runtime", err: errors.New(`ent: missing required edge "Bot.runtime"`)}
 	}
 	return nil
 }
@@ -429,13 +421,9 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 		_spec.SetField(bot.FieldMode, field.TypeEnum, value)
 		_node.Mode = value
 	}
-	if value, ok := _c.mutation.RuntimeType(); ok {
-		_spec.SetField(bot.FieldRuntimeType, field.TypeEnum, value)
-		_node.RuntimeType = value
-	}
-	if value, ok := _c.mutation.RuntimeID(); ok {
-		_spec.SetField(bot.FieldRuntimeID, field.TypeString, value)
-		_node.RuntimeID = value
+	if value, ok := _c.mutation.ContainerID(); ok {
+		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
+		_node.ContainerID = value
 	}
 	if value, ok := _c.mutation.RuntimeMetadata(); ok {
 		_spec.SetField(bot.FieldRuntimeMetadata, field.TypeJSON, value)
@@ -509,6 +497,23 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.StrategyID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RuntimeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   bot.RuntimeTable,
+			Columns: []string{bot.RuntimeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.RuntimeID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.TradesIDs(); len(nodes) > 0 {

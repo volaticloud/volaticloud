@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
@@ -32,6 +33,11 @@ var botImplementors = []string{"Bot", "Node"}
 
 // IsNode implements the Node interface check for GQLGen.
 func (*Bot) IsNode() {}
+
+var botruntimeImplementors = []string{"BotRuntime", "Node"}
+
+// IsNode implements the Node interface check for GQLGen.
+func (*BotRuntime) IsNode() {}
 
 var exchangeImplementors = []string{"Exchange", "Node"}
 
@@ -125,6 +131,15 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			Where(bot.ID(id))
 		if fc := graphql.GetFieldContext(ctx); fc != nil {
 			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, botImplementors...); err != nil {
+				return nil, err
+			}
+		}
+		return query.Only(ctx)
+	case botruntime.Table:
+		query := c.BotRuntime.Query().
+			Where(botruntime.ID(id))
+		if fc := graphql.GetFieldContext(ctx); fc != nil {
+			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, botruntimeImplementors...); err != nil {
 				return nil, err
 			}
 		}
@@ -258,6 +273,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		query := c.Bot.Query().
 			Where(bot.IDIn(ids...))
 		query, err := query.CollectFields(ctx, botImplementors...)
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case botruntime.Table:
+		query := c.BotRuntime.Query().
+			Where(botruntime.IDIn(ids...))
+		query, err := query.CollectFields(ctx, botruntimeImplementors...)
 		if err != nil {
 			return nil, err
 		}

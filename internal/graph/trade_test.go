@@ -28,11 +28,18 @@ func TestTradeMutations(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	runtime, err := mutationResolver.CreateBotRuntime(ctx(), ent.CreateBotRuntimeInput{
+		Name: "Trade Runtime",
+		Type: ptr(enum.RuntimeDocker),
+	})
+	require.NoError(t, err)
+
 	bot, err := mutationResolver.CreateBot(ctx(), ent.CreateBotInput{
 		Name:       "Trade Bot",
 		Status:     ptr(enum.BotStatusRunning),
 		ExchangeID: exchange.ID,
 		StrategyID: strategy.ID,
+		RuntimeID:  runtime.ID,
 	})
 	require.NoError(t, err)
 
@@ -129,11 +136,18 @@ func TestTradeQueries(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	runtime, err := mutationResolver.CreateBotRuntime(ctx(), ent.CreateBotRuntimeInput{
+		Name: "Query Runtime",
+		Type: ptr(enum.RuntimeDocker),
+	})
+	require.NoError(t, err)
+
 	bot, err := mutationResolver.CreateBot(ctx(), ent.CreateBotInput{
 		Name:       "Query Bot",
 		Status:     ptr(enum.BotStatusRunning),
 		ExchangeID: exchange.ID,
 		StrategyID: strategy.ID,
+		RuntimeID:  runtime.ID,
 	})
 	require.NoError(t, err)
 

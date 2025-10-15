@@ -24,6 +24,11 @@ type Mutation {
   updateBot(id: ID!, input: UpdateBotInput!): Bot!
   deleteBot(id: ID!): Boolean!
 
+  # BotRuntime mutations
+  createBotRuntime(input: CreateBotRuntimeInput!): BotRuntime!
+  updateBotRuntime(id: ID!, input: UpdateBotRuntimeInput!): BotRuntime!
+  deleteBotRuntime(id: ID!): Boolean!
+
   # Backtest mutations
   createBacktest(input: CreateBacktestInput!): Backtest!
   updateBacktest(id: ID!, input: UpdateBacktestInput!): Backtest!

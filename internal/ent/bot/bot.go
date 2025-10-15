@@ -24,10 +24,8 @@ const (
 	FieldStatus = "status"
 	// FieldMode holds the string denoting the mode field in the database.
 	FieldMode = "mode"
-	// FieldRuntimeType holds the string denoting the runtime_type field in the database.
-	FieldRuntimeType = "runtime_type"
-	// FieldRuntimeID holds the string denoting the runtime_id field in the database.
-	FieldRuntimeID = "runtime_id"
+	// FieldContainerID holds the string denoting the container_id field in the database.
+	FieldContainerID = "container_id"
 	// FieldRuntimeMetadata holds the string denoting the runtime_metadata field in the database.
 	FieldRuntimeMetadata = "runtime_metadata"
 	// FieldAPIURL holds the string denoting the api_url field in the database.
@@ -48,6 +46,8 @@ const (
 	FieldExchangeID = "exchange_id"
 	// FieldStrategyID holds the string denoting the strategy_id field in the database.
 	FieldStrategyID = "strategy_id"
+	// FieldRuntimeID holds the string denoting the runtime_id field in the database.
+	FieldRuntimeID = "runtime_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -56,6 +56,8 @@ const (
 	EdgeExchange = "exchange"
 	// EdgeStrategy holds the string denoting the strategy edge name in mutations.
 	EdgeStrategy = "strategy"
+	// EdgeRuntime holds the string denoting the runtime edge name in mutations.
+	EdgeRuntime = "runtime"
 	// EdgeTrades holds the string denoting the trades edge name in mutations.
 	EdgeTrades = "trades"
 	// Table holds the table name of the bot in the database.
@@ -74,6 +76,13 @@ const (
 	StrategyInverseTable = "strategies"
 	// StrategyColumn is the table column denoting the strategy relation/edge.
 	StrategyColumn = "strategy_id"
+	// RuntimeTable is the table that holds the runtime relation/edge.
+	RuntimeTable = "bots"
+	// RuntimeInverseTable is the table name for the BotRuntime entity.
+	// It exists in this package in order to avoid circular dependency with the "botruntime" package.
+	RuntimeInverseTable = "bot_runtimes"
+	// RuntimeColumn is the table column denoting the runtime relation/edge.
+	RuntimeColumn = "runtime_id"
 	// TradesTable is the table that holds the trades relation/edge.
 	TradesTable = "trades"
 	// TradesInverseTable is the table name for the Trade entity.
@@ -89,8 +98,7 @@ var Columns = []string{
 	FieldName,
 	FieldStatus,
 	FieldMode,
-	FieldRuntimeType,
-	FieldRuntimeID,
+	FieldContainerID,
 	FieldRuntimeMetadata,
 	FieldAPIURL,
 	FieldAPIUsername,
@@ -101,6 +109,7 @@ var Columns = []string{
 	FieldErrorMessage,
 	FieldExchangeID,
 	FieldStrategyID,
+	FieldRuntimeID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -154,18 +163,6 @@ func ModeValidator(m enum.BotMode) error {
 	}
 }
 
-const DefaultRuntimeType enum.RuntimeType = "docker"
-
-// RuntimeTypeValidator is a validator for the "runtime_type" field enum values. It is called by the builders before save.
-func RuntimeTypeValidator(rt enum.RuntimeType) error {
-	switch rt {
-	case "docker", "kubernetes", "local":
-		return nil
-	default:
-		return fmt.Errorf("bot: invalid enum value for runtime_type field: %q", rt)
-	}
-}
-
 // OrderOption defines the ordering options for the Bot queries.
 type OrderOption func(*sql.Selector)
 
@@ -189,14 +186,9 @@ func ByMode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMode, opts...).ToFunc()
 }
 
-// ByRuntimeType orders the results by the runtime_type field.
-func ByRuntimeType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRuntimeType, opts...).ToFunc()
-}
-
-// ByRuntimeID orders the results by the runtime_id field.
-func ByRuntimeID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRuntimeID, opts...).ToFunc()
+// ByContainerID orders the results by the container_id field.
+func ByContainerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContainerID, opts...).ToFunc()
 }
 
 // ByAPIURL orders the results by the api_url field.
@@ -239,6 +231,11 @@ func ByStrategyID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStrategyID, opts...).ToFunc()
 }
 
+// ByRuntimeID orders the results by the runtime_id field.
+func ByRuntimeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRuntimeID, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -260,6 +257,13 @@ func ByExchangeField(field string, opts ...sql.OrderTermOption) OrderOption {
 func ByStrategyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newStrategyStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByRuntimeField orders the results by runtime field.
+func ByRuntimeField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRuntimeStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -290,6 +294,13 @@ func newStrategyStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, StrategyTable, StrategyColumn),
 	)
 }
+func newRuntimeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RuntimeInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, RuntimeTable, RuntimeColumn),
+	)
+}
 func newTradesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -310,11 +321,4 @@ var (
 	_ graphql.Marshaler = (*enum.BotMode)(nil)
 	// enum.BotMode must implement graphql.Unmarshaler.
 	_ graphql.Unmarshaler = (*enum.BotMode)(nil)
-)
-
-var (
-	// enum.RuntimeType must implement graphql.Marshaler.
-	_ graphql.Marshaler = (*enum.RuntimeType)(nil)
-	// enum.RuntimeType must implement graphql.Unmarshaler.
-	_ graphql.Unmarshaler = (*enum.RuntimeType)(nil)
 )

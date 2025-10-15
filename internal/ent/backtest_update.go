@@ -14,7 +14,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -46,107 +45,6 @@ func (_u *BacktestUpdate) SetNillableStatus(v *enum.TaskStatus) *BacktestUpdate 
 	return _u
 }
 
-// SetStartDate sets the "start_date" field.
-func (_u *BacktestUpdate) SetStartDate(v time.Time) *BacktestUpdate {
-	_u.mutation.SetStartDate(v)
-	return _u
-}
-
-// SetNillableStartDate sets the "start_date" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableStartDate(v *time.Time) *BacktestUpdate {
-	if v != nil {
-		_u.SetStartDate(*v)
-	}
-	return _u
-}
-
-// SetEndDate sets the "end_date" field.
-func (_u *BacktestUpdate) SetEndDate(v time.Time) *BacktestUpdate {
-	_u.mutation.SetEndDate(v)
-	return _u
-}
-
-// SetNillableEndDate sets the "end_date" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableEndDate(v *time.Time) *BacktestUpdate {
-	if v != nil {
-		_u.SetEndDate(*v)
-	}
-	return _u
-}
-
-// SetTimeframe sets the "timeframe" field.
-func (_u *BacktestUpdate) SetTimeframe(v string) *BacktestUpdate {
-	_u.mutation.SetTimeframe(v)
-	return _u
-}
-
-// SetNillableTimeframe sets the "timeframe" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableTimeframe(v *string) *BacktestUpdate {
-	if v != nil {
-		_u.SetTimeframe(*v)
-	}
-	return _u
-}
-
-// SetStakeAmount sets the "stake_amount" field.
-func (_u *BacktestUpdate) SetStakeAmount(v float64) *BacktestUpdate {
-	_u.mutation.ResetStakeAmount()
-	_u.mutation.SetStakeAmount(v)
-	return _u
-}
-
-// SetNillableStakeAmount sets the "stake_amount" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableStakeAmount(v *float64) *BacktestUpdate {
-	if v != nil {
-		_u.SetStakeAmount(*v)
-	}
-	return _u
-}
-
-// AddStakeAmount adds value to the "stake_amount" field.
-func (_u *BacktestUpdate) AddStakeAmount(v float64) *BacktestUpdate {
-	_u.mutation.AddStakeAmount(v)
-	return _u
-}
-
-// SetStakeCurrency sets the "stake_currency" field.
-func (_u *BacktestUpdate) SetStakeCurrency(v string) *BacktestUpdate {
-	_u.mutation.SetStakeCurrency(v)
-	return _u
-}
-
-// SetNillableStakeCurrency sets the "stake_currency" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableStakeCurrency(v *string) *BacktestUpdate {
-	if v != nil {
-		_u.SetStakeCurrency(*v)
-	}
-	return _u
-}
-
-// SetPairs sets the "pairs" field.
-func (_u *BacktestUpdate) SetPairs(v []string) *BacktestUpdate {
-	_u.mutation.SetPairs(v)
-	return _u
-}
-
-// AppendPairs appends value to the "pairs" field.
-func (_u *BacktestUpdate) AppendPairs(v []string) *BacktestUpdate {
-	_u.mutation.AppendPairs(v)
-	return _u
-}
-
-// SetResults sets the "results" field.
-func (_u *BacktestUpdate) SetResults(v map[string]interface{}) *BacktestUpdate {
-	_u.mutation.SetResults(v)
-	return _u
-}
-
-// ClearResults clears the value of the "results" field.
-func (_u *BacktestUpdate) ClearResults() *BacktestUpdate {
-	_u.mutation.ClearResults()
-	return _u
-}
-
 // SetConfig sets the "config" field.
 func (_u *BacktestUpdate) SetConfig(v map[string]interface{}) *BacktestUpdate {
 	_u.mutation.SetConfig(v)
@@ -159,63 +57,15 @@ func (_u *BacktestUpdate) ClearConfig() *BacktestUpdate {
 	return _u
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_u *BacktestUpdate) SetRuntimeID(v string) *BacktestUpdate {
-	_u.mutation.SetRuntimeID(v)
+// SetResult sets the "result" field.
+func (_u *BacktestUpdate) SetResult(v map[string]interface{}) *BacktestUpdate {
+	_u.mutation.SetResult(v)
 	return _u
 }
 
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableRuntimeID(v *string) *BacktestUpdate {
-	if v != nil {
-		_u.SetRuntimeID(*v)
-	}
-	return _u
-}
-
-// ClearRuntimeID clears the value of the "runtime_id" field.
-func (_u *BacktestUpdate) ClearRuntimeID() *BacktestUpdate {
-	_u.mutation.ClearRuntimeID()
-	return _u
-}
-
-// SetLogOutput sets the "log_output" field.
-func (_u *BacktestUpdate) SetLogOutput(v string) *BacktestUpdate {
-	_u.mutation.SetLogOutput(v)
-	return _u
-}
-
-// SetNillableLogOutput sets the "log_output" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableLogOutput(v *string) *BacktestUpdate {
-	if v != nil {
-		_u.SetLogOutput(*v)
-	}
-	return _u
-}
-
-// ClearLogOutput clears the value of the "log_output" field.
-func (_u *BacktestUpdate) ClearLogOutput() *BacktestUpdate {
-	_u.mutation.ClearLogOutput()
-	return _u
-}
-
-// SetErrorMessage sets the "error_message" field.
-func (_u *BacktestUpdate) SetErrorMessage(v string) *BacktestUpdate {
-	_u.mutation.SetErrorMessage(v)
-	return _u
-}
-
-// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableErrorMessage(v *string) *BacktestUpdate {
-	if v != nil {
-		_u.SetErrorMessage(*v)
-	}
-	return _u
-}
-
-// ClearErrorMessage clears the value of the "error_message" field.
-func (_u *BacktestUpdate) ClearErrorMessage() *BacktestUpdate {
-	_u.mutation.ClearErrorMessage()
+// ClearResult clears the value of the "result" field.
+func (_u *BacktestUpdate) ClearResult() *BacktestUpdate {
+	_u.mutation.ClearResult()
 	return _u
 }
 
@@ -318,21 +168,6 @@ func (_u *BacktestUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Backtest.status": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Timeframe(); ok {
-		if err := backtest.TimeframeValidator(v); err != nil {
-			return &ValidationError{Name: "timeframe", err: fmt.Errorf(`ent: validator failed for field "Backtest.timeframe": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.StakeAmount(); ok {
-		if err := backtest.StakeAmountValidator(v); err != nil {
-			return &ValidationError{Name: "stake_amount", err: fmt.Errorf(`ent: validator failed for field "Backtest.stake_amount": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.StakeCurrency(); ok {
-		if err := backtest.StakeCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "stake_currency", err: fmt.Errorf(`ent: validator failed for field "Backtest.stake_currency": %w`, err)}
-		}
-	}
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Backtest.strategy"`)
 	}
@@ -354,61 +189,17 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.StartDate(); ok {
-		_spec.SetField(backtest.FieldStartDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.EndDate(); ok {
-		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Timeframe(); ok {
-		_spec.SetField(backtest.FieldTimeframe, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.StakeAmount(); ok {
-		_spec.SetField(backtest.FieldStakeAmount, field.TypeFloat64, value)
-	}
-	if value, ok := _u.mutation.AddedStakeAmount(); ok {
-		_spec.AddField(backtest.FieldStakeAmount, field.TypeFloat64, value)
-	}
-	if value, ok := _u.mutation.StakeCurrency(); ok {
-		_spec.SetField(backtest.FieldStakeCurrency, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Pairs(); ok {
-		_spec.SetField(backtest.FieldPairs, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedPairs(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, backtest.FieldPairs, value)
-		})
-	}
-	if value, ok := _u.mutation.Results(); ok {
-		_spec.SetField(backtest.FieldResults, field.TypeJSON, value)
-	}
-	if _u.mutation.ResultsCleared() {
-		_spec.ClearField(backtest.FieldResults, field.TypeJSON)
-	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(backtest.FieldConfig, field.TypeJSON)
 	}
-	if value, ok := _u.mutation.RuntimeID(); ok {
-		_spec.SetField(backtest.FieldRuntimeID, field.TypeString, value)
+	if value, ok := _u.mutation.Result(); ok {
+		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)
 	}
-	if _u.mutation.RuntimeIDCleared() {
-		_spec.ClearField(backtest.FieldRuntimeID, field.TypeString)
-	}
-	if value, ok := _u.mutation.LogOutput(); ok {
-		_spec.SetField(backtest.FieldLogOutput, field.TypeString, value)
-	}
-	if _u.mutation.LogOutputCleared() {
-		_spec.ClearField(backtest.FieldLogOutput, field.TypeString)
-	}
-	if value, ok := _u.mutation.ErrorMessage(); ok {
-		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
-	}
-	if _u.mutation.ErrorMessageCleared() {
-		_spec.ClearField(backtest.FieldErrorMessage, field.TypeString)
+	if _u.mutation.ResultCleared() {
+		_spec.ClearField(backtest.FieldResult, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(backtest.FieldUpdatedAt, field.TypeTime, value)
@@ -482,107 +273,6 @@ func (_u *BacktestUpdateOne) SetNillableStatus(v *enum.TaskStatus) *BacktestUpda
 	return _u
 }
 
-// SetStartDate sets the "start_date" field.
-func (_u *BacktestUpdateOne) SetStartDate(v time.Time) *BacktestUpdateOne {
-	_u.mutation.SetStartDate(v)
-	return _u
-}
-
-// SetNillableStartDate sets the "start_date" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableStartDate(v *time.Time) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetStartDate(*v)
-	}
-	return _u
-}
-
-// SetEndDate sets the "end_date" field.
-func (_u *BacktestUpdateOne) SetEndDate(v time.Time) *BacktestUpdateOne {
-	_u.mutation.SetEndDate(v)
-	return _u
-}
-
-// SetNillableEndDate sets the "end_date" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableEndDate(v *time.Time) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetEndDate(*v)
-	}
-	return _u
-}
-
-// SetTimeframe sets the "timeframe" field.
-func (_u *BacktestUpdateOne) SetTimeframe(v string) *BacktestUpdateOne {
-	_u.mutation.SetTimeframe(v)
-	return _u
-}
-
-// SetNillableTimeframe sets the "timeframe" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableTimeframe(v *string) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetTimeframe(*v)
-	}
-	return _u
-}
-
-// SetStakeAmount sets the "stake_amount" field.
-func (_u *BacktestUpdateOne) SetStakeAmount(v float64) *BacktestUpdateOne {
-	_u.mutation.ResetStakeAmount()
-	_u.mutation.SetStakeAmount(v)
-	return _u
-}
-
-// SetNillableStakeAmount sets the "stake_amount" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableStakeAmount(v *float64) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetStakeAmount(*v)
-	}
-	return _u
-}
-
-// AddStakeAmount adds value to the "stake_amount" field.
-func (_u *BacktestUpdateOne) AddStakeAmount(v float64) *BacktestUpdateOne {
-	_u.mutation.AddStakeAmount(v)
-	return _u
-}
-
-// SetStakeCurrency sets the "stake_currency" field.
-func (_u *BacktestUpdateOne) SetStakeCurrency(v string) *BacktestUpdateOne {
-	_u.mutation.SetStakeCurrency(v)
-	return _u
-}
-
-// SetNillableStakeCurrency sets the "stake_currency" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableStakeCurrency(v *string) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetStakeCurrency(*v)
-	}
-	return _u
-}
-
-// SetPairs sets the "pairs" field.
-func (_u *BacktestUpdateOne) SetPairs(v []string) *BacktestUpdateOne {
-	_u.mutation.SetPairs(v)
-	return _u
-}
-
-// AppendPairs appends value to the "pairs" field.
-func (_u *BacktestUpdateOne) AppendPairs(v []string) *BacktestUpdateOne {
-	_u.mutation.AppendPairs(v)
-	return _u
-}
-
-// SetResults sets the "results" field.
-func (_u *BacktestUpdateOne) SetResults(v map[string]interface{}) *BacktestUpdateOne {
-	_u.mutation.SetResults(v)
-	return _u
-}
-
-// ClearResults clears the value of the "results" field.
-func (_u *BacktestUpdateOne) ClearResults() *BacktestUpdateOne {
-	_u.mutation.ClearResults()
-	return _u
-}
-
 // SetConfig sets the "config" field.
 func (_u *BacktestUpdateOne) SetConfig(v map[string]interface{}) *BacktestUpdateOne {
 	_u.mutation.SetConfig(v)
@@ -595,63 +285,15 @@ func (_u *BacktestUpdateOne) ClearConfig() *BacktestUpdateOne {
 	return _u
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_u *BacktestUpdateOne) SetRuntimeID(v string) *BacktestUpdateOne {
-	_u.mutation.SetRuntimeID(v)
+// SetResult sets the "result" field.
+func (_u *BacktestUpdateOne) SetResult(v map[string]interface{}) *BacktestUpdateOne {
+	_u.mutation.SetResult(v)
 	return _u
 }
 
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableRuntimeID(v *string) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetRuntimeID(*v)
-	}
-	return _u
-}
-
-// ClearRuntimeID clears the value of the "runtime_id" field.
-func (_u *BacktestUpdateOne) ClearRuntimeID() *BacktestUpdateOne {
-	_u.mutation.ClearRuntimeID()
-	return _u
-}
-
-// SetLogOutput sets the "log_output" field.
-func (_u *BacktestUpdateOne) SetLogOutput(v string) *BacktestUpdateOne {
-	_u.mutation.SetLogOutput(v)
-	return _u
-}
-
-// SetNillableLogOutput sets the "log_output" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableLogOutput(v *string) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetLogOutput(*v)
-	}
-	return _u
-}
-
-// ClearLogOutput clears the value of the "log_output" field.
-func (_u *BacktestUpdateOne) ClearLogOutput() *BacktestUpdateOne {
-	_u.mutation.ClearLogOutput()
-	return _u
-}
-
-// SetErrorMessage sets the "error_message" field.
-func (_u *BacktestUpdateOne) SetErrorMessage(v string) *BacktestUpdateOne {
-	_u.mutation.SetErrorMessage(v)
-	return _u
-}
-
-// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableErrorMessage(v *string) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetErrorMessage(*v)
-	}
-	return _u
-}
-
-// ClearErrorMessage clears the value of the "error_message" field.
-func (_u *BacktestUpdateOne) ClearErrorMessage() *BacktestUpdateOne {
-	_u.mutation.ClearErrorMessage()
+// ClearResult clears the value of the "result" field.
+func (_u *BacktestUpdateOne) ClearResult() *BacktestUpdateOne {
+	_u.mutation.ClearResult()
 	return _u
 }
 
@@ -767,21 +409,6 @@ func (_u *BacktestUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Backtest.status": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Timeframe(); ok {
-		if err := backtest.TimeframeValidator(v); err != nil {
-			return &ValidationError{Name: "timeframe", err: fmt.Errorf(`ent: validator failed for field "Backtest.timeframe": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.StakeAmount(); ok {
-		if err := backtest.StakeAmountValidator(v); err != nil {
-			return &ValidationError{Name: "stake_amount", err: fmt.Errorf(`ent: validator failed for field "Backtest.stake_amount": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.StakeCurrency(); ok {
-		if err := backtest.StakeCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "stake_currency", err: fmt.Errorf(`ent: validator failed for field "Backtest.stake_currency": %w`, err)}
-		}
-	}
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Backtest.strategy"`)
 	}
@@ -820,61 +447,17 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.StartDate(); ok {
-		_spec.SetField(backtest.FieldStartDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.EndDate(); ok {
-		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Timeframe(); ok {
-		_spec.SetField(backtest.FieldTimeframe, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.StakeAmount(); ok {
-		_spec.SetField(backtest.FieldStakeAmount, field.TypeFloat64, value)
-	}
-	if value, ok := _u.mutation.AddedStakeAmount(); ok {
-		_spec.AddField(backtest.FieldStakeAmount, field.TypeFloat64, value)
-	}
-	if value, ok := _u.mutation.StakeCurrency(); ok {
-		_spec.SetField(backtest.FieldStakeCurrency, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Pairs(); ok {
-		_spec.SetField(backtest.FieldPairs, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedPairs(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, backtest.FieldPairs, value)
-		})
-	}
-	if value, ok := _u.mutation.Results(); ok {
-		_spec.SetField(backtest.FieldResults, field.TypeJSON, value)
-	}
-	if _u.mutation.ResultsCleared() {
-		_spec.ClearField(backtest.FieldResults, field.TypeJSON)
-	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(backtest.FieldConfig, field.TypeJSON)
 	}
-	if value, ok := _u.mutation.RuntimeID(); ok {
-		_spec.SetField(backtest.FieldRuntimeID, field.TypeString, value)
+	if value, ok := _u.mutation.Result(); ok {
+		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)
 	}
-	if _u.mutation.RuntimeIDCleared() {
-		_spec.ClearField(backtest.FieldRuntimeID, field.TypeString)
-	}
-	if value, ok := _u.mutation.LogOutput(); ok {
-		_spec.SetField(backtest.FieldLogOutput, field.TypeString, value)
-	}
-	if _u.mutation.LogOutputCleared() {
-		_spec.ClearField(backtest.FieldLogOutput, field.TypeString)
-	}
-	if value, ok := _u.mutation.ErrorMessage(); ok {
-		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
-	}
-	if _u.mutation.ErrorMessageCleared() {
-		_spec.ClearField(backtest.FieldErrorMessage, field.TypeString)
+	if _u.mutation.ResultCleared() {
+		_spec.ClearField(backtest.FieldResult, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(backtest.FieldUpdatedAt, field.TypeTime, value)

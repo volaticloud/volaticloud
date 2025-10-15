@@ -13,6 +13,7 @@ import (
 
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
@@ -34,6 +35,8 @@ type Client struct {
 	Backtest *BacktestClient
 	// Bot is the client for interacting with the Bot builders.
 	Bot *BotClient
+	// BotRuntime is the client for interacting with the BotRuntime builders.
+	BotRuntime *BotRuntimeClient
 	// Exchange is the client for interacting with the Exchange builders.
 	Exchange *ExchangeClient
 	// ExchangeSecret is the client for interacting with the ExchangeSecret builders.
@@ -55,6 +58,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Backtest = NewBacktestClient(c.config)
 	c.Bot = NewBotClient(c.config)
+	c.BotRuntime = NewBotRuntimeClient(c.config)
 	c.Exchange = NewExchangeClient(c.config)
 	c.ExchangeSecret = NewExchangeSecretClient(c.config)
 	c.Strategy = NewStrategyClient(c.config)
@@ -153,6 +157,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:         cfg,
 		Backtest:       NewBacktestClient(cfg),
 		Bot:            NewBotClient(cfg),
+		BotRuntime:     NewBotRuntimeClient(cfg),
 		Exchange:       NewExchangeClient(cfg),
 		ExchangeSecret: NewExchangeSecretClient(cfg),
 		Strategy:       NewStrategyClient(cfg),
@@ -178,6 +183,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:         cfg,
 		Backtest:       NewBacktestClient(cfg),
 		Bot:            NewBotClient(cfg),
+		BotRuntime:     NewBotRuntimeClient(cfg),
 		Exchange:       NewExchangeClient(cfg),
 		ExchangeSecret: NewExchangeSecretClient(cfg),
 		Strategy:       NewStrategyClient(cfg),
@@ -211,7 +217,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Backtest, c.Bot, c.Exchange, c.ExchangeSecret, c.Strategy, c.Trade,
+		c.Backtest, c.Bot, c.BotRuntime, c.Exchange, c.ExchangeSecret, c.Strategy,
+		c.Trade,
 	} {
 		n.Use(hooks...)
 	}
@@ -221,7 +228,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Backtest, c.Bot, c.Exchange, c.ExchangeSecret, c.Strategy, c.Trade,
+		c.Backtest, c.Bot, c.BotRuntime, c.Exchange, c.ExchangeSecret, c.Strategy,
+		c.Trade,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -234,6 +242,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Backtest.mutate(ctx, m)
 	case *BotMutation:
 		return c.Bot.mutate(ctx, m)
+	case *BotRuntimeMutation:
+		return c.BotRuntime.mutate(ctx, m)
 	case *ExchangeMutation:
 		return c.Exchange.mutate(ctx, m)
 	case *ExchangeSecretMutation:
@@ -536,6 +546,22 @@ func (c *BotClient) QueryStrategy(_m *Bot) *StrategyQuery {
 	return query
 }
 
+// QueryRuntime queries the runtime edge of a Bot.
+func (c *BotClient) QueryRuntime(_m *Bot) *BotRuntimeQuery {
+	query := (&BotRuntimeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bot.Table, bot.FieldID, id),
+			sqlgraph.To(botruntime.Table, botruntime.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, bot.RuntimeTable, bot.RuntimeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryTrades queries the trades edge of a Bot.
 func (c *BotClient) QueryTrades(_m *Bot) *TradeQuery {
 	query := (&TradeClient{config: c.config}).Query()
@@ -574,6 +600,155 @@ func (c *BotClient) mutate(ctx context.Context, m *BotMutation) (Value, error) {
 		return (&BotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Bot mutation op: %q", m.Op())
+	}
+}
+
+// BotRuntimeClient is a client for the BotRuntime schema.
+type BotRuntimeClient struct {
+	config
+}
+
+// NewBotRuntimeClient returns a client for the BotRuntime from the given config.
+func NewBotRuntimeClient(c config) *BotRuntimeClient {
+	return &BotRuntimeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `botruntime.Hooks(f(g(h())))`.
+func (c *BotRuntimeClient) Use(hooks ...Hook) {
+	c.hooks.BotRuntime = append(c.hooks.BotRuntime, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `botruntime.Intercept(f(g(h())))`.
+func (c *BotRuntimeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BotRuntime = append(c.inters.BotRuntime, interceptors...)
+}
+
+// Create returns a builder for creating a BotRuntime entity.
+func (c *BotRuntimeClient) Create() *BotRuntimeCreate {
+	mutation := newBotRuntimeMutation(c.config, OpCreate)
+	return &BotRuntimeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BotRuntime entities.
+func (c *BotRuntimeClient) CreateBulk(builders ...*BotRuntimeCreate) *BotRuntimeCreateBulk {
+	return &BotRuntimeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BotRuntimeClient) MapCreateBulk(slice any, setFunc func(*BotRuntimeCreate, int)) *BotRuntimeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BotRuntimeCreateBulk{err: fmt.Errorf("calling to BotRuntimeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BotRuntimeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BotRuntimeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BotRuntime.
+func (c *BotRuntimeClient) Update() *BotRuntimeUpdate {
+	mutation := newBotRuntimeMutation(c.config, OpUpdate)
+	return &BotRuntimeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BotRuntimeClient) UpdateOne(_m *BotRuntime) *BotRuntimeUpdateOne {
+	mutation := newBotRuntimeMutation(c.config, OpUpdateOne, withBotRuntime(_m))
+	return &BotRuntimeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BotRuntimeClient) UpdateOneID(id uuid.UUID) *BotRuntimeUpdateOne {
+	mutation := newBotRuntimeMutation(c.config, OpUpdateOne, withBotRuntimeID(id))
+	return &BotRuntimeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BotRuntime.
+func (c *BotRuntimeClient) Delete() *BotRuntimeDelete {
+	mutation := newBotRuntimeMutation(c.config, OpDelete)
+	return &BotRuntimeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BotRuntimeClient) DeleteOne(_m *BotRuntime) *BotRuntimeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BotRuntimeClient) DeleteOneID(id uuid.UUID) *BotRuntimeDeleteOne {
+	builder := c.Delete().Where(botruntime.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BotRuntimeDeleteOne{builder}
+}
+
+// Query returns a query builder for BotRuntime.
+func (c *BotRuntimeClient) Query() *BotRuntimeQuery {
+	return &BotRuntimeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBotRuntime},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BotRuntime entity by its id.
+func (c *BotRuntimeClient) Get(ctx context.Context, id uuid.UUID) (*BotRuntime, error) {
+	return c.Query().Where(botruntime.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BotRuntimeClient) GetX(ctx context.Context, id uuid.UUID) *BotRuntime {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBots queries the bots edge of a BotRuntime.
+func (c *BotRuntimeClient) QueryBots(_m *BotRuntime) *BotQuery {
+	query := (&BotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botruntime.Table, botruntime.FieldID, id),
+			sqlgraph.To(bot.Table, bot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botruntime.BotsTable, botruntime.BotsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BotRuntimeClient) Hooks() []Hook {
+	return c.hooks.BotRuntime
+}
+
+// Interceptors returns the client interceptors.
+func (c *BotRuntimeClient) Interceptors() []Interceptor {
+	return c.inters.BotRuntime
+}
+
+func (c *BotRuntimeClient) mutate(ctx context.Context, m *BotRuntimeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BotRuntimeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BotRuntimeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BotRuntimeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BotRuntimeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BotRuntime mutation op: %q", m.Op())
 	}
 }
 
@@ -1208,9 +1383,10 @@ func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Backtest, Bot, Exchange, ExchangeSecret, Strategy, Trade []ent.Hook
+		Backtest, Bot, BotRuntime, Exchange, ExchangeSecret, Strategy, Trade []ent.Hook
 	}
 	inters struct {
-		Backtest, Bot, Exchange, ExchangeSecret, Strategy, Trade []ent.Interceptor
+		Backtest, Bot, BotRuntime, Exchange, ExchangeSecret, Strategy,
+		Trade []ent.Interceptor
 	}
 )

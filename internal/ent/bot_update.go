@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
@@ -75,37 +76,23 @@ func (_u *BotUpdate) SetNillableMode(v *enum.BotMode) *BotUpdate {
 	return _u
 }
 
-// SetRuntimeType sets the "runtime_type" field.
-func (_u *BotUpdate) SetRuntimeType(v enum.RuntimeType) *BotUpdate {
-	_u.mutation.SetRuntimeType(v)
+// SetContainerID sets the "container_id" field.
+func (_u *BotUpdate) SetContainerID(v string) *BotUpdate {
+	_u.mutation.SetContainerID(v)
 	return _u
 }
 
-// SetNillableRuntimeType sets the "runtime_type" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableRuntimeType(v *enum.RuntimeType) *BotUpdate {
+// SetNillableContainerID sets the "container_id" field if the given value is not nil.
+func (_u *BotUpdate) SetNillableContainerID(v *string) *BotUpdate {
 	if v != nil {
-		_u.SetRuntimeType(*v)
+		_u.SetContainerID(*v)
 	}
 	return _u
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_u *BotUpdate) SetRuntimeID(v string) *BotUpdate {
-	_u.mutation.SetRuntimeID(v)
-	return _u
-}
-
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableRuntimeID(v *string) *BotUpdate {
-	if v != nil {
-		_u.SetRuntimeID(*v)
-	}
-	return _u
-}
-
-// ClearRuntimeID clears the value of the "runtime_id" field.
-func (_u *BotUpdate) ClearRuntimeID() *BotUpdate {
-	_u.mutation.ClearRuntimeID()
+// ClearContainerID clears the value of the "container_id" field.
+func (_u *BotUpdate) ClearContainerID() *BotUpdate {
+	_u.mutation.ClearContainerID()
 	return _u
 }
 
@@ -275,6 +262,20 @@ func (_u *BotUpdate) SetNillableStrategyID(v *uuid.UUID) *BotUpdate {
 	return _u
 }
 
+// SetRuntimeID sets the "runtime_id" field.
+func (_u *BotUpdate) SetRuntimeID(v uuid.UUID) *BotUpdate {
+	_u.mutation.SetRuntimeID(v)
+	return _u
+}
+
+// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
+func (_u *BotUpdate) SetNillableRuntimeID(v *uuid.UUID) *BotUpdate {
+	if v != nil {
+		_u.SetRuntimeID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotUpdate) SetUpdatedAt(v time.Time) *BotUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -289,6 +290,11 @@ func (_u *BotUpdate) SetExchange(v *Exchange) *BotUpdate {
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_u *BotUpdate) SetStrategy(v *Strategy) *BotUpdate {
 	return _u.SetStrategyID(v.ID)
+}
+
+// SetRuntime sets the "runtime" edge to the BotRuntime entity.
+func (_u *BotUpdate) SetRuntime(v *BotRuntime) *BotUpdate {
+	return _u.SetRuntimeID(v.ID)
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by IDs.
@@ -320,6 +326,12 @@ func (_u *BotUpdate) ClearExchange() *BotUpdate {
 // ClearStrategy clears the "strategy" edge to the Strategy entity.
 func (_u *BotUpdate) ClearStrategy() *BotUpdate {
 	_u.mutation.ClearStrategy()
+	return _u
+}
+
+// ClearRuntime clears the "runtime" edge to the BotRuntime entity.
+func (_u *BotUpdate) ClearRuntime() *BotUpdate {
+	_u.mutation.ClearRuntime()
 	return _u
 }
 
@@ -397,16 +409,14 @@ func (_u *BotUpdate) check() error {
 			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "Bot.mode": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.RuntimeType(); ok {
-		if err := bot.RuntimeTypeValidator(v); err != nil {
-			return &ValidationError{Name: "runtime_type", err: fmt.Errorf(`ent: validator failed for field "Bot.runtime_type": %w`, err)}
-		}
-	}
 	if _u.mutation.ExchangeCleared() && len(_u.mutation.ExchangeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.exchange"`)
 	}
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.strategy"`)
+	}
+	if _u.mutation.RuntimeCleared() && len(_u.mutation.RuntimeIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Bot.runtime"`)
 	}
 	return nil
 }
@@ -432,14 +442,11 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Mode(); ok {
 		_spec.SetField(bot.FieldMode, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.RuntimeType(); ok {
-		_spec.SetField(bot.FieldRuntimeType, field.TypeEnum, value)
+	if value, ok := _u.mutation.ContainerID(); ok {
+		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.RuntimeID(); ok {
-		_spec.SetField(bot.FieldRuntimeID, field.TypeString, value)
-	}
-	if _u.mutation.RuntimeIDCleared() {
-		_spec.ClearField(bot.FieldRuntimeID, field.TypeString)
+	if _u.mutation.ContainerIDCleared() {
+		_spec.ClearField(bot.FieldContainerID, field.TypeString)
 	}
 	if value, ok := _u.mutation.RuntimeMetadata(); ok {
 		_spec.SetField(bot.FieldRuntimeMetadata, field.TypeJSON, value)
@@ -540,6 +547,35 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RuntimeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   bot.RuntimeTable,
+			Columns: []string{bot.RuntimeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RuntimeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   bot.RuntimeTable,
+			Columns: []string{bot.RuntimeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -654,37 +690,23 @@ func (_u *BotUpdateOne) SetNillableMode(v *enum.BotMode) *BotUpdateOne {
 	return _u
 }
 
-// SetRuntimeType sets the "runtime_type" field.
-func (_u *BotUpdateOne) SetRuntimeType(v enum.RuntimeType) *BotUpdateOne {
-	_u.mutation.SetRuntimeType(v)
+// SetContainerID sets the "container_id" field.
+func (_u *BotUpdateOne) SetContainerID(v string) *BotUpdateOne {
+	_u.mutation.SetContainerID(v)
 	return _u
 }
 
-// SetNillableRuntimeType sets the "runtime_type" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableRuntimeType(v *enum.RuntimeType) *BotUpdateOne {
+// SetNillableContainerID sets the "container_id" field if the given value is not nil.
+func (_u *BotUpdateOne) SetNillableContainerID(v *string) *BotUpdateOne {
 	if v != nil {
-		_u.SetRuntimeType(*v)
+		_u.SetContainerID(*v)
 	}
 	return _u
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_u *BotUpdateOne) SetRuntimeID(v string) *BotUpdateOne {
-	_u.mutation.SetRuntimeID(v)
-	return _u
-}
-
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableRuntimeID(v *string) *BotUpdateOne {
-	if v != nil {
-		_u.SetRuntimeID(*v)
-	}
-	return _u
-}
-
-// ClearRuntimeID clears the value of the "runtime_id" field.
-func (_u *BotUpdateOne) ClearRuntimeID() *BotUpdateOne {
-	_u.mutation.ClearRuntimeID()
+// ClearContainerID clears the value of the "container_id" field.
+func (_u *BotUpdateOne) ClearContainerID() *BotUpdateOne {
+	_u.mutation.ClearContainerID()
 	return _u
 }
 
@@ -854,6 +876,20 @@ func (_u *BotUpdateOne) SetNillableStrategyID(v *uuid.UUID) *BotUpdateOne {
 	return _u
 }
 
+// SetRuntimeID sets the "runtime_id" field.
+func (_u *BotUpdateOne) SetRuntimeID(v uuid.UUID) *BotUpdateOne {
+	_u.mutation.SetRuntimeID(v)
+	return _u
+}
+
+// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
+func (_u *BotUpdateOne) SetNillableRuntimeID(v *uuid.UUID) *BotUpdateOne {
+	if v != nil {
+		_u.SetRuntimeID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotUpdateOne) SetUpdatedAt(v time.Time) *BotUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -868,6 +904,11 @@ func (_u *BotUpdateOne) SetExchange(v *Exchange) *BotUpdateOne {
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_u *BotUpdateOne) SetStrategy(v *Strategy) *BotUpdateOne {
 	return _u.SetStrategyID(v.ID)
+}
+
+// SetRuntime sets the "runtime" edge to the BotRuntime entity.
+func (_u *BotUpdateOne) SetRuntime(v *BotRuntime) *BotUpdateOne {
+	return _u.SetRuntimeID(v.ID)
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by IDs.
@@ -899,6 +940,12 @@ func (_u *BotUpdateOne) ClearExchange() *BotUpdateOne {
 // ClearStrategy clears the "strategy" edge to the Strategy entity.
 func (_u *BotUpdateOne) ClearStrategy() *BotUpdateOne {
 	_u.mutation.ClearStrategy()
+	return _u
+}
+
+// ClearRuntime clears the "runtime" edge to the BotRuntime entity.
+func (_u *BotUpdateOne) ClearRuntime() *BotUpdateOne {
+	_u.mutation.ClearRuntime()
 	return _u
 }
 
@@ -989,16 +1036,14 @@ func (_u *BotUpdateOne) check() error {
 			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "Bot.mode": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.RuntimeType(); ok {
-		if err := bot.RuntimeTypeValidator(v); err != nil {
-			return &ValidationError{Name: "runtime_type", err: fmt.Errorf(`ent: validator failed for field "Bot.runtime_type": %w`, err)}
-		}
-	}
 	if _u.mutation.ExchangeCleared() && len(_u.mutation.ExchangeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.exchange"`)
 	}
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.strategy"`)
+	}
+	if _u.mutation.RuntimeCleared() && len(_u.mutation.RuntimeIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Bot.runtime"`)
 	}
 	return nil
 }
@@ -1041,14 +1086,11 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	if value, ok := _u.mutation.Mode(); ok {
 		_spec.SetField(bot.FieldMode, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.RuntimeType(); ok {
-		_spec.SetField(bot.FieldRuntimeType, field.TypeEnum, value)
+	if value, ok := _u.mutation.ContainerID(); ok {
+		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.RuntimeID(); ok {
-		_spec.SetField(bot.FieldRuntimeID, field.TypeString, value)
-	}
-	if _u.mutation.RuntimeIDCleared() {
-		_spec.ClearField(bot.FieldRuntimeID, field.TypeString)
+	if _u.mutation.ContainerIDCleared() {
+		_spec.ClearField(bot.FieldContainerID, field.TypeString)
 	}
 	if value, ok := _u.mutation.RuntimeMetadata(); ok {
 		_spec.SetField(bot.FieldRuntimeMetadata, field.TypeJSON, value)
@@ -1149,6 +1191,35 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RuntimeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   bot.RuntimeTable,
+			Columns: []string{bot.RuntimeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RuntimeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   bot.RuntimeTable,
+			Columns: []string{bot.RuntimeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

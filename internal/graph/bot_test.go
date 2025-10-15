@@ -27,12 +27,19 @@ func TestBotMutations(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	runtime, err := mutationResolver.CreateBotRuntime(ctx(), ent.CreateBotRuntimeInput{
+		Name: "Test Runtime",
+		Type: ptr(enum.RuntimeDocker),
+	})
+	require.NoError(t, err)
+
 	t.Run("CreateBot", func(t *testing.T) {
 		input := ent.CreateBotInput{
 			Name:       "My Trading Bot",
 			Status:     ptr(enum.BotStatusStopped),
 			ExchangeID: exchange.ID,
 			StrategyID: strategy.ID,
+			RuntimeID:  runtime.ID,
 		}
 
 		bot, err := mutationResolver.CreateBot(ctx(), input)
@@ -51,6 +58,7 @@ func TestBotMutations(t *testing.T) {
 			Status:     ptr(enum.BotStatusStopped),
 			ExchangeID: exchange.ID,
 			StrategyID: strategy.ID,
+			RuntimeID:  runtime.ID,
 		}
 		bot, err := mutationResolver.CreateBot(ctx(), input)
 		require.NoError(t, err)
@@ -73,6 +81,7 @@ func TestBotMutations(t *testing.T) {
 			Status:     ptr(enum.BotStatusStopped),
 			ExchangeID: exchange.ID,
 			StrategyID: strategy.ID,
+			RuntimeID:  runtime.ID,
 		}
 		bot, err := mutationResolver.CreateBot(ctx(), input)
 		require.NoError(t, err)
@@ -103,11 +112,17 @@ func TestBotQueries(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	runtime, err := mutationResolver.CreateBotRuntime(ctx(), ent.CreateBotRuntimeInput{
+		Name: "Query Runtime",
+		Type: ptr(enum.RuntimeDocker),
+	})
+	require.NoError(t, err)
+
 	// Create test bots
 	bots := []ent.CreateBotInput{
-		{Name: "Bot 1", Status: ptr(enum.BotStatusStopped), ExchangeID: exchange.ID, StrategyID: strategy.ID},
-		{Name: "Bot 2", Status: ptr(enum.BotStatusRunning), ExchangeID: exchange.ID, StrategyID: strategy.ID},
-		{Name: "Bot 3", Status: ptr(enum.BotStatusError), ExchangeID: exchange.ID, StrategyID: strategy.ID},
+		{Name: "Bot 1", Status: ptr(enum.BotStatusStopped), ExchangeID: exchange.ID, StrategyID: strategy.ID, RuntimeID: runtime.ID},
+		{Name: "Bot 2", Status: ptr(enum.BotStatusRunning), ExchangeID: exchange.ID, StrategyID: strategy.ID, RuntimeID: runtime.ID},
+		{Name: "Bot 3", Status: ptr(enum.BotStatusError), ExchangeID: exchange.ID, StrategyID: strategy.ID, RuntimeID: runtime.ID},
 	}
 
 	for _, input := range bots {

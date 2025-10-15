@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
@@ -59,46 +60,6 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			if _, ok := fieldSeen[backtest.FieldStatus]; !ok {
 				selectedFields = append(selectedFields, backtest.FieldStatus)
 				fieldSeen[backtest.FieldStatus] = struct{}{}
-			}
-		case "startDate":
-			if _, ok := fieldSeen[backtest.FieldStartDate]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldStartDate)
-				fieldSeen[backtest.FieldStartDate] = struct{}{}
-			}
-		case "endDate":
-			if _, ok := fieldSeen[backtest.FieldEndDate]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldEndDate)
-				fieldSeen[backtest.FieldEndDate] = struct{}{}
-			}
-		case "timeframe":
-			if _, ok := fieldSeen[backtest.FieldTimeframe]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldTimeframe)
-				fieldSeen[backtest.FieldTimeframe] = struct{}{}
-			}
-		case "stakeAmount":
-			if _, ok := fieldSeen[backtest.FieldStakeAmount]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldStakeAmount)
-				fieldSeen[backtest.FieldStakeAmount] = struct{}{}
-			}
-		case "stakeCurrency":
-			if _, ok := fieldSeen[backtest.FieldStakeCurrency]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldStakeCurrency)
-				fieldSeen[backtest.FieldStakeCurrency] = struct{}{}
-			}
-		case "runtimeID":
-			if _, ok := fieldSeen[backtest.FieldRuntimeID]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldRuntimeID)
-				fieldSeen[backtest.FieldRuntimeID] = struct{}{}
-			}
-		case "logOutput":
-			if _, ok := fieldSeen[backtest.FieldLogOutput]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldLogOutput)
-				fieldSeen[backtest.FieldLogOutput] = struct{}{}
-			}
-		case "errorMessage":
-			if _, ok := fieldSeen[backtest.FieldErrorMessage]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldErrorMessage)
-				fieldSeen[backtest.FieldErrorMessage] = struct{}{}
 			}
 		case "strategyID":
 			if _, ok := fieldSeen[backtest.FieldStrategyID]; !ok {
@@ -210,6 +171,21 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				fieldSeen[bot.FieldStrategyID] = struct{}{}
 			}
 
+		case "runtime":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BotRuntimeClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botruntimeImplementors)...); err != nil {
+				return err
+			}
+			_q.withRuntime = query
+			if _, ok := fieldSeen[bot.FieldRuntimeID]; !ok {
+				selectedFields = append(selectedFields, bot.FieldRuntimeID)
+				fieldSeen[bot.FieldRuntimeID] = struct{}{}
+			}
+
 		case "trades":
 			var (
 				alias = field.Alias
@@ -253,10 +229,10 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 						}
 						for i := range nodes {
 							n := m[nodes[i].ID]
-							if nodes[i].Edges.totalCount[2] == nil {
-								nodes[i].Edges.totalCount[2] = make(map[string]int)
+							if nodes[i].Edges.totalCount[3] == nil {
+								nodes[i].Edges.totalCount[3] = make(map[string]int)
 							}
-							nodes[i].Edges.totalCount[2][alias] = n
+							nodes[i].Edges.totalCount[3][alias] = n
 						}
 						return nil
 					})
@@ -264,10 +240,10 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*Bot) error {
 						for i := range nodes {
 							n := len(nodes[i].Edges.Trades)
-							if nodes[i].Edges.totalCount[2] == nil {
-								nodes[i].Edges.totalCount[2] = make(map[string]int)
+							if nodes[i].Edges.totalCount[3] == nil {
+								nodes[i].Edges.totalCount[3] = make(map[string]int)
 							}
-							nodes[i].Edges.totalCount[2][alias] = n
+							nodes[i].Edges.totalCount[3][alias] = n
 						}
 						return nil
 					})
@@ -313,15 +289,10 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				selectedFields = append(selectedFields, bot.FieldMode)
 				fieldSeen[bot.FieldMode] = struct{}{}
 			}
-		case "runtimeType":
-			if _, ok := fieldSeen[bot.FieldRuntimeType]; !ok {
-				selectedFields = append(selectedFields, bot.FieldRuntimeType)
-				fieldSeen[bot.FieldRuntimeType] = struct{}{}
-			}
-		case "runtimeID":
-			if _, ok := fieldSeen[bot.FieldRuntimeID]; !ok {
-				selectedFields = append(selectedFields, bot.FieldRuntimeID)
-				fieldSeen[bot.FieldRuntimeID] = struct{}{}
+		case "containerID":
+			if _, ok := fieldSeen[bot.FieldContainerID]; !ok {
+				selectedFields = append(selectedFields, bot.FieldContainerID)
+				fieldSeen[bot.FieldContainerID] = struct{}{}
 			}
 		case "apiURL":
 			if _, ok := fieldSeen[bot.FieldAPIURL]; !ok {
@@ -358,6 +329,11 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				selectedFields = append(selectedFields, bot.FieldStrategyID)
 				fieldSeen[bot.FieldStrategyID] = struct{}{}
 			}
+		case "runtimeID":
+			if _, ok := fieldSeen[bot.FieldRuntimeID]; !ok {
+				selectedFields = append(selectedFields, bot.FieldRuntimeID)
+				fieldSeen[bot.FieldRuntimeID] = struct{}{}
+			}
 		case "createdAt":
 			if _, ok := fieldSeen[bot.FieldCreatedAt]; !ok {
 				selectedFields = append(selectedFields, bot.FieldCreatedAt)
@@ -388,6 +364,174 @@ type botPaginateArgs struct {
 
 func newBotPaginateArgs(rv map[string]any) *botPaginateArgs {
 	args := &botPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (_q *BotRuntimeQuery) CollectFields(ctx context.Context, satisfies ...string) (*BotRuntimeQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return _q, nil
+	}
+	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return _q, nil
+}
+
+func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(botruntime.Columns))
+		selectedFields = []string{botruntime.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+
+		case "bots":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BotClient{config: _q.config}).Query()
+			)
+			args := newBotPaginateArgs(fieldArgs(ctx, nil, path...))
+			if err := validateFirstLast(args.first, args.last); err != nil {
+				return fmt.Errorf("validate first and last in path %q: %w", path, err)
+			}
+			pager, err := newBotPager(args.opts, args.last != nil)
+			if err != nil {
+				return fmt.Errorf("create new pager in path %q: %w", path, err)
+			}
+			if query, err = pager.applyFilter(query); err != nil {
+				return err
+			}
+			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
+			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
+				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
+				if hasPagination || ignoredEdges {
+					query := query.Clone()
+					_q.loadTotal = append(_q.loadTotal, func(ctx context.Context, nodes []*BotRuntime) error {
+						ids := make([]driver.Value, len(nodes))
+						for i := range nodes {
+							ids[i] = nodes[i].ID
+						}
+						var v []struct {
+							NodeID uuid.UUID `sql:"runtime_id"`
+							Count  int       `sql:"count"`
+						}
+						query.Where(func(s *sql.Selector) {
+							s.Where(sql.InValues(s.C(botruntime.BotsColumn), ids...))
+						})
+						if err := query.GroupBy(botruntime.BotsColumn).Aggregate(Count()).Scan(ctx, &v); err != nil {
+							return err
+						}
+						m := make(map[uuid.UUID]int, len(v))
+						for i := range v {
+							m[v[i].NodeID] = v[i].Count
+						}
+						for i := range nodes {
+							n := m[nodes[i].ID]
+							if nodes[i].Edges.totalCount[0] == nil {
+								nodes[i].Edges.totalCount[0] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[0][alias] = n
+						}
+						return nil
+					})
+				} else {
+					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*BotRuntime) error {
+						for i := range nodes {
+							n := len(nodes[i].Edges.Bots)
+							if nodes[i].Edges.totalCount[0] == nil {
+								nodes[i].Edges.totalCount[0] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[0][alias] = n
+						}
+						return nil
+					})
+				}
+			}
+			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
+				continue
+			}
+			if query, err = pager.applyCursors(query, args.after, args.before); err != nil {
+				return err
+			}
+			path = append(path, edgesField, nodeField)
+			if field := collectedField(ctx, path...); field != nil {
+				if err := query.collectField(ctx, false, opCtx, *field, path, mayAddCondition(satisfies, botImplementors)...); err != nil {
+					return err
+				}
+			}
+			if limit := paginateLimit(args.first, args.last); limit > 0 {
+				if oneNode {
+					pager.applyOrder(query.Limit(limit))
+				} else {
+					modify := entgql.LimitPerRow(botruntime.BotsColumn, limit, pager.orderExpr(query))
+					query.modifiers = append(query.modifiers, modify)
+				}
+			} else {
+				query = pager.applyOrder(query)
+			}
+			_q.WithNamedBots(alias, func(wq *BotQuery) {
+				*wq = *query
+			})
+		case "name":
+			if _, ok := fieldSeen[botruntime.FieldName]; !ok {
+				selectedFields = append(selectedFields, botruntime.FieldName)
+				fieldSeen[botruntime.FieldName] = struct{}{}
+			}
+		case "type":
+			if _, ok := fieldSeen[botruntime.FieldType]; !ok {
+				selectedFields = append(selectedFields, botruntime.FieldType)
+				fieldSeen[botruntime.FieldType] = struct{}{}
+			}
+		case "createdAt":
+			if _, ok := fieldSeen[botruntime.FieldCreatedAt]; !ok {
+				selectedFields = append(selectedFields, botruntime.FieldCreatedAt)
+				fieldSeen[botruntime.FieldCreatedAt] = struct{}{}
+			}
+		case "updatedAt":
+			if _, ok := fieldSeen[botruntime.FieldUpdatedAt]; !ok {
+				selectedFields = append(selectedFields, botruntime.FieldUpdatedAt)
+				fieldSeen[botruntime.FieldUpdatedAt] = struct{}{}
+			}
+		case "id":
+		case "__typename":
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		_q.Select(selectedFields...)
+	}
+	return nil
+}
+
+type botruntimePaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []BotRuntimePaginateOption
+}
+
+func newBotRuntimePaginateArgs(rv map[string]any) *botruntimePaginateArgs {
+	args := &botruntimePaginateArgs{}
 	if rv == nil {
 		return args
 	}

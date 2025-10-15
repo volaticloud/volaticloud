@@ -62,9 +62,9 @@ func Name(v string) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldName, v))
 }
 
-// RuntimeID applies equality check predicate on the "runtime_id" field. It's identical to RuntimeIDEQ.
-func RuntimeID(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldEQ(FieldRuntimeID, v))
+// ContainerID applies equality check predicate on the "container_id" field. It's identical to ContainerIDEQ.
+func ContainerID(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldContainerID, v))
 }
 
 // APIURL applies equality check predicate on the "api_url" field. It's identical to APIURLEQ.
@@ -105,6 +105,11 @@ func ExchangeID(v uuid.UUID) predicate.Bot {
 // StrategyID applies equality check predicate on the "strategy_id" field. It's identical to StrategyIDEQ.
 func StrategyID(v uuid.UUID) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldStrategyID, v))
+}
+
+// RuntimeID applies equality check predicate on the "runtime_id" field. It's identical to RuntimeIDEQ.
+func RuntimeID(v uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldRuntimeID, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -242,109 +247,79 @@ func ModeNotIn(vs ...enum.BotMode) predicate.Bot {
 	return predicate.Bot(sql.FieldNotIn(FieldMode, v...))
 }
 
-// RuntimeTypeEQ applies the EQ predicate on the "runtime_type" field.
-func RuntimeTypeEQ(v enum.RuntimeType) predicate.Bot {
-	vc := v
-	return predicate.Bot(sql.FieldEQ(FieldRuntimeType, vc))
+// ContainerIDEQ applies the EQ predicate on the "container_id" field.
+func ContainerIDEQ(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldContainerID, v))
 }
 
-// RuntimeTypeNEQ applies the NEQ predicate on the "runtime_type" field.
-func RuntimeTypeNEQ(v enum.RuntimeType) predicate.Bot {
-	vc := v
-	return predicate.Bot(sql.FieldNEQ(FieldRuntimeType, vc))
+// ContainerIDNEQ applies the NEQ predicate on the "container_id" field.
+func ContainerIDNEQ(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldNEQ(FieldContainerID, v))
 }
 
-// RuntimeTypeIn applies the In predicate on the "runtime_type" field.
-func RuntimeTypeIn(vs ...enum.RuntimeType) predicate.Bot {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Bot(sql.FieldIn(FieldRuntimeType, v...))
+// ContainerIDIn applies the In predicate on the "container_id" field.
+func ContainerIDIn(vs ...string) predicate.Bot {
+	return predicate.Bot(sql.FieldIn(FieldContainerID, vs...))
 }
 
-// RuntimeTypeNotIn applies the NotIn predicate on the "runtime_type" field.
-func RuntimeTypeNotIn(vs ...enum.RuntimeType) predicate.Bot {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Bot(sql.FieldNotIn(FieldRuntimeType, v...))
+// ContainerIDNotIn applies the NotIn predicate on the "container_id" field.
+func ContainerIDNotIn(vs ...string) predicate.Bot {
+	return predicate.Bot(sql.FieldNotIn(FieldContainerID, vs...))
 }
 
-// RuntimeIDEQ applies the EQ predicate on the "runtime_id" field.
-func RuntimeIDEQ(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldEQ(FieldRuntimeID, v))
+// ContainerIDGT applies the GT predicate on the "container_id" field.
+func ContainerIDGT(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldGT(FieldContainerID, v))
 }
 
-// RuntimeIDNEQ applies the NEQ predicate on the "runtime_id" field.
-func RuntimeIDNEQ(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldNEQ(FieldRuntimeID, v))
+// ContainerIDGTE applies the GTE predicate on the "container_id" field.
+func ContainerIDGTE(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldGTE(FieldContainerID, v))
 }
 
-// RuntimeIDIn applies the In predicate on the "runtime_id" field.
-func RuntimeIDIn(vs ...string) predicate.Bot {
-	return predicate.Bot(sql.FieldIn(FieldRuntimeID, vs...))
+// ContainerIDLT applies the LT predicate on the "container_id" field.
+func ContainerIDLT(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldLT(FieldContainerID, v))
 }
 
-// RuntimeIDNotIn applies the NotIn predicate on the "runtime_id" field.
-func RuntimeIDNotIn(vs ...string) predicate.Bot {
-	return predicate.Bot(sql.FieldNotIn(FieldRuntimeID, vs...))
+// ContainerIDLTE applies the LTE predicate on the "container_id" field.
+func ContainerIDLTE(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldLTE(FieldContainerID, v))
 }
 
-// RuntimeIDGT applies the GT predicate on the "runtime_id" field.
-func RuntimeIDGT(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldGT(FieldRuntimeID, v))
+// ContainerIDContains applies the Contains predicate on the "container_id" field.
+func ContainerIDContains(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldContains(FieldContainerID, v))
 }
 
-// RuntimeIDGTE applies the GTE predicate on the "runtime_id" field.
-func RuntimeIDGTE(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldGTE(FieldRuntimeID, v))
+// ContainerIDHasPrefix applies the HasPrefix predicate on the "container_id" field.
+func ContainerIDHasPrefix(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldHasPrefix(FieldContainerID, v))
 }
 
-// RuntimeIDLT applies the LT predicate on the "runtime_id" field.
-func RuntimeIDLT(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldLT(FieldRuntimeID, v))
+// ContainerIDHasSuffix applies the HasSuffix predicate on the "container_id" field.
+func ContainerIDHasSuffix(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldHasSuffix(FieldContainerID, v))
 }
 
-// RuntimeIDLTE applies the LTE predicate on the "runtime_id" field.
-func RuntimeIDLTE(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldLTE(FieldRuntimeID, v))
+// ContainerIDIsNil applies the IsNil predicate on the "container_id" field.
+func ContainerIDIsNil() predicate.Bot {
+	return predicate.Bot(sql.FieldIsNull(FieldContainerID))
 }
 
-// RuntimeIDContains applies the Contains predicate on the "runtime_id" field.
-func RuntimeIDContains(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldContains(FieldRuntimeID, v))
+// ContainerIDNotNil applies the NotNil predicate on the "container_id" field.
+func ContainerIDNotNil() predicate.Bot {
+	return predicate.Bot(sql.FieldNotNull(FieldContainerID))
 }
 
-// RuntimeIDHasPrefix applies the HasPrefix predicate on the "runtime_id" field.
-func RuntimeIDHasPrefix(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldHasPrefix(FieldRuntimeID, v))
+// ContainerIDEqualFold applies the EqualFold predicate on the "container_id" field.
+func ContainerIDEqualFold(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldEqualFold(FieldContainerID, v))
 }
 
-// RuntimeIDHasSuffix applies the HasSuffix predicate on the "runtime_id" field.
-func RuntimeIDHasSuffix(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldHasSuffix(FieldRuntimeID, v))
-}
-
-// RuntimeIDIsNil applies the IsNil predicate on the "runtime_id" field.
-func RuntimeIDIsNil() predicate.Bot {
-	return predicate.Bot(sql.FieldIsNull(FieldRuntimeID))
-}
-
-// RuntimeIDNotNil applies the NotNil predicate on the "runtime_id" field.
-func RuntimeIDNotNil() predicate.Bot {
-	return predicate.Bot(sql.FieldNotNull(FieldRuntimeID))
-}
-
-// RuntimeIDEqualFold applies the EqualFold predicate on the "runtime_id" field.
-func RuntimeIDEqualFold(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldEqualFold(FieldRuntimeID, v))
-}
-
-// RuntimeIDContainsFold applies the ContainsFold predicate on the "runtime_id" field.
-func RuntimeIDContainsFold(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldContainsFold(FieldRuntimeID, v))
+// ContainerIDContainsFold applies the ContainsFold predicate on the "container_id" field.
+func ContainerIDContainsFold(v string) predicate.Bot {
+	return predicate.Bot(sql.FieldContainsFold(FieldContainerID, v))
 }
 
 // RuntimeMetadataIsNil applies the IsNil predicate on the "runtime_metadata" field.
@@ -822,6 +797,26 @@ func StrategyIDNotIn(vs ...uuid.UUID) predicate.Bot {
 	return predicate.Bot(sql.FieldNotIn(FieldStrategyID, vs...))
 }
 
+// RuntimeIDEQ applies the EQ predicate on the "runtime_id" field.
+func RuntimeIDEQ(v uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldRuntimeID, v))
+}
+
+// RuntimeIDNEQ applies the NEQ predicate on the "runtime_id" field.
+func RuntimeIDNEQ(v uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldNEQ(FieldRuntimeID, v))
+}
+
+// RuntimeIDIn applies the In predicate on the "runtime_id" field.
+func RuntimeIDIn(vs ...uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldIn(FieldRuntimeID, vs...))
+}
+
+// RuntimeIDNotIn applies the NotIn predicate on the "runtime_id" field.
+func RuntimeIDNotIn(vs ...uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldNotIn(FieldRuntimeID, vs...))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldCreatedAt, v))
@@ -940,6 +935,29 @@ func HasStrategy() predicate.Bot {
 func HasStrategyWith(preds ...predicate.Strategy) predicate.Bot {
 	return predicate.Bot(func(s *sql.Selector) {
 		step := newStrategyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRuntime applies the HasEdge predicate on the "runtime" edge.
+func HasRuntime() predicate.Bot {
+	return predicate.Bot(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, RuntimeTable, RuntimeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRuntimeWith applies the HasEdge predicate on the "runtime" edge with a given conditions (other predicates).
+func HasRuntimeWith(preds ...predicate.BotRuntime) predicate.Bot {
+	return predicate.Bot(func(s *sql.Selector) {
+		step := newRuntimeStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

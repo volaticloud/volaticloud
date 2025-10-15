@@ -28,6 +28,10 @@ func (r *queryResolver) Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID
 	return r.client.Bot.Query().Paginate(ctx, after, first, before, last)
 }
 
+func (r *queryResolver) BotRuntimes(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotRuntimeConnection, error) {
+	return r.client.BotRuntime.Query().Paginate(ctx, after, first, before, last)
+}
+
 func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) {
 	return r.client.Exchange.Query().All(ctx)
 }

@@ -11,39 +11,17 @@ import (
 
 // CreateBacktestInput represents a mutation input for creating backtests.
 type CreateBacktestInput struct {
-	Status        *enum.TaskStatus
-	StartDate     time.Time
-	EndDate       time.Time
-	Timeframe     string
-	StakeAmount   float64
-	StakeCurrency string
-	RuntimeID     *string
-	LogOutput     *string
-	ErrorMessage  *string
-	CreatedAt     *time.Time
-	UpdatedAt     *time.Time
-	CompletedAt   *time.Time
-	StrategyID    uuid.UUID
+	Status      *enum.TaskStatus
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
+	CompletedAt *time.Time
+	StrategyID  uuid.UUID
 }
 
 // Mutate applies the CreateBacktestInput on the BacktestMutation builder.
 func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
 	if v := i.Status; v != nil {
 		m.SetStatus(*v)
-	}
-	m.SetStartDate(i.StartDate)
-	m.SetEndDate(i.EndDate)
-	m.SetTimeframe(i.Timeframe)
-	m.SetStakeAmount(i.StakeAmount)
-	m.SetStakeCurrency(i.StakeCurrency)
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
-	}
-	if v := i.LogOutput; v != nil {
-		m.SetLogOutput(*v)
-	}
-	if v := i.ErrorMessage; v != nil {
-		m.SetErrorMessage(*v)
 	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
@@ -65,61 +43,17 @@ func (c *BacktestCreate) SetInput(i CreateBacktestInput) *BacktestCreate {
 
 // UpdateBacktestInput represents a mutation input for updating backtests.
 type UpdateBacktestInput struct {
-	Status            *enum.TaskStatus
-	StartDate         *time.Time
-	EndDate           *time.Time
-	Timeframe         *string
-	StakeAmount       *float64
-	StakeCurrency     *string
-	ClearRuntimeID    bool
-	RuntimeID         *string
-	ClearLogOutput    bool
-	LogOutput         *string
-	ClearErrorMessage bool
-	ErrorMessage      *string
-	UpdatedAt         *time.Time
-	ClearCompletedAt  bool
-	CompletedAt       *time.Time
-	StrategyID        *uuid.UUID
+	Status           *enum.TaskStatus
+	UpdatedAt        *time.Time
+	ClearCompletedAt bool
+	CompletedAt      *time.Time
+	StrategyID       *uuid.UUID
 }
 
 // Mutate applies the UpdateBacktestInput on the BacktestMutation builder.
 func (i *UpdateBacktestInput) Mutate(m *BacktestMutation) {
 	if v := i.Status; v != nil {
 		m.SetStatus(*v)
-	}
-	if v := i.StartDate; v != nil {
-		m.SetStartDate(*v)
-	}
-	if v := i.EndDate; v != nil {
-		m.SetEndDate(*v)
-	}
-	if v := i.Timeframe; v != nil {
-		m.SetTimeframe(*v)
-	}
-	if v := i.StakeAmount; v != nil {
-		m.SetStakeAmount(*v)
-	}
-	if v := i.StakeCurrency; v != nil {
-		m.SetStakeCurrency(*v)
-	}
-	if i.ClearRuntimeID {
-		m.ClearRuntimeID()
-	}
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
-	}
-	if i.ClearLogOutput {
-		m.ClearLogOutput()
-	}
-	if v := i.LogOutput; v != nil {
-		m.SetLogOutput(*v)
-	}
-	if i.ClearErrorMessage {
-		m.ClearErrorMessage()
-	}
-	if v := i.ErrorMessage; v != nil {
-		m.SetErrorMessage(*v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
@@ -152,8 +86,7 @@ type CreateBotInput struct {
 	Name             string
 	Status           *enum.BotStatus
 	Mode             *enum.BotMode
-	RuntimeType      *enum.RuntimeType
-	RuntimeID        *string
+	ContainerID      *string
 	APIURL           *string
 	APIUsername      *string
 	APIPassword      *string
@@ -164,6 +97,7 @@ type CreateBotInput struct {
 	UpdatedAt        *time.Time
 	ExchangeID       uuid.UUID
 	StrategyID       uuid.UUID
+	RuntimeID        uuid.UUID
 	TradeIDs         []uuid.UUID
 }
 
@@ -176,11 +110,8 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	if v := i.Mode; v != nil {
 		m.SetMode(*v)
 	}
-	if v := i.RuntimeType; v != nil {
-		m.SetRuntimeType(*v)
-	}
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
+	if v := i.ContainerID; v != nil {
+		m.SetContainerID(*v)
 	}
 	if v := i.APIURL; v != nil {
 		m.SetAPIURL(*v)
@@ -208,6 +139,7 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	}
 	m.SetExchangeID(i.ExchangeID)
 	m.SetStrategyID(i.StrategyID)
+	m.SetRuntimeID(i.RuntimeID)
 	if v := i.TradeIDs; len(v) > 0 {
 		m.AddTradeIDs(v...)
 	}
@@ -224,9 +156,8 @@ type UpdateBotInput struct {
 	Name              *string
 	Status            *enum.BotStatus
 	Mode              *enum.BotMode
-	RuntimeType       *enum.RuntimeType
-	ClearRuntimeID    bool
-	RuntimeID         *string
+	ClearContainerID  bool
+	ContainerID       *string
 	ClearAPIURL       bool
 	APIURL            *string
 	ClearAPIUsername  bool
@@ -241,6 +172,7 @@ type UpdateBotInput struct {
 	UpdatedAt         *time.Time
 	ExchangeID        *uuid.UUID
 	StrategyID        *uuid.UUID
+	RuntimeID         *uuid.UUID
 	ClearTrades       bool
 	AddTradeIDs       []uuid.UUID
 	RemoveTradeIDs    []uuid.UUID
@@ -257,14 +189,11 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	if v := i.Mode; v != nil {
 		m.SetMode(*v)
 	}
-	if v := i.RuntimeType; v != nil {
-		m.SetRuntimeType(*v)
+	if i.ClearContainerID {
+		m.ClearContainerID()
 	}
-	if i.ClearRuntimeID {
-		m.ClearRuntimeID()
-	}
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
+	if v := i.ContainerID; v != nil {
+		m.SetContainerID(*v)
 	}
 	if i.ClearAPIURL {
 		m.ClearAPIURL()
@@ -308,6 +237,9 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	if v := i.StrategyID; v != nil {
 		m.SetStrategyID(*v)
 	}
+	if v := i.RuntimeID; v != nil {
+		m.SetRuntimeID(*v)
+	}
 	if i.ClearTrades {
 		m.ClearTrades()
 	}
@@ -327,6 +259,82 @@ func (c *BotUpdate) SetInput(i UpdateBotInput) *BotUpdate {
 
 // SetInput applies the change-set in the UpdateBotInput on the BotUpdateOne builder.
 func (c *BotUpdateOne) SetInput(i UpdateBotInput) *BotUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// CreateBotRuntimeInput represents a mutation input for creating botruntimes.
+type CreateBotRuntimeInput struct {
+	Name      string
+	Type      *enum.RuntimeType
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
+	BotIDs    []uuid.UUID
+}
+
+// Mutate applies the CreateBotRuntimeInput on the BotRuntimeMutation builder.
+func (i *CreateBotRuntimeInput) Mutate(m *BotRuntimeMutation) {
+	m.SetName(i.Name)
+	if v := i.Type; v != nil {
+		m.SetType(*v)
+	}
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if v := i.BotIDs; len(v) > 0 {
+		m.AddBotIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the CreateBotRuntimeInput on the BotRuntimeCreate builder.
+func (c *BotRuntimeCreate) SetInput(i CreateBotRuntimeInput) *BotRuntimeCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateBotRuntimeInput represents a mutation input for updating botruntimes.
+type UpdateBotRuntimeInput struct {
+	Name         *string
+	Type         *enum.RuntimeType
+	UpdatedAt    *time.Time
+	ClearBots    bool
+	AddBotIDs    []uuid.UUID
+	RemoveBotIDs []uuid.UUID
+}
+
+// Mutate applies the UpdateBotRuntimeInput on the BotRuntimeMutation builder.
+func (i *UpdateBotRuntimeInput) Mutate(m *BotRuntimeMutation) {
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if v := i.Type; v != nil {
+		m.SetType(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if i.ClearBots {
+		m.ClearBots()
+	}
+	if v := i.AddBotIDs; len(v) > 0 {
+		m.AddBotIDs(v...)
+	}
+	if v := i.RemoveBotIDs; len(v) > 0 {
+		m.RemoveBotIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateBotRuntimeInput on the BotRuntimeUpdate builder.
+func (c *BotRuntimeUpdate) SetInput(i UpdateBotRuntimeInput) *BotRuntimeUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateBotRuntimeInput on the BotRuntimeUpdateOne builder.
+func (c *BotRuntimeUpdateOne) SetInput(i UpdateBotRuntimeInput) *BotRuntimeUpdateOne {
 	i.Mutate(c.Mutation())
 	return c
 }

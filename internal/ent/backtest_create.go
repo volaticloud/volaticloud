@@ -37,93 +37,15 @@ func (_c *BacktestCreate) SetNillableStatus(v *enum.TaskStatus) *BacktestCreate 
 	return _c
 }
 
-// SetStartDate sets the "start_date" field.
-func (_c *BacktestCreate) SetStartDate(v time.Time) *BacktestCreate {
-	_c.mutation.SetStartDate(v)
-	return _c
-}
-
-// SetEndDate sets the "end_date" field.
-func (_c *BacktestCreate) SetEndDate(v time.Time) *BacktestCreate {
-	_c.mutation.SetEndDate(v)
-	return _c
-}
-
-// SetTimeframe sets the "timeframe" field.
-func (_c *BacktestCreate) SetTimeframe(v string) *BacktestCreate {
-	_c.mutation.SetTimeframe(v)
-	return _c
-}
-
-// SetStakeAmount sets the "stake_amount" field.
-func (_c *BacktestCreate) SetStakeAmount(v float64) *BacktestCreate {
-	_c.mutation.SetStakeAmount(v)
-	return _c
-}
-
-// SetStakeCurrency sets the "stake_currency" field.
-func (_c *BacktestCreate) SetStakeCurrency(v string) *BacktestCreate {
-	_c.mutation.SetStakeCurrency(v)
-	return _c
-}
-
-// SetPairs sets the "pairs" field.
-func (_c *BacktestCreate) SetPairs(v []string) *BacktestCreate {
-	_c.mutation.SetPairs(v)
-	return _c
-}
-
-// SetResults sets the "results" field.
-func (_c *BacktestCreate) SetResults(v map[string]interface{}) *BacktestCreate {
-	_c.mutation.SetResults(v)
-	return _c
-}
-
 // SetConfig sets the "config" field.
 func (_c *BacktestCreate) SetConfig(v map[string]interface{}) *BacktestCreate {
 	_c.mutation.SetConfig(v)
 	return _c
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_c *BacktestCreate) SetRuntimeID(v string) *BacktestCreate {
-	_c.mutation.SetRuntimeID(v)
-	return _c
-}
-
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_c *BacktestCreate) SetNillableRuntimeID(v *string) *BacktestCreate {
-	if v != nil {
-		_c.SetRuntimeID(*v)
-	}
-	return _c
-}
-
-// SetLogOutput sets the "log_output" field.
-func (_c *BacktestCreate) SetLogOutput(v string) *BacktestCreate {
-	_c.mutation.SetLogOutput(v)
-	return _c
-}
-
-// SetNillableLogOutput sets the "log_output" field if the given value is not nil.
-func (_c *BacktestCreate) SetNillableLogOutput(v *string) *BacktestCreate {
-	if v != nil {
-		_c.SetLogOutput(*v)
-	}
-	return _c
-}
-
-// SetErrorMessage sets the "error_message" field.
-func (_c *BacktestCreate) SetErrorMessage(v string) *BacktestCreate {
-	_c.mutation.SetErrorMessage(v)
-	return _c
-}
-
-// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
-func (_c *BacktestCreate) SetNillableErrorMessage(v *string) *BacktestCreate {
-	if v != nil {
-		_c.SetErrorMessage(*v)
-	}
+// SetResult sets the "result" field.
+func (_c *BacktestCreate) SetResult(v map[string]interface{}) *BacktestCreate {
+	_c.mutation.SetResult(v)
 	return _c
 }
 
@@ -257,39 +179,6 @@ func (_c *BacktestCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Backtest.status": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.StartDate(); !ok {
-		return &ValidationError{Name: "start_date", err: errors.New(`ent: missing required field "Backtest.start_date"`)}
-	}
-	if _, ok := _c.mutation.EndDate(); !ok {
-		return &ValidationError{Name: "end_date", err: errors.New(`ent: missing required field "Backtest.end_date"`)}
-	}
-	if _, ok := _c.mutation.Timeframe(); !ok {
-		return &ValidationError{Name: "timeframe", err: errors.New(`ent: missing required field "Backtest.timeframe"`)}
-	}
-	if v, ok := _c.mutation.Timeframe(); ok {
-		if err := backtest.TimeframeValidator(v); err != nil {
-			return &ValidationError{Name: "timeframe", err: fmt.Errorf(`ent: validator failed for field "Backtest.timeframe": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.StakeAmount(); !ok {
-		return &ValidationError{Name: "stake_amount", err: errors.New(`ent: missing required field "Backtest.stake_amount"`)}
-	}
-	if v, ok := _c.mutation.StakeAmount(); ok {
-		if err := backtest.StakeAmountValidator(v); err != nil {
-			return &ValidationError{Name: "stake_amount", err: fmt.Errorf(`ent: validator failed for field "Backtest.stake_amount": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.StakeCurrency(); !ok {
-		return &ValidationError{Name: "stake_currency", err: errors.New(`ent: missing required field "Backtest.stake_currency"`)}
-	}
-	if v, ok := _c.mutation.StakeCurrency(); ok {
-		if err := backtest.StakeCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "stake_currency", err: fmt.Errorf(`ent: validator failed for field "Backtest.stake_currency": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.Pairs(); !ok {
-		return &ValidationError{Name: "pairs", err: errors.New(`ent: missing required field "Backtest.pairs"`)}
-	}
 	if _, ok := _c.mutation.StrategyID(); !ok {
 		return &ValidationError{Name: "strategy_id", err: errors.New(`ent: missing required field "Backtest.strategy_id"`)}
 	}
@@ -341,49 +230,13 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := _c.mutation.StartDate(); ok {
-		_spec.SetField(backtest.FieldStartDate, field.TypeTime, value)
-		_node.StartDate = value
-	}
-	if value, ok := _c.mutation.EndDate(); ok {
-		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
-		_node.EndDate = value
-	}
-	if value, ok := _c.mutation.Timeframe(); ok {
-		_spec.SetField(backtest.FieldTimeframe, field.TypeString, value)
-		_node.Timeframe = value
-	}
-	if value, ok := _c.mutation.StakeAmount(); ok {
-		_spec.SetField(backtest.FieldStakeAmount, field.TypeFloat64, value)
-		_node.StakeAmount = value
-	}
-	if value, ok := _c.mutation.StakeCurrency(); ok {
-		_spec.SetField(backtest.FieldStakeCurrency, field.TypeString, value)
-		_node.StakeCurrency = value
-	}
-	if value, ok := _c.mutation.Pairs(); ok {
-		_spec.SetField(backtest.FieldPairs, field.TypeJSON, value)
-		_node.Pairs = value
-	}
-	if value, ok := _c.mutation.Results(); ok {
-		_spec.SetField(backtest.FieldResults, field.TypeJSON, value)
-		_node.Results = value
-	}
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
 	}
-	if value, ok := _c.mutation.RuntimeID(); ok {
-		_spec.SetField(backtest.FieldRuntimeID, field.TypeString, value)
-		_node.RuntimeID = value
-	}
-	if value, ok := _c.mutation.LogOutput(); ok {
-		_spec.SetField(backtest.FieldLogOutput, field.TypeString, value)
-		_node.LogOutput = value
-	}
-	if value, ok := _c.mutation.ErrorMessage(); ok {
-		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
-		_node.ErrorMessage = value
+	if value, ok := _c.mutation.Result(); ok {
+		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)
+		_node.Result = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(backtest.FieldCreatedAt, field.TypeTime, value)

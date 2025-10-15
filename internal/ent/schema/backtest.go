@@ -28,39 +28,14 @@ func (Backtest) Fields() []ent.Field {
 			GoType(enum.TaskStatus("")).
 			Default(string(enum.TaskStatusPending)).
 			Comment("Task status"),
-		field.Time("start_date").
-			Comment("Historical data start date"),
-		field.Time("end_date").
-			Comment("Historical data end date"),
-		field.String("timeframe").
-			NotEmpty().
-			Comment("Candlestick timeframe"),
-		field.Float("stake_amount").
-			Positive().
-			Comment("Stake amount per trade"),
-		field.String("stake_currency").
-			NotEmpty().
-			Comment("Currency (USDT, BTC, etc.)"),
-		field.JSON("pairs", []string{}).
-			Annotations(entgql.Skip(entgql.SkipAll)).
-			Comment("List of trading pairs"),
-		field.JSON("results", map[string]interface{}{}).
-			Optional().
-			Annotations(entgql.Skip(entgql.SkipAll)).
-			Comment("Backtest results"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
 			Annotations(entgql.Skip(entgql.SkipAll)).
-			Comment("Backtest-specific configuration"),
-		field.String("runtime_id").
+			Comment("Backtest configuration (pairs, timeframe, dates, stake, etc.)"),
+		field.JSON("result", map[string]interface{}{}).
 			Optional().
-			Comment("Runtime identifier for execution"),
-		field.Text("log_output").
-			Optional().
-			Comment("Execution logs"),
-		field.Text("error_message").
-			Optional().
-			Comment("Error if failed"),
+			Annotations(entgql.Skip(entgql.SkipAll)).
+			Comment("Backtest result data (metrics, logs, trades, etc.)"),
 		field.UUID("strategy_id", uuid.UUID{}).
 			Comment("Foreign key to strategy"),
 		field.Time("created_at").

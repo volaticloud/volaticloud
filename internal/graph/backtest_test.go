@@ -4,7 +4,6 @@ import (
 	"anytrade/internal/ent"
 	"anytrade/internal/enum"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,45 +22,22 @@ func TestBacktestMutations(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("CreateBacktest", func(t *testing.T) {
-		startDate := time.Now().AddDate(0, -3, 0)
-		endDate := time.Now()
-
-		// Use ENT client directly since pairs field is skipped from GraphQL
-		client := resolver.client
-		backtest, err := client.Backtest.Create().
-			SetStatus(enum.TaskStatusPending).
-			SetStartDate(startDate).
-			SetEndDate(endDate).
-			SetTimeframe("1h").
-			SetStakeAmount(100.0).
-			SetStakeCurrency("USDT").
-			SetPairs([]string{"BTC/USDT", "ETH/USDT"}).
-			SetStrategyID(strategy.ID).
-			Save(ctx())
+		input := ent.CreateBacktestInput{
+			StrategyID: strategy.ID,
+		}
+		backtest, err := mutationResolver.CreateBacktest(ctx(), input)
 		require.NoError(t, err)
 		assert.NotNil(t, backtest)
 		assert.Equal(t, enum.TaskStatusPending, backtest.Status)
-		assert.Equal(t, "1h", backtest.Timeframe)
-		assert.Equal(t, 100.0, backtest.StakeAmount)
-		assert.Equal(t, "USDT", backtest.StakeCurrency)
 		assert.Equal(t, strategy.ID, backtest.StrategyID)
 	})
 
 	t.Run("UpdateBacktest", func(t *testing.T) {
-		// Create backtest first using ENT client directly
-		startDate := time.Now().AddDate(0, -2, 0)
-		endDate := time.Now()
-		client := resolver.client
-		backtest, err := client.Backtest.Create().
-			SetStatus(enum.TaskStatusPending).
-			SetStartDate(startDate).
-			SetEndDate(endDate).
-			SetTimeframe("1h").
-			SetStakeAmount(50.0).
-			SetStakeCurrency("USDT").
-			SetPairs([]string{"BTC/USDT"}).
-			SetStrategyID(strategy.ID).
-			Save(ctx())
+		// Create backtest first
+		input := ent.CreateBacktestInput{
+			StrategyID: strategy.ID,
+		}
+		backtest, err := mutationResolver.CreateBacktest(ctx(), input)
 		require.NoError(t, err)
 
 		// Update it
@@ -76,20 +52,11 @@ func TestBacktestMutations(t *testing.T) {
 	})
 
 	t.Run("DeleteBacktest", func(t *testing.T) {
-		// Create backtest first using ENT client directly
-		startDate := time.Now().AddDate(0, -1, 0)
-		endDate := time.Now()
-		client := resolver.client
-		backtest, err := client.Backtest.Create().
-			SetStatus(enum.TaskStatusPending).
-			SetStartDate(startDate).
-			SetEndDate(endDate).
-			SetTimeframe("4h").
-			SetStakeAmount(25.0).
-			SetStakeCurrency("BTC").
-			SetPairs([]string{"BTC/USDT"}).
-			SetStrategyID(strategy.ID).
-			Save(ctx())
+		// Create backtest first
+		input := ent.CreateBacktestInput{
+			StrategyID: strategy.ID,
+		}
+		backtest, err := mutationResolver.CreateBacktest(ctx(), input)
 		require.NoError(t, err)
 
 		// Delete it
@@ -112,46 +79,14 @@ func TestBacktestQueries(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Create test backtests using ENT client directly
-	startDate := time.Now().AddDate(0, -1, 0)
-	endDate := time.Now()
-	client := resolver.client
-
-	_, err = client.Backtest.Create().
-		SetStatus(enum.TaskStatusPending).
-		SetStartDate(startDate).
-		SetEndDate(endDate).
-		SetTimeframe("1h").
-		SetStakeAmount(100.0).
-		SetStakeCurrency("USDT").
-		SetPairs([]string{"BTC/USDT"}).
-		SetStrategyID(strategy.ID).
-		Save(ctx())
-	require.NoError(t, err)
-
-	_, err = client.Backtest.Create().
-		SetStatus(enum.TaskStatusRunning).
-		SetStartDate(startDate).
-		SetEndDate(endDate).
-		SetTimeframe("4h").
-		SetStakeAmount(100.0).
-		SetStakeCurrency("USDT").
-		SetPairs([]string{"ETH/USDT"}).
-		SetStrategyID(strategy.ID).
-		Save(ctx())
-	require.NoError(t, err)
-
-	_, err = client.Backtest.Create().
-		SetStatus(enum.TaskStatusCompleted).
-		SetStartDate(startDate).
-		SetEndDate(endDate).
-		SetTimeframe("1d").
-		SetStakeAmount(100.0).
-		SetStakeCurrency("BTC").
-		SetPairs([]string{"BTC/USDT", "ETH/USDT"}).
-		SetStrategyID(strategy.ID).
-		Save(ctx())
-	require.NoError(t, err)
+	// Create test backtests
+	for i := 0; i < 3; i++ {
+		input := ent.CreateBacktestInput{
+			StrategyID: strategy.ID,
+		}
+		_, err := mutationResolver.CreateBacktest(ctx(), input)
+		require.NoError(t, err)
+	}
 
 	t.Run("QueryBacktests", func(t *testing.T) {
 		first := 10

@@ -20,28 +20,10 @@ const (
 	FieldID = "id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldStartDate holds the string denoting the start_date field in the database.
-	FieldStartDate = "start_date"
-	// FieldEndDate holds the string denoting the end_date field in the database.
-	FieldEndDate = "end_date"
-	// FieldTimeframe holds the string denoting the timeframe field in the database.
-	FieldTimeframe = "timeframe"
-	// FieldStakeAmount holds the string denoting the stake_amount field in the database.
-	FieldStakeAmount = "stake_amount"
-	// FieldStakeCurrency holds the string denoting the stake_currency field in the database.
-	FieldStakeCurrency = "stake_currency"
-	// FieldPairs holds the string denoting the pairs field in the database.
-	FieldPairs = "pairs"
-	// FieldResults holds the string denoting the results field in the database.
-	FieldResults = "results"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
-	// FieldRuntimeID holds the string denoting the runtime_id field in the database.
-	FieldRuntimeID = "runtime_id"
-	// FieldLogOutput holds the string denoting the log_output field in the database.
-	FieldLogOutput = "log_output"
-	// FieldErrorMessage holds the string denoting the error_message field in the database.
-	FieldErrorMessage = "error_message"
+	// FieldResult holds the string denoting the result field in the database.
+	FieldResult = "result"
 	// FieldStrategyID holds the string denoting the strategy_id field in the database.
 	FieldStrategyID = "strategy_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -67,17 +49,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldStatus,
-	FieldStartDate,
-	FieldEndDate,
-	FieldTimeframe,
-	FieldStakeAmount,
-	FieldStakeCurrency,
-	FieldPairs,
-	FieldResults,
 	FieldConfig,
-	FieldRuntimeID,
-	FieldLogOutput,
-	FieldErrorMessage,
+	FieldResult,
 	FieldStrategyID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -95,12 +68,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// TimeframeValidator is a validator for the "timeframe" field. It is called by the builders before save.
-	TimeframeValidator func(string) error
-	// StakeAmountValidator is a validator for the "stake_amount" field. It is called by the builders before save.
-	StakeAmountValidator func(float64) error
-	// StakeCurrencyValidator is a validator for the "stake_currency" field. It is called by the builders before save.
-	StakeCurrencyValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -134,46 +101,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
-}
-
-// ByStartDate orders the results by the start_date field.
-func ByStartDate(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStartDate, opts...).ToFunc()
-}
-
-// ByEndDate orders the results by the end_date field.
-func ByEndDate(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEndDate, opts...).ToFunc()
-}
-
-// ByTimeframe orders the results by the timeframe field.
-func ByTimeframe(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTimeframe, opts...).ToFunc()
-}
-
-// ByStakeAmount orders the results by the stake_amount field.
-func ByStakeAmount(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStakeAmount, opts...).ToFunc()
-}
-
-// ByStakeCurrency orders the results by the stake_currency field.
-func ByStakeCurrency(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStakeCurrency, opts...).ToFunc()
-}
-
-// ByRuntimeID orders the results by the runtime_id field.
-func ByRuntimeID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRuntimeID, opts...).ToFunc()
-}
-
-// ByLogOutput orders the results by the log_output field.
-func ByLogOutput(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldLogOutput, opts...).ToFunc()
-}
-
-// ByErrorMessage orders the results by the error_message field.
-func ByErrorMessage(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldErrorMessage, opts...).ToFunc()
 }
 
 // ByStrategyID orders the results by the strategy_id field.

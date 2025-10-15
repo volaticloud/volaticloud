@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
@@ -594,6 +595,255 @@ func (_m *Bot) ToEdge(order *BotOrder) *BotEdge {
 		order = DefaultBotOrder
 	}
 	return &BotEdge{
+		Node:   _m,
+		Cursor: order.Field.toCursor(_m),
+	}
+}
+
+// BotRuntimeEdge is the edge representation of BotRuntime.
+type BotRuntimeEdge struct {
+	Node   *BotRuntime `json:"node"`
+	Cursor Cursor      `json:"cursor"`
+}
+
+// BotRuntimeConnection is the connection containing edges to BotRuntime.
+type BotRuntimeConnection struct {
+	Edges      []*BotRuntimeEdge `json:"edges"`
+	PageInfo   PageInfo          `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
+}
+
+func (c *BotRuntimeConnection) build(nodes []*BotRuntime, pager *botruntimePager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *BotRuntime
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *BotRuntime {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *BotRuntime {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*BotRuntimeEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &BotRuntimeEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// BotRuntimePaginateOption enables pagination customization.
+type BotRuntimePaginateOption func(*botruntimePager) error
+
+// WithBotRuntimeOrder configures pagination ordering.
+func WithBotRuntimeOrder(order *BotRuntimeOrder) BotRuntimePaginateOption {
+	if order == nil {
+		order = DefaultBotRuntimeOrder
+	}
+	o := *order
+	return func(pager *botruntimePager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultBotRuntimeOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithBotRuntimeFilter configures pagination filter.
+func WithBotRuntimeFilter(filter func(*BotRuntimeQuery) (*BotRuntimeQuery, error)) BotRuntimePaginateOption {
+	return func(pager *botruntimePager) error {
+		if filter == nil {
+			return errors.New("BotRuntimeQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type botruntimePager struct {
+	reverse bool
+	order   *BotRuntimeOrder
+	filter  func(*BotRuntimeQuery) (*BotRuntimeQuery, error)
+}
+
+func newBotRuntimePager(opts []BotRuntimePaginateOption, reverse bool) (*botruntimePager, error) {
+	pager := &botruntimePager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultBotRuntimeOrder
+	}
+	return pager, nil
+}
+
+func (p *botruntimePager) applyFilter(query *BotRuntimeQuery) (*BotRuntimeQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *botruntimePager) toCursor(_m *BotRuntime) Cursor {
+	return p.order.Field.toCursor(_m)
+}
+
+func (p *botruntimePager) applyCursors(query *BotRuntimeQuery, after, before *Cursor) (*BotRuntimeQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultBotRuntimeOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *botruntimePager) applyOrder(query *BotRuntimeQuery) *BotRuntimeQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultBotRuntimeOrder.Field {
+		query = query.Order(DefaultBotRuntimeOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return query
+}
+
+func (p *botruntimePager) orderExpr(query *BotRuntimeQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultBotRuntimeOrder.Field {
+			b.Comma().Ident(DefaultBotRuntimeOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to BotRuntime.
+func (_m *BotRuntimeQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...BotRuntimePaginateOption,
+) (*BotRuntimeConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newBotRuntimePager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if _m, err = pager.applyFilter(_m); err != nil {
+		return nil, err
+	}
+	conn := &BotRuntimeConnection{Edges: []*BotRuntimeEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			c := _m.Clone()
+			c.ctx.Fields = nil
+			if conn.TotalCount, err = c.Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+	if _m, err = pager.applyCursors(_m, after, before); err != nil {
+		return nil, err
+	}
+	limit := paginateLimit(first, last)
+	if limit != 0 {
+		_m.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := _m.collectField(ctx, limit == 1, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+	_m = pager.applyOrder(_m)
+	nodes, err := _m.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// BotRuntimeOrderField defines the ordering field of BotRuntime.
+type BotRuntimeOrderField struct {
+	// Value extracts the ordering value from the given BotRuntime.
+	Value    func(*BotRuntime) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) botruntime.OrderOption
+	toCursor func(*BotRuntime) Cursor
+}
+
+// BotRuntimeOrder defines the ordering of BotRuntime.
+type BotRuntimeOrder struct {
+	Direction OrderDirection        `json:"direction"`
+	Field     *BotRuntimeOrderField `json:"field"`
+}
+
+// DefaultBotRuntimeOrder is the default ordering of BotRuntime.
+var DefaultBotRuntimeOrder = &BotRuntimeOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &BotRuntimeOrderField{
+		Value: func(_m *BotRuntime) (ent.Value, error) {
+			return _m.ID, nil
+		},
+		column: botruntime.FieldID,
+		toTerm: botruntime.ByID,
+		toCursor: func(_m *BotRuntime) Cursor {
+			return Cursor{ID: _m.ID}
+		},
+	},
+}
+
+// ToEdge converts BotRuntime into BotRuntimeEdge.
+func (_m *BotRuntime) ToEdge(order *BotRuntimeOrder) *BotRuntimeEdge {
+	if order == nil {
+		order = DefaultBotRuntimeOrder
+	}
+	return &BotRuntimeEdge{
 		Node:   _m,
 		Cursor: order.Field.toCursor(_m),
 	}

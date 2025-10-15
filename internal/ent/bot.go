@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
@@ -28,10 +29,8 @@ type Bot struct {
 	Status enum.BotStatus `json:"status,omitempty"`
 	// Trading mode (dry-run or live)
 	Mode enum.BotMode `json:"mode,omitempty"`
-	// Runtime environment type
-	RuntimeType enum.RuntimeType `json:"runtime_type,omitempty"`
-	// Runtime-specific identifier
-	RuntimeID string `json:"runtime_id,omitempty"`
+	// Runtime-specific identifier (container ID, pod name, etc.)
+	ContainerID string `json:"container_id,omitempty"`
 	// Runtime-specific metadata
 	RuntimeMetadata map[string]string `json:"runtime_metadata,omitempty"`
 	// Freqtrade API endpoint
@@ -52,6 +51,8 @@ type Bot struct {
 	ExchangeID uuid.UUID `json:"exchange_id,omitempty"`
 	// Foreign key to strategy
 	StrategyID uuid.UUID `json:"strategy_id,omitempty"`
+	// Foreign key to runtime
+	RuntimeID uuid.UUID `json:"runtime_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -68,13 +69,15 @@ type BotEdges struct {
 	Exchange *Exchange `json:"exchange,omitempty"`
 	// Strategy holds the value of the strategy edge.
 	Strategy *Strategy `json:"strategy,omitempty"`
+	// Runtime holds the value of the runtime edge.
+	Runtime *BotRuntime `json:"runtime,omitempty"`
 	// Trades holds the value of the trades edge.
 	Trades []*Trade `json:"trades,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [3]map[string]int
+	totalCount [4]map[string]int
 
 	namedTrades map[string][]*Trade
 }
@@ -101,10 +104,21 @@ func (e BotEdges) StrategyOrErr() (*Strategy, error) {
 	return nil, &NotLoadedError{edge: "strategy"}
 }
 
+// RuntimeOrErr returns the Runtime value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e BotEdges) RuntimeOrErr() (*BotRuntime, error) {
+	if e.Runtime != nil {
+		return e.Runtime, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: botruntime.Label}
+	}
+	return nil, &NotLoadedError{edge: "runtime"}
+}
+
 // TradesOrErr returns the Trades value or an error if the edge
 // was not loaded in eager-loading.
 func (e BotEdges) TradesOrErr() ([]*Trade, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Trades, nil
 	}
 	return nil, &NotLoadedError{edge: "trades"}
@@ -117,11 +131,11 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case bot.FieldRuntimeMetadata, bot.FieldConfig:
 			values[i] = new([]byte)
-		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldRuntimeType, bot.FieldRuntimeID, bot.FieldAPIURL, bot.FieldAPIUsername, bot.FieldAPIPassword, bot.FieldFreqtradeVersion, bot.FieldErrorMessage:
+		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldAPIURL, bot.FieldAPIUsername, bot.FieldAPIPassword, bot.FieldFreqtradeVersion, bot.FieldErrorMessage:
 			values[i] = new(sql.NullString)
 		case bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case bot.FieldID, bot.FieldExchangeID, bot.FieldStrategyID:
+		case bot.FieldID, bot.FieldExchangeID, bot.FieldStrategyID, bot.FieldRuntimeID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -162,17 +176,11 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Mode = enum.BotMode(value.String)
 			}
-		case bot.FieldRuntimeType:
+		case bot.FieldContainerID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field runtime_type", values[i])
+				return fmt.Errorf("unexpected type %T for field container_id", values[i])
 			} else if value.Valid {
-				_m.RuntimeType = enum.RuntimeType(value.String)
-			}
-		case bot.FieldRuntimeID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field runtime_id", values[i])
-			} else if value.Valid {
-				_m.RuntimeID = value.String
+				_m.ContainerID = value.String
 			}
 		case bot.FieldRuntimeMetadata:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -238,6 +246,12 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				_m.StrategyID = *value
 			}
+		case bot.FieldRuntimeID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field runtime_id", values[i])
+			} else if value != nil {
+				_m.RuntimeID = *value
+			}
 		case bot.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -271,6 +285,11 @@ func (_m *Bot) QueryExchange() *ExchangeQuery {
 // QueryStrategy queries the "strategy" edge of the Bot entity.
 func (_m *Bot) QueryStrategy() *StrategyQuery {
 	return NewBotClient(_m.config).QueryStrategy(_m)
+}
+
+// QueryRuntime queries the "runtime" edge of the Bot entity.
+func (_m *Bot) QueryRuntime() *BotRuntimeQuery {
+	return NewBotClient(_m.config).QueryRuntime(_m)
 }
 
 // QueryTrades queries the "trades" edge of the Bot entity.
@@ -310,11 +329,8 @@ func (_m *Bot) String() string {
 	builder.WriteString("mode=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Mode))
 	builder.WriteString(", ")
-	builder.WriteString("runtime_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.RuntimeType))
-	builder.WriteString(", ")
-	builder.WriteString("runtime_id=")
-	builder.WriteString(_m.RuntimeID)
+	builder.WriteString("container_id=")
+	builder.WriteString(_m.ContainerID)
 	builder.WriteString(", ")
 	builder.WriteString("runtime_metadata=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RuntimeMetadata))
@@ -344,6 +360,9 @@ func (_m *Bot) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("strategy_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StrategyID))
+	builder.WriteString(", ")
+	builder.WriteString("runtime_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RuntimeID))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

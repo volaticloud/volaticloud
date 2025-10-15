@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botruntime"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
@@ -80,6 +81,7 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			backtest.Table:       backtest.ValidColumn,
 			bot.Table:            bot.ValidColumn,
+			botruntime.Table:     botruntime.ValidColumn,
 			exchange.Table:       exchange.ValidColumn,
 			exchangesecret.Table: exchangesecret.ValidColumn,
 			strategy.Table:       strategy.ValidColumn,

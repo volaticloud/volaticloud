@@ -23,28 +23,10 @@ type Backtest struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Task status
 	Status enum.TaskStatus `json:"status,omitempty"`
-	// Historical data start date
-	StartDate time.Time `json:"start_date,omitempty"`
-	// Historical data end date
-	EndDate time.Time `json:"end_date,omitempty"`
-	// Candlestick timeframe
-	Timeframe string `json:"timeframe,omitempty"`
-	// Stake amount per trade
-	StakeAmount float64 `json:"stake_amount,omitempty"`
-	// Currency (USDT, BTC, etc.)
-	StakeCurrency string `json:"stake_currency,omitempty"`
-	// List of trading pairs
-	Pairs []string `json:"pairs,omitempty"`
-	// Backtest results
-	Results map[string]interface{} `json:"results,omitempty"`
-	// Backtest-specific configuration
+	// Backtest configuration (pairs, timeframe, dates, stake, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
-	// Runtime identifier for execution
-	RuntimeID string `json:"runtime_id,omitempty"`
-	// Execution logs
-	LogOutput string `json:"log_output,omitempty"`
-	// Error if failed
-	ErrorMessage string `json:"error_message,omitempty"`
+	// Backtest result data (metrics, logs, trades, etc.)
+	Result map[string]interface{} `json:"result,omitempty"`
 	// Foreign key to strategy
 	StrategyID uuid.UUID `json:"strategy_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -86,13 +68,11 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case backtest.FieldPairs, backtest.FieldResults, backtest.FieldConfig:
+		case backtest.FieldConfig, backtest.FieldResult:
 			values[i] = new([]byte)
-		case backtest.FieldStakeAmount:
-			values[i] = new(sql.NullFloat64)
-		case backtest.FieldStatus, backtest.FieldTimeframe, backtest.FieldStakeCurrency, backtest.FieldRuntimeID, backtest.FieldLogOutput, backtest.FieldErrorMessage:
+		case backtest.FieldStatus:
 			values[i] = new(sql.NullString)
-		case backtest.FieldStartDate, backtest.FieldEndDate, backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt:
+		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
 		case backtest.FieldID, backtest.FieldStrategyID:
 			values[i] = new(uuid.UUID)
@@ -123,52 +103,6 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = enum.TaskStatus(value.String)
 			}
-		case backtest.FieldStartDate:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field start_date", values[i])
-			} else if value.Valid {
-				_m.StartDate = value.Time
-			}
-		case backtest.FieldEndDate:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field end_date", values[i])
-			} else if value.Valid {
-				_m.EndDate = value.Time
-			}
-		case backtest.FieldTimeframe:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field timeframe", values[i])
-			} else if value.Valid {
-				_m.Timeframe = value.String
-			}
-		case backtest.FieldStakeAmount:
-			if value, ok := values[i].(*sql.NullFloat64); !ok {
-				return fmt.Errorf("unexpected type %T for field stake_amount", values[i])
-			} else if value.Valid {
-				_m.StakeAmount = value.Float64
-			}
-		case backtest.FieldStakeCurrency:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field stake_currency", values[i])
-			} else if value.Valid {
-				_m.StakeCurrency = value.String
-			}
-		case backtest.FieldPairs:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field pairs", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Pairs); err != nil {
-					return fmt.Errorf("unmarshal field pairs: %w", err)
-				}
-			}
-		case backtest.FieldResults:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field results", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Results); err != nil {
-					return fmt.Errorf("unmarshal field results: %w", err)
-				}
-			}
 		case backtest.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field config", values[i])
@@ -177,23 +111,13 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field config: %w", err)
 				}
 			}
-		case backtest.FieldRuntimeID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field runtime_id", values[i])
-			} else if value.Valid {
-				_m.RuntimeID = value.String
-			}
-		case backtest.FieldLogOutput:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field log_output", values[i])
-			} else if value.Valid {
-				_m.LogOutput = value.String
-			}
-		case backtest.FieldErrorMessage:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field error_message", values[i])
-			} else if value.Valid {
-				_m.ErrorMessage = value.String
+		case backtest.FieldResult:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field result", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Result); err != nil {
+					return fmt.Errorf("unmarshal field result: %w", err)
+				}
 			}
 		case backtest.FieldStrategyID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -263,38 +187,11 @@ func (_m *Backtest) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
-	builder.WriteString("start_date=")
-	builder.WriteString(_m.StartDate.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("end_date=")
-	builder.WriteString(_m.EndDate.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("timeframe=")
-	builder.WriteString(_m.Timeframe)
-	builder.WriteString(", ")
-	builder.WriteString("stake_amount=")
-	builder.WriteString(fmt.Sprintf("%v", _m.StakeAmount))
-	builder.WriteString(", ")
-	builder.WriteString("stake_currency=")
-	builder.WriteString(_m.StakeCurrency)
-	builder.WriteString(", ")
-	builder.WriteString("pairs=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Pairs))
-	builder.WriteString(", ")
-	builder.WriteString("results=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Results))
-	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))
 	builder.WriteString(", ")
-	builder.WriteString("runtime_id=")
-	builder.WriteString(_m.RuntimeID)
-	builder.WriteString(", ")
-	builder.WriteString("log_output=")
-	builder.WriteString(_m.LogOutput)
-	builder.WriteString(", ")
-	builder.WriteString("error_message=")
-	builder.WriteString(_m.ErrorMessage)
+	builder.WriteString("result=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Result))
 	builder.WriteString(", ")
 	builder.WriteString("strategy_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StrategyID))
