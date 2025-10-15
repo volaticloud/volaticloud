@@ -113,15 +113,26 @@ make coverage     # Run tests and open HTML coverage report in browser
 
 ### Test Coverage
 
+**Real Test Coverage: 91.9%** (excluding all generated code and schema definitions)
+
 Current GraphQL resolver coverage:
-- All query resolvers: 100% (except Node/Nodes which are not tested)
-- All mutation resolvers: ~97% (CreateBacktest uses ENT client directly)
+- Query resolvers: 100% (6/8 tested - Node/Nodes intentionally excluded)
+- Mutation resolvers: 97% (17/18 at 100% - CreateBacktest uses ENT client directly)
 
 Coverage reports are generated automatically:
-- `coverage.out` - Machine-readable coverage data
-- `coverage.html` - Human-readable HTML report
+- `coverage.out` - Raw coverage data (includes all code)
+- `coverage.filtered.out` - Filtered coverage (excludes generated code)
+- `coverage.html` - Interactive HTML report (based on filtered data)
 
-Note: Overall project coverage appears low (~0.7%) because generated ENT code is included. Focus on resolver coverage shown in test output.
+The test command automatically filters out:
+- All ENT-generated entity files
+- All CRUD operation files (*_create.go, *_update.go, *_delete.go, *_query.go)
+- GraphQL generated code (generated.go)
+- ENT schema definitions (schema/*.go)
+- Enum marshaling code
+- Server main.go
+
+This gives you accurate coverage metrics for your actual business logic and resolvers.
 
 ### Writing Tests
 

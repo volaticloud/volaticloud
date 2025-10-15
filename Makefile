@@ -54,13 +54,22 @@ build:
 test:
 	@echo "Running tests..."
 	go test -v -race -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out -o coverage.html
+	@echo ""
+	@echo "Filtering generated code and schema definitions from coverage..."
+	@grep -v -E "/(ent|graph)/.*_create\.go|/(ent|graph)/.*_update\.go|/(ent|graph)/.*_delete\.go|/(ent|graph)/.*_query\.go|/ent/(backtest|bot|exchange|exchangesecret|strategy|trade)\.go|/ent/(backtest|bot|exchange|exchangesecret|strategy|trade)/|/ent/client\.go|/ent/ent\.go|/ent/tx\.go|/ent/mutation\.go|/ent/runtime\.go|/ent/gql_.*\.go|/ent/migrate/|/ent/hook/|/ent/predicate/|/ent/enttest/|/ent/schema/|/graph/generated\.go|/graph/ent\.graphql|/enum/|cmd/server/main\.go" coverage.out > coverage.filtered.out || true
+	go tool cover -html=coverage.filtered.out -o coverage.html
 	@echo ""
 	@echo "Tests complete!"
-	@echo "Coverage report: coverage.html"
+	@echo "Coverage report (excluding generated code): coverage.html"
 	@echo ""
-	@echo "GraphQL Resolver Coverage:"
-	@go tool cover -func=coverage.out | grep -E "ent.resolvers.go|schema.resolvers.go" | grep -v generated || echo "  No resolver coverage data"
+	@echo "=== Coverage Summary (Excluding Generated Code) ==="
+	@go tool cover -func=coverage.filtered.out | tail -1
+	@echo ""
+	@echo "=== GraphQL Resolver Coverage ==="
+	@go tool cover -func=coverage.filtered.out | grep -E "ent.resolvers.go|schema.resolvers.go" || echo "  No resolver data"
+	@echo ""
+	@echo "=== Schema Coverage ==="
+	@go tool cover -func=coverage.filtered.out | grep "schema/" || echo "  No schema data"
 
 # Run tests and open coverage report
 coverage: test
@@ -93,6 +102,6 @@ db-reset:
 # Clean generated files
 clean:
 	@echo "Cleaning generated files..."
-	rm -f coverage.out coverage.html
+	rm -f coverage.out coverage.filtered.out coverage.html
 	rm -rf bin/
 	@echo "Clean complete!"
