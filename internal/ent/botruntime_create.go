@@ -113,7 +113,9 @@ func (_c *BotRuntimeCreate) Mutation() *BotRuntimeMutation {
 
 // Save creates the BotRuntime in the database.
 func (_c *BotRuntimeCreate) Save(ctx context.Context) (*BotRuntime, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -140,23 +142,33 @@ func (_c *BotRuntimeCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *BotRuntimeCreate) defaults() {
+func (_c *BotRuntimeCreate) defaults() error {
 	if _, ok := _c.mutation.GetType(); !ok {
 		v := botruntime.DefaultType
 		_c.mutation.SetType(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if botruntime.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized botruntime.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := botruntime.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if botruntime.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized botruntime.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := botruntime.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if botruntime.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized botruntime.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := botruntime.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

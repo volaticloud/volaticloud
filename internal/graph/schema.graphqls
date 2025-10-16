@@ -1,6 +1,30 @@
 # Custom GraphQL schema
-# Scalar type declarations that ENT types depend on
+
+# Scalar declarations
 scalar Time
+
+# Bot runtime status from the runner
+type BotStatus {
+  botID: String!
+  status: BotBotStatus!
+  containerID: String!
+  healthy: Boolean!
+  lastSeenAt: Time
+  cpuUsage: Float!
+  memoryUsage: Int!
+  ipAddress: String!
+  hostPort: Int!
+  errorMessage: String!
+  createdAt: Time!
+  startedAt: Time
+  stoppedAt: Time
+}
+
+# Query extensions
+extend type Query {
+  # Get runtime status for a bot
+  getBotRuntimeStatus(id: ID!): BotStatus
+}
 
 # Mutations for managing entities
 type Mutation {
@@ -23,6 +47,11 @@ type Mutation {
   createBot(input: CreateBotInput!): Bot!
   updateBot(id: ID!, input: UpdateBotInput!): Bot!
   deleteBot(id: ID!): Boolean!
+
+  # Bot lifecycle mutations
+  startBot(id: ID!): Bot!
+  stopBot(id: ID!): Bot!
+  restartBot(id: ID!): Bot!
 
   # BotRuntime mutations
   createBotRuntime(input: CreateBotRuntimeInput!): BotRuntime!

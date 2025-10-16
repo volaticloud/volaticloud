@@ -20,9 +20,10 @@ resolver:
   filename_template: "{name}.resolvers.go"
   omit_template_comment: true
 
-# Autobind ENT types
+# Autobind ENT types and runner types
 autobind:
   - anytrade/internal/ent
+  - anytrade/internal/runner
 
 # Type mappings
 models:
@@ -71,3 +72,8 @@ models:
   Trade:
     model:
       - anytrade/internal/ent.Trade
+
+  # Map runner types to GraphQL
+  BotStatus:
+    model:
+      - anytrade/internal/runner.BotStatus

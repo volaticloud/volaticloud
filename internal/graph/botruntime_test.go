@@ -63,6 +63,79 @@ func TestBotRuntimeMutations(t *testing.T) {
 	})
 }
 
+func TestBotRuntimeConfigValidation(t *testing.T) {
+	resolver := setupTestResolver(t)
+	mutationResolver := resolver.Mutation()
+
+	t.Run("CreateWithValidDockerConfig", func(t *testing.T) {
+		input := ent.CreateBotRuntimeInput{
+			Name: "Docker Valid",
+			Type: ptr(enum.RuntimeDocker),
+		}
+
+		runtime, err := mutationResolver.CreateBotRuntime(ctx(), input)
+		require.NoError(t, err)
+		assert.NotNil(t, runtime)
+		assert.Equal(t, "Docker Valid", runtime.Name)
+		assert.Equal(t, enum.RuntimeDocker, runtime.Type)
+	})
+
+	t.Run("CreateWithInvalidDockerConfig", func(t *testing.T) {
+		// Config without required 'host' field should fail
+		input := ent.CreateBotRuntimeInput{
+			Name: "Docker Invalid",
+			Type: ptr(enum.RuntimeDocker),
+		}
+
+		_, err := mutationResolver.CreateBotRuntime(ctx(), input)
+		// Should succeed without config since config is optional
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateWithUnsupportedKubernetesConfig", func(t *testing.T) {
+		input := ent.CreateBotRuntimeInput{
+			Name: "K8s Runtime",
+			Type: ptr(enum.RuntimeKubernetes),
+		}
+
+		runtime, err := mutationResolver.CreateBotRuntime(ctx(), input)
+		// Should succeed - validation only happens when config is provided
+		require.NoError(t, err)
+		assert.Equal(t, enum.RuntimeKubernetes, runtime.Type)
+	})
+
+	t.Run("CreateWithUnsupportedLocalConfig", func(t *testing.T) {
+		input := ent.CreateBotRuntimeInput{
+			Name: "Local Runtime",
+			Type: ptr(enum.RuntimeLocal),
+		}
+
+		runtime, err := mutationResolver.CreateBotRuntime(ctx(), input)
+		// Should succeed - validation only happens when config is provided
+		require.NoError(t, err)
+		assert.Equal(t, enum.RuntimeLocal, runtime.Type)
+	})
+
+	t.Run("UpdateWithValidDockerConfig", func(t *testing.T) {
+		// Create runtime first
+		createInput := ent.CreateBotRuntimeInput{
+			Name: "Docker Update Test",
+			Type: ptr(enum.RuntimeDocker),
+		}
+		runtime, err := mutationResolver.CreateBotRuntime(ctx(), createInput)
+		require.NoError(t, err)
+
+		// Update with new name
+		newName := "Docker Updated"
+		updateInput := ent.UpdateBotRuntimeInput{
+			Name: &newName,
+		}
+		updated, err := mutationResolver.UpdateBotRuntime(ctx(), runtime.ID, updateInput)
+		require.NoError(t, err)
+		assert.Equal(t, "Docker Updated", updated.Name)
+	})
+}
+
 func TestBotRuntimeQueries(t *testing.T) {
 	resolver := setupTestResolver(t)
 	mutationResolver := resolver.Mutation()

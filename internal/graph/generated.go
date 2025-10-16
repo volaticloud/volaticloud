@@ -6,6 +6,7 @@ import (
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/schema/uuidgql"
 	"anytrade/internal/enum"
+	"anytrade/internal/runner"
 	"bytes"
 	"context"
 	"embed"
@@ -126,6 +127,22 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	BotStatus struct {
+		BotID        func(childComplexity int) int
+		CPUUsage     func(childComplexity int) int
+		ContainerID  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ErrorMessage func(childComplexity int) int
+		Healthy      func(childComplexity int) int
+		HostPort     func(childComplexity int) int
+		IPAddress    func(childComplexity int) int
+		LastSeenAt   func(childComplexity int) int
+		MemoryUsage  func(childComplexity int) int
+		StartedAt    func(childComplexity int) int
+		Status       func(childComplexity int) int
+		StoppedAt    func(childComplexity int) int
+	}
+
 	Exchange struct {
 		Bots      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		CreatedAt func(childComplexity int) int
@@ -171,6 +188,9 @@ type ComplexityRoot struct {
 		DeleteExchangeSecret func(childComplexity int, id uuid.UUID) int
 		DeleteStrategy       func(childComplexity int, id uuid.UUID) int
 		DeleteTrade          func(childComplexity int, id uuid.UUID) int
+		RestartBot           func(childComplexity int, id uuid.UUID) int
+		StartBot             func(childComplexity int, id uuid.UUID) int
+		StopBot              func(childComplexity int, id uuid.UUID) int
 		UpdateBacktest       func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
 		UpdateBot            func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
 		UpdateBotRuntime     func(childComplexity int, id uuid.UUID, input ent.UpdateBotRuntimeInput) int
@@ -188,15 +208,16 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Backtests       func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		BotRuntimes     func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		Bots            func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		ExchangeSecrets func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		Exchanges       func(childComplexity int) int
-		Node            func(childComplexity int, id uuid.UUID) int
-		Nodes           func(childComplexity int, ids []uuid.UUID) int
-		Strategies      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		Trades          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Backtests           func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		BotRuntimes         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Bots                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		ExchangeSecrets     func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Exchanges           func(childComplexity int) int
+		GetBotRuntimeStatus func(childComplexity int, id uuid.UUID) int
+		Node                func(childComplexity int, id uuid.UUID) int
+		Nodes               func(childComplexity int, ids []uuid.UUID) int
+		Strategies          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Trades              func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 	}
 
 	Strategy struct {
@@ -269,6 +290,9 @@ type MutationResolver interface {
 	CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error)
 	UpdateBot(ctx context.Context, id uuid.UUID, input ent.UpdateBotInput) (*ent.Bot, error)
 	DeleteBot(ctx context.Context, id uuid.UUID) (bool, error)
+	StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error)
+	StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error)
+	RestartBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error)
 	CreateBotRuntime(ctx context.Context, input ent.CreateBotRuntimeInput) (*ent.BotRuntime, error)
 	UpdateBotRuntime(ctx context.Context, id uuid.UUID, input ent.UpdateBotRuntimeInput) (*ent.BotRuntime, error)
 	DeleteBotRuntime(ctx context.Context, id uuid.UUID) (bool, error)
@@ -289,6 +313,7 @@ type QueryResolver interface {
 	ExchangeSecrets(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.ExchangeSecretConnection, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.TradeConnection, error)
+	GetBotRuntimeStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
 }
 
 type executableSchema struct {
@@ -611,6 +636,85 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BotRuntimeEdge.Node(childComplexity), true
 
+	case "BotStatus.botID":
+		if e.complexity.BotStatus.BotID == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.BotID(childComplexity), true
+	case "BotStatus.cpuUsage":
+		if e.complexity.BotStatus.CPUUsage == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.CPUUsage(childComplexity), true
+	case "BotStatus.containerID":
+		if e.complexity.BotStatus.ContainerID == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.ContainerID(childComplexity), true
+	case "BotStatus.createdAt":
+		if e.complexity.BotStatus.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.CreatedAt(childComplexity), true
+	case "BotStatus.errorMessage":
+		if e.complexity.BotStatus.ErrorMessage == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.ErrorMessage(childComplexity), true
+	case "BotStatus.healthy":
+		if e.complexity.BotStatus.Healthy == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.Healthy(childComplexity), true
+	case "BotStatus.hostPort":
+		if e.complexity.BotStatus.HostPort == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.HostPort(childComplexity), true
+	case "BotStatus.ipAddress":
+		if e.complexity.BotStatus.IPAddress == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.IPAddress(childComplexity), true
+	case "BotStatus.lastSeenAt":
+		if e.complexity.BotStatus.LastSeenAt == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.LastSeenAt(childComplexity), true
+	case "BotStatus.memoryUsage":
+		if e.complexity.BotStatus.MemoryUsage == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.MemoryUsage(childComplexity), true
+	case "BotStatus.startedAt":
+		if e.complexity.BotStatus.StartedAt == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.StartedAt(childComplexity), true
+	case "BotStatus.status":
+		if e.complexity.BotStatus.Status == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.Status(childComplexity), true
+	case "BotStatus.stoppedAt":
+		if e.complexity.BotStatus.StoppedAt == nil {
+			break
+		}
+
+		return e.complexity.BotStatus.StoppedAt(childComplexity), true
+
 	case "Exchange.bots":
 		if e.complexity.Exchange.Bots == nil {
 			break
@@ -887,6 +991,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteTrade(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.restartBot":
+		if e.complexity.Mutation.RestartBot == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_restartBot_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RestartBot(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.startBot":
+		if e.complexity.Mutation.StartBot == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_startBot_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.StartBot(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.stopBot":
+		if e.complexity.Mutation.StopBot == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_stopBot_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.StopBot(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.updateBacktest":
 		if e.complexity.Mutation.UpdateBacktest == nil {
 			break
@@ -1040,6 +1177,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Exchanges(childComplexity), true
+	case "Query.getBotRuntimeStatus":
+		if e.complexity.Query.GetBotRuntimeStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getBotRuntimeStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetBotRuntimeStatus(childComplexity, args["id"].(uuid.UUID)), true
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -1726,6 +1874,39 @@ func (ec *executionContext) field_Mutation_deleteTrade_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_restartBot_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_startBot_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_stopBot_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1950,6 +2131,17 @@ func (ec *executionContext) field_Query_exchangeSecrets_args(ctx context.Context
 		return nil, err
 	}
 	args["last"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getBotRuntimeStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -3722,6 +3914,383 @@ func (ec *executionContext) fieldContext_BotRuntimeEdge_cursor(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _BotStatus_botID(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_botID,
+		func(ctx context.Context) (any, error) {
+			return obj.BotID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_botID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_status(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BotBotStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_containerID(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_containerID,
+		func(ctx context.Context) (any, error) {
+			return obj.ContainerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_containerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_healthy(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_healthy,
+		func(ctx context.Context) (any, error) {
+			return obj.Healthy, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_healthy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_lastSeenAt(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_lastSeenAt,
+		func(ctx context.Context) (any, error) {
+			return obj.LastSeenAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_lastSeenAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_cpuUsage(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_cpuUsage,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUUsage, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_cpuUsage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_memoryUsage(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_memoryUsage,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryUsage, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_memoryUsage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_ipAddress(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_ipAddress,
+		func(ctx context.Context) (any, error) {
+			return obj.IPAddress, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_ipAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_hostPort(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_hostPort,
+		func(ctx context.Context) (any, error) {
+			return obj.HostPort, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_hostPort(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_errorMessage(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_errorMessage,
+		func(ctx context.Context) (any, error) {
+			return obj.ErrorMessage, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_errorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_createdAt(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_startedAt(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_startedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.StartedAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_startedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotStatus_stoppedAt(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotStatus_stoppedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.StoppedAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotStatus_stoppedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Exchange_id(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5002,6 +5571,249 @@ func (ec *executionContext) fieldContext_Mutation_deleteBot(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_startBot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_startBot,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().StartBot(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bot_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Bot_name(ctx, field)
+			case "status":
+				return ec.fieldContext_Bot_status(ctx, field)
+			case "mode":
+				return ec.fieldContext_Bot_mode(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Bot_containerID(ctx, field)
+			case "apiURL":
+				return ec.fieldContext_Bot_apiURL(ctx, field)
+			case "apiUsername":
+				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "freqtradeVersion":
+				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
+			case "lastSeenAt":
+				return ec.fieldContext_Bot_lastSeenAt(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Bot_errorMessage(ctx, field)
+			case "exchangeID":
+				return ec.fieldContext_Bot_exchangeID(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Bot_strategyID(ctx, field)
+			case "runtimeID":
+				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bot_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Bot_updatedAt(ctx, field)
+			case "exchange":
+				return ec.fieldContext_Bot_exchange(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Bot_strategy(ctx, field)
+			case "runtime":
+				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "trades":
+				return ec.fieldContext_Bot_trades(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_startBot_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_stopBot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_stopBot,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().StopBot(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bot_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Bot_name(ctx, field)
+			case "status":
+				return ec.fieldContext_Bot_status(ctx, field)
+			case "mode":
+				return ec.fieldContext_Bot_mode(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Bot_containerID(ctx, field)
+			case "apiURL":
+				return ec.fieldContext_Bot_apiURL(ctx, field)
+			case "apiUsername":
+				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "freqtradeVersion":
+				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
+			case "lastSeenAt":
+				return ec.fieldContext_Bot_lastSeenAt(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Bot_errorMessage(ctx, field)
+			case "exchangeID":
+				return ec.fieldContext_Bot_exchangeID(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Bot_strategyID(ctx, field)
+			case "runtimeID":
+				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bot_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Bot_updatedAt(ctx, field)
+			case "exchange":
+				return ec.fieldContext_Bot_exchange(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Bot_strategy(ctx, field)
+			case "runtime":
+				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "trades":
+				return ec.fieldContext_Bot_trades(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_stopBot_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_restartBot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_restartBot,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RestartBot(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bot_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Bot_name(ctx, field)
+			case "status":
+				return ec.fieldContext_Bot_status(ctx, field)
+			case "mode":
+				return ec.fieldContext_Bot_mode(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Bot_containerID(ctx, field)
+			case "apiURL":
+				return ec.fieldContext_Bot_apiURL(ctx, field)
+			case "apiUsername":
+				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "freqtradeVersion":
+				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
+			case "lastSeenAt":
+				return ec.fieldContext_Bot_lastSeenAt(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Bot_errorMessage(ctx, field)
+			case "exchangeID":
+				return ec.fieldContext_Bot_exchangeID(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Bot_strategyID(ctx, field)
+			case "runtimeID":
+				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bot_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Bot_updatedAt(ctx, field)
+			case "exchange":
+				return ec.fieldContext_Bot_exchange(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Bot_strategy(ctx, field)
+			case "runtime":
+				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "trades":
+				return ec.fieldContext_Bot_trades(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_restartBot_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createBotRuntime(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6042,6 +6854,75 @@ func (ec *executionContext) fieldContext_Query_trades(ctx context.Context, field
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_trades_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getBotRuntimeStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_getBotRuntimeStatus,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().GetBotRuntimeStatus(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐBotStatus,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_getBotRuntimeStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "botID":
+				return ec.fieldContext_BotStatus_botID(ctx, field)
+			case "status":
+				return ec.fieldContext_BotStatus_status(ctx, field)
+			case "containerID":
+				return ec.fieldContext_BotStatus_containerID(ctx, field)
+			case "healthy":
+				return ec.fieldContext_BotStatus_healthy(ctx, field)
+			case "lastSeenAt":
+				return ec.fieldContext_BotStatus_lastSeenAt(ctx, field)
+			case "cpuUsage":
+				return ec.fieldContext_BotStatus_cpuUsage(ctx, field)
+			case "memoryUsage":
+				return ec.fieldContext_BotStatus_memoryUsage(ctx, field)
+			case "ipAddress":
+				return ec.fieldContext_BotStatus_ipAddress(ctx, field)
+			case "hostPort":
+				return ec.fieldContext_BotStatus_hostPort(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_BotStatus_errorMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotStatus_createdAt(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_BotStatus_startedAt(ctx, field)
+			case "stoppedAt":
+				return ec.fieldContext_BotStatus_stoppedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotStatus", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getBotRuntimeStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10893,6 +11774,96 @@ func (ec *executionContext) _BotRuntimeEdge(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var botStatusImplementors = []string{"BotStatus"}
+
+func (ec *executionContext) _BotStatus(ctx context.Context, sel ast.SelectionSet, obj *runner.BotStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, botStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BotStatus")
+		case "botID":
+			out.Values[i] = ec._BotStatus_botID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._BotStatus_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "containerID":
+			out.Values[i] = ec._BotStatus_containerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "healthy":
+			out.Values[i] = ec._BotStatus_healthy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastSeenAt":
+			out.Values[i] = ec._BotStatus_lastSeenAt(ctx, field, obj)
+		case "cpuUsage":
+			out.Values[i] = ec._BotStatus_cpuUsage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memoryUsage":
+			out.Values[i] = ec._BotStatus_memoryUsage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ipAddress":
+			out.Values[i] = ec._BotStatus_ipAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hostPort":
+			out.Values[i] = ec._BotStatus_hostPort(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errorMessage":
+			out.Values[i] = ec._BotStatus_errorMessage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._BotStatus_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startedAt":
+			out.Values[i] = ec._BotStatus_startedAt(ctx, field, obj)
+		case "stoppedAt":
+			out.Values[i] = ec._BotStatus_stoppedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exchangeImplementors = []string{"Exchange", "Node"}
 
 func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet, obj *ent.Exchange) graphql.Marshaler {
@@ -11309,6 +12280,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "startBot":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_startBot(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopBot":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_stopBot(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "restartBot":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_restartBot(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createBotRuntime":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createBotRuntime(ctx, field)
@@ -11648,6 +12640,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getBotRuntimeStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getBotRuntimeStatus(ctx, field)
 				return res
 			}
 
@@ -12839,6 +13850,22 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v any) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNNode2ᚕanytradeᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v []ent.Noder) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -13514,6 +14541,13 @@ func (ec *executionContext) marshalOBotRuntimeRuntimeType2ᚖanytradeᚋinternal
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v *runner.BotStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BotStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor(ctx context.Context, v any) (*entgql.Cursor[uuid.UUID], error) {

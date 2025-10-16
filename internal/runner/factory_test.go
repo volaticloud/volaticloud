@@ -1,0 +1,96 @@
+package runner
+
+import (
+	"context"
+	"testing"
+
+	"anytrade/internal/enum"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestFactory(t *testing.T) {
+	factory := NewFactory()
+	ctx := context.Background()
+
+	t.Run("CreateDockerRuntime_ValidConfig", func(t *testing.T) {
+		config := map[string]interface{}{
+			"host": "unix:///var/run/docker.sock",
+		}
+
+		// Note: This will fail if Docker is not running, which is expected
+		rt, err := factory.Create(ctx, enum.RuntimeDocker, config)
+
+		// We expect either success (if Docker is available) or a connection error
+		if err != nil {
+			// Should be a connection error, not a config error
+			assert.Contains(t, err.Error(), "Docker")
+		} else {
+			require.NotNil(t, rt)
+			assert.Equal(t, "docker", rt.Type())
+			rt.Close()
+		}
+	})
+
+	t.Run("CreateDockerRuntime_InvalidConfig", func(t *testing.T) {
+		config := map[string]interface{}{
+			"network": "bridge", // Missing required 'host'
+		}
+
+		rt, err := factory.Create(ctx, enum.RuntimeDocker, config)
+
+		assert.Error(t, err)
+		assert.Nil(t, rt)
+		assert.Contains(t, err.Error(), "host is required")
+	})
+
+	t.Run("CreateKubernetesRuntime", func(t *testing.T) {
+		config := map[string]interface{}{
+			"namespace": "default",
+		}
+
+		rt, err := factory.Create(ctx, enum.RuntimeKubernetes, config)
+
+		require.NoError(t, err)
+		require.NotNil(t, rt)
+		assert.Equal(t, "kubernetes", rt.Type())
+
+		// Verify it's not actually supported
+		err = rt.HealthCheck(ctx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not yet supported")
+	})
+
+	t.Run("CreateLocalRuntime", func(t *testing.T) {
+		config := map[string]interface{}{
+			"work_dir": "/tmp",
+		}
+
+		rt, err := factory.Create(ctx, enum.RuntimeLocal, config)
+
+		require.NoError(t, err)
+		require.NotNil(t, rt)
+		assert.Equal(t, "local", rt.Type())
+
+		// Verify it's not actually supported
+		err = rt.HealthCheck(ctx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not yet supported")
+	})
+
+	t.Run("CreateRuntime_UnsupportedType", func(t *testing.T) {
+		config := map[string]interface{}{}
+
+		rt, err := factory.Create(ctx, enum.RuntimeType("invalid"), config)
+
+		assert.Error(t, err)
+		assert.Nil(t, rt)
+		assert.Contains(t, err.Error(), "unsupported runtime type")
+	})
+}
+
+func TestNewFactory(t *testing.T) {
+	factory := NewFactory()
+	assert.NotNil(t, factory)
+}

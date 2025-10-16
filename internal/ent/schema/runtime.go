@@ -60,3 +60,10 @@ func (BotRuntime) Annotations() []schema.Annotation {
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
 	}
 }
+
+// Hooks of the BotRuntime.
+func (BotRuntime) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateRuntimeConfig,
+	}
+}

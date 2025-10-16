@@ -729,7 +729,8 @@ func (c *BotRuntimeClient) QueryBots(_m *BotRuntime) *BotQuery {
 
 // Hooks returns the client hooks.
 func (c *BotRuntimeClient) Hooks() []Hook {
-	return c.hooks.BotRuntime
+	hooks := c.hooks.BotRuntime
+	return append(hooks[:len(hooks):len(hooks)], botruntime.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
