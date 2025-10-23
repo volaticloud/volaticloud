@@ -1,0 +1,51 @@
+query GetStrategies($first: Int, $after: Cursor) {
+  strategies(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        name
+        description
+        code
+        version
+        config
+        createdAt
+        bots {
+          totalCount
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+mutation CreateStrategy($input: CreateStrategyInput!) {
+  createStrategy(input: $input) {
+    id
+    name
+    description
+    code
+    version
+    config
+  }
+}
+
+mutation UpdateStrategy($id: ID!, $input: UpdateStrategyInput!) {
+  updateStrategy(id: $id, input: $input) {
+    id
+    name
+    description
+    code
+    version
+    config
+  }
+}
+
+mutation DeleteStrategy($id: ID!) {
+  deleteStrategy(id: $id)
+}

@@ -1,0 +1,59 @@
+query GetDashboardData {
+  bots(first: 10) {
+    edges {
+      node {
+        id
+        name
+        status
+        mode
+        freqtradeVersion
+        lastSeenAt
+        exchange {
+          id
+          name
+        }
+        strategy {
+          id
+          name
+        }
+      }
+    }
+    totalCount
+  }
+
+  trades(first: 10) {
+    edges {
+      node {
+        id
+        pair
+        isOpen
+        openDate
+        closeDate
+        profitAbs
+        profitRatio
+        bot {
+          id
+          name
+        }
+      }
+    }
+    totalCount
+  }
+
+  exchanges {
+    id
+    name
+    testMode
+  }
+
+  strategies(first: 10) {
+    edges {
+      node {
+        id
+        name
+        version
+      }
+    }
+    totalCount
+  }
+}

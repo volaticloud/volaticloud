@@ -1,0 +1,14 @@
+# Layout queries for navigation and summary data
+query GetBotsCount {
+  bots(first: 1) {
+    totalCount
+  }
+}
+
+query GetExchangesForLayout {
+  exchanges {
+    id
+    name
+    testMode
+  }
+}

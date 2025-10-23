@@ -1,0 +1,155 @@
+query GetBots($first: Int, $after: Cursor) {
+  bots(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        name
+        status
+        mode
+        containerID
+        freqtradeVersion
+        lastSeenAt
+        errorMessage
+        createdAt
+        config
+        exchange {
+          id
+          name
+        }
+        strategy {
+          id
+          name
+        }
+        runner {
+          id
+          name
+          type
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetBot($id: ID!) {
+  node(id: $id) {
+    ... on Bot {
+      id
+      name
+      status
+      mode
+      containerID
+      apiURL
+      apiUsername
+      freqtradeVersion
+      lastSeenAt
+      errorMessage
+      createdAt
+      updatedAt
+      config
+      exchange {
+        id
+        name
+        testMode
+      }
+      strategy {
+        id
+        name
+        description
+        version
+      }
+      runner {
+        id
+        name
+        type
+      }
+      trades(first: 10) {
+        edges {
+          node {
+            id
+            pair
+            isOpen
+            openDate
+            closeDate
+            profitAbs
+            profitRatio
+          }
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+query GetBotRunnerStatus($id: ID!) {
+  getBotRunnerStatus(id: $id) {
+    botID
+    status
+    containerID
+    healthy
+    lastSeenAt
+    cpuUsage
+    memoryUsage
+    ipAddress
+    hostPort
+    errorMessage
+    createdAt
+    startedAt
+    stoppedAt
+  }
+}
+
+mutation CreateBot($input: CreateBotInput!) {
+  createBot(input: $input) {
+    id
+    name
+    status
+    mode
+    freqtradeVersion
+    config
+  }
+}
+
+mutation UpdateBot($id: ID!, $input: UpdateBotInput!) {
+  updateBot(id: $id, input: $input) {
+    id
+    name
+    status
+    mode
+    config
+  }
+}
+
+mutation DeleteBot($id: ID!) {
+  deleteBot(id: $id)
+}
+
+mutation StartBot($id: ID!) {
+  startBot(id: $id) {
+    id
+    name
+    status
+  }
+}
+
+mutation StopBot($id: ID!) {
+  stopBot(id: $id) {
+    id
+    name
+    status
+  }
+}
+
+mutation RestartBot($id: ID!) {
+  restartBot(id: $id) {
+    id
+    name
+    status
+  }
+}

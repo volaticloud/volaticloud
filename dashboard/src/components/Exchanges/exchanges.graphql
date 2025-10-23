@@ -1,0 +1,54 @@
+query GetExchanges {
+  exchanges {
+    id
+    name
+    testMode
+    createdAt
+    updatedAt
+    bots(first: 10) {
+      totalCount
+    }
+  }
+}
+
+query GetExchange($id: ID!) {
+  node(id: $id) {
+    ... on Exchange {
+      id
+      name
+      testMode
+      createdAt
+      updatedAt
+      bots(first: 50) {
+        edges {
+          node {
+            id
+            name
+            status
+          }
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+mutation CreateExchange($input: CreateExchangeInput!) {
+  createExchange(input: $input) {
+    id
+    name
+    testMode
+  }
+}
+
+mutation UpdateExchange($id: ID!, $input: UpdateExchangeInput!) {
+  updateExchange(id: $id, input: $input) {
+    id
+    name
+    testMode
+  }
+}
+
+mutation DeleteExchange($id: ID!) {
+  deleteExchange(id: $id)
+}

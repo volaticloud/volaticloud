@@ -1,0 +1,56 @@
+query GetRunners($first: Int, $after: Cursor) {
+  botRunners(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        name
+        type
+        createdAt
+        bots {
+          totalCount
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetRunner($id: ID!) {
+  node(id: $id) {
+    ... on BotRunner {
+      id
+      name
+      type
+      createdAt
+      bots {
+        totalCount
+      }
+    }
+  }
+}
+
+mutation CreateRunner($input: CreateBotRunnerInput!) {
+  createBotRunner(input: $input) {
+    id
+    name
+    type
+  }
+}
+
+mutation UpdateRunner($id: ID!, $input: UpdateBotRunnerInput!) {
+  updateBotRunner(id: $id, input: $input) {
+    id
+    name
+    type
+  }
+}
+
+mutation DeleteRunner($id: ID!) {
+  deleteBotRunner(id: $id)
+}
