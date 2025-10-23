@@ -4,7 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
@@ -96,15 +96,15 @@ func (_u *BotUpdate) ClearContainerID() *BotUpdate {
 	return _u
 }
 
-// SetRuntimeMetadata sets the "runtime_metadata" field.
-func (_u *BotUpdate) SetRuntimeMetadata(v map[string]string) *BotUpdate {
-	_u.mutation.SetRuntimeMetadata(v)
+// SetRunnerMetadata sets the "runner_metadata" field.
+func (_u *BotUpdate) SetRunnerMetadata(v map[string]string) *BotUpdate {
+	_u.mutation.SetRunnerMetadata(v)
 	return _u
 }
 
-// ClearRuntimeMetadata clears the value of the "runtime_metadata" field.
-func (_u *BotUpdate) ClearRuntimeMetadata() *BotUpdate {
-	_u.mutation.ClearRuntimeMetadata()
+// ClearRunnerMetadata clears the value of the "runner_metadata" field.
+func (_u *BotUpdate) ClearRunnerMetadata() *BotUpdate {
+	_u.mutation.ClearRunnerMetadata()
 	return _u
 }
 
@@ -262,16 +262,16 @@ func (_u *BotUpdate) SetNillableStrategyID(v *uuid.UUID) *BotUpdate {
 	return _u
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_u *BotUpdate) SetRuntimeID(v uuid.UUID) *BotUpdate {
-	_u.mutation.SetRuntimeID(v)
+// SetRunnerID sets the "runner_id" field.
+func (_u *BotUpdate) SetRunnerID(v uuid.UUID) *BotUpdate {
+	_u.mutation.SetRunnerID(v)
 	return _u
 }
 
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableRuntimeID(v *uuid.UUID) *BotUpdate {
+// SetNillableRunnerID sets the "runner_id" field if the given value is not nil.
+func (_u *BotUpdate) SetNillableRunnerID(v *uuid.UUID) *BotUpdate {
 	if v != nil {
-		_u.SetRuntimeID(*v)
+		_u.SetRunnerID(*v)
 	}
 	return _u
 }
@@ -292,9 +292,9 @@ func (_u *BotUpdate) SetStrategy(v *Strategy) *BotUpdate {
 	return _u.SetStrategyID(v.ID)
 }
 
-// SetRuntime sets the "runtime" edge to the BotRuntime entity.
-func (_u *BotUpdate) SetRuntime(v *BotRuntime) *BotUpdate {
-	return _u.SetRuntimeID(v.ID)
+// SetRunner sets the "runner" edge to the BotRunner entity.
+func (_u *BotUpdate) SetRunner(v *BotRunner) *BotUpdate {
+	return _u.SetRunnerID(v.ID)
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by IDs.
@@ -329,9 +329,9 @@ func (_u *BotUpdate) ClearStrategy() *BotUpdate {
 	return _u
 }
 
-// ClearRuntime clears the "runtime" edge to the BotRuntime entity.
-func (_u *BotUpdate) ClearRuntime() *BotUpdate {
-	_u.mutation.ClearRuntime()
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (_u *BotUpdate) ClearRunner() *BotUpdate {
+	_u.mutation.ClearRunner()
 	return _u
 }
 
@@ -415,8 +415,8 @@ func (_u *BotUpdate) check() error {
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.strategy"`)
 	}
-	if _u.mutation.RuntimeCleared() && len(_u.mutation.RuntimeIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Bot.runtime"`)
+	if _u.mutation.RunnerCleared() && len(_u.mutation.RunnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Bot.runner"`)
 	}
 	return nil
 }
@@ -448,11 +448,11 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ContainerIDCleared() {
 		_spec.ClearField(bot.FieldContainerID, field.TypeString)
 	}
-	if value, ok := _u.mutation.RuntimeMetadata(); ok {
-		_spec.SetField(bot.FieldRuntimeMetadata, field.TypeJSON, value)
+	if value, ok := _u.mutation.RunnerMetadata(); ok {
+		_spec.SetField(bot.FieldRunnerMetadata, field.TypeJSON, value)
 	}
-	if _u.mutation.RuntimeMetadataCleared() {
-		_spec.ClearField(bot.FieldRuntimeMetadata, field.TypeJSON)
+	if _u.mutation.RunnerMetadataCleared() {
+		_spec.ClearField(bot.FieldRunnerMetadata, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.APIURL(); ok {
 		_spec.SetField(bot.FieldAPIURL, field.TypeString, value)
@@ -554,28 +554,28 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.RuntimeCleared() {
+	if _u.mutation.RunnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   bot.RuntimeTable,
-			Columns: []string{bot.RuntimeColumn},
+			Table:   bot.RunnerTable,
+			Columns: []string{bot.RunnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RuntimeIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RunnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   bot.RuntimeTable,
-			Columns: []string{bot.RuntimeColumn},
+			Table:   bot.RunnerTable,
+			Columns: []string{bot.RunnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -710,15 +710,15 @@ func (_u *BotUpdateOne) ClearContainerID() *BotUpdateOne {
 	return _u
 }
 
-// SetRuntimeMetadata sets the "runtime_metadata" field.
-func (_u *BotUpdateOne) SetRuntimeMetadata(v map[string]string) *BotUpdateOne {
-	_u.mutation.SetRuntimeMetadata(v)
+// SetRunnerMetadata sets the "runner_metadata" field.
+func (_u *BotUpdateOne) SetRunnerMetadata(v map[string]string) *BotUpdateOne {
+	_u.mutation.SetRunnerMetadata(v)
 	return _u
 }
 
-// ClearRuntimeMetadata clears the value of the "runtime_metadata" field.
-func (_u *BotUpdateOne) ClearRuntimeMetadata() *BotUpdateOne {
-	_u.mutation.ClearRuntimeMetadata()
+// ClearRunnerMetadata clears the value of the "runner_metadata" field.
+func (_u *BotUpdateOne) ClearRunnerMetadata() *BotUpdateOne {
+	_u.mutation.ClearRunnerMetadata()
 	return _u
 }
 
@@ -876,16 +876,16 @@ func (_u *BotUpdateOne) SetNillableStrategyID(v *uuid.UUID) *BotUpdateOne {
 	return _u
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_u *BotUpdateOne) SetRuntimeID(v uuid.UUID) *BotUpdateOne {
-	_u.mutation.SetRuntimeID(v)
+// SetRunnerID sets the "runner_id" field.
+func (_u *BotUpdateOne) SetRunnerID(v uuid.UUID) *BotUpdateOne {
+	_u.mutation.SetRunnerID(v)
 	return _u
 }
 
-// SetNillableRuntimeID sets the "runtime_id" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableRuntimeID(v *uuid.UUID) *BotUpdateOne {
+// SetNillableRunnerID sets the "runner_id" field if the given value is not nil.
+func (_u *BotUpdateOne) SetNillableRunnerID(v *uuid.UUID) *BotUpdateOne {
 	if v != nil {
-		_u.SetRuntimeID(*v)
+		_u.SetRunnerID(*v)
 	}
 	return _u
 }
@@ -906,9 +906,9 @@ func (_u *BotUpdateOne) SetStrategy(v *Strategy) *BotUpdateOne {
 	return _u.SetStrategyID(v.ID)
 }
 
-// SetRuntime sets the "runtime" edge to the BotRuntime entity.
-func (_u *BotUpdateOne) SetRuntime(v *BotRuntime) *BotUpdateOne {
-	return _u.SetRuntimeID(v.ID)
+// SetRunner sets the "runner" edge to the BotRunner entity.
+func (_u *BotUpdateOne) SetRunner(v *BotRunner) *BotUpdateOne {
+	return _u.SetRunnerID(v.ID)
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by IDs.
@@ -943,9 +943,9 @@ func (_u *BotUpdateOne) ClearStrategy() *BotUpdateOne {
 	return _u
 }
 
-// ClearRuntime clears the "runtime" edge to the BotRuntime entity.
-func (_u *BotUpdateOne) ClearRuntime() *BotUpdateOne {
-	_u.mutation.ClearRuntime()
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (_u *BotUpdateOne) ClearRunner() *BotUpdateOne {
+	_u.mutation.ClearRunner()
 	return _u
 }
 
@@ -1042,8 +1042,8 @@ func (_u *BotUpdateOne) check() error {
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.strategy"`)
 	}
-	if _u.mutation.RuntimeCleared() && len(_u.mutation.RuntimeIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Bot.runtime"`)
+	if _u.mutation.RunnerCleared() && len(_u.mutation.RunnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Bot.runner"`)
 	}
 	return nil
 }
@@ -1092,11 +1092,11 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	if _u.mutation.ContainerIDCleared() {
 		_spec.ClearField(bot.FieldContainerID, field.TypeString)
 	}
-	if value, ok := _u.mutation.RuntimeMetadata(); ok {
-		_spec.SetField(bot.FieldRuntimeMetadata, field.TypeJSON, value)
+	if value, ok := _u.mutation.RunnerMetadata(); ok {
+		_spec.SetField(bot.FieldRunnerMetadata, field.TypeJSON, value)
 	}
-	if _u.mutation.RuntimeMetadataCleared() {
-		_spec.ClearField(bot.FieldRuntimeMetadata, field.TypeJSON)
+	if _u.mutation.RunnerMetadataCleared() {
+		_spec.ClearField(bot.FieldRunnerMetadata, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.APIURL(); ok {
 		_spec.SetField(bot.FieldAPIURL, field.TypeString, value)
@@ -1198,28 +1198,28 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.RuntimeCleared() {
+	if _u.mutation.RunnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   bot.RuntimeTable,
-			Columns: []string{bot.RuntimeColumn},
+			Table:   bot.RunnerTable,
+			Columns: []string{bot.RunnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RuntimeIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RunnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   bot.RuntimeTable,
-			Columns: []string{bot.RuntimeColumn},
+			Table:   bot.RunnerTable,
+			Columns: []string{bot.RunnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

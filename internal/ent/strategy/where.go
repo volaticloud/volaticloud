@@ -356,6 +356,16 @@ func VersionContainsFold(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldContainsFold(FieldVersion, v))
 }
 
+// ConfigIsNil applies the IsNil predicate on the "config" field.
+func ConfigIsNil() predicate.Strategy {
+	return predicate.Strategy(sql.FieldIsNull(FieldConfig))
+}
+
+// ConfigNotNil applies the NotNil predicate on the "config" field.
+func ConfigNotNil() predicate.Strategy {
+	return predicate.Strategy(sql.FieldNotNull(FieldConfig))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Strategy {
 	return predicate.Strategy(sql.FieldEQ(FieldCreatedAt, v))

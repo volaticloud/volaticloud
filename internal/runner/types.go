@@ -19,18 +19,19 @@ type BotSpec struct {
 	FreqtradeVersion string           // Freqtrade version tag
 
 	// Strategy configuration
-	StrategyName    string            // Name of the strategy file
-	StrategyCode    string            // Strategy Python code content
+	StrategyName    string                 // Name of the strategy file
+	StrategyCode    string                 // Strategy Python code content
+	StrategyConfig  map[string]interface{} // Strategy-specific config.json
 
 	// Bot configuration
-	Config          map[string]interface{} // Freqtrade config JSON
+	Config          map[string]interface{} // Bot-specific Freqtrade config JSON
 
 	// Exchange configuration
 	ExchangeName    string            // Exchange name (binance, kraken, etc.)
 	ExchangeAPIKey  string            // Exchange API key
 	ExchangeSecret  string            // Exchange API secret
 
-	// Runtime configuration
+	// Runner configuration
 	Environment     map[string]string // Additional environment variables
 	ResourceLimits  *ResourceLimits   // CPU/memory limits
 	NetworkMode     string            // Network mode (bridge, host, custom)
@@ -56,14 +57,14 @@ type ResourceLimits struct {
 	CPUPeriod int64
 }
 
-// BotStatus represents the current status of a bot in the runtime
+// BotStatus represents the current status of a bot in the runner
 type BotStatus struct {
 	// Bot identification
 	BotID string
 
-	// Runtime status
+	// Runner status
 	Status      enum.BotStatus // creating, running, stopped, error
-	ContainerID string         // Runtime-specific identifier
+	ContainerID string         // Runner-specific identifier
 
 	// Health information
 	Healthy    bool
@@ -133,8 +134,8 @@ type UpdateBotSpec struct {
 	Environment map[string]string
 }
 
-// RuntimeError represents an error from runtime operations
-type RuntimeError struct {
+// RunnerError represents an error from runner operations
+type RunnerError struct {
 	Operation string // Operation that failed (e.g., "CreateBot", "DeleteBot")
 	BotID     string // Bot ID if applicable
 	Err       error  // Underlying error
@@ -142,30 +143,30 @@ type RuntimeError struct {
 }
 
 // Error implements the error interface
-func (e *RuntimeError) Error() string {
+func (e *RunnerError) Error() string {
 	if e.BotID != "" {
-		return fmt.Sprintf("runtime %s failed for bot %s: %v", e.Operation, e.BotID, e.Err)
+		return fmt.Sprintf("runner %s failed for bot %s: %v", e.Operation, e.BotID, e.Err)
 	}
-	return fmt.Sprintf("runtime %s failed: %v", e.Operation, e.Err)
+	return fmt.Sprintf("runner %s failed: %v", e.Operation, e.Err)
 }
 
 // Unwrap implements error unwrapping
-func (e *RuntimeError) Unwrap() error {
+func (e *RunnerError) Unwrap() error {
 	return e.Err
 }
 
-// Common runtime errors
+// Common runner errors
 var (
-	ErrBotNotFound       = fmt.Errorf("bot not found in runtime")
-	ErrBotAlreadyExists  = fmt.Errorf("bot already exists in runtime")
-	ErrRuntimeNotConnected = fmt.Errorf("runtime client not connected")
-	ErrInvalidSpec       = fmt.Errorf("invalid bot specification")
-	ErrResourceLimit     = fmt.Errorf("resource limit exceeded")
+	ErrBotNotFound         = fmt.Errorf("bot not found in runner")
+	ErrBotAlreadyExists    = fmt.Errorf("bot already exists in runner")
+	ErrRunnerNotConnected  = fmt.Errorf("runner client not connected")
+	ErrInvalidSpec         = fmt.Errorf("invalid bot specification")
+	ErrResourceLimit       = fmt.Errorf("resource limit exceeded")
 )
 
-// NewRuntimeError creates a new runtime error
-func NewRuntimeError(operation, botID string, err error, retryable bool) *RuntimeError {
-	return &RuntimeError{
+// NewRunnerError creates a new runner error
+func NewRunnerError(operation, botID string, err error, retryable bool) *RunnerError {
+	return &RunnerError{
 		Operation: operation,
 		BotID:     botID,
 		Err:       err,

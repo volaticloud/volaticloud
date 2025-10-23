@@ -64,3 +64,6 @@ docker-compose.override.yml
 *.tar.gz
 *.zip*.iml
 *.iml
+/dashboard/node_modules
+/dashboard/dist
+/dashboard/.env

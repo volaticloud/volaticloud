@@ -4,7 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
@@ -74,9 +74,9 @@ func (_c *BotCreate) SetNillableContainerID(v *string) *BotCreate {
 	return _c
 }
 
-// SetRuntimeMetadata sets the "runtime_metadata" field.
-func (_c *BotCreate) SetRuntimeMetadata(v map[string]string) *BotCreate {
-	_c.mutation.SetRuntimeMetadata(v)
+// SetRunnerMetadata sets the "runner_metadata" field.
+func (_c *BotCreate) SetRunnerMetadata(v map[string]string) *BotCreate {
+	_c.mutation.SetRunnerMetadata(v)
 	return _c
 }
 
@@ -182,9 +182,9 @@ func (_c *BotCreate) SetStrategyID(v uuid.UUID) *BotCreate {
 	return _c
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (_c *BotCreate) SetRuntimeID(v uuid.UUID) *BotCreate {
-	_c.mutation.SetRuntimeID(v)
+// SetRunnerID sets the "runner_id" field.
+func (_c *BotCreate) SetRunnerID(v uuid.UUID) *BotCreate {
+	_c.mutation.SetRunnerID(v)
 	return _c
 }
 
@@ -240,9 +240,9 @@ func (_c *BotCreate) SetStrategy(v *Strategy) *BotCreate {
 	return _c.SetStrategyID(v.ID)
 }
 
-// SetRuntime sets the "runtime" edge to the BotRuntime entity.
-func (_c *BotCreate) SetRuntime(v *BotRuntime) *BotCreate {
-	return _c.SetRuntimeID(v.ID)
+// SetRunner sets the "runner" edge to the BotRunner entity.
+func (_c *BotCreate) SetRunner(v *BotRunner) *BotCreate {
+	return _c.SetRunnerID(v.ID)
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by IDs.
@@ -356,8 +356,8 @@ func (_c *BotCreate) check() error {
 	if _, ok := _c.mutation.StrategyID(); !ok {
 		return &ValidationError{Name: "strategy_id", err: errors.New(`ent: missing required field "Bot.strategy_id"`)}
 	}
-	if _, ok := _c.mutation.RuntimeID(); !ok {
-		return &ValidationError{Name: "runtime_id", err: errors.New(`ent: missing required field "Bot.runtime_id"`)}
+	if _, ok := _c.mutation.RunnerID(); !ok {
+		return &ValidationError{Name: "runner_id", err: errors.New(`ent: missing required field "Bot.runner_id"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Bot.created_at"`)}
@@ -371,8 +371,8 @@ func (_c *BotCreate) check() error {
 	if len(_c.mutation.StrategyIDs()) == 0 {
 		return &ValidationError{Name: "strategy", err: errors.New(`ent: missing required edge "Bot.strategy"`)}
 	}
-	if len(_c.mutation.RuntimeIDs()) == 0 {
-		return &ValidationError{Name: "runtime", err: errors.New(`ent: missing required edge "Bot.runtime"`)}
+	if len(_c.mutation.RunnerIDs()) == 0 {
+		return &ValidationError{Name: "runner", err: errors.New(`ent: missing required edge "Bot.runner"`)}
 	}
 	return nil
 }
@@ -425,9 +425,9 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
 		_node.ContainerID = value
 	}
-	if value, ok := _c.mutation.RuntimeMetadata(); ok {
-		_spec.SetField(bot.FieldRuntimeMetadata, field.TypeJSON, value)
-		_node.RuntimeMetadata = value
+	if value, ok := _c.mutation.RunnerMetadata(); ok {
+		_spec.SetField(bot.FieldRunnerMetadata, field.TypeJSON, value)
+		_node.RunnerMetadata = value
 	}
 	if value, ok := _c.mutation.APIURL(); ok {
 		_spec.SetField(bot.FieldAPIURL, field.TypeString, value)
@@ -499,21 +499,21 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 		_node.StrategyID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.RuntimeIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RunnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   bot.RuntimeTable,
-			Columns: []string{bot.RuntimeColumn},
+			Table:   bot.RunnerTable,
+			Columns: []string{bot.RunnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.RuntimeID = nodes[0]
+		_node.RunnerID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.TradesIDs(); len(nodes) > 0 {

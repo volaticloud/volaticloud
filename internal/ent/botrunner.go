@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/enum"
 	"encoding/json"
 	"fmt"
@@ -15,29 +15,29 @@ import (
 	"github.com/google/uuid"
 )
 
-// BotRuntime is the model entity for the BotRuntime schema.
-type BotRuntime struct {
+// BotRunner is the model entity for the BotRunner schema.
+type BotRunner struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Runtime display name
+	// Runner display name
 	Name string `json:"name,omitempty"`
-	// Runtime environment type (docker, kubernetes, local)
-	Type enum.RuntimeType `json:"type,omitempty"`
-	// Runtime connection configuration (host, port, credentials, etc.)
+	// Runner environment type (docker, kubernetes, local)
+	Type enum.RunnerType `json:"type,omitempty"`
+	// Runner connection configuration (host, port, credentials, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the BotRuntimeQuery when eager-loading is set.
-	Edges        BotRuntimeEdges `json:"edges"`
+	// The values are being populated by the BotRunnerQuery when eager-loading is set.
+	Edges        BotRunnerEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// BotRuntimeEdges holds the relations/edges for other nodes in the graph.
-type BotRuntimeEdges struct {
+// BotRunnerEdges holds the relations/edges for other nodes in the graph.
+type BotRunnerEdges struct {
 	// Bots holds the value of the bots edge.
 	Bots []*Bot `json:"bots,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -51,7 +51,7 @@ type BotRuntimeEdges struct {
 
 // BotsOrErr returns the Bots value or an error if the edge
 // was not loaded in eager-loading.
-func (e BotRuntimeEdges) BotsOrErr() ([]*Bot, error) {
+func (e BotRunnerEdges) BotsOrErr() ([]*Bot, error) {
 	if e.loadedTypes[0] {
 		return e.Bots, nil
 	}
@@ -59,17 +59,17 @@ func (e BotRuntimeEdges) BotsOrErr() ([]*Bot, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*BotRuntime) scanValues(columns []string) ([]any, error) {
+func (*BotRunner) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case botruntime.FieldConfig:
+		case botrunner.FieldConfig:
 			values[i] = new([]byte)
-		case botruntime.FieldName, botruntime.FieldType:
+		case botrunner.FieldName, botrunner.FieldType:
 			values[i] = new(sql.NullString)
-		case botruntime.FieldCreatedAt, botruntime.FieldUpdatedAt:
+		case botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case botruntime.FieldID:
+		case botrunner.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -79,32 +79,32 @@ func (*BotRuntime) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the BotRuntime fields.
-func (_m *BotRuntime) assignValues(columns []string, values []any) error {
+// to the BotRunner fields.
+func (_m *BotRunner) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case botruntime.FieldID:
+		case botrunner.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case botruntime.FieldName:
+		case botrunner.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
 			}
-		case botruntime.FieldType:
+		case botrunner.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
-				_m.Type = enum.RuntimeType(value.String)
+				_m.Type = enum.RunnerType(value.String)
 			}
-		case botruntime.FieldConfig:
+		case botrunner.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field config", values[i])
 			} else if value != nil && len(*value) > 0 {
@@ -112,13 +112,13 @@ func (_m *BotRuntime) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field config: %w", err)
 				}
 			}
-		case botruntime.FieldCreatedAt:
+		case botrunner.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case botruntime.FieldUpdatedAt:
+		case botrunner.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
@@ -131,39 +131,39 @@ func (_m *BotRuntime) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the BotRuntime.
+// Value returns the ent.Value that was dynamically selected and assigned to the BotRunner.
 // This includes values selected through modifiers, order, etc.
-func (_m *BotRuntime) Value(name string) (ent.Value, error) {
+func (_m *BotRunner) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryBots queries the "bots" edge of the BotRuntime entity.
-func (_m *BotRuntime) QueryBots() *BotQuery {
-	return NewBotRuntimeClient(_m.config).QueryBots(_m)
+// QueryBots queries the "bots" edge of the BotRunner entity.
+func (_m *BotRunner) QueryBots() *BotQuery {
+	return NewBotRunnerClient(_m.config).QueryBots(_m)
 }
 
-// Update returns a builder for updating this BotRuntime.
-// Note that you need to call BotRuntime.Unwrap() before calling this method if this BotRuntime
+// Update returns a builder for updating this BotRunner.
+// Note that you need to call BotRunner.Unwrap() before calling this method if this BotRunner
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *BotRuntime) Update() *BotRuntimeUpdateOne {
-	return NewBotRuntimeClient(_m.config).UpdateOne(_m)
+func (_m *BotRunner) Update() *BotRunnerUpdateOne {
+	return NewBotRunnerClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the BotRuntime entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the BotRunner entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *BotRuntime) Unwrap() *BotRuntime {
+func (_m *BotRunner) Unwrap() *BotRunner {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: BotRuntime is not a transactional entity")
+		panic("ent: BotRunner is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *BotRuntime) String() string {
+func (_m *BotRunner) String() string {
 	var builder strings.Builder
-	builder.WriteString("BotRuntime(")
+	builder.WriteString("BotRunner(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -185,7 +185,7 @@ func (_m *BotRuntime) String() string {
 
 // NamedBots returns the Bots named value or an error if the edge was not
 // loaded in eager-loading with this name.
-func (_m *BotRuntime) NamedBots(name string) ([]*Bot, error) {
+func (_m *BotRunner) NamedBots(name string) ([]*Bot, error) {
 	if _m.Edges.namedBots == nil {
 		return nil, &NotLoadedError{edge: name}
 	}
@@ -196,7 +196,7 @@ func (_m *BotRuntime) NamedBots(name string) ([]*Bot, error) {
 	return nodes, nil
 }
 
-func (_m *BotRuntime) appendNamedBots(name string, edges ...*Bot) {
+func (_m *BotRunner) appendNamedBots(name string, edges ...*Bot) {
 	if _m.Edges.namedBots == nil {
 		_m.Edges.namedBots = make(map[string][]*Bot)
 	}
@@ -207,5 +207,5 @@ func (_m *BotRuntime) appendNamedBots(name string, edges ...*Bot) {
 	}
 }
 
-// BotRuntimes is a parsable slice of BotRuntime.
-type BotRuntimes []*BotRuntime
+// BotRunners is a parsable slice of BotRunner.
+type BotRunners []*BotRunner

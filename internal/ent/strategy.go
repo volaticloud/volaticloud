@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/strategy"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -26,6 +27,8 @@ type Strategy struct {
 	Code string `json:"code,omitempty"`
 	// Strategy version
 	Version string `json:"version,omitempty"`
+	// Strategy-specific configuration (config.json)
+	Config map[string]interface{} `json:"config,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -75,6 +78,8 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case strategy.FieldConfig:
+			values[i] = new([]byte)
 		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode, strategy.FieldVersion:
 			values[i] = new(sql.NullString)
 		case strategy.FieldCreatedAt, strategy.FieldUpdatedAt:
@@ -125,6 +130,14 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field version", values[i])
 			} else if value.Valid {
 				_m.Version = value.String
+			}
+		case strategy.FieldConfig:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Config); err != nil {
+					return fmt.Errorf("unmarshal field config: %w", err)
+				}
 			}
 		case strategy.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -195,6 +208,9 @@ func (_m *Strategy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("version=")
 	builder.WriteString(_m.Version)
+	builder.WriteString(", ")
+	builder.WriteString("config=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Config))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

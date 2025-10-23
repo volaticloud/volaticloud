@@ -90,6 +90,7 @@ type CreateBotInput struct {
 	APIURL           *string
 	APIUsername      *string
 	APIPassword      *string
+	Config           map[string]interface{}
 	FreqtradeVersion *string
 	LastSeenAt       *time.Time
 	ErrorMessage     *string
@@ -97,7 +98,7 @@ type CreateBotInput struct {
 	UpdatedAt        *time.Time
 	ExchangeID       uuid.UUID
 	StrategyID       uuid.UUID
-	RuntimeID        uuid.UUID
+	RunnerID         uuid.UUID
 	TradeIDs         []uuid.UUID
 }
 
@@ -122,6 +123,9 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	if v := i.APIPassword; v != nil {
 		m.SetAPIPassword(*v)
 	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
+	}
 	if v := i.FreqtradeVersion; v != nil {
 		m.SetFreqtradeVersion(*v)
 	}
@@ -139,7 +143,7 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	}
 	m.SetExchangeID(i.ExchangeID)
 	m.SetStrategyID(i.StrategyID)
-	m.SetRuntimeID(i.RuntimeID)
+	m.SetRunnerID(i.RunnerID)
 	if v := i.TradeIDs; len(v) > 0 {
 		m.AddTradeIDs(v...)
 	}
@@ -164,6 +168,8 @@ type UpdateBotInput struct {
 	APIUsername       *string
 	ClearAPIPassword  bool
 	APIPassword       *string
+	ClearConfig       bool
+	Config            map[string]interface{}
 	FreqtradeVersion  *string
 	ClearLastSeenAt   bool
 	LastSeenAt        *time.Time
@@ -172,7 +178,7 @@ type UpdateBotInput struct {
 	UpdatedAt         *time.Time
 	ExchangeID        *uuid.UUID
 	StrategyID        *uuid.UUID
-	RuntimeID         *uuid.UUID
+	RunnerID          *uuid.UUID
 	ClearTrades       bool
 	AddTradeIDs       []uuid.UUID
 	RemoveTradeIDs    []uuid.UUID
@@ -213,6 +219,12 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	if v := i.APIPassword; v != nil {
 		m.SetAPIPassword(*v)
 	}
+	if i.ClearConfig {
+		m.ClearConfig()
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
+	}
 	if v := i.FreqtradeVersion; v != nil {
 		m.SetFreqtradeVersion(*v)
 	}
@@ -237,8 +249,8 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	if v := i.StrategyID; v != nil {
 		m.SetStrategyID(*v)
 	}
-	if v := i.RuntimeID; v != nil {
-		m.SetRuntimeID(*v)
+	if v := i.RunnerID; v != nil {
+		m.SetRunnerID(*v)
 	}
 	if i.ClearTrades {
 		m.ClearTrades()
@@ -263,20 +275,24 @@ func (c *BotUpdateOne) SetInput(i UpdateBotInput) *BotUpdateOne {
 	return c
 }
 
-// CreateBotRuntimeInput represents a mutation input for creating botruntimes.
-type CreateBotRuntimeInput struct {
+// CreateBotRunnerInput represents a mutation input for creating botrunners.
+type CreateBotRunnerInput struct {
 	Name      string
-	Type      *enum.RuntimeType
+	Type      *enum.RunnerType
+	Config    map[string]interface{}
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 	BotIDs    []uuid.UUID
 }
 
-// Mutate applies the CreateBotRuntimeInput on the BotRuntimeMutation builder.
-func (i *CreateBotRuntimeInput) Mutate(m *BotRuntimeMutation) {
+// Mutate applies the CreateBotRunnerInput on the BotRunnerMutation builder.
+func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	m.SetName(i.Name)
 	if v := i.Type; v != nil {
 		m.SetType(*v)
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
@@ -289,29 +305,37 @@ func (i *CreateBotRuntimeInput) Mutate(m *BotRuntimeMutation) {
 	}
 }
 
-// SetInput applies the change-set in the CreateBotRuntimeInput on the BotRuntimeCreate builder.
-func (c *BotRuntimeCreate) SetInput(i CreateBotRuntimeInput) *BotRuntimeCreate {
+// SetInput applies the change-set in the CreateBotRunnerInput on the BotRunnerCreate builder.
+func (c *BotRunnerCreate) SetInput(i CreateBotRunnerInput) *BotRunnerCreate {
 	i.Mutate(c.Mutation())
 	return c
 }
 
-// UpdateBotRuntimeInput represents a mutation input for updating botruntimes.
-type UpdateBotRuntimeInput struct {
+// UpdateBotRunnerInput represents a mutation input for updating botrunners.
+type UpdateBotRunnerInput struct {
 	Name         *string
-	Type         *enum.RuntimeType
+	Type         *enum.RunnerType
+	ClearConfig  bool
+	Config       map[string]interface{}
 	UpdatedAt    *time.Time
 	ClearBots    bool
 	AddBotIDs    []uuid.UUID
 	RemoveBotIDs []uuid.UUID
 }
 
-// Mutate applies the UpdateBotRuntimeInput on the BotRuntimeMutation builder.
-func (i *UpdateBotRuntimeInput) Mutate(m *BotRuntimeMutation) {
+// Mutate applies the UpdateBotRunnerInput on the BotRunnerMutation builder.
+func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
 	if v := i.Type; v != nil {
 		m.SetType(*v)
+	}
+	if i.ClearConfig {
+		m.ClearConfig()
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
@@ -327,14 +351,14 @@ func (i *UpdateBotRuntimeInput) Mutate(m *BotRuntimeMutation) {
 	}
 }
 
-// SetInput applies the change-set in the UpdateBotRuntimeInput on the BotRuntimeUpdate builder.
-func (c *BotRuntimeUpdate) SetInput(i UpdateBotRuntimeInput) *BotRuntimeUpdate {
+// SetInput applies the change-set in the UpdateBotRunnerInput on the BotRunnerUpdate builder.
+func (c *BotRunnerUpdate) SetInput(i UpdateBotRunnerInput) *BotRunnerUpdate {
 	i.Mutate(c.Mutation())
 	return c
 }
 
-// SetInput applies the change-set in the UpdateBotRuntimeInput on the BotRuntimeUpdateOne builder.
-func (c *BotRuntimeUpdateOne) SetInput(i UpdateBotRuntimeInput) *BotRuntimeUpdateOne {
+// SetInput applies the change-set in the UpdateBotRunnerInput on the BotRunnerUpdateOne builder.
+func (c *BotRunnerUpdateOne) SetInput(i UpdateBotRunnerInput) *BotRunnerUpdateOne {
 	i.Mutate(c.Mutation())
 	return c
 }
@@ -343,10 +367,10 @@ func (c *BotRuntimeUpdateOne) SetInput(i UpdateBotRuntimeInput) *BotRuntimeUpdat
 type CreateExchangeInput struct {
 	Name      enum.ExchangeType
 	TestMode  *bool
+	Config    map[string]interface{}
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 	BotIDs    []uuid.UUID
-	SecretIDs []uuid.UUID
 }
 
 // Mutate applies the CreateExchangeInput on the ExchangeMutation builder.
@@ -354,6 +378,9 @@ func (i *CreateExchangeInput) Mutate(m *ExchangeMutation) {
 	m.SetName(i.Name)
 	if v := i.TestMode; v != nil {
 		m.SetTestMode(*v)
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
@@ -363,9 +390,6 @@ func (i *CreateExchangeInput) Mutate(m *ExchangeMutation) {
 	}
 	if v := i.BotIDs; len(v) > 0 {
 		m.AddBotIDs(v...)
-	}
-	if v := i.SecretIDs; len(v) > 0 {
-		m.AddSecretIDs(v...)
 	}
 }
 
@@ -377,15 +401,14 @@ func (c *ExchangeCreate) SetInput(i CreateExchangeInput) *ExchangeCreate {
 
 // UpdateExchangeInput represents a mutation input for updating exchanges.
 type UpdateExchangeInput struct {
-	Name            *enum.ExchangeType
-	TestMode        *bool
-	UpdatedAt       *time.Time
-	ClearBots       bool
-	AddBotIDs       []uuid.UUID
-	RemoveBotIDs    []uuid.UUID
-	ClearSecrets    bool
-	AddSecretIDs    []uuid.UUID
-	RemoveSecretIDs []uuid.UUID
+	Name         *enum.ExchangeType
+	TestMode     *bool
+	ClearConfig  bool
+	Config       map[string]interface{}
+	UpdatedAt    *time.Time
+	ClearBots    bool
+	AddBotIDs    []uuid.UUID
+	RemoveBotIDs []uuid.UUID
 }
 
 // Mutate applies the UpdateExchangeInput on the ExchangeMutation builder.
@@ -395,6 +418,12 @@ func (i *UpdateExchangeInput) Mutate(m *ExchangeMutation) {
 	}
 	if v := i.TestMode; v != nil {
 		m.SetTestMode(*v)
+	}
+	if i.ClearConfig {
+		m.ClearConfig()
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
@@ -407,15 +436,6 @@ func (i *UpdateExchangeInput) Mutate(m *ExchangeMutation) {
 	}
 	if v := i.RemoveBotIDs; len(v) > 0 {
 		m.RemoveBotIDs(v...)
-	}
-	if i.ClearSecrets {
-		m.ClearSecrets()
-	}
-	if v := i.AddSecretIDs; len(v) > 0 {
-		m.AddSecretIDs(v...)
-	}
-	if v := i.RemoveSecretIDs; len(v) > 0 {
-		m.RemoveSecretIDs(v...)
 	}
 }
 
@@ -431,76 +451,13 @@ func (c *ExchangeUpdateOne) SetInput(i UpdateExchangeInput) *ExchangeUpdateOne {
 	return c
 }
 
-// CreateExchangeSecretInput represents a mutation input for creating exchangesecrets.
-type CreateExchangeSecretInput struct {
-	Name       string
-	Value      string
-	CreatedAt  *time.Time
-	UpdatedAt  *time.Time
-	ExchangeID uuid.UUID
-}
-
-// Mutate applies the CreateExchangeSecretInput on the ExchangeSecretMutation builder.
-func (i *CreateExchangeSecretInput) Mutate(m *ExchangeSecretMutation) {
-	m.SetName(i.Name)
-	m.SetValue(i.Value)
-	if v := i.CreatedAt; v != nil {
-		m.SetCreatedAt(*v)
-	}
-	if v := i.UpdatedAt; v != nil {
-		m.SetUpdatedAt(*v)
-	}
-	m.SetExchangeID(i.ExchangeID)
-}
-
-// SetInput applies the change-set in the CreateExchangeSecretInput on the ExchangeSecretCreate builder.
-func (c *ExchangeSecretCreate) SetInput(i CreateExchangeSecretInput) *ExchangeSecretCreate {
-	i.Mutate(c.Mutation())
-	return c
-}
-
-// UpdateExchangeSecretInput represents a mutation input for updating exchangesecrets.
-type UpdateExchangeSecretInput struct {
-	Name       *string
-	Value      *string
-	UpdatedAt  *time.Time
-	ExchangeID *uuid.UUID
-}
-
-// Mutate applies the UpdateExchangeSecretInput on the ExchangeSecretMutation builder.
-func (i *UpdateExchangeSecretInput) Mutate(m *ExchangeSecretMutation) {
-	if v := i.Name; v != nil {
-		m.SetName(*v)
-	}
-	if v := i.Value; v != nil {
-		m.SetValue(*v)
-	}
-	if v := i.UpdatedAt; v != nil {
-		m.SetUpdatedAt(*v)
-	}
-	if v := i.ExchangeID; v != nil {
-		m.SetExchangeID(*v)
-	}
-}
-
-// SetInput applies the change-set in the UpdateExchangeSecretInput on the ExchangeSecretUpdate builder.
-func (c *ExchangeSecretUpdate) SetInput(i UpdateExchangeSecretInput) *ExchangeSecretUpdate {
-	i.Mutate(c.Mutation())
-	return c
-}
-
-// SetInput applies the change-set in the UpdateExchangeSecretInput on the ExchangeSecretUpdateOne builder.
-func (c *ExchangeSecretUpdateOne) SetInput(i UpdateExchangeSecretInput) *ExchangeSecretUpdateOne {
-	i.Mutate(c.Mutation())
-	return c
-}
-
 // CreateStrategyInput represents a mutation input for creating strategies.
 type CreateStrategyInput struct {
 	Name        string
 	Description *string
 	Code        string
 	Version     *string
+	Config      map[string]interface{}
 	CreatedAt   *time.Time
 	UpdatedAt   *time.Time
 	BotIDs      []uuid.UUID
@@ -516,6 +473,9 @@ func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 	m.SetCode(i.Code)
 	if v := i.Version; v != nil {
 		m.SetVersion(*v)
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
@@ -544,6 +504,8 @@ type UpdateStrategyInput struct {
 	Description       *string
 	Code              *string
 	Version           *string
+	ClearConfig       bool
+	Config            map[string]interface{}
 	UpdatedAt         *time.Time
 	ClearBots         bool
 	AddBotIDs         []uuid.UUID
@@ -569,6 +531,12 @@ func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	}
 	if v := i.Version; v != nil {
 		m.SetVersion(*v)
+	}
+	if i.ClearConfig {
+		m.ClearConfig()
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)

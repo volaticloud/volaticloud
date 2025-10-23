@@ -13,28 +13,31 @@ import (
 	"anytrade/internal/enum"
 )
 
-// BotRuntime holds the schema definition for the BotRuntime entity.
-type BotRuntime struct {
+// BotRunner holds the schema definition for the BotRunner entity.
+type BotRunner struct {
 	ent.Schema
 }
 
-// Fields of the BotRuntime.
-func (BotRuntime) Fields() []ent.Field {
+// Fields of the BotRunner.
+func (BotRunner) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			Immutable(),
 		field.String("name").
 			NotEmpty().
-			Comment("Runtime display name"),
+			Comment("Runner display name"),
 		field.Enum("type").
-			GoType(enum.RuntimeType("")).
-			Default(string(enum.RuntimeDocker)).
-			Comment("Runtime environment type (docker, kubernetes, local)"),
+			GoType(enum.RunnerType("")).
+			Default(string(enum.RunnerDocker)).
+			Comment("Runner environment type (docker, kubernetes, local)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Skip(entgql.SkipAll)).
-			Comment("Runtime connection configuration (host, port, credentials, etc.)"),
+			Annotations(
+				entgql.Type("RunnerConfigInput"),
+				entgql.Skip(entgql.SkipType), // Skip in type output, but allow in mutations
+			).
+			Comment("Runner connection configuration (host, port, credentials, etc.)"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -44,16 +47,16 @@ func (BotRuntime) Fields() []ent.Field {
 	}
 }
 
-// Edges of the BotRuntime.
-func (BotRuntime) Edges() []ent.Edge {
+// Edges of the BotRunner.
+func (BotRunner) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("bots", Bot.Type).
 			Annotations(entgql.RelayConnection()),
 	}
 }
 
-// Annotations of the BotRuntime.
-func (BotRuntime) Annotations() []schema.Annotation {
+// Annotations of the BotRunner.
+func (BotRunner) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.RelayConnection(),
 		entgql.QueryField(),
@@ -61,9 +64,9 @@ func (BotRuntime) Annotations() []schema.Annotation {
 	}
 }
 
-// Hooks of the BotRuntime.
-func (BotRuntime) Hooks() []ent.Hook {
+// Hooks of the BotRunner.
+func (BotRunner) Hooks() []ent.Hook {
 	return []ent.Hook{
-		validateRuntimeConfig,
+		validateRunnerConfig,
 	}
 }

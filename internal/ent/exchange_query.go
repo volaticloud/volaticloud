@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/predicate"
 	"context"
 	"database/sql/driver"
@@ -22,16 +21,14 @@ import (
 // ExchangeQuery is the builder for querying Exchange entities.
 type ExchangeQuery struct {
 	config
-	ctx              *QueryContext
-	order            []exchange.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Exchange
-	withBots         *BotQuery
-	withSecrets      *ExchangeSecretQuery
-	modifiers        []func(*sql.Selector)
-	loadTotal        []func(context.Context, []*Exchange) error
-	withNamedBots    map[string]*BotQuery
-	withNamedSecrets map[string]*ExchangeSecretQuery
+	ctx           *QueryContext
+	order         []exchange.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Exchange
+	withBots      *BotQuery
+	modifiers     []func(*sql.Selector)
+	loadTotal     []func(context.Context, []*Exchange) error
+	withNamedBots map[string]*BotQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -83,28 +80,6 @@ func (_q *ExchangeQuery) QueryBots() *BotQuery {
 			sqlgraph.From(exchange.Table, exchange.FieldID, selector),
 			sqlgraph.To(bot.Table, bot.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, exchange.BotsTable, exchange.BotsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QuerySecrets chains the current query on the "secrets" edge.
-func (_q *ExchangeQuery) QuerySecrets() *ExchangeSecretQuery {
-	query := (&ExchangeSecretClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(exchange.Table, exchange.FieldID, selector),
-			sqlgraph.To(exchangesecret.Table, exchangesecret.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, exchange.SecretsTable, exchange.SecretsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -299,13 +274,12 @@ func (_q *ExchangeQuery) Clone() *ExchangeQuery {
 		return nil
 	}
 	return &ExchangeQuery{
-		config:      _q.config,
-		ctx:         _q.ctx.Clone(),
-		order:       append([]exchange.OrderOption{}, _q.order...),
-		inters:      append([]Interceptor{}, _q.inters...),
-		predicates:  append([]predicate.Exchange{}, _q.predicates...),
-		withBots:    _q.withBots.Clone(),
-		withSecrets: _q.withSecrets.Clone(),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]exchange.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.Exchange{}, _q.predicates...),
+		withBots:   _q.withBots.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -320,17 +294,6 @@ func (_q *ExchangeQuery) WithBots(opts ...func(*BotQuery)) *ExchangeQuery {
 		opt(query)
 	}
 	_q.withBots = query
-	return _q
-}
-
-// WithSecrets tells the query-builder to eager-load the nodes that are connected to
-// the "secrets" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *ExchangeQuery) WithSecrets(opts ...func(*ExchangeSecretQuery)) *ExchangeQuery {
-	query := (&ExchangeSecretClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withSecrets = query
 	return _q
 }
 
@@ -412,9 +375,8 @@ func (_q *ExchangeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Exc
 	var (
 		nodes       = []*Exchange{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [1]bool{
 			_q.withBots != nil,
-			_q.withSecrets != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -445,24 +407,10 @@ func (_q *ExchangeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Exc
 			return nil, err
 		}
 	}
-	if query := _q.withSecrets; query != nil {
-		if err := _q.loadSecrets(ctx, query, nodes,
-			func(n *Exchange) { n.Edges.Secrets = []*ExchangeSecret{} },
-			func(n *Exchange, e *ExchangeSecret) { n.Edges.Secrets = append(n.Edges.Secrets, e) }); err != nil {
-			return nil, err
-		}
-	}
 	for name, query := range _q.withNamedBots {
 		if err := _q.loadBots(ctx, query, nodes,
 			func(n *Exchange) { n.appendNamedBots(name) },
 			func(n *Exchange, e *Bot) { n.appendNamedBots(name, e) }); err != nil {
-			return nil, err
-		}
-	}
-	for name, query := range _q.withNamedSecrets {
-		if err := _q.loadSecrets(ctx, query, nodes,
-			func(n *Exchange) { n.appendNamedSecrets(name) },
-			func(n *Exchange, e *ExchangeSecret) { n.appendNamedSecrets(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -489,36 +437,6 @@ func (_q *ExchangeQuery) loadBots(ctx context.Context, query *BotQuery, nodes []
 	}
 	query.Where(predicate.Bot(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(exchange.BotsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.ExchangeID
-		node, ok := nodeids[fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "exchange_id" returned %v for node %v`, fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (_q *ExchangeQuery) loadSecrets(ctx context.Context, query *ExchangeSecretQuery, nodes []*Exchange, init func(*Exchange), assign func(*Exchange, *ExchangeSecret)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Exchange)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(exchangesecret.FieldExchangeID)
-	}
-	query.Where(predicate.ExchangeSecret(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(exchange.SecretsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -630,20 +548,6 @@ func (_q *ExchangeQuery) WithNamedBots(name string, opts ...func(*BotQuery)) *Ex
 		_q.withNamedBots = make(map[string]*BotQuery)
 	}
 	_q.withNamedBots[name] = query
-	return _q
-}
-
-// WithNamedSecrets tells the query-builder to eager-load the nodes that are connected to the "secrets"
-// edge with the given name. The optional arguments are used to configure the query builder of the edge.
-func (_q *ExchangeQuery) WithNamedSecrets(name string, opts ...func(*ExchangeSecretQuery)) *ExchangeQuery {
-	query := (&ExchangeSecretClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	if _q.withNamedSecrets == nil {
-		_q.withNamedSecrets = make(map[string]*ExchangeSecretQuery)
-	}
-	_q.withNamedSecrets[name] = query
 	return _q
 }
 

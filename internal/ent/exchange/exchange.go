@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/99designs/gqlgen/graphql"
@@ -30,8 +31,6 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeBots holds the string denoting the bots edge name in mutations.
 	EdgeBots = "bots"
-	// EdgeSecrets holds the string denoting the secrets edge name in mutations.
-	EdgeSecrets = "secrets"
 	// Table holds the table name of the exchange in the database.
 	Table = "exchanges"
 	// BotsTable is the table that holds the bots relation/edge.
@@ -41,13 +40,6 @@ const (
 	BotsInverseTable = "bots"
 	// BotsColumn is the table column denoting the bots relation/edge.
 	BotsColumn = "exchange_id"
-	// SecretsTable is the table that holds the secrets relation/edge.
-	SecretsTable = "exchange_secrets"
-	// SecretsInverseTable is the table name for the ExchangeSecret entity.
-	// It exists in this package in order to avoid circular dependency with the "exchangesecret" package.
-	SecretsInverseTable = "exchange_secrets"
-	// SecretsColumn is the table column denoting the secrets relation/edge.
-	SecretsColumn = "exchange_id"
 )
 
 // Columns holds all SQL columns for exchange fields.
@@ -70,7 +62,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "anytrade/internal/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultTestMode holds the default value on creation for the "test_mode" field.
 	DefaultTestMode bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -134,32 +132,11 @@ func ByBots(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBotsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
-// BySecretsCount orders the results by secrets count.
-func BySecretsCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newSecretsStep(), opts...)
-	}
-}
-
-// BySecrets orders the results by secrets terms.
-func BySecrets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newSecretsStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
 func newBotsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BotsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BotsTable, BotsColumn),
-	)
-}
-func newSecretsStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(SecretsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, SecretsTable, SecretsColumn),
 	)
 }
 

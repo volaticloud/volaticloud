@@ -34,6 +34,10 @@ func (Strategy) Fields() []ent.Field {
 		field.String("version").
 			Default("1.0").
 			Comment("Strategy version"),
+		field.JSON("config", map[string]interface{}{}).
+			Optional().
+			Comment("Strategy-specific configuration (config.json)").
+			Annotations(entgql.Type("Map")),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

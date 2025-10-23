@@ -6,6 +6,8 @@ import (
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/schema/uuidgql"
 	"anytrade/internal/enum"
+	"anytrade/internal/exchange"
+	"anytrade/internal/graph/model"
 	"anytrade/internal/runner"
 	"bytes"
 	"context"
@@ -47,6 +49,10 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	CreateBotRunnerInput() CreateBotRunnerInputResolver
+	CreateExchangeInput() CreateExchangeInputResolver
+	UpdateBotRunnerInput() UpdateBotRunnerInputResolver
+	UpdateExchangeInput() UpdateExchangeInputResolver
 }
 
 type DirectiveRoot struct {
@@ -77,6 +83,7 @@ type ComplexityRoot struct {
 	Bot struct {
 		APIURL           func(childComplexity int) int
 		APIUsername      func(childComplexity int) int
+		Config           func(childComplexity int) int
 		ContainerID      func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
 		ErrorMessage     func(childComplexity int) int
@@ -87,8 +94,8 @@ type ComplexityRoot struct {
 		LastSeenAt       func(childComplexity int) int
 		Mode             func(childComplexity int) int
 		Name             func(childComplexity int) int
-		Runtime          func(childComplexity int) int
-		RuntimeID        func(childComplexity int) int
+		Runner           func(childComplexity int) int
+		RunnerID         func(childComplexity int) int
 		Status           func(childComplexity int) int
 		Strategy         func(childComplexity int) int
 		StrategyID       func(childComplexity int) int
@@ -107,7 +114,7 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	BotRuntime struct {
+	BotRunner struct {
 		Bots      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
@@ -116,13 +123,13 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
-	BotRuntimeConnection struct {
+	BotRunnerConnection struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
 
-	BotRuntimeEdge struct {
+	BotRunnerEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -148,56 +155,32 @@ type ComplexityRoot struct {
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
-		Secrets   func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		TestMode  func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
 
-	ExchangeSecret struct {
-		CreatedAt  func(childComplexity int) int
-		Exchange   func(childComplexity int) int
-		ExchangeID func(childComplexity int) int
-		ID         func(childComplexity int) int
-		Name       func(childComplexity int) int
-		UpdatedAt  func(childComplexity int) int
-	}
-
-	ExchangeSecretConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	ExchangeSecretEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
 	Mutation struct {
-		CreateBacktest       func(childComplexity int, input ent.CreateBacktestInput) int
-		CreateBot            func(childComplexity int, input ent.CreateBotInput) int
-		CreateBotRuntime     func(childComplexity int, input ent.CreateBotRuntimeInput) int
-		CreateExchange       func(childComplexity int, input ent.CreateExchangeInput) int
-		CreateExchangeSecret func(childComplexity int, input ent.CreateExchangeSecretInput) int
-		CreateStrategy       func(childComplexity int, input ent.CreateStrategyInput) int
-		CreateTrade          func(childComplexity int, input ent.CreateTradeInput) int
-		DeleteBacktest       func(childComplexity int, id uuid.UUID) int
-		DeleteBot            func(childComplexity int, id uuid.UUID) int
-		DeleteBotRuntime     func(childComplexity int, id uuid.UUID) int
-		DeleteExchange       func(childComplexity int, id uuid.UUID) int
-		DeleteExchangeSecret func(childComplexity int, id uuid.UUID) int
-		DeleteStrategy       func(childComplexity int, id uuid.UUID) int
-		DeleteTrade          func(childComplexity int, id uuid.UUID) int
-		RestartBot           func(childComplexity int, id uuid.UUID) int
-		StartBot             func(childComplexity int, id uuid.UUID) int
-		StopBot              func(childComplexity int, id uuid.UUID) int
-		UpdateBacktest       func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
-		UpdateBot            func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
-		UpdateBotRuntime     func(childComplexity int, id uuid.UUID, input ent.UpdateBotRuntimeInput) int
-		UpdateExchange       func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
-		UpdateExchangeSecret func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeSecretInput) int
-		UpdateStrategy       func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
-		UpdateTrade          func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
+		CreateBacktest  func(childComplexity int, input ent.CreateBacktestInput) int
+		CreateBot       func(childComplexity int, input ent.CreateBotInput) int
+		CreateBotRunner func(childComplexity int, input ent.CreateBotRunnerInput) int
+		CreateExchange  func(childComplexity int, input ent.CreateExchangeInput) int
+		CreateStrategy  func(childComplexity int, input ent.CreateStrategyInput) int
+		CreateTrade     func(childComplexity int, input ent.CreateTradeInput) int
+		DeleteBacktest  func(childComplexity int, id uuid.UUID) int
+		DeleteBot       func(childComplexity int, id uuid.UUID) int
+		DeleteBotRunner func(childComplexity int, id uuid.UUID) int
+		DeleteExchange  func(childComplexity int, id uuid.UUID) int
+		DeleteStrategy  func(childComplexity int, id uuid.UUID) int
+		DeleteTrade     func(childComplexity int, id uuid.UUID) int
+		RestartBot      func(childComplexity int, id uuid.UUID) int
+		StartBot        func(childComplexity int, id uuid.UUID) int
+		StopBot         func(childComplexity int, id uuid.UUID) int
+		UpdateBacktest  func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
+		UpdateBot       func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
+		UpdateBotRunner func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
+		UpdateExchange  func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
+		UpdateStrategy  func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
+		UpdateTrade     func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
 	}
 
 	PageInfo struct {
@@ -208,22 +191,22 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Backtests           func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		BotRuntimes         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		Bots                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		ExchangeSecrets     func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		Exchanges           func(childComplexity int) int
-		GetBotRuntimeStatus func(childComplexity int, id uuid.UUID) int
-		Node                func(childComplexity int, id uuid.UUID) int
-		Nodes               func(childComplexity int, ids []uuid.UUID) int
-		Strategies          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
-		Trades              func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Backtests          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		BotRunners         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Bots               func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Exchanges          func(childComplexity int) int
+		GetBotRunnerStatus func(childComplexity int, id uuid.UUID) int
+		Node               func(childComplexity int, id uuid.UUID) int
+		Nodes              func(childComplexity int, ids []uuid.UUID) int
+		Strategies         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Trades             func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 	}
 
 	Strategy struct {
 		Backtests   func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		Bots        func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		Code        func(childComplexity int) int
+		Config      func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
@@ -281,9 +264,6 @@ type MutationResolver interface {
 	CreateExchange(ctx context.Context, input ent.CreateExchangeInput) (*ent.Exchange, error)
 	UpdateExchange(ctx context.Context, id uuid.UUID, input ent.UpdateExchangeInput) (*ent.Exchange, error)
 	DeleteExchange(ctx context.Context, id uuid.UUID) (bool, error)
-	CreateExchangeSecret(ctx context.Context, input ent.CreateExchangeSecretInput) (*ent.ExchangeSecret, error)
-	UpdateExchangeSecret(ctx context.Context, id uuid.UUID, input ent.UpdateExchangeSecretInput) (*ent.ExchangeSecret, error)
-	DeleteExchangeSecret(ctx context.Context, id uuid.UUID) (bool, error)
 	CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error)
 	UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error)
 	DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error)
@@ -293,9 +273,9 @@ type MutationResolver interface {
 	StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error)
 	StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error)
 	RestartBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error)
-	CreateBotRuntime(ctx context.Context, input ent.CreateBotRuntimeInput) (*ent.BotRuntime, error)
-	UpdateBotRuntime(ctx context.Context, id uuid.UUID, input ent.UpdateBotRuntimeInput) (*ent.BotRuntime, error)
-	DeleteBotRuntime(ctx context.Context, id uuid.UUID) (bool, error)
+	CreateBotRunner(ctx context.Context, input ent.CreateBotRunnerInput) (*ent.BotRunner, error)
+	UpdateBotRunner(ctx context.Context, id uuid.UUID, input ent.UpdateBotRunnerInput) (*ent.BotRunner, error)
+	DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error)
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
@@ -308,12 +288,24 @@ type QueryResolver interface {
 	Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder, error)
 	Backtests(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BacktestConnection, error)
 	Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotConnection, error)
-	BotRuntimes(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotRuntimeConnection, error)
+	BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotRunnerConnection, error)
 	Exchanges(ctx context.Context) ([]*ent.Exchange, error)
-	ExchangeSecrets(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.ExchangeSecretConnection, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.TradeConnection, error)
-	GetBotRuntimeStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
+	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
+}
+
+type CreateBotRunnerInputResolver interface {
+	Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error
+}
+type CreateExchangeInputResolver interface {
+	Config(ctx context.Context, obj *ent.CreateExchangeInput, data *exchange.ExchangeConfigInput) error
+}
+type UpdateBotRunnerInputResolver interface {
+	Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error
+}
+type UpdateExchangeInputResolver interface {
+	Config(ctx context.Context, obj *ent.UpdateExchangeInput, data *exchange.ExchangeConfigInput) error
 }
 
 type executableSchema struct {
@@ -422,6 +414,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bot.APIUsername(childComplexity), true
+	case "Bot.config":
+		if e.complexity.Bot.Config == nil {
+			break
+		}
+
+		return e.complexity.Bot.Config(childComplexity), true
 	case "Bot.containerID":
 		if e.complexity.Bot.ContainerID == nil {
 			break
@@ -482,18 +480,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bot.Name(childComplexity), true
-	case "Bot.runtime":
-		if e.complexity.Bot.Runtime == nil {
+	case "Bot.runner":
+		if e.complexity.Bot.Runner == nil {
 			break
 		}
 
-		return e.complexity.Bot.Runtime(childComplexity), true
-	case "Bot.runtimeID":
-		if e.complexity.Bot.RuntimeID == nil {
+		return e.complexity.Bot.Runner(childComplexity), true
+	case "Bot.runnerID":
+		if e.complexity.Bot.RunnerID == nil {
 			break
 		}
 
-		return e.complexity.Bot.RuntimeID(childComplexity), true
+		return e.complexity.Bot.RunnerID(childComplexity), true
 	case "Bot.status":
 		if e.complexity.Bot.Status == nil {
 			break
@@ -562,79 +560,79 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BotEdge.Node(childComplexity), true
 
-	case "BotRuntime.bots":
-		if e.complexity.BotRuntime.Bots == nil {
+	case "BotRunner.bots":
+		if e.complexity.BotRunner.Bots == nil {
 			break
 		}
 
-		args, err := ec.field_BotRuntime_bots_args(ctx, rawArgs)
+		args, err := ec.field_BotRunner_bots_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.BotRuntime.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
-	case "BotRuntime.createdAt":
-		if e.complexity.BotRuntime.CreatedAt == nil {
+		return e.complexity.BotRunner.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
+	case "BotRunner.createdAt":
+		if e.complexity.BotRunner.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.BotRuntime.CreatedAt(childComplexity), true
-	case "BotRuntime.id":
-		if e.complexity.BotRuntime.ID == nil {
+		return e.complexity.BotRunner.CreatedAt(childComplexity), true
+	case "BotRunner.id":
+		if e.complexity.BotRunner.ID == nil {
 			break
 		}
 
-		return e.complexity.BotRuntime.ID(childComplexity), true
-	case "BotRuntime.name":
-		if e.complexity.BotRuntime.Name == nil {
+		return e.complexity.BotRunner.ID(childComplexity), true
+	case "BotRunner.name":
+		if e.complexity.BotRunner.Name == nil {
 			break
 		}
 
-		return e.complexity.BotRuntime.Name(childComplexity), true
-	case "BotRuntime.type":
-		if e.complexity.BotRuntime.Type == nil {
+		return e.complexity.BotRunner.Name(childComplexity), true
+	case "BotRunner.type":
+		if e.complexity.BotRunner.Type == nil {
 			break
 		}
 
-		return e.complexity.BotRuntime.Type(childComplexity), true
-	case "BotRuntime.updatedAt":
-		if e.complexity.BotRuntime.UpdatedAt == nil {
+		return e.complexity.BotRunner.Type(childComplexity), true
+	case "BotRunner.updatedAt":
+		if e.complexity.BotRunner.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.BotRuntime.UpdatedAt(childComplexity), true
+		return e.complexity.BotRunner.UpdatedAt(childComplexity), true
 
-	case "BotRuntimeConnection.edges":
-		if e.complexity.BotRuntimeConnection.Edges == nil {
+	case "BotRunnerConnection.edges":
+		if e.complexity.BotRunnerConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.BotRuntimeConnection.Edges(childComplexity), true
-	case "BotRuntimeConnection.pageInfo":
-		if e.complexity.BotRuntimeConnection.PageInfo == nil {
+		return e.complexity.BotRunnerConnection.Edges(childComplexity), true
+	case "BotRunnerConnection.pageInfo":
+		if e.complexity.BotRunnerConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.BotRuntimeConnection.PageInfo(childComplexity), true
-	case "BotRuntimeConnection.totalCount":
-		if e.complexity.BotRuntimeConnection.TotalCount == nil {
+		return e.complexity.BotRunnerConnection.PageInfo(childComplexity), true
+	case "BotRunnerConnection.totalCount":
+		if e.complexity.BotRunnerConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.BotRuntimeConnection.TotalCount(childComplexity), true
+		return e.complexity.BotRunnerConnection.TotalCount(childComplexity), true
 
-	case "BotRuntimeEdge.cursor":
-		if e.complexity.BotRuntimeEdge.Cursor == nil {
+	case "BotRunnerEdge.cursor":
+		if e.complexity.BotRunnerEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.BotRuntimeEdge.Cursor(childComplexity), true
-	case "BotRuntimeEdge.node":
-		if e.complexity.BotRuntimeEdge.Node == nil {
+		return e.complexity.BotRunnerEdge.Cursor(childComplexity), true
+	case "BotRunnerEdge.node":
+		if e.complexity.BotRunnerEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.BotRuntimeEdge.Node(childComplexity), true
+		return e.complexity.BotRunnerEdge.Node(childComplexity), true
 
 	case "BotStatus.botID":
 		if e.complexity.BotStatus.BotID == nil {
@@ -744,17 +742,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Exchange.Name(childComplexity), true
-	case "Exchange.secrets":
-		if e.complexity.Exchange.Secrets == nil {
-			break
-		}
-
-		args, err := ec.field_Exchange_secrets_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Exchange.Secrets(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
 	case "Exchange.testMode":
 		if e.complexity.Exchange.TestMode == nil {
 			break
@@ -767,75 +754,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Exchange.UpdatedAt(childComplexity), true
-
-	case "ExchangeSecret.createdAt":
-		if e.complexity.ExchangeSecret.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecret.CreatedAt(childComplexity), true
-	case "ExchangeSecret.exchange":
-		if e.complexity.ExchangeSecret.Exchange == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecret.Exchange(childComplexity), true
-	case "ExchangeSecret.exchangeID":
-		if e.complexity.ExchangeSecret.ExchangeID == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecret.ExchangeID(childComplexity), true
-	case "ExchangeSecret.id":
-		if e.complexity.ExchangeSecret.ID == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecret.ID(childComplexity), true
-	case "ExchangeSecret.name":
-		if e.complexity.ExchangeSecret.Name == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecret.Name(childComplexity), true
-	case "ExchangeSecret.updatedAt":
-		if e.complexity.ExchangeSecret.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecret.UpdatedAt(childComplexity), true
-
-	case "ExchangeSecretConnection.edges":
-		if e.complexity.ExchangeSecretConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecretConnection.Edges(childComplexity), true
-	case "ExchangeSecretConnection.pageInfo":
-		if e.complexity.ExchangeSecretConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecretConnection.PageInfo(childComplexity), true
-	case "ExchangeSecretConnection.totalCount":
-		if e.complexity.ExchangeSecretConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecretConnection.TotalCount(childComplexity), true
-
-	case "ExchangeSecretEdge.cursor":
-		if e.complexity.ExchangeSecretEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecretEdge.Cursor(childComplexity), true
-	case "ExchangeSecretEdge.node":
-		if e.complexity.ExchangeSecretEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.ExchangeSecretEdge.Node(childComplexity), true
 
 	case "Mutation.createBacktest":
 		if e.complexity.Mutation.CreateBacktest == nil {
@@ -859,17 +777,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateBot(childComplexity, args["input"].(ent.CreateBotInput)), true
-	case "Mutation.createBotRuntime":
-		if e.complexity.Mutation.CreateBotRuntime == nil {
+	case "Mutation.createBotRunner":
+		if e.complexity.Mutation.CreateBotRunner == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createBotRuntime_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createBotRunner_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateBotRuntime(childComplexity, args["input"].(ent.CreateBotRuntimeInput)), true
+		return e.complexity.Mutation.CreateBotRunner(childComplexity, args["input"].(ent.CreateBotRunnerInput)), true
 	case "Mutation.createExchange":
 		if e.complexity.Mutation.CreateExchange == nil {
 			break
@@ -881,17 +799,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateExchange(childComplexity, args["input"].(ent.CreateExchangeInput)), true
-	case "Mutation.createExchangeSecret":
-		if e.complexity.Mutation.CreateExchangeSecret == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createExchangeSecret_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateExchangeSecret(childComplexity, args["input"].(ent.CreateExchangeSecretInput)), true
 	case "Mutation.createStrategy":
 		if e.complexity.Mutation.CreateStrategy == nil {
 			break
@@ -936,17 +843,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteBot(childComplexity, args["id"].(uuid.UUID)), true
-	case "Mutation.deleteBotRuntime":
-		if e.complexity.Mutation.DeleteBotRuntime == nil {
+	case "Mutation.deleteBotRunner":
+		if e.complexity.Mutation.DeleteBotRunner == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteBotRuntime_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteBotRunner_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteBotRuntime(childComplexity, args["id"].(uuid.UUID)), true
+		return e.complexity.Mutation.DeleteBotRunner(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.deleteExchange":
 		if e.complexity.Mutation.DeleteExchange == nil {
 			break
@@ -958,17 +865,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteExchange(childComplexity, args["id"].(uuid.UUID)), true
-	case "Mutation.deleteExchangeSecret":
-		if e.complexity.Mutation.DeleteExchangeSecret == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteExchangeSecret_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteExchangeSecret(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.deleteStrategy":
 		if e.complexity.Mutation.DeleteStrategy == nil {
 			break
@@ -1046,17 +942,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateBot(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateBotInput)), true
-	case "Mutation.updateBotRuntime":
-		if e.complexity.Mutation.UpdateBotRuntime == nil {
+	case "Mutation.updateBotRunner":
+		if e.complexity.Mutation.UpdateBotRunner == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateBotRuntime_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_updateBotRunner_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateBotRuntime(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateBotRuntimeInput)), true
+		return e.complexity.Mutation.UpdateBotRunner(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateBotRunnerInput)), true
 	case "Mutation.updateExchange":
 		if e.complexity.Mutation.UpdateExchange == nil {
 			break
@@ -1068,17 +964,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateExchange(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateExchangeInput)), true
-	case "Mutation.updateExchangeSecret":
-		if e.complexity.Mutation.UpdateExchangeSecret == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateExchangeSecret_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateExchangeSecret(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateExchangeSecretInput)), true
 	case "Mutation.updateStrategy":
 		if e.complexity.Mutation.UpdateStrategy == nil {
 			break
@@ -1138,17 +1023,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Backtests(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
-	case "Query.botRuntimes":
-		if e.complexity.Query.BotRuntimes == nil {
+	case "Query.botRunners":
+		if e.complexity.Query.BotRunners == nil {
 			break
 		}
 
-		args, err := ec.field_Query_botRuntimes_args(ctx, rawArgs)
+		args, err := ec.field_Query_botRunners_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.BotRuntimes(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
+		return e.complexity.Query.BotRunners(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
 	case "Query.bots":
 		if e.complexity.Query.Bots == nil {
 			break
@@ -1160,34 +1045,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
-	case "Query.exchangeSecrets":
-		if e.complexity.Query.ExchangeSecrets == nil {
-			break
-		}
-
-		args, err := ec.field_Query_exchangeSecrets_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.ExchangeSecrets(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
 	case "Query.exchanges":
 		if e.complexity.Query.Exchanges == nil {
 			break
 		}
 
 		return e.complexity.Query.Exchanges(childComplexity), true
-	case "Query.getBotRuntimeStatus":
-		if e.complexity.Query.GetBotRuntimeStatus == nil {
+	case "Query.getBotRunnerStatus":
+		if e.complexity.Query.GetBotRunnerStatus == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getBotRuntimeStatus_args(ctx, rawArgs)
+		args, err := ec.field_Query_getBotRunnerStatus_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetBotRuntimeStatus(childComplexity, args["id"].(uuid.UUID)), true
+		return e.complexity.Query.GetBotRunnerStatus(childComplexity, args["id"].(uuid.UUID)), true
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -1261,6 +1135,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Code(childComplexity), true
+	case "Strategy.config":
+		if e.complexity.Strategy.Config == nil {
+			break
+		}
+
+		return e.complexity.Strategy.Config(childComplexity), true
 	case "Strategy.createdAt":
 		if e.complexity.Strategy.CreatedAt == nil {
 			break
@@ -1485,18 +1365,27 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputBinanceConfigInput,
+		ec.unmarshalInputBitfinexConfigInput,
+		ec.unmarshalInputBybitConfigInput,
 		ec.unmarshalInputCreateBacktestInput,
 		ec.unmarshalInputCreateBotInput,
-		ec.unmarshalInputCreateBotRuntimeInput,
+		ec.unmarshalInputCreateBotRunnerInput,
 		ec.unmarshalInputCreateExchangeInput,
-		ec.unmarshalInputCreateExchangeSecretInput,
 		ec.unmarshalInputCreateStrategyInput,
 		ec.unmarshalInputCreateTradeInput,
+		ec.unmarshalInputDockerConfigInput,
+		ec.unmarshalInputExchangeConfigInput,
+		ec.unmarshalInputKrakenConfigInput,
+		ec.unmarshalInputKubernetesConfigInput,
+		ec.unmarshalInputLocalConfigInput,
+		ec.unmarshalInputPassphraseExchangeConfigInput,
+		ec.unmarshalInputRegistryAuthInput,
+		ec.unmarshalInputRunnerConfigInput,
 		ec.unmarshalInputUpdateBacktestInput,
 		ec.unmarshalInputUpdateBotInput,
-		ec.unmarshalInputUpdateBotRuntimeInput,
+		ec.unmarshalInputUpdateBotRunnerInput,
 		ec.unmarshalInputUpdateExchangeInput,
-		ec.unmarshalInputUpdateExchangeSecretInput,
 		ec.unmarshalInputUpdateStrategyInput,
 		ec.unmarshalInputUpdateTradeInput,
 	)
@@ -1616,7 +1505,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_BotRuntime_bots_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_BotRunner_bots_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
@@ -1694,32 +1583,6 @@ func (ec *executionContext) field_Exchange_bots_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Exchange_secrets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg3
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1731,10 +1594,10 @@ func (ec *executionContext) field_Mutation_createBacktest_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createBotRuntime_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createBotRunner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotRuntimeInput2anytradeᚋinternalᚋentᚐCreateBotRuntimeInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotRunnerInput2anytradeᚋinternalᚋentᚐCreateBotRunnerInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1746,17 +1609,6 @@ func (ec *executionContext) field_Mutation_createBot_args(ctx context.Context, r
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotInput2anytradeᚋinternalᚋentᚐCreateBotInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createExchangeSecret_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateExchangeSecretInput2anytradeᚋinternalᚋentᚐCreateExchangeSecretInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1808,7 +1660,7 @@ func (ec *executionContext) field_Mutation_deleteBacktest_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteBotRuntime_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteBotRunner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -1820,17 +1672,6 @@ func (ec *executionContext) field_Mutation_deleteBotRuntime_args(ctx context.Con
 }
 
 func (ec *executionContext) field_Mutation_deleteBot_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteExchangeSecret_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -1923,7 +1764,7 @@ func (ec *executionContext) field_Mutation_updateBacktest_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateBotRuntime_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_updateBotRunner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -1931,7 +1772,7 @@ func (ec *executionContext) field_Mutation_updateBotRuntime_args(ctx context.Con
 		return nil, err
 	}
 	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotRuntimeInput2anytradeᚋinternalᚋentᚐUpdateBotRuntimeInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotRunnerInput2anytradeᚋinternalᚋentᚐUpdateBotRunnerInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1948,22 +1789,6 @@ func (ec *executionContext) field_Mutation_updateBot_args(ctx context.Context, r
 	}
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotInput2anytradeᚋinternalᚋentᚐUpdateBotInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateExchangeSecret_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateExchangeSecretInput2anytradeᚋinternalᚋentᚐUpdateExchangeSecretInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2056,7 +1881,7 @@ func (ec *executionContext) field_Query_backtests_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_botRuntimes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Query_botRunners_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
@@ -2108,33 +1933,7 @@ func (ec *executionContext) field_Query_bots_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_exchangeSecrets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_getBotRuntimeStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Query_getBotRunnerStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -2531,6 +2330,8 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "version":
 				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -2926,6 +2727,35 @@ func (ec *executionContext) fieldContext_Bot_apiUsername(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Bot_config(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Bot_config,
+		func(ctx context.Context) (any, error) {
+			return obj.Config, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Bot_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bot",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bot_freqtradeVersion(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3071,14 +2901,14 @@ func (ec *executionContext) fieldContext_Bot_strategyID(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Bot_runtimeID(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bot_runnerID(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Bot_runtimeID,
+		ec.fieldContext_Bot_runnerID,
 		func(ctx context.Context) (any, error) {
-			return obj.RuntimeID, nil
+			return obj.RunnerID, nil
 		},
 		nil,
 		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
@@ -3087,7 +2917,7 @@ func (ec *executionContext) _Bot_runtimeID(ctx context.Context, field graphql.Co
 	)
 }
 
-func (ec *executionContext) fieldContext_Bot_runtimeID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bot_runnerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bot",
 		Field:      field,
@@ -3194,8 +3024,6 @@ func (ec *executionContext) fieldContext_Bot_exchange(_ context.Context, field g
 				return ec.fieldContext_Exchange_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Exchange_bots(ctx, field)
-			case "secrets":
-				return ec.fieldContext_Exchange_secrets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
 		},
@@ -3237,6 +3065,8 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "version":
 				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -3252,23 +3082,23 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Bot_runtime(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bot_runner(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Bot_runtime,
+		ec.fieldContext_Bot_runner,
 		func(ctx context.Context) (any, error) {
-			return obj.Runtime(ctx)
+			return obj.Runner(ctx)
 		},
 		nil,
-		ec.marshalNBotRuntime2ᚖanytradeᚋinternalᚋentᚐBotRuntime,
+		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Bot_runtime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bot",
 		Field:      field,
@@ -3277,19 +3107,19 @@ func (ec *executionContext) fieldContext_Bot_runtime(_ context.Context, field gr
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_BotRuntime_id(ctx, field)
+				return ec.fieldContext_BotRunner_id(ctx, field)
 			case "name":
-				return ec.fieldContext_BotRuntime_name(ctx, field)
+				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
-				return ec.fieldContext_BotRuntime_type(ctx, field)
+				return ec.fieldContext_BotRunner_type(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_BotRuntime_createdAt(ctx, field)
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_BotRuntime_updatedAt(ctx, field)
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
-				return ec.fieldContext_BotRuntime_bots(ctx, field)
+				return ec.fieldContext_BotRunner_bots(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BotRuntime", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
 	}
 	return fc, nil
@@ -3485,6 +3315,8 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -3495,8 +3327,8 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -3505,8 +3337,8 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -3545,12 +3377,12 @@ func (ec *executionContext) fieldContext_BotEdge_cursor(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntime_id(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntime) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunner_id(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntime_id,
+		ec.fieldContext_BotRunner_id,
 		func(ctx context.Context) (any, error) {
 			return obj.ID, nil
 		},
@@ -3561,9 +3393,9 @@ func (ec *executionContext) _BotRuntime_id(ctx context.Context, field graphql.Co
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntime_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunner_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntime",
+		Object:     "BotRunner",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3574,12 +3406,12 @@ func (ec *executionContext) fieldContext_BotRuntime_id(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntime_name(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntime) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunner_name(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntime_name,
+		ec.fieldContext_BotRunner_name,
 		func(ctx context.Context) (any, error) {
 			return obj.Name, nil
 		},
@@ -3590,9 +3422,9 @@ func (ec *executionContext) _BotRuntime_name(ctx context.Context, field graphql.
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntime_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunner_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntime",
+		Object:     "BotRunner",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3603,41 +3435,41 @@ func (ec *executionContext) fieldContext_BotRuntime_name(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntime_type(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntime) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunner_type(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntime_type,
+		ec.fieldContext_BotRunner_type,
 		func(ctx context.Context) (any, error) {
 			return obj.Type, nil
 		},
 		nil,
-		ec.marshalNBotRuntimeRuntimeType2anytradeᚋinternalᚋenumᚐRuntimeType,
+		ec.marshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntime_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunner_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntime",
+		Object:     "BotRunner",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BotRuntimeRuntimeType does not have child fields")
+			return nil, errors.New("field of type BotRunnerRunnerType does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntime_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntime) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunner_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntime_createdAt,
+		ec.fieldContext_BotRunner_createdAt,
 		func(ctx context.Context) (any, error) {
 			return obj.CreatedAt, nil
 		},
@@ -3648,9 +3480,9 @@ func (ec *executionContext) _BotRuntime_createdAt(ctx context.Context, field gra
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntime_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunner_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntime",
+		Object:     "BotRunner",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3661,12 +3493,12 @@ func (ec *executionContext) fieldContext_BotRuntime_createdAt(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntime_updatedAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntime) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunner_updatedAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntime_updatedAt,
+		ec.fieldContext_BotRunner_updatedAt,
 		func(ctx context.Context) (any, error) {
 			return obj.UpdatedAt, nil
 		},
@@ -3677,9 +3509,9 @@ func (ec *executionContext) _BotRuntime_updatedAt(ctx context.Context, field gra
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntime_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunner_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntime",
+		Object:     "BotRunner",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3690,12 +3522,12 @@ func (ec *executionContext) fieldContext_BotRuntime_updatedAt(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntime_bots(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntime) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunner_bots(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntime_bots,
+		ec.fieldContext_BotRunner_bots,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
 			return obj.Bots(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
@@ -3707,9 +3539,9 @@ func (ec *executionContext) _BotRuntime_bots(ctx context.Context, field graphql.
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntime_bots(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunner_bots(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntime",
+		Object:     "BotRunner",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
@@ -3732,54 +3564,54 @@ func (ec *executionContext) fieldContext_BotRuntime_bots(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_BotRuntime_bots_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_BotRunner_bots_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntimeConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntimeConnection) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunnerConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunnerConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntimeConnection_edges,
+		ec.fieldContext_BotRunnerConnection_edges,
 		func(ctx context.Context) (any, error) {
 			return obj.Edges, nil
 		},
 		nil,
-		ec.marshalOBotRuntimeEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRuntimeEdge,
+		ec.marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerEdge,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntimeConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunnerConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntimeConnection",
+		Object:     "BotRunnerConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "node":
-				return ec.fieldContext_BotRuntimeEdge_node(ctx, field)
+				return ec.fieldContext_BotRunnerEdge_node(ctx, field)
 			case "cursor":
-				return ec.fieldContext_BotRuntimeEdge_cursor(ctx, field)
+				return ec.fieldContext_BotRunnerEdge_cursor(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BotRuntimeEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BotRunnerEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntimeConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntimeConnection) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunnerConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunnerConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntimeConnection_pageInfo,
+		ec.fieldContext_BotRunnerConnection_pageInfo,
 		func(ctx context.Context) (any, error) {
 			return obj.PageInfo, nil
 		},
@@ -3790,9 +3622,9 @@ func (ec *executionContext) _BotRuntimeConnection_pageInfo(ctx context.Context, 
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntimeConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunnerConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntimeConnection",
+		Object:     "BotRunnerConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3813,12 +3645,12 @@ func (ec *executionContext) fieldContext_BotRuntimeConnection_pageInfo(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntimeConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntimeConnection) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunnerConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunnerConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntimeConnection_totalCount,
+		ec.fieldContext_BotRunnerConnection_totalCount,
 		func(ctx context.Context) (any, error) {
 			return obj.TotalCount, nil
 		},
@@ -3829,9 +3661,9 @@ func (ec *executionContext) _BotRuntimeConnection_totalCount(ctx context.Context
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntimeConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunnerConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntimeConnection",
+		Object:     "BotRunnerConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3842,55 +3674,55 @@ func (ec *executionContext) fieldContext_BotRuntimeConnection_totalCount(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntimeEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntimeEdge) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunnerEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunnerEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntimeEdge_node,
+		ec.fieldContext_BotRunnerEdge_node,
 		func(ctx context.Context) (any, error) {
 			return obj.Node, nil
 		},
 		nil,
-		ec.marshalOBotRuntime2ᚖanytradeᚋinternalᚋentᚐBotRuntime,
+		ec.marshalOBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntimeEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntimeEdge",
+		Object:     "BotRunnerEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_BotRuntime_id(ctx, field)
+				return ec.fieldContext_BotRunner_id(ctx, field)
 			case "name":
-				return ec.fieldContext_BotRuntime_name(ctx, field)
+				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
-				return ec.fieldContext_BotRuntime_type(ctx, field)
+				return ec.fieldContext_BotRunner_type(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_BotRuntime_createdAt(ctx, field)
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_BotRuntime_updatedAt(ctx, field)
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
-				return ec.fieldContext_BotRuntime_bots(ctx, field)
+				return ec.fieldContext_BotRunner_bots(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BotRuntime", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _BotRuntimeEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.BotRuntimeEdge) (ret graphql.Marshaler) {
+func (ec *executionContext) _BotRunnerEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunnerEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_BotRuntimeEdge_cursor,
+		ec.fieldContext_BotRunnerEdge_cursor,
 		func(ctx context.Context) (any, error) {
 			return obj.Cursor, nil
 		},
@@ -3901,9 +3733,9 @@ func (ec *executionContext) _BotRuntimeEdge_cursor(ctx context.Context, field gr
 	)
 }
 
-func (ec *executionContext) fieldContext_BotRuntimeEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BotRunnerEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BotRuntimeEdge",
+		Object:     "BotRunnerEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4485,420 +4317,6 @@ func (ec *executionContext) fieldContext_Exchange_bots(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Exchange_secrets(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Exchange_secrets,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return obj.Secrets(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
-		},
-		nil,
-		ec.marshalNExchangeSecretConnection2ᚖanytradeᚋinternalᚋentᚐExchangeSecretConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Exchange_secrets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Exchange",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_ExchangeSecretConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_ExchangeSecretConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_ExchangeSecretConnection_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExchangeSecretConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Exchange_secrets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecret_id(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecret) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecret_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecret_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecret_exchangeID(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecret) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecret_exchangeID,
-		func(ctx context.Context) (any, error) {
-			return obj.ExchangeID, nil
-		},
-		nil,
-		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecret_exchangeID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecret_name(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecret) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecret_name,
-		func(ctx context.Context) (any, error) {
-			return obj.Name, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecret_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecret_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecret) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecret_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecret_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecret_updatedAt(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecret) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecret_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNTime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecret_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecret_exchange(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecret) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecret_exchange,
-		func(ctx context.Context) (any, error) {
-			return obj.Exchange(ctx)
-		},
-		nil,
-		ec.marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExchange,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecret_exchange(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Exchange_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Exchange_name(ctx, field)
-			case "testMode":
-				return ec.fieldContext_Exchange_testMode(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Exchange_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Exchange_updatedAt(ctx, field)
-			case "bots":
-				return ec.fieldContext_Exchange_bots(ctx, field)
-			case "secrets":
-				return ec.fieldContext_Exchange_secrets(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecretConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecretConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecretConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalOExchangeSecretEdge2ᚕᚖanytradeᚋinternalᚋentᚐExchangeSecretEdge,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecretConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecretConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_ExchangeSecretEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_ExchangeSecretEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExchangeSecretEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecretConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecretConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecretConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecretConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecretConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecretConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecretConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecretConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return obj.TotalCount, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecretConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecretConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecretEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecretEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecretEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalOExchangeSecret2ᚖanytradeᚋinternalᚋentᚐExchangeSecret,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecretEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecretEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ExchangeSecret_id(ctx, field)
-			case "exchangeID":
-				return ec.fieldContext_ExchangeSecret_exchangeID(ctx, field)
-			case "name":
-				return ec.fieldContext_ExchangeSecret_name(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ExchangeSecret_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ExchangeSecret_updatedAt(ctx, field)
-			case "exchange":
-				return ec.fieldContext_ExchangeSecret_exchange(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExchangeSecret", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExchangeSecretEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeSecretEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ExchangeSecretEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCursor,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ExchangeSecretEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExchangeSecretEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Cursor does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4936,8 +4354,6 @@ func (ec *executionContext) fieldContext_Mutation_createExchange(ctx context.Con
 				return ec.fieldContext_Exchange_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Exchange_bots(ctx, field)
-			case "secrets":
-				return ec.fieldContext_Exchange_secrets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
 		},
@@ -4993,8 +4409,6 @@ func (ec *executionContext) fieldContext_Mutation_updateExchange(ctx context.Con
 				return ec.fieldContext_Exchange_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Exchange_bots(ctx, field)
-			case "secrets":
-				return ec.fieldContext_Exchange_secrets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
 		},
@@ -5054,157 +4468,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteExchange(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createExchangeSecret(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_createExchangeSecret,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateExchangeSecret(ctx, fc.Args["input"].(ent.CreateExchangeSecretInput))
-		},
-		nil,
-		ec.marshalNExchangeSecret2ᚖanytradeᚋinternalᚋentᚐExchangeSecret,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createExchangeSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ExchangeSecret_id(ctx, field)
-			case "exchangeID":
-				return ec.fieldContext_ExchangeSecret_exchangeID(ctx, field)
-			case "name":
-				return ec.fieldContext_ExchangeSecret_name(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ExchangeSecret_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ExchangeSecret_updatedAt(ctx, field)
-			case "exchange":
-				return ec.fieldContext_ExchangeSecret_exchange(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExchangeSecret", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createExchangeSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateExchangeSecret(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateExchangeSecret,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateExchangeSecret(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateExchangeSecretInput))
-		},
-		nil,
-		ec.marshalNExchangeSecret2ᚖanytradeᚋinternalᚋentᚐExchangeSecret,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateExchangeSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ExchangeSecret_id(ctx, field)
-			case "exchangeID":
-				return ec.fieldContext_ExchangeSecret_exchangeID(ctx, field)
-			case "name":
-				return ec.fieldContext_ExchangeSecret_name(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ExchangeSecret_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ExchangeSecret_updatedAt(ctx, field)
-			case "exchange":
-				return ec.fieldContext_ExchangeSecret_exchange(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExchangeSecret", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateExchangeSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteExchangeSecret(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteExchangeSecret,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteExchangeSecret(ctx, fc.Args["id"].(uuid.UUID))
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteExchangeSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteExchangeSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_createStrategy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5240,6 +4503,8 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "version":
 				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -5301,6 +4566,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "version":
 				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -5407,6 +4674,8 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -5417,8 +4686,8 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5427,8 +4696,8 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -5488,6 +4757,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -5498,8 +4769,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5508,8 +4779,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -5610,6 +4881,8 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -5620,8 +4893,8 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5630,8 +4903,8 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -5691,6 +4964,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -5701,8 +4976,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5711,8 +4986,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -5772,6 +5047,8 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -5782,8 +5059,8 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5792,8 +5069,8 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -5814,24 +5091,24 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createBotRuntime(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createBotRunner(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_createBotRuntime,
+		ec.fieldContext_Mutation_createBotRunner,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateBotRuntime(ctx, fc.Args["input"].(ent.CreateBotRuntimeInput))
+			return ec.resolvers.Mutation().CreateBotRunner(ctx, fc.Args["input"].(ent.CreateBotRunnerInput))
 		},
 		nil,
-		ec.marshalNBotRuntime2ᚖanytradeᚋinternalᚋentᚐBotRuntime,
+		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createBotRuntime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5840,19 +5117,19 @@ func (ec *executionContext) fieldContext_Mutation_createBotRuntime(ctx context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_BotRuntime_id(ctx, field)
+				return ec.fieldContext_BotRunner_id(ctx, field)
 			case "name":
-				return ec.fieldContext_BotRuntime_name(ctx, field)
+				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
-				return ec.fieldContext_BotRuntime_type(ctx, field)
+				return ec.fieldContext_BotRunner_type(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_BotRuntime_createdAt(ctx, field)
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_BotRuntime_updatedAt(ctx, field)
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
-				return ec.fieldContext_BotRuntime_bots(ctx, field)
+				return ec.fieldContext_BotRunner_bots(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BotRuntime", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
 	}
 	defer func() {
@@ -5862,31 +5139,31 @@ func (ec *executionContext) fieldContext_Mutation_createBotRuntime(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createBotRuntime_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createBotRunner_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateBotRuntime(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateBotRunner(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_updateBotRuntime,
+		ec.fieldContext_Mutation_updateBotRunner,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateBotRuntime(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBotRuntimeInput))
+			return ec.resolvers.Mutation().UpdateBotRunner(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBotRunnerInput))
 		},
 		nil,
-		ec.marshalNBotRuntime2ᚖanytradeᚋinternalᚋentᚐBotRuntime,
+		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateBotRuntime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5895,19 +5172,19 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRuntime(ctx context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_BotRuntime_id(ctx, field)
+				return ec.fieldContext_BotRunner_id(ctx, field)
 			case "name":
-				return ec.fieldContext_BotRuntime_name(ctx, field)
+				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
-				return ec.fieldContext_BotRuntime_type(ctx, field)
+				return ec.fieldContext_BotRunner_type(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_BotRuntime_createdAt(ctx, field)
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_BotRuntime_updatedAt(ctx, field)
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
-				return ec.fieldContext_BotRuntime_bots(ctx, field)
+				return ec.fieldContext_BotRunner_bots(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BotRuntime", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
 	}
 	defer func() {
@@ -5917,22 +5194,22 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRuntime(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateBotRuntime_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateBotRunner_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteBotRuntime(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteBotRunner(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_deleteBotRuntime,
+		ec.fieldContext_Mutation_deleteBotRunner,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteBotRuntime(ctx, fc.Args["id"].(uuid.UUID))
+			return ec.resolvers.Mutation().DeleteBotRunner(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -5941,7 +5218,7 @@ func (ec *executionContext) _Mutation_deleteBotRuntime(ctx context.Context, fiel
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteBotRuntime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteBotRunner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5958,7 +5235,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteBotRuntime(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteBotRuntime_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteBotRunner_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6619,24 +5896,24 @@ func (ec *executionContext) fieldContext_Query_bots(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_botRuntimes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_botRunners(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Query_botRuntimes,
+		ec.fieldContext_Query_botRunners,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().BotRuntimes(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
+			return ec.resolvers.Query().BotRunners(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
 		},
 		nil,
-		ec.marshalNBotRuntimeConnection2ᚖanytradeᚋinternalᚋentᚐBotRuntimeConnection,
+		ec.marshalNBotRunnerConnection2ᚖanytradeᚋinternalᚋentᚐBotRunnerConnection,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_botRuntimes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_botRunners(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -6645,13 +5922,13 @@ func (ec *executionContext) fieldContext_Query_botRuntimes(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_BotRuntimeConnection_edges(ctx, field)
+				return ec.fieldContext_BotRunnerConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_BotRuntimeConnection_pageInfo(ctx, field)
+				return ec.fieldContext_BotRunnerConnection_pageInfo(ctx, field)
 			case "totalCount":
-				return ec.fieldContext_BotRuntimeConnection_totalCount(ctx, field)
+				return ec.fieldContext_BotRunnerConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BotRuntimeConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BotRunnerConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -6661,7 +5938,7 @@ func (ec *executionContext) fieldContext_Query_botRuntimes(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_botRuntimes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_botRunners_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6704,60 +5981,9 @@ func (ec *executionContext) fieldContext_Query_exchanges(_ context.Context, fiel
 				return ec.fieldContext_Exchange_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Exchange_bots(ctx, field)
-			case "secrets":
-				return ec.fieldContext_Exchange_secrets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_exchangeSecrets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_exchangeSecrets,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().ExchangeSecrets(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
-		},
-		nil,
-		ec.marshalNExchangeSecretConnection2ᚖanytradeᚋinternalᚋentᚐExchangeSecretConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_exchangeSecrets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_ExchangeSecretConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_ExchangeSecretConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_ExchangeSecretConnection_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExchangeSecretConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_exchangeSecrets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -6860,15 +6086,15 @@ func (ec *executionContext) fieldContext_Query_trades(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getBotRuntimeStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_getBotRunnerStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Query_getBotRuntimeStatus,
+		ec.fieldContext_Query_getBotRunnerStatus,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().GetBotRuntimeStatus(ctx, fc.Args["id"].(uuid.UUID))
+			return ec.resolvers.Query().GetBotRunnerStatus(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
 		ec.marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐBotStatus,
@@ -6877,7 +6103,7 @@ func (ec *executionContext) _Query_getBotRuntimeStatus(ctx context.Context, fiel
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_getBotRuntimeStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getBotRunnerStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -6922,7 +6148,7 @@ func (ec *executionContext) fieldContext_Query_getBotRuntimeStatus(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getBotRuntimeStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_getBotRunnerStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7177,6 +6403,35 @@ func (ec *executionContext) fieldContext_Strategy_version(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_config(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_config,
+		func(ctx context.Context) (any, error) {
+			return obj.Config, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7475,6 +6730,8 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "version":
 				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -8079,6 +7336,8 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_apiURL(ctx, field)
 			case "apiUsername":
 				return ec.fieldContext_Bot_apiUsername(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
 				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
 			case "lastSeenAt":
@@ -8089,8 +7348,8 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_exchangeID(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Bot_strategyID(ctx, field)
-			case "runtimeID":
-				return ec.fieldContext_Bot_runtimeID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -8099,8 +7358,8 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_exchange(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Bot_strategy(ctx, field)
-			case "runtime":
-				return ec.fieldContext_Bot_runtime(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
 			case "trades":
 				return ec.fieldContext_Bot_trades(ctx, field)
 			}
@@ -9757,6 +9016,108 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputBinanceConfigInput(ctx context.Context, obj any) (exchange.BinanceConfigInput, error) {
+	var it exchange.BinanceConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiKey", "apiSecret"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIKey = data
+		case "apiSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiSecret"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APISecret = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBitfinexConfigInput(ctx context.Context, obj any) (exchange.BitfinexConfigInput, error) {
+	var it exchange.BitfinexConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiKey", "apiSecret"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIKey = data
+		case "apiSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiSecret"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APISecret = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBybitConfigInput(ctx context.Context, obj any) (exchange.BybitConfigInput, error) {
+	var it exchange.BybitConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiKey", "apiSecret"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIKey = data
+		case "apiSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiSecret"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APISecret = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Context, obj any) (ent.CreateBacktestInput, error) {
 	var it ent.CreateBacktestInput
 	asMap := map[string]any{}
@@ -9819,7 +9180,7 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "apiURL", "apiUsername", "apiPassword", "freqtradeVersion", "lastSeenAt", "errorMessage", "createdAt", "updatedAt", "exchangeID", "strategyID", "runtimeID", "tradeIDs"}
+	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "apiURL", "apiUsername", "apiPassword", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9875,6 +9236,13 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.APIPassword = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
 		case "freqtradeVersion":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freqtradeVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -9924,13 +9292,13 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.StrategyID = data
-		case "runtimeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runtimeID"))
+		case "runnerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.RuntimeID = data
+			it.RunnerID = data
 		case "tradeIDs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tradeIDs"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
@@ -9944,14 +9312,14 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateBotRuntimeInput(ctx context.Context, obj any) (ent.CreateBotRuntimeInput, error) {
-	var it ent.CreateBotRuntimeInput
+func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Context, obj any) (ent.CreateBotRunnerInput, error) {
+	var it ent.CreateBotRunnerInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "createdAt", "updatedAt", "botIDs"}
+	fieldsInOrder := [...]string{"name", "type", "config", "createdAt", "updatedAt", "botIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9967,11 +9335,20 @@ func (ec *executionContext) unmarshalInputCreateBotRuntimeInput(ctx context.Cont
 			it.Name = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOBotRuntimeRuntimeType2ᚖanytradeᚋinternalᚋenumᚐRuntimeType(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Type = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalORunnerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.CreateBotRunnerInput().Config(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -10006,7 +9383,7 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "testMode", "createdAt", "updatedAt", "botIDs", "secretIDs"}
+	fieldsInOrder := [...]string{"name", "testMode", "config", "createdAt", "updatedAt", "botIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10027,6 +9404,15 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 				return it, err
 			}
 			it.TestMode = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐExchangeConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.CreateExchangeInput().Config(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -10048,68 +9434,6 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 				return it, err
 			}
 			it.BotIDs = data
-		case "secretIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SecretIDs = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateExchangeSecretInput(ctx context.Context, obj any) (ent.CreateExchangeSecretInput, error) {
-	var it ent.CreateExchangeSecretInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "value", "createdAt", "updatedAt", "exchangeID"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Value = data
-		case "createdAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CreatedAt = data
-		case "updatedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UpdatedAt = data
-		case "exchangeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exchangeID"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ExchangeID = data
 		}
 	}
 
@@ -10123,7 +9447,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code", "version", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"name", "description", "code", "version", "config", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10158,6 +9482,13 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.Version = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -10331,6 +9662,383 @@ func (ec *executionContext) unmarshalInputCreateTradeInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDockerConfigInput(ctx context.Context, obj any) (model.DockerConfigInput, error) {
+	var it model.DockerConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"host", "tlsVerify", "certPath", "keyPath", "caPath", "apiVersion", "network", "registryAuth"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "host":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("host"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Host = data
+		case "tlsVerify":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tlsVerify"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TLSVerify = data
+		case "certPath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("certPath"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CertPath = data
+		case "keyPath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyPath"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.KeyPath = data
+		case "caPath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("caPath"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CaPath = data
+		case "apiVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIVersion = data
+		case "network":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("network"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Network = data
+		case "registryAuth":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registryAuth"))
+			data, err := ec.unmarshalORegistryAuthInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRegistryAuthInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RegistryAuth = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputExchangeConfigInput(ctx context.Context, obj any) (exchange.ExchangeConfigInput, error) {
+	var it exchange.ExchangeConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"binance", "binanceus", "coinbase", "kraken", "kucoin", "bybit", "okx", "bitfinex"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "binance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binance"))
+			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBinanceConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Binance = data
+		case "binanceus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binanceus"))
+			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBinanceConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BinanceUS = data
+		case "coinbase":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coinbase"))
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Coinbase = data
+		case "kraken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kraken"))
+			data, err := ec.unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐKrakenConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kraken = data
+		case "kucoin":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kucoin"))
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kucoin = data
+		case "bybit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bybit"))
+			data, err := ec.unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBybitConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Bybit = data
+		case "okx":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("okx"))
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OKX = data
+		case "bitfinex":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bitfinex"))
+			data, err := ec.unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBitfinexConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Bitfinex = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputKrakenConfigInput(ctx context.Context, obj any) (exchange.KrakenConfigInput, error) {
+	var it exchange.KrakenConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiKey", "apiSecret"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIKey = data
+		case "apiSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiSecret"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APISecret = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputKubernetesConfigInput(ctx context.Context, obj any) (model.KubernetesConfigInput, error) {
+	var it model.KubernetesConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"kubeconfigPath", "namespace", "context"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "kubeconfigPath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubeconfigPath"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.KubeconfigPath = data
+		case "namespace":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Namespace = data
+		case "context":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("context"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Context = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputLocalConfigInput(ctx context.Context, obj any) (model.LocalConfigInput, error) {
+	var it model.LocalConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"basePath"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "basePath":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("basePath"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BasePath = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPassphraseExchangeConfigInput(ctx context.Context, obj any) (exchange.PassphraseExchangeConfigInput, error) {
+	var it exchange.PassphraseExchangeConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiKey", "apiSecret", "passphrase"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIKey = data
+		case "apiSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiSecret"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APISecret = data
+		case "passphrase":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("passphrase"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Passphrase = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegistryAuthInput(ctx context.Context, obj any) (model.RegistryAuthInput, error) {
+	var it model.RegistryAuthInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"username", "password", "serverAddress"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "username":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Username = data
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
+		case "serverAddress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serverAddress"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServerAddress = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRunnerConfigInput(ctx context.Context, obj any) (model.RunnerConfigInput, error) {
+	var it model.RunnerConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"docker", "kubernetes", "local"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "docker":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("docker"))
+			data, err := ec.unmarshalODockerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDockerConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Docker = data
+		case "kubernetes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubernetes"))
+			data, err := ec.unmarshalOKubernetesConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKubernetesConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kubernetes = data
+		case "local":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("local"))
+			data, err := ec.unmarshalOLocalConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐLocalConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Local = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateBacktestInput(ctx context.Context, obj any) (ent.UpdateBacktestInput, error) {
 	var it ent.UpdateBacktestInput
 	asMap := map[string]any{}
@@ -10393,7 +10101,7 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "clearContainerID", "apiURL", "clearAPIURL", "apiUsername", "clearAPIUsername", "apiPassword", "clearAPIPassword", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "updatedAt", "exchangeID", "strategyID", "runtimeID", "addTradeIDs", "removeTradeIDs", "clearTrades"}
+	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "clearContainerID", "apiURL", "clearAPIURL", "apiUsername", "clearAPIUsername", "apiPassword", "clearAPIPassword", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10477,6 +10185,20 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ClearAPIPassword = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
+		case "clearConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearConfig = data
 		case "freqtradeVersion":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freqtradeVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -10533,13 +10255,13 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.StrategyID = data
-		case "runtimeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runtimeID"))
+		case "runnerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.RuntimeID = data
+			it.RunnerID = data
 		case "addTradeIDs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addTradeIDs"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
@@ -10567,14 +10289,14 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateBotRuntimeInput(ctx context.Context, obj any) (ent.UpdateBotRuntimeInput, error) {
-	var it ent.UpdateBotRuntimeInput
+func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Context, obj any) (ent.UpdateBotRunnerInput, error) {
+	var it ent.UpdateBotRunnerInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
+	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10590,11 +10312,27 @@ func (ec *executionContext) unmarshalInputUpdateBotRuntimeInput(ctx context.Cont
 			it.Name = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOBotRuntimeRuntimeType2ᚖanytradeᚋinternalᚋenumᚐRuntimeType(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Type = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalORunnerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.UpdateBotRunnerInput().Config(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "clearConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearConfig = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -10636,7 +10374,7 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "testMode", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addSecretIDs", "removeSecretIDs", "clearSecrets"}
+	fieldsInOrder := [...]string{"name", "testMode", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10657,6 +10395,22 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 				return it, err
 			}
 			it.TestMode = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐExchangeConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.UpdateExchangeInput().Config(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "clearConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearConfig = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -10685,75 +10439,6 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearBots = data
-		case "addSecretIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addSecretIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AddSecretIDs = data
-		case "removeSecretIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeSecretIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RemoveSecretIDs = data
-		case "clearSecrets":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearSecrets"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearSecrets = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateExchangeSecretInput(ctx context.Context, obj any) (ent.UpdateExchangeSecretInput, error) {
-	var it ent.UpdateExchangeSecretInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "value", "updatedAt", "exchangeID"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Value = data
-		case "updatedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UpdatedAt = data
-		case "exchangeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exchangeID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ExchangeID = data
 		}
 	}
 
@@ -10767,7 +10452,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10809,6 +10494,20 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.Version = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
+		case "clearConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearConfig = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -11049,21 +10748,16 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Strategy(ctx, sel, obj)
-	case *ent.ExchangeSecret:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ExchangeSecret(ctx, sel, obj)
 	case *ent.Exchange:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._Exchange(ctx, sel, obj)
-	case *ent.BotRuntime:
+	case *ent.BotRunner:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._BotRuntime(ctx, sel, obj)
+		return ec._BotRunner(ctx, sel, obj)
 	case *ent.Bot:
 		if obj == nil {
 			return graphql.Null
@@ -11304,6 +10998,8 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = ec._Bot_apiURL(ctx, field, obj)
 		case "apiUsername":
 			out.Values[i] = ec._Bot_apiUsername(ctx, field, obj)
+		case "config":
+			out.Values[i] = ec._Bot_config(ctx, field, obj)
 		case "freqtradeVersion":
 			out.Values[i] = ec._Bot_freqtradeVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11323,8 +11019,8 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "runtimeID":
-			out.Values[i] = ec._Bot_runtimeID(ctx, field, obj)
+		case "runnerID":
+			out.Values[i] = ec._Bot_runnerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -11410,7 +11106,7 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "runtime":
+		case "runner":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -11419,7 +11115,7 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Bot_runtime(ctx, field, obj)
+				res = ec._Bot_runner(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11592,39 +11288,39 @@ func (ec *executionContext) _BotEdge(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var botRuntimeImplementors = []string{"BotRuntime", "Node"}
+var botRunnerImplementors = []string{"BotRunner", "Node"}
 
-func (ec *executionContext) _BotRuntime(ctx context.Context, sel ast.SelectionSet, obj *ent.BotRuntime) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, botRuntimeImplementors)
+func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet, obj *ent.BotRunner) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, botRunnerImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("BotRuntime")
+			out.Values[i] = graphql.MarshalString("BotRunner")
 		case "id":
-			out.Values[i] = ec._BotRuntime_id(ctx, field, obj)
+			out.Values[i] = ec._BotRunner_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
-			out.Values[i] = ec._BotRuntime_name(ctx, field, obj)
+			out.Values[i] = ec._BotRunner_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
-			out.Values[i] = ec._BotRuntime_type(ctx, field, obj)
+			out.Values[i] = ec._BotRunner_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
-			out.Values[i] = ec._BotRuntime_createdAt(ctx, field, obj)
+			out.Values[i] = ec._BotRunner_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
-			out.Values[i] = ec._BotRuntime_updatedAt(ctx, field, obj)
+			out.Values[i] = ec._BotRunner_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -11637,7 +11333,7 @@ func (ec *executionContext) _BotRuntime(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._BotRuntime_bots(ctx, field, obj)
+				res = ec._BotRunner_bots(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11687,26 +11383,26 @@ func (ec *executionContext) _BotRuntime(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var botRuntimeConnectionImplementors = []string{"BotRuntimeConnection"}
+var botRunnerConnectionImplementors = []string{"BotRunnerConnection"}
 
-func (ec *executionContext) _BotRuntimeConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.BotRuntimeConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, botRuntimeConnectionImplementors)
+func (ec *executionContext) _BotRunnerConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.BotRunnerConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, botRunnerConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("BotRuntimeConnection")
+			out.Values[i] = graphql.MarshalString("BotRunnerConnection")
 		case "edges":
-			out.Values[i] = ec._BotRuntimeConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._BotRunnerConnection_edges(ctx, field, obj)
 		case "pageInfo":
-			out.Values[i] = ec._BotRuntimeConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._BotRunnerConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "totalCount":
-			out.Values[i] = ec._BotRuntimeConnection_totalCount(ctx, field, obj)
+			out.Values[i] = ec._BotRunnerConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11733,21 +11429,21 @@ func (ec *executionContext) _BotRuntimeConnection(ctx context.Context, sel ast.S
 	return out
 }
 
-var botRuntimeEdgeImplementors = []string{"BotRuntimeEdge"}
+var botRunnerEdgeImplementors = []string{"BotRunnerEdge"}
 
-func (ec *executionContext) _BotRuntimeEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.BotRuntimeEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, botRuntimeEdgeImplementors)
+func (ec *executionContext) _BotRunnerEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.BotRunnerEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, botRunnerEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("BotRuntimeEdge")
+			out.Values[i] = graphql.MarshalString("BotRunnerEdge")
 		case "node":
-			out.Values[i] = ec._BotRuntimeEdge_node(ctx, field, obj)
+			out.Values[i] = ec._BotRunnerEdge_node(ctx, field, obj)
 		case "cursor":
-			out.Values[i] = ec._BotRuntimeEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._BotRunnerEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -11936,224 +11632,6 @@ func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "secrets":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Exchange_secrets(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var exchangeSecretImplementors = []string{"ExchangeSecret", "Node"}
-
-func (ec *executionContext) _ExchangeSecret(ctx context.Context, sel ast.SelectionSet, obj *ent.ExchangeSecret) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, exchangeSecretImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ExchangeSecret")
-		case "id":
-			out.Values[i] = ec._ExchangeSecret_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "exchangeID":
-			out.Values[i] = ec._ExchangeSecret_exchangeID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "name":
-			out.Values[i] = ec._ExchangeSecret_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "createdAt":
-			out.Values[i] = ec._ExchangeSecret_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._ExchangeSecret_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "exchange":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ExchangeSecret_exchange(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var exchangeSecretConnectionImplementors = []string{"ExchangeSecretConnection"}
-
-func (ec *executionContext) _ExchangeSecretConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.ExchangeSecretConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, exchangeSecretConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ExchangeSecretConnection")
-		case "edges":
-			out.Values[i] = ec._ExchangeSecretConnection_edges(ctx, field, obj)
-		case "pageInfo":
-			out.Values[i] = ec._ExchangeSecretConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "totalCount":
-			out.Values[i] = ec._ExchangeSecretConnection_totalCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var exchangeSecretEdgeImplementors = []string{"ExchangeSecretEdge"}
-
-func (ec *executionContext) _ExchangeSecretEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.ExchangeSecretEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, exchangeSecretEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ExchangeSecretEdge")
-		case "node":
-			out.Values[i] = ec._ExchangeSecretEdge_node(ctx, field, obj)
-		case "cursor":
-			out.Values[i] = ec._ExchangeSecretEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12213,27 +11691,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteExchange":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteExchange(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createExchangeSecret":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createExchangeSecret(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateExchangeSecret":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateExchangeSecret(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteExchangeSecret":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteExchangeSecret(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -12301,23 +11758,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createBotRuntime":
+		case "createBotRunner":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createBotRuntime(ctx, field)
+				return ec._Mutation_createBotRunner(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateBotRuntime":
+		case "updateBotRunner":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateBotRuntime(ctx, field)
+				return ec._Mutation_updateBotRunner(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteBotRuntime":
+		case "deleteBotRunner":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteBotRuntime(ctx, field)
+				return ec._Mutation_deleteBotRunner(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -12539,7 +11996,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "botRuntimes":
+		case "botRunners":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -12548,7 +12005,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_botRuntimes(ctx, field)
+				res = ec._Query_botRunners(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -12571,28 +12028,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_exchanges(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "exchangeSecrets":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_exchangeSecrets(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -12649,7 +12084,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getBotRuntimeStatus":
+		case "getBotRunnerStatus":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -12658,7 +12093,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getBotRuntimeStatus(ctx, field)
+				res = ec._Query_getBotRunnerStatus(ctx, field)
 				return res
 			}
 
@@ -12732,6 +12167,8 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "config":
+			out.Values[i] = ec._Strategy_config(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Strategy_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -13593,41 +13030,41 @@ func (ec *executionContext) marshalNBotConnection2ᚖanytradeᚋinternalᚋent�
 	return ec._BotConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBotRuntime2anytradeᚋinternalᚋentᚐBotRuntime(ctx context.Context, sel ast.SelectionSet, v ent.BotRuntime) graphql.Marshaler {
-	return ec._BotRuntime(ctx, sel, &v)
+func (ec *executionContext) marshalNBotRunner2anytradeᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v ent.BotRunner) graphql.Marshaler {
+	return ec._BotRunner(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBotRuntime2ᚖanytradeᚋinternalᚋentᚐBotRuntime(ctx context.Context, sel ast.SelectionSet, v *ent.BotRuntime) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunner) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._BotRuntime(ctx, sel, v)
+	return ec._BotRunner(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBotRuntimeConnection2anytradeᚋinternalᚋentᚐBotRuntimeConnection(ctx context.Context, sel ast.SelectionSet, v ent.BotRuntimeConnection) graphql.Marshaler {
-	return ec._BotRuntimeConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNBotRunnerConnection2anytradeᚋinternalᚋentᚐBotRunnerConnection(ctx context.Context, sel ast.SelectionSet, v ent.BotRunnerConnection) graphql.Marshaler {
+	return ec._BotRunnerConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBotRuntimeConnection2ᚖanytradeᚋinternalᚋentᚐBotRuntimeConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BotRuntimeConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunnerConnection2ᚖanytradeᚋinternalᚋentᚐBotRunnerConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunnerConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._BotRuntimeConnection(ctx, sel, v)
+	return ec._BotRunnerConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBotRuntimeRuntimeType2anytradeᚋinternalᚋenumᚐRuntimeType(ctx context.Context, v any) (enum.RuntimeType, error) {
-	var res enum.RuntimeType
+func (ec *executionContext) unmarshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (enum.RunnerType, error) {
+	var res enum.RunnerType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBotRuntimeRuntimeType2anytradeᚋinternalᚋenumᚐRuntimeType(ctx context.Context, sel ast.SelectionSet, v enum.RuntimeType) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, sel ast.SelectionSet, v enum.RunnerType) graphql.Marshaler {
 	return v
 }
 
@@ -13641,18 +13078,13 @@ func (ec *executionContext) unmarshalNCreateBotInput2anytradeᚋinternalᚋent�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateBotRuntimeInput2anytradeᚋinternalᚋentᚐCreateBotRuntimeInput(ctx context.Context, v any) (ent.CreateBotRuntimeInput, error) {
-	res, err := ec.unmarshalInputCreateBotRuntimeInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateBotRunnerInput2anytradeᚋinternalᚋentᚐCreateBotRunnerInput(ctx context.Context, v any) (ent.CreateBotRunnerInput, error) {
+	res, err := ec.unmarshalInputCreateBotRunnerInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNCreateExchangeInput2anytradeᚋinternalᚋentᚐCreateExchangeInput(ctx context.Context, v any) (ent.CreateExchangeInput, error) {
 	res, err := ec.unmarshalInputCreateExchangeInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNCreateExchangeSecretInput2anytradeᚋinternalᚋentᚐCreateExchangeSecretInput(ctx context.Context, v any) (ent.CreateExchangeSecretInput, error) {
-	res, err := ec.unmarshalInputCreateExchangeSecretInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -13742,34 +13174,6 @@ func (ec *executionContext) unmarshalNExchangeExchangeType2anytradeᚋinternal�
 
 func (ec *executionContext) marshalNExchangeExchangeType2anytradeᚋinternalᚋenumᚐExchangeType(ctx context.Context, sel ast.SelectionSet, v enum.ExchangeType) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) marshalNExchangeSecret2anytradeᚋinternalᚋentᚐExchangeSecret(ctx context.Context, sel ast.SelectionSet, v ent.ExchangeSecret) graphql.Marshaler {
-	return ec._ExchangeSecret(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNExchangeSecret2ᚖanytradeᚋinternalᚋentᚐExchangeSecret(ctx context.Context, sel ast.SelectionSet, v *ent.ExchangeSecret) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ExchangeSecret(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNExchangeSecretConnection2anytradeᚋinternalᚋentᚐExchangeSecretConnection(ctx context.Context, sel ast.SelectionSet, v ent.ExchangeSecretConnection) graphql.Marshaler {
-	return ec._ExchangeSecretConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNExchangeSecretConnection2ᚖanytradeᚋinternalᚋentᚐExchangeSecretConnection(ctx context.Context, sel ast.SelectionSet, v *ent.ExchangeSecretConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ExchangeSecretConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
@@ -14006,18 +13410,13 @@ func (ec *executionContext) unmarshalNUpdateBotInput2anytradeᚋinternalᚋent�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateBotRuntimeInput2anytradeᚋinternalᚋentᚐUpdateBotRuntimeInput(ctx context.Context, v any) (ent.UpdateBotRuntimeInput, error) {
-	res, err := ec.unmarshalInputUpdateBotRuntimeInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdateBotRunnerInput2anytradeᚋinternalᚋentᚐUpdateBotRunnerInput(ctx context.Context, v any) (ent.UpdateBotRunnerInput, error) {
+	res, err := ec.unmarshalInputUpdateBotRunnerInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNUpdateExchangeInput2anytradeᚋinternalᚋentᚐUpdateExchangeInput(ctx context.Context, v any) (ent.UpdateExchangeInput, error) {
 	res, err := ec.unmarshalInputUpdateExchangeInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateExchangeSecretInput2anytradeᚋinternalᚋentᚐUpdateExchangeSecretInput(ctx context.Context, v any) (ent.UpdateExchangeSecretInput, error) {
-	res, err := ec.unmarshalInputUpdateExchangeSecretInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -14355,6 +13754,22 @@ func (ec *executionContext) marshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋ
 	return v
 }
 
+func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBinanceConfigInput(ctx context.Context, v any) (*exchange.BinanceConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputBinanceConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBitfinexConfigInput(ctx context.Context, v any) (*exchange.BitfinexConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputBitfinexConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -14472,14 +13887,14 @@ func (ec *executionContext) marshalOBotEdge2ᚖanytradeᚋinternalᚋentᚐBotEd
 	return ec._BotEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBotRuntime2ᚖanytradeᚋinternalᚋentᚐBotRuntime(ctx context.Context, sel ast.SelectionSet, v *ent.BotRuntime) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunner) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._BotRuntime(ctx, sel, v)
+	return ec._BotRunner(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBotRuntimeEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRuntimeEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotRuntimeEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotRunnerEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14506,7 +13921,7 @@ func (ec *executionContext) marshalOBotRuntimeEdge2ᚕᚖanytradeᚋinternalᚋe
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOBotRuntimeEdge2ᚖanytradeᚋinternalᚋentᚐBotRuntimeEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOBotRunnerEdge2ᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -14520,23 +13935,23 @@ func (ec *executionContext) marshalOBotRuntimeEdge2ᚕᚖanytradeᚋinternalᚋe
 	return ret
 }
 
-func (ec *executionContext) marshalOBotRuntimeEdge2ᚖanytradeᚋinternalᚋentᚐBotRuntimeEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BotRuntimeEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerEdge2ᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunnerEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._BotRuntimeEdge(ctx, sel, v)
+	return ec._BotRunnerEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBotRuntimeRuntimeType2ᚖanytradeᚋinternalᚋenumᚐRuntimeType(ctx context.Context, v any) (*enum.RuntimeType, error) {
+func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (*enum.RunnerType, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(enum.RuntimeType)
+	var res = new(enum.RunnerType)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotRuntimeRuntimeType2ᚖanytradeᚋinternalᚋenumᚐRuntimeType(ctx context.Context, sel ast.SelectionSet, v *enum.RuntimeType) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, sel ast.SelectionSet, v *enum.RunnerType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14548,6 +13963,14 @@ func (ec *executionContext) marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐ
 		return graphql.Null
 	}
 	return ec._BotStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBybitConfigInput(ctx context.Context, v any) (*exchange.BybitConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputBybitConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor(ctx context.Context, v any) (*entgql.Cursor[uuid.UUID], error) {
@@ -14566,6 +13989,22 @@ func (ec *executionContext) marshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCu
 	return v
 }
 
+func (ec *executionContext) unmarshalODockerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDockerConfigInput(ctx context.Context, v any) (*model.DockerConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDockerConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐExchangeConfigInput(ctx context.Context, v any) (*exchange.ExchangeConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputExchangeConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOExchangeExchangeType2ᚖanytradeᚋinternalᚋenumᚐExchangeType(ctx context.Context, v any) (*enum.ExchangeType, error) {
 	if v == nil {
 		return nil, nil
@@ -14580,61 +14019,6 @@ func (ec *executionContext) marshalOExchangeExchangeType2ᚖanytradeᚋinternal�
 		return graphql.Null
 	}
 	return v
-}
-
-func (ec *executionContext) marshalOExchangeSecret2ᚖanytradeᚋinternalᚋentᚐExchangeSecret(ctx context.Context, sel ast.SelectionSet, v *ent.ExchangeSecret) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ExchangeSecret(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOExchangeSecretEdge2ᚕᚖanytradeᚋinternalᚋentᚐExchangeSecretEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.ExchangeSecretEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOExchangeSecretEdge2ᚖanytradeᚋinternalᚋentᚐExchangeSecretEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOExchangeSecretEdge2ᚖanytradeᚋinternalᚋentᚐExchangeSecretEdge(ctx context.Context, sel ast.SelectionSet, v *ent.ExchangeSecretEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ExchangeSecretEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {
@@ -14726,11 +14110,77 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐKrakenConfigInput(ctx context.Context, v any) (*exchange.KrakenConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputKrakenConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOKubernetesConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKubernetesConfigInput(ctx context.Context, v any) (*model.KubernetesConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputKubernetesConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOLocalConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐLocalConfigInput(ctx context.Context, v any) (*model.LocalConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputLocalConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOMap2map(ctx context.Context, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalMap(v)
+	return res
+}
+
 func (ec *executionContext) marshalONode2anytradeᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v ent.Noder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx context.Context, v any) (*exchange.PassphraseExchangeConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPassphraseExchangeConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalORegistryAuthInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRegistryAuthInput(ctx context.Context, v any) (*model.RegistryAuthInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputRegistryAuthInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalORunnerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx context.Context, v any) (*model.RunnerConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputRunnerConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {

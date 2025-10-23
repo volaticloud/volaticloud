@@ -24,7 +24,7 @@ type Exchange struct {
 	Name enum.ExchangeType `json:"name,omitempty"`
 	// Use testnet/sandbox
 	TestMode bool `json:"test_mode,omitempty"`
-	// Exchange-specific settings (non-sensitive)
+	// Exchange-specific configuration including API credentials
 	Config map[string]interface{} `json:"config,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
@@ -40,16 +40,13 @@ type Exchange struct {
 type ExchangeEdges struct {
 	// Bots holds the value of the bots edge.
 	Bots []*Bot `json:"bots,omitempty"`
-	// Secrets holds the value of the secrets edge.
-	Secrets []*ExchangeSecret `json:"secrets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [1]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
+	totalCount [1]map[string]int
 
-	namedBots    map[string][]*Bot
-	namedSecrets map[string][]*ExchangeSecret
+	namedBots map[string][]*Bot
 }
 
 // BotsOrErr returns the Bots value or an error if the edge
@@ -59,15 +56,6 @@ func (e ExchangeEdges) BotsOrErr() ([]*Bot, error) {
 		return e.Bots, nil
 	}
 	return nil, &NotLoadedError{edge: "bots"}
-}
-
-// SecretsOrErr returns the Secrets value or an error if the edge
-// was not loaded in eager-loading.
-func (e ExchangeEdges) SecretsOrErr() ([]*ExchangeSecret, error) {
-	if e.loadedTypes[1] {
-		return e.Secrets, nil
-	}
-	return nil, &NotLoadedError{edge: "secrets"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -156,11 +144,6 @@ func (_m *Exchange) QueryBots() *BotQuery {
 	return NewExchangeClient(_m.config).QueryBots(_m)
 }
 
-// QuerySecrets queries the "secrets" edge of the Exchange entity.
-func (_m *Exchange) QuerySecrets() *ExchangeSecretQuery {
-	return NewExchangeClient(_m.config).QuerySecrets(_m)
-}
-
 // Update returns a builder for updating this Exchange.
 // Note that you need to call Exchange.Unwrap() before calling this method if this Exchange
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -223,30 +206,6 @@ func (_m *Exchange) appendNamedBots(name string, edges ...*Bot) {
 		_m.Edges.namedBots[name] = []*Bot{}
 	} else {
 		_m.Edges.namedBots[name] = append(_m.Edges.namedBots[name], edges...)
-	}
-}
-
-// NamedSecrets returns the Secrets named value or an error if the edge was not
-// loaded in eager-loading with this name.
-func (_m *Exchange) NamedSecrets(name string) ([]*ExchangeSecret, error) {
-	if _m.Edges.namedSecrets == nil {
-		return nil, &NotLoadedError{edge: name}
-	}
-	nodes, ok := _m.Edges.namedSecrets[name]
-	if !ok {
-		return nil, &NotLoadedError{edge: name}
-	}
-	return nodes, nil
-}
-
-func (_m *Exchange) appendNamedSecrets(name string, edges ...*ExchangeSecret) {
-	if _m.Edges.namedSecrets == nil {
-		_m.Edges.namedSecrets = make(map[string][]*ExchangeSecret)
-	}
-	if len(edges) == 0 {
-		_m.Edges.namedSecrets[name] = []*ExchangeSecret{}
-	} else {
-		_m.Edges.namedSecrets[name] = append(_m.Edges.namedSecrets[name], edges...)
 	}
 }
 

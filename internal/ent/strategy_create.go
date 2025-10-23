@@ -63,6 +63,12 @@ func (_c *StrategyCreate) SetNillableVersion(v *string) *StrategyCreate {
 	return _c
 }
 
+// SetConfig sets the "config" field.
+func (_c *StrategyCreate) SetConfig(v map[string]interface{}) *StrategyCreate {
+	_c.mutation.SetConfig(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *StrategyCreate) SetCreatedAt(v time.Time) *StrategyCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -260,6 +266,10 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Version(); ok {
 		_spec.SetField(strategy.FieldVersion, field.TypeString, value)
 		_node.Version = value
+	}
+	if value, ok := _c.mutation.Config(); ok {
+		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
+		_node.Config = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(strategy.FieldCreatedAt, field.TypeTime, value)

@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/enum"
 	"context"
 	"errors"
@@ -107,21 +106,6 @@ func (_c *ExchangeCreate) AddBots(v ...*Bot) *ExchangeCreate {
 	return _c.AddBotIDs(ids...)
 }
 
-// AddSecretIDs adds the "secrets" edge to the ExchangeSecret entity by IDs.
-func (_c *ExchangeCreate) AddSecretIDs(ids ...uuid.UUID) *ExchangeCreate {
-	_c.mutation.AddSecretIDs(ids...)
-	return _c
-}
-
-// AddSecrets adds the "secrets" edges to the ExchangeSecret entity.
-func (_c *ExchangeCreate) AddSecrets(v ...*ExchangeSecret) *ExchangeCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddSecretIDs(ids...)
-}
-
 // Mutation returns the ExchangeMutation object of the builder.
 func (_c *ExchangeCreate) Mutation() *ExchangeMutation {
 	return _c.mutation
@@ -129,7 +113,9 @@ func (_c *ExchangeCreate) Mutation() *ExchangeMutation {
 
 // Save creates the Exchange in the database.
 func (_c *ExchangeCreate) Save(ctx context.Context) (*Exchange, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -156,23 +142,33 @@ func (_c *ExchangeCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ExchangeCreate) defaults() {
+func (_c *ExchangeCreate) defaults() error {
 	if _, ok := _c.mutation.TestMode(); !ok {
 		v := exchange.DefaultTestMode
 		_c.mutation.SetTestMode(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if exchange.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized exchange.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := exchange.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if exchange.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized exchange.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := exchange.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if exchange.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized exchange.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := exchange.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -258,22 +254,6 @@ func (_c *ExchangeCreate) createSpec() (*Exchange, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.SecretsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

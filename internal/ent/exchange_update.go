@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/enum"
 	"context"
@@ -93,21 +92,6 @@ func (_u *ExchangeUpdate) AddBots(v ...*Bot) *ExchangeUpdate {
 	return _u.AddBotIDs(ids...)
 }
 
-// AddSecretIDs adds the "secrets" edge to the ExchangeSecret entity by IDs.
-func (_u *ExchangeUpdate) AddSecretIDs(ids ...uuid.UUID) *ExchangeUpdate {
-	_u.mutation.AddSecretIDs(ids...)
-	return _u
-}
-
-// AddSecrets adds the "secrets" edges to the ExchangeSecret entity.
-func (_u *ExchangeUpdate) AddSecrets(v ...*ExchangeSecret) *ExchangeUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddSecretIDs(ids...)
-}
-
 // Mutation returns the ExchangeMutation object of the builder.
 func (_u *ExchangeUpdate) Mutation() *ExchangeMutation {
 	return _u.mutation
@@ -134,30 +118,11 @@ func (_u *ExchangeUpdate) RemoveBots(v ...*Bot) *ExchangeUpdate {
 	return _u.RemoveBotIDs(ids...)
 }
 
-// ClearSecrets clears all "secrets" edges to the ExchangeSecret entity.
-func (_u *ExchangeUpdate) ClearSecrets() *ExchangeUpdate {
-	_u.mutation.ClearSecrets()
-	return _u
-}
-
-// RemoveSecretIDs removes the "secrets" edge to ExchangeSecret entities by IDs.
-func (_u *ExchangeUpdate) RemoveSecretIDs(ids ...uuid.UUID) *ExchangeUpdate {
-	_u.mutation.RemoveSecretIDs(ids...)
-	return _u
-}
-
-// RemoveSecrets removes "secrets" edges to ExchangeSecret entities.
-func (_u *ExchangeUpdate) RemoveSecrets(v ...*ExchangeSecret) *ExchangeUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveSecretIDs(ids...)
-}
-
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *ExchangeUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -184,11 +149,15 @@ func (_u *ExchangeUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ExchangeUpdate) defaults() {
+func (_u *ExchangeUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if exchange.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized exchange.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := exchange.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -266,51 +235,6 @@ func (_u *ExchangeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.SecretsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedSecretsIDs(); len(nodes) > 0 && !_u.mutation.SecretsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.SecretsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -399,21 +323,6 @@ func (_u *ExchangeUpdateOne) AddBots(v ...*Bot) *ExchangeUpdateOne {
 	return _u.AddBotIDs(ids...)
 }
 
-// AddSecretIDs adds the "secrets" edge to the ExchangeSecret entity by IDs.
-func (_u *ExchangeUpdateOne) AddSecretIDs(ids ...uuid.UUID) *ExchangeUpdateOne {
-	_u.mutation.AddSecretIDs(ids...)
-	return _u
-}
-
-// AddSecrets adds the "secrets" edges to the ExchangeSecret entity.
-func (_u *ExchangeUpdateOne) AddSecrets(v ...*ExchangeSecret) *ExchangeUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddSecretIDs(ids...)
-}
-
 // Mutation returns the ExchangeMutation object of the builder.
 func (_u *ExchangeUpdateOne) Mutation() *ExchangeMutation {
 	return _u.mutation
@@ -440,27 +349,6 @@ func (_u *ExchangeUpdateOne) RemoveBots(v ...*Bot) *ExchangeUpdateOne {
 	return _u.RemoveBotIDs(ids...)
 }
 
-// ClearSecrets clears all "secrets" edges to the ExchangeSecret entity.
-func (_u *ExchangeUpdateOne) ClearSecrets() *ExchangeUpdateOne {
-	_u.mutation.ClearSecrets()
-	return _u
-}
-
-// RemoveSecretIDs removes the "secrets" edge to ExchangeSecret entities by IDs.
-func (_u *ExchangeUpdateOne) RemoveSecretIDs(ids ...uuid.UUID) *ExchangeUpdateOne {
-	_u.mutation.RemoveSecretIDs(ids...)
-	return _u
-}
-
-// RemoveSecrets removes "secrets" edges to ExchangeSecret entities.
-func (_u *ExchangeUpdateOne) RemoveSecrets(v ...*ExchangeSecret) *ExchangeUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveSecretIDs(ids...)
-}
-
 // Where appends a list predicates to the ExchangeUpdate builder.
 func (_u *ExchangeUpdateOne) Where(ps ...predicate.Exchange) *ExchangeUpdateOne {
 	_u.mutation.Where(ps...)
@@ -476,7 +364,9 @@ func (_u *ExchangeUpdateOne) Select(field string, fields ...string) *ExchangeUpd
 
 // Save executes the query and returns the updated Exchange entity.
 func (_u *ExchangeUpdateOne) Save(ctx context.Context) (*Exchange, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -503,11 +393,15 @@ func (_u *ExchangeUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ExchangeUpdateOne) defaults() {
+func (_u *ExchangeUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if exchange.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized exchange.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := exchange.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -602,51 +496,6 @@ func (_u *ExchangeUpdateOne) sqlSave(ctx context.Context) (_node *Exchange, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.SecretsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedSecretsIDs(); len(nodes) > 0 && !_u.mutation.SecretsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.SecretsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   exchange.SecretsTable,
-			Columns: []string{exchange.SecretsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(exchangesecret.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

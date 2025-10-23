@@ -13,9 +13,8 @@ import (
 
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
 
@@ -35,12 +34,10 @@ type Client struct {
 	Backtest *BacktestClient
 	// Bot is the client for interacting with the Bot builders.
 	Bot *BotClient
-	// BotRuntime is the client for interacting with the BotRuntime builders.
-	BotRuntime *BotRuntimeClient
+	// BotRunner is the client for interacting with the BotRunner builders.
+	BotRunner *BotRunnerClient
 	// Exchange is the client for interacting with the Exchange builders.
 	Exchange *ExchangeClient
-	// ExchangeSecret is the client for interacting with the ExchangeSecret builders.
-	ExchangeSecret *ExchangeSecretClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
 	// Trade is the client for interacting with the Trade builders.
@@ -58,9 +55,8 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Backtest = NewBacktestClient(c.config)
 	c.Bot = NewBotClient(c.config)
-	c.BotRuntime = NewBotRuntimeClient(c.config)
+	c.BotRunner = NewBotRunnerClient(c.config)
 	c.Exchange = NewExchangeClient(c.config)
-	c.ExchangeSecret = NewExchangeSecretClient(c.config)
 	c.Strategy = NewStrategyClient(c.config)
 	c.Trade = NewTradeClient(c.config)
 }
@@ -153,15 +149,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		Backtest:       NewBacktestClient(cfg),
-		Bot:            NewBotClient(cfg),
-		BotRuntime:     NewBotRuntimeClient(cfg),
-		Exchange:       NewExchangeClient(cfg),
-		ExchangeSecret: NewExchangeSecretClient(cfg),
-		Strategy:       NewStrategyClient(cfg),
-		Trade:          NewTradeClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		Backtest:  NewBacktestClient(cfg),
+		Bot:       NewBotClient(cfg),
+		BotRunner: NewBotRunnerClient(cfg),
+		Exchange:  NewExchangeClient(cfg),
+		Strategy:  NewStrategyClient(cfg),
+		Trade:     NewTradeClient(cfg),
 	}, nil
 }
 
@@ -179,15 +174,14 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		Backtest:       NewBacktestClient(cfg),
-		Bot:            NewBotClient(cfg),
-		BotRuntime:     NewBotRuntimeClient(cfg),
-		Exchange:       NewExchangeClient(cfg),
-		ExchangeSecret: NewExchangeSecretClient(cfg),
-		Strategy:       NewStrategyClient(cfg),
-		Trade:          NewTradeClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		Backtest:  NewBacktestClient(cfg),
+		Bot:       NewBotClient(cfg),
+		BotRunner: NewBotRunnerClient(cfg),
+		Exchange:  NewExchangeClient(cfg),
+		Strategy:  NewStrategyClient(cfg),
+		Trade:     NewTradeClient(cfg),
 	}, nil
 }
 
@@ -217,8 +211,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Backtest, c.Bot, c.BotRuntime, c.Exchange, c.ExchangeSecret, c.Strategy,
-		c.Trade,
+		c.Backtest, c.Bot, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
 	} {
 		n.Use(hooks...)
 	}
@@ -228,8 +221,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Backtest, c.Bot, c.BotRuntime, c.Exchange, c.ExchangeSecret, c.Strategy,
-		c.Trade,
+		c.Backtest, c.Bot, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -242,12 +234,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Backtest.mutate(ctx, m)
 	case *BotMutation:
 		return c.Bot.mutate(ctx, m)
-	case *BotRuntimeMutation:
-		return c.BotRuntime.mutate(ctx, m)
+	case *BotRunnerMutation:
+		return c.BotRunner.mutate(ctx, m)
 	case *ExchangeMutation:
 		return c.Exchange.mutate(ctx, m)
-	case *ExchangeSecretMutation:
-		return c.ExchangeSecret.mutate(ctx, m)
 	case *StrategyMutation:
 		return c.Strategy.mutate(ctx, m)
 	case *TradeMutation:
@@ -546,15 +536,15 @@ func (c *BotClient) QueryStrategy(_m *Bot) *StrategyQuery {
 	return query
 }
 
-// QueryRuntime queries the runtime edge of a Bot.
-func (c *BotClient) QueryRuntime(_m *Bot) *BotRuntimeQuery {
-	query := (&BotRuntimeClient{config: c.config}).Query()
+// QueryRunner queries the runner edge of a Bot.
+func (c *BotClient) QueryRunner(_m *Bot) *BotRunnerQuery {
+	query := (&BotRunnerClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(bot.Table, bot.FieldID, id),
-			sqlgraph.To(botruntime.Table, botruntime.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, bot.RuntimeTable, bot.RuntimeColumn),
+			sqlgraph.To(botrunner.Table, botrunner.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, bot.RunnerTable, bot.RunnerColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -603,107 +593,107 @@ func (c *BotClient) mutate(ctx context.Context, m *BotMutation) (Value, error) {
 	}
 }
 
-// BotRuntimeClient is a client for the BotRuntime schema.
-type BotRuntimeClient struct {
+// BotRunnerClient is a client for the BotRunner schema.
+type BotRunnerClient struct {
 	config
 }
 
-// NewBotRuntimeClient returns a client for the BotRuntime from the given config.
-func NewBotRuntimeClient(c config) *BotRuntimeClient {
-	return &BotRuntimeClient{config: c}
+// NewBotRunnerClient returns a client for the BotRunner from the given config.
+func NewBotRunnerClient(c config) *BotRunnerClient {
+	return &BotRunnerClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `botruntime.Hooks(f(g(h())))`.
-func (c *BotRuntimeClient) Use(hooks ...Hook) {
-	c.hooks.BotRuntime = append(c.hooks.BotRuntime, hooks...)
+// A call to `Use(f, g, h)` equals to `botrunner.Hooks(f(g(h())))`.
+func (c *BotRunnerClient) Use(hooks ...Hook) {
+	c.hooks.BotRunner = append(c.hooks.BotRunner, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `botruntime.Intercept(f(g(h())))`.
-func (c *BotRuntimeClient) Intercept(interceptors ...Interceptor) {
-	c.inters.BotRuntime = append(c.inters.BotRuntime, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `botrunner.Intercept(f(g(h())))`.
+func (c *BotRunnerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BotRunner = append(c.inters.BotRunner, interceptors...)
 }
 
-// Create returns a builder for creating a BotRuntime entity.
-func (c *BotRuntimeClient) Create() *BotRuntimeCreate {
-	mutation := newBotRuntimeMutation(c.config, OpCreate)
-	return &BotRuntimeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a BotRunner entity.
+func (c *BotRunnerClient) Create() *BotRunnerCreate {
+	mutation := newBotRunnerMutation(c.config, OpCreate)
+	return &BotRunnerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of BotRuntime entities.
-func (c *BotRuntimeClient) CreateBulk(builders ...*BotRuntimeCreate) *BotRuntimeCreateBulk {
-	return &BotRuntimeCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of BotRunner entities.
+func (c *BotRunnerClient) CreateBulk(builders ...*BotRunnerCreate) *BotRunnerCreateBulk {
+	return &BotRunnerCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *BotRuntimeClient) MapCreateBulk(slice any, setFunc func(*BotRuntimeCreate, int)) *BotRuntimeCreateBulk {
+func (c *BotRunnerClient) MapCreateBulk(slice any, setFunc func(*BotRunnerCreate, int)) *BotRunnerCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &BotRuntimeCreateBulk{err: fmt.Errorf("calling to BotRuntimeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &BotRunnerCreateBulk{err: fmt.Errorf("calling to BotRunnerClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*BotRuntimeCreate, rv.Len())
+	builders := make([]*BotRunnerCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &BotRuntimeCreateBulk{config: c.config, builders: builders}
+	return &BotRunnerCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for BotRuntime.
-func (c *BotRuntimeClient) Update() *BotRuntimeUpdate {
-	mutation := newBotRuntimeMutation(c.config, OpUpdate)
-	return &BotRuntimeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for BotRunner.
+func (c *BotRunnerClient) Update() *BotRunnerUpdate {
+	mutation := newBotRunnerMutation(c.config, OpUpdate)
+	return &BotRunnerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *BotRuntimeClient) UpdateOne(_m *BotRuntime) *BotRuntimeUpdateOne {
-	mutation := newBotRuntimeMutation(c.config, OpUpdateOne, withBotRuntime(_m))
-	return &BotRuntimeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *BotRunnerClient) UpdateOne(_m *BotRunner) *BotRunnerUpdateOne {
+	mutation := newBotRunnerMutation(c.config, OpUpdateOne, withBotRunner(_m))
+	return &BotRunnerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *BotRuntimeClient) UpdateOneID(id uuid.UUID) *BotRuntimeUpdateOne {
-	mutation := newBotRuntimeMutation(c.config, OpUpdateOne, withBotRuntimeID(id))
-	return &BotRuntimeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *BotRunnerClient) UpdateOneID(id uuid.UUID) *BotRunnerUpdateOne {
+	mutation := newBotRunnerMutation(c.config, OpUpdateOne, withBotRunnerID(id))
+	return &BotRunnerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for BotRuntime.
-func (c *BotRuntimeClient) Delete() *BotRuntimeDelete {
-	mutation := newBotRuntimeMutation(c.config, OpDelete)
-	return &BotRuntimeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for BotRunner.
+func (c *BotRunnerClient) Delete() *BotRunnerDelete {
+	mutation := newBotRunnerMutation(c.config, OpDelete)
+	return &BotRunnerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *BotRuntimeClient) DeleteOne(_m *BotRuntime) *BotRuntimeDeleteOne {
+func (c *BotRunnerClient) DeleteOne(_m *BotRunner) *BotRunnerDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *BotRuntimeClient) DeleteOneID(id uuid.UUID) *BotRuntimeDeleteOne {
-	builder := c.Delete().Where(botruntime.ID(id))
+func (c *BotRunnerClient) DeleteOneID(id uuid.UUID) *BotRunnerDeleteOne {
+	builder := c.Delete().Where(botrunner.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &BotRuntimeDeleteOne{builder}
+	return &BotRunnerDeleteOne{builder}
 }
 
-// Query returns a query builder for BotRuntime.
-func (c *BotRuntimeClient) Query() *BotRuntimeQuery {
-	return &BotRuntimeQuery{
+// Query returns a query builder for BotRunner.
+func (c *BotRunnerClient) Query() *BotRunnerQuery {
+	return &BotRunnerQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeBotRuntime},
+		ctx:    &QueryContext{Type: TypeBotRunner},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a BotRuntime entity by its id.
-func (c *BotRuntimeClient) Get(ctx context.Context, id uuid.UUID) (*BotRuntime, error) {
-	return c.Query().Where(botruntime.ID(id)).Only(ctx)
+// Get returns a BotRunner entity by its id.
+func (c *BotRunnerClient) Get(ctx context.Context, id uuid.UUID) (*BotRunner, error) {
+	return c.Query().Where(botrunner.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *BotRuntimeClient) GetX(ctx context.Context, id uuid.UUID) *BotRuntime {
+func (c *BotRunnerClient) GetX(ctx context.Context, id uuid.UUID) *BotRunner {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -711,15 +701,15 @@ func (c *BotRuntimeClient) GetX(ctx context.Context, id uuid.UUID) *BotRuntime {
 	return obj
 }
 
-// QueryBots queries the bots edge of a BotRuntime.
-func (c *BotRuntimeClient) QueryBots(_m *BotRuntime) *BotQuery {
+// QueryBots queries the bots edge of a BotRunner.
+func (c *BotRunnerClient) QueryBots(_m *BotRunner) *BotQuery {
 	query := (&BotClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(botruntime.Table, botruntime.FieldID, id),
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, id),
 			sqlgraph.To(bot.Table, bot.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, botruntime.BotsTable, botruntime.BotsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.BotsTable, botrunner.BotsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -728,28 +718,28 @@ func (c *BotRuntimeClient) QueryBots(_m *BotRuntime) *BotQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *BotRuntimeClient) Hooks() []Hook {
-	hooks := c.hooks.BotRuntime
-	return append(hooks[:len(hooks):len(hooks)], botruntime.Hooks[:]...)
+func (c *BotRunnerClient) Hooks() []Hook {
+	hooks := c.hooks.BotRunner
+	return append(hooks[:len(hooks):len(hooks)], botrunner.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
-func (c *BotRuntimeClient) Interceptors() []Interceptor {
-	return c.inters.BotRuntime
+func (c *BotRunnerClient) Interceptors() []Interceptor {
+	return c.inters.BotRunner
 }
 
-func (c *BotRuntimeClient) mutate(ctx context.Context, m *BotRuntimeMutation) (Value, error) {
+func (c *BotRunnerClient) mutate(ctx context.Context, m *BotRunnerMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&BotRuntimeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&BotRunnerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&BotRuntimeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&BotRunnerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&BotRuntimeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&BotRunnerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&BotRuntimeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&BotRunnerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown BotRuntime mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown BotRunner mutation op: %q", m.Op())
 	}
 }
 
@@ -877,25 +867,10 @@ func (c *ExchangeClient) QueryBots(_m *Exchange) *BotQuery {
 	return query
 }
 
-// QuerySecrets queries the secrets edge of a Exchange.
-func (c *ExchangeClient) QuerySecrets(_m *Exchange) *ExchangeSecretQuery {
-	query := (&ExchangeSecretClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(exchange.Table, exchange.FieldID, id),
-			sqlgraph.To(exchangesecret.Table, exchangesecret.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, exchange.SecretsTable, exchange.SecretsColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
 func (c *ExchangeClient) Hooks() []Hook {
-	return c.hooks.Exchange
+	hooks := c.hooks.Exchange
+	return append(hooks[:len(hooks):len(hooks)], exchange.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -915,155 +890,6 @@ func (c *ExchangeClient) mutate(ctx context.Context, m *ExchangeMutation) (Value
 		return (&ExchangeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Exchange mutation op: %q", m.Op())
-	}
-}
-
-// ExchangeSecretClient is a client for the ExchangeSecret schema.
-type ExchangeSecretClient struct {
-	config
-}
-
-// NewExchangeSecretClient returns a client for the ExchangeSecret from the given config.
-func NewExchangeSecretClient(c config) *ExchangeSecretClient {
-	return &ExchangeSecretClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `exchangesecret.Hooks(f(g(h())))`.
-func (c *ExchangeSecretClient) Use(hooks ...Hook) {
-	c.hooks.ExchangeSecret = append(c.hooks.ExchangeSecret, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `exchangesecret.Intercept(f(g(h())))`.
-func (c *ExchangeSecretClient) Intercept(interceptors ...Interceptor) {
-	c.inters.ExchangeSecret = append(c.inters.ExchangeSecret, interceptors...)
-}
-
-// Create returns a builder for creating a ExchangeSecret entity.
-func (c *ExchangeSecretClient) Create() *ExchangeSecretCreate {
-	mutation := newExchangeSecretMutation(c.config, OpCreate)
-	return &ExchangeSecretCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of ExchangeSecret entities.
-func (c *ExchangeSecretClient) CreateBulk(builders ...*ExchangeSecretCreate) *ExchangeSecretCreateBulk {
-	return &ExchangeSecretCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ExchangeSecretClient) MapCreateBulk(slice any, setFunc func(*ExchangeSecretCreate, int)) *ExchangeSecretCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ExchangeSecretCreateBulk{err: fmt.Errorf("calling to ExchangeSecretClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ExchangeSecretCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ExchangeSecretCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for ExchangeSecret.
-func (c *ExchangeSecretClient) Update() *ExchangeSecretUpdate {
-	mutation := newExchangeSecretMutation(c.config, OpUpdate)
-	return &ExchangeSecretUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ExchangeSecretClient) UpdateOne(_m *ExchangeSecret) *ExchangeSecretUpdateOne {
-	mutation := newExchangeSecretMutation(c.config, OpUpdateOne, withExchangeSecret(_m))
-	return &ExchangeSecretUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ExchangeSecretClient) UpdateOneID(id uuid.UUID) *ExchangeSecretUpdateOne {
-	mutation := newExchangeSecretMutation(c.config, OpUpdateOne, withExchangeSecretID(id))
-	return &ExchangeSecretUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for ExchangeSecret.
-func (c *ExchangeSecretClient) Delete() *ExchangeSecretDelete {
-	mutation := newExchangeSecretMutation(c.config, OpDelete)
-	return &ExchangeSecretDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ExchangeSecretClient) DeleteOne(_m *ExchangeSecret) *ExchangeSecretDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ExchangeSecretClient) DeleteOneID(id uuid.UUID) *ExchangeSecretDeleteOne {
-	builder := c.Delete().Where(exchangesecret.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ExchangeSecretDeleteOne{builder}
-}
-
-// Query returns a query builder for ExchangeSecret.
-func (c *ExchangeSecretClient) Query() *ExchangeSecretQuery {
-	return &ExchangeSecretQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeExchangeSecret},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a ExchangeSecret entity by its id.
-func (c *ExchangeSecretClient) Get(ctx context.Context, id uuid.UUID) (*ExchangeSecret, error) {
-	return c.Query().Where(exchangesecret.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ExchangeSecretClient) GetX(ctx context.Context, id uuid.UUID) *ExchangeSecret {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryExchange queries the exchange edge of a ExchangeSecret.
-func (c *ExchangeSecretClient) QueryExchange(_m *ExchangeSecret) *ExchangeQuery {
-	query := (&ExchangeClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(exchangesecret.Table, exchangesecret.FieldID, id),
-			sqlgraph.To(exchange.Table, exchange.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, exchangesecret.ExchangeTable, exchangesecret.ExchangeColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *ExchangeSecretClient) Hooks() []Hook {
-	return c.hooks.ExchangeSecret
-}
-
-// Interceptors returns the client interceptors.
-func (c *ExchangeSecretClient) Interceptors() []Interceptor {
-	return c.inters.ExchangeSecret
-}
-
-func (c *ExchangeSecretClient) mutate(ctx context.Context, m *ExchangeSecretMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ExchangeSecretCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ExchangeSecretUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ExchangeSecretUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ExchangeSecretDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown ExchangeSecret mutation op: %q", m.Op())
 	}
 }
 
@@ -1384,10 +1210,9 @@ func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Backtest, Bot, BotRuntime, Exchange, ExchangeSecret, Strategy, Trade []ent.Hook
+		Backtest, Bot, BotRunner, Exchange, Strategy, Trade []ent.Hook
 	}
 	inters struct {
-		Backtest, Bot, BotRuntime, Exchange, ExchangeSecret, Strategy,
-		Trade []ent.Interceptor
+		Backtest, Bot, BotRunner, Exchange, Strategy, Trade []ent.Interceptor
 	}
 )

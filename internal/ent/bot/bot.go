@@ -26,8 +26,8 @@ const (
 	FieldMode = "mode"
 	// FieldContainerID holds the string denoting the container_id field in the database.
 	FieldContainerID = "container_id"
-	// FieldRuntimeMetadata holds the string denoting the runtime_metadata field in the database.
-	FieldRuntimeMetadata = "runtime_metadata"
+	// FieldRunnerMetadata holds the string denoting the runner_metadata field in the database.
+	FieldRunnerMetadata = "runner_metadata"
 	// FieldAPIURL holds the string denoting the api_url field in the database.
 	FieldAPIURL = "api_url"
 	// FieldAPIUsername holds the string denoting the api_username field in the database.
@@ -46,8 +46,8 @@ const (
 	FieldExchangeID = "exchange_id"
 	// FieldStrategyID holds the string denoting the strategy_id field in the database.
 	FieldStrategyID = "strategy_id"
-	// FieldRuntimeID holds the string denoting the runtime_id field in the database.
-	FieldRuntimeID = "runtime_id"
+	// FieldRunnerID holds the string denoting the runner_id field in the database.
+	FieldRunnerID = "runner_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -56,8 +56,8 @@ const (
 	EdgeExchange = "exchange"
 	// EdgeStrategy holds the string denoting the strategy edge name in mutations.
 	EdgeStrategy = "strategy"
-	// EdgeRuntime holds the string denoting the runtime edge name in mutations.
-	EdgeRuntime = "runtime"
+	// EdgeRunner holds the string denoting the runner edge name in mutations.
+	EdgeRunner = "runner"
 	// EdgeTrades holds the string denoting the trades edge name in mutations.
 	EdgeTrades = "trades"
 	// Table holds the table name of the bot in the database.
@@ -76,13 +76,13 @@ const (
 	StrategyInverseTable = "strategies"
 	// StrategyColumn is the table column denoting the strategy relation/edge.
 	StrategyColumn = "strategy_id"
-	// RuntimeTable is the table that holds the runtime relation/edge.
-	RuntimeTable = "bots"
-	// RuntimeInverseTable is the table name for the BotRuntime entity.
-	// It exists in this package in order to avoid circular dependency with the "botruntime" package.
-	RuntimeInverseTable = "bot_runtimes"
-	// RuntimeColumn is the table column denoting the runtime relation/edge.
-	RuntimeColumn = "runtime_id"
+	// RunnerTable is the table that holds the runner relation/edge.
+	RunnerTable = "bots"
+	// RunnerInverseTable is the table name for the BotRunner entity.
+	// It exists in this package in order to avoid circular dependency with the "botrunner" package.
+	RunnerInverseTable = "bot_runners"
+	// RunnerColumn is the table column denoting the runner relation/edge.
+	RunnerColumn = "runner_id"
 	// TradesTable is the table that holds the trades relation/edge.
 	TradesTable = "trades"
 	// TradesInverseTable is the table name for the Trade entity.
@@ -99,7 +99,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldMode,
 	FieldContainerID,
-	FieldRuntimeMetadata,
+	FieldRunnerMetadata,
 	FieldAPIURL,
 	FieldAPIUsername,
 	FieldAPIPassword,
@@ -109,7 +109,7 @@ var Columns = []string{
 	FieldErrorMessage,
 	FieldExchangeID,
 	FieldStrategyID,
-	FieldRuntimeID,
+	FieldRunnerID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -231,9 +231,9 @@ func ByStrategyID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStrategyID, opts...).ToFunc()
 }
 
-// ByRuntimeID orders the results by the runtime_id field.
-func ByRuntimeID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRuntimeID, opts...).ToFunc()
+// ByRunnerID orders the results by the runner_id field.
+func ByRunnerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRunnerID, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -260,10 +260,10 @@ func ByStrategyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByRuntimeField orders the results by runtime field.
-func ByRuntimeField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByRunnerField orders the results by runner field.
+func ByRunnerField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newRuntimeStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newRunnerStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -294,11 +294,11 @@ func newStrategyStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, StrategyTable, StrategyColumn),
 	)
 }
-func newRuntimeStep() *sqlgraph.Step {
+func newRunnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(RuntimeInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, RuntimeTable, RuntimeColumn),
+		sqlgraph.To(RunnerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, RunnerTable, RunnerColumn),
 	)
 }
 func newTradesStep() *sqlgraph.Step {

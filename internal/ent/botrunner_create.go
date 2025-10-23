@@ -4,7 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/enum"
 	"context"
 	"errors"
@@ -16,27 +16,27 @@ import (
 	"github.com/google/uuid"
 )
 
-// BotRuntimeCreate is the builder for creating a BotRuntime entity.
-type BotRuntimeCreate struct {
+// BotRunnerCreate is the builder for creating a BotRunner entity.
+type BotRunnerCreate struct {
 	config
-	mutation *BotRuntimeMutation
+	mutation *BotRunnerMutation
 	hooks    []Hook
 }
 
 // SetName sets the "name" field.
-func (_c *BotRuntimeCreate) SetName(v string) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetName(v string) *BotRunnerCreate {
 	_c.mutation.SetName(v)
 	return _c
 }
 
 // SetType sets the "type" field.
-func (_c *BotRuntimeCreate) SetType(v enum.RuntimeType) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetType(v enum.RunnerType) *BotRunnerCreate {
 	_c.mutation.SetType(v)
 	return _c
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (_c *BotRuntimeCreate) SetNillableType(v *enum.RuntimeType) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetNillableType(v *enum.RunnerType) *BotRunnerCreate {
 	if v != nil {
 		_c.SetType(*v)
 	}
@@ -44,19 +44,19 @@ func (_c *BotRuntimeCreate) SetNillableType(v *enum.RuntimeType) *BotRuntimeCrea
 }
 
 // SetConfig sets the "config" field.
-func (_c *BotRuntimeCreate) SetConfig(v map[string]interface{}) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetConfig(v map[string]interface{}) *BotRunnerCreate {
 	_c.mutation.SetConfig(v)
 	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (_c *BotRuntimeCreate) SetCreatedAt(v time.Time) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetCreatedAt(v time.Time) *BotRunnerCreate {
 	_c.mutation.SetCreatedAt(v)
 	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *BotRuntimeCreate) SetNillableCreatedAt(v *time.Time) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetNillableCreatedAt(v *time.Time) *BotRunnerCreate {
 	if v != nil {
 		_c.SetCreatedAt(*v)
 	}
@@ -64,13 +64,13 @@ func (_c *BotRuntimeCreate) SetNillableCreatedAt(v *time.Time) *BotRuntimeCreate
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_c *BotRuntimeCreate) SetUpdatedAt(v time.Time) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetUpdatedAt(v time.Time) *BotRunnerCreate {
 	_c.mutation.SetUpdatedAt(v)
 	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *BotRuntimeCreate) SetNillableUpdatedAt(v *time.Time) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetNillableUpdatedAt(v *time.Time) *BotRunnerCreate {
 	if v != nil {
 		_c.SetUpdatedAt(*v)
 	}
@@ -78,13 +78,13 @@ func (_c *BotRuntimeCreate) SetNillableUpdatedAt(v *time.Time) *BotRuntimeCreate
 }
 
 // SetID sets the "id" field.
-func (_c *BotRuntimeCreate) SetID(v uuid.UUID) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetID(v uuid.UUID) *BotRunnerCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (_c *BotRuntimeCreate) SetNillableID(v *uuid.UUID) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) SetNillableID(v *uuid.UUID) *BotRunnerCreate {
 	if v != nil {
 		_c.SetID(*v)
 	}
@@ -92,13 +92,13 @@ func (_c *BotRuntimeCreate) SetNillableID(v *uuid.UUID) *BotRuntimeCreate {
 }
 
 // AddBotIDs adds the "bots" edge to the Bot entity by IDs.
-func (_c *BotRuntimeCreate) AddBotIDs(ids ...uuid.UUID) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) AddBotIDs(ids ...uuid.UUID) *BotRunnerCreate {
 	_c.mutation.AddBotIDs(ids...)
 	return _c
 }
 
 // AddBots adds the "bots" edges to the Bot entity.
-func (_c *BotRuntimeCreate) AddBots(v ...*Bot) *BotRuntimeCreate {
+func (_c *BotRunnerCreate) AddBots(v ...*Bot) *BotRunnerCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -106,13 +106,13 @@ func (_c *BotRuntimeCreate) AddBots(v ...*Bot) *BotRuntimeCreate {
 	return _c.AddBotIDs(ids...)
 }
 
-// Mutation returns the BotRuntimeMutation object of the builder.
-func (_c *BotRuntimeCreate) Mutation() *BotRuntimeMutation {
+// Mutation returns the BotRunnerMutation object of the builder.
+func (_c *BotRunnerCreate) Mutation() *BotRunnerMutation {
 	return _c.mutation
 }
 
-// Save creates the BotRuntime in the database.
-func (_c *BotRuntimeCreate) Save(ctx context.Context) (*BotRuntime, error) {
+// Save creates the BotRunner in the database.
+func (_c *BotRunnerCreate) Save(ctx context.Context) (*BotRunner, error) {
 	if err := _c.defaults(); err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (_c *BotRuntimeCreate) Save(ctx context.Context) (*BotRuntime, error) {
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (_c *BotRuntimeCreate) SaveX(ctx context.Context) *BotRuntime {
+func (_c *BotRunnerCreate) SaveX(ctx context.Context) *BotRunner {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -129,76 +129,76 @@ func (_c *BotRuntimeCreate) SaveX(ctx context.Context) *BotRuntime {
 }
 
 // Exec executes the query.
-func (_c *BotRuntimeCreate) Exec(ctx context.Context) error {
+func (_c *BotRunnerCreate) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *BotRuntimeCreate) ExecX(ctx context.Context) {
+func (_c *BotRunnerCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *BotRuntimeCreate) defaults() error {
+func (_c *BotRunnerCreate) defaults() error {
 	if _, ok := _c.mutation.GetType(); !ok {
-		v := botruntime.DefaultType
+		v := botrunner.DefaultType
 		_c.mutation.SetType(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		if botruntime.DefaultCreatedAt == nil {
-			return fmt.Errorf("ent: uninitialized botruntime.DefaultCreatedAt (forgotten import ent/runtime?)")
+		if botrunner.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized botrunner.DefaultCreatedAt (forgotten import ent/runtime?)")
 		}
-		v := botruntime.DefaultCreatedAt()
+		v := botrunner.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		if botruntime.DefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized botruntime.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		if botrunner.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized botrunner.DefaultUpdatedAt (forgotten import ent/runtime?)")
 		}
-		v := botruntime.DefaultUpdatedAt()
+		v := botrunner.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		if botruntime.DefaultID == nil {
-			return fmt.Errorf("ent: uninitialized botruntime.DefaultID (forgotten import ent/runtime?)")
+		if botrunner.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized botrunner.DefaultID (forgotten import ent/runtime?)")
 		}
-		v := botruntime.DefaultID()
+		v := botrunner.DefaultID()
 		_c.mutation.SetID(v)
 	}
 	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_c *BotRuntimeCreate) check() error {
+func (_c *BotRunnerCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "BotRuntime.name"`)}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "BotRunner.name"`)}
 	}
 	if v, ok := _c.mutation.Name(); ok {
-		if err := botruntime.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "BotRuntime.name": %w`, err)}
+		if err := botrunner.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "BotRunner.name": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.GetType(); !ok {
-		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "BotRuntime.type"`)}
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "BotRunner.type"`)}
 	}
 	if v, ok := _c.mutation.GetType(); ok {
-		if err := botruntime.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRuntime.type": %w`, err)}
+		if err := botrunner.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRunner.type": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BotRuntime.created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BotRunner.created_at"`)}
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BotRuntime.updated_at"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BotRunner.updated_at"`)}
 	}
 	return nil
 }
 
-func (_c *BotRuntimeCreate) sqlSave(ctx context.Context) (*BotRuntime, error) {
+func (_c *BotRunnerCreate) sqlSave(ctx context.Context) (*BotRunner, error) {
 	if err := _c.check(); err != nil {
 		return nil, err
 	}
@@ -221,41 +221,41 @@ func (_c *BotRuntimeCreate) sqlSave(ctx context.Context) (*BotRuntime, error) {
 	return _node, nil
 }
 
-func (_c *BotRuntimeCreate) createSpec() (*BotRuntime, *sqlgraph.CreateSpec) {
+func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 	var (
-		_node = &BotRuntime{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(botruntime.Table, sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID))
+		_node = &BotRunner{config: _c.config}
+		_spec = sqlgraph.NewCreateSpec(botrunner.Table, sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID))
 	)
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
 	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(botruntime.FieldName, field.TypeString, value)
+		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.GetType(); ok {
-		_spec.SetField(botruntime.FieldType, field.TypeEnum, value)
+		_spec.SetField(botrunner.FieldType, field.TypeEnum, value)
 		_node.Type = value
 	}
 	if value, ok := _c.mutation.Config(); ok {
-		_spec.SetField(botruntime.FieldConfig, field.TypeJSON, value)
+		_spec.SetField(botrunner.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(botruntime.FieldCreatedAt, field.TypeTime, value)
+		_spec.SetField(botrunner.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(botruntime.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.BotsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -269,27 +269,27 @@ func (_c *BotRuntimeCreate) createSpec() (*BotRuntime, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
-// BotRuntimeCreateBulk is the builder for creating many BotRuntime entities in bulk.
-type BotRuntimeCreateBulk struct {
+// BotRunnerCreateBulk is the builder for creating many BotRunner entities in bulk.
+type BotRunnerCreateBulk struct {
 	config
 	err      error
-	builders []*BotRuntimeCreate
+	builders []*BotRunnerCreate
 }
 
-// Save creates the BotRuntime entities in the database.
-func (_c *BotRuntimeCreateBulk) Save(ctx context.Context) ([]*BotRuntime, error) {
+// Save creates the BotRunner entities in the database.
+func (_c *BotRunnerCreateBulk) Save(ctx context.Context) ([]*BotRunner, error) {
 	if _c.err != nil {
 		return nil, _c.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
-	nodes := make([]*BotRuntime, len(_c.builders))
+	nodes := make([]*BotRunner, len(_c.builders))
 	mutators := make([]Mutator, len(_c.builders))
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*BotRuntimeMutation)
+				mutation, ok := m.(*BotRunnerMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -332,7 +332,7 @@ func (_c *BotRuntimeCreateBulk) Save(ctx context.Context) ([]*BotRuntime, error)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_c *BotRuntimeCreateBulk) SaveX(ctx context.Context) []*BotRuntime {
+func (_c *BotRunnerCreateBulk) SaveX(ctx context.Context) []*BotRunner {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -341,13 +341,13 @@ func (_c *BotRuntimeCreateBulk) SaveX(ctx context.Context) []*BotRuntime {
 }
 
 // Exec executes the query.
-func (_c *BotRuntimeCreateBulk) Exec(ctx context.Context) error {
+func (_c *BotRunnerCreateBulk) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *BotRuntimeCreateBulk) ExecX(ctx context.Context) {
+func (_c *BotRunnerCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}

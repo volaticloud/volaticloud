@@ -225,29 +225,6 @@ func HasBotsWith(preds ...predicate.Bot) predicate.Exchange {
 	})
 }
 
-// HasSecrets applies the HasEdge predicate on the "secrets" edge.
-func HasSecrets() predicate.Exchange {
-	return predicate.Exchange(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, SecretsTable, SecretsColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasSecretsWith applies the HasEdge predicate on the "secrets" edge with a given conditions (other predicates).
-func HasSecretsWith(preds ...predicate.ExchangeSecret) predicate.Exchange {
-	return predicate.Exchange(func(s *sql.Selector) {
-		step := newSecretsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Exchange) predicate.Exchange {
 	return predicate.Exchange(sql.AndPredicates(predicates...))

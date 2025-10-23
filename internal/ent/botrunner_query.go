@@ -4,7 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
 	"context"
 	"database/sql/driver"
@@ -18,55 +18,55 @@ import (
 	"github.com/google/uuid"
 )
 
-// BotRuntimeQuery is the builder for querying BotRuntime entities.
-type BotRuntimeQuery struct {
+// BotRunnerQuery is the builder for querying BotRunner entities.
+type BotRunnerQuery struct {
 	config
 	ctx           *QueryContext
-	order         []botruntime.OrderOption
+	order         []botrunner.OrderOption
 	inters        []Interceptor
-	predicates    []predicate.BotRuntime
+	predicates    []predicate.BotRunner
 	withBots      *BotQuery
 	modifiers     []func(*sql.Selector)
-	loadTotal     []func(context.Context, []*BotRuntime) error
+	loadTotal     []func(context.Context, []*BotRunner) error
 	withNamedBots map[string]*BotQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the BotRuntimeQuery builder.
-func (_q *BotRuntimeQuery) Where(ps ...predicate.BotRuntime) *BotRuntimeQuery {
+// Where adds a new predicate for the BotRunnerQuery builder.
+func (_q *BotRunnerQuery) Where(ps ...predicate.BotRunner) *BotRunnerQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *BotRuntimeQuery) Limit(limit int) *BotRuntimeQuery {
+func (_q *BotRunnerQuery) Limit(limit int) *BotRunnerQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *BotRuntimeQuery) Offset(offset int) *BotRuntimeQuery {
+func (_q *BotRunnerQuery) Offset(offset int) *BotRunnerQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *BotRuntimeQuery) Unique(unique bool) *BotRuntimeQuery {
+func (_q *BotRunnerQuery) Unique(unique bool) *BotRunnerQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *BotRuntimeQuery) Order(o ...botruntime.OrderOption) *BotRuntimeQuery {
+func (_q *BotRunnerQuery) Order(o ...botrunner.OrderOption) *BotRunnerQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryBots chains the current query on the "bots" edge.
-func (_q *BotRuntimeQuery) QueryBots() *BotQuery {
+func (_q *BotRunnerQuery) QueryBots() *BotQuery {
 	query := (&BotClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -77,9 +77,9 @@ func (_q *BotRuntimeQuery) QueryBots() *BotQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(botruntime.Table, botruntime.FieldID, selector),
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, selector),
 			sqlgraph.To(bot.Table, bot.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, botruntime.BotsTable, botruntime.BotsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.BotsTable, botrunner.BotsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -87,21 +87,21 @@ func (_q *BotRuntimeQuery) QueryBots() *BotQuery {
 	return query
 }
 
-// First returns the first BotRuntime entity from the query.
-// Returns a *NotFoundError when no BotRuntime was found.
-func (_q *BotRuntimeQuery) First(ctx context.Context) (*BotRuntime, error) {
+// First returns the first BotRunner entity from the query.
+// Returns a *NotFoundError when no BotRunner was found.
+func (_q *BotRunnerQuery) First(ctx context.Context) (*BotRunner, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{botruntime.Label}
+		return nil, &NotFoundError{botrunner.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *BotRuntimeQuery) FirstX(ctx context.Context) *BotRuntime {
+func (_q *BotRunnerQuery) FirstX(ctx context.Context) *BotRunner {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -109,22 +109,22 @@ func (_q *BotRuntimeQuery) FirstX(ctx context.Context) *BotRuntime {
 	return node
 }
 
-// FirstID returns the first BotRuntime ID from the query.
-// Returns a *NotFoundError when no BotRuntime ID was found.
-func (_q *BotRuntimeQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first BotRunner ID from the query.
+// Returns a *NotFoundError when no BotRunner ID was found.
+func (_q *BotRunnerQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{botruntime.Label}
+		err = &NotFoundError{botrunner.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *BotRuntimeQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *BotRunnerQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -132,10 +132,10 @@ func (_q *BotRuntimeQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single BotRuntime entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one BotRuntime entity is found.
-// Returns a *NotFoundError when no BotRuntime entities are found.
-func (_q *BotRuntimeQuery) Only(ctx context.Context) (*BotRuntime, error) {
+// Only returns a single BotRunner entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one BotRunner entity is found.
+// Returns a *NotFoundError when no BotRunner entities are found.
+func (_q *BotRunnerQuery) Only(ctx context.Context) (*BotRunner, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -144,14 +144,14 @@ func (_q *BotRuntimeQuery) Only(ctx context.Context) (*BotRuntime, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{botruntime.Label}
+		return nil, &NotFoundError{botrunner.Label}
 	default:
-		return nil, &NotSingularError{botruntime.Label}
+		return nil, &NotSingularError{botrunner.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *BotRuntimeQuery) OnlyX(ctx context.Context) *BotRuntime {
+func (_q *BotRunnerQuery) OnlyX(ctx context.Context) *BotRunner {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -159,10 +159,10 @@ func (_q *BotRuntimeQuery) OnlyX(ctx context.Context) *BotRuntime {
 	return node
 }
 
-// OnlyID is like Only, but returns the only BotRuntime ID in the query.
-// Returns a *NotSingularError when more than one BotRuntime ID is found.
+// OnlyID is like Only, but returns the only BotRunner ID in the query.
+// Returns a *NotSingularError when more than one BotRunner ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *BotRuntimeQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *BotRunnerQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -171,15 +171,15 @@ func (_q *BotRuntimeQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error)
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{botruntime.Label}
+		err = &NotFoundError{botrunner.Label}
 	default:
-		err = &NotSingularError{botruntime.Label}
+		err = &NotSingularError{botrunner.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *BotRuntimeQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *BotRunnerQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -187,18 +187,18 @@ func (_q *BotRuntimeQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of BotRuntimes.
-func (_q *BotRuntimeQuery) All(ctx context.Context) ([]*BotRuntime, error) {
+// All executes the query and returns a list of BotRunners.
+func (_q *BotRunnerQuery) All(ctx context.Context) ([]*BotRunner, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*BotRuntime, *BotRuntimeQuery]()
-	return withInterceptors[[]*BotRuntime](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*BotRunner, *BotRunnerQuery]()
+	return withInterceptors[[]*BotRunner](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *BotRuntimeQuery) AllX(ctx context.Context) []*BotRuntime {
+func (_q *BotRunnerQuery) AllX(ctx context.Context) []*BotRunner {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -206,20 +206,20 @@ func (_q *BotRuntimeQuery) AllX(ctx context.Context) []*BotRuntime {
 	return nodes
 }
 
-// IDs executes the query and returns a list of BotRuntime IDs.
-func (_q *BotRuntimeQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of BotRunner IDs.
+func (_q *BotRunnerQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(botruntime.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(botrunner.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *BotRuntimeQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *BotRunnerQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -228,16 +228,16 @@ func (_q *BotRuntimeQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *BotRuntimeQuery) Count(ctx context.Context) (int, error) {
+func (_q *BotRunnerQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*BotRuntimeQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*BotRunnerQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *BotRuntimeQuery) CountX(ctx context.Context) int {
+func (_q *BotRunnerQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -246,7 +246,7 @@ func (_q *BotRuntimeQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *BotRuntimeQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *BotRunnerQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -259,7 +259,7 @@ func (_q *BotRuntimeQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *BotRuntimeQuery) ExistX(ctx context.Context) bool {
+func (_q *BotRunnerQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -267,18 +267,18 @@ func (_q *BotRuntimeQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the BotRuntimeQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the BotRunnerQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *BotRuntimeQuery) Clone() *BotRuntimeQuery {
+func (_q *BotRunnerQuery) Clone() *BotRunnerQuery {
 	if _q == nil {
 		return nil
 	}
-	return &BotRuntimeQuery{
+	return &BotRunnerQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]botruntime.OrderOption{}, _q.order...),
+		order:      append([]botrunner.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.BotRuntime{}, _q.predicates...),
+		predicates: append([]predicate.BotRunner{}, _q.predicates...),
 		withBots:   _q.withBots.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -288,7 +288,7 @@ func (_q *BotRuntimeQuery) Clone() *BotRuntimeQuery {
 
 // WithBots tells the query-builder to eager-load the nodes that are connected to
 // the "bots" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *BotRuntimeQuery) WithBots(opts ...func(*BotQuery)) *BotRuntimeQuery {
+func (_q *BotRunnerQuery) WithBots(opts ...func(*BotQuery)) *BotRunnerQuery {
 	query := (&BotClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -307,15 +307,15 @@ func (_q *BotRuntimeQuery) WithBots(opts ...func(*BotQuery)) *BotRuntimeQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.BotRuntime.Query().
-//		GroupBy(botruntime.FieldName).
+//	client.BotRunner.Query().
+//		GroupBy(botrunner.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *BotRuntimeQuery) GroupBy(field string, fields ...string) *BotRuntimeGroupBy {
+func (_q *BotRunnerQuery) GroupBy(field string, fields ...string) *BotRunnerGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &BotRuntimeGroupBy{build: _q}
+	grbuild := &BotRunnerGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = botruntime.Label
+	grbuild.label = botrunner.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -329,23 +329,23 @@ func (_q *BotRuntimeQuery) GroupBy(field string, fields ...string) *BotRuntimeGr
 //		Name string `json:"name,omitempty"`
 //	}
 //
-//	client.BotRuntime.Query().
-//		Select(botruntime.FieldName).
+//	client.BotRunner.Query().
+//		Select(botrunner.FieldName).
 //		Scan(ctx, &v)
-func (_q *BotRuntimeQuery) Select(fields ...string) *BotRuntimeSelect {
+func (_q *BotRunnerQuery) Select(fields ...string) *BotRunnerSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &BotRuntimeSelect{BotRuntimeQuery: _q}
-	sbuild.label = botruntime.Label
+	sbuild := &BotRunnerSelect{BotRunnerQuery: _q}
+	sbuild.label = botrunner.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a BotRuntimeSelect configured with the given aggregations.
-func (_q *BotRuntimeQuery) Aggregate(fns ...AggregateFunc) *BotRuntimeSelect {
+// Aggregate returns a BotRunnerSelect configured with the given aggregations.
+func (_q *BotRunnerQuery) Aggregate(fns ...AggregateFunc) *BotRunnerSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *BotRuntimeQuery) prepareQuery(ctx context.Context) error {
+func (_q *BotRunnerQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -357,7 +357,7 @@ func (_q *BotRuntimeQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !botruntime.ValidColumn(f) {
+		if !botrunner.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -371,19 +371,19 @@ func (_q *BotRuntimeQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *BotRuntimeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*BotRuntime, error) {
+func (_q *BotRunnerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*BotRunner, error) {
 	var (
-		nodes       = []*BotRuntime{}
+		nodes       = []*BotRunner{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
 			_q.withBots != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*BotRuntime).scanValues(nil, columns)
+		return (*BotRunner).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &BotRuntime{config: _q.config}
+		node := &BotRunner{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -402,15 +402,15 @@ func (_q *BotRuntimeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*B
 	}
 	if query := _q.withBots; query != nil {
 		if err := _q.loadBots(ctx, query, nodes,
-			func(n *BotRuntime) { n.Edges.Bots = []*Bot{} },
-			func(n *BotRuntime, e *Bot) { n.Edges.Bots = append(n.Edges.Bots, e) }); err != nil {
+			func(n *BotRunner) { n.Edges.Bots = []*Bot{} },
+			func(n *BotRunner, e *Bot) { n.Edges.Bots = append(n.Edges.Bots, e) }); err != nil {
 			return nil, err
 		}
 	}
 	for name, query := range _q.withNamedBots {
 		if err := _q.loadBots(ctx, query, nodes,
-			func(n *BotRuntime) { n.appendNamedBots(name) },
-			func(n *BotRuntime, e *Bot) { n.appendNamedBots(name, e) }); err != nil {
+			func(n *BotRunner) { n.appendNamedBots(name) },
+			func(n *BotRunner, e *Bot) { n.appendNamedBots(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -422,9 +422,9 @@ func (_q *BotRuntimeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*B
 	return nodes, nil
 }
 
-func (_q *BotRuntimeQuery) loadBots(ctx context.Context, query *BotQuery, nodes []*BotRuntime, init func(*BotRuntime), assign func(*BotRuntime, *Bot)) error {
+func (_q *BotRunnerQuery) loadBots(ctx context.Context, query *BotQuery, nodes []*BotRunner, init func(*BotRunner), assign func(*BotRunner, *Bot)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*BotRuntime)
+	nodeids := make(map[uuid.UUID]*BotRunner)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -433,27 +433,27 @@ func (_q *BotRuntimeQuery) loadBots(ctx context.Context, query *BotQuery, nodes 
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(bot.FieldRuntimeID)
+		query.ctx.AppendFieldOnce(bot.FieldRunnerID)
 	}
 	query.Where(predicate.Bot(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(botruntime.BotsColumn), fks...))
+		s.Where(sql.InValues(s.C(botrunner.BotsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.RuntimeID
+		fk := n.RunnerID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "runtime_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "runner_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *BotRuntimeQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *BotRunnerQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	if len(_q.modifiers) > 0 {
 		_spec.Modifiers = _q.modifiers
@@ -465,8 +465,8 @@ func (_q *BotRuntimeQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *BotRuntimeQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(botruntime.Table, botruntime.Columns, sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID))
+func (_q *BotRunnerQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(botrunner.Table, botrunner.Columns, sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -475,9 +475,9 @@ func (_q *BotRuntimeQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, botruntime.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, botrunner.FieldID)
 		for i := range fields {
-			if fields[i] != botruntime.FieldID {
+			if fields[i] != botrunner.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -505,12 +505,12 @@ func (_q *BotRuntimeQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *BotRuntimeQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *BotRunnerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(botruntime.Table)
+	t1 := builder.Table(botrunner.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = botruntime.Columns
+		columns = botrunner.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -539,7 +539,7 @@ func (_q *BotRuntimeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 
 // WithNamedBots tells the query-builder to eager-load the nodes that are connected to the "bots"
 // edge with the given name. The optional arguments are used to configure the query builder of the edge.
-func (_q *BotRuntimeQuery) WithNamedBots(name string, opts ...func(*BotQuery)) *BotRuntimeQuery {
+func (_q *BotRunnerQuery) WithNamedBots(name string, opts ...func(*BotQuery)) *BotRunnerQuery {
 	query := (&BotClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -551,28 +551,28 @@ func (_q *BotRuntimeQuery) WithNamedBots(name string, opts ...func(*BotQuery)) *
 	return _q
 }
 
-// BotRuntimeGroupBy is the group-by builder for BotRuntime entities.
-type BotRuntimeGroupBy struct {
+// BotRunnerGroupBy is the group-by builder for BotRunner entities.
+type BotRunnerGroupBy struct {
 	selector
-	build *BotRuntimeQuery
+	build *BotRunnerQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *BotRuntimeGroupBy) Aggregate(fns ...AggregateFunc) *BotRuntimeGroupBy {
+func (_g *BotRunnerGroupBy) Aggregate(fns ...AggregateFunc) *BotRunnerGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *BotRuntimeGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *BotRunnerGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*BotRuntimeQuery, *BotRuntimeGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*BotRunnerQuery, *BotRunnerGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *BotRuntimeGroupBy) sqlScan(ctx context.Context, root *BotRuntimeQuery, v any) error {
+func (_g *BotRunnerGroupBy) sqlScan(ctx context.Context, root *BotRunnerQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -599,28 +599,28 @@ func (_g *BotRuntimeGroupBy) sqlScan(ctx context.Context, root *BotRuntimeQuery,
 	return sql.ScanSlice(rows, v)
 }
 
-// BotRuntimeSelect is the builder for selecting fields of BotRuntime entities.
-type BotRuntimeSelect struct {
-	*BotRuntimeQuery
+// BotRunnerSelect is the builder for selecting fields of BotRunner entities.
+type BotRunnerSelect struct {
+	*BotRunnerQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *BotRuntimeSelect) Aggregate(fns ...AggregateFunc) *BotRuntimeSelect {
+func (_s *BotRunnerSelect) Aggregate(fns ...AggregateFunc) *BotRunnerSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *BotRuntimeSelect) Scan(ctx context.Context, v any) error {
+func (_s *BotRunnerSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*BotRuntimeQuery, *BotRuntimeSelect](ctx, _s.BotRuntimeQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*BotRunnerQuery, *BotRunnerSelect](ctx, _s.BotRunnerQuery, _s, _s.inters, v)
 }
 
-func (_s *BotRuntimeSelect) sqlScan(ctx context.Context, root *BotRuntimeQuery, v any) error {
+func (_s *BotRunnerSelect) sqlScan(ctx context.Context, root *BotRunnerQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

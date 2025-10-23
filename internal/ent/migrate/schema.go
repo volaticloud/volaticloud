@@ -40,7 +40,7 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
-		{Name: "runtime_metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "runner_metadata", Type: field.TypeJSON, Nullable: true},
 		{Name: "api_url", Type: field.TypeString, Nullable: true},
 		{Name: "api_username", Type: field.TypeString, Nullable: true},
 		{Name: "api_password", Type: field.TypeString, Nullable: true},
@@ -50,7 +50,7 @@ var (
 		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "runtime_id", Type: field.TypeUUID},
+		{Name: "runner_id", Type: field.TypeUUID},
 		{Name: "exchange_id", Type: field.TypeUUID},
 		{Name: "strategy_id", Type: field.TypeUUID},
 	}
@@ -61,9 +61,9 @@ var (
 		PrimaryKey: []*schema.Column{BotsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "bots_bot_runtimes_bots",
+				Symbol:     "bots_bot_runners_bots",
 				Columns:    []*schema.Column{BotsColumns[15]},
-				RefColumns: []*schema.Column{BotRuntimesColumns[0]},
+				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
@@ -80,8 +80,8 @@ var (
 			},
 		},
 	}
-	// BotRuntimesColumns holds the columns for the "bot_runtimes" table.
-	BotRuntimesColumns = []*schema.Column{
+	// BotRunnersColumns holds the columns for the "bot_runners" table.
+	BotRunnersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"docker", "kubernetes", "local"}, Default: "docker"},
@@ -89,11 +89,11 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
-	// BotRuntimesTable holds the schema information for the "bot_runtimes" table.
-	BotRuntimesTable = &schema.Table{
-		Name:       "bot_runtimes",
-		Columns:    BotRuntimesColumns,
-		PrimaryKey: []*schema.Column{BotRuntimesColumns[0]},
+	// BotRunnersTable holds the schema information for the "bot_runners" table.
+	BotRunnersTable = &schema.Table{
+		Name:       "bot_runners",
+		Columns:    BotRunnersColumns,
+		PrimaryKey: []*schema.Column{BotRunnersColumns[0]},
 	}
 	// ExchangesColumns holds the columns for the "exchanges" table.
 	ExchangesColumns = []*schema.Column{
@@ -110,36 +110,6 @@ var (
 		Columns:    ExchangesColumns,
 		PrimaryKey: []*schema.Column{ExchangesColumns[0]},
 	}
-	// ExchangeSecretsColumns holds the columns for the "exchange_secrets" table.
-	ExchangeSecretsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "name", Type: field.TypeString},
-		{Name: "value", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "exchange_id", Type: field.TypeUUID},
-	}
-	// ExchangeSecretsTable holds the schema information for the "exchange_secrets" table.
-	ExchangeSecretsTable = &schema.Table{
-		Name:       "exchange_secrets",
-		Columns:    ExchangeSecretsColumns,
-		PrimaryKey: []*schema.Column{ExchangeSecretsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "exchange_secrets_exchanges_secrets",
-				Columns:    []*schema.Column{ExchangeSecretsColumns[5]},
-				RefColumns: []*schema.Column{ExchangesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "exchangesecret_exchange_id_name",
-				Unique:  true,
-				Columns: []*schema.Column{ExchangeSecretsColumns[5], ExchangeSecretsColumns[1]},
-			},
-		},
-	}
 	// StrategiesColumns holds the columns for the "strategies" table.
 	StrategiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -147,6 +117,7 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "code", Type: field.TypeString, Size: 2147483647},
 		{Name: "version", Type: field.TypeString, Default: "1.0"},
+		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -212,9 +183,8 @@ var (
 	Tables = []*schema.Table{
 		BacktestsTable,
 		BotsTable,
-		BotRuntimesTable,
+		BotRunnersTable,
 		ExchangesTable,
-		ExchangeSecretsTable,
 		StrategiesTable,
 		TradesTable,
 	}
@@ -222,9 +192,8 @@ var (
 
 func init() {
 	BacktestsTable.ForeignKeys[0].RefTable = StrategiesTable
-	BotsTable.ForeignKeys[0].RefTable = BotRuntimesTable
+	BotsTable.ForeignKeys[0].RefTable = BotRunnersTable
 	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[2].RefTable = StrategiesTable
-	ExchangeSecretsTable.ForeignKeys[0].RefTable = ExchangesTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

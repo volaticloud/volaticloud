@@ -107,9 +107,9 @@ func StrategyID(v uuid.UUID) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldStrategyID, v))
 }
 
-// RuntimeID applies equality check predicate on the "runtime_id" field. It's identical to RuntimeIDEQ.
-func RuntimeID(v uuid.UUID) predicate.Bot {
-	return predicate.Bot(sql.FieldEQ(FieldRuntimeID, v))
+// RunnerID applies equality check predicate on the "runner_id" field. It's identical to RunnerIDEQ.
+func RunnerID(v uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldRunnerID, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -322,14 +322,14 @@ func ContainerIDContainsFold(v string) predicate.Bot {
 	return predicate.Bot(sql.FieldContainsFold(FieldContainerID, v))
 }
 
-// RuntimeMetadataIsNil applies the IsNil predicate on the "runtime_metadata" field.
-func RuntimeMetadataIsNil() predicate.Bot {
-	return predicate.Bot(sql.FieldIsNull(FieldRuntimeMetadata))
+// RunnerMetadataIsNil applies the IsNil predicate on the "runner_metadata" field.
+func RunnerMetadataIsNil() predicate.Bot {
+	return predicate.Bot(sql.FieldIsNull(FieldRunnerMetadata))
 }
 
-// RuntimeMetadataNotNil applies the NotNil predicate on the "runtime_metadata" field.
-func RuntimeMetadataNotNil() predicate.Bot {
-	return predicate.Bot(sql.FieldNotNull(FieldRuntimeMetadata))
+// RunnerMetadataNotNil applies the NotNil predicate on the "runner_metadata" field.
+func RunnerMetadataNotNil() predicate.Bot {
+	return predicate.Bot(sql.FieldNotNull(FieldRunnerMetadata))
 }
 
 // APIURLEQ applies the EQ predicate on the "api_url" field.
@@ -797,24 +797,24 @@ func StrategyIDNotIn(vs ...uuid.UUID) predicate.Bot {
 	return predicate.Bot(sql.FieldNotIn(FieldStrategyID, vs...))
 }
 
-// RuntimeIDEQ applies the EQ predicate on the "runtime_id" field.
-func RuntimeIDEQ(v uuid.UUID) predicate.Bot {
-	return predicate.Bot(sql.FieldEQ(FieldRuntimeID, v))
+// RunnerIDEQ applies the EQ predicate on the "runner_id" field.
+func RunnerIDEQ(v uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldRunnerID, v))
 }
 
-// RuntimeIDNEQ applies the NEQ predicate on the "runtime_id" field.
-func RuntimeIDNEQ(v uuid.UUID) predicate.Bot {
-	return predicate.Bot(sql.FieldNEQ(FieldRuntimeID, v))
+// RunnerIDNEQ applies the NEQ predicate on the "runner_id" field.
+func RunnerIDNEQ(v uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldNEQ(FieldRunnerID, v))
 }
 
-// RuntimeIDIn applies the In predicate on the "runtime_id" field.
-func RuntimeIDIn(vs ...uuid.UUID) predicate.Bot {
-	return predicate.Bot(sql.FieldIn(FieldRuntimeID, vs...))
+// RunnerIDIn applies the In predicate on the "runner_id" field.
+func RunnerIDIn(vs ...uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldIn(FieldRunnerID, vs...))
 }
 
-// RuntimeIDNotIn applies the NotIn predicate on the "runtime_id" field.
-func RuntimeIDNotIn(vs ...uuid.UUID) predicate.Bot {
-	return predicate.Bot(sql.FieldNotIn(FieldRuntimeID, vs...))
+// RunnerIDNotIn applies the NotIn predicate on the "runner_id" field.
+func RunnerIDNotIn(vs ...uuid.UUID) predicate.Bot {
+	return predicate.Bot(sql.FieldNotIn(FieldRunnerID, vs...))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -943,21 +943,21 @@ func HasStrategyWith(preds ...predicate.Strategy) predicate.Bot {
 	})
 }
 
-// HasRuntime applies the HasEdge predicate on the "runtime" edge.
-func HasRuntime() predicate.Bot {
+// HasRunner applies the HasEdge predicate on the "runner" edge.
+func HasRunner() predicate.Bot {
 	return predicate.Bot(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, RuntimeTable, RuntimeColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, RunnerTable, RunnerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasRuntimeWith applies the HasEdge predicate on the "runtime" edge with a given conditions (other predicates).
-func HasRuntimeWith(preds ...predicate.BotRuntime) predicate.Bot {
+// HasRunnerWith applies the HasEdge predicate on the "runner" edge with a given conditions (other predicates).
+func HasRunnerWith(preds ...predicate.BotRunner) predicate.Bot {
 	return predicate.Bot(func(s *sql.Selector) {
-		step := newRuntimeStep()
+		step := newRunnerStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

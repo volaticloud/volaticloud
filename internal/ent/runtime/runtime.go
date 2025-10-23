@@ -5,9 +5,8 @@ package runtime
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/schema"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
@@ -60,28 +59,30 @@ func init() {
 	botDescID := botFields[0].Descriptor()
 	// bot.DefaultID holds the default value on creation for the id field.
 	bot.DefaultID = botDescID.Default.(func() uuid.UUID)
-	botruntimeHooks := schema.BotRuntime{}.Hooks()
-	botruntime.Hooks[0] = botruntimeHooks[0]
-	botruntimeFields := schema.BotRuntime{}.Fields()
-	_ = botruntimeFields
-	// botruntimeDescName is the schema descriptor for name field.
-	botruntimeDescName := botruntimeFields[1].Descriptor()
-	// botruntime.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	botruntime.NameValidator = botruntimeDescName.Validators[0].(func(string) error)
-	// botruntimeDescCreatedAt is the schema descriptor for created_at field.
-	botruntimeDescCreatedAt := botruntimeFields[4].Descriptor()
-	// botruntime.DefaultCreatedAt holds the default value on creation for the created_at field.
-	botruntime.DefaultCreatedAt = botruntimeDescCreatedAt.Default.(func() time.Time)
-	// botruntimeDescUpdatedAt is the schema descriptor for updated_at field.
-	botruntimeDescUpdatedAt := botruntimeFields[5].Descriptor()
-	// botruntime.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	botruntime.DefaultUpdatedAt = botruntimeDescUpdatedAt.Default.(func() time.Time)
-	// botruntime.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	botruntime.UpdateDefaultUpdatedAt = botruntimeDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// botruntimeDescID is the schema descriptor for id field.
-	botruntimeDescID := botruntimeFields[0].Descriptor()
-	// botruntime.DefaultID holds the default value on creation for the id field.
-	botruntime.DefaultID = botruntimeDescID.Default.(func() uuid.UUID)
+	botrunnerHooks := schema.BotRunner{}.Hooks()
+	botrunner.Hooks[0] = botrunnerHooks[0]
+	botrunnerFields := schema.BotRunner{}.Fields()
+	_ = botrunnerFields
+	// botrunnerDescName is the schema descriptor for name field.
+	botrunnerDescName := botrunnerFields[1].Descriptor()
+	// botrunner.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	botrunner.NameValidator = botrunnerDescName.Validators[0].(func(string) error)
+	// botrunnerDescCreatedAt is the schema descriptor for created_at field.
+	botrunnerDescCreatedAt := botrunnerFields[4].Descriptor()
+	// botrunner.DefaultCreatedAt holds the default value on creation for the created_at field.
+	botrunner.DefaultCreatedAt = botrunnerDescCreatedAt.Default.(func() time.Time)
+	// botrunnerDescUpdatedAt is the schema descriptor for updated_at field.
+	botrunnerDescUpdatedAt := botrunnerFields[5].Descriptor()
+	// botrunner.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	botrunner.DefaultUpdatedAt = botrunnerDescUpdatedAt.Default.(func() time.Time)
+	// botrunner.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	botrunner.UpdateDefaultUpdatedAt = botrunnerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// botrunnerDescID is the schema descriptor for id field.
+	botrunnerDescID := botrunnerFields[0].Descriptor()
+	// botrunner.DefaultID holds the default value on creation for the id field.
+	botrunner.DefaultID = botrunnerDescID.Default.(func() uuid.UUID)
+	exchangeHooks := schema.Exchange{}.Hooks()
+	exchange.Hooks[0] = exchangeHooks[0]
 	exchangeFields := schema.Exchange{}.Fields()
 	_ = exchangeFields
 	// exchangeDescTestMode is the schema descriptor for test_mode field.
@@ -102,26 +103,6 @@ func init() {
 	exchangeDescID := exchangeFields[0].Descriptor()
 	// exchange.DefaultID holds the default value on creation for the id field.
 	exchange.DefaultID = exchangeDescID.Default.(func() uuid.UUID)
-	exchangesecretFields := schema.ExchangeSecret{}.Fields()
-	_ = exchangesecretFields
-	// exchangesecretDescName is the schema descriptor for name field.
-	exchangesecretDescName := exchangesecretFields[2].Descriptor()
-	// exchangesecret.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	exchangesecret.NameValidator = exchangesecretDescName.Validators[0].(func(string) error)
-	// exchangesecretDescCreatedAt is the schema descriptor for created_at field.
-	exchangesecretDescCreatedAt := exchangesecretFields[4].Descriptor()
-	// exchangesecret.DefaultCreatedAt holds the default value on creation for the created_at field.
-	exchangesecret.DefaultCreatedAt = exchangesecretDescCreatedAt.Default.(func() time.Time)
-	// exchangesecretDescUpdatedAt is the schema descriptor for updated_at field.
-	exchangesecretDescUpdatedAt := exchangesecretFields[5].Descriptor()
-	// exchangesecret.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	exchangesecret.DefaultUpdatedAt = exchangesecretDescUpdatedAt.Default.(func() time.Time)
-	// exchangesecret.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	exchangesecret.UpdateDefaultUpdatedAt = exchangesecretDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// exchangesecretDescID is the schema descriptor for id field.
-	exchangesecretDescID := exchangesecretFields[0].Descriptor()
-	// exchangesecret.DefaultID holds the default value on creation for the id field.
-	exchangesecret.DefaultID = exchangesecretDescID.Default.(func() uuid.UUID)
 	strategyFields := schema.Strategy{}.Fields()
 	_ = strategyFields
 	// strategyDescName is the schema descriptor for name field.
@@ -133,11 +114,11 @@ func init() {
 	// strategy.DefaultVersion holds the default value on creation for the version field.
 	strategy.DefaultVersion = strategyDescVersion.Default.(string)
 	// strategyDescCreatedAt is the schema descriptor for created_at field.
-	strategyDescCreatedAt := strategyFields[5].Descriptor()
+	strategyDescCreatedAt := strategyFields[6].Descriptor()
 	// strategy.DefaultCreatedAt holds the default value on creation for the created_at field.
 	strategy.DefaultCreatedAt = strategyDescCreatedAt.Default.(func() time.Time)
 	// strategyDescUpdatedAt is the schema descriptor for updated_at field.
-	strategyDescUpdatedAt := strategyFields[6].Descriptor()
+	strategyDescUpdatedAt := strategyFields[7].Descriptor()
 	// strategy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	strategy.DefaultUpdatedAt = strategyDescUpdatedAt.Default.(func() time.Time)
 	// strategy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

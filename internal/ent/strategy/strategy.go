@@ -23,6 +23,8 @@ const (
 	FieldCode = "code"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
+	// FieldConfig holds the string denoting the config field in the database.
+	FieldConfig = "config"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -56,6 +58,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldCode,
 	FieldVersion,
+	FieldConfig,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }

@@ -93,6 +93,18 @@ func (_u *StrategyUpdate) SetNillableVersion(v *string) *StrategyUpdate {
 	return _u
 }
 
+// SetConfig sets the "config" field.
+func (_u *StrategyUpdate) SetConfig(v map[string]interface{}) *StrategyUpdate {
+	_u.mutation.SetConfig(v)
+	return _u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (_u *StrategyUpdate) ClearConfig() *StrategyUpdate {
+	_u.mutation.ClearConfig()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *StrategyUpdate) SetUpdatedAt(v time.Time) *StrategyUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -248,6 +260,12 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Version(); ok {
 		_spec.SetField(strategy.FieldVersion, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Config(); ok {
+		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.ConfigCleared() {
+		_spec.ClearField(strategy.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(strategy.FieldUpdatedAt, field.TypeTime, value)
@@ -421,6 +439,18 @@ func (_u *StrategyUpdateOne) SetNillableVersion(v *string) *StrategyUpdateOne {
 	if v != nil {
 		_u.SetVersion(*v)
 	}
+	return _u
+}
+
+// SetConfig sets the "config" field.
+func (_u *StrategyUpdateOne) SetConfig(v map[string]interface{}) *StrategyUpdateOne {
+	_u.mutation.SetConfig(v)
+	return _u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (_u *StrategyUpdateOne) ClearConfig() *StrategyUpdateOne {
+	_u.mutation.ClearConfig()
 	return _u
 }
 
@@ -609,6 +639,12 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	}
 	if value, ok := _u.mutation.Version(); ok {
 		_spec.SetField(strategy.FieldVersion, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Config(); ok {
+		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.ConfigCleared() {
+		_spec.ClearField(strategy.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(strategy.FieldUpdatedAt, field.TypeTime, value)

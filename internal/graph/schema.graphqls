@@ -2,8 +2,85 @@
 
 # Scalar declarations
 scalar Time
+scalar Map
 
-# Bot runtime status from the runner
+# Runner configuration inputs
+
+input RegistryAuthInput {
+  username: String!
+  password: String!
+  serverAddress: String
+}
+
+input DockerConfigInput {
+  host: String!
+  tlsVerify: Boolean
+  certPath: String
+  keyPath: String
+  caPath: String
+  apiVersion: String
+  network: String
+  registryAuth: RegistryAuthInput
+}
+
+input KubernetesConfigInput {
+  kubeconfigPath: String
+  namespace: String
+  context: String
+}
+
+input LocalConfigInput {
+  basePath: String
+}
+
+# Union-like input for runner configuration
+input RunnerConfigInput {
+  docker: DockerConfigInput
+  kubernetes: KubernetesConfigInput
+  local: LocalConfigInput
+}
+
+# Exchange configuration inputs
+
+input BinanceConfigInput {
+  apiKey: String!
+  apiSecret: String!
+}
+
+input KrakenConfigInput {
+  apiKey: String!
+  apiSecret: String!
+}
+
+input PassphraseExchangeConfigInput {
+  apiKey: String!
+  apiSecret: String!
+  passphrase: String!
+}
+
+input BybitConfigInput {
+  apiKey: String!
+  apiSecret: String!
+}
+
+input BitfinexConfigInput {
+  apiKey: String!
+  apiSecret: String!
+}
+
+# Union-like input for exchange configuration
+input ExchangeConfigInput {
+  binance: BinanceConfigInput
+  binanceus: BinanceConfigInput
+  coinbase: PassphraseExchangeConfigInput
+  kraken: KrakenConfigInput
+  kucoin: PassphraseExchangeConfigInput
+  bybit: BybitConfigInput
+  okx: PassphraseExchangeConfigInput
+  bitfinex: BitfinexConfigInput
+}
+
+# Bot runner status from the runner
 type BotStatus {
   botID: String!
   status: BotBotStatus!
@@ -22,8 +99,8 @@ type BotStatus {
 
 # Query extensions
 extend type Query {
-  # Get runtime status for a bot
-  getBotRuntimeStatus(id: ID!): BotStatus
+  # Get runner status for a bot
+  getBotRunnerStatus(id: ID!): BotStatus
 }
 
 # Mutations for managing entities
@@ -32,11 +109,6 @@ type Mutation {
   createExchange(input: CreateExchangeInput!): Exchange!
   updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange!
   deleteExchange(id: ID!): Boolean!
-
-  # ExchangeSecret mutations
-  createExchangeSecret(input: CreateExchangeSecretInput!): ExchangeSecret!
-  updateExchangeSecret(id: ID!, input: UpdateExchangeSecretInput!): ExchangeSecret!
-  deleteExchangeSecret(id: ID!): Boolean!
 
   # Strategy mutations
   createStrategy(input: CreateStrategyInput!): Strategy!
@@ -53,10 +125,10 @@ type Mutation {
   stopBot(id: ID!): Bot!
   restartBot(id: ID!): Bot!
 
-  # BotRuntime mutations
-  createBotRuntime(input: CreateBotRuntimeInput!): BotRuntime!
-  updateBotRuntime(id: ID!, input: UpdateBotRuntimeInput!): BotRuntime!
-  deleteBotRuntime(id: ID!): Boolean!
+  # BotRunner mutations
+  createBotRunner(input: CreateBotRunnerInput!): BotRunner!
+  updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner!
+  deleteBotRunner(id: ID!): Boolean!
 
   # Backtest mutations
   createBacktest(input: CreateBacktestInput!): Backtest!

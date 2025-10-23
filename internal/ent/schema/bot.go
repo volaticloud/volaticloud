@@ -37,11 +37,11 @@ func (Bot) Fields() []ent.Field {
 			Comment("Trading mode (dry-run or live)"),
 		field.String("container_id").
 			Optional().
-			Comment("Runtime-specific identifier (container ID, pod name, etc.)"),
-		field.JSON("runtime_metadata", map[string]string{}).
+			Comment("Runner-specific identifier (container ID, pod name, etc.)"),
+		field.JSON("runner_metadata", map[string]string{}).
 			Optional().
 			Annotations(entgql.Skip(entgql.SkipAll)).
-			Comment("Runtime-specific metadata"),
+			Comment("Runner-specific metadata"),
 		field.String("api_url").
 			Optional().
 			Comment("Freqtrade API endpoint"),
@@ -54,7 +54,6 @@ func (Bot) Fields() []ent.Field {
 			Comment("Freqtrade API password (encrypted)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Skip(entgql.SkipAll)).
 			Comment("Bot-specific freqtrade config overrides"),
 		field.String("freqtrade_version").
 			Default("2024.1").
@@ -69,8 +68,8 @@ func (Bot) Fields() []ent.Field {
 			Comment("Foreign key to exchange"),
 		field.UUID("strategy_id", uuid.UUID{}).
 			Comment("Foreign key to strategy"),
-		field.UUID("runtime_id", uuid.UUID{}).
-			Comment("Foreign key to runtime"),
+		field.UUID("runner_id", uuid.UUID{}).
+			Comment("Foreign key to runner"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -93,9 +92,9 @@ func (Bot) Edges() []ent.Edge {
 			Field("strategy_id").
 			Required().
 			Unique(),
-		edge.From("runtime", BotRuntime.Type).
+		edge.From("runner", BotRunner.Type).
 			Ref("bots").
-			Field("runtime_id").
+			Field("runner_id").
 			Required().
 			Unique(),
 		edge.To("trades", Trade.Type).

@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
 	"context"
 
@@ -12,26 +12,26 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// BotRuntimeDelete is the builder for deleting a BotRuntime entity.
-type BotRuntimeDelete struct {
+// BotRunnerDelete is the builder for deleting a BotRunner entity.
+type BotRunnerDelete struct {
 	config
 	hooks    []Hook
-	mutation *BotRuntimeMutation
+	mutation *BotRunnerMutation
 }
 
-// Where appends a list predicates to the BotRuntimeDelete builder.
-func (_d *BotRuntimeDelete) Where(ps ...predicate.BotRuntime) *BotRuntimeDelete {
+// Where appends a list predicates to the BotRunnerDelete builder.
+func (_d *BotRunnerDelete) Where(ps ...predicate.BotRunner) *BotRunnerDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *BotRuntimeDelete) Exec(ctx context.Context) (int, error) {
+func (_d *BotRunnerDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *BotRuntimeDelete) ExecX(ctx context.Context) int {
+func (_d *BotRunnerDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *BotRuntimeDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *BotRuntimeDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(botruntime.Table, sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID))
+func (_d *BotRunnerDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(botrunner.Table, sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *BotRuntimeDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// BotRuntimeDeleteOne is the builder for deleting a single BotRuntime entity.
-type BotRuntimeDeleteOne struct {
-	_d *BotRuntimeDelete
+// BotRunnerDeleteOne is the builder for deleting a single BotRunner entity.
+type BotRunnerDeleteOne struct {
+	_d *BotRunnerDelete
 }
 
-// Where appends a list predicates to the BotRuntimeDelete builder.
-func (_d *BotRuntimeDeleteOne) Where(ps ...predicate.BotRuntime) *BotRuntimeDeleteOne {
+// Where appends a list predicates to the BotRunnerDelete builder.
+func (_d *BotRunnerDeleteOne) Where(ps ...predicate.BotRunner) *BotRunnerDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *BotRuntimeDeleteOne) Exec(ctx context.Context) error {
+func (_d *BotRunnerDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{botruntime.Label}
+		return &NotFoundError{botrunner.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *BotRuntimeDeleteOne) ExecX(ctx context.Context) {
+func (_d *BotRunnerDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

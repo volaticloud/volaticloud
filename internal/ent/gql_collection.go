@@ -5,9 +5,8 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
 	"context"
@@ -171,19 +170,19 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				fieldSeen[bot.FieldStrategyID] = struct{}{}
 			}
 
-		case "runtime":
+		case "runner":
 			var (
 				alias = field.Alias
 				path  = append(path, alias)
-				query = (&BotRuntimeClient{config: _q.config}).Query()
+				query = (&BotRunnerClient{config: _q.config}).Query()
 			)
-			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botruntimeImplementors)...); err != nil {
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botrunnerImplementors)...); err != nil {
 				return err
 			}
-			_q.withRuntime = query
-			if _, ok := fieldSeen[bot.FieldRuntimeID]; !ok {
-				selectedFields = append(selectedFields, bot.FieldRuntimeID)
-				fieldSeen[bot.FieldRuntimeID] = struct{}{}
+			_q.withRunner = query
+			if _, ok := fieldSeen[bot.FieldRunnerID]; !ok {
+				selectedFields = append(selectedFields, bot.FieldRunnerID)
+				fieldSeen[bot.FieldRunnerID] = struct{}{}
 			}
 
 		case "trades":
@@ -304,6 +303,11 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				selectedFields = append(selectedFields, bot.FieldAPIUsername)
 				fieldSeen[bot.FieldAPIUsername] = struct{}{}
 			}
+		case "config":
+			if _, ok := fieldSeen[bot.FieldConfig]; !ok {
+				selectedFields = append(selectedFields, bot.FieldConfig)
+				fieldSeen[bot.FieldConfig] = struct{}{}
+			}
 		case "freqtradeVersion":
 			if _, ok := fieldSeen[bot.FieldFreqtradeVersion]; !ok {
 				selectedFields = append(selectedFields, bot.FieldFreqtradeVersion)
@@ -329,10 +333,10 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				selectedFields = append(selectedFields, bot.FieldStrategyID)
 				fieldSeen[bot.FieldStrategyID] = struct{}{}
 			}
-		case "runtimeID":
-			if _, ok := fieldSeen[bot.FieldRuntimeID]; !ok {
-				selectedFields = append(selectedFields, bot.FieldRuntimeID)
-				fieldSeen[bot.FieldRuntimeID] = struct{}{}
+		case "runnerID":
+			if _, ok := fieldSeen[bot.FieldRunnerID]; !ok {
+				selectedFields = append(selectedFields, bot.FieldRunnerID)
+				fieldSeen[bot.FieldRunnerID] = struct{}{}
 			}
 		case "createdAt":
 			if _, ok := fieldSeen[bot.FieldCreatedAt]; !ok {
@@ -383,7 +387,7 @@ func newBotPaginateArgs(rv map[string]any) *botPaginateArgs {
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
-func (_q *BotRuntimeQuery) CollectFields(ctx context.Context, satisfies ...string) (*BotRuntimeQuery, error) {
+func (_q *BotRunnerQuery) CollectFields(ctx context.Context, satisfies ...string) (*BotRunnerQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
 		return _q, nil
@@ -394,12 +398,12 @@ func (_q *BotRuntimeQuery) CollectFields(ctx context.Context, satisfies ...strin
 	return _q, nil
 }
 
-func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
 	path = append([]string(nil), path...)
 	var (
 		unknownSeen    bool
-		fieldSeen      = make(map[string]struct{}, len(botruntime.Columns))
-		selectedFields = []string{botruntime.FieldID}
+		fieldSeen      = make(map[string]struct{}, len(botrunner.Columns))
+		selectedFields = []string{botrunner.FieldID}
 	)
 	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
 		switch field.Name {
@@ -426,19 +430,19 @@ func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx
 				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
 				if hasPagination || ignoredEdges {
 					query := query.Clone()
-					_q.loadTotal = append(_q.loadTotal, func(ctx context.Context, nodes []*BotRuntime) error {
+					_q.loadTotal = append(_q.loadTotal, func(ctx context.Context, nodes []*BotRunner) error {
 						ids := make([]driver.Value, len(nodes))
 						for i := range nodes {
 							ids[i] = nodes[i].ID
 						}
 						var v []struct {
-							NodeID uuid.UUID `sql:"runtime_id"`
+							NodeID uuid.UUID `sql:"runner_id"`
 							Count  int       `sql:"count"`
 						}
 						query.Where(func(s *sql.Selector) {
-							s.Where(sql.InValues(s.C(botruntime.BotsColumn), ids...))
+							s.Where(sql.InValues(s.C(botrunner.BotsColumn), ids...))
 						})
-						if err := query.GroupBy(botruntime.BotsColumn).Aggregate(Count()).Scan(ctx, &v); err != nil {
+						if err := query.GroupBy(botrunner.BotsColumn).Aggregate(Count()).Scan(ctx, &v); err != nil {
 							return err
 						}
 						m := make(map[uuid.UUID]int, len(v))
@@ -455,7 +459,7 @@ func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx
 						return nil
 					})
 				} else {
-					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*BotRuntime) error {
+					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*BotRunner) error {
 						for i := range nodes {
 							n := len(nodes[i].Edges.Bots)
 							if nodes[i].Edges.totalCount[0] == nil {
@@ -483,7 +487,7 @@ func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx
 				if oneNode {
 					pager.applyOrder(query.Limit(limit))
 				} else {
-					modify := entgql.LimitPerRow(botruntime.BotsColumn, limit, pager.orderExpr(query))
+					modify := entgql.LimitPerRow(botrunner.BotsColumn, limit, pager.orderExpr(query))
 					query.modifiers = append(query.modifiers, modify)
 				}
 			} else {
@@ -493,24 +497,24 @@ func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx
 				*wq = *query
 			})
 		case "name":
-			if _, ok := fieldSeen[botruntime.FieldName]; !ok {
-				selectedFields = append(selectedFields, botruntime.FieldName)
-				fieldSeen[botruntime.FieldName] = struct{}{}
+			if _, ok := fieldSeen[botrunner.FieldName]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldName)
+				fieldSeen[botrunner.FieldName] = struct{}{}
 			}
 		case "type":
-			if _, ok := fieldSeen[botruntime.FieldType]; !ok {
-				selectedFields = append(selectedFields, botruntime.FieldType)
-				fieldSeen[botruntime.FieldType] = struct{}{}
+			if _, ok := fieldSeen[botrunner.FieldType]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldType)
+				fieldSeen[botrunner.FieldType] = struct{}{}
 			}
 		case "createdAt":
-			if _, ok := fieldSeen[botruntime.FieldCreatedAt]; !ok {
-				selectedFields = append(selectedFields, botruntime.FieldCreatedAt)
-				fieldSeen[botruntime.FieldCreatedAt] = struct{}{}
+			if _, ok := fieldSeen[botrunner.FieldCreatedAt]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldCreatedAt)
+				fieldSeen[botrunner.FieldCreatedAt] = struct{}{}
 			}
 		case "updatedAt":
-			if _, ok := fieldSeen[botruntime.FieldUpdatedAt]; !ok {
-				selectedFields = append(selectedFields, botruntime.FieldUpdatedAt)
-				fieldSeen[botruntime.FieldUpdatedAt] = struct{}{}
+			if _, ok := fieldSeen[botrunner.FieldUpdatedAt]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldUpdatedAt)
+				fieldSeen[botrunner.FieldUpdatedAt] = struct{}{}
 			}
 		case "id":
 		case "__typename":
@@ -524,14 +528,14 @@ func (_q *BotRuntimeQuery) collectField(ctx context.Context, oneNode bool, opCtx
 	return nil
 }
 
-type botruntimePaginateArgs struct {
+type botrunnerPaginateArgs struct {
 	first, last   *int
 	after, before *Cursor
-	opts          []BotRuntimePaginateOption
+	opts          []BotRunnerPaginateOption
 }
 
-func newBotRuntimePaginateArgs(rv map[string]any) *botruntimePaginateArgs {
-	args := &botruntimePaginateArgs{}
+func newBotRunnerPaginateArgs(rv map[string]any) *botrunnerPaginateArgs {
+	args := &botrunnerPaginateArgs{}
 	if rv == nil {
 		return args
 	}
@@ -660,95 +664,6 @@ func (_q *ExchangeQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			_q.WithNamedBots(alias, func(wq *BotQuery) {
 				*wq = *query
 			})
-
-		case "secrets":
-			var (
-				alias = field.Alias
-				path  = append(path, alias)
-				query = (&ExchangeSecretClient{config: _q.config}).Query()
-			)
-			args := newExchangeSecretPaginateArgs(fieldArgs(ctx, nil, path...))
-			if err := validateFirstLast(args.first, args.last); err != nil {
-				return fmt.Errorf("validate first and last in path %q: %w", path, err)
-			}
-			pager, err := newExchangeSecretPager(args.opts, args.last != nil)
-			if err != nil {
-				return fmt.Errorf("create new pager in path %q: %w", path, err)
-			}
-			if query, err = pager.applyFilter(query); err != nil {
-				return err
-			}
-			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
-			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
-				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
-				if hasPagination || ignoredEdges {
-					query := query.Clone()
-					_q.loadTotal = append(_q.loadTotal, func(ctx context.Context, nodes []*Exchange) error {
-						ids := make([]driver.Value, len(nodes))
-						for i := range nodes {
-							ids[i] = nodes[i].ID
-						}
-						var v []struct {
-							NodeID uuid.UUID `sql:"exchange_id"`
-							Count  int       `sql:"count"`
-						}
-						query.Where(func(s *sql.Selector) {
-							s.Where(sql.InValues(s.C(exchange.SecretsColumn), ids...))
-						})
-						if err := query.GroupBy(exchange.SecretsColumn).Aggregate(Count()).Scan(ctx, &v); err != nil {
-							return err
-						}
-						m := make(map[uuid.UUID]int, len(v))
-						for i := range v {
-							m[v[i].NodeID] = v[i].Count
-						}
-						for i := range nodes {
-							n := m[nodes[i].ID]
-							if nodes[i].Edges.totalCount[1] == nil {
-								nodes[i].Edges.totalCount[1] = make(map[string]int)
-							}
-							nodes[i].Edges.totalCount[1][alias] = n
-						}
-						return nil
-					})
-				} else {
-					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*Exchange) error {
-						for i := range nodes {
-							n := len(nodes[i].Edges.Secrets)
-							if nodes[i].Edges.totalCount[1] == nil {
-								nodes[i].Edges.totalCount[1] = make(map[string]int)
-							}
-							nodes[i].Edges.totalCount[1][alias] = n
-						}
-						return nil
-					})
-				}
-			}
-			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
-				continue
-			}
-			if query, err = pager.applyCursors(query, args.after, args.before); err != nil {
-				return err
-			}
-			path = append(path, edgesField, nodeField)
-			if field := collectedField(ctx, path...); field != nil {
-				if err := query.collectField(ctx, false, opCtx, *field, path, mayAddCondition(satisfies, exchangesecretImplementors)...); err != nil {
-					return err
-				}
-			}
-			if limit := paginateLimit(args.first, args.last); limit > 0 {
-				if oneNode {
-					pager.applyOrder(query.Limit(limit))
-				} else {
-					modify := entgql.LimitPerRow(exchange.SecretsColumn, limit, pager.orderExpr(query))
-					query.modifiers = append(query.modifiers, modify)
-				}
-			} else {
-				query = pager.applyOrder(query)
-			}
-			_q.WithNamedSecrets(alias, func(wq *ExchangeSecretQuery) {
-				*wq = *query
-			})
 		case "name":
 			if _, ok := fieldSeen[exchange.FieldName]; !ok {
 				selectedFields = append(selectedFields, exchange.FieldName)
@@ -789,100 +704,6 @@ type exchangePaginateArgs struct {
 
 func newExchangePaginateArgs(rv map[string]any) *exchangePaginateArgs {
 	args := &exchangePaginateArgs{}
-	if rv == nil {
-		return args
-	}
-	if v := rv[firstField]; v != nil {
-		args.first = v.(*int)
-	}
-	if v := rv[lastField]; v != nil {
-		args.last = v.(*int)
-	}
-	if v := rv[afterField]; v != nil {
-		args.after = v.(*Cursor)
-	}
-	if v := rv[beforeField]; v != nil {
-		args.before = v.(*Cursor)
-	}
-	return args
-}
-
-// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
-func (_q *ExchangeSecretQuery) CollectFields(ctx context.Context, satisfies ...string) (*ExchangeSecretQuery, error) {
-	fc := graphql.GetFieldContext(ctx)
-	if fc == nil {
-		return _q, nil
-	}
-	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
-		return nil, err
-	}
-	return _q, nil
-}
-
-func (_q *ExchangeSecretQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
-	path = append([]string(nil), path...)
-	var (
-		unknownSeen    bool
-		fieldSeen      = make(map[string]struct{}, len(exchangesecret.Columns))
-		selectedFields = []string{exchangesecret.FieldID}
-	)
-	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
-		switch field.Name {
-
-		case "exchange":
-			var (
-				alias = field.Alias
-				path  = append(path, alias)
-				query = (&ExchangeClient{config: _q.config}).Query()
-			)
-			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, exchangeImplementors)...); err != nil {
-				return err
-			}
-			_q.withExchange = query
-			if _, ok := fieldSeen[exchangesecret.FieldExchangeID]; !ok {
-				selectedFields = append(selectedFields, exchangesecret.FieldExchangeID)
-				fieldSeen[exchangesecret.FieldExchangeID] = struct{}{}
-			}
-		case "exchangeID":
-			if _, ok := fieldSeen[exchangesecret.FieldExchangeID]; !ok {
-				selectedFields = append(selectedFields, exchangesecret.FieldExchangeID)
-				fieldSeen[exchangesecret.FieldExchangeID] = struct{}{}
-			}
-		case "name":
-			if _, ok := fieldSeen[exchangesecret.FieldName]; !ok {
-				selectedFields = append(selectedFields, exchangesecret.FieldName)
-				fieldSeen[exchangesecret.FieldName] = struct{}{}
-			}
-		case "createdAt":
-			if _, ok := fieldSeen[exchangesecret.FieldCreatedAt]; !ok {
-				selectedFields = append(selectedFields, exchangesecret.FieldCreatedAt)
-				fieldSeen[exchangesecret.FieldCreatedAt] = struct{}{}
-			}
-		case "updatedAt":
-			if _, ok := fieldSeen[exchangesecret.FieldUpdatedAt]; !ok {
-				selectedFields = append(selectedFields, exchangesecret.FieldUpdatedAt)
-				fieldSeen[exchangesecret.FieldUpdatedAt] = struct{}{}
-			}
-		case "id":
-		case "__typename":
-		default:
-			unknownSeen = true
-		}
-	}
-	if !unknownSeen {
-		_q.Select(selectedFields...)
-	}
-	return nil
-}
-
-type exchangesecretPaginateArgs struct {
-	first, last   *int
-	after, before *Cursor
-	opts          []ExchangeSecretPaginateOption
-}
-
-func newExchangeSecretPaginateArgs(rv map[string]any) *exchangesecretPaginateArgs {
-	args := &exchangesecretPaginateArgs{}
 	if rv == nil {
 		return args
 	}
@@ -1119,6 +940,11 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			if _, ok := fieldSeen[strategy.FieldVersion]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldVersion)
 				fieldSeen[strategy.FieldVersion] = struct{}{}
+			}
+		case "config":
+			if _, ok := fieldSeen[strategy.FieldConfig]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldConfig)
+				fieldSeen[strategy.FieldConfig] = struct{}{}
 			}
 		case "createdAt":
 			if _, ok := fieldSeen[strategy.FieldCreatedAt]; !ok {

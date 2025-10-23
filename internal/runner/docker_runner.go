@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -101,17 +102,23 @@ var _ Runtime = (*DockerRuntime)(nil)
 func (d *DockerRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, error) {
 	// Ensure network exists
 	if err := d.ensureNetwork(ctx); err != nil {
-		return "", NewRuntimeError("CreateBot", spec.ID, err, true)
+		return "", NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Pull image if needed
 	if err := d.pullImage(ctx, spec.Image); err != nil {
-		return "", NewRuntimeError("CreateBot", spec.ID, err, true)
+		return "", NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
-	// Build container configuration
-	containerConfig := d.buildContainerConfig(spec)
-	hostConfig := d.buildHostConfig(spec)
+	// Create temporary config files
+	configPaths, err := d.createConfigFiles(spec)
+	if err != nil {
+		return "", NewRunnerError("CreateBot", spec.ID, err, true)
+	}
+
+	// Build container configuration with config file paths
+	containerConfig := d.buildContainerConfig(spec, configPaths)
+	hostConfig := d.buildHostConfig(spec, configPaths)
 	networkConfig := d.buildNetworkConfig(spec)
 
 	// Create container
@@ -125,14 +132,17 @@ func (d *DockerRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, er
 		containerName,
 	)
 	if err != nil {
-		return "", NewRuntimeError("CreateBot", spec.ID, err, true)
+		// Clean up config files if container creation fails
+		d.cleanupConfigFiles(spec.ID)
+		return "", NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Start container
 	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		// Clean up container if start fails
+		// Clean up container and config files if start fails
 		d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
-		return "", NewRuntimeError("CreateBot", spec.ID, err, true)
+		d.cleanupConfigFiles(spec.ID)
+		return "", NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	return resp.ID, nil
@@ -142,7 +152,7 @@ func (d *DockerRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, er
 func (d *DockerRuntime) DeleteBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRuntimeError("DeleteBot", botID, err, false)
+		return NewRunnerError("DeleteBot", botID, err, false)
 	}
 
 	// Remove container (force=true to remove even if running)
@@ -151,8 +161,11 @@ func (d *DockerRuntime) DeleteBot(ctx context.Context, botID string) error {
 		RemoveVolumes: true,
 	})
 	if err != nil {
-		return NewRuntimeError("DeleteBot", botID, err, true)
+		return NewRunnerError("DeleteBot", botID, err, true)
 	}
+
+	// Clean up config files
+	d.cleanupConfigFiles(botID)
 
 	return nil
 }
@@ -161,12 +174,12 @@ func (d *DockerRuntime) DeleteBot(ctx context.Context, botID string) error {
 func (d *DockerRuntime) StartBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRuntimeError("StartBot", botID, err, false)
+		return NewRunnerError("StartBot", botID, err, false)
 	}
 
 	err = d.client.ContainerStart(ctx, containerID, container.StartOptions{})
 	if err != nil {
-		return NewRuntimeError("StartBot", botID, err, true)
+		return NewRunnerError("StartBot", botID, err, true)
 	}
 
 	return nil
@@ -176,13 +189,13 @@ func (d *DockerRuntime) StartBot(ctx context.Context, botID string) error {
 func (d *DockerRuntime) StopBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRuntimeError("StopBot", botID, err, false)
+		return NewRunnerError("StopBot", botID, err, false)
 	}
 
 	timeout := int(defaultStopTimeout.Seconds())
 	err = d.client.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeout})
 	if err != nil {
-		return NewRuntimeError("StopBot", botID, err, true)
+		return NewRunnerError("StopBot", botID, err, true)
 	}
 
 	return nil
@@ -192,13 +205,13 @@ func (d *DockerRuntime) StopBot(ctx context.Context, botID string) error {
 func (d *DockerRuntime) RestartBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRuntimeError("RestartBot", botID, err, false)
+		return NewRunnerError("RestartBot", botID, err, false)
 	}
 
 	timeout := int(defaultStopTimeout.Seconds())
 	err = d.client.ContainerRestart(ctx, containerID, container.StopOptions{Timeout: &timeout})
 	if err != nil {
-		return NewRuntimeError("RestartBot", botID, err, true)
+		return NewRunnerError("RestartBot", botID, err, true)
 	}
 
 	return nil
@@ -208,13 +221,13 @@ func (d *DockerRuntime) RestartBot(ctx context.Context, botID string) error {
 func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotStatus, error) {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return nil, NewRuntimeError("GetBotStatus", botID, err, false)
+		return nil, NewRunnerError("GetBotStatus", botID, err, false)
 	}
 
 	// Inspect container
 	inspect, err := d.client.ContainerInspect(ctx, containerID)
 	if err != nil {
-		return nil, NewRuntimeError("GetBotStatus", botID, err, true)
+		return nil, NewRunnerError("GetBotStatus", botID, err, true)
 	}
 
 	// Get container stats for resource usage
@@ -295,7 +308,7 @@ func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotSta
 func (d *DockerRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return nil, NewRuntimeError("GetBotLogs", botID, err, false)
+		return nil, NewRunnerError("GetBotLogs", botID, err, false)
 	}
 
 	// Build log options
@@ -322,7 +335,7 @@ func (d *DockerRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOp
 	// Get logs
 	logs, err := d.client.ContainerLogs(ctx, containerID, logOpts)
 	if err != nil {
-		return nil, NewRuntimeError("GetBotLogs", botID, err, true)
+		return nil, NewRunnerError("GetBotLogs", botID, err, true)
 	}
 
 	return &LogReader{
@@ -334,7 +347,7 @@ func (d *DockerRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOp
 func (d *DockerRuntime) UpdateBot(ctx context.Context, botID string, spec UpdateBotSpec) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRuntimeError("UpdateBot", botID, err, false)
+		return NewRunnerError("UpdateBot", botID, err, false)
 	}
 
 	// Build update config
@@ -357,12 +370,12 @@ func (d *DockerRuntime) UpdateBot(ctx context.Context, botID string, spec Update
 	// Update container
 	_, err = d.client.ContainerUpdate(ctx, containerID, updateConfig)
 	if err != nil {
-		return NewRuntimeError("UpdateBot", botID, err, true)
+		return NewRunnerError("UpdateBot", botID, err, true)
 	}
 
 	// Note: Image updates require recreation - not supported here
 	if spec.Image != nil {
-		return NewRuntimeError("UpdateBot", botID,
+		return NewRunnerError("UpdateBot", botID,
 			fmt.Errorf("image updates not supported - please recreate the bot"), false)
 	}
 
@@ -380,7 +393,7 @@ func (d *DockerRuntime) ListBots(ctx context.Context) ([]BotStatus, error) {
 		Filters: filterArgs,
 	})
 	if err != nil {
-		return nil, NewRuntimeError("ListBots", "", err, true)
+		return nil, NewRunnerError("ListBots", "", err, true)
 	}
 
 	// Convert to BotStatus
@@ -406,7 +419,7 @@ func (d *DockerRuntime) ListBots(ctx context.Context) ([]BotStatus, error) {
 func (d *DockerRuntime) HealthCheck(ctx context.Context) error {
 	_, err := d.client.Ping(ctx)
 	if err != nil {
-		return NewRuntimeError("HealthCheck", "", err, true)
+		return NewRunnerError("HealthCheck", "", err, true)
 	}
 	return nil
 }
@@ -426,7 +439,7 @@ func (d *DockerRuntime) Type() string {
 
 // Helper methods
 
-func (d *DockerRuntime) buildContainerConfig(spec BotSpec) *container.Config {
+func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFilePaths) *container.Config {
 	// Build environment variables
 	env := []string{
 		"FREQTRADE_VERSION=" + spec.FreqtradeVersion,
@@ -465,8 +478,31 @@ func (d *DockerRuntime) buildContainerConfig(spec BotSpec) *container.Config {
 	}
 	exposedPorts[nat.Port(fmt.Sprintf("%d/tcp", apiPort))] = struct{}{}
 
+	// Build command with config files
+	// Format: trade --config <exchange_config> --config <strategy_config> --config <bot_config> --strategy <strategy_name>
+	// Note: The freqtrade image already has "freqtrade" as its entrypoint
+	// Config files are layered - later configs override earlier ones
+	cmd := []string{"trade"}
+
+	// Add config file arguments in order: exchange -> strategy -> bot
+	if configPaths.exchangeConfigHost != "" {
+		cmd = append(cmd, "--config", configPaths.exchangeConfigContainer)
+	}
+	if configPaths.strategyConfigHost != "" {
+		cmd = append(cmd, "--config", configPaths.strategyConfigContainer)
+	}
+	if configPaths.botConfigHost != "" {
+		cmd = append(cmd, "--config", configPaths.botConfigContainer)
+	}
+
+	// Add strategy name
+	if spec.StrategyName != "" {
+		cmd = append(cmd, "--strategy", spec.StrategyName)
+	}
+
 	return &container.Config{
 		Image:        spec.Image,
+		Cmd:          cmd,
 		Env:          env,
 		ExposedPorts: exposedPorts,
 		Labels: map[string]string{
@@ -477,12 +513,48 @@ func (d *DockerRuntime) buildContainerConfig(spec BotSpec) *container.Config {
 	}
 }
 
-func (d *DockerRuntime) buildHostConfig(spec BotSpec) *container.HostConfig {
+func (d *DockerRuntime) buildHostConfig(spec BotSpec, configPaths *configFilePaths) *container.HostConfig {
 	hostConfig := &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
 			Name: "unless-stopped",
 		},
 		Mounts: []mount.Mount{},
+	}
+
+	// Add volume mounts for config files in order
+	if configPaths.exchangeConfigHost != "" {
+		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   configPaths.exchangeConfigHost,
+			Target:   configPaths.exchangeConfigContainer,
+			ReadOnly: true,
+		})
+	}
+	if configPaths.strategyConfigHost != "" {
+		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   configPaths.strategyConfigHost,
+			Target:   configPaths.strategyConfigContainer,
+			ReadOnly: true,
+		})
+	}
+	if configPaths.botConfigHost != "" {
+		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   configPaths.botConfigHost,
+			Target:   configPaths.botConfigContainer,
+			ReadOnly: true,
+		})
+	}
+
+	// Add volume mount for strategy Python file
+	if configPaths.strategyFileHost != "" {
+		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   configPaths.strategyFileHost,
+			Target:   configPaths.strategyFileContainer,
+			ReadOnly: true,
+		})
 	}
 
 	// Add resource limits if specified
@@ -593,6 +665,12 @@ func (d *DockerRuntime) findContainer(ctx context.Context, botID string) (string
 		return inspect.ID, nil
 	}
 
+	// Try as direct container ID (in case botID is actually a container ID)
+	inspect, err = d.client.ContainerInspect(ctx, botID)
+	if err == nil {
+		return inspect.ID, nil
+	}
+
 	// Fall back to label search
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("label", labelBotID+"="+botID)
@@ -689,4 +767,117 @@ func loadTLSConfig(config *DockerConfig) (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
+}
+
+// configFilePaths holds the paths to config files for a bot
+type configFilePaths struct {
+	exchangeConfigHost      string // Host path to exchange config file
+	exchangeConfigContainer string // Container path to exchange config file
+	strategyConfigHost      string // Host path to strategy config file
+	strategyConfigContainer string // Container path to strategy config file
+	botConfigHost           string // Host path to bot config file
+	botConfigContainer      string // Container path to bot config file
+	strategyFileHost        string // Host path to strategy Python file
+	strategyFileContainer   string // Container path to strategy Python file
+}
+
+// createConfigFiles creates temporary config files for the bot
+func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error) {
+	// Create config directory for this bot
+	configDir := getConfigDir(spec.ID)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	paths := &configFilePaths{
+		exchangeConfigContainer: "/freqtrade/user_data/config.exchange.json",
+		strategyConfigContainer: "/freqtrade/user_data/config.strategy.json",
+		botConfigContainer:      "/freqtrade/user_data/config.bot.json",
+	}
+
+	// Create exchange config file (required)
+	if spec.ExchangeName != "" {
+		exchangeConfig := map[string]interface{}{
+			"exchange": map[string]interface{}{
+				"name":   spec.ExchangeName,
+				"key":    spec.ExchangeAPIKey,
+				"secret": spec.ExchangeSecret,
+				// Use wildcard to match all pairs with USDT as quote currency
+				// Pattern .*/USDT matches any pair ending with /USDT
+				"pair_whitelist": []string{
+					".*/USDT",
+				},
+			},
+		}
+
+		exchangeConfigPath := filepath.Join(configDir, "config.exchange.json")
+		exchangeConfigJSON, err := json.MarshalIndent(exchangeConfig, "", "  ")
+		if err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to marshal exchange config: %w", err)
+		}
+		if err := os.WriteFile(exchangeConfigPath, exchangeConfigJSON, 0644); err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to write exchange config file: %w", err)
+		}
+		paths.exchangeConfigHost = exchangeConfigPath
+	}
+
+	// Create strategy config file if strategy config exists
+	if spec.StrategyConfig != nil && len(spec.StrategyConfig) > 0 {
+		strategyConfigPath := filepath.Join(configDir, "config.strategy.json")
+		strategyConfigJSON, err := json.MarshalIndent(spec.StrategyConfig, "", "  ")
+		if err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to marshal strategy config: %w", err)
+		}
+		if err := os.WriteFile(strategyConfigPath, strategyConfigJSON, 0644); err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to write strategy config file: %w", err)
+		}
+		paths.strategyConfigHost = strategyConfigPath
+	}
+
+	// Create bot config file if bot config exists
+	if spec.Config != nil && len(spec.Config) > 0 {
+		botConfigPath := filepath.Join(configDir, "config.bot.json")
+		botConfigJSON, err := json.MarshalIndent(spec.Config, "", "  ")
+		if err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to marshal bot config: %w", err)
+		}
+		if err := os.WriteFile(botConfigPath, botConfigJSON, 0644); err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to write bot config file: %w", err)
+		}
+		paths.botConfigHost = botConfigPath
+	}
+
+	// Create strategy Python file if strategy code exists
+	if spec.StrategyCode != "" && spec.StrategyName != "" {
+		strategyFileName := spec.StrategyName + ".py"
+		strategyFilePath := filepath.Join(configDir, strategyFileName)
+
+		// Write the strategy Python code
+		if err := os.WriteFile(strategyFilePath, []byte(spec.StrategyCode), 0644); err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to write strategy file: %w", err)
+		}
+
+		paths.strategyFileHost = strategyFilePath
+		paths.strategyFileContainer = "/freqtrade/user_data/strategies/" + strategyFileName
+	}
+
+	return paths, nil
+}
+
+// cleanupConfigFiles removes the temporary config files for a bot
+func (d *DockerRuntime) cleanupConfigFiles(botID string) {
+	configDir := getConfigDir(botID)
+	os.RemoveAll(configDir) // Ignore errors - best effort cleanup
+}
+
+// getConfigDir returns the config directory path for a bot
+func getConfigDir(botID string) string {
+	return filepath.Join(os.TempDir(), "anytrade-configs", botID)
 }

@@ -32,16 +32,16 @@ func (f BotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BotMutation", m)
 }
 
-// The BotRuntimeFunc type is an adapter to allow the use of ordinary
-// function as BotRuntime mutator.
-type BotRuntimeFunc func(context.Context, *ent.BotRuntimeMutation) (ent.Value, error)
+// The BotRunnerFunc type is an adapter to allow the use of ordinary
+// function as BotRunner mutator.
+type BotRunnerFunc func(context.Context, *ent.BotRunnerMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f BotRuntimeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.BotRuntimeMutation); ok {
+func (f BotRunnerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BotRunnerMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BotRuntimeMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BotRunnerMutation", m)
 }
 
 // The ExchangeFunc type is an adapter to allow the use of ordinary
@@ -54,18 +54,6 @@ func (f ExchangeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExchangeMutation", m)
-}
-
-// The ExchangeSecretFunc type is an adapter to allow the use of ordinary
-// function as ExchangeSecret mutator.
-type ExchangeSecretFunc func(context.Context, *ent.ExchangeSecretMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ExchangeSecretFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ExchangeSecretMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExchangeSecretMutation", m)
 }
 
 // The StrategyFunc type is an adapter to allow the use of ordinary

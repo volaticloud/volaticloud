@@ -5,9 +5,8 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
 	"context"
@@ -600,20 +599,20 @@ func (_m *Bot) ToEdge(order *BotOrder) *BotEdge {
 	}
 }
 
-// BotRuntimeEdge is the edge representation of BotRuntime.
-type BotRuntimeEdge struct {
-	Node   *BotRuntime `json:"node"`
-	Cursor Cursor      `json:"cursor"`
+// BotRunnerEdge is the edge representation of BotRunner.
+type BotRunnerEdge struct {
+	Node   *BotRunner `json:"node"`
+	Cursor Cursor     `json:"cursor"`
 }
 
-// BotRuntimeConnection is the connection containing edges to BotRuntime.
-type BotRuntimeConnection struct {
-	Edges      []*BotRuntimeEdge `json:"edges"`
-	PageInfo   PageInfo          `json:"pageInfo"`
-	TotalCount int               `json:"totalCount"`
+// BotRunnerConnection is the connection containing edges to BotRunner.
+type BotRunnerConnection struct {
+	Edges      []*BotRunnerEdge `json:"edges"`
+	PageInfo   PageInfo         `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
 }
 
-func (c *BotRuntimeConnection) build(nodes []*BotRuntime, pager *botruntimePager, after *Cursor, first *int, before *Cursor, last *int) {
+func (c *BotRunnerConnection) build(nodes []*BotRunner, pager *botrunnerPager, after *Cursor, first *int, before *Cursor, last *int) {
 	c.PageInfo.HasNextPage = before != nil
 	c.PageInfo.HasPreviousPage = after != nil
 	if first != nil && *first+1 == len(nodes) {
@@ -623,21 +622,21 @@ func (c *BotRuntimeConnection) build(nodes []*BotRuntime, pager *botruntimePager
 		c.PageInfo.HasPreviousPage = true
 		nodes = nodes[:len(nodes)-1]
 	}
-	var nodeAt func(int) *BotRuntime
+	var nodeAt func(int) *BotRunner
 	if last != nil {
 		n := len(nodes) - 1
-		nodeAt = func(i int) *BotRuntime {
+		nodeAt = func(i int) *BotRunner {
 			return nodes[n-i]
 		}
 	} else {
-		nodeAt = func(i int) *BotRuntime {
+		nodeAt = func(i int) *BotRunner {
 			return nodes[i]
 		}
 	}
-	c.Edges = make([]*BotRuntimeEdge, len(nodes))
+	c.Edges = make([]*BotRunnerEdge, len(nodes))
 	for i := range nodes {
 		node := nodeAt(i)
-		c.Edges[i] = &BotRuntimeEdge{
+		c.Edges[i] = &BotRunnerEdge{
 			Node:   node,
 			Cursor: pager.toCursor(node),
 		}
@@ -651,87 +650,87 @@ func (c *BotRuntimeConnection) build(nodes []*BotRuntime, pager *botruntimePager
 	}
 }
 
-// BotRuntimePaginateOption enables pagination customization.
-type BotRuntimePaginateOption func(*botruntimePager) error
+// BotRunnerPaginateOption enables pagination customization.
+type BotRunnerPaginateOption func(*botrunnerPager) error
 
-// WithBotRuntimeOrder configures pagination ordering.
-func WithBotRuntimeOrder(order *BotRuntimeOrder) BotRuntimePaginateOption {
+// WithBotRunnerOrder configures pagination ordering.
+func WithBotRunnerOrder(order *BotRunnerOrder) BotRunnerPaginateOption {
 	if order == nil {
-		order = DefaultBotRuntimeOrder
+		order = DefaultBotRunnerOrder
 	}
 	o := *order
-	return func(pager *botruntimePager) error {
+	return func(pager *botrunnerPager) error {
 		if err := o.Direction.Validate(); err != nil {
 			return err
 		}
 		if o.Field == nil {
-			o.Field = DefaultBotRuntimeOrder.Field
+			o.Field = DefaultBotRunnerOrder.Field
 		}
 		pager.order = &o
 		return nil
 	}
 }
 
-// WithBotRuntimeFilter configures pagination filter.
-func WithBotRuntimeFilter(filter func(*BotRuntimeQuery) (*BotRuntimeQuery, error)) BotRuntimePaginateOption {
-	return func(pager *botruntimePager) error {
+// WithBotRunnerFilter configures pagination filter.
+func WithBotRunnerFilter(filter func(*BotRunnerQuery) (*BotRunnerQuery, error)) BotRunnerPaginateOption {
+	return func(pager *botrunnerPager) error {
 		if filter == nil {
-			return errors.New("BotRuntimeQuery filter cannot be nil")
+			return errors.New("BotRunnerQuery filter cannot be nil")
 		}
 		pager.filter = filter
 		return nil
 	}
 }
 
-type botruntimePager struct {
+type botrunnerPager struct {
 	reverse bool
-	order   *BotRuntimeOrder
-	filter  func(*BotRuntimeQuery) (*BotRuntimeQuery, error)
+	order   *BotRunnerOrder
+	filter  func(*BotRunnerQuery) (*BotRunnerQuery, error)
 }
 
-func newBotRuntimePager(opts []BotRuntimePaginateOption, reverse bool) (*botruntimePager, error) {
-	pager := &botruntimePager{reverse: reverse}
+func newBotRunnerPager(opts []BotRunnerPaginateOption, reverse bool) (*botrunnerPager, error) {
+	pager := &botrunnerPager{reverse: reverse}
 	for _, opt := range opts {
 		if err := opt(pager); err != nil {
 			return nil, err
 		}
 	}
 	if pager.order == nil {
-		pager.order = DefaultBotRuntimeOrder
+		pager.order = DefaultBotRunnerOrder
 	}
 	return pager, nil
 }
 
-func (p *botruntimePager) applyFilter(query *BotRuntimeQuery) (*BotRuntimeQuery, error) {
+func (p *botrunnerPager) applyFilter(query *BotRunnerQuery) (*BotRunnerQuery, error) {
 	if p.filter != nil {
 		return p.filter(query)
 	}
 	return query, nil
 }
 
-func (p *botruntimePager) toCursor(_m *BotRuntime) Cursor {
+func (p *botrunnerPager) toCursor(_m *BotRunner) Cursor {
 	return p.order.Field.toCursor(_m)
 }
 
-func (p *botruntimePager) applyCursors(query *BotRuntimeQuery, after, before *Cursor) (*BotRuntimeQuery, error) {
+func (p *botrunnerPager) applyCursors(query *BotRunnerQuery, after, before *Cursor) (*BotRunnerQuery, error) {
 	direction := p.order.Direction
 	if p.reverse {
 		direction = direction.Reverse()
 	}
-	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultBotRuntimeOrder.Field.column, p.order.Field.column, direction) {
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultBotRunnerOrder.Field.column, p.order.Field.column, direction) {
 		query = query.Where(predicate)
 	}
 	return query, nil
 }
 
-func (p *botruntimePager) applyOrder(query *BotRuntimeQuery) *BotRuntimeQuery {
+func (p *botrunnerPager) applyOrder(query *BotRunnerQuery) *BotRunnerQuery {
 	direction := p.order.Direction
 	if p.reverse {
 		direction = direction.Reverse()
 	}
 	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
-	if p.order.Field != DefaultBotRuntimeOrder.Field {
-		query = query.Order(DefaultBotRuntimeOrder.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultBotRunnerOrder.Field {
+		query = query.Order(DefaultBotRunnerOrder.Field.toTerm(direction.OrderTermOption()))
 	}
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(p.order.Field.column)
@@ -739,7 +738,7 @@ func (p *botruntimePager) applyOrder(query *BotRuntimeQuery) *BotRuntimeQuery {
 	return query
 }
 
-func (p *botruntimePager) orderExpr(query *BotRuntimeQuery) sql.Querier {
+func (p *botrunnerPager) orderExpr(query *BotRunnerQuery) sql.Querier {
 	direction := p.order.Direction
 	if p.reverse {
 		direction = direction.Reverse()
@@ -749,28 +748,28 @@ func (p *botruntimePager) orderExpr(query *BotRuntimeQuery) sql.Querier {
 	}
 	return sql.ExprFunc(func(b *sql.Builder) {
 		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
-		if p.order.Field != DefaultBotRuntimeOrder.Field {
-			b.Comma().Ident(DefaultBotRuntimeOrder.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultBotRunnerOrder.Field {
+			b.Comma().Ident(DefaultBotRunnerOrder.Field.column).Pad().WriteString(string(direction))
 		}
 	})
 }
 
-// Paginate executes the query and returns a relay based cursor connection to BotRuntime.
-func (_m *BotRuntimeQuery) Paginate(
+// Paginate executes the query and returns a relay based cursor connection to BotRunner.
+func (_m *BotRunnerQuery) Paginate(
 	ctx context.Context, after *Cursor, first *int,
-	before *Cursor, last *int, opts ...BotRuntimePaginateOption,
-) (*BotRuntimeConnection, error) {
+	before *Cursor, last *int, opts ...BotRunnerPaginateOption,
+) (*BotRunnerConnection, error) {
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
-	pager, err := newBotRuntimePager(opts, last != nil)
+	pager, err := newBotRunnerPager(opts, last != nil)
 	if err != nil {
 		return nil, err
 	}
 	if _m, err = pager.applyFilter(_m); err != nil {
 		return nil, err
 	}
-	conn := &BotRuntimeConnection{Edges: []*BotRuntimeEdge{}}
+	conn := &BotRunnerConnection{Edges: []*BotRunnerEdge{}}
 	ignoredEdges := !hasCollectedField(ctx, edgesField)
 	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
 		hasPagination := after != nil || first != nil || before != nil || last != nil
@@ -808,42 +807,42 @@ func (_m *BotRuntimeQuery) Paginate(
 	return conn, nil
 }
 
-// BotRuntimeOrderField defines the ordering field of BotRuntime.
-type BotRuntimeOrderField struct {
-	// Value extracts the ordering value from the given BotRuntime.
-	Value    func(*BotRuntime) (ent.Value, error)
+// BotRunnerOrderField defines the ordering field of BotRunner.
+type BotRunnerOrderField struct {
+	// Value extracts the ordering value from the given BotRunner.
+	Value    func(*BotRunner) (ent.Value, error)
 	column   string // field or computed.
-	toTerm   func(...sql.OrderTermOption) botruntime.OrderOption
-	toCursor func(*BotRuntime) Cursor
+	toTerm   func(...sql.OrderTermOption) botrunner.OrderOption
+	toCursor func(*BotRunner) Cursor
 }
 
-// BotRuntimeOrder defines the ordering of BotRuntime.
-type BotRuntimeOrder struct {
-	Direction OrderDirection        `json:"direction"`
-	Field     *BotRuntimeOrderField `json:"field"`
+// BotRunnerOrder defines the ordering of BotRunner.
+type BotRunnerOrder struct {
+	Direction OrderDirection       `json:"direction"`
+	Field     *BotRunnerOrderField `json:"field"`
 }
 
-// DefaultBotRuntimeOrder is the default ordering of BotRuntime.
-var DefaultBotRuntimeOrder = &BotRuntimeOrder{
+// DefaultBotRunnerOrder is the default ordering of BotRunner.
+var DefaultBotRunnerOrder = &BotRunnerOrder{
 	Direction: entgql.OrderDirectionAsc,
-	Field: &BotRuntimeOrderField{
-		Value: func(_m *BotRuntime) (ent.Value, error) {
+	Field: &BotRunnerOrderField{
+		Value: func(_m *BotRunner) (ent.Value, error) {
 			return _m.ID, nil
 		},
-		column: botruntime.FieldID,
-		toTerm: botruntime.ByID,
-		toCursor: func(_m *BotRuntime) Cursor {
+		column: botrunner.FieldID,
+		toTerm: botrunner.ByID,
+		toCursor: func(_m *BotRunner) Cursor {
 			return Cursor{ID: _m.ID}
 		},
 	},
 }
 
-// ToEdge converts BotRuntime into BotRuntimeEdge.
-func (_m *BotRuntime) ToEdge(order *BotRuntimeOrder) *BotRuntimeEdge {
+// ToEdge converts BotRunner into BotRunnerEdge.
+func (_m *BotRunner) ToEdge(order *BotRunnerOrder) *BotRunnerEdge {
 	if order == nil {
-		order = DefaultBotRuntimeOrder
+		order = DefaultBotRunnerOrder
 	}
-	return &BotRuntimeEdge{
+	return &BotRunnerEdge{
 		Node:   _m,
 		Cursor: order.Field.toCursor(_m),
 	}
@@ -1093,255 +1092,6 @@ func (_m *Exchange) ToEdge(order *ExchangeOrder) *ExchangeEdge {
 		order = DefaultExchangeOrder
 	}
 	return &ExchangeEdge{
-		Node:   _m,
-		Cursor: order.Field.toCursor(_m),
-	}
-}
-
-// ExchangeSecretEdge is the edge representation of ExchangeSecret.
-type ExchangeSecretEdge struct {
-	Node   *ExchangeSecret `json:"node"`
-	Cursor Cursor          `json:"cursor"`
-}
-
-// ExchangeSecretConnection is the connection containing edges to ExchangeSecret.
-type ExchangeSecretConnection struct {
-	Edges      []*ExchangeSecretEdge `json:"edges"`
-	PageInfo   PageInfo              `json:"pageInfo"`
-	TotalCount int                   `json:"totalCount"`
-}
-
-func (c *ExchangeSecretConnection) build(nodes []*ExchangeSecret, pager *exchangesecretPager, after *Cursor, first *int, before *Cursor, last *int) {
-	c.PageInfo.HasNextPage = before != nil
-	c.PageInfo.HasPreviousPage = after != nil
-	if first != nil && *first+1 == len(nodes) {
-		c.PageInfo.HasNextPage = true
-		nodes = nodes[:len(nodes)-1]
-	} else if last != nil && *last+1 == len(nodes) {
-		c.PageInfo.HasPreviousPage = true
-		nodes = nodes[:len(nodes)-1]
-	}
-	var nodeAt func(int) *ExchangeSecret
-	if last != nil {
-		n := len(nodes) - 1
-		nodeAt = func(i int) *ExchangeSecret {
-			return nodes[n-i]
-		}
-	} else {
-		nodeAt = func(i int) *ExchangeSecret {
-			return nodes[i]
-		}
-	}
-	c.Edges = make([]*ExchangeSecretEdge, len(nodes))
-	for i := range nodes {
-		node := nodeAt(i)
-		c.Edges[i] = &ExchangeSecretEdge{
-			Node:   node,
-			Cursor: pager.toCursor(node),
-		}
-	}
-	if l := len(c.Edges); l > 0 {
-		c.PageInfo.StartCursor = &c.Edges[0].Cursor
-		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
-	}
-	if c.TotalCount == 0 {
-		c.TotalCount = len(nodes)
-	}
-}
-
-// ExchangeSecretPaginateOption enables pagination customization.
-type ExchangeSecretPaginateOption func(*exchangesecretPager) error
-
-// WithExchangeSecretOrder configures pagination ordering.
-func WithExchangeSecretOrder(order *ExchangeSecretOrder) ExchangeSecretPaginateOption {
-	if order == nil {
-		order = DefaultExchangeSecretOrder
-	}
-	o := *order
-	return func(pager *exchangesecretPager) error {
-		if err := o.Direction.Validate(); err != nil {
-			return err
-		}
-		if o.Field == nil {
-			o.Field = DefaultExchangeSecretOrder.Field
-		}
-		pager.order = &o
-		return nil
-	}
-}
-
-// WithExchangeSecretFilter configures pagination filter.
-func WithExchangeSecretFilter(filter func(*ExchangeSecretQuery) (*ExchangeSecretQuery, error)) ExchangeSecretPaginateOption {
-	return func(pager *exchangesecretPager) error {
-		if filter == nil {
-			return errors.New("ExchangeSecretQuery filter cannot be nil")
-		}
-		pager.filter = filter
-		return nil
-	}
-}
-
-type exchangesecretPager struct {
-	reverse bool
-	order   *ExchangeSecretOrder
-	filter  func(*ExchangeSecretQuery) (*ExchangeSecretQuery, error)
-}
-
-func newExchangeSecretPager(opts []ExchangeSecretPaginateOption, reverse bool) (*exchangesecretPager, error) {
-	pager := &exchangesecretPager{reverse: reverse}
-	for _, opt := range opts {
-		if err := opt(pager); err != nil {
-			return nil, err
-		}
-	}
-	if pager.order == nil {
-		pager.order = DefaultExchangeSecretOrder
-	}
-	return pager, nil
-}
-
-func (p *exchangesecretPager) applyFilter(query *ExchangeSecretQuery) (*ExchangeSecretQuery, error) {
-	if p.filter != nil {
-		return p.filter(query)
-	}
-	return query, nil
-}
-
-func (p *exchangesecretPager) toCursor(_m *ExchangeSecret) Cursor {
-	return p.order.Field.toCursor(_m)
-}
-
-func (p *exchangesecretPager) applyCursors(query *ExchangeSecretQuery, after, before *Cursor) (*ExchangeSecretQuery, error) {
-	direction := p.order.Direction
-	if p.reverse {
-		direction = direction.Reverse()
-	}
-	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultExchangeSecretOrder.Field.column, p.order.Field.column, direction) {
-		query = query.Where(predicate)
-	}
-	return query, nil
-}
-
-func (p *exchangesecretPager) applyOrder(query *ExchangeSecretQuery) *ExchangeSecretQuery {
-	direction := p.order.Direction
-	if p.reverse {
-		direction = direction.Reverse()
-	}
-	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
-	if p.order.Field != DefaultExchangeSecretOrder.Field {
-		query = query.Order(DefaultExchangeSecretOrder.Field.toTerm(direction.OrderTermOption()))
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(p.order.Field.column)
-	}
-	return query
-}
-
-func (p *exchangesecretPager) orderExpr(query *ExchangeSecretQuery) sql.Querier {
-	direction := p.order.Direction
-	if p.reverse {
-		direction = direction.Reverse()
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(p.order.Field.column)
-	}
-	return sql.ExprFunc(func(b *sql.Builder) {
-		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
-		if p.order.Field != DefaultExchangeSecretOrder.Field {
-			b.Comma().Ident(DefaultExchangeSecretOrder.Field.column).Pad().WriteString(string(direction))
-		}
-	})
-}
-
-// Paginate executes the query and returns a relay based cursor connection to ExchangeSecret.
-func (_m *ExchangeSecretQuery) Paginate(
-	ctx context.Context, after *Cursor, first *int,
-	before *Cursor, last *int, opts ...ExchangeSecretPaginateOption,
-) (*ExchangeSecretConnection, error) {
-	if err := validateFirstLast(first, last); err != nil {
-		return nil, err
-	}
-	pager, err := newExchangeSecretPager(opts, last != nil)
-	if err != nil {
-		return nil, err
-	}
-	if _m, err = pager.applyFilter(_m); err != nil {
-		return nil, err
-	}
-	conn := &ExchangeSecretConnection{Edges: []*ExchangeSecretEdge{}}
-	ignoredEdges := !hasCollectedField(ctx, edgesField)
-	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
-		hasPagination := after != nil || first != nil || before != nil || last != nil
-		if hasPagination || ignoredEdges {
-			c := _m.Clone()
-			c.ctx.Fields = nil
-			if conn.TotalCount, err = c.Count(ctx); err != nil {
-				return nil, err
-			}
-			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
-			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
-		}
-	}
-	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
-		return conn, nil
-	}
-	if _m, err = pager.applyCursors(_m, after, before); err != nil {
-		return nil, err
-	}
-	limit := paginateLimit(first, last)
-	if limit != 0 {
-		_m.Limit(limit)
-	}
-	if field := collectedField(ctx, edgesField, nodeField); field != nil {
-		if err := _m.collectField(ctx, limit == 1, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
-			return nil, err
-		}
-	}
-	_m = pager.applyOrder(_m)
-	nodes, err := _m.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	conn.build(nodes, pager, after, first, before, last)
-	return conn, nil
-}
-
-// ExchangeSecretOrderField defines the ordering field of ExchangeSecret.
-type ExchangeSecretOrderField struct {
-	// Value extracts the ordering value from the given ExchangeSecret.
-	Value    func(*ExchangeSecret) (ent.Value, error)
-	column   string // field or computed.
-	toTerm   func(...sql.OrderTermOption) exchangesecret.OrderOption
-	toCursor func(*ExchangeSecret) Cursor
-}
-
-// ExchangeSecretOrder defines the ordering of ExchangeSecret.
-type ExchangeSecretOrder struct {
-	Direction OrderDirection            `json:"direction"`
-	Field     *ExchangeSecretOrderField `json:"field"`
-}
-
-// DefaultExchangeSecretOrder is the default ordering of ExchangeSecret.
-var DefaultExchangeSecretOrder = &ExchangeSecretOrder{
-	Direction: entgql.OrderDirectionAsc,
-	Field: &ExchangeSecretOrderField{
-		Value: func(_m *ExchangeSecret) (ent.Value, error) {
-			return _m.ID, nil
-		},
-		column: exchangesecret.FieldID,
-		toTerm: exchangesecret.ByID,
-		toCursor: func(_m *ExchangeSecret) Cursor {
-			return Cursor{ID: _m.ID}
-		},
-	},
-}
-
-// ToEdge converts ExchangeSecret into ExchangeSecretEdge.
-func (_m *ExchangeSecret) ToEdge(order *ExchangeSecretOrder) *ExchangeSecretEdge {
-	if order == nil {
-		order = DefaultExchangeSecretOrder
-	}
-	return &ExchangeSecretEdge{
 		Node:   _m,
 		Cursor: order.Field.toCursor(_m),
 	}

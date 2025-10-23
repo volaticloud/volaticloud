@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// DockerConfig holds configuration for Docker runtime
+// DockerConfig holds configuration for Docker runner
 type DockerConfig struct {
 	// Host is the Docker daemon host (e.g., "unix:///var/run/docker.sock" or "tcp://localhost:2375")
 	Host string `json:"host" validate:"required"`

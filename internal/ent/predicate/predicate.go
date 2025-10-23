@@ -12,14 +12,11 @@ type Backtest func(*sql.Selector)
 // Bot is the predicate function for bot builders.
 type Bot func(*sql.Selector)
 
-// BotRuntime is the predicate function for botruntime builders.
-type BotRuntime func(*sql.Selector)
+// BotRunner is the predicate function for botrunner builders.
+type BotRunner func(*sql.Selector)
 
 // Exchange is the predicate function for exchange builders.
 type Exchange func(*sql.Selector)
-
-// ExchangeSecret is the predicate function for exchangesecret builders.
-type ExchangeSecret func(*sql.Selector)
 
 // Strategy is the predicate function for strategy builders.
 type Strategy func(*sql.Selector)

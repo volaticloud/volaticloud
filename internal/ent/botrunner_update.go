@@ -4,7 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/enum"
 	"context"
@@ -18,27 +18,27 @@ import (
 	"github.com/google/uuid"
 )
 
-// BotRuntimeUpdate is the builder for updating BotRuntime entities.
-type BotRuntimeUpdate struct {
+// BotRunnerUpdate is the builder for updating BotRunner entities.
+type BotRunnerUpdate struct {
 	config
 	hooks    []Hook
-	mutation *BotRuntimeMutation
+	mutation *BotRunnerMutation
 }
 
-// Where appends a list predicates to the BotRuntimeUpdate builder.
-func (_u *BotRuntimeUpdate) Where(ps ...predicate.BotRuntime) *BotRuntimeUpdate {
+// Where appends a list predicates to the BotRunnerUpdate builder.
+func (_u *BotRunnerUpdate) Where(ps ...predicate.BotRunner) *BotRunnerUpdate {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // SetName sets the "name" field.
-func (_u *BotRuntimeUpdate) SetName(v string) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) SetName(v string) *BotRunnerUpdate {
 	_u.mutation.SetName(v)
 	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (_u *BotRuntimeUpdate) SetNillableName(v *string) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) SetNillableName(v *string) *BotRunnerUpdate {
 	if v != nil {
 		_u.SetName(*v)
 	}
@@ -46,13 +46,13 @@ func (_u *BotRuntimeUpdate) SetNillableName(v *string) *BotRuntimeUpdate {
 }
 
 // SetType sets the "type" field.
-func (_u *BotRuntimeUpdate) SetType(v enum.RuntimeType) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) SetType(v enum.RunnerType) *BotRunnerUpdate {
 	_u.mutation.SetType(v)
 	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (_u *BotRuntimeUpdate) SetNillableType(v *enum.RuntimeType) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) SetNillableType(v *enum.RunnerType) *BotRunnerUpdate {
 	if v != nil {
 		_u.SetType(*v)
 	}
@@ -60,31 +60,31 @@ func (_u *BotRuntimeUpdate) SetNillableType(v *enum.RuntimeType) *BotRuntimeUpda
 }
 
 // SetConfig sets the "config" field.
-func (_u *BotRuntimeUpdate) SetConfig(v map[string]interface{}) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) SetConfig(v map[string]interface{}) *BotRunnerUpdate {
 	_u.mutation.SetConfig(v)
 	return _u
 }
 
 // ClearConfig clears the value of the "config" field.
-func (_u *BotRuntimeUpdate) ClearConfig() *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) ClearConfig() *BotRunnerUpdate {
 	_u.mutation.ClearConfig()
 	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *BotRuntimeUpdate) SetUpdatedAt(v time.Time) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) SetUpdatedAt(v time.Time) *BotRunnerUpdate {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
 // AddBotIDs adds the "bots" edge to the Bot entity by IDs.
-func (_u *BotRuntimeUpdate) AddBotIDs(ids ...uuid.UUID) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) AddBotIDs(ids ...uuid.UUID) *BotRunnerUpdate {
 	_u.mutation.AddBotIDs(ids...)
 	return _u
 }
 
 // AddBots adds the "bots" edges to the Bot entity.
-func (_u *BotRuntimeUpdate) AddBots(v ...*Bot) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) AddBots(v ...*Bot) *BotRunnerUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -92,25 +92,25 @@ func (_u *BotRuntimeUpdate) AddBots(v ...*Bot) *BotRuntimeUpdate {
 	return _u.AddBotIDs(ids...)
 }
 
-// Mutation returns the BotRuntimeMutation object of the builder.
-func (_u *BotRuntimeUpdate) Mutation() *BotRuntimeMutation {
+// Mutation returns the BotRunnerMutation object of the builder.
+func (_u *BotRunnerUpdate) Mutation() *BotRunnerMutation {
 	return _u.mutation
 }
 
 // ClearBots clears all "bots" edges to the Bot entity.
-func (_u *BotRuntimeUpdate) ClearBots() *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) ClearBots() *BotRunnerUpdate {
 	_u.mutation.ClearBots()
 	return _u
 }
 
 // RemoveBotIDs removes the "bots" edge to Bot entities by IDs.
-func (_u *BotRuntimeUpdate) RemoveBotIDs(ids ...uuid.UUID) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) RemoveBotIDs(ids ...uuid.UUID) *BotRunnerUpdate {
 	_u.mutation.RemoveBotIDs(ids...)
 	return _u
 }
 
 // RemoveBots removes "bots" edges to Bot entities.
-func (_u *BotRuntimeUpdate) RemoveBots(v ...*Bot) *BotRuntimeUpdate {
+func (_u *BotRunnerUpdate) RemoveBots(v ...*Bot) *BotRunnerUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -119,7 +119,7 @@ func (_u *BotRuntimeUpdate) RemoveBots(v ...*Bot) *BotRuntimeUpdate {
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (_u *BotRuntimeUpdate) Save(ctx context.Context) (int, error) {
+func (_u *BotRunnerUpdate) Save(ctx context.Context) (int, error) {
 	if err := _u.defaults(); err != nil {
 		return 0, err
 	}
@@ -127,7 +127,7 @@ func (_u *BotRuntimeUpdate) Save(ctx context.Context) (int, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *BotRuntimeUpdate) SaveX(ctx context.Context) int {
+func (_u *BotRunnerUpdate) SaveX(ctx context.Context) int {
 	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -136,50 +136,50 @@ func (_u *BotRuntimeUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (_u *BotRuntimeUpdate) Exec(ctx context.Context) error {
+func (_u *BotRunnerUpdate) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *BotRuntimeUpdate) ExecX(ctx context.Context) {
+func (_u *BotRunnerUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *BotRuntimeUpdate) defaults() error {
+func (_u *BotRunnerUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if botruntime.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized botruntime.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		if botrunner.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized botrunner.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
 		}
-		v := botruntime.UpdateDefaultUpdatedAt()
+		v := botrunner.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *BotRuntimeUpdate) check() error {
+func (_u *BotRunnerUpdate) check() error {
 	if v, ok := _u.mutation.Name(); ok {
-		if err := botruntime.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "BotRuntime.name": %w`, err)}
+		if err := botrunner.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "BotRunner.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.GetType(); ok {
-		if err := botruntime.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRuntime.type": %w`, err)}
+		if err := botrunner.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRunner.type": %w`, err)}
 		}
 	}
 	return nil
 }
 
-func (_u *BotRuntimeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(botruntime.Table, botruntime.Columns, sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(botrunner.Table, botrunner.Columns, sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -188,26 +188,26 @@ func (_u *BotRuntimeUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		}
 	}
 	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(botruntime.FieldName, field.TypeString, value)
+		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(botruntime.FieldType, field.TypeEnum, value)
+		_spec.SetField(botrunner.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Config(); ok {
-		_spec.SetField(botruntime.FieldConfig, field.TypeJSON, value)
+		_spec.SetField(botrunner.FieldConfig, field.TypeJSON, value)
 	}
 	if _u.mutation.ConfigCleared() {
-		_spec.ClearField(botruntime.FieldConfig, field.TypeJSON)
+		_spec.ClearField(botrunner.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(botruntime.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.BotsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -219,8 +219,8 @@ func (_u *BotRuntimeUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -235,8 +235,8 @@ func (_u *BotRuntimeUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -249,7 +249,7 @@ func (_u *BotRuntimeUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{botruntime.Label}
+			err = &NotFoundError{botrunner.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -259,22 +259,22 @@ func (_u *BotRuntimeUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	return _node, nil
 }
 
-// BotRuntimeUpdateOne is the builder for updating a single BotRuntime entity.
-type BotRuntimeUpdateOne struct {
+// BotRunnerUpdateOne is the builder for updating a single BotRunner entity.
+type BotRunnerUpdateOne struct {
 	config
 	fields   []string
 	hooks    []Hook
-	mutation *BotRuntimeMutation
+	mutation *BotRunnerMutation
 }
 
 // SetName sets the "name" field.
-func (_u *BotRuntimeUpdateOne) SetName(v string) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) SetName(v string) *BotRunnerUpdateOne {
 	_u.mutation.SetName(v)
 	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (_u *BotRuntimeUpdateOne) SetNillableName(v *string) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) SetNillableName(v *string) *BotRunnerUpdateOne {
 	if v != nil {
 		_u.SetName(*v)
 	}
@@ -282,13 +282,13 @@ func (_u *BotRuntimeUpdateOne) SetNillableName(v *string) *BotRuntimeUpdateOne {
 }
 
 // SetType sets the "type" field.
-func (_u *BotRuntimeUpdateOne) SetType(v enum.RuntimeType) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) SetType(v enum.RunnerType) *BotRunnerUpdateOne {
 	_u.mutation.SetType(v)
 	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (_u *BotRuntimeUpdateOne) SetNillableType(v *enum.RuntimeType) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) SetNillableType(v *enum.RunnerType) *BotRunnerUpdateOne {
 	if v != nil {
 		_u.SetType(*v)
 	}
@@ -296,31 +296,31 @@ func (_u *BotRuntimeUpdateOne) SetNillableType(v *enum.RuntimeType) *BotRuntimeU
 }
 
 // SetConfig sets the "config" field.
-func (_u *BotRuntimeUpdateOne) SetConfig(v map[string]interface{}) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) SetConfig(v map[string]interface{}) *BotRunnerUpdateOne {
 	_u.mutation.SetConfig(v)
 	return _u
 }
 
 // ClearConfig clears the value of the "config" field.
-func (_u *BotRuntimeUpdateOne) ClearConfig() *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) ClearConfig() *BotRunnerUpdateOne {
 	_u.mutation.ClearConfig()
 	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *BotRuntimeUpdateOne) SetUpdatedAt(v time.Time) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) SetUpdatedAt(v time.Time) *BotRunnerUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
 // AddBotIDs adds the "bots" edge to the Bot entity by IDs.
-func (_u *BotRuntimeUpdateOne) AddBotIDs(ids ...uuid.UUID) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) AddBotIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
 	_u.mutation.AddBotIDs(ids...)
 	return _u
 }
 
 // AddBots adds the "bots" edges to the Bot entity.
-func (_u *BotRuntimeUpdateOne) AddBots(v ...*Bot) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) AddBots(v ...*Bot) *BotRunnerUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -328,25 +328,25 @@ func (_u *BotRuntimeUpdateOne) AddBots(v ...*Bot) *BotRuntimeUpdateOne {
 	return _u.AddBotIDs(ids...)
 }
 
-// Mutation returns the BotRuntimeMutation object of the builder.
-func (_u *BotRuntimeUpdateOne) Mutation() *BotRuntimeMutation {
+// Mutation returns the BotRunnerMutation object of the builder.
+func (_u *BotRunnerUpdateOne) Mutation() *BotRunnerMutation {
 	return _u.mutation
 }
 
 // ClearBots clears all "bots" edges to the Bot entity.
-func (_u *BotRuntimeUpdateOne) ClearBots() *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) ClearBots() *BotRunnerUpdateOne {
 	_u.mutation.ClearBots()
 	return _u
 }
 
 // RemoveBotIDs removes the "bots" edge to Bot entities by IDs.
-func (_u *BotRuntimeUpdateOne) RemoveBotIDs(ids ...uuid.UUID) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) RemoveBotIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
 	_u.mutation.RemoveBotIDs(ids...)
 	return _u
 }
 
 // RemoveBots removes "bots" edges to Bot entities.
-func (_u *BotRuntimeUpdateOne) RemoveBots(v ...*Bot) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) RemoveBots(v ...*Bot) *BotRunnerUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -354,21 +354,21 @@ func (_u *BotRuntimeUpdateOne) RemoveBots(v ...*Bot) *BotRuntimeUpdateOne {
 	return _u.RemoveBotIDs(ids...)
 }
 
-// Where appends a list predicates to the BotRuntimeUpdate builder.
-func (_u *BotRuntimeUpdateOne) Where(ps ...predicate.BotRuntime) *BotRuntimeUpdateOne {
+// Where appends a list predicates to the BotRunnerUpdate builder.
+func (_u *BotRunnerUpdateOne) Where(ps ...predicate.BotRunner) *BotRunnerUpdateOne {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (_u *BotRuntimeUpdateOne) Select(field string, fields ...string) *BotRuntimeUpdateOne {
+func (_u *BotRunnerUpdateOne) Select(field string, fields ...string) *BotRunnerUpdateOne {
 	_u.fields = append([]string{field}, fields...)
 	return _u
 }
 
-// Save executes the query and returns the updated BotRuntime entity.
-func (_u *BotRuntimeUpdateOne) Save(ctx context.Context) (*BotRuntime, error) {
+// Save executes the query and returns the updated BotRunner entity.
+func (_u *BotRunnerUpdateOne) Save(ctx context.Context) (*BotRunner, error) {
 	if err := _u.defaults(); err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func (_u *BotRuntimeUpdateOne) Save(ctx context.Context) (*BotRuntime, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *BotRuntimeUpdateOne) SaveX(ctx context.Context) *BotRuntime {
+func (_u *BotRunnerUpdateOne) SaveX(ctx context.Context) *BotRunner {
 	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -385,63 +385,63 @@ func (_u *BotRuntimeUpdateOne) SaveX(ctx context.Context) *BotRuntime {
 }
 
 // Exec executes the query on the entity.
-func (_u *BotRuntimeUpdateOne) Exec(ctx context.Context) error {
+func (_u *BotRunnerUpdateOne) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *BotRuntimeUpdateOne) ExecX(ctx context.Context) {
+func (_u *BotRunnerUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *BotRuntimeUpdateOne) defaults() error {
+func (_u *BotRunnerUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if botruntime.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized botruntime.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		if botrunner.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized botrunner.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
 		}
-		v := botruntime.UpdateDefaultUpdatedAt()
+		v := botrunner.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *BotRuntimeUpdateOne) check() error {
+func (_u *BotRunnerUpdateOne) check() error {
 	if v, ok := _u.mutation.Name(); ok {
-		if err := botruntime.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "BotRuntime.name": %w`, err)}
+		if err := botrunner.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "BotRunner.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.GetType(); ok {
-		if err := botruntime.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRuntime.type": %w`, err)}
+		if err := botrunner.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRunner.type": %w`, err)}
 		}
 	}
 	return nil
 }
 
-func (_u *BotRuntimeUpdateOne) sqlSave(ctx context.Context) (_node *BotRuntime, err error) {
+func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(botruntime.Table, botruntime.Columns, sqlgraph.NewFieldSpec(botruntime.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(botrunner.Table, botrunner.Columns, sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "BotRuntime.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "BotRunner.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, botruntime.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, botrunner.FieldID)
 		for _, f := range fields {
-			if !botruntime.ValidColumn(f) {
+			if !botrunner.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != botruntime.FieldID {
+			if f != botrunner.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
@@ -454,26 +454,26 @@ func (_u *BotRuntimeUpdateOne) sqlSave(ctx context.Context) (_node *BotRuntime, 
 		}
 	}
 	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(botruntime.FieldName, field.TypeString, value)
+		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(botruntime.FieldType, field.TypeEnum, value)
+		_spec.SetField(botrunner.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Config(); ok {
-		_spec.SetField(botruntime.FieldConfig, field.TypeJSON, value)
+		_spec.SetField(botrunner.FieldConfig, field.TypeJSON, value)
 	}
 	if _u.mutation.ConfigCleared() {
-		_spec.ClearField(botruntime.FieldConfig, field.TypeJSON)
+		_spec.ClearField(botrunner.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(botruntime.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.BotsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -485,8 +485,8 @@ func (_u *BotRuntimeUpdateOne) sqlSave(ctx context.Context) (_node *BotRuntime, 
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -501,8 +501,8 @@ func (_u *BotRuntimeUpdateOne) sqlSave(ctx context.Context) (_node *BotRuntime, 
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   botruntime.BotsTable,
-			Columns: []string{botruntime.BotsColumn},
+			Table:   botrunner.BotsTable,
+			Columns: []string{botrunner.BotsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
@@ -513,12 +513,12 @@ func (_u *BotRuntimeUpdateOne) sqlSave(ctx context.Context) (_node *BotRuntime, 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &BotRuntime{config: _u.config}
+	_node = &BotRunner{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{botruntime.Label}
+			err = &NotFoundError{botrunner.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

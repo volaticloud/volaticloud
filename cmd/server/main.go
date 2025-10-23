@@ -16,11 +16,13 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/urfave/cli/v2"
+	"github.com/go-chi/cors"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/urfave/cli/v2"
 
 	"anytrade/internal/ent"
+	_ "anytrade/internal/ent/runtime"
 	"anytrade/internal/graph"
 )
 
@@ -157,6 +159,16 @@ func runServer(c *cli.Context) error {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Compress(5))
 
+	// CORS middleware for dashboard
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
 	// GraphQL routes
 	router.Handle("/", playground.Handler("GraphQL Playground", "/query"))
 	router.Handle("/query", srv)
@@ -185,7 +197,7 @@ func runServer(c *cli.Context) error {
 	log.Printf("✓ GraphQL playground: http://%s/\n", addr)
 	log.Printf("✓ Health check: http://%s/health\n", addr)
 	log.Println("")
-	log.Println("TODO: Start runtime manager")
+	log.Println("TODO: Start runner manager")
 	log.Println("TODO: Start health monitoring")
 	log.Println("")
 	log.Printf("🚀 Server ready at http://%s\n", addr)

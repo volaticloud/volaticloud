@@ -6,7 +6,10 @@ package graph
 
 import (
 	"anytrade/internal/ent"
+	"anytrade/internal/exchange"
+	"anytrade/internal/graph/model"
 	"context"
+	"fmt"
 
 	"entgo.io/contrib/entgql"
 	"github.com/google/uuid"
@@ -28,16 +31,12 @@ func (r *queryResolver) Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID
 	return r.client.Bot.Query().Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) BotRuntimes(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotRuntimeConnection, error) {
-	return r.client.BotRuntime.Query().Paginate(ctx, after, first, before, last)
+func (r *queryResolver) BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotRunnerConnection, error) {
+	return r.client.BotRunner.Query().Paginate(ctx, after, first, before, last)
 }
 
 func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) {
 	return r.client.Exchange.Query().All(ctx)
-}
-
-func (r *queryResolver) ExchangeSecrets(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.ExchangeSecretConnection, error) {
-	return r.client.ExchangeSecret.Query().Paginate(ctx, after, first, before, last)
 }
 
 func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.StrategyConnection, error) {
@@ -48,6 +47,86 @@ func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UU
 	return r.client.Trade.Query().Paginate(ctx, after, first, before, last)
 }
 
+func (r *createBotRunnerInputResolver) Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error {
+	if data == nil {
+		return nil
+	}
+
+	// Convert the typed config to map[string]interface{}
+	configMap, err := convertRunnerConfigToMap(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert runner config: %w", err)
+	}
+
+	obj.Config = configMap
+	return nil
+}
+
+func (r *createExchangeInputResolver) Config(ctx context.Context, obj *ent.CreateExchangeInput, data *exchange.ExchangeConfigInput) error {
+	if data == nil {
+		return nil
+	}
+
+	// Convert the typed config to map[string]interface{}
+	configMap, err := convertExchangeConfigToMap(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert exchange config: %w", err)
+	}
+
+	obj.Config = configMap
+	return nil
+}
+
+func (r *updateBotRunnerInputResolver) Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error {
+	if data == nil {
+		return nil
+	}
+
+	// Convert the typed config to map[string]interface{}
+	configMap, err := convertRunnerConfigToMap(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert runner config: %w", err)
+	}
+
+	obj.Config = configMap
+	return nil
+}
+
+func (r *updateExchangeInputResolver) Config(ctx context.Context, obj *ent.UpdateExchangeInput, data *exchange.ExchangeConfigInput) error {
+	if data == nil {
+		return nil
+	}
+
+	// Convert the typed config to map[string]interface{}
+	configMap, err := convertExchangeConfigToMap(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert exchange config: %w", err)
+	}
+
+	obj.Config = configMap
+	return nil
+}
+
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+func (r *Resolver) CreateBotRunnerInput() CreateBotRunnerInputResolver {
+	return &createBotRunnerInputResolver{r}
+}
+
+func (r *Resolver) CreateExchangeInput() CreateExchangeInputResolver {
+	return &createExchangeInputResolver{r}
+}
+
+func (r *Resolver) UpdateBotRunnerInput() UpdateBotRunnerInputResolver {
+	return &updateBotRunnerInputResolver{r}
+}
+
+func (r *Resolver) UpdateExchangeInput() UpdateExchangeInputResolver {
+	return &updateExchangeInputResolver{r}
+}
+
 type queryResolver struct{ *Resolver }
+type createBotRunnerInputResolver struct{ *Resolver }
+type createExchangeInputResolver struct{ *Resolver }
+type updateBotRunnerInputResolver struct{ *Resolver }
+type updateExchangeInputResolver struct{ *Resolver }

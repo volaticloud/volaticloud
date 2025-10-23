@@ -5,9 +5,8 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botruntime"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/exchangesecret"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/ent/trade"
@@ -32,13 +31,12 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeBacktest       = "Backtest"
-	TypeBot            = "Bot"
-	TypeBotRuntime     = "BotRuntime"
-	TypeExchange       = "Exchange"
-	TypeExchangeSecret = "ExchangeSecret"
-	TypeStrategy       = "Strategy"
-	TypeTrade          = "Trade"
+	TypeBacktest  = "Backtest"
+	TypeBot       = "Bot"
+	TypeBotRunner = "BotRunner"
+	TypeExchange  = "Exchange"
+	TypeStrategy  = "Strategy"
+	TypeTrade     = "Trade"
 )
 
 // BacktestMutation represents an operation that mutates the Backtest nodes in the graph.
@@ -821,7 +819,7 @@ type BotMutation struct {
 	status            *enum.BotStatus
 	mode              *enum.BotMode
 	container_id      *string
-	runtime_metadata  *map[string]string
+	runner_metadata   *map[string]string
 	api_url           *string
 	api_username      *string
 	api_password      *string
@@ -836,8 +834,8 @@ type BotMutation struct {
 	clearedexchange   bool
 	strategy          *uuid.UUID
 	clearedstrategy   bool
-	runtime           *uuid.UUID
-	clearedruntime    bool
+	runner            *uuid.UUID
+	clearedrunner     bool
 	trades            map[uuid.UUID]struct{}
 	removedtrades     map[uuid.UUID]struct{}
 	clearedtrades     bool
@@ -1107,53 +1105,53 @@ func (m *BotMutation) ResetContainerID() {
 	delete(m.clearedFields, bot.FieldContainerID)
 }
 
-// SetRuntimeMetadata sets the "runtime_metadata" field.
-func (m *BotMutation) SetRuntimeMetadata(value map[string]string) {
-	m.runtime_metadata = &value
+// SetRunnerMetadata sets the "runner_metadata" field.
+func (m *BotMutation) SetRunnerMetadata(value map[string]string) {
+	m.runner_metadata = &value
 }
 
-// RuntimeMetadata returns the value of the "runtime_metadata" field in the mutation.
-func (m *BotMutation) RuntimeMetadata() (r map[string]string, exists bool) {
-	v := m.runtime_metadata
+// RunnerMetadata returns the value of the "runner_metadata" field in the mutation.
+func (m *BotMutation) RunnerMetadata() (r map[string]string, exists bool) {
+	v := m.runner_metadata
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldRuntimeMetadata returns the old "runtime_metadata" field's value of the Bot entity.
+// OldRunnerMetadata returns the old "runner_metadata" field's value of the Bot entity.
 // If the Bot object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldRuntimeMetadata(ctx context.Context) (v map[string]string, err error) {
+func (m *BotMutation) OldRunnerMetadata(ctx context.Context) (v map[string]string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRuntimeMetadata is only allowed on UpdateOne operations")
+		return v, errors.New("OldRunnerMetadata is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRuntimeMetadata requires an ID field in the mutation")
+		return v, errors.New("OldRunnerMetadata requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRuntimeMetadata: %w", err)
+		return v, fmt.Errorf("querying old value for OldRunnerMetadata: %w", err)
 	}
-	return oldValue.RuntimeMetadata, nil
+	return oldValue.RunnerMetadata, nil
 }
 
-// ClearRuntimeMetadata clears the value of the "runtime_metadata" field.
-func (m *BotMutation) ClearRuntimeMetadata() {
-	m.runtime_metadata = nil
-	m.clearedFields[bot.FieldRuntimeMetadata] = struct{}{}
+// ClearRunnerMetadata clears the value of the "runner_metadata" field.
+func (m *BotMutation) ClearRunnerMetadata() {
+	m.runner_metadata = nil
+	m.clearedFields[bot.FieldRunnerMetadata] = struct{}{}
 }
 
-// RuntimeMetadataCleared returns if the "runtime_metadata" field was cleared in this mutation.
-func (m *BotMutation) RuntimeMetadataCleared() bool {
-	_, ok := m.clearedFields[bot.FieldRuntimeMetadata]
+// RunnerMetadataCleared returns if the "runner_metadata" field was cleared in this mutation.
+func (m *BotMutation) RunnerMetadataCleared() bool {
+	_, ok := m.clearedFields[bot.FieldRunnerMetadata]
 	return ok
 }
 
-// ResetRuntimeMetadata resets all changes to the "runtime_metadata" field.
-func (m *BotMutation) ResetRuntimeMetadata() {
-	m.runtime_metadata = nil
-	delete(m.clearedFields, bot.FieldRuntimeMetadata)
+// ResetRunnerMetadata resets all changes to the "runner_metadata" field.
+func (m *BotMutation) ResetRunnerMetadata() {
+	m.runner_metadata = nil
+	delete(m.clearedFields, bot.FieldRunnerMetadata)
 }
 
 // SetAPIURL sets the "api_url" field.
@@ -1558,40 +1556,40 @@ func (m *BotMutation) ResetStrategyID() {
 	m.strategy = nil
 }
 
-// SetRuntimeID sets the "runtime_id" field.
-func (m *BotMutation) SetRuntimeID(u uuid.UUID) {
-	m.runtime = &u
+// SetRunnerID sets the "runner_id" field.
+func (m *BotMutation) SetRunnerID(u uuid.UUID) {
+	m.runner = &u
 }
 
-// RuntimeID returns the value of the "runtime_id" field in the mutation.
-func (m *BotMutation) RuntimeID() (r uuid.UUID, exists bool) {
-	v := m.runtime
+// RunnerID returns the value of the "runner_id" field in the mutation.
+func (m *BotMutation) RunnerID() (r uuid.UUID, exists bool) {
+	v := m.runner
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldRuntimeID returns the old "runtime_id" field's value of the Bot entity.
+// OldRunnerID returns the old "runner_id" field's value of the Bot entity.
 // If the Bot object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldRuntimeID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *BotMutation) OldRunnerID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRuntimeID is only allowed on UpdateOne operations")
+		return v, errors.New("OldRunnerID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRuntimeID requires an ID field in the mutation")
+		return v, errors.New("OldRunnerID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRuntimeID: %w", err)
+		return v, fmt.Errorf("querying old value for OldRunnerID: %w", err)
 	}
-	return oldValue.RuntimeID, nil
+	return oldValue.RunnerID, nil
 }
 
-// ResetRuntimeID resets all changes to the "runtime_id" field.
-func (m *BotMutation) ResetRuntimeID() {
-	m.runtime = nil
+// ResetRunnerID resets all changes to the "runner_id" field.
+func (m *BotMutation) ResetRunnerID() {
+	m.runner = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -1720,31 +1718,31 @@ func (m *BotMutation) ResetStrategy() {
 	m.clearedstrategy = false
 }
 
-// ClearRuntime clears the "runtime" edge to the BotRuntime entity.
-func (m *BotMutation) ClearRuntime() {
-	m.clearedruntime = true
-	m.clearedFields[bot.FieldRuntimeID] = struct{}{}
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (m *BotMutation) ClearRunner() {
+	m.clearedrunner = true
+	m.clearedFields[bot.FieldRunnerID] = struct{}{}
 }
 
-// RuntimeCleared reports if the "runtime" edge to the BotRuntime entity was cleared.
-func (m *BotMutation) RuntimeCleared() bool {
-	return m.clearedruntime
+// RunnerCleared reports if the "runner" edge to the BotRunner entity was cleared.
+func (m *BotMutation) RunnerCleared() bool {
+	return m.clearedrunner
 }
 
-// RuntimeIDs returns the "runtime" edge IDs in the mutation.
+// RunnerIDs returns the "runner" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// RuntimeID instead. It exists only for internal usage by the builders.
-func (m *BotMutation) RuntimeIDs() (ids []uuid.UUID) {
-	if id := m.runtime; id != nil {
+// RunnerID instead. It exists only for internal usage by the builders.
+func (m *BotMutation) RunnerIDs() (ids []uuid.UUID) {
+	if id := m.runner; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetRuntime resets all changes to the "runtime" edge.
-func (m *BotMutation) ResetRuntime() {
-	m.runtime = nil
-	m.clearedruntime = false
+// ResetRunner resets all changes to the "runner" edge.
+func (m *BotMutation) ResetRunner() {
+	m.runner = nil
+	m.clearedrunner = false
 }
 
 // AddTradeIDs adds the "trades" edge to the Trade entity by ids.
@@ -1848,8 +1846,8 @@ func (m *BotMutation) Fields() []string {
 	if m.container_id != nil {
 		fields = append(fields, bot.FieldContainerID)
 	}
-	if m.runtime_metadata != nil {
-		fields = append(fields, bot.FieldRuntimeMetadata)
+	if m.runner_metadata != nil {
+		fields = append(fields, bot.FieldRunnerMetadata)
 	}
 	if m.api_url != nil {
 		fields = append(fields, bot.FieldAPIURL)
@@ -1878,8 +1876,8 @@ func (m *BotMutation) Fields() []string {
 	if m.strategy != nil {
 		fields = append(fields, bot.FieldStrategyID)
 	}
-	if m.runtime != nil {
-		fields = append(fields, bot.FieldRuntimeID)
+	if m.runner != nil {
+		fields = append(fields, bot.FieldRunnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, bot.FieldCreatedAt)
@@ -1903,8 +1901,8 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 		return m.Mode()
 	case bot.FieldContainerID:
 		return m.ContainerID()
-	case bot.FieldRuntimeMetadata:
-		return m.RuntimeMetadata()
+	case bot.FieldRunnerMetadata:
+		return m.RunnerMetadata()
 	case bot.FieldAPIURL:
 		return m.APIURL()
 	case bot.FieldAPIUsername:
@@ -1923,8 +1921,8 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 		return m.ExchangeID()
 	case bot.FieldStrategyID:
 		return m.StrategyID()
-	case bot.FieldRuntimeID:
-		return m.RuntimeID()
+	case bot.FieldRunnerID:
+		return m.RunnerID()
 	case bot.FieldCreatedAt:
 		return m.CreatedAt()
 	case bot.FieldUpdatedAt:
@@ -1946,8 +1944,8 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldMode(ctx)
 	case bot.FieldContainerID:
 		return m.OldContainerID(ctx)
-	case bot.FieldRuntimeMetadata:
-		return m.OldRuntimeMetadata(ctx)
+	case bot.FieldRunnerMetadata:
+		return m.OldRunnerMetadata(ctx)
 	case bot.FieldAPIURL:
 		return m.OldAPIURL(ctx)
 	case bot.FieldAPIUsername:
@@ -1966,8 +1964,8 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldExchangeID(ctx)
 	case bot.FieldStrategyID:
 		return m.OldStrategyID(ctx)
-	case bot.FieldRuntimeID:
-		return m.OldRuntimeID(ctx)
+	case bot.FieldRunnerID:
+		return m.OldRunnerID(ctx)
 	case bot.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case bot.FieldUpdatedAt:
@@ -2009,12 +2007,12 @@ func (m *BotMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetContainerID(v)
 		return nil
-	case bot.FieldRuntimeMetadata:
+	case bot.FieldRunnerMetadata:
 		v, ok := value.(map[string]string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetRuntimeMetadata(v)
+		m.SetRunnerMetadata(v)
 		return nil
 	case bot.FieldAPIURL:
 		v, ok := value.(string)
@@ -2079,12 +2077,12 @@ func (m *BotMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStrategyID(v)
 		return nil
-	case bot.FieldRuntimeID:
+	case bot.FieldRunnerID:
 		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetRuntimeID(v)
+		m.SetRunnerID(v)
 		return nil
 	case bot.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -2133,8 +2131,8 @@ func (m *BotMutation) ClearedFields() []string {
 	if m.FieldCleared(bot.FieldContainerID) {
 		fields = append(fields, bot.FieldContainerID)
 	}
-	if m.FieldCleared(bot.FieldRuntimeMetadata) {
-		fields = append(fields, bot.FieldRuntimeMetadata)
+	if m.FieldCleared(bot.FieldRunnerMetadata) {
+		fields = append(fields, bot.FieldRunnerMetadata)
 	}
 	if m.FieldCleared(bot.FieldAPIURL) {
 		fields = append(fields, bot.FieldAPIURL)
@@ -2171,8 +2169,8 @@ func (m *BotMutation) ClearField(name string) error {
 	case bot.FieldContainerID:
 		m.ClearContainerID()
 		return nil
-	case bot.FieldRuntimeMetadata:
-		m.ClearRuntimeMetadata()
+	case bot.FieldRunnerMetadata:
+		m.ClearRunnerMetadata()
 		return nil
 	case bot.FieldAPIURL:
 		m.ClearAPIURL()
@@ -2212,8 +2210,8 @@ func (m *BotMutation) ResetField(name string) error {
 	case bot.FieldContainerID:
 		m.ResetContainerID()
 		return nil
-	case bot.FieldRuntimeMetadata:
-		m.ResetRuntimeMetadata()
+	case bot.FieldRunnerMetadata:
+		m.ResetRunnerMetadata()
 		return nil
 	case bot.FieldAPIURL:
 		m.ResetAPIURL()
@@ -2242,8 +2240,8 @@ func (m *BotMutation) ResetField(name string) error {
 	case bot.FieldStrategyID:
 		m.ResetStrategyID()
 		return nil
-	case bot.FieldRuntimeID:
-		m.ResetRuntimeID()
+	case bot.FieldRunnerID:
+		m.ResetRunnerID()
 		return nil
 	case bot.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -2264,8 +2262,8 @@ func (m *BotMutation) AddedEdges() []string {
 	if m.strategy != nil {
 		edges = append(edges, bot.EdgeStrategy)
 	}
-	if m.runtime != nil {
-		edges = append(edges, bot.EdgeRuntime)
+	if m.runner != nil {
+		edges = append(edges, bot.EdgeRunner)
 	}
 	if m.trades != nil {
 		edges = append(edges, bot.EdgeTrades)
@@ -2285,8 +2283,8 @@ func (m *BotMutation) AddedIDs(name string) []ent.Value {
 		if id := m.strategy; id != nil {
 			return []ent.Value{*id}
 		}
-	case bot.EdgeRuntime:
-		if id := m.runtime; id != nil {
+	case bot.EdgeRunner:
+		if id := m.runner; id != nil {
 			return []ent.Value{*id}
 		}
 	case bot.EdgeTrades:
@@ -2331,8 +2329,8 @@ func (m *BotMutation) ClearedEdges() []string {
 	if m.clearedstrategy {
 		edges = append(edges, bot.EdgeStrategy)
 	}
-	if m.clearedruntime {
-		edges = append(edges, bot.EdgeRuntime)
+	if m.clearedrunner {
+		edges = append(edges, bot.EdgeRunner)
 	}
 	if m.clearedtrades {
 		edges = append(edges, bot.EdgeTrades)
@@ -2348,8 +2346,8 @@ func (m *BotMutation) EdgeCleared(name string) bool {
 		return m.clearedexchange
 	case bot.EdgeStrategy:
 		return m.clearedstrategy
-	case bot.EdgeRuntime:
-		return m.clearedruntime
+	case bot.EdgeRunner:
+		return m.clearedrunner
 	case bot.EdgeTrades:
 		return m.clearedtrades
 	}
@@ -2366,8 +2364,8 @@ func (m *BotMutation) ClearEdge(name string) error {
 	case bot.EdgeStrategy:
 		m.ClearStrategy()
 		return nil
-	case bot.EdgeRuntime:
-		m.ClearRuntime()
+	case bot.EdgeRunner:
+		m.ClearRunner()
 		return nil
 	}
 	return fmt.Errorf("unknown Bot unique edge %s", name)
@@ -2383,8 +2381,8 @@ func (m *BotMutation) ResetEdge(name string) error {
 	case bot.EdgeStrategy:
 		m.ResetStrategy()
 		return nil
-	case bot.EdgeRuntime:
-		m.ResetRuntime()
+	case bot.EdgeRunner:
+		m.ResetRunner()
 		return nil
 	case bot.EdgeTrades:
 		m.ResetTrades()
@@ -2393,14 +2391,14 @@ func (m *BotMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Bot edge %s", name)
 }
 
-// BotRuntimeMutation represents an operation that mutates the BotRuntime nodes in the graph.
-type BotRuntimeMutation struct {
+// BotRunnerMutation represents an operation that mutates the BotRunner nodes in the graph.
+type BotRunnerMutation struct {
 	config
 	op            Op
 	typ           string
 	id            *uuid.UUID
 	name          *string
-	_type         *enum.RuntimeType
+	_type         *enum.RunnerType
 	_config       *map[string]interface{}
 	created_at    *time.Time
 	updated_at    *time.Time
@@ -2409,21 +2407,21 @@ type BotRuntimeMutation struct {
 	removedbots   map[uuid.UUID]struct{}
 	clearedbots   bool
 	done          bool
-	oldValue      func(context.Context) (*BotRuntime, error)
-	predicates    []predicate.BotRuntime
+	oldValue      func(context.Context) (*BotRunner, error)
+	predicates    []predicate.BotRunner
 }
 
-var _ ent.Mutation = (*BotRuntimeMutation)(nil)
+var _ ent.Mutation = (*BotRunnerMutation)(nil)
 
-// botruntimeOption allows management of the mutation configuration using functional options.
-type botruntimeOption func(*BotRuntimeMutation)
+// botrunnerOption allows management of the mutation configuration using functional options.
+type botrunnerOption func(*BotRunnerMutation)
 
-// newBotRuntimeMutation creates new mutation for the BotRuntime entity.
-func newBotRuntimeMutation(c config, op Op, opts ...botruntimeOption) *BotRuntimeMutation {
-	m := &BotRuntimeMutation{
+// newBotRunnerMutation creates new mutation for the BotRunner entity.
+func newBotRunnerMutation(c config, op Op, opts ...botrunnerOption) *BotRunnerMutation {
+	m := &BotRunnerMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeBotRuntime,
+		typ:           TypeBotRunner,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -2432,20 +2430,20 @@ func newBotRuntimeMutation(c config, op Op, opts ...botruntimeOption) *BotRuntim
 	return m
 }
 
-// withBotRuntimeID sets the ID field of the mutation.
-func withBotRuntimeID(id uuid.UUID) botruntimeOption {
-	return func(m *BotRuntimeMutation) {
+// withBotRunnerID sets the ID field of the mutation.
+func withBotRunnerID(id uuid.UUID) botrunnerOption {
+	return func(m *BotRunnerMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *BotRuntime
+			value *BotRunner
 		)
-		m.oldValue = func(ctx context.Context) (*BotRuntime, error) {
+		m.oldValue = func(ctx context.Context) (*BotRunner, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().BotRuntime.Get(ctx, id)
+					value, err = m.Client().BotRunner.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -2454,10 +2452,10 @@ func withBotRuntimeID(id uuid.UUID) botruntimeOption {
 	}
 }
 
-// withBotRuntime sets the old BotRuntime of the mutation.
-func withBotRuntime(node *BotRuntime) botruntimeOption {
-	return func(m *BotRuntimeMutation) {
-		m.oldValue = func(context.Context) (*BotRuntime, error) {
+// withBotRunner sets the old BotRunner of the mutation.
+func withBotRunner(node *BotRunner) botrunnerOption {
+	return func(m *BotRunnerMutation) {
+		m.oldValue = func(context.Context) (*BotRunner, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -2466,7 +2464,7 @@ func withBotRuntime(node *BotRuntime) botruntimeOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m BotRuntimeMutation) Client() *Client {
+func (m BotRunnerMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -2474,7 +2472,7 @@ func (m BotRuntimeMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m BotRuntimeMutation) Tx() (*Tx, error) {
+func (m BotRunnerMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -2484,14 +2482,14 @@ func (m BotRuntimeMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of BotRuntime entities.
-func (m *BotRuntimeMutation) SetID(id uuid.UUID) {
+// operation is only accepted on creation of BotRunner entities.
+func (m *BotRunnerMutation) SetID(id uuid.UUID) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *BotRuntimeMutation) ID() (id uuid.UUID, exists bool) {
+func (m *BotRunnerMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -2502,7 +2500,7 @@ func (m *BotRuntimeMutation) ID() (id uuid.UUID, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *BotRuntimeMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+func (m *BotRunnerMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -2511,19 +2509,19 @@ func (m *BotRuntimeMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().BotRuntime.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().BotRunner.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetName sets the "name" field.
-func (m *BotRuntimeMutation) SetName(s string) {
+func (m *BotRunnerMutation) SetName(s string) {
 	m.name = &s
 }
 
 // Name returns the value of the "name" field in the mutation.
-func (m *BotRuntimeMutation) Name() (r string, exists bool) {
+func (m *BotRunnerMutation) Name() (r string, exists bool) {
 	v := m.name
 	if v == nil {
 		return
@@ -2531,10 +2529,10 @@ func (m *BotRuntimeMutation) Name() (r string, exists bool) {
 	return *v, true
 }
 
-// OldName returns the old "name" field's value of the BotRuntime entity.
-// If the BotRuntime object wasn't provided to the builder, the object is fetched from the database.
+// OldName returns the old "name" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotRuntimeMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *BotRunnerMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
@@ -2549,17 +2547,17 @@ func (m *BotRuntimeMutation) OldName(ctx context.Context) (v string, err error) 
 }
 
 // ResetName resets all changes to the "name" field.
-func (m *BotRuntimeMutation) ResetName() {
+func (m *BotRunnerMutation) ResetName() {
 	m.name = nil
 }
 
 // SetType sets the "type" field.
-func (m *BotRuntimeMutation) SetType(et enum.RuntimeType) {
+func (m *BotRunnerMutation) SetType(et enum.RunnerType) {
 	m._type = &et
 }
 
 // GetType returns the value of the "type" field in the mutation.
-func (m *BotRuntimeMutation) GetType() (r enum.RuntimeType, exists bool) {
+func (m *BotRunnerMutation) GetType() (r enum.RunnerType, exists bool) {
 	v := m._type
 	if v == nil {
 		return
@@ -2567,10 +2565,10 @@ func (m *BotRuntimeMutation) GetType() (r enum.RuntimeType, exists bool) {
 	return *v, true
 }
 
-// OldType returns the old "type" field's value of the BotRuntime entity.
-// If the BotRuntime object wasn't provided to the builder, the object is fetched from the database.
+// OldType returns the old "type" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotRuntimeMutation) OldType(ctx context.Context) (v enum.RuntimeType, err error) {
+func (m *BotRunnerMutation) OldType(ctx context.Context) (v enum.RunnerType, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldType is only allowed on UpdateOne operations")
 	}
@@ -2585,17 +2583,17 @@ func (m *BotRuntimeMutation) OldType(ctx context.Context) (v enum.RuntimeType, e
 }
 
 // ResetType resets all changes to the "type" field.
-func (m *BotRuntimeMutation) ResetType() {
+func (m *BotRunnerMutation) ResetType() {
 	m._type = nil
 }
 
 // SetConfig sets the "config" field.
-func (m *BotRuntimeMutation) SetConfig(value map[string]interface{}) {
+func (m *BotRunnerMutation) SetConfig(value map[string]interface{}) {
 	m._config = &value
 }
 
 // Config returns the value of the "config" field in the mutation.
-func (m *BotRuntimeMutation) Config() (r map[string]interface{}, exists bool) {
+func (m *BotRunnerMutation) Config() (r map[string]interface{}, exists bool) {
 	v := m._config
 	if v == nil {
 		return
@@ -2603,10 +2601,10 @@ func (m *BotRuntimeMutation) Config() (r map[string]interface{}, exists bool) {
 	return *v, true
 }
 
-// OldConfig returns the old "config" field's value of the BotRuntime entity.
-// If the BotRuntime object wasn't provided to the builder, the object is fetched from the database.
+// OldConfig returns the old "config" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotRuntimeMutation) OldConfig(ctx context.Context) (v map[string]interface{}, err error) {
+func (m *BotRunnerMutation) OldConfig(ctx context.Context) (v map[string]interface{}, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldConfig is only allowed on UpdateOne operations")
 	}
@@ -2621,30 +2619,30 @@ func (m *BotRuntimeMutation) OldConfig(ctx context.Context) (v map[string]interf
 }
 
 // ClearConfig clears the value of the "config" field.
-func (m *BotRuntimeMutation) ClearConfig() {
+func (m *BotRunnerMutation) ClearConfig() {
 	m._config = nil
-	m.clearedFields[botruntime.FieldConfig] = struct{}{}
+	m.clearedFields[botrunner.FieldConfig] = struct{}{}
 }
 
 // ConfigCleared returns if the "config" field was cleared in this mutation.
-func (m *BotRuntimeMutation) ConfigCleared() bool {
-	_, ok := m.clearedFields[botruntime.FieldConfig]
+func (m *BotRunnerMutation) ConfigCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldConfig]
 	return ok
 }
 
 // ResetConfig resets all changes to the "config" field.
-func (m *BotRuntimeMutation) ResetConfig() {
+func (m *BotRunnerMutation) ResetConfig() {
 	m._config = nil
-	delete(m.clearedFields, botruntime.FieldConfig)
+	delete(m.clearedFields, botrunner.FieldConfig)
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (m *BotRuntimeMutation) SetCreatedAt(t time.Time) {
+func (m *BotRunnerMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
 }
 
 // CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *BotRuntimeMutation) CreatedAt() (r time.Time, exists bool) {
+func (m *BotRunnerMutation) CreatedAt() (r time.Time, exists bool) {
 	v := m.created_at
 	if v == nil {
 		return
@@ -2652,10 +2650,10 @@ func (m *BotRuntimeMutation) CreatedAt() (r time.Time, exists bool) {
 	return *v, true
 }
 
-// OldCreatedAt returns the old "created_at" field's value of the BotRuntime entity.
-// If the BotRuntime object wasn't provided to the builder, the object is fetched from the database.
+// OldCreatedAt returns the old "created_at" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotRuntimeMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *BotRunnerMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
 	}
@@ -2670,17 +2668,17 @@ func (m *BotRuntimeMutation) OldCreatedAt(ctx context.Context) (v time.Time, err
 }
 
 // ResetCreatedAt resets all changes to the "created_at" field.
-func (m *BotRuntimeMutation) ResetCreatedAt() {
+func (m *BotRunnerMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (m *BotRuntimeMutation) SetUpdatedAt(t time.Time) {
+func (m *BotRunnerMutation) SetUpdatedAt(t time.Time) {
 	m.updated_at = &t
 }
 
 // UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *BotRuntimeMutation) UpdatedAt() (r time.Time, exists bool) {
+func (m *BotRunnerMutation) UpdatedAt() (r time.Time, exists bool) {
 	v := m.updated_at
 	if v == nil {
 		return
@@ -2688,10 +2686,10 @@ func (m *BotRuntimeMutation) UpdatedAt() (r time.Time, exists bool) {
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updated_at" field's value of the BotRuntime entity.
-// If the BotRuntime object wasn't provided to the builder, the object is fetched from the database.
+// OldUpdatedAt returns the old "updated_at" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotRuntimeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *BotRunnerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
 	}
@@ -2706,12 +2704,12 @@ func (m *BotRuntimeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err
 }
 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *BotRuntimeMutation) ResetUpdatedAt() {
+func (m *BotRunnerMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
 // AddBotIDs adds the "bots" edge to the Bot entity by ids.
-func (m *BotRuntimeMutation) AddBotIDs(ids ...uuid.UUID) {
+func (m *BotRunnerMutation) AddBotIDs(ids ...uuid.UUID) {
 	if m.bots == nil {
 		m.bots = make(map[uuid.UUID]struct{})
 	}
@@ -2721,17 +2719,17 @@ func (m *BotRuntimeMutation) AddBotIDs(ids ...uuid.UUID) {
 }
 
 // ClearBots clears the "bots" edge to the Bot entity.
-func (m *BotRuntimeMutation) ClearBots() {
+func (m *BotRunnerMutation) ClearBots() {
 	m.clearedbots = true
 }
 
 // BotsCleared reports if the "bots" edge to the Bot entity was cleared.
-func (m *BotRuntimeMutation) BotsCleared() bool {
+func (m *BotRunnerMutation) BotsCleared() bool {
 	return m.clearedbots
 }
 
 // RemoveBotIDs removes the "bots" edge to the Bot entity by IDs.
-func (m *BotRuntimeMutation) RemoveBotIDs(ids ...uuid.UUID) {
+func (m *BotRunnerMutation) RemoveBotIDs(ids ...uuid.UUID) {
 	if m.removedbots == nil {
 		m.removedbots = make(map[uuid.UUID]struct{})
 	}
@@ -2742,7 +2740,7 @@ func (m *BotRuntimeMutation) RemoveBotIDs(ids ...uuid.UUID) {
 }
 
 // RemovedBots returns the removed IDs of the "bots" edge to the Bot entity.
-func (m *BotRuntimeMutation) RemovedBotsIDs() (ids []uuid.UUID) {
+func (m *BotRunnerMutation) RemovedBotsIDs() (ids []uuid.UUID) {
 	for id := range m.removedbots {
 		ids = append(ids, id)
 	}
@@ -2750,7 +2748,7 @@ func (m *BotRuntimeMutation) RemovedBotsIDs() (ids []uuid.UUID) {
 }
 
 // BotsIDs returns the "bots" edge IDs in the mutation.
-func (m *BotRuntimeMutation) BotsIDs() (ids []uuid.UUID) {
+func (m *BotRunnerMutation) BotsIDs() (ids []uuid.UUID) {
 	for id := range m.bots {
 		ids = append(ids, id)
 	}
@@ -2758,21 +2756,21 @@ func (m *BotRuntimeMutation) BotsIDs() (ids []uuid.UUID) {
 }
 
 // ResetBots resets all changes to the "bots" edge.
-func (m *BotRuntimeMutation) ResetBots() {
+func (m *BotRunnerMutation) ResetBots() {
 	m.bots = nil
 	m.clearedbots = false
 	m.removedbots = nil
 }
 
-// Where appends a list predicates to the BotRuntimeMutation builder.
-func (m *BotRuntimeMutation) Where(ps ...predicate.BotRuntime) {
+// Where appends a list predicates to the BotRunnerMutation builder.
+func (m *BotRunnerMutation) Where(ps ...predicate.BotRunner) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the BotRuntimeMutation builder. Using this method,
+// WhereP appends storage-level predicates to the BotRunnerMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *BotRuntimeMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.BotRuntime, len(ps))
+func (m *BotRunnerMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.BotRunner, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -2780,39 +2778,39 @@ func (m *BotRuntimeMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *BotRuntimeMutation) Op() Op {
+func (m *BotRunnerMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *BotRuntimeMutation) SetOp(op Op) {
+func (m *BotRunnerMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (BotRuntime).
-func (m *BotRuntimeMutation) Type() string {
+// Type returns the node type of this mutation (BotRunner).
+func (m *BotRunnerMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *BotRuntimeMutation) Fields() []string {
+func (m *BotRunnerMutation) Fields() []string {
 	fields := make([]string, 0, 5)
 	if m.name != nil {
-		fields = append(fields, botruntime.FieldName)
+		fields = append(fields, botrunner.FieldName)
 	}
 	if m._type != nil {
-		fields = append(fields, botruntime.FieldType)
+		fields = append(fields, botrunner.FieldType)
 	}
 	if m._config != nil {
-		fields = append(fields, botruntime.FieldConfig)
+		fields = append(fields, botrunner.FieldConfig)
 	}
 	if m.created_at != nil {
-		fields = append(fields, botruntime.FieldCreatedAt)
+		fields = append(fields, botrunner.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
-		fields = append(fields, botruntime.FieldUpdatedAt)
+		fields = append(fields, botrunner.FieldUpdatedAt)
 	}
 	return fields
 }
@@ -2820,17 +2818,17 @@ func (m *BotRuntimeMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *BotRuntimeMutation) Field(name string) (ent.Value, bool) {
+func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case botruntime.FieldName:
+	case botrunner.FieldName:
 		return m.Name()
-	case botruntime.FieldType:
+	case botrunner.FieldType:
 		return m.GetType()
-	case botruntime.FieldConfig:
+	case botrunner.FieldConfig:
 		return m.Config()
-	case botruntime.FieldCreatedAt:
+	case botrunner.FieldCreatedAt:
 		return m.CreatedAt()
-	case botruntime.FieldUpdatedAt:
+	case botrunner.FieldUpdatedAt:
 		return m.UpdatedAt()
 	}
 	return nil, false
@@ -2839,56 +2837,56 @@ func (m *BotRuntimeMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *BotRuntimeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case botruntime.FieldName:
+	case botrunner.FieldName:
 		return m.OldName(ctx)
-	case botruntime.FieldType:
+	case botrunner.FieldType:
 		return m.OldType(ctx)
-	case botruntime.FieldConfig:
+	case botrunner.FieldConfig:
 		return m.OldConfig(ctx)
-	case botruntime.FieldCreatedAt:
+	case botrunner.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
-	case botruntime.FieldUpdatedAt:
+	case botrunner.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
 	}
-	return nil, fmt.Errorf("unknown BotRuntime field %s", name)
+	return nil, fmt.Errorf("unknown BotRunner field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *BotRuntimeMutation) SetField(name string, value ent.Value) error {
+func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case botruntime.FieldName:
+	case botrunner.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
 		return nil
-	case botruntime.FieldType:
-		v, ok := value.(enum.RuntimeType)
+	case botrunner.FieldType:
+		v, ok := value.(enum.RunnerType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
 		return nil
-	case botruntime.FieldConfig:
+	case botrunner.FieldConfig:
 		v, ok := value.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetConfig(v)
 		return nil
-	case botruntime.FieldCreatedAt:
+	case botrunner.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedAt(v)
 		return nil
-	case botruntime.FieldUpdatedAt:
+	case botrunner.FieldUpdatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -2896,96 +2894,96 @@ func (m *BotRuntimeMutation) SetField(name string, value ent.Value) error {
 		m.SetUpdatedAt(v)
 		return nil
 	}
-	return fmt.Errorf("unknown BotRuntime field %s", name)
+	return fmt.Errorf("unknown BotRunner field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *BotRuntimeMutation) AddedFields() []string {
+func (m *BotRunnerMutation) AddedFields() []string {
 	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *BotRuntimeMutation) AddedField(name string) (ent.Value, bool) {
+func (m *BotRunnerMutation) AddedField(name string) (ent.Value, bool) {
 	return nil, false
 }
 
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *BotRuntimeMutation) AddField(name string, value ent.Value) error {
+func (m *BotRunnerMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	}
-	return fmt.Errorf("unknown BotRuntime numeric field %s", name)
+	return fmt.Errorf("unknown BotRunner numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *BotRuntimeMutation) ClearedFields() []string {
+func (m *BotRunnerMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(botruntime.FieldConfig) {
-		fields = append(fields, botruntime.FieldConfig)
+	if m.FieldCleared(botrunner.FieldConfig) {
+		fields = append(fields, botrunner.FieldConfig)
 	}
 	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *BotRuntimeMutation) FieldCleared(name string) bool {
+func (m *BotRunnerMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *BotRuntimeMutation) ClearField(name string) error {
+func (m *BotRunnerMutation) ClearField(name string) error {
 	switch name {
-	case botruntime.FieldConfig:
+	case botrunner.FieldConfig:
 		m.ClearConfig()
 		return nil
 	}
-	return fmt.Errorf("unknown BotRuntime nullable field %s", name)
+	return fmt.Errorf("unknown BotRunner nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *BotRuntimeMutation) ResetField(name string) error {
+func (m *BotRunnerMutation) ResetField(name string) error {
 	switch name {
-	case botruntime.FieldName:
+	case botrunner.FieldName:
 		m.ResetName()
 		return nil
-	case botruntime.FieldType:
+	case botrunner.FieldType:
 		m.ResetType()
 		return nil
-	case botruntime.FieldConfig:
+	case botrunner.FieldConfig:
 		m.ResetConfig()
 		return nil
-	case botruntime.FieldCreatedAt:
+	case botrunner.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
-	case botruntime.FieldUpdatedAt:
+	case botrunner.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
 	}
-	return fmt.Errorf("unknown BotRuntime field %s", name)
+	return fmt.Errorf("unknown BotRunner field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *BotRuntimeMutation) AddedEdges() []string {
+func (m *BotRunnerMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
 	if m.bots != nil {
-		edges = append(edges, botruntime.EdgeBots)
+		edges = append(edges, botrunner.EdgeBots)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *BotRuntimeMutation) AddedIDs(name string) []ent.Value {
+func (m *BotRunnerMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case botruntime.EdgeBots:
+	case botrunner.EdgeBots:
 		ids := make([]ent.Value, 0, len(m.bots))
 		for id := range m.bots {
 			ids = append(ids, id)
@@ -2996,19 +2994,19 @@ func (m *BotRuntimeMutation) AddedIDs(name string) []ent.Value {
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *BotRuntimeMutation) RemovedEdges() []string {
+func (m *BotRunnerMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
 	if m.removedbots != nil {
-		edges = append(edges, botruntime.EdgeBots)
+		edges = append(edges, botrunner.EdgeBots)
 	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *BotRuntimeMutation) RemovedIDs(name string) []ent.Value {
+func (m *BotRunnerMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case botruntime.EdgeBots:
+	case botrunner.EdgeBots:
 		ids := make([]ent.Value, 0, len(m.removedbots))
 		for id := range m.removedbots {
 			ids = append(ids, id)
@@ -3019,19 +3017,19 @@ func (m *BotRuntimeMutation) RemovedIDs(name string) []ent.Value {
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *BotRuntimeMutation) ClearedEdges() []string {
+func (m *BotRunnerMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
 	if m.clearedbots {
-		edges = append(edges, botruntime.EdgeBots)
+		edges = append(edges, botrunner.EdgeBots)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *BotRuntimeMutation) EdgeCleared(name string) bool {
+func (m *BotRunnerMutation) EdgeCleared(name string) bool {
 	switch name {
-	case botruntime.EdgeBots:
+	case botrunner.EdgeBots:
 		return m.clearedbots
 	}
 	return false
@@ -3039,44 +3037,41 @@ func (m *BotRuntimeMutation) EdgeCleared(name string) bool {
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *BotRuntimeMutation) ClearEdge(name string) error {
+func (m *BotRunnerMutation) ClearEdge(name string) error {
 	switch name {
 	}
-	return fmt.Errorf("unknown BotRuntime unique edge %s", name)
+	return fmt.Errorf("unknown BotRunner unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *BotRuntimeMutation) ResetEdge(name string) error {
+func (m *BotRunnerMutation) ResetEdge(name string) error {
 	switch name {
-	case botruntime.EdgeBots:
+	case botrunner.EdgeBots:
 		m.ResetBots()
 		return nil
 	}
-	return fmt.Errorf("unknown BotRuntime edge %s", name)
+	return fmt.Errorf("unknown BotRunner edge %s", name)
 }
 
 // ExchangeMutation represents an operation that mutates the Exchange nodes in the graph.
 type ExchangeMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *uuid.UUID
-	name           *enum.ExchangeType
-	test_mode      *bool
-	_config        *map[string]interface{}
-	created_at     *time.Time
-	updated_at     *time.Time
-	clearedFields  map[string]struct{}
-	bots           map[uuid.UUID]struct{}
-	removedbots    map[uuid.UUID]struct{}
-	clearedbots    bool
-	secrets        map[uuid.UUID]struct{}
-	removedsecrets map[uuid.UUID]struct{}
-	clearedsecrets bool
-	done           bool
-	oldValue       func(context.Context) (*Exchange, error)
-	predicates     []predicate.Exchange
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	name          *enum.ExchangeType
+	test_mode     *bool
+	_config       *map[string]interface{}
+	created_at    *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	bots          map[uuid.UUID]struct{}
+	removedbots   map[uuid.UUID]struct{}
+	clearedbots   bool
+	done          bool
+	oldValue      func(context.Context) (*Exchange, error)
+	predicates    []predicate.Exchange
 }
 
 var _ ent.Mutation = (*ExchangeMutation)(nil)
@@ -3430,60 +3425,6 @@ func (m *ExchangeMutation) ResetBots() {
 	m.removedbots = nil
 }
 
-// AddSecretIDs adds the "secrets" edge to the ExchangeSecret entity by ids.
-func (m *ExchangeMutation) AddSecretIDs(ids ...uuid.UUID) {
-	if m.secrets == nil {
-		m.secrets = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.secrets[ids[i]] = struct{}{}
-	}
-}
-
-// ClearSecrets clears the "secrets" edge to the ExchangeSecret entity.
-func (m *ExchangeMutation) ClearSecrets() {
-	m.clearedsecrets = true
-}
-
-// SecretsCleared reports if the "secrets" edge to the ExchangeSecret entity was cleared.
-func (m *ExchangeMutation) SecretsCleared() bool {
-	return m.clearedsecrets
-}
-
-// RemoveSecretIDs removes the "secrets" edge to the ExchangeSecret entity by IDs.
-func (m *ExchangeMutation) RemoveSecretIDs(ids ...uuid.UUID) {
-	if m.removedsecrets == nil {
-		m.removedsecrets = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.secrets, ids[i])
-		m.removedsecrets[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedSecrets returns the removed IDs of the "secrets" edge to the ExchangeSecret entity.
-func (m *ExchangeMutation) RemovedSecretsIDs() (ids []uuid.UUID) {
-	for id := range m.removedsecrets {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// SecretsIDs returns the "secrets" edge IDs in the mutation.
-func (m *ExchangeMutation) SecretsIDs() (ids []uuid.UUID) {
-	for id := range m.secrets {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetSecrets resets all changes to the "secrets" edge.
-func (m *ExchangeMutation) ResetSecrets() {
-	m.secrets = nil
-	m.clearedsecrets = false
-	m.removedsecrets = nil
-}
-
 // Where appends a list predicates to the ExchangeMutation builder.
 func (m *ExchangeMutation) Where(ps ...predicate.Exchange) {
 	m.predicates = append(m.predicates, ps...)
@@ -3694,12 +3635,9 @@ func (m *ExchangeMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ExchangeMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 1)
 	if m.bots != nil {
 		edges = append(edges, exchange.EdgeBots)
-	}
-	if m.secrets != nil {
-		edges = append(edges, exchange.EdgeSecrets)
 	}
 	return edges
 }
@@ -3714,24 +3652,15 @@ func (m *ExchangeMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case exchange.EdgeSecrets:
-		ids := make([]ent.Value, 0, len(m.secrets))
-		for id := range m.secrets {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ExchangeMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 1)
 	if m.removedbots != nil {
 		edges = append(edges, exchange.EdgeBots)
-	}
-	if m.removedsecrets != nil {
-		edges = append(edges, exchange.EdgeSecrets)
 	}
 	return edges
 }
@@ -3746,24 +3675,15 @@ func (m *ExchangeMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case exchange.EdgeSecrets:
-		ids := make([]ent.Value, 0, len(m.removedsecrets))
-		for id := range m.removedsecrets {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ExchangeMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 1)
 	if m.clearedbots {
 		edges = append(edges, exchange.EdgeBots)
-	}
-	if m.clearedsecrets {
-		edges = append(edges, exchange.EdgeSecrets)
 	}
 	return edges
 }
@@ -3774,8 +3694,6 @@ func (m *ExchangeMutation) EdgeCleared(name string) bool {
 	switch name {
 	case exchange.EdgeBots:
 		return m.clearedbots
-	case exchange.EdgeSecrets:
-		return m.clearedsecrets
 	}
 	return false
 }
@@ -3795,613 +3713,8 @@ func (m *ExchangeMutation) ResetEdge(name string) error {
 	case exchange.EdgeBots:
 		m.ResetBots()
 		return nil
-	case exchange.EdgeSecrets:
-		m.ResetSecrets()
-		return nil
 	}
 	return fmt.Errorf("unknown Exchange edge %s", name)
-}
-
-// ExchangeSecretMutation represents an operation that mutates the ExchangeSecret nodes in the graph.
-type ExchangeSecretMutation struct {
-	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	name            *string
-	value           *string
-	created_at      *time.Time
-	updated_at      *time.Time
-	clearedFields   map[string]struct{}
-	exchange        *uuid.UUID
-	clearedexchange bool
-	done            bool
-	oldValue        func(context.Context) (*ExchangeSecret, error)
-	predicates      []predicate.ExchangeSecret
-}
-
-var _ ent.Mutation = (*ExchangeSecretMutation)(nil)
-
-// exchangesecretOption allows management of the mutation configuration using functional options.
-type exchangesecretOption func(*ExchangeSecretMutation)
-
-// newExchangeSecretMutation creates new mutation for the ExchangeSecret entity.
-func newExchangeSecretMutation(c config, op Op, opts ...exchangesecretOption) *ExchangeSecretMutation {
-	m := &ExchangeSecretMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeExchangeSecret,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withExchangeSecretID sets the ID field of the mutation.
-func withExchangeSecretID(id uuid.UUID) exchangesecretOption {
-	return func(m *ExchangeSecretMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *ExchangeSecret
-		)
-		m.oldValue = func(ctx context.Context) (*ExchangeSecret, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().ExchangeSecret.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withExchangeSecret sets the old ExchangeSecret of the mutation.
-func withExchangeSecret(node *ExchangeSecret) exchangesecretOption {
-	return func(m *ExchangeSecretMutation) {
-		m.oldValue = func(context.Context) (*ExchangeSecret, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m ExchangeSecretMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m ExchangeSecretMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of ExchangeSecret entities.
-func (m *ExchangeSecretMutation) SetID(id uuid.UUID) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *ExchangeSecretMutation) ID() (id uuid.UUID, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *ExchangeSecretMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []uuid.UUID{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().ExchangeSecret.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetExchangeID sets the "exchange_id" field.
-func (m *ExchangeSecretMutation) SetExchangeID(u uuid.UUID) {
-	m.exchange = &u
-}
-
-// ExchangeID returns the value of the "exchange_id" field in the mutation.
-func (m *ExchangeSecretMutation) ExchangeID() (r uuid.UUID, exists bool) {
-	v := m.exchange
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldExchangeID returns the old "exchange_id" field's value of the ExchangeSecret entity.
-// If the ExchangeSecret object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeSecretMutation) OldExchangeID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldExchangeID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldExchangeID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldExchangeID: %w", err)
-	}
-	return oldValue.ExchangeID, nil
-}
-
-// ResetExchangeID resets all changes to the "exchange_id" field.
-func (m *ExchangeSecretMutation) ResetExchangeID() {
-	m.exchange = nil
-}
-
-// SetName sets the "name" field.
-func (m *ExchangeSecretMutation) SetName(s string) {
-	m.name = &s
-}
-
-// Name returns the value of the "name" field in the mutation.
-func (m *ExchangeSecretMutation) Name() (r string, exists bool) {
-	v := m.name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldName returns the old "name" field's value of the ExchangeSecret entity.
-// If the ExchangeSecret object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeSecretMutation) OldName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
-	}
-	return oldValue.Name, nil
-}
-
-// ResetName resets all changes to the "name" field.
-func (m *ExchangeSecretMutation) ResetName() {
-	m.name = nil
-}
-
-// SetValue sets the "value" field.
-func (m *ExchangeSecretMutation) SetValue(s string) {
-	m.value = &s
-}
-
-// Value returns the value of the "value" field in the mutation.
-func (m *ExchangeSecretMutation) Value() (r string, exists bool) {
-	v := m.value
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldValue returns the old "value" field's value of the ExchangeSecret entity.
-// If the ExchangeSecret object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeSecretMutation) OldValue(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldValue is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldValue requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldValue: %w", err)
-	}
-	return oldValue.Value, nil
-}
-
-// ResetValue resets all changes to the "value" field.
-func (m *ExchangeSecretMutation) ResetValue() {
-	m.value = nil
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (m *ExchangeSecretMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *ExchangeSecretMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the ExchangeSecret entity.
-// If the ExchangeSecret object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeSecretMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *ExchangeSecretMutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *ExchangeSecretMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *ExchangeSecretMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the ExchangeSecret entity.
-// If the ExchangeSecret object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeSecretMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *ExchangeSecretMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// ClearExchange clears the "exchange" edge to the Exchange entity.
-func (m *ExchangeSecretMutation) ClearExchange() {
-	m.clearedexchange = true
-	m.clearedFields[exchangesecret.FieldExchangeID] = struct{}{}
-}
-
-// ExchangeCleared reports if the "exchange" edge to the Exchange entity was cleared.
-func (m *ExchangeSecretMutation) ExchangeCleared() bool {
-	return m.clearedexchange
-}
-
-// ExchangeIDs returns the "exchange" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ExchangeID instead. It exists only for internal usage by the builders.
-func (m *ExchangeSecretMutation) ExchangeIDs() (ids []uuid.UUID) {
-	if id := m.exchange; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetExchange resets all changes to the "exchange" edge.
-func (m *ExchangeSecretMutation) ResetExchange() {
-	m.exchange = nil
-	m.clearedexchange = false
-}
-
-// Where appends a list predicates to the ExchangeSecretMutation builder.
-func (m *ExchangeSecretMutation) Where(ps ...predicate.ExchangeSecret) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the ExchangeSecretMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *ExchangeSecretMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.ExchangeSecret, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *ExchangeSecretMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *ExchangeSecretMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (ExchangeSecret).
-func (m *ExchangeSecretMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *ExchangeSecretMutation) Fields() []string {
-	fields := make([]string, 0, 5)
-	if m.exchange != nil {
-		fields = append(fields, exchangesecret.FieldExchangeID)
-	}
-	if m.name != nil {
-		fields = append(fields, exchangesecret.FieldName)
-	}
-	if m.value != nil {
-		fields = append(fields, exchangesecret.FieldValue)
-	}
-	if m.created_at != nil {
-		fields = append(fields, exchangesecret.FieldCreatedAt)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, exchangesecret.FieldUpdatedAt)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *ExchangeSecretMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case exchangesecret.FieldExchangeID:
-		return m.ExchangeID()
-	case exchangesecret.FieldName:
-		return m.Name()
-	case exchangesecret.FieldValue:
-		return m.Value()
-	case exchangesecret.FieldCreatedAt:
-		return m.CreatedAt()
-	case exchangesecret.FieldUpdatedAt:
-		return m.UpdatedAt()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *ExchangeSecretMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case exchangesecret.FieldExchangeID:
-		return m.OldExchangeID(ctx)
-	case exchangesecret.FieldName:
-		return m.OldName(ctx)
-	case exchangesecret.FieldValue:
-		return m.OldValue(ctx)
-	case exchangesecret.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case exchangesecret.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
-	}
-	return nil, fmt.Errorf("unknown ExchangeSecret field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *ExchangeSecretMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case exchangesecret.FieldExchangeID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetExchangeID(v)
-		return nil
-	case exchangesecret.FieldName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetName(v)
-		return nil
-	case exchangesecret.FieldValue:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetValue(v)
-		return nil
-	case exchangesecret.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	case exchangesecret.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
-		return nil
-	}
-	return fmt.Errorf("unknown ExchangeSecret field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *ExchangeSecretMutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *ExchangeSecretMutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *ExchangeSecretMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown ExchangeSecret numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *ExchangeSecretMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *ExchangeSecretMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *ExchangeSecretMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown ExchangeSecret nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *ExchangeSecretMutation) ResetField(name string) error {
-	switch name {
-	case exchangesecret.FieldExchangeID:
-		m.ResetExchangeID()
-		return nil
-	case exchangesecret.FieldName:
-		m.ResetName()
-		return nil
-	case exchangesecret.FieldValue:
-		m.ResetValue()
-		return nil
-	case exchangesecret.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	case exchangesecret.FieldUpdatedAt:
-		m.ResetUpdatedAt()
-		return nil
-	}
-	return fmt.Errorf("unknown ExchangeSecret field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *ExchangeSecretMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.exchange != nil {
-		edges = append(edges, exchangesecret.EdgeExchange)
-	}
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *ExchangeSecretMutation) AddedIDs(name string) []ent.Value {
-	switch name {
-	case exchangesecret.EdgeExchange:
-		if id := m.exchange; id != nil {
-			return []ent.Value{*id}
-		}
-	}
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *ExchangeSecretMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *ExchangeSecretMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *ExchangeSecretMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.clearedexchange {
-		edges = append(edges, exchangesecret.EdgeExchange)
-	}
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *ExchangeSecretMutation) EdgeCleared(name string) bool {
-	switch name {
-	case exchangesecret.EdgeExchange:
-		return m.clearedexchange
-	}
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *ExchangeSecretMutation) ClearEdge(name string) error {
-	switch name {
-	case exchangesecret.EdgeExchange:
-		m.ClearExchange()
-		return nil
-	}
-	return fmt.Errorf("unknown ExchangeSecret unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *ExchangeSecretMutation) ResetEdge(name string) error {
-	switch name {
-	case exchangesecret.EdgeExchange:
-		m.ResetExchange()
-		return nil
-	}
-	return fmt.Errorf("unknown ExchangeSecret edge %s", name)
 }
 
 // StrategyMutation represents an operation that mutates the Strategy nodes in the graph.
@@ -4414,6 +3727,7 @@ type StrategyMutation struct {
 	description      *string
 	code             *string
 	version          *string
+	_config          *map[string]interface{}
 	created_at       *time.Time
 	updated_at       *time.Time
 	clearedFields    map[string]struct{}
@@ -4689,6 +4003,55 @@ func (m *StrategyMutation) ResetVersion() {
 	m.version = nil
 }
 
+// SetConfig sets the "config" field.
+func (m *StrategyMutation) SetConfig(value map[string]interface{}) {
+	m._config = &value
+}
+
+// Config returns the value of the "config" field in the mutation.
+func (m *StrategyMutation) Config() (r map[string]interface{}, exists bool) {
+	v := m._config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfig returns the old "config" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldConfig(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfig: %w", err)
+	}
+	return oldValue.Config, nil
+}
+
+// ClearConfig clears the value of the "config" field.
+func (m *StrategyMutation) ClearConfig() {
+	m._config = nil
+	m.clearedFields[strategy.FieldConfig] = struct{}{}
+}
+
+// ConfigCleared returns if the "config" field was cleared in this mutation.
+func (m *StrategyMutation) ConfigCleared() bool {
+	_, ok := m.clearedFields[strategy.FieldConfig]
+	return ok
+}
+
+// ResetConfig resets all changes to the "config" field.
+func (m *StrategyMutation) ResetConfig() {
+	m._config = nil
+	delete(m.clearedFields, strategy.FieldConfig)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *StrategyMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -4903,7 +4266,7 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, strategy.FieldName)
 	}
@@ -4915,6 +4278,9 @@ func (m *StrategyMutation) Fields() []string {
 	}
 	if m.version != nil {
 		fields = append(fields, strategy.FieldVersion)
+	}
+	if m._config != nil {
+		fields = append(fields, strategy.FieldConfig)
 	}
 	if m.created_at != nil {
 		fields = append(fields, strategy.FieldCreatedAt)
@@ -4938,6 +4304,8 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 		return m.Code()
 	case strategy.FieldVersion:
 		return m.Version()
+	case strategy.FieldConfig:
+		return m.Config()
 	case strategy.FieldCreatedAt:
 		return m.CreatedAt()
 	case strategy.FieldUpdatedAt:
@@ -4959,6 +4327,8 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldCode(ctx)
 	case strategy.FieldVersion:
 		return m.OldVersion(ctx)
+	case strategy.FieldConfig:
+		return m.OldConfig(ctx)
 	case strategy.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case strategy.FieldUpdatedAt:
@@ -4999,6 +4369,13 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVersion(v)
+		return nil
+	case strategy.FieldConfig:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfig(v)
 		return nil
 	case strategy.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -5047,6 +4424,9 @@ func (m *StrategyMutation) ClearedFields() []string {
 	if m.FieldCleared(strategy.FieldDescription) {
 		fields = append(fields, strategy.FieldDescription)
 	}
+	if m.FieldCleared(strategy.FieldConfig) {
+		fields = append(fields, strategy.FieldConfig)
+	}
 	return fields
 }
 
@@ -5063,6 +4443,9 @@ func (m *StrategyMutation) ClearField(name string) error {
 	switch name {
 	case strategy.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case strategy.FieldConfig:
+		m.ClearConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown Strategy nullable field %s", name)
@@ -5083,6 +4466,9 @@ func (m *StrategyMutation) ResetField(name string) error {
 		return nil
 	case strategy.FieldVersion:
 		m.ResetVersion()
+		return nil
+	case strategy.FieldConfig:
+		m.ResetConfig()
 		return nil
 	case strategy.FieldCreatedAt:
 		m.ResetCreatedAt()
