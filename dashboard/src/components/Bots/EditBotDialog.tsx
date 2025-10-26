@@ -53,7 +53,7 @@ interface EditBotDialogProps {
     id: string;
     name: string;
     mode: string;
-    config?: any;
+    config?: object;
     exchange: { id: string; name: string };
     strategy: { id: string; name: string };
     runner: { id: string; name: string };
@@ -87,7 +87,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
     }
 
     try {
-      await updateBot({
+      const result = await updateBot({
         variables: {
           id: bot.id,
           input: {
@@ -101,10 +101,15 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
         },
       });
 
-      onSuccess();
-      onClose();
+      // Only close if mutation was successful
+      if (result.data?.updateBot) {
+        onSuccess();
+        onClose();
+      }
+      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to update bot:', err);
+      // Error will be displayed via the error state from the mutation hook
     }
   };
 
@@ -146,7 +151,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
               onChange={(e) => setExchangeID(e.target.value)}
               label="Exchange"
             >
-              {exchanges.map((exchange: any) => (
+              {exchanges.map((exchange) => (
                 <MenuItem key={exchange.id} value={exchange.id}>
                   {exchange.name}
                 </MenuItem>
@@ -166,7 +171,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
               onChange={(e) => setStrategyID(e.target.value)}
               label="Strategy"
             >
-              {strategies.map((strategy: any) => (
+              {strategies.map((strategy) => (
                 <MenuItem key={strategy.id} value={strategy.id}>
                   {strategy.name}
                 </MenuItem>
@@ -186,7 +191,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
               onChange={(e) => setRunnerID(e.target.value)}
               label="Runner"
             >
-              {runners.map((runner: any) => (
+              {runners.map((runner) => (
                 <MenuItem key={runner.id} value={runner.id}>
                   {runner.name} ({runner.type})
                 </MenuItem>
@@ -199,14 +204,15 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
             )}
           </FormControl>
 
-          <JSONEditor
-            value={config}
-            onChange={setConfig}
-            label="Bot Configuration (JSON)"
-            helperText="Optional: Configure bot-specific Freqtrade settings like dry_run_wallet, timeframe, etc."
-            height="200px"
-            placeholder='{\n  "dry_run_wallet": 1000,\n  "stake_amount": "unlimited",\n  "unfilledtimeout": {\n    "entry": 10,\n    "exit": 30\n  }\n}'
-          />
+          <Box>
+            <JSONEditor
+              value={config}
+              onChange={setConfig}
+              label="Freqtrade Bot Configuration"
+              helperText="Complete freqtrade bot config. Required fields: stake_currency, stake_amount, exit_pricing, entry_pricing. This will be written to config.bot.json and merged with exchange and strategy configs."
+              height="400px"
+            />
+          </Box>
 
           {error && (
             <FormHelperText error>

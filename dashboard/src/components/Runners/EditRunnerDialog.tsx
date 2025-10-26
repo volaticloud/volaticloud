@@ -66,7 +66,7 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
       : { local: localConfig };
 
     try {
-      await updateRunner({
+      const result = await updateRunner({
         variables: {
           id: runner.id,
           input: {
@@ -77,10 +77,15 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
         },
       });
 
-      onSuccess();
-      onClose();
+      // Only close if mutation was successful
+      if (result.data?.updateBotRunner) {
+        onSuccess();
+        onClose();
+      }
+      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to update runner:', err);
+      // Error will be displayed via the error state from the mutation hook
     }
   };
 

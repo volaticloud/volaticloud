@@ -33,7 +33,7 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
     }
 
     try {
-      await createStrategy({
+      const result = await createStrategy({
         variables: {
           input: {
             name,
@@ -45,17 +45,22 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
         },
       });
 
-      // Reset form
-      setName('');
-      setDescription('');
-      setCode('');
-      setVersion('');
-      setConfig(null);
+      // Only close and reset if mutation was successful
+      if (result.data?.createStrategy) {
+        // Reset form
+        setName('');
+        setDescription('');
+        setCode('');
+        setVersion('');
+        setConfig(null);
 
-      onSuccess();
-      onClose();
+        onSuccess();
+        onClose();
+      }
+      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to create strategy:', err);
+      // Error will be displayed via the error state from the mutation hook
     }
   };
 

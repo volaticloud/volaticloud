@@ -55,7 +55,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
       : { local: localConfig };
 
     try {
-      await createRunner({
+      const result = await createRunner({
         variables: {
           input: {
             name,
@@ -65,17 +65,22 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         },
       });
 
-      // Reset form
-      setName('');
-      setType('docker');
-      setDockerConfig({ host: 'unix:///var/run/docker.sock' });
-      setKubernetesConfig({});
-      setLocalConfig({});
+      // Only close and reset if mutation was successful
+      if (result.data?.createBotRunner) {
+        // Reset form
+        setName('');
+        setType('docker');
+        setDockerConfig({ host: 'unix:///var/run/docker.sock' });
+        setKubernetesConfig({});
+        setLocalConfig({});
 
-      onSuccess();
-      onClose();
+        onSuccess();
+        onClose();
+      }
+      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to create runner:', err);
+      // Error will be displayed via the error state from the mutation hook
     }
   };
 

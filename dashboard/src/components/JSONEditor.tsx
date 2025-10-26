@@ -34,7 +34,7 @@ export const JSONEditor: React.FC<JSONEditorProps> = ({
       } else {
         setTextValue('');
       }
-    } catch (err) {
+    } catch {
       setTextValue('');
     }
   }, [value]);

@@ -22,7 +22,7 @@ interface EditStrategyDialogProps {
     description?: string | null;
     code: string;
     version: string;
-    config?: any;
+    config?: object;
   };
 }
 
@@ -52,7 +52,7 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
     }
 
     try {
-      await updateStrategy({
+      const result = await updateStrategy({
         variables: {
           id: strategy.id,
           input: {
@@ -65,10 +65,15 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
         },
       });
 
-      onSuccess();
-      onClose();
+      // Only close if mutation was successful
+      if (result.data?.updateStrategy) {
+        onSuccess();
+        onClose();
+      }
+      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to update strategy:', err);
+      // Error will be displayed via the error state from the mutation hook
     }
   };
 

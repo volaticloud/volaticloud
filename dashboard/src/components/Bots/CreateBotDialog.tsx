@@ -57,7 +57,52 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
   const [strategyID, setStrategyID] = useState('');
   const [runnerID, setRunnerID] = useState('');
   const [mode, setMode] = useState<'live' | 'dry_run'>('dry_run');
-  const [config, setConfig] = useState<object | null>(null);
+  const [config, setConfig] = useState<object | null>({
+    stake_currency: 'USDT',
+    stake_amount: 10,
+    dry_run_wallet: 1000,
+    timeframe: '5m',
+    max_open_trades: 3,
+    unfilledtimeout: {
+      entry: 10,
+      exit: 30,
+    },
+    exit_pricing: {
+      price_side: 'other',
+      use_order_book: true,
+      order_book_top: 1,
+      price_last_balance: 0.0,
+    },
+    entry_pricing: {
+      price_side: 'other',
+      use_order_book: true,
+      order_book_top: 1,
+      price_last_balance: 0.0,
+      check_depth_of_market: {
+        enabled: false,
+        bids_to_ask_delta: 1,
+      },
+    },
+    order_types: {
+      entry: 'limit',
+      exit: 'limit',
+      stoploss: 'market',
+      stoploss_on_exchange: false,
+      stoploss_on_exchange_interval: 60,
+    },
+    order_time_in_force: {
+      entry: 'GTC',
+      exit: 'GTC',
+    },
+    pairlists: [
+      {
+        method: 'StaticPairList',
+      },
+    ],
+    exchange: {
+      pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
+    },
+  });
 
   const { data: optionsData } = useQuery(GET_BOT_OPTIONS);
   const [createBot, { loading, error }] = useCreateBotMutation();
@@ -68,7 +113,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
     }
 
     try {
-      await createBot({
+      const result = await createBot({
         variables: {
           input: {
             name,
@@ -82,18 +127,23 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
         },
       });
 
-      // Reset form
-      setName('');
-      setExchangeID('');
-      setStrategyID('');
-      setRunnerID('');
-      setMode('dry_run');
-      setConfig(null);
+      // Only close and reset if mutation was successful
+      if (result.data?.createBot) {
+        // Reset form
+        setName('');
+        setExchangeID('');
+        setStrategyID('');
+        setRunnerID('');
+        setMode('dry_run');
+        setConfig(null);
 
-      onSuccess();
-      onClose();
+        onSuccess();
+        onClose();
+      }
+      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to create bot:', err);
+      // Error will be displayed via the error state from the mutation hook
     }
   };
 
@@ -135,7 +185,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
               onChange={(e) => setExchangeID(e.target.value)}
               label="Exchange"
             >
-              {exchanges.map((exchange: any) => (
+              {exchanges.map((exchange) => (
                 <MenuItem key={exchange.id} value={exchange.id}>
                   {exchange.name}
                 </MenuItem>
@@ -155,7 +205,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
               onChange={(e) => setStrategyID(e.target.value)}
               label="Strategy"
             >
-              {strategies.map((strategy: any) => (
+              {strategies.map((strategy) => (
                 <MenuItem key={strategy.id} value={strategy.id}>
                   {strategy.name}
                 </MenuItem>
@@ -175,7 +225,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
               onChange={(e) => setRunnerID(e.target.value)}
               label="Runner"
             >
-              {runners.map((runner: any) => (
+              {runners.map((runner) => (
                 <MenuItem key={runner.id} value={runner.id}>
                   {runner.name} ({runner.type})
                 </MenuItem>
@@ -188,14 +238,15 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             )}
           </FormControl>
 
-          <JSONEditor
-            value={config}
-            onChange={setConfig}
-            label="Bot Configuration (JSON)"
-            helperText="Optional: Configure bot-specific Freqtrade settings like dry_run_wallet, timeframe, etc."
-            height="200px"
-            placeholder='{\n  "dry_run_wallet": 1000,\n  "stake_amount": "unlimited",\n  "unfilledtimeout": {\n    "entry": 10,\n    "exit": 30\n  }\n}'
-          />
+          <Box>
+            <JSONEditor
+              value={config}
+              onChange={setConfig}
+              label="Freqtrade Bot Configuration"
+              helperText="Complete freqtrade bot config. Required fields: stake_currency, stake_amount, exit_pricing, entry_pricing. This will be written to config.bot.json and merged with exchange and strategy configs."
+              height="400px"
+            />
+          </Box>
 
           {error && (
             <FormHelperText error>
