@@ -2,6 +2,13 @@
 
 AnyTrade is a control-plane platform for managing freqtrade trading bots. It provides centralized management of bot lifecycles, strategies, exchanges, backtesting, and hyperparameter optimization.
 
+## CI/CD Status
+
+[![Backend CI](https://github.com/diazoxide/anytrade/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/diazoxide/anytrade/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/frontend-ci.yml)
+[![Security Scanning](https://github.com/diazoxide/anytrade/actions/workflows/security.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/security.yml)
+[![Code Quality](https://github.com/diazoxide/anytrade/actions/workflows/quality.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/quality.yml)
+
 ## Features
 
 - 🤖 **Bot Management** - Create, start, stop, and monitor multiple freqtrade bots

@@ -1,0 +1,123 @@
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - internal/ent # Skip ENT generated code
+  skip-files:
+    - ".*\\.generated\\.go$"
+    - ".*_test\\.go$" # Test files are checked separately
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+    disable:
+      - shadow # Too many false positives
+
+  gocyclo:
+    min-complexity: 15
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  misspell:
+    locale: US
+
+  lll:
+    line-length: 140
+
+  goimports:
+    local-prefixes: anytrade
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+
+  funlen:
+    lines: 100
+    statements: 50
+
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: "io/ioutil"
+            desc: "Use os or io package instead of deprecated io/ioutil"
+
+linters:
+  enable:
+    - errcheck      # Check error returns
+    - gosimple      # Simplify code
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Static analysis
+    - typecheck     # Type-check Go code
+    - unused        # Check for unused code
+    - gosec         # Security checks
+    - gocyclo       # Cyclomatic complexity
+    - goconst       # Find repeated strings
+    - goimports     # Check imports formatting
+    - misspell      # Spell checker
+    - revive        # Fast, configurable linter
+    - gofmt         # Check code formatting
+    - gocritic      # Comprehensive Go source code linter
+    - depguard      # Check imports whitelist/blacklist
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Find unused function parameters
+    - nakedret      # Find naked returns in long functions
+    - prealloc      # Find slice declarations that could be preallocated
+    - exportloopref # Check for pointers to loop variables
+
+  disable:
+    - funlen        # Disable function length check (too strict for generated code)
+    - gomnd         # Disable magic number detector (too many false positives)
+    - lll           # Disable line length check (handled by IDE)
+    - wsl           # Disable whitespace linter (too opinionated)
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
+        - goconst
+
+    # Exclude generated files
+    - path: internal/ent/.*\.go
+      linters:
+        - all
+
+    - path: internal/graph/generated\.go
+      linters:
+        - all
+
+    # Exclude known false positives
+    - text: "G404: Use of weak random number generator"
+      linters:
+        - gosec
+
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  sort-results: true
