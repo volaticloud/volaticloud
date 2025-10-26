@@ -12,18 +12,10 @@ func ValidateConfig(runnerType enum.RunnerType, configData map[string]interface{
 		return fmt.Errorf("config cannot be nil")
 	}
 
-	// Extract the inner config based on runner type
-	// Config structure is: {"docker": {...}} or {"kubernetes": {...}} or {"local": {...}}
-	var innerConfig map[string]interface{}
-	var ok bool
-
 	switch runnerType {
 	case enum.RunnerDocker:
-		innerConfig, ok = configData["docker"].(map[string]interface{})
-		if !ok || innerConfig == nil {
-			return fmt.Errorf("docker config not found or invalid")
-		}
-		_, err := ParseDockerConfig(innerConfig)
+		// Config is passed directly, not nested
+		_, err := ParseDockerConfig(configData)
 		return err
 
 	case enum.RunnerKubernetes:
