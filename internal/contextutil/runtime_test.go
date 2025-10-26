@@ -111,14 +111,14 @@ func TestMockRuntime(t *testing.T) {
 func TestRuntimeTypes(t *testing.T) {
 	t.Run("DockerRuntime", func(t *testing.T) {
 		// Just verify the enum values are correct
-		assert.Equal(t, "docker", string(enum.RuntimeDocker))
+		assert.Equal(t, "docker", string(enum.RunnerDocker))
 	})
 
 	t.Run("KubernetesRuntime", func(t *testing.T) {
-		assert.Equal(t, "kubernetes", string(enum.RuntimeKubernetes))
+		assert.Equal(t, "kubernetes", string(enum.RunnerKubernetes))
 	})
 
 	t.Run("LocalRuntime", func(t *testing.T) {
-		assert.Equal(t, "local", string(enum.RuntimeLocal))
+		assert.Equal(t, "local", string(enum.RunnerLocal))
 	})
 }

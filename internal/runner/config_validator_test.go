@@ -14,7 +14,7 @@ func TestValidateConfig(t *testing.T) {
 			"host": "unix:///var/run/docker.sock",
 		}
 
-		err := ValidateConfig(enum.RuntimeDocker, configData)
+		err := ValidateConfig(enum.RunnerDocker, configData)
 		assert.NoError(t, err)
 	})
 
@@ -23,7 +23,7 @@ func TestValidateConfig(t *testing.T) {
 			"network": "bridge", // Missing required 'host'
 		}
 
-		err := ValidateConfig(enum.RuntimeDocker, configData)
+		err := ValidateConfig(enum.RunnerDocker, configData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "host is required")
 	})
@@ -33,7 +33,7 @@ func TestValidateConfig(t *testing.T) {
 			"namespace": "default",
 		}
 
-		err := ValidateConfig(enum.RuntimeKubernetes, configData)
+		err := ValidateConfig(enum.RunnerKubernetes, configData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not yet supported")
 	})
@@ -43,13 +43,13 @@ func TestValidateConfig(t *testing.T) {
 			"work_dir": "/tmp",
 		}
 
-		err := ValidateConfig(enum.RuntimeLocal, configData)
+		err := ValidateConfig(enum.RunnerLocal, configData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not yet supported")
 	})
 
 	t.Run("NilConfig", func(t *testing.T) {
-		err := ValidateConfig(enum.RuntimeDocker, nil)
+		err := ValidateConfig(enum.RunnerDocker, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "config cannot be nil")
 	})
@@ -59,8 +59,8 @@ func TestValidateConfig(t *testing.T) {
 			"host": "test",
 		}
 
-		err := ValidateConfig(enum.RuntimeType("invalid"), configData)
+		err := ValidateConfig(enum.RunnerType("invalid"), configData)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "unsupported runtime type")
+		assert.Contains(t, err.Error(), "unsupported runner type")
 	})
 }

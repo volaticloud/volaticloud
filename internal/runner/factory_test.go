@@ -20,7 +20,7 @@ func TestFactory(t *testing.T) {
 		}
 
 		// Note: This will fail if Docker is not running, which is expected
-		rt, err := factory.Create(ctx, enum.RuntimeDocker, config)
+		rt, err := factory.Create(ctx, enum.RunnerDocker, config)
 
 		// We expect either success (if Docker is available) or a connection error
 		if err != nil {
@@ -38,7 +38,7 @@ func TestFactory(t *testing.T) {
 			"network": "bridge", // Missing required 'host'
 		}
 
-		rt, err := factory.Create(ctx, enum.RuntimeDocker, config)
+		rt, err := factory.Create(ctx, enum.RunnerDocker, config)
 
 		assert.Error(t, err)
 		assert.Nil(t, rt)
@@ -50,7 +50,7 @@ func TestFactory(t *testing.T) {
 			"namespace": "default",
 		}
 
-		rt, err := factory.Create(ctx, enum.RuntimeKubernetes, config)
+		rt, err := factory.Create(ctx, enum.RunnerKubernetes, config)
 
 		require.NoError(t, err)
 		require.NotNil(t, rt)
@@ -67,7 +67,7 @@ func TestFactory(t *testing.T) {
 			"work_dir": "/tmp",
 		}
 
-		rt, err := factory.Create(ctx, enum.RuntimeLocal, config)
+		rt, err := factory.Create(ctx, enum.RunnerLocal, config)
 
 		require.NoError(t, err)
 		require.NotNil(t, rt)
@@ -82,11 +82,11 @@ func TestFactory(t *testing.T) {
 	t.Run("CreateRuntime_UnsupportedType", func(t *testing.T) {
 		config := map[string]interface{}{}
 
-		rt, err := factory.Create(ctx, enum.RuntimeType("invalid"), config)
+		rt, err := factory.Create(ctx, enum.RunnerType("invalid"), config)
 
 		assert.Error(t, err)
 		assert.Nil(t, rt)
-		assert.Contains(t, err.Error(), "unsupported runtime type")
+		assert.Contains(t, err.Error(), "unsupported runner type")
 	})
 }
 

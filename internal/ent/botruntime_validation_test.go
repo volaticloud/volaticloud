@@ -25,16 +25,16 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"host": "unix:///var/run/docker.sock",
 		}
 
-		runtime, err := client.BotRuntime.Create().
+		runtime, err := client.BotRunner.Create().
 			SetName("Docker Valid").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(validConfig).
 			Save(ctx)
 
 		require.NoError(t, err)
 		assert.NotNil(t, runtime)
 		assert.Equal(t, "Docker Valid", runtime.Name)
-		assert.Equal(t, enum.RuntimeDocker, runtime.Type)
+		assert.Equal(t, enum.RunnerDocker, runtime.Type)
 	})
 
 	t.Run("CreateWithInvalidDockerConfig", func(t *testing.T) {
@@ -43,14 +43,14 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"network": "bridge",
 		}
 
-		_, err := client.BotRuntime.Create().
+		_, err := client.BotRunner.Create().
 			SetName("Docker Invalid").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(invalidConfig).
 			Save(ctx)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid runtime config")
+		assert.Contains(t, err.Error(), "invalid runner config")
 		assert.Contains(t, err.Error(), "host is required")
 	})
 
@@ -64,9 +64,9 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"ca_path":    "/certs/ca.pem",
 		}
 
-		runtime, err := client.BotRuntime.Create().
+		runtime, err := client.BotRunner.Create().
 			SetName("Docker TLS").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(validTLSConfig).
 			Save(ctx)
 
@@ -82,14 +82,14 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"tls_verify": true,
 		}
 
-		_, err := client.BotRuntime.Create().
+		_, err := client.BotRunner.Create().
 			SetName("Docker Invalid TLS").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(invalidTLSConfig).
 			Save(ctx)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid runtime config")
+		assert.Contains(t, err.Error(), "invalid runner config")
 		assert.Contains(t, err.Error(), "cert_path is required")
 	})
 
@@ -99,14 +99,14 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"namespace": "default",
 		}
 
-		_, err := client.BotRuntime.Create().
+		_, err := client.BotRunner.Create().
 			SetName("K8s Runtime").
-			SetType(enum.RuntimeKubernetes).
+			SetType(enum.RunnerKubernetes).
 			SetConfig(k8sConfig).
 			Save(ctx)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid runtime config")
+		assert.Contains(t, err.Error(), "invalid runner config")
 		assert.Contains(t, err.Error(), "not yet supported")
 	})
 
@@ -116,22 +116,22 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"work_dir": "/tmp",
 		}
 
-		_, err := client.BotRuntime.Create().
+		_, err := client.BotRunner.Create().
 			SetName("Local Runtime").
-			SetType(enum.RuntimeLocal).
+			SetType(enum.RunnerLocal).
 			SetConfig(localConfig).
 			Save(ctx)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid runtime config")
+		assert.Contains(t, err.Error(), "invalid runner config")
 		assert.Contains(t, err.Error(), "not yet supported")
 	})
 
 	t.Run("CreateWithoutConfig", func(t *testing.T) {
 		// Creating without config should succeed (config is optional)
-		runtime, err := client.BotRuntime.Create().
+		runtime, err := client.BotRunner.Create().
 			SetName("Docker No Config").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			Save(ctx)
 
 		require.NoError(t, err)
@@ -141,9 +141,9 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 
 	t.Run("UpdateWithValidDockerConfig", func(t *testing.T) {
 		// Create runtime without config
-		runtime, err := client.BotRuntime.Create().
+		runtime, err := client.BotRunner.Create().
 			SetName("Docker Update Test").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			Save(ctx)
 		require.NoError(t, err)
 
@@ -153,7 +153,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"network": "custom_network",
 		}
 
-		updated, err := client.BotRuntime.UpdateOne(runtime).
+		updated, err := client.BotRunner.UpdateOne(runtime).
 			SetConfig(validConfig).
 			Save(ctx)
 
@@ -166,9 +166,9 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		validConfig := map[string]interface{}{
 			"host": "unix:///var/run/docker.sock",
 		}
-		runtime, err := client.BotRuntime.Create().
+		runtime, err := client.BotRunner.Create().
 			SetName("Docker Update Invalid").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(validConfig).
 			Save(ctx)
 		require.NoError(t, err)
@@ -183,13 +183,13 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			"network": "bridge",
 		}
 
-		_, err = client.BotRuntime.UpdateOne(runtime).
-			SetType(enum.RuntimeDocker). // Include type in the mutation
+		_, err = client.BotRunner.UpdateOne(runtime).
+			SetType(enum.RunnerDocker). // Include type in the mutation
 			SetConfig(invalidConfig).
 			Save(ctx)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid runtime config")
+		assert.Contains(t, err.Error(), "invalid runner config")
 		assert.Contains(t, err.Error(), "host is required")
 	})
 
@@ -204,9 +204,9 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			},
 		}
 
-		runtime, err := client.BotRuntime.Create().
+		runtime, err := client.BotRunner.Create().
 			SetName("Docker with Registry Auth").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(configWithAuth).
 			Save(ctx)
 
@@ -225,14 +225,14 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 			},
 		}
 
-		_, err := client.BotRuntime.Create().
+		_, err := client.BotRunner.Create().
 			SetName("Docker Invalid Auth").
-			SetType(enum.RuntimeDocker).
+			SetType(enum.RunnerDocker).
 			SetConfig(invalidAuthConfig).
 			Save(ctx)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid runtime config")
+		assert.Contains(t, err.Error(), "invalid runner config")
 		assert.Contains(t, err.Error(), "password is required")
 	})
 }
