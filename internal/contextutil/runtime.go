@@ -14,11 +14,11 @@ const (
 	runtimeKey contextKey = "runtime"
 )
 
-// InitRuntime initializes a runtime from a BotRuntime entity and stores it in context
+// InitRuntime initializes a runtime from a BotRunner entity and stores it in context
 // Returns the updated context and any error
-func InitRuntime(ctx context.Context, botRuntime *ent.BotRuntime) (context.Context, error) {
+func InitRuntime(ctx context.Context, botRuntime *ent.BotRunner) (context.Context, error) {
 	if botRuntime == nil {
-		return ctx, fmt.Errorf("botRuntime cannot be nil")
+		return ctx, fmt.Errorf("botRunner cannot be nil")
 	}
 
 	// Create factory
