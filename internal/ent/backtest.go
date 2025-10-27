@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/backtest"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
 	"encoding/json"
@@ -27,8 +28,14 @@ type Backtest struct {
 	Config map[string]interface{} `json:"config,omitempty"`
 	// Backtest result data (metrics, logs, trades, etc.)
 	Result map[string]interface{} `json:"result,omitempty"`
+	// Docker container ID for running backtest
+	ContainerID string `json:"container_id,omitempty"`
+	// Error message if backtest failed
+	ErrorMessage string `json:"error_message,omitempty"`
 	// Foreign key to strategy
 	StrategyID uuid.UUID `json:"strategy_id,omitempty"`
+	// Foreign key to runner
+	RunnerID uuid.UUID `json:"runner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -45,11 +52,13 @@ type Backtest struct {
 type BacktestEdges struct {
 	// Strategy holds the value of the strategy edge.
 	Strategy *Strategy `json:"strategy,omitempty"`
+	// Runner holds the value of the runner edge.
+	Runner *BotRunner `json:"runner,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 	// totalCount holds the count of the edges above.
-	totalCount [1]map[string]int
+	totalCount [2]map[string]int
 }
 
 // StrategyOrErr returns the Strategy value or an error if the edge
@@ -63,6 +72,17 @@ func (e BacktestEdges) StrategyOrErr() (*Strategy, error) {
 	return nil, &NotLoadedError{edge: "strategy"}
 }
 
+// RunnerOrErr returns the Runner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e BacktestEdges) RunnerOrErr() (*BotRunner, error) {
+	if e.Runner != nil {
+		return e.Runner, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: botrunner.Label}
+	}
+	return nil, &NotLoadedError{edge: "runner"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Backtest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -70,11 +90,11 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case backtest.FieldConfig, backtest.FieldResult:
 			values[i] = new([]byte)
-		case backtest.FieldStatus:
+		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage:
 			values[i] = new(sql.NullString)
 		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
-		case backtest.FieldID, backtest.FieldStrategyID:
+		case backtest.FieldID, backtest.FieldStrategyID, backtest.FieldRunnerID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -119,11 +139,29 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field result: %w", err)
 				}
 			}
+		case backtest.FieldContainerID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field container_id", values[i])
+			} else if value.Valid {
+				_m.ContainerID = value.String
+			}
+		case backtest.FieldErrorMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error_message", values[i])
+			} else if value.Valid {
+				_m.ErrorMessage = value.String
+			}
 		case backtest.FieldStrategyID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field strategy_id", values[i])
 			} else if value != nil {
 				_m.StrategyID = *value
+			}
+		case backtest.FieldRunnerID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field runner_id", values[i])
+			} else if value != nil {
+				_m.RunnerID = *value
 			}
 		case backtest.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -161,6 +199,11 @@ func (_m *Backtest) QueryStrategy() *StrategyQuery {
 	return NewBacktestClient(_m.config).QueryStrategy(_m)
 }
 
+// QueryRunner queries the "runner" edge of the Backtest entity.
+func (_m *Backtest) QueryRunner() *BotRunnerQuery {
+	return NewBacktestClient(_m.config).QueryRunner(_m)
+}
+
 // Update returns a builder for updating this Backtest.
 // Note that you need to call Backtest.Unwrap() before calling this method if this Backtest
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -193,8 +236,17 @@ func (_m *Backtest) String() string {
 	builder.WriteString("result=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Result))
 	builder.WriteString(", ")
+	builder.WriteString("container_id=")
+	builder.WriteString(_m.ContainerID)
+	builder.WriteString(", ")
+	builder.WriteString("error_message=")
+	builder.WriteString(_m.ErrorMessage)
+	builder.WriteString(", ")
 	builder.WriteString("strategy_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StrategyID))
+	builder.WriteString(", ")
+	builder.WriteString("runner_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RunnerID))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

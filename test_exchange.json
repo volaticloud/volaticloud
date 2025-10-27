@@ -1,0 +1,14 @@
+{
+  "query": "mutation CreateTestExchange($input: CreateExchangeInput!) { createExchange(input: $input) { id name } }",
+  "variables": {
+    "input": {
+      "name": "binance",
+      "config": {
+        "binance": {
+          "apiKey": "test_api_key",
+          "apiSecret": "test_api_secret"
+        }
+      }
+    }
+  }
+}

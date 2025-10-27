@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
@@ -21,14 +22,16 @@ import (
 // BotRunnerQuery is the builder for querying BotRunner entities.
 type BotRunnerQuery struct {
 	config
-	ctx           *QueryContext
-	order         []botrunner.OrderOption
-	inters        []Interceptor
-	predicates    []predicate.BotRunner
-	withBots      *BotQuery
-	modifiers     []func(*sql.Selector)
-	loadTotal     []func(context.Context, []*BotRunner) error
-	withNamedBots map[string]*BotQuery
+	ctx                *QueryContext
+	order              []botrunner.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.BotRunner
+	withBots           *BotQuery
+	withBacktests      *BacktestQuery
+	modifiers          []func(*sql.Selector)
+	loadTotal          []func(context.Context, []*BotRunner) error
+	withNamedBots      map[string]*BotQuery
+	withNamedBacktests map[string]*BacktestQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -80,6 +83,28 @@ func (_q *BotRunnerQuery) QueryBots() *BotQuery {
 			sqlgraph.From(botrunner.Table, botrunner.FieldID, selector),
 			sqlgraph.To(bot.Table, bot.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.BotsTable, botrunner.BotsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBacktests chains the current query on the "backtests" edge.
+func (_q *BotRunnerQuery) QueryBacktests() *BacktestQuery {
+	query := (&BacktestClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, selector),
+			sqlgraph.To(backtest.Table, backtest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.BacktestsTable, botrunner.BacktestsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -274,12 +299,13 @@ func (_q *BotRunnerQuery) Clone() *BotRunnerQuery {
 		return nil
 	}
 	return &BotRunnerQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]botrunner.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.BotRunner{}, _q.predicates...),
-		withBots:   _q.withBots.Clone(),
+		config:        _q.config,
+		ctx:           _q.ctx.Clone(),
+		order:         append([]botrunner.OrderOption{}, _q.order...),
+		inters:        append([]Interceptor{}, _q.inters...),
+		predicates:    append([]predicate.BotRunner{}, _q.predicates...),
+		withBots:      _q.withBots.Clone(),
+		withBacktests: _q.withBacktests.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -294,6 +320,17 @@ func (_q *BotRunnerQuery) WithBots(opts ...func(*BotQuery)) *BotRunnerQuery {
 		opt(query)
 	}
 	_q.withBots = query
+	return _q
+}
+
+// WithBacktests tells the query-builder to eager-load the nodes that are connected to
+// the "backtests" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotRunnerQuery) WithBacktests(opts ...func(*BacktestQuery)) *BotRunnerQuery {
+	query := (&BacktestClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withBacktests = query
 	return _q
 }
 
@@ -375,8 +412,9 @@ func (_q *BotRunnerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bo
 	var (
 		nodes       = []*BotRunner{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withBots != nil,
+			_q.withBacktests != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -407,10 +445,24 @@ func (_q *BotRunnerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bo
 			return nil, err
 		}
 	}
+	if query := _q.withBacktests; query != nil {
+		if err := _q.loadBacktests(ctx, query, nodes,
+			func(n *BotRunner) { n.Edges.Backtests = []*Backtest{} },
+			func(n *BotRunner, e *Backtest) { n.Edges.Backtests = append(n.Edges.Backtests, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range _q.withNamedBots {
 		if err := _q.loadBots(ctx, query, nodes,
 			func(n *BotRunner) { n.appendNamedBots(name) },
 			func(n *BotRunner, e *Bot) { n.appendNamedBots(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range _q.withNamedBacktests {
+		if err := _q.loadBacktests(ctx, query, nodes,
+			func(n *BotRunner) { n.appendNamedBacktests(name) },
+			func(n *BotRunner, e *Backtest) { n.appendNamedBacktests(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -437,6 +489,36 @@ func (_q *BotRunnerQuery) loadBots(ctx context.Context, query *BotQuery, nodes [
 	}
 	query.Where(predicate.Bot(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(botrunner.BotsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.RunnerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "runner_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *BotRunnerQuery) loadBacktests(ctx context.Context, query *BacktestQuery, nodes []*BotRunner, init func(*BotRunner), assign func(*BotRunner, *Backtest)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*BotRunner)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(backtest.FieldRunnerID)
+	}
+	query.Where(predicate.Backtest(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(botrunner.BacktestsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -548,6 +630,20 @@ func (_q *BotRunnerQuery) WithNamedBots(name string, opts ...func(*BotQuery)) *B
 		_q.withNamedBots = make(map[string]*BotQuery)
 	}
 	_q.withNamedBots[name] = query
+	return _q
+}
+
+// WithNamedBacktests tells the query-builder to eager-load the nodes that are connected to the "backtests"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotRunnerQuery) WithNamedBacktests(name string, opts ...func(*BacktestQuery)) *BotRunnerQuery {
+	query := (&BacktestClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if _q.withNamedBacktests == nil {
+		_q.withNamedBacktests = make(map[string]*BacktestQuery)
+	}
+	_q.withNamedBacktests[name] = query
 	return _q
 }
 

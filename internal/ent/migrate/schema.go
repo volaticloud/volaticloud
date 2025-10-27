@@ -14,9 +14,12 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "result", Type: field.TypeJSON, Nullable: true},
+		{Name: "container_id", Type: field.TypeString, Nullable: true},
+		{Name: "error_message", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "runner_id", Type: field.TypeUUID},
 		{Name: "strategy_id", Type: field.TypeUUID},
 	}
 	// BacktestsTable holds the schema information for the "backtests" table.
@@ -26,8 +29,14 @@ var (
 		PrimaryKey: []*schema.Column{BacktestsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "backtests_bot_runners_backtests",
+				Columns:    []*schema.Column{BacktestsColumns[9]},
+				RefColumns: []*schema.Column{BotRunnersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
 				Symbol:     "backtests_strategies_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[7]},
+				Columns:    []*schema.Column{BacktestsColumns[10]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -40,12 +49,8 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
-		{Name: "runner_metadata", Type: field.TypeJSON, Nullable: true},
-		{Name: "api_url", Type: field.TypeString, Nullable: true},
-		{Name: "api_username", Type: field.TypeString, Nullable: true},
-		{Name: "api_password", Type: field.TypeString, Nullable: true},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
-		{Name: "freqtrade_version", Type: field.TypeString, Default: "2024.1"},
+		{Name: "freqtrade_version", Type: field.TypeString, Default: "stable"},
 		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
@@ -62,19 +67,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bots_bot_runners_bots",
-				Columns:    []*schema.Column{BotsColumns[15]},
+				Columns:    []*schema.Column{BotsColumns[11]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_exchanges_bots",
-				Columns:    []*schema.Column{BotsColumns[16]},
+				Columns:    []*schema.Column{BotsColumns[12]},
 				RefColumns: []*schema.Column{ExchangesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_strategies_bots",
-				Columns:    []*schema.Column{BotsColumns[17]},
+				Columns:    []*schema.Column{BotsColumns[13]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -98,8 +103,7 @@ var (
 	// ExchangesColumns holds the columns for the "exchanges" table.
 	ExchangesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "name", Type: field.TypeEnum, Enums: []string{"binance", "binanceus", "coinbase", "kraken", "kucoin", "bybit", "okx", "bitfinex"}},
-		{Name: "test_mode", Type: field.TypeBool, Default: false},
+		{Name: "name", Type: field.TypeString},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -191,7 +195,8 @@ var (
 )
 
 func init() {
-	BacktestsTable.ForeignKeys[0].RefTable = StrategiesTable
+	BacktestsTable.ForeignKeys[0].RefTable = BotRunnersTable
+	BacktestsTable.ForeignKeys[1].RefTable = StrategiesTable
 	BotsTable.ForeignKeys[0].RefTable = BotRunnersTable
 	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[2].RefTable = StrategiesTable

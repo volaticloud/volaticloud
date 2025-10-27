@@ -2,7 +2,6 @@ query GetExchanges {
   exchanges {
     id
     name
-    testMode
     createdAt
     updatedAt
     bots(first: 10) {
@@ -16,7 +15,6 @@ query GetExchange($id: ID!) {
     ... on Exchange {
       id
       name
-      testMode
       createdAt
       updatedAt
       bots(first: 50) {
@@ -37,7 +35,6 @@ mutation CreateExchange($input: CreateExchangeInput!) {
   createExchange(input: $input) {
     id
     name
-    testMode
   }
 }
 
@@ -45,7 +42,6 @@ mutation UpdateExchange($id: ID!, $input: UpdateExchangeInput!) {
   updateExchange(id: $id, input: $input) {
     id
     name
-    testMode
   }
 }
 

@@ -2,6 +2,21 @@
 
 package model
 
+type BinanceConfigInput struct {
+	APIKey    string `json:"apiKey"`
+	APISecret string `json:"apiSecret"`
+}
+
+type BitfinexConfigInput struct {
+	APIKey    string `json:"apiKey"`
+	APISecret string `json:"apiSecret"`
+}
+
+type BybitConfigInput struct {
+	APIKey    string `json:"apiKey"`
+	APISecret string `json:"apiSecret"`
+}
+
 type DockerConfigInput struct {
 	Host         string             `json:"host"`
 	TLSVerify    *bool              `json:"tlsVerify,omitempty"`
@@ -13,6 +28,22 @@ type DockerConfigInput struct {
 	RegistryAuth *RegistryAuthInput `json:"registryAuth,omitempty"`
 }
 
+type ExchangeConfigInput struct {
+	Binance   *BinanceConfigInput            `json:"binance,omitempty"`
+	Binanceus *BinanceConfigInput            `json:"binanceus,omitempty"`
+	Coinbase  *PassphraseExchangeConfigInput `json:"coinbase,omitempty"`
+	Kraken    *KrakenConfigInput             `json:"kraken,omitempty"`
+	Kucoin    *PassphraseExchangeConfigInput `json:"kucoin,omitempty"`
+	Bybit     *BybitConfigInput              `json:"bybit,omitempty"`
+	Okx       *PassphraseExchangeConfigInput `json:"okx,omitempty"`
+	Bitfinex  *BitfinexConfigInput           `json:"bitfinex,omitempty"`
+}
+
+type KrakenConfigInput struct {
+	APIKey    string `json:"apiKey"`
+	APISecret string `json:"apiSecret"`
+}
+
 type KubernetesConfigInput struct {
 	KubeconfigPath *string `json:"kubeconfigPath,omitempty"`
 	Namespace      *string `json:"namespace,omitempty"`
@@ -21,6 +52,12 @@ type KubernetesConfigInput struct {
 
 type LocalConfigInput struct {
 	BasePath *string `json:"basePath,omitempty"`
+}
+
+type PassphraseExchangeConfigInput struct {
+	APIKey     string `json:"apiKey"`
+	APISecret  string `json:"apiSecret"`
+	Passphrase string `json:"passphrase"`
 }
 
 type RegistryAuthInput struct {

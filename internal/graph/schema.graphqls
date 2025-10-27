@@ -135,6 +135,10 @@ type Mutation {
   updateBacktest(id: ID!, input: UpdateBacktestInput!): Backtest!
   deleteBacktest(id: ID!): Boolean!
 
+  # Backtest lifecycle mutations
+  runBacktest(id: ID!): Backtest!
+  stopBacktest(id: ID!): Backtest!
+
   # Trade mutations
   createTrade(input: CreateTradeInput!): Trade!
   updateTrade(id: ID!, input: UpdateTradeInput!): Trade!

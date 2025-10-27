@@ -9,37 +9,33 @@ import (
 )
 
 // BotSpec defines the specification for deploying a bot
+// Config-first architecture: each entity provides its own config.json
+// Freqtrade merges them via: --config exchange.json --config strategy.json --config bot.json
 type BotSpec struct {
 	// Bot identification
 	ID   string
 	Name string
 
 	// Container configuration
-	Image           string            // Docker image (e.g., "freqtradeorg/freqtrade:2024.1")
-	FreqtradeVersion string           // Freqtrade version tag
+	Image            string // Docker image (e.g., "freqtradeorg/freqtrade:stable")
+	FreqtradeVersion string // Freqtrade version tag
 
 	// Strategy configuration
-	StrategyName    string                 // Name of the strategy file
-	StrategyCode    string                 // Strategy Python code content
-	StrategyConfig  map[string]interface{} // Strategy-specific config.json
+	StrategyName   string                 // Name of the strategy file
+	StrategyCode   string                 // Strategy Python code content
+	StrategyConfig map[string]interface{} // Strategy-specific config.json (separate file)
 
 	// Bot configuration
-	Config          map[string]interface{} // Bot-specific Freqtrade config JSON
+	Config map[string]interface{} // Bot-specific config.json (separate file, includes dry_run)
 
 	// Exchange configuration
-	ExchangeName    string            // Exchange name (binance, kraken, etc.)
-	ExchangeAPIKey  string            // Exchange API key
-	ExchangeSecret  string            // Exchange API secret
+	ExchangeConfig map[string]interface{} // Exchange config.json (separate file, includes credentials)
 
 	// Runner configuration
-	Environment     map[string]string // Additional environment variables
-	ResourceLimits  *ResourceLimits   // CPU/memory limits
-	NetworkMode     string            // Network mode (bridge, host, custom)
-
-	// API configuration
-	APIUsername     string            // Freqtrade API username
-	APIPassword     string            // Freqtrade API password
-	APIPort         int               // Freqtrade API port (default: 8080)
+	Environment    map[string]string // Additional environment variables
+	ResourceLimits *ResourceLimits   // CPU/memory limits
+	NetworkMode    string            // Network mode (bridge, host, custom)
+	APIPort        int               // Freqtrade API port (default: 8080)
 }
 
 // ResourceLimits defines resource constraints for a bot

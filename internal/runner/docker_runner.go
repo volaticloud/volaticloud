@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
@@ -440,29 +439,10 @@ func (d *DockerRuntime) Type() string {
 // Helper methods
 
 func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFilePaths) *container.Config {
-	// Build environment variables
+	// Build environment variables (minimal - only metadata)
 	env := []string{
 		"FREQTRADE_VERSION=" + spec.FreqtradeVersion,
 		"STRATEGY_NAME=" + spec.StrategyName,
-	}
-
-	// Add exchange config
-	if spec.ExchangeName != "" {
-		env = append(env, "EXCHANGE_NAME="+spec.ExchangeName)
-	}
-	if spec.ExchangeAPIKey != "" {
-		env = append(env, "EXCHANGE_API_KEY="+spec.ExchangeAPIKey)
-	}
-	if spec.ExchangeSecret != "" {
-		env = append(env, "EXCHANGE_SECRET="+spec.ExchangeSecret)
-	}
-
-	// Add API config
-	if spec.APIUsername != "" {
-		env = append(env, "API_USERNAME="+spec.APIUsername)
-	}
-	if spec.APIPassword != "" {
-		env = append(env, "API_PASSWORD="+spec.APIPassword)
 	}
 
 	// Add custom environment variables
@@ -705,7 +685,7 @@ func (d *DockerRuntime) getContainerStats(ctx context.Context, containerID strin
 	return &v, nil
 }
 
-func (d *DockerRuntime) mapDockerState(state *types.ContainerState) enum.BotStatus {
+func (d *DockerRuntime) mapDockerState(state *container.State) enum.BotStatus {
 	if state == nil {
 		return enum.BotStatusError
 	}
@@ -795,23 +775,11 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 		botConfigContainer:      "/freqtrade/user_data/config.bot.json",
 	}
 
-	// Create exchange config file (required)
-	if spec.ExchangeName != "" {
-		exchangeConfig := map[string]interface{}{
-			"exchange": map[string]interface{}{
-				"name":   spec.ExchangeName,
-				"key":    spec.ExchangeAPIKey,
-				"secret": spec.ExchangeSecret,
-				// Use wildcard to match all pairs with USDT as quote currency
-				// Pattern .*/USDT matches any pair ending with /USDT
-				"pair_whitelist": []string{
-					".*/USDT",
-				},
-			},
-		}
-
+	// Create exchange config file - write as-is (NO BUILDING, NO WRAPPING)
+	// Exchange config is already complete freqtrade format: {"exchange": {"name": "...", "key": "...", ...}}
+	if spec.ExchangeConfig != nil && len(spec.ExchangeConfig) > 0 {
 		exchangeConfigPath := filepath.Join(configDir, "config.exchange.json")
-		exchangeConfigJSON, err := json.MarshalIndent(exchangeConfig, "", "  ")
+		exchangeConfigJSON, err := json.MarshalIndent(spec.ExchangeConfig, "", "  ")
 		if err != nil {
 			d.cleanupConfigFiles(spec.ID)
 			return nil, fmt.Errorf("failed to marshal exchange config: %w", err)

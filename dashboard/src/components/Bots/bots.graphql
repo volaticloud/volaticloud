@@ -45,8 +45,6 @@ query GetBot($id: ID!) {
       status
       mode
       containerID
-      apiURL
-      apiUsername
       freqtradeVersion
       lastSeenAt
       errorMessage
@@ -56,7 +54,6 @@ query GetBot($id: ID!) {
       exchange {
         id
         name
-        testMode
       }
       strategy {
         id

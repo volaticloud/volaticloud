@@ -9,6 +9,5 @@ query GetExchangesForLayout {
   exchanges {
     id
     name
-    testMode
   }
 }

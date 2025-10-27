@@ -38,26 +38,13 @@ func (Bot) Fields() []ent.Field {
 		field.String("container_id").
 			Optional().
 			Comment("Runner-specific identifier (container ID, pod name, etc.)"),
-		field.JSON("runner_metadata", map[string]string{}).
-			Optional().
-			Annotations(entgql.Skip(entgql.SkipAll)).
-			Comment("Runner-specific metadata"),
-		field.String("api_url").
-			Optional().
-			Comment("Freqtrade API endpoint"),
-		field.String("api_username").
-			Optional().
-			Comment("Freqtrade API username"),
-		field.String("api_password").
-			Sensitive().
-			Optional().
-			Comment("Freqtrade API password (encrypted)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Comment("Bot-specific freqtrade config overrides"),
+			Annotations(entgql.Type("Map")).
+			Comment("Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)"),
 		field.String("freqtrade_version").
-			Default("2024.1").
-			Comment("Freqtrade version"),
+			Default("stable").
+			Comment("Freqtrade Docker image version tag"),
 		field.Time("last_seen_at").
 			Optional().
 			Comment("Last successful health check"),
@@ -65,11 +52,11 @@ func (Bot) Fields() []ent.Field {
 			Optional().
 			Comment("Last error message if status is error"),
 		field.UUID("exchange_id", uuid.UUID{}).
-			Comment("Foreign key to exchange"),
+			Comment("Foreign key to exchange (provides credentials)"),
 		field.UUID("strategy_id", uuid.UUID{}).
-			Comment("Foreign key to strategy"),
+			Comment("Foreign key to strategy (provides code)"),
 		field.UUID("runner_id", uuid.UUID{}).
-			Comment("Foreign key to runner"),
+			Comment("Foreign key to runner (provides execution environment)"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

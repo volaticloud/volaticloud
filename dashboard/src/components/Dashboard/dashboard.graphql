@@ -43,7 +43,6 @@ query GetDashboardData {
   exchanges {
     id
     name
-    testMode
   }
 
   strategies(first: 10) {

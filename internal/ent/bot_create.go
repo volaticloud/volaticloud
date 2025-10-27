@@ -74,54 +74,6 @@ func (_c *BotCreate) SetNillableContainerID(v *string) *BotCreate {
 	return _c
 }
 
-// SetRunnerMetadata sets the "runner_metadata" field.
-func (_c *BotCreate) SetRunnerMetadata(v map[string]string) *BotCreate {
-	_c.mutation.SetRunnerMetadata(v)
-	return _c
-}
-
-// SetAPIURL sets the "api_url" field.
-func (_c *BotCreate) SetAPIURL(v string) *BotCreate {
-	_c.mutation.SetAPIURL(v)
-	return _c
-}
-
-// SetNillableAPIURL sets the "api_url" field if the given value is not nil.
-func (_c *BotCreate) SetNillableAPIURL(v *string) *BotCreate {
-	if v != nil {
-		_c.SetAPIURL(*v)
-	}
-	return _c
-}
-
-// SetAPIUsername sets the "api_username" field.
-func (_c *BotCreate) SetAPIUsername(v string) *BotCreate {
-	_c.mutation.SetAPIUsername(v)
-	return _c
-}
-
-// SetNillableAPIUsername sets the "api_username" field if the given value is not nil.
-func (_c *BotCreate) SetNillableAPIUsername(v *string) *BotCreate {
-	if v != nil {
-		_c.SetAPIUsername(*v)
-	}
-	return _c
-}
-
-// SetAPIPassword sets the "api_password" field.
-func (_c *BotCreate) SetAPIPassword(v string) *BotCreate {
-	_c.mutation.SetAPIPassword(v)
-	return _c
-}
-
-// SetNillableAPIPassword sets the "api_password" field if the given value is not nil.
-func (_c *BotCreate) SetNillableAPIPassword(v *string) *BotCreate {
-	if v != nil {
-		_c.SetAPIPassword(*v)
-	}
-	return _c
-}
-
 // SetConfig sets the "config" field.
 func (_c *BotCreate) SetConfig(v map[string]interface{}) *BotCreate {
 	_c.mutation.SetConfig(v)
@@ -424,22 +376,6 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ContainerID(); ok {
 		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
 		_node.ContainerID = value
-	}
-	if value, ok := _c.mutation.RunnerMetadata(); ok {
-		_spec.SetField(bot.FieldRunnerMetadata, field.TypeJSON, value)
-		_node.RunnerMetadata = value
-	}
-	if value, ok := _c.mutation.APIURL(); ok {
-		_spec.SetField(bot.FieldAPIURL, field.TypeString, value)
-		_node.APIURL = value
-	}
-	if value, ok := _c.mutation.APIUsername(); ok {
-		_spec.SetField(bot.FieldAPIUsername, field.TypeString, value)
-		_node.APIUsername = value
-	}
-	if value, ok := _c.mutation.APIPassword(); ok {
-		_spec.SetField(bot.FieldAPIPassword, field.TypeString, value)
-		_node.APIPassword = value
 	}
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)

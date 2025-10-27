@@ -24,8 +24,14 @@ const (
 	FieldConfig = "config"
 	// FieldResult holds the string denoting the result field in the database.
 	FieldResult = "result"
+	// FieldContainerID holds the string denoting the container_id field in the database.
+	FieldContainerID = "container_id"
+	// FieldErrorMessage holds the string denoting the error_message field in the database.
+	FieldErrorMessage = "error_message"
 	// FieldStrategyID holds the string denoting the strategy_id field in the database.
 	FieldStrategyID = "strategy_id"
+	// FieldRunnerID holds the string denoting the runner_id field in the database.
+	FieldRunnerID = "runner_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -34,6 +40,8 @@ const (
 	FieldCompletedAt = "completed_at"
 	// EdgeStrategy holds the string denoting the strategy edge name in mutations.
 	EdgeStrategy = "strategy"
+	// EdgeRunner holds the string denoting the runner edge name in mutations.
+	EdgeRunner = "runner"
 	// Table holds the table name of the backtest in the database.
 	Table = "backtests"
 	// StrategyTable is the table that holds the strategy relation/edge.
@@ -43,6 +51,13 @@ const (
 	StrategyInverseTable = "strategies"
 	// StrategyColumn is the table column denoting the strategy relation/edge.
 	StrategyColumn = "strategy_id"
+	// RunnerTable is the table that holds the runner relation/edge.
+	RunnerTable = "backtests"
+	// RunnerInverseTable is the table name for the BotRunner entity.
+	// It exists in this package in order to avoid circular dependency with the "botrunner" package.
+	RunnerInverseTable = "bot_runners"
+	// RunnerColumn is the table column denoting the runner relation/edge.
+	RunnerColumn = "runner_id"
 )
 
 // Columns holds all SQL columns for backtest fields.
@@ -51,7 +66,10 @@ var Columns = []string{
 	FieldStatus,
 	FieldConfig,
 	FieldResult,
+	FieldContainerID,
+	FieldErrorMessage,
 	FieldStrategyID,
+	FieldRunnerID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldCompletedAt,
@@ -103,9 +121,24 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
+// ByContainerID orders the results by the container_id field.
+func ByContainerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContainerID, opts...).ToFunc()
+}
+
+// ByErrorMessage orders the results by the error_message field.
+func ByErrorMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorMessage, opts...).ToFunc()
+}
+
 // ByStrategyID orders the results by the strategy_id field.
 func ByStrategyID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStrategyID, opts...).ToFunc()
+}
+
+// ByRunnerID orders the results by the runner_id field.
+func ByRunnerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRunnerID, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -129,11 +162,25 @@ func ByStrategyField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newStrategyStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByRunnerField orders the results by runner field.
+func ByRunnerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRunnerStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newStrategyStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(StrategyInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, StrategyTable, StrategyColumn),
+	)
+}
+func newRunnerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RunnerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, RunnerTable, RunnerColumn),
 	)
 }
 

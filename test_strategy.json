@@ -1,0 +1,16 @@
+{
+  "query": "mutation CreateTestStrategy($input: CreateStrategyInput!) { createStrategy(input: $input) { id name description version config } }",
+  "variables": {
+    "input": {
+      "name": "TestStrategy",
+      "description": "Simple test strategy",
+      "code": "from freqtrade.strategy import IStrategy\nfrom pandas import DataFrame\n\nclass TestStrategy(IStrategy):\n    minimal_roi = {\"0\": 0.10}\n    stoploss = -0.05\n    timeframe = \"5m\"\n    \n    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n        return dataframe\n    \n    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n        dataframe.loc[:, \"enter_long\"] = 0\n        return dataframe\n    \n    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n        dataframe.loc[:, \"exit_long\"] = 0\n        return dataframe",
+      "version": "1.0",
+      "config": {
+        "max_open_trades": 3,
+        "stake_amount": 100,
+        "stake_currency": "USDT"
+      }
+    }
+  }
+}

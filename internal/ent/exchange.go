@@ -4,7 +4,6 @@ package ent
 
 import (
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/enum"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -20,11 +19,9 @@ type Exchange struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Exchange name from ExchangeType enum
-	Name enum.ExchangeType `json:"name,omitempty"`
-	// Use testnet/sandbox
-	TestMode bool `json:"test_mode,omitempty"`
-	// Exchange-specific configuration including API credentials
+	// Exchange display name (e.g., 'Binance Production', 'Coinbase Testnet')
+	Name string `json:"name,omitempty"`
+	// Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
@@ -65,8 +62,6 @@ func (*Exchange) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case exchange.FieldConfig:
 			values[i] = new([]byte)
-		case exchange.FieldTestMode:
-			values[i] = new(sql.NullBool)
 		case exchange.FieldName:
 			values[i] = new(sql.NullString)
 		case exchange.FieldCreatedAt, exchange.FieldUpdatedAt:
@@ -98,13 +93,7 @@ func (_m *Exchange) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				_m.Name = enum.ExchangeType(value.String)
-			}
-		case exchange.FieldTestMode:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field test_mode", values[i])
-			} else if value.Valid {
-				_m.TestMode = value.Bool
+				_m.Name = value.String
 			}
 		case exchange.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -168,10 +157,7 @@ func (_m *Exchange) String() string {
 	builder.WriteString("Exchange(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("name=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Name))
-	builder.WriteString(", ")
-	builder.WriteString("test_mode=")
-	builder.WriteString(fmt.Sprintf("%v", _m.TestMode))
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))

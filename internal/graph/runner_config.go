@@ -86,13 +86,14 @@ func convertDockerConfig(input *model.DockerConfigInput) map[string]interface{} 
 		result["network"] = *input.Network
 	}
 	if input.RegistryAuth != nil {
-		result["registry_auth"] = map[string]interface{}{
+		registryAuth := map[string]interface{}{
 			"username": input.RegistryAuth.Username,
 			"password": input.RegistryAuth.Password,
 		}
 		if input.RegistryAuth.ServerAddress != nil {
-			result["registry_auth"].(map[string]interface{})["server_address"] = *input.RegistryAuth.ServerAddress
+			registryAuth["server_address"] = *input.RegistryAuth.ServerAddress
 		}
+		result["registry_auth"] = registryAuth
 	}
 
 	return result

@@ -31,27 +31,19 @@ type Bot struct {
 	Mode enum.BotMode `json:"mode,omitempty"`
 	// Runner-specific identifier (container ID, pod name, etc.)
 	ContainerID string `json:"container_id,omitempty"`
-	// Runner-specific metadata
-	RunnerMetadata map[string]string `json:"runner_metadata,omitempty"`
-	// Freqtrade API endpoint
-	APIURL string `json:"api_url,omitempty"`
-	// Freqtrade API username
-	APIUsername string `json:"api_username,omitempty"`
-	// Freqtrade API password (encrypted)
-	APIPassword string `json:"-"`
-	// Bot-specific freqtrade config overrides
+	// Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
-	// Freqtrade version
+	// Freqtrade Docker image version tag
 	FreqtradeVersion string `json:"freqtrade_version,omitempty"`
 	// Last successful health check
 	LastSeenAt time.Time `json:"last_seen_at,omitempty"`
 	// Last error message if status is error
 	ErrorMessage string `json:"error_message,omitempty"`
-	// Foreign key to exchange
+	// Foreign key to exchange (provides credentials)
 	ExchangeID uuid.UUID `json:"exchange_id,omitempty"`
-	// Foreign key to strategy
+	// Foreign key to strategy (provides code)
 	StrategyID uuid.UUID `json:"strategy_id,omitempty"`
-	// Foreign key to runner
+	// Foreign key to runner (provides execution environment)
 	RunnerID uuid.UUID `json:"runner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
@@ -129,9 +121,9 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case bot.FieldRunnerMetadata, bot.FieldConfig:
+		case bot.FieldConfig:
 			values[i] = new([]byte)
-		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldAPIURL, bot.FieldAPIUsername, bot.FieldAPIPassword, bot.FieldFreqtradeVersion, bot.FieldErrorMessage:
+		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldFreqtradeVersion, bot.FieldErrorMessage:
 			values[i] = new(sql.NullString)
 		case bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -181,32 +173,6 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field container_id", values[i])
 			} else if value.Valid {
 				_m.ContainerID = value.String
-			}
-		case bot.FieldRunnerMetadata:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field runner_metadata", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.RunnerMetadata); err != nil {
-					return fmt.Errorf("unmarshal field runner_metadata: %w", err)
-				}
-			}
-		case bot.FieldAPIURL:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field api_url", values[i])
-			} else if value.Valid {
-				_m.APIURL = value.String
-			}
-		case bot.FieldAPIUsername:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field api_username", values[i])
-			} else if value.Valid {
-				_m.APIUsername = value.String
-			}
-		case bot.FieldAPIPassword:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field api_password", values[i])
-			} else if value.Valid {
-				_m.APIPassword = value.String
 			}
 		case bot.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -331,17 +297,6 @@ func (_m *Bot) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("container_id=")
 	builder.WriteString(_m.ContainerID)
-	builder.WriteString(", ")
-	builder.WriteString("runner_metadata=")
-	builder.WriteString(fmt.Sprintf("%v", _m.RunnerMetadata))
-	builder.WriteString(", ")
-	builder.WriteString("api_url=")
-	builder.WriteString(_m.APIURL)
-	builder.WriteString(", ")
-	builder.WriteString("api_username=")
-	builder.WriteString(_m.APIUsername)
-	builder.WriteString(", ")
-	builder.WriteString("api_password=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))

@@ -96,78 +96,6 @@ func (_u *BotUpdate) ClearContainerID() *BotUpdate {
 	return _u
 }
 
-// SetRunnerMetadata sets the "runner_metadata" field.
-func (_u *BotUpdate) SetRunnerMetadata(v map[string]string) *BotUpdate {
-	_u.mutation.SetRunnerMetadata(v)
-	return _u
-}
-
-// ClearRunnerMetadata clears the value of the "runner_metadata" field.
-func (_u *BotUpdate) ClearRunnerMetadata() *BotUpdate {
-	_u.mutation.ClearRunnerMetadata()
-	return _u
-}
-
-// SetAPIURL sets the "api_url" field.
-func (_u *BotUpdate) SetAPIURL(v string) *BotUpdate {
-	_u.mutation.SetAPIURL(v)
-	return _u
-}
-
-// SetNillableAPIURL sets the "api_url" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableAPIURL(v *string) *BotUpdate {
-	if v != nil {
-		_u.SetAPIURL(*v)
-	}
-	return _u
-}
-
-// ClearAPIURL clears the value of the "api_url" field.
-func (_u *BotUpdate) ClearAPIURL() *BotUpdate {
-	_u.mutation.ClearAPIURL()
-	return _u
-}
-
-// SetAPIUsername sets the "api_username" field.
-func (_u *BotUpdate) SetAPIUsername(v string) *BotUpdate {
-	_u.mutation.SetAPIUsername(v)
-	return _u
-}
-
-// SetNillableAPIUsername sets the "api_username" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableAPIUsername(v *string) *BotUpdate {
-	if v != nil {
-		_u.SetAPIUsername(*v)
-	}
-	return _u
-}
-
-// ClearAPIUsername clears the value of the "api_username" field.
-func (_u *BotUpdate) ClearAPIUsername() *BotUpdate {
-	_u.mutation.ClearAPIUsername()
-	return _u
-}
-
-// SetAPIPassword sets the "api_password" field.
-func (_u *BotUpdate) SetAPIPassword(v string) *BotUpdate {
-	_u.mutation.SetAPIPassword(v)
-	return _u
-}
-
-// SetNillableAPIPassword sets the "api_password" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableAPIPassword(v *string) *BotUpdate {
-	if v != nil {
-		_u.SetAPIPassword(*v)
-	}
-	return _u
-}
-
-// ClearAPIPassword clears the value of the "api_password" field.
-func (_u *BotUpdate) ClearAPIPassword() *BotUpdate {
-	_u.mutation.ClearAPIPassword()
-	return _u
-}
-
 // SetConfig sets the "config" field.
 func (_u *BotUpdate) SetConfig(v map[string]interface{}) *BotUpdate {
 	_u.mutation.SetConfig(v)
@@ -448,30 +376,6 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ContainerIDCleared() {
 		_spec.ClearField(bot.FieldContainerID, field.TypeString)
 	}
-	if value, ok := _u.mutation.RunnerMetadata(); ok {
-		_spec.SetField(bot.FieldRunnerMetadata, field.TypeJSON, value)
-	}
-	if _u.mutation.RunnerMetadataCleared() {
-		_spec.ClearField(bot.FieldRunnerMetadata, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.APIURL(); ok {
-		_spec.SetField(bot.FieldAPIURL, field.TypeString, value)
-	}
-	if _u.mutation.APIURLCleared() {
-		_spec.ClearField(bot.FieldAPIURL, field.TypeString)
-	}
-	if value, ok := _u.mutation.APIUsername(); ok {
-		_spec.SetField(bot.FieldAPIUsername, field.TypeString, value)
-	}
-	if _u.mutation.APIUsernameCleared() {
-		_spec.ClearField(bot.FieldAPIUsername, field.TypeString)
-	}
-	if value, ok := _u.mutation.APIPassword(); ok {
-		_spec.SetField(bot.FieldAPIPassword, field.TypeString, value)
-	}
-	if _u.mutation.APIPasswordCleared() {
-		_spec.ClearField(bot.FieldAPIPassword, field.TypeString)
-	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)
 	}
@@ -707,78 +611,6 @@ func (_u *BotUpdateOne) SetNillableContainerID(v *string) *BotUpdateOne {
 // ClearContainerID clears the value of the "container_id" field.
 func (_u *BotUpdateOne) ClearContainerID() *BotUpdateOne {
 	_u.mutation.ClearContainerID()
-	return _u
-}
-
-// SetRunnerMetadata sets the "runner_metadata" field.
-func (_u *BotUpdateOne) SetRunnerMetadata(v map[string]string) *BotUpdateOne {
-	_u.mutation.SetRunnerMetadata(v)
-	return _u
-}
-
-// ClearRunnerMetadata clears the value of the "runner_metadata" field.
-func (_u *BotUpdateOne) ClearRunnerMetadata() *BotUpdateOne {
-	_u.mutation.ClearRunnerMetadata()
-	return _u
-}
-
-// SetAPIURL sets the "api_url" field.
-func (_u *BotUpdateOne) SetAPIURL(v string) *BotUpdateOne {
-	_u.mutation.SetAPIURL(v)
-	return _u
-}
-
-// SetNillableAPIURL sets the "api_url" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableAPIURL(v *string) *BotUpdateOne {
-	if v != nil {
-		_u.SetAPIURL(*v)
-	}
-	return _u
-}
-
-// ClearAPIURL clears the value of the "api_url" field.
-func (_u *BotUpdateOne) ClearAPIURL() *BotUpdateOne {
-	_u.mutation.ClearAPIURL()
-	return _u
-}
-
-// SetAPIUsername sets the "api_username" field.
-func (_u *BotUpdateOne) SetAPIUsername(v string) *BotUpdateOne {
-	_u.mutation.SetAPIUsername(v)
-	return _u
-}
-
-// SetNillableAPIUsername sets the "api_username" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableAPIUsername(v *string) *BotUpdateOne {
-	if v != nil {
-		_u.SetAPIUsername(*v)
-	}
-	return _u
-}
-
-// ClearAPIUsername clears the value of the "api_username" field.
-func (_u *BotUpdateOne) ClearAPIUsername() *BotUpdateOne {
-	_u.mutation.ClearAPIUsername()
-	return _u
-}
-
-// SetAPIPassword sets the "api_password" field.
-func (_u *BotUpdateOne) SetAPIPassword(v string) *BotUpdateOne {
-	_u.mutation.SetAPIPassword(v)
-	return _u
-}
-
-// SetNillableAPIPassword sets the "api_password" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableAPIPassword(v *string) *BotUpdateOne {
-	if v != nil {
-		_u.SetAPIPassword(*v)
-	}
-	return _u
-}
-
-// ClearAPIPassword clears the value of the "api_password" field.
-func (_u *BotUpdateOne) ClearAPIPassword() *BotUpdateOne {
-	_u.mutation.ClearAPIPassword()
 	return _u
 }
 
@@ -1091,30 +923,6 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	}
 	if _u.mutation.ContainerIDCleared() {
 		_spec.ClearField(bot.FieldContainerID, field.TypeString)
-	}
-	if value, ok := _u.mutation.RunnerMetadata(); ok {
-		_spec.SetField(bot.FieldRunnerMetadata, field.TypeJSON, value)
-	}
-	if _u.mutation.RunnerMetadataCleared() {
-		_spec.ClearField(bot.FieldRunnerMetadata, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.APIURL(); ok {
-		_spec.SetField(bot.FieldAPIURL, field.TypeString, value)
-	}
-	if _u.mutation.APIURLCleared() {
-		_spec.ClearField(bot.FieldAPIURL, field.TypeString)
-	}
-	if value, ok := _u.mutation.APIUsername(); ok {
-		_spec.SetField(bot.FieldAPIUsername, field.TypeString, value)
-	}
-	if _u.mutation.APIUsernameCleared() {
-		_spec.ClearField(bot.FieldAPIUsername, field.TypeString)
-	}
-	if value, ok := _u.mutation.APIPassword(); ok {
-		_spec.SetField(bot.FieldAPIPassword, field.TypeString, value)
-	}
-	if _u.mutation.APIPasswordCleared() {
-		_spec.ClearField(bot.FieldAPIPassword, field.TypeString)
 	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)

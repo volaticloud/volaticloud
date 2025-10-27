@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  Chip,
   CircularProgress,
   Alert,
   Stack,
@@ -16,7 +15,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useGetExchangesQuery, ExchangeExchangeType } from '../../generated/graphql';
+import { useGetExchangesQuery } from '../../generated/graphql';
 import { CreateExchangeDialog } from './CreateExchangeDialog';
 import { EditExchangeDialog } from './EditExchangeDialog';
 import { DeleteExchangeDialog } from './DeleteExchangeDialog';
@@ -27,18 +26,17 @@ export const ExchangesList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedExchange, setSelectedExchange] = useState<{
     id: string;
-    name: ExchangeExchangeType;
-    testMode: boolean;
+    name: string;
   } | null>(null);
 
   const { data, loading, error, refetch } = useGetExchangesQuery();
 
-  const handleEdit = (exchange: { id: string; name: ExchangeExchangeType; testMode: boolean }) => {
+  const handleEdit = (exchange: { id: string; name: string }) => {
     setSelectedExchange(exchange);
     setEditDialogOpen(true);
   };
 
-  const handleDelete = (exchange: { id: string; name: ExchangeExchangeType; testMode: boolean }) => {
+  const handleDelete = (exchange: { id: string; name: string }) => {
     setSelectedExchange(exchange);
     setDeleteDialogOpen(true);
   };
@@ -106,14 +104,6 @@ export const ExchangesList = () => {
                       <Typography variant="h6" fontWeight={600}>
                         {exchange.name}
                       </Typography>
-                      {exchange.testMode && (
-                        <Chip
-                          label="Test Mode"
-                          size="small"
-                          color="warning"
-                          variant="outlined"
-                        />
-                      )}
                     </Box>
 
                     <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>

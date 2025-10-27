@@ -57,9 +57,24 @@ func IDLTE(id uuid.UUID) predicate.Backtest {
 	return predicate.Backtest(sql.FieldLTE(FieldID, id))
 }
 
+// ContainerID applies equality check predicate on the "container_id" field. It's identical to ContainerIDEQ.
+func ContainerID(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldContainerID, v))
+}
+
+// ErrorMessage applies equality check predicate on the "error_message" field. It's identical to ErrorMessageEQ.
+func ErrorMessage(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldErrorMessage, v))
+}
+
 // StrategyID applies equality check predicate on the "strategy_id" field. It's identical to StrategyIDEQ.
 func StrategyID(v uuid.UUID) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldStrategyID, v))
+}
+
+// RunnerID applies equality check predicate on the "runner_id" field. It's identical to RunnerIDEQ.
+func RunnerID(v uuid.UUID) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldRunnerID, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -127,6 +142,156 @@ func ResultNotNil() predicate.Backtest {
 	return predicate.Backtest(sql.FieldNotNull(FieldResult))
 }
 
+// ContainerIDEQ applies the EQ predicate on the "container_id" field.
+func ContainerIDEQ(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldContainerID, v))
+}
+
+// ContainerIDNEQ applies the NEQ predicate on the "container_id" field.
+func ContainerIDNEQ(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNEQ(FieldContainerID, v))
+}
+
+// ContainerIDIn applies the In predicate on the "container_id" field.
+func ContainerIDIn(vs ...string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldIn(FieldContainerID, vs...))
+}
+
+// ContainerIDNotIn applies the NotIn predicate on the "container_id" field.
+func ContainerIDNotIn(vs ...string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotIn(FieldContainerID, vs...))
+}
+
+// ContainerIDGT applies the GT predicate on the "container_id" field.
+func ContainerIDGT(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGT(FieldContainerID, v))
+}
+
+// ContainerIDGTE applies the GTE predicate on the "container_id" field.
+func ContainerIDGTE(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGTE(FieldContainerID, v))
+}
+
+// ContainerIDLT applies the LT predicate on the "container_id" field.
+func ContainerIDLT(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLT(FieldContainerID, v))
+}
+
+// ContainerIDLTE applies the LTE predicate on the "container_id" field.
+func ContainerIDLTE(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLTE(FieldContainerID, v))
+}
+
+// ContainerIDContains applies the Contains predicate on the "container_id" field.
+func ContainerIDContains(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldContains(FieldContainerID, v))
+}
+
+// ContainerIDHasPrefix applies the HasPrefix predicate on the "container_id" field.
+func ContainerIDHasPrefix(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldHasPrefix(FieldContainerID, v))
+}
+
+// ContainerIDHasSuffix applies the HasSuffix predicate on the "container_id" field.
+func ContainerIDHasSuffix(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldHasSuffix(FieldContainerID, v))
+}
+
+// ContainerIDIsNil applies the IsNil predicate on the "container_id" field.
+func ContainerIDIsNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldIsNull(FieldContainerID))
+}
+
+// ContainerIDNotNil applies the NotNil predicate on the "container_id" field.
+func ContainerIDNotNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotNull(FieldContainerID))
+}
+
+// ContainerIDEqualFold applies the EqualFold predicate on the "container_id" field.
+func ContainerIDEqualFold(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEqualFold(FieldContainerID, v))
+}
+
+// ContainerIDContainsFold applies the ContainsFold predicate on the "container_id" field.
+func ContainerIDContainsFold(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldContainsFold(FieldContainerID, v))
+}
+
+// ErrorMessageEQ applies the EQ predicate on the "error_message" field.
+func ErrorMessageEQ(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldErrorMessage, v))
+}
+
+// ErrorMessageNEQ applies the NEQ predicate on the "error_message" field.
+func ErrorMessageNEQ(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNEQ(FieldErrorMessage, v))
+}
+
+// ErrorMessageIn applies the In predicate on the "error_message" field.
+func ErrorMessageIn(vs ...string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldIn(FieldErrorMessage, vs...))
+}
+
+// ErrorMessageNotIn applies the NotIn predicate on the "error_message" field.
+func ErrorMessageNotIn(vs ...string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotIn(FieldErrorMessage, vs...))
+}
+
+// ErrorMessageGT applies the GT predicate on the "error_message" field.
+func ErrorMessageGT(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGT(FieldErrorMessage, v))
+}
+
+// ErrorMessageGTE applies the GTE predicate on the "error_message" field.
+func ErrorMessageGTE(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGTE(FieldErrorMessage, v))
+}
+
+// ErrorMessageLT applies the LT predicate on the "error_message" field.
+func ErrorMessageLT(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLT(FieldErrorMessage, v))
+}
+
+// ErrorMessageLTE applies the LTE predicate on the "error_message" field.
+func ErrorMessageLTE(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLTE(FieldErrorMessage, v))
+}
+
+// ErrorMessageContains applies the Contains predicate on the "error_message" field.
+func ErrorMessageContains(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldContains(FieldErrorMessage, v))
+}
+
+// ErrorMessageHasPrefix applies the HasPrefix predicate on the "error_message" field.
+func ErrorMessageHasPrefix(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldHasPrefix(FieldErrorMessage, v))
+}
+
+// ErrorMessageHasSuffix applies the HasSuffix predicate on the "error_message" field.
+func ErrorMessageHasSuffix(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldHasSuffix(FieldErrorMessage, v))
+}
+
+// ErrorMessageIsNil applies the IsNil predicate on the "error_message" field.
+func ErrorMessageIsNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldIsNull(FieldErrorMessage))
+}
+
+// ErrorMessageNotNil applies the NotNil predicate on the "error_message" field.
+func ErrorMessageNotNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotNull(FieldErrorMessage))
+}
+
+// ErrorMessageEqualFold applies the EqualFold predicate on the "error_message" field.
+func ErrorMessageEqualFold(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEqualFold(FieldErrorMessage, v))
+}
+
+// ErrorMessageContainsFold applies the ContainsFold predicate on the "error_message" field.
+func ErrorMessageContainsFold(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldContainsFold(FieldErrorMessage, v))
+}
+
 // StrategyIDEQ applies the EQ predicate on the "strategy_id" field.
 func StrategyIDEQ(v uuid.UUID) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldStrategyID, v))
@@ -145,6 +310,26 @@ func StrategyIDIn(vs ...uuid.UUID) predicate.Backtest {
 // StrategyIDNotIn applies the NotIn predicate on the "strategy_id" field.
 func StrategyIDNotIn(vs ...uuid.UUID) predicate.Backtest {
 	return predicate.Backtest(sql.FieldNotIn(FieldStrategyID, vs...))
+}
+
+// RunnerIDEQ applies the EQ predicate on the "runner_id" field.
+func RunnerIDEQ(v uuid.UUID) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldRunnerID, v))
+}
+
+// RunnerIDNEQ applies the NEQ predicate on the "runner_id" field.
+func RunnerIDNEQ(v uuid.UUID) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNEQ(FieldRunnerID, v))
+}
+
+// RunnerIDIn applies the In predicate on the "runner_id" field.
+func RunnerIDIn(vs ...uuid.UUID) predicate.Backtest {
+	return predicate.Backtest(sql.FieldIn(FieldRunnerID, vs...))
+}
+
+// RunnerIDNotIn applies the NotIn predicate on the "runner_id" field.
+func RunnerIDNotIn(vs ...uuid.UUID) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotIn(FieldRunnerID, vs...))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -292,6 +477,29 @@ func HasStrategy() predicate.Backtest {
 func HasStrategyWith(preds ...predicate.Strategy) predicate.Backtest {
 	return predicate.Backtest(func(s *sql.Selector) {
 		step := newStrategyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRunner applies the HasEdge predicate on the "runner" edge.
+func HasRunner() predicate.Backtest {
+	return predicate.Backtest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, RunnerTable, RunnerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRunnerWith applies the HasEdge predicate on the "runner" edge with a given conditions (other predicates).
+func HasRunnerWith(preds ...predicate.BotRunner) predicate.Backtest {
+	return predicate.Backtest(func(s *sql.Selector) {
+		step := newRunnerStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

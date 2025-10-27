@@ -6,7 +6,6 @@ package graph
 
 import (
 	"anytrade/internal/ent"
-	"anytrade/internal/exchange"
 	"anytrade/internal/graph/model"
 	"context"
 	"fmt"
@@ -62,21 +61,6 @@ func (r *createBotRunnerInputResolver) Config(ctx context.Context, obj *ent.Crea
 	return nil
 }
 
-func (r *createExchangeInputResolver) Config(ctx context.Context, obj *ent.CreateExchangeInput, data *exchange.ExchangeConfigInput) error {
-	if data == nil {
-		return nil
-	}
-
-	// Convert the typed config to map[string]interface{}
-	configMap, err := convertExchangeConfigToMap(data)
-	if err != nil {
-		return fmt.Errorf("failed to convert exchange config: %w", err)
-	}
-
-	obj.Config = configMap
-	return nil
-}
-
 func (r *updateBotRunnerInputResolver) Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error {
 	if data == nil {
 		return nil
@@ -92,41 +76,16 @@ func (r *updateBotRunnerInputResolver) Config(ctx context.Context, obj *ent.Upda
 	return nil
 }
 
-func (r *updateExchangeInputResolver) Config(ctx context.Context, obj *ent.UpdateExchangeInput, data *exchange.ExchangeConfigInput) error {
-	if data == nil {
-		return nil
-	}
-
-	// Convert the typed config to map[string]interface{}
-	configMap, err := convertExchangeConfigToMap(data)
-	if err != nil {
-		return fmt.Errorf("failed to convert exchange config: %w", err)
-	}
-
-	obj.Config = configMap
-	return nil
-}
-
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 func (r *Resolver) CreateBotRunnerInput() CreateBotRunnerInputResolver {
 	return &createBotRunnerInputResolver{r}
 }
 
-func (r *Resolver) CreateExchangeInput() CreateExchangeInputResolver {
-	return &createExchangeInputResolver{r}
-}
-
 func (r *Resolver) UpdateBotRunnerInput() UpdateBotRunnerInputResolver {
 	return &updateBotRunnerInputResolver{r}
 }
 
-func (r *Resolver) UpdateExchangeInput() UpdateExchangeInputResolver {
-	return &updateExchangeInputResolver{r}
-}
-
 type queryResolver struct{ *Resolver }
 type createBotRunnerInputResolver struct{ *Resolver }
-type createExchangeInputResolver struct{ *Resolver }
 type updateBotRunnerInputResolver struct{ *Resolver }
-type updateExchangeInputResolver struct{ *Resolver }

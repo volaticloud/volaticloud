@@ -16,6 +16,14 @@ func (_m *Backtest) Strategy(ctx context.Context) (*Strategy, error) {
 	return result, err
 }
 
+func (_m *Backtest) Runner(ctx context.Context) (*BotRunner, error) {
+	result, err := _m.Edges.RunnerOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryRunner().Only(ctx)
+	}
+	return result, err
+}
+
 func (_m *Bot) Exchange(ctx context.Context) (*Exchange, error) {
 	result, err := _m.Edges.ExchangeOrErr()
 	if IsNotLoaded(err) {
@@ -74,6 +82,24 @@ func (_m *BotRunner) Bots(
 		return conn, nil
 	}
 	return _m.QueryBots().Paginate(ctx, after, first, before, last, opts...)
+}
+
+func (_m *BotRunner) Backtests(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+) (*BacktestConnection, error) {
+	opts := []BacktestPaginateOption{}
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := _m.Edges.totalCount[1][alias]
+	if nodes, err := _m.NamedBacktests(alias); err == nil || hasTotalCount {
+		pager, err := newBacktestPager(opts, last != nil)
+		if err != nil {
+			return nil, err
+		}
+		conn := &BacktestConnection{Edges: []*BacktestEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
+	}
+	return _m.QueryBacktests().Paginate(ctx, after, first, before, last, opts...)
 }
 
 func (_m *Exchange) Bots(

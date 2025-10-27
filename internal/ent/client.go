@@ -371,6 +371,22 @@ func (c *BacktestClient) QueryStrategy(_m *Backtest) *StrategyQuery {
 	return query
 }
 
+// QueryRunner queries the runner edge of a Backtest.
+func (c *BacktestClient) QueryRunner(_m *Backtest) *BotRunnerQuery {
+	query := (&BotRunnerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(backtest.Table, backtest.FieldID, id),
+			sqlgraph.To(botrunner.Table, botrunner.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, backtest.RunnerTable, backtest.RunnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *BacktestClient) Hooks() []Hook {
 	return c.hooks.Backtest
@@ -717,6 +733,22 @@ func (c *BotRunnerClient) QueryBots(_m *BotRunner) *BotQuery {
 	return query
 }
 
+// QueryBacktests queries the backtests edge of a BotRunner.
+func (c *BotRunnerClient) QueryBacktests(_m *BotRunner) *BacktestQuery {
+	query := (&BacktestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, id),
+			sqlgraph.To(backtest.Table, backtest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.BacktestsTable, botrunner.BacktestsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *BotRunnerClient) Hooks() []Hook {
 	hooks := c.hooks.BotRunner
@@ -869,8 +901,7 @@ func (c *ExchangeClient) QueryBots(_m *Exchange) *BotQuery {
 
 // Hooks returns the client hooks.
 func (c *ExchangeClient) Hooks() []Hook {
-	hooks := c.hooks.Exchange
-	return append(hooks[:len(hooks):len(hooks)], exchange.Hooks[:]...)
+	return c.hooks.Exchange
 }
 
 // Interceptors returns the client interceptors.

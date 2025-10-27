@@ -31,6 +31,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeBots holds the string denoting the bots edge name in mutations.
 	EdgeBots = "bots"
+	// EdgeBacktests holds the string denoting the backtests edge name in mutations.
+	EdgeBacktests = "backtests"
 	// Table holds the table name of the botrunner in the database.
 	Table = "bot_runners"
 	// BotsTable is the table that holds the bots relation/edge.
@@ -40,6 +42,13 @@ const (
 	BotsInverseTable = "bots"
 	// BotsColumn is the table column denoting the bots relation/edge.
 	BotsColumn = "runner_id"
+	// BacktestsTable is the table that holds the backtests relation/edge.
+	BacktestsTable = "backtests"
+	// BacktestsInverseTable is the table name for the Backtest entity.
+	// It exists in this package in order to avoid circular dependency with the "backtest" package.
+	BacktestsInverseTable = "backtests"
+	// BacktestsColumn is the table column denoting the backtests relation/edge.
+	BacktestsColumn = "runner_id"
 )
 
 // Columns holds all SQL columns for botrunner fields.
@@ -134,11 +143,32 @@ func ByBots(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBotsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByBacktestsCount orders the results by backtests count.
+func ByBacktestsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBacktestsStep(), opts...)
+	}
+}
+
+// ByBacktests orders the results by backtests terms.
+func ByBacktests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBacktestsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBotsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BotsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BotsTable, BotsColumn),
+	)
+}
+func newBacktestsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BacktestsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BacktestsTable, BacktestsColumn),
 	)
 }
 

@@ -303,7 +303,7 @@ func (_q *ExchangeQuery) WithBots(opts ...func(*BotQuery)) *ExchangeQuery {
 // Example:
 //
 //	var v []struct {
-//		Name enum.ExchangeType `json:"name,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -326,7 +326,7 @@ func (_q *ExchangeQuery) GroupBy(field string, fields ...string) *ExchangeGroupB
 // Example:
 //
 //	var v []struct {
-//		Name enum.ExchangeType `json:"name,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.Exchange.Query().

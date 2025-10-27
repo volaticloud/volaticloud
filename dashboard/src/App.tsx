@@ -10,6 +10,7 @@ import { BotsPage } from './pages/Bots/BotsPage';
 import { ExchangesPage } from './pages/Exchanges/ExchangesPage';
 import { StrategiesPage } from './pages/Strategies/StrategiesPage';
 import { RunnersPage } from './pages/Runners/RunnersPage';
+import { BacktestsPage } from './pages/BacktestsPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -34,7 +35,7 @@ function App() {
               <Route path="bots" element={<BotsPage />} />
               <Route path="exchanges" element={<ExchangesPage />} />
               <Route path="strategies" element={<StrategiesPage />} />
-              <Route path="backtests" element={<div>Backtests (Coming Soon)</div>} />
+              <Route path="backtests" element={<BacktestsPage />} />
               <Route path="trades" element={<div>Trades (Coming Soon)</div>} />
               <Route path="runners" element={<RunnersPage />} />
             </Route>

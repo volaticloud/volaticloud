@@ -4,7 +4,6 @@ package exchange
 
 import (
 	"anytrade/internal/ent/predicate"
-	"anytrade/internal/enum"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -57,9 +56,9 @@ func IDLTE(id uuid.UUID) predicate.Exchange {
 	return predicate.Exchange(sql.FieldLTE(FieldID, id))
 }
 
-// TestMode applies equality check predicate on the "test_mode" field. It's identical to TestModeEQ.
-func TestMode(v bool) predicate.Exchange {
-	return predicate.Exchange(sql.FieldEQ(FieldTestMode, v))
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldEQ(FieldName, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -73,43 +72,68 @@ func UpdatedAt(v time.Time) predicate.Exchange {
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v enum.ExchangeType) predicate.Exchange {
-	vc := v
-	return predicate.Exchange(sql.FieldEQ(FieldName, vc))
+func NameEQ(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldEQ(FieldName, v))
 }
 
 // NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v enum.ExchangeType) predicate.Exchange {
-	vc := v
-	return predicate.Exchange(sql.FieldNEQ(FieldName, vc))
+func NameNEQ(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldNEQ(FieldName, v))
 }
 
 // NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...enum.ExchangeType) predicate.Exchange {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Exchange(sql.FieldIn(FieldName, v...))
+func NameIn(vs ...string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldIn(FieldName, vs...))
 }
 
 // NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...enum.ExchangeType) predicate.Exchange {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Exchange(sql.FieldNotIn(FieldName, v...))
+func NameNotIn(vs ...string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldNotIn(FieldName, vs...))
 }
 
-// TestModeEQ applies the EQ predicate on the "test_mode" field.
-func TestModeEQ(v bool) predicate.Exchange {
-	return predicate.Exchange(sql.FieldEQ(FieldTestMode, v))
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldGT(FieldName, v))
 }
 
-// TestModeNEQ applies the NEQ predicate on the "test_mode" field.
-func TestModeNEQ(v bool) predicate.Exchange {
-	return predicate.Exchange(sql.FieldNEQ(FieldTestMode, v))
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.Exchange {
+	return predicate.Exchange(sql.FieldContainsFold(FieldName, v))
 }
 
 // ConfigIsNil applies the IsNil predicate on the "config" field.

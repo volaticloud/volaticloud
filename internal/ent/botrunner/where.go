@@ -280,6 +280,29 @@ func HasBotsWith(preds ...predicate.Bot) predicate.BotRunner {
 	})
 }
 
+// HasBacktests applies the HasEdge predicate on the "backtests" edge.
+func HasBacktests() predicate.BotRunner {
+	return predicate.BotRunner(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BacktestsTable, BacktestsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBacktestsWith applies the HasEdge predicate on the "backtests" edge with a given conditions (other predicates).
+func HasBacktestsWith(preds ...predicate.Backtest) predicate.BotRunner {
+	return predicate.BotRunner(func(s *sql.Selector) {
+		step := newBacktestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.BotRunner) predicate.BotRunner {
 	return predicate.BotRunner(sql.AndPredicates(predicates...))

@@ -48,12 +48,16 @@ type BacktestMutation struct {
 	status          *enum.TaskStatus
 	_config         *map[string]interface{}
 	result          *map[string]interface{}
+	container_id    *string
+	error_message   *string
 	created_at      *time.Time
 	updated_at      *time.Time
 	completed_at    *time.Time
 	clearedFields   map[string]struct{}
 	strategy        *uuid.UUID
 	clearedstrategy bool
+	runner          *uuid.UUID
+	clearedrunner   bool
 	done            bool
 	oldValue        func(context.Context) (*Backtest, error)
 	predicates      []predicate.Backtest
@@ -297,6 +301,104 @@ func (m *BacktestMutation) ResetResult() {
 	delete(m.clearedFields, backtest.FieldResult)
 }
 
+// SetContainerID sets the "container_id" field.
+func (m *BacktestMutation) SetContainerID(s string) {
+	m.container_id = &s
+}
+
+// ContainerID returns the value of the "container_id" field in the mutation.
+func (m *BacktestMutation) ContainerID() (r string, exists bool) {
+	v := m.container_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContainerID returns the old "container_id" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldContainerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContainerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContainerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContainerID: %w", err)
+	}
+	return oldValue.ContainerID, nil
+}
+
+// ClearContainerID clears the value of the "container_id" field.
+func (m *BacktestMutation) ClearContainerID() {
+	m.container_id = nil
+	m.clearedFields[backtest.FieldContainerID] = struct{}{}
+}
+
+// ContainerIDCleared returns if the "container_id" field was cleared in this mutation.
+func (m *BacktestMutation) ContainerIDCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldContainerID]
+	return ok
+}
+
+// ResetContainerID resets all changes to the "container_id" field.
+func (m *BacktestMutation) ResetContainerID() {
+	m.container_id = nil
+	delete(m.clearedFields, backtest.FieldContainerID)
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (m *BacktestMutation) SetErrorMessage(s string) {
+	m.error_message = &s
+}
+
+// ErrorMessage returns the value of the "error_message" field in the mutation.
+func (m *BacktestMutation) ErrorMessage() (r string, exists bool) {
+	v := m.error_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorMessage returns the old "error_message" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldErrorMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorMessage: %w", err)
+	}
+	return oldValue.ErrorMessage, nil
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (m *BacktestMutation) ClearErrorMessage() {
+	m.error_message = nil
+	m.clearedFields[backtest.FieldErrorMessage] = struct{}{}
+}
+
+// ErrorMessageCleared returns if the "error_message" field was cleared in this mutation.
+func (m *BacktestMutation) ErrorMessageCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldErrorMessage]
+	return ok
+}
+
+// ResetErrorMessage resets all changes to the "error_message" field.
+func (m *BacktestMutation) ResetErrorMessage() {
+	m.error_message = nil
+	delete(m.clearedFields, backtest.FieldErrorMessage)
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (m *BacktestMutation) SetStrategyID(u uuid.UUID) {
 	m.strategy = &u
@@ -331,6 +433,42 @@ func (m *BacktestMutation) OldStrategyID(ctx context.Context) (v uuid.UUID, err 
 // ResetStrategyID resets all changes to the "strategy_id" field.
 func (m *BacktestMutation) ResetStrategyID() {
 	m.strategy = nil
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (m *BacktestMutation) SetRunnerID(u uuid.UUID) {
+	m.runner = &u
+}
+
+// RunnerID returns the value of the "runner_id" field in the mutation.
+func (m *BacktestMutation) RunnerID() (r uuid.UUID, exists bool) {
+	v := m.runner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRunnerID returns the old "runner_id" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldRunnerID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRunnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRunnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRunnerID: %w", err)
+	}
+	return oldValue.RunnerID, nil
+}
+
+// ResetRunnerID resets all changes to the "runner_id" field.
+func (m *BacktestMutation) ResetRunnerID() {
+	m.runner = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -481,6 +619,33 @@ func (m *BacktestMutation) ResetStrategy() {
 	m.clearedstrategy = false
 }
 
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (m *BacktestMutation) ClearRunner() {
+	m.clearedrunner = true
+	m.clearedFields[backtest.FieldRunnerID] = struct{}{}
+}
+
+// RunnerCleared reports if the "runner" edge to the BotRunner entity was cleared.
+func (m *BacktestMutation) RunnerCleared() bool {
+	return m.clearedrunner
+}
+
+// RunnerIDs returns the "runner" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RunnerID instead. It exists only for internal usage by the builders.
+func (m *BacktestMutation) RunnerIDs() (ids []uuid.UUID) {
+	if id := m.runner; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRunner resets all changes to the "runner" edge.
+func (m *BacktestMutation) ResetRunner() {
+	m.runner = nil
+	m.clearedrunner = false
+}
+
 // Where appends a list predicates to the BacktestMutation builder.
 func (m *BacktestMutation) Where(ps ...predicate.Backtest) {
 	m.predicates = append(m.predicates, ps...)
@@ -515,7 +680,7 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 10)
 	if m.status != nil {
 		fields = append(fields, backtest.FieldStatus)
 	}
@@ -525,8 +690,17 @@ func (m *BacktestMutation) Fields() []string {
 	if m.result != nil {
 		fields = append(fields, backtest.FieldResult)
 	}
+	if m.container_id != nil {
+		fields = append(fields, backtest.FieldContainerID)
+	}
+	if m.error_message != nil {
+		fields = append(fields, backtest.FieldErrorMessage)
+	}
 	if m.strategy != nil {
 		fields = append(fields, backtest.FieldStrategyID)
+	}
+	if m.runner != nil {
+		fields = append(fields, backtest.FieldRunnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, backtest.FieldCreatedAt)
@@ -551,8 +725,14 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 		return m.Config()
 	case backtest.FieldResult:
 		return m.Result()
+	case backtest.FieldContainerID:
+		return m.ContainerID()
+	case backtest.FieldErrorMessage:
+		return m.ErrorMessage()
 	case backtest.FieldStrategyID:
 		return m.StrategyID()
+	case backtest.FieldRunnerID:
+		return m.RunnerID()
 	case backtest.FieldCreatedAt:
 		return m.CreatedAt()
 	case backtest.FieldUpdatedAt:
@@ -574,8 +754,14 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldConfig(ctx)
 	case backtest.FieldResult:
 		return m.OldResult(ctx)
+	case backtest.FieldContainerID:
+		return m.OldContainerID(ctx)
+	case backtest.FieldErrorMessage:
+		return m.OldErrorMessage(ctx)
 	case backtest.FieldStrategyID:
 		return m.OldStrategyID(ctx)
+	case backtest.FieldRunnerID:
+		return m.OldRunnerID(ctx)
 	case backtest.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case backtest.FieldUpdatedAt:
@@ -612,12 +798,33 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetResult(v)
 		return nil
+	case backtest.FieldContainerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContainerID(v)
+		return nil
+	case backtest.FieldErrorMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorMessage(v)
+		return nil
 	case backtest.FieldStrategyID:
 		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStrategyID(v)
+		return nil
+	case backtest.FieldRunnerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRunnerID(v)
 		return nil
 	case backtest.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -676,6 +883,12 @@ func (m *BacktestMutation) ClearedFields() []string {
 	if m.FieldCleared(backtest.FieldResult) {
 		fields = append(fields, backtest.FieldResult)
 	}
+	if m.FieldCleared(backtest.FieldContainerID) {
+		fields = append(fields, backtest.FieldContainerID)
+	}
+	if m.FieldCleared(backtest.FieldErrorMessage) {
+		fields = append(fields, backtest.FieldErrorMessage)
+	}
 	if m.FieldCleared(backtest.FieldCompletedAt) {
 		fields = append(fields, backtest.FieldCompletedAt)
 	}
@@ -699,6 +912,12 @@ func (m *BacktestMutation) ClearField(name string) error {
 	case backtest.FieldResult:
 		m.ClearResult()
 		return nil
+	case backtest.FieldContainerID:
+		m.ClearContainerID()
+		return nil
+	case backtest.FieldErrorMessage:
+		m.ClearErrorMessage()
+		return nil
 	case backtest.FieldCompletedAt:
 		m.ClearCompletedAt()
 		return nil
@@ -719,8 +938,17 @@ func (m *BacktestMutation) ResetField(name string) error {
 	case backtest.FieldResult:
 		m.ResetResult()
 		return nil
+	case backtest.FieldContainerID:
+		m.ResetContainerID()
+		return nil
+	case backtest.FieldErrorMessage:
+		m.ResetErrorMessage()
+		return nil
 	case backtest.FieldStrategyID:
 		m.ResetStrategyID()
+		return nil
+	case backtest.FieldRunnerID:
+		m.ResetRunnerID()
 		return nil
 	case backtest.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -737,9 +965,12 @@ func (m *BacktestMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *BacktestMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.strategy != nil {
 		edges = append(edges, backtest.EdgeStrategy)
+	}
+	if m.runner != nil {
+		edges = append(edges, backtest.EdgeRunner)
 	}
 	return edges
 }
@@ -752,13 +983,17 @@ func (m *BacktestMutation) AddedIDs(name string) []ent.Value {
 		if id := m.strategy; id != nil {
 			return []ent.Value{*id}
 		}
+	case backtest.EdgeRunner:
+		if id := m.runner; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *BacktestMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
@@ -770,9 +1005,12 @@ func (m *BacktestMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *BacktestMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedstrategy {
 		edges = append(edges, backtest.EdgeStrategy)
+	}
+	if m.clearedrunner {
+		edges = append(edges, backtest.EdgeRunner)
 	}
 	return edges
 }
@@ -783,6 +1021,8 @@ func (m *BacktestMutation) EdgeCleared(name string) bool {
 	switch name {
 	case backtest.EdgeStrategy:
 		return m.clearedstrategy
+	case backtest.EdgeRunner:
+		return m.clearedrunner
 	}
 	return false
 }
@@ -794,6 +1034,9 @@ func (m *BacktestMutation) ClearEdge(name string) error {
 	case backtest.EdgeStrategy:
 		m.ClearStrategy()
 		return nil
+	case backtest.EdgeRunner:
+		m.ClearRunner()
+		return nil
 	}
 	return fmt.Errorf("unknown Backtest unique edge %s", name)
 }
@@ -804,6 +1047,9 @@ func (m *BacktestMutation) ResetEdge(name string) error {
 	switch name {
 	case backtest.EdgeStrategy:
 		m.ResetStrategy()
+		return nil
+	case backtest.EdgeRunner:
+		m.ResetRunner()
 		return nil
 	}
 	return fmt.Errorf("unknown Backtest edge %s", name)
@@ -819,10 +1065,6 @@ type BotMutation struct {
 	status            *enum.BotStatus
 	mode              *enum.BotMode
 	container_id      *string
-	runner_metadata   *map[string]string
-	api_url           *string
-	api_username      *string
-	api_password      *string
 	_config           *map[string]interface{}
 	freqtrade_version *string
 	last_seen_at      *time.Time
@@ -1103,202 +1345,6 @@ func (m *BotMutation) ContainerIDCleared() bool {
 func (m *BotMutation) ResetContainerID() {
 	m.container_id = nil
 	delete(m.clearedFields, bot.FieldContainerID)
-}
-
-// SetRunnerMetadata sets the "runner_metadata" field.
-func (m *BotMutation) SetRunnerMetadata(value map[string]string) {
-	m.runner_metadata = &value
-}
-
-// RunnerMetadata returns the value of the "runner_metadata" field in the mutation.
-func (m *BotMutation) RunnerMetadata() (r map[string]string, exists bool) {
-	v := m.runner_metadata
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldRunnerMetadata returns the old "runner_metadata" field's value of the Bot entity.
-// If the Bot object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldRunnerMetadata(ctx context.Context) (v map[string]string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRunnerMetadata is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRunnerMetadata requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRunnerMetadata: %w", err)
-	}
-	return oldValue.RunnerMetadata, nil
-}
-
-// ClearRunnerMetadata clears the value of the "runner_metadata" field.
-func (m *BotMutation) ClearRunnerMetadata() {
-	m.runner_metadata = nil
-	m.clearedFields[bot.FieldRunnerMetadata] = struct{}{}
-}
-
-// RunnerMetadataCleared returns if the "runner_metadata" field was cleared in this mutation.
-func (m *BotMutation) RunnerMetadataCleared() bool {
-	_, ok := m.clearedFields[bot.FieldRunnerMetadata]
-	return ok
-}
-
-// ResetRunnerMetadata resets all changes to the "runner_metadata" field.
-func (m *BotMutation) ResetRunnerMetadata() {
-	m.runner_metadata = nil
-	delete(m.clearedFields, bot.FieldRunnerMetadata)
-}
-
-// SetAPIURL sets the "api_url" field.
-func (m *BotMutation) SetAPIURL(s string) {
-	m.api_url = &s
-}
-
-// APIURL returns the value of the "api_url" field in the mutation.
-func (m *BotMutation) APIURL() (r string, exists bool) {
-	v := m.api_url
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldAPIURL returns the old "api_url" field's value of the Bot entity.
-// If the Bot object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldAPIURL(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAPIURL is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAPIURL requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAPIURL: %w", err)
-	}
-	return oldValue.APIURL, nil
-}
-
-// ClearAPIURL clears the value of the "api_url" field.
-func (m *BotMutation) ClearAPIURL() {
-	m.api_url = nil
-	m.clearedFields[bot.FieldAPIURL] = struct{}{}
-}
-
-// APIURLCleared returns if the "api_url" field was cleared in this mutation.
-func (m *BotMutation) APIURLCleared() bool {
-	_, ok := m.clearedFields[bot.FieldAPIURL]
-	return ok
-}
-
-// ResetAPIURL resets all changes to the "api_url" field.
-func (m *BotMutation) ResetAPIURL() {
-	m.api_url = nil
-	delete(m.clearedFields, bot.FieldAPIURL)
-}
-
-// SetAPIUsername sets the "api_username" field.
-func (m *BotMutation) SetAPIUsername(s string) {
-	m.api_username = &s
-}
-
-// APIUsername returns the value of the "api_username" field in the mutation.
-func (m *BotMutation) APIUsername() (r string, exists bool) {
-	v := m.api_username
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldAPIUsername returns the old "api_username" field's value of the Bot entity.
-// If the Bot object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldAPIUsername(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAPIUsername is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAPIUsername requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAPIUsername: %w", err)
-	}
-	return oldValue.APIUsername, nil
-}
-
-// ClearAPIUsername clears the value of the "api_username" field.
-func (m *BotMutation) ClearAPIUsername() {
-	m.api_username = nil
-	m.clearedFields[bot.FieldAPIUsername] = struct{}{}
-}
-
-// APIUsernameCleared returns if the "api_username" field was cleared in this mutation.
-func (m *BotMutation) APIUsernameCleared() bool {
-	_, ok := m.clearedFields[bot.FieldAPIUsername]
-	return ok
-}
-
-// ResetAPIUsername resets all changes to the "api_username" field.
-func (m *BotMutation) ResetAPIUsername() {
-	m.api_username = nil
-	delete(m.clearedFields, bot.FieldAPIUsername)
-}
-
-// SetAPIPassword sets the "api_password" field.
-func (m *BotMutation) SetAPIPassword(s string) {
-	m.api_password = &s
-}
-
-// APIPassword returns the value of the "api_password" field in the mutation.
-func (m *BotMutation) APIPassword() (r string, exists bool) {
-	v := m.api_password
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldAPIPassword returns the old "api_password" field's value of the Bot entity.
-// If the Bot object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldAPIPassword(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAPIPassword is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAPIPassword requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAPIPassword: %w", err)
-	}
-	return oldValue.APIPassword, nil
-}
-
-// ClearAPIPassword clears the value of the "api_password" field.
-func (m *BotMutation) ClearAPIPassword() {
-	m.api_password = nil
-	m.clearedFields[bot.FieldAPIPassword] = struct{}{}
-}
-
-// APIPasswordCleared returns if the "api_password" field was cleared in this mutation.
-func (m *BotMutation) APIPasswordCleared() bool {
-	_, ok := m.clearedFields[bot.FieldAPIPassword]
-	return ok
-}
-
-// ResetAPIPassword resets all changes to the "api_password" field.
-func (m *BotMutation) ResetAPIPassword() {
-	m.api_password = nil
-	delete(m.clearedFields, bot.FieldAPIPassword)
 }
 
 // SetConfig sets the "config" field.
@@ -1833,7 +1879,7 @@ func (m *BotMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 13)
 	if m.name != nil {
 		fields = append(fields, bot.FieldName)
 	}
@@ -1845,18 +1891,6 @@ func (m *BotMutation) Fields() []string {
 	}
 	if m.container_id != nil {
 		fields = append(fields, bot.FieldContainerID)
-	}
-	if m.runner_metadata != nil {
-		fields = append(fields, bot.FieldRunnerMetadata)
-	}
-	if m.api_url != nil {
-		fields = append(fields, bot.FieldAPIURL)
-	}
-	if m.api_username != nil {
-		fields = append(fields, bot.FieldAPIUsername)
-	}
-	if m.api_password != nil {
-		fields = append(fields, bot.FieldAPIPassword)
 	}
 	if m._config != nil {
 		fields = append(fields, bot.FieldConfig)
@@ -1901,14 +1935,6 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 		return m.Mode()
 	case bot.FieldContainerID:
 		return m.ContainerID()
-	case bot.FieldRunnerMetadata:
-		return m.RunnerMetadata()
-	case bot.FieldAPIURL:
-		return m.APIURL()
-	case bot.FieldAPIUsername:
-		return m.APIUsername()
-	case bot.FieldAPIPassword:
-		return m.APIPassword()
 	case bot.FieldConfig:
 		return m.Config()
 	case bot.FieldFreqtradeVersion:
@@ -1944,14 +1970,6 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldMode(ctx)
 	case bot.FieldContainerID:
 		return m.OldContainerID(ctx)
-	case bot.FieldRunnerMetadata:
-		return m.OldRunnerMetadata(ctx)
-	case bot.FieldAPIURL:
-		return m.OldAPIURL(ctx)
-	case bot.FieldAPIUsername:
-		return m.OldAPIUsername(ctx)
-	case bot.FieldAPIPassword:
-		return m.OldAPIPassword(ctx)
 	case bot.FieldConfig:
 		return m.OldConfig(ctx)
 	case bot.FieldFreqtradeVersion:
@@ -2006,34 +2024,6 @@ func (m *BotMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetContainerID(v)
-		return nil
-	case bot.FieldRunnerMetadata:
-		v, ok := value.(map[string]string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetRunnerMetadata(v)
-		return nil
-	case bot.FieldAPIURL:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAPIURL(v)
-		return nil
-	case bot.FieldAPIUsername:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAPIUsername(v)
-		return nil
-	case bot.FieldAPIPassword:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAPIPassword(v)
 		return nil
 	case bot.FieldConfig:
 		v, ok := value.(map[string]interface{})
@@ -2131,18 +2121,6 @@ func (m *BotMutation) ClearedFields() []string {
 	if m.FieldCleared(bot.FieldContainerID) {
 		fields = append(fields, bot.FieldContainerID)
 	}
-	if m.FieldCleared(bot.FieldRunnerMetadata) {
-		fields = append(fields, bot.FieldRunnerMetadata)
-	}
-	if m.FieldCleared(bot.FieldAPIURL) {
-		fields = append(fields, bot.FieldAPIURL)
-	}
-	if m.FieldCleared(bot.FieldAPIUsername) {
-		fields = append(fields, bot.FieldAPIUsername)
-	}
-	if m.FieldCleared(bot.FieldAPIPassword) {
-		fields = append(fields, bot.FieldAPIPassword)
-	}
 	if m.FieldCleared(bot.FieldConfig) {
 		fields = append(fields, bot.FieldConfig)
 	}
@@ -2168,18 +2146,6 @@ func (m *BotMutation) ClearField(name string) error {
 	switch name {
 	case bot.FieldContainerID:
 		m.ClearContainerID()
-		return nil
-	case bot.FieldRunnerMetadata:
-		m.ClearRunnerMetadata()
-		return nil
-	case bot.FieldAPIURL:
-		m.ClearAPIURL()
-		return nil
-	case bot.FieldAPIUsername:
-		m.ClearAPIUsername()
-		return nil
-	case bot.FieldAPIPassword:
-		m.ClearAPIPassword()
 		return nil
 	case bot.FieldConfig:
 		m.ClearConfig()
@@ -2209,18 +2175,6 @@ func (m *BotMutation) ResetField(name string) error {
 		return nil
 	case bot.FieldContainerID:
 		m.ResetContainerID()
-		return nil
-	case bot.FieldRunnerMetadata:
-		m.ResetRunnerMetadata()
-		return nil
-	case bot.FieldAPIURL:
-		m.ResetAPIURL()
-		return nil
-	case bot.FieldAPIUsername:
-		m.ResetAPIUsername()
-		return nil
-	case bot.FieldAPIPassword:
-		m.ResetAPIPassword()
 		return nil
 	case bot.FieldConfig:
 		m.ResetConfig()
@@ -2394,21 +2348,24 @@ func (m *BotMutation) ResetEdge(name string) error {
 // BotRunnerMutation represents an operation that mutates the BotRunner nodes in the graph.
 type BotRunnerMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	name          *string
-	_type         *enum.RunnerType
-	_config       *map[string]interface{}
-	created_at    *time.Time
-	updated_at    *time.Time
-	clearedFields map[string]struct{}
-	bots          map[uuid.UUID]struct{}
-	removedbots   map[uuid.UUID]struct{}
-	clearedbots   bool
-	done          bool
-	oldValue      func(context.Context) (*BotRunner, error)
-	predicates    []predicate.BotRunner
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	name             *string
+	_type            *enum.RunnerType
+	_config          *map[string]interface{}
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	bots             map[uuid.UUID]struct{}
+	removedbots      map[uuid.UUID]struct{}
+	clearedbots      bool
+	backtests        map[uuid.UUID]struct{}
+	removedbacktests map[uuid.UUID]struct{}
+	clearedbacktests bool
+	done             bool
+	oldValue         func(context.Context) (*BotRunner, error)
+	predicates       []predicate.BotRunner
 }
 
 var _ ent.Mutation = (*BotRunnerMutation)(nil)
@@ -2762,6 +2719,60 @@ func (m *BotRunnerMutation) ResetBots() {
 	m.removedbots = nil
 }
 
+// AddBacktestIDs adds the "backtests" edge to the Backtest entity by ids.
+func (m *BotRunnerMutation) AddBacktestIDs(ids ...uuid.UUID) {
+	if m.backtests == nil {
+		m.backtests = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.backtests[ids[i]] = struct{}{}
+	}
+}
+
+// ClearBacktests clears the "backtests" edge to the Backtest entity.
+func (m *BotRunnerMutation) ClearBacktests() {
+	m.clearedbacktests = true
+}
+
+// BacktestsCleared reports if the "backtests" edge to the Backtest entity was cleared.
+func (m *BotRunnerMutation) BacktestsCleared() bool {
+	return m.clearedbacktests
+}
+
+// RemoveBacktestIDs removes the "backtests" edge to the Backtest entity by IDs.
+func (m *BotRunnerMutation) RemoveBacktestIDs(ids ...uuid.UUID) {
+	if m.removedbacktests == nil {
+		m.removedbacktests = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.backtests, ids[i])
+		m.removedbacktests[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedBacktests returns the removed IDs of the "backtests" edge to the Backtest entity.
+func (m *BotRunnerMutation) RemovedBacktestsIDs() (ids []uuid.UUID) {
+	for id := range m.removedbacktests {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// BacktestsIDs returns the "backtests" edge IDs in the mutation.
+func (m *BotRunnerMutation) BacktestsIDs() (ids []uuid.UUID) {
+	for id := range m.backtests {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetBacktests resets all changes to the "backtests" edge.
+func (m *BotRunnerMutation) ResetBacktests() {
+	m.backtests = nil
+	m.clearedbacktests = false
+	m.removedbacktests = nil
+}
+
 // Where appends a list predicates to the BotRunnerMutation builder.
 func (m *BotRunnerMutation) Where(ps ...predicate.BotRunner) {
 	m.predicates = append(m.predicates, ps...)
@@ -2972,9 +2983,12 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *BotRunnerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.bots != nil {
 		edges = append(edges, botrunner.EdgeBots)
+	}
+	if m.backtests != nil {
+		edges = append(edges, botrunner.EdgeBacktests)
 	}
 	return edges
 }
@@ -2989,15 +3003,24 @@ func (m *BotRunnerMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case botrunner.EdgeBacktests:
+		ids := make([]ent.Value, 0, len(m.backtests))
+		for id := range m.backtests {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *BotRunnerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedbots != nil {
 		edges = append(edges, botrunner.EdgeBots)
+	}
+	if m.removedbacktests != nil {
+		edges = append(edges, botrunner.EdgeBacktests)
 	}
 	return edges
 }
@@ -3012,15 +3035,24 @@ func (m *BotRunnerMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case botrunner.EdgeBacktests:
+		ids := make([]ent.Value, 0, len(m.removedbacktests))
+		for id := range m.removedbacktests {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *BotRunnerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedbots {
 		edges = append(edges, botrunner.EdgeBots)
+	}
+	if m.clearedbacktests {
+		edges = append(edges, botrunner.EdgeBacktests)
 	}
 	return edges
 }
@@ -3031,6 +3063,8 @@ func (m *BotRunnerMutation) EdgeCleared(name string) bool {
 	switch name {
 	case botrunner.EdgeBots:
 		return m.clearedbots
+	case botrunner.EdgeBacktests:
+		return m.clearedbacktests
 	}
 	return false
 }
@@ -3050,6 +3084,9 @@ func (m *BotRunnerMutation) ResetEdge(name string) error {
 	case botrunner.EdgeBots:
 		m.ResetBots()
 		return nil
+	case botrunner.EdgeBacktests:
+		m.ResetBacktests()
+		return nil
 	}
 	return fmt.Errorf("unknown BotRunner edge %s", name)
 }
@@ -3060,8 +3097,7 @@ type ExchangeMutation struct {
 	op            Op
 	typ           string
 	id            *uuid.UUID
-	name          *enum.ExchangeType
-	test_mode     *bool
+	name          *string
 	_config       *map[string]interface{}
 	created_at    *time.Time
 	updated_at    *time.Time
@@ -3179,12 +3215,12 @@ func (m *ExchangeMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 }
 
 // SetName sets the "name" field.
-func (m *ExchangeMutation) SetName(et enum.ExchangeType) {
-	m.name = &et
+func (m *ExchangeMutation) SetName(s string) {
+	m.name = &s
 }
 
 // Name returns the value of the "name" field in the mutation.
-func (m *ExchangeMutation) Name() (r enum.ExchangeType, exists bool) {
+func (m *ExchangeMutation) Name() (r string, exists bool) {
 	v := m.name
 	if v == nil {
 		return
@@ -3195,7 +3231,7 @@ func (m *ExchangeMutation) Name() (r enum.ExchangeType, exists bool) {
 // OldName returns the old "name" field's value of the Exchange entity.
 // If the Exchange object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeMutation) OldName(ctx context.Context) (v enum.ExchangeType, err error) {
+func (m *ExchangeMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
@@ -3212,42 +3248,6 @@ func (m *ExchangeMutation) OldName(ctx context.Context) (v enum.ExchangeType, er
 // ResetName resets all changes to the "name" field.
 func (m *ExchangeMutation) ResetName() {
 	m.name = nil
-}
-
-// SetTestMode sets the "test_mode" field.
-func (m *ExchangeMutation) SetTestMode(b bool) {
-	m.test_mode = &b
-}
-
-// TestMode returns the value of the "test_mode" field in the mutation.
-func (m *ExchangeMutation) TestMode() (r bool, exists bool) {
-	v := m.test_mode
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTestMode returns the old "test_mode" field's value of the Exchange entity.
-// If the Exchange object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExchangeMutation) OldTestMode(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTestMode is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTestMode requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTestMode: %w", err)
-	}
-	return oldValue.TestMode, nil
-}
-
-// ResetTestMode resets all changes to the "test_mode" field.
-func (m *ExchangeMutation) ResetTestMode() {
-	m.test_mode = nil
 }
 
 // SetConfig sets the "config" field.
@@ -3459,12 +3459,9 @@ func (m *ExchangeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ExchangeMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, exchange.FieldName)
-	}
-	if m.test_mode != nil {
-		fields = append(fields, exchange.FieldTestMode)
 	}
 	if m._config != nil {
 		fields = append(fields, exchange.FieldConfig)
@@ -3485,8 +3482,6 @@ func (m *ExchangeMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case exchange.FieldName:
 		return m.Name()
-	case exchange.FieldTestMode:
-		return m.TestMode()
 	case exchange.FieldConfig:
 		return m.Config()
 	case exchange.FieldCreatedAt:
@@ -3504,8 +3499,6 @@ func (m *ExchangeMutation) OldField(ctx context.Context, name string) (ent.Value
 	switch name {
 	case exchange.FieldName:
 		return m.OldName(ctx)
-	case exchange.FieldTestMode:
-		return m.OldTestMode(ctx)
 	case exchange.FieldConfig:
 		return m.OldConfig(ctx)
 	case exchange.FieldCreatedAt:
@@ -3522,18 +3515,11 @@ func (m *ExchangeMutation) OldField(ctx context.Context, name string) (ent.Value
 func (m *ExchangeMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case exchange.FieldName:
-		v, ok := value.(enum.ExchangeType)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case exchange.FieldTestMode:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTestMode(v)
 		return nil
 	case exchange.FieldConfig:
 		v, ok := value.(map[string]interface{})
@@ -3616,9 +3602,6 @@ func (m *ExchangeMutation) ResetField(name string) error {
 	switch name {
 	case exchange.FieldName:
 		m.ResetName()
-		return nil
-	case exchange.FieldTestMode:
-		m.ResetTestMode()
 		return nil
 	case exchange.FieldConfig:
 		m.ResetConfig()

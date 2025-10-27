@@ -161,7 +161,7 @@ func runServer(c *cli.Context) error {
 
 	// CORS middleware for dashboard
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -202,7 +202,7 @@ func runServer(c *cli.Context) error {
 	log.Println("")
 	log.Printf("🚀 Server ready at http://%s\n", addr)
 
-	// Start server in goroutine
+	// Start server in goroutinex
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)

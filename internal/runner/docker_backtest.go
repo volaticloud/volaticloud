@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 
 	"anytrade/internal/enum"
@@ -81,6 +84,12 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 		return "", fmt.Errorf("failed to ensure image: %w", err)
 	}
 
+	// Create config files
+	configPaths, err := d.createBacktestConfigFiles(spec)
+	if err != nil {
+		return "", fmt.Errorf("failed to create config files: %w", err)
+	}
+
 	// Build freqtrade command
 	cmd := d.buildBacktestCommand(spec)
 
@@ -98,6 +107,20 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 	hostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode(d.network),
 		AutoRemove:  false, // Keep container for result retrieval
+		Mounts: []mount.Mount{
+			{
+				Type:     mount.TypeBind,
+				Source:   configPaths.configFileHost,
+				Target:   configPaths.configFileContainer,
+				ReadOnly: true,
+			},
+			{
+				Type:     mount.TypeBind,
+				Source:   configPaths.strategyFileHost,
+				Target:   configPaths.strategyFileContainer,
+				ReadOnly: true,
+			},
+		},
 	}
 
 	// Apply resource limits
@@ -110,11 +133,14 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 	// Create container
 	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)
 	if err != nil {
+		d.cleanupBacktestConfigFiles(spec.ID)
 		return "", fmt.Errorf("failed to create backtest container: %w", err)
 	}
 
 	// Start container
 	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+		d.cleanupBacktestConfigFiles(spec.ID)
 		return "", fmt.Errorf("failed to start backtest container: %w", err)
 	}
 
@@ -252,15 +278,22 @@ func (d *DockerBacktestRunner) DeleteBacktest(ctx context.Context, backtestID st
 	containerID, err := d.findContainer(ctx, backtestID, taskTypeBacktest)
 	if err != nil {
 		if err == ErrBacktestNotFound {
+			// Still cleanup config files if they exist
+			d.cleanupBacktestConfigFiles(backtestID)
 			return nil // Already deleted
 		}
 		return err
 	}
 
-	return d.client.ContainerRemove(ctx, containerID, container.RemoveOptions{
+	err = d.client.ContainerRemove(ctx, containerID, container.RemoveOptions{
 		Force:         true,
 		RemoveVolumes: true,
 	})
+
+	// Cleanup config files regardless of container removal result
+	d.cleanupBacktestConfigFiles(backtestID)
+
+	return err
 }
 
 // ListBacktests returns all backtest tasks
@@ -462,7 +495,7 @@ func (d *DockerBacktestRunner) getImageName(version string) string {
 
 func (d *DockerBacktestRunner) ensureImage(ctx context.Context, imageName string) error {
 	// Check if image exists locally
-	_, _, err := d.client.ImageInspectWithRaw(ctx, imageName)
+	_, err := d.client.ImageInspect(ctx, imageName)
 	if err == nil {
 		return nil // Image exists
 	}
@@ -480,30 +513,15 @@ func (d *DockerBacktestRunner) ensureImage(ctx context.Context, imageName string
 }
 
 func (d *DockerBacktestRunner) buildBacktestCommand(spec BacktestSpec) []string {
+	// Backtests use JSON config only (like bots), no command-line parameters
+	// Only pass strategy name as it's required
 	cmd := []string{"backtesting"}
 
-	// Add strategy
 	if spec.StrategyName != "" {
 		cmd = append(cmd, "--strategy", spec.StrategyName)
 	}
 
-	// Add timeframe
-	if spec.Timeframe != "" {
-		cmd = append(cmd, "--timeframe", spec.Timeframe)
-	}
-
-	// Add time range
-	if !spec.StartDate.IsZero() {
-		cmd = append(cmd, "--timerange", fmt.Sprintf("%s-%s",
-			spec.StartDate.Format("20060102"),
-			spec.EndDate.Format("20060102")))
-	}
-
-	// Add pairs
-	if len(spec.Pairs) > 0 {
-		cmd = append(cmd, "--pairs", strings.Join(spec.Pairs, " "))
-	}
-
+	// All other configuration (timeframe, pairs, timerange, etc.) is in config.json
 	return cmd
 }
 
@@ -705,4 +723,72 @@ func getBacktestContainerName(backtestID string) string {
 
 func getHyperOptContainerName(hyperOptID string) string {
 	return fmt.Sprintf("anytrade-hyperopt-%s", hyperOptID)
+}
+
+// backtestConfigPaths holds the paths to config files for a backtest
+type backtestConfigPaths struct {
+	configFileHost      string // Host path to main config file
+	configFileContainer string // Container path to main config file
+	strategyFileHost    string // Host path to strategy Python file
+	strategyFileContainer string // Container path to strategy Python file
+}
+
+// createBacktestConfigFiles creates temporary config files for the backtest
+func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*backtestConfigPaths, error) {
+	// Create config directory for this backtest
+	configDir := filepath.Join("/tmp", "anytrade-backtest-configs", spec.ID)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	paths := &backtestConfigPaths{
+		configFileContainer:   "/freqtrade/user_data/config.json",
+		strategyFileContainer: fmt.Sprintf("/freqtrade/user_data/strategies/%s.py", spec.StrategyName),
+	}
+
+	// Use spec.Config directly (like bots do) - just write it as-is
+	// No hardcoding! Validation should be done before calling this function
+	if spec.Config == nil {
+		return nil, fmt.Errorf("backtest config is nil - validation should have caught this")
+	}
+
+	// Create a copy to avoid mutating the original
+	config := make(map[string]interface{})
+	for k, v := range spec.Config {
+		config[k] = v
+	}
+
+	// Only inject dry_run field for backtests (always true)
+	config["dry_run"] = true
+
+	// Write config file
+	configPath := filepath.Join(configDir, "config.json")
+	configJSON, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		d.cleanupBacktestConfigFiles(spec.ID)
+		return nil, fmt.Errorf("failed to marshal config: %w", err)
+	}
+	if err := os.WriteFile(configPath, configJSON, 0644); err != nil {
+		d.cleanupBacktestConfigFiles(spec.ID)
+		return nil, fmt.Errorf("failed to write config file: %w", err)
+	}
+	paths.configFileHost = configPath
+
+	// Write strategy Python file
+	if spec.StrategyCode != "" && spec.StrategyName != "" {
+		strategyPath := filepath.Join(configDir, spec.StrategyName+".py")
+		if err := os.WriteFile(strategyPath, []byte(spec.StrategyCode), 0644); err != nil {
+			d.cleanupBacktestConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to write strategy file: %w", err)
+		}
+		paths.strategyFileHost = strategyPath
+	}
+
+	return paths, nil
+}
+
+// cleanupBacktestConfigFiles removes temporary config files for a backtest
+func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
+	configDir := filepath.Join("/tmp", "anytrade-backtest-configs", backtestID)
+	os.RemoveAll(configDir) // Best effort cleanup
 }

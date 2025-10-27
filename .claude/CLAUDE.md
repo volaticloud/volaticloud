@@ -236,24 +236,39 @@ Dashboard runs on http://localhost:5173
 
 ### Architecture
 
-**Per-Component Code Generation:**
-Each page/component has its own GraphQL file and co-located generated hooks:
-- `src/pages/Dashboard/dashboard.graphql` → `dashboard.generated.tsx`
-- `src/pages/Bots/bots.graphql` → `bots.generated.tsx`
-- `src/pages/Exchanges/exchanges.graphql` → `exchanges.generated.tsx`
+**Centralized Code Generation:**
+All GraphQL operations are generated into a single centralized file:
+- GraphQL files: `src/components/*/[feature].graphql` (e.g., `bots.graphql`, `backtests.graphql`)
+- Generated hooks: `src/generated/graphql.ts` (centralized)
+- Codegen config: `codegen.ts` uses **schema introspection** from `http://localhost:8080/query`
 
-Run `npm run codegen` after schema changes to regenerate type-safe hooks.
+**Important**: The codegen fetches the schema from the running GraphQL server via introspection, NOT from the `internal/graph/ent.graphql` file. This means:
+1. The backend server MUST be running on port 8080 before running `npm run codegen`
+2. After regenerating backend schema with `make generate`, you MUST rebuild and restart the server
+3. Then run `npm run codegen` to fetch the updated schema via introspection
+
+**Workflow after schema changes:**
+```bash
+# Backend changes
+make generate  # Regenerate ENT schema
+make build     # Rebuild binary
+./bin/anytrade server &  # Restart server
+
+# Frontend codegen (requires server running)
+cd dashboard
+npm run codegen  # Fetches schema from http://localhost:8080/query
+```
 
 **Usage Example:**
 ```typescript
-// Import from co-located generated file
-import { useGetBotsQuery, useStartBotMutation } from './bots.generated';
+// Import from centralized generated file
+import { useGetBotsQuery, useStartBotMutation } from '../../generated/graphql';
 
 const { data, loading } = useGetBotsQuery({ variables: { first: 10 } });
 const [startBot] = useStartBotMutation();
 ```
 
-All generated files are ignored by git (`*.generated.tsx`).
+All GraphQL operation files use the `.graphql` extension. The generated file `src/generated/graphql.ts` is git-ignored.
 
 ### Key Features
 - Dark/Light mode toggle
@@ -501,3 +516,34 @@ Before committing:
 3. **Regression Tests** - Add tests for every bug fix
 4. **Error Path Testing** - Test all error conditions
 5. **Edge Case Coverage** - Test nil, empty, boundary values
+## JSON Schema Validation
+
+**Updated: 2025-10-24** - Implemented automatic JSON schema validation using the official Freqtrade schema.
+
+### Implementation
+
+All bot and backtest configs are now validated against the official Freqtrade JSON schema from `https://schema.freqtrade.io/schema.json`.
+
+**Files:**
+- `internal/graph/schema_validator.go` - Schema validation helper
+- Uses `github.com/xeipuuv/gojsonschema` library
+
+**Validation happens:**
+- `createBot` mutation - Validates before database save
+- `updateBot` mutation - Validates config changes
+
+**Benefits:**
+1. Automatic validation against official Freqtrade requirements
+2. Schema is fetched once and cached
+3. Clear, descriptive error messages from the schema
+4. No manual validation code to maintain
+
+**Note:** The schema validates the complete Freqtrade config. Since we store configs separately (Exchange, Strategy, Bot), you may need to include required fields or adjust validation logic for partial configs.
+
+### Next Steps
+
+Consider implementing:
+1. Partial schema validation (only validate bot-specific fields)
+2. Schema merging (merge Exchange/Strategy/Bot configs before validation)
+3. Custom schema for our architecture
+

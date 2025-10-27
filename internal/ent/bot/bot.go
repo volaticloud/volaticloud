@@ -26,14 +26,6 @@ const (
 	FieldMode = "mode"
 	// FieldContainerID holds the string denoting the container_id field in the database.
 	FieldContainerID = "container_id"
-	// FieldRunnerMetadata holds the string denoting the runner_metadata field in the database.
-	FieldRunnerMetadata = "runner_metadata"
-	// FieldAPIURL holds the string denoting the api_url field in the database.
-	FieldAPIURL = "api_url"
-	// FieldAPIUsername holds the string denoting the api_username field in the database.
-	FieldAPIUsername = "api_username"
-	// FieldAPIPassword holds the string denoting the api_password field in the database.
-	FieldAPIPassword = "api_password"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
 	// FieldFreqtradeVersion holds the string denoting the freqtrade_version field in the database.
@@ -99,10 +91,6 @@ var Columns = []string{
 	FieldStatus,
 	FieldMode,
 	FieldContainerID,
-	FieldRunnerMetadata,
-	FieldAPIURL,
-	FieldAPIUsername,
-	FieldAPIPassword,
 	FieldConfig,
 	FieldFreqtradeVersion,
 	FieldLastSeenAt,
@@ -189,21 +177,6 @@ func ByMode(opts ...sql.OrderTermOption) OrderOption {
 // ByContainerID orders the results by the container_id field.
 func ByContainerID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldContainerID, opts...).ToFunc()
-}
-
-// ByAPIURL orders the results by the api_url field.
-func ByAPIURL(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAPIURL, opts...).ToFunc()
-}
-
-// ByAPIUsername orders the results by the api_username field.
-func ByAPIUsername(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAPIUsername, opts...).ToFunc()
-}
-
-// ByAPIPassword orders the results by the api_password field.
-func ByAPIPassword(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAPIPassword, opts...).ToFunc()
 }
 
 // ByFreqtradeVersion orders the results by the freqtrade_version field.

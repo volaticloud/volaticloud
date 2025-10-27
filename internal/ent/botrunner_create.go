@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/enum"
@@ -104,6 +105,21 @@ func (_c *BotRunnerCreate) AddBots(v ...*Bot) *BotRunnerCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddBotIDs(ids...)
+}
+
+// AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
+func (_c *BotRunnerCreate) AddBacktestIDs(ids ...uuid.UUID) *BotRunnerCreate {
+	_c.mutation.AddBacktestIDs(ids...)
+	return _c
+}
+
+// AddBacktests adds the "backtests" edges to the Backtest entity.
+func (_c *BotRunnerCreate) AddBacktests(v ...*Backtest) *BotRunnerCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBacktestIDs(ids...)
 }
 
 // Mutation returns the BotRunnerMutation object of the builder.
@@ -259,6 +275,22 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BacktestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

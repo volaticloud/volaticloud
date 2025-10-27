@@ -6,7 +6,6 @@ import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
-	"anytrade/internal/enum"
 	"context"
 	"errors"
 	"fmt"
@@ -32,29 +31,15 @@ func (_u *ExchangeUpdate) Where(ps ...predicate.Exchange) *ExchangeUpdate {
 }
 
 // SetName sets the "name" field.
-func (_u *ExchangeUpdate) SetName(v enum.ExchangeType) *ExchangeUpdate {
+func (_u *ExchangeUpdate) SetName(v string) *ExchangeUpdate {
 	_u.mutation.SetName(v)
 	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (_u *ExchangeUpdate) SetNillableName(v *enum.ExchangeType) *ExchangeUpdate {
+func (_u *ExchangeUpdate) SetNillableName(v *string) *ExchangeUpdate {
 	if v != nil {
 		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetTestMode sets the "test_mode" field.
-func (_u *ExchangeUpdate) SetTestMode(v bool) *ExchangeUpdate {
-	_u.mutation.SetTestMode(v)
-	return _u
-}
-
-// SetNillableTestMode sets the "test_mode" field if the given value is not nil.
-func (_u *ExchangeUpdate) SetNillableTestMode(v *bool) *ExchangeUpdate {
-	if v != nil {
-		_u.SetTestMode(*v)
 	}
 	return _u
 }
@@ -120,9 +105,7 @@ func (_u *ExchangeUpdate) RemoveBots(v ...*Bot) *ExchangeUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *ExchangeUpdate) Save(ctx context.Context) (int, error) {
-	if err := _u.defaults(); err != nil {
-		return 0, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -149,15 +132,11 @@ func (_u *ExchangeUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ExchangeUpdate) defaults() error {
+func (_u *ExchangeUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if exchange.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized exchange.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := exchange.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -183,10 +162,7 @@ func (_u *ExchangeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(exchange.FieldName, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.TestMode(); ok {
-		_spec.SetField(exchange.FieldTestMode, field.TypeBool, value)
+		_spec.SetField(exchange.FieldName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(exchange.FieldConfig, field.TypeJSON, value)
@@ -263,29 +239,15 @@ type ExchangeUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (_u *ExchangeUpdateOne) SetName(v enum.ExchangeType) *ExchangeUpdateOne {
+func (_u *ExchangeUpdateOne) SetName(v string) *ExchangeUpdateOne {
 	_u.mutation.SetName(v)
 	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (_u *ExchangeUpdateOne) SetNillableName(v *enum.ExchangeType) *ExchangeUpdateOne {
+func (_u *ExchangeUpdateOne) SetNillableName(v *string) *ExchangeUpdateOne {
 	if v != nil {
 		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetTestMode sets the "test_mode" field.
-func (_u *ExchangeUpdateOne) SetTestMode(v bool) *ExchangeUpdateOne {
-	_u.mutation.SetTestMode(v)
-	return _u
-}
-
-// SetNillableTestMode sets the "test_mode" field if the given value is not nil.
-func (_u *ExchangeUpdateOne) SetNillableTestMode(v *bool) *ExchangeUpdateOne {
-	if v != nil {
-		_u.SetTestMode(*v)
 	}
 	return _u
 }
@@ -364,9 +326,7 @@ func (_u *ExchangeUpdateOne) Select(field string, fields ...string) *ExchangeUpd
 
 // Save executes the query and returns the updated Exchange entity.
 func (_u *ExchangeUpdateOne) Save(ctx context.Context) (*Exchange, error) {
-	if err := _u.defaults(); err != nil {
-		return nil, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -393,15 +353,11 @@ func (_u *ExchangeUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ExchangeUpdateOne) defaults() error {
+func (_u *ExchangeUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if exchange.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized exchange.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := exchange.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -444,10 +400,7 @@ func (_u *ExchangeUpdateOne) sqlSave(ctx context.Context) (_node *Exchange, err 
 		}
 	}
 	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(exchange.FieldName, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.TestMode(); ok {
-		_spec.SetField(exchange.FieldTestMode, field.TypeBool, value)
+		_spec.SetField(exchange.FieldName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(exchange.FieldConfig, field.TypeJSON, value)

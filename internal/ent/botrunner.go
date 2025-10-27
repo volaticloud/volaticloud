@@ -40,13 +40,16 @@ type BotRunner struct {
 type BotRunnerEdges struct {
 	// Bots holds the value of the bots edge.
 	Bots []*Bot `json:"bots,omitempty"`
+	// Backtests holds the value of the backtests edge.
+	Backtests []*Backtest `json:"backtests,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 	// totalCount holds the count of the edges above.
-	totalCount [1]map[string]int
+	totalCount [2]map[string]int
 
-	namedBots map[string][]*Bot
+	namedBots      map[string][]*Bot
+	namedBacktests map[string][]*Backtest
 }
 
 // BotsOrErr returns the Bots value or an error if the edge
@@ -56,6 +59,15 @@ func (e BotRunnerEdges) BotsOrErr() ([]*Bot, error) {
 		return e.Bots, nil
 	}
 	return nil, &NotLoadedError{edge: "bots"}
+}
+
+// BacktestsOrErr returns the Backtests value or an error if the edge
+// was not loaded in eager-loading.
+func (e BotRunnerEdges) BacktestsOrErr() ([]*Backtest, error) {
+	if e.loadedTypes[1] {
+		return e.Backtests, nil
+	}
+	return nil, &NotLoadedError{edge: "backtests"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -142,6 +154,11 @@ func (_m *BotRunner) QueryBots() *BotQuery {
 	return NewBotRunnerClient(_m.config).QueryBots(_m)
 }
 
+// QueryBacktests queries the "backtests" edge of the BotRunner entity.
+func (_m *BotRunner) QueryBacktests() *BacktestQuery {
+	return NewBotRunnerClient(_m.config).QueryBacktests(_m)
+}
+
 // Update returns a builder for updating this BotRunner.
 // Note that you need to call BotRunner.Unwrap() before calling this method if this BotRunner
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -204,6 +221,30 @@ func (_m *BotRunner) appendNamedBots(name string, edges ...*Bot) {
 		_m.Edges.namedBots[name] = []*Bot{}
 	} else {
 		_m.Edges.namedBots[name] = append(_m.Edges.namedBots[name], edges...)
+	}
+}
+
+// NamedBacktests returns the Backtests named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (_m *BotRunner) NamedBacktests(name string) ([]*Backtest, error) {
+	if _m.Edges.namedBacktests == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := _m.Edges.namedBacktests[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (_m *BotRunner) appendNamedBacktests(name string, edges ...*Backtest) {
+	if _m.Edges.namedBacktests == nil {
+		_m.Edges.namedBacktests = make(map[string][]*Backtest)
+	}
+	if len(edges) == 0 {
+		_m.Edges.namedBacktests[name] = []*Backtest{}
+	} else {
+		_m.Edges.namedBacktests[name] = append(_m.Edges.namedBacktests[name], edges...)
 	}
 }
 

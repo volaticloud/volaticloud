@@ -30,14 +30,20 @@ func (Backtest) Fields() []ent.Field {
 			Comment("Task status"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Skip(entgql.SkipAll)).
 			Comment("Backtest configuration (pairs, timeframe, dates, stake, etc.)"),
 		field.JSON("result", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Skip(entgql.SkipAll)).
 			Comment("Backtest result data (metrics, logs, trades, etc.)"),
+		field.String("container_id").
+			Optional().
+			Comment("Docker container ID for running backtest"),
+		field.String("error_message").
+			Optional().
+			Comment("Error message if backtest failed"),
 		field.UUID("strategy_id", uuid.UUID{}).
 			Comment("Foreign key to strategy"),
+		field.UUID("runner_id", uuid.UUID{}).
+			Comment("Foreign key to runner"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -56,6 +62,11 @@ func (Backtest) Edges() []ent.Edge {
 		edge.From("strategy", Strategy.Type).
 			Ref("backtests").
 			Field("strategy_id").
+			Required().
+			Unique(),
+		edge.From("runner", BotRunner.Type).
+			Ref("backtests").
+			Field("runner_id").
 			Required().
 			Unique(),
 	}

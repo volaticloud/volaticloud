@@ -1,0 +1,14 @@
+{
+  "query": "mutation CreateBot($input: CreateBotInput!) { createBot(input: $input) { id name status containerID } }",
+  "variables": {
+    "input": {
+      "name": "Test Bot",
+      "freqtradeVersion": "2024.1",
+      "apiUsername": "testuser",
+      "apiPassword": "testpass",
+      "exchangeID": "e22ebec7-6ebc-496e-ab79-d2d5fa07cdb0",
+      "strategyID": "7da3f7f3-3b96-4256-99f1-29fe8e0d8a28",
+      "runnerID": "2f9d9f5b-b729-49c9-8221-5fc672aea357"
+    }
+  }
+}

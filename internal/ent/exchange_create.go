@@ -5,7 +5,6 @@ package ent
 import (
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/exchange"
-	"anytrade/internal/enum"
 	"context"
 	"errors"
 	"fmt"
@@ -24,22 +23,8 @@ type ExchangeCreate struct {
 }
 
 // SetName sets the "name" field.
-func (_c *ExchangeCreate) SetName(v enum.ExchangeType) *ExchangeCreate {
+func (_c *ExchangeCreate) SetName(v string) *ExchangeCreate {
 	_c.mutation.SetName(v)
-	return _c
-}
-
-// SetTestMode sets the "test_mode" field.
-func (_c *ExchangeCreate) SetTestMode(v bool) *ExchangeCreate {
-	_c.mutation.SetTestMode(v)
-	return _c
-}
-
-// SetNillableTestMode sets the "test_mode" field if the given value is not nil.
-func (_c *ExchangeCreate) SetNillableTestMode(v *bool) *ExchangeCreate {
-	if v != nil {
-		_c.SetTestMode(*v)
-	}
 	return _c
 }
 
@@ -113,9 +98,7 @@ func (_c *ExchangeCreate) Mutation() *ExchangeMutation {
 
 // Save creates the Exchange in the database.
 func (_c *ExchangeCreate) Save(ctx context.Context) (*Exchange, error) {
-	if err := _c.defaults(); err != nil {
-		return nil, err
-	}
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -142,33 +125,19 @@ func (_c *ExchangeCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ExchangeCreate) defaults() error {
-	if _, ok := _c.mutation.TestMode(); !ok {
-		v := exchange.DefaultTestMode
-		_c.mutation.SetTestMode(v)
-	}
+func (_c *ExchangeCreate) defaults() {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		if exchange.DefaultCreatedAt == nil {
-			return fmt.Errorf("ent: uninitialized exchange.DefaultCreatedAt (forgotten import ent/runtime?)")
-		}
 		v := exchange.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		if exchange.DefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized exchange.DefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := exchange.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		if exchange.DefaultID == nil {
-			return fmt.Errorf("ent: uninitialized exchange.DefaultID (forgotten import ent/runtime?)")
-		}
 		v := exchange.DefaultID()
 		_c.mutation.SetID(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -180,9 +149,6 @@ func (_c *ExchangeCreate) check() error {
 		if err := exchange.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Exchange.name": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.TestMode(); !ok {
-		return &ValidationError{Name: "test_mode", err: errors.New(`ent: missing required field "Exchange.test_mode"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Exchange.created_at"`)}
@@ -226,12 +192,8 @@ func (_c *ExchangeCreate) createSpec() (*Exchange, *sqlgraph.CreateSpec) {
 		_spec.ID.Value = &id
 	}
 	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(exchange.FieldName, field.TypeEnum, value)
+		_spec.SetField(exchange.FieldName, field.TypeString, value)
 		_node.Name = value
-	}
-	if value, ok := _c.mutation.TestMode(); ok {
-		_spec.SetField(exchange.FieldTestMode, field.TypeBool, value)
-		_node.TestMode = value
 	}
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(exchange.FieldConfig, field.TypeJSON, value)

@@ -22,11 +22,11 @@ func init() {
 	backtestFields := schema.Backtest{}.Fields()
 	_ = backtestFields
 	// backtestDescCreatedAt is the schema descriptor for created_at field.
-	backtestDescCreatedAt := backtestFields[5].Descriptor()
+	backtestDescCreatedAt := backtestFields[8].Descriptor()
 	// backtest.DefaultCreatedAt holds the default value on creation for the created_at field.
 	backtest.DefaultCreatedAt = backtestDescCreatedAt.Default.(func() time.Time)
 	// backtestDescUpdatedAt is the schema descriptor for updated_at field.
-	backtestDescUpdatedAt := backtestFields[6].Descriptor()
+	backtestDescUpdatedAt := backtestFields[9].Descriptor()
 	// backtest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	backtest.DefaultUpdatedAt = backtestDescUpdatedAt.Default.(func() time.Time)
 	// backtest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -42,15 +42,15 @@ func init() {
 	// bot.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	bot.NameValidator = botDescName.Validators[0].(func(string) error)
 	// botDescFreqtradeVersion is the schema descriptor for freqtrade_version field.
-	botDescFreqtradeVersion := botFields[10].Descriptor()
+	botDescFreqtradeVersion := botFields[6].Descriptor()
 	// bot.DefaultFreqtradeVersion holds the default value on creation for the freqtrade_version field.
 	bot.DefaultFreqtradeVersion = botDescFreqtradeVersion.Default.(string)
 	// botDescCreatedAt is the schema descriptor for created_at field.
-	botDescCreatedAt := botFields[16].Descriptor()
+	botDescCreatedAt := botFields[12].Descriptor()
 	// bot.DefaultCreatedAt holds the default value on creation for the created_at field.
 	bot.DefaultCreatedAt = botDescCreatedAt.Default.(func() time.Time)
 	// botDescUpdatedAt is the schema descriptor for updated_at field.
-	botDescUpdatedAt := botFields[17].Descriptor()
+	botDescUpdatedAt := botFields[13].Descriptor()
 	// bot.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	bot.DefaultUpdatedAt = botDescUpdatedAt.Default.(func() time.Time)
 	// bot.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -81,20 +81,18 @@ func init() {
 	botrunnerDescID := botrunnerFields[0].Descriptor()
 	// botrunner.DefaultID holds the default value on creation for the id field.
 	botrunner.DefaultID = botrunnerDescID.Default.(func() uuid.UUID)
-	exchangeHooks := schema.Exchange{}.Hooks()
-	exchange.Hooks[0] = exchangeHooks[0]
 	exchangeFields := schema.Exchange{}.Fields()
 	_ = exchangeFields
-	// exchangeDescTestMode is the schema descriptor for test_mode field.
-	exchangeDescTestMode := exchangeFields[2].Descriptor()
-	// exchange.DefaultTestMode holds the default value on creation for the test_mode field.
-	exchange.DefaultTestMode = exchangeDescTestMode.Default.(bool)
+	// exchangeDescName is the schema descriptor for name field.
+	exchangeDescName := exchangeFields[1].Descriptor()
+	// exchange.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	exchange.NameValidator = exchangeDescName.Validators[0].(func(string) error)
 	// exchangeDescCreatedAt is the schema descriptor for created_at field.
-	exchangeDescCreatedAt := exchangeFields[4].Descriptor()
+	exchangeDescCreatedAt := exchangeFields[3].Descriptor()
 	// exchange.DefaultCreatedAt holds the default value on creation for the created_at field.
 	exchange.DefaultCreatedAt = exchangeDescCreatedAt.Default.(func() time.Time)
 	// exchangeDescUpdatedAt is the schema descriptor for updated_at field.
-	exchangeDescUpdatedAt := exchangeFields[5].Descriptor()
+	exchangeDescUpdatedAt := exchangeFields[4].Descriptor()
 	// exchange.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	exchange.DefaultUpdatedAt = exchangeDescUpdatedAt.Default.(func() time.Time)
 	// exchange.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

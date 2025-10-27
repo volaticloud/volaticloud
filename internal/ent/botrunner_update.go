@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
@@ -92,6 +93,21 @@ func (_u *BotRunnerUpdate) AddBots(v ...*Bot) *BotRunnerUpdate {
 	return _u.AddBotIDs(ids...)
 }
 
+// AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
+func (_u *BotRunnerUpdate) AddBacktestIDs(ids ...uuid.UUID) *BotRunnerUpdate {
+	_u.mutation.AddBacktestIDs(ids...)
+	return _u
+}
+
+// AddBacktests adds the "backtests" edges to the Backtest entity.
+func (_u *BotRunnerUpdate) AddBacktests(v ...*Backtest) *BotRunnerUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBacktestIDs(ids...)
+}
+
 // Mutation returns the BotRunnerMutation object of the builder.
 func (_u *BotRunnerUpdate) Mutation() *BotRunnerMutation {
 	return _u.mutation
@@ -116,6 +132,27 @@ func (_u *BotRunnerUpdate) RemoveBots(v ...*Bot) *BotRunnerUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBotIDs(ids...)
+}
+
+// ClearBacktests clears all "backtests" edges to the Backtest entity.
+func (_u *BotRunnerUpdate) ClearBacktests() *BotRunnerUpdate {
+	_u.mutation.ClearBacktests()
+	return _u
+}
+
+// RemoveBacktestIDs removes the "backtests" edge to Backtest entities by IDs.
+func (_u *BotRunnerUpdate) RemoveBacktestIDs(ids ...uuid.UUID) *BotRunnerUpdate {
+	_u.mutation.RemoveBacktestIDs(ids...)
+	return _u
+}
+
+// RemoveBacktests removes "backtests" edges to Backtest entities.
+func (_u *BotRunnerUpdate) RemoveBacktests(v ...*Backtest) *BotRunnerUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBacktestIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -247,6 +284,51 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.BacktestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBacktestsIDs(); len(nodes) > 0 && !_u.mutation.BacktestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BacktestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{botrunner.Label}
@@ -328,6 +410,21 @@ func (_u *BotRunnerUpdateOne) AddBots(v ...*Bot) *BotRunnerUpdateOne {
 	return _u.AddBotIDs(ids...)
 }
 
+// AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
+func (_u *BotRunnerUpdateOne) AddBacktestIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
+	_u.mutation.AddBacktestIDs(ids...)
+	return _u
+}
+
+// AddBacktests adds the "backtests" edges to the Backtest entity.
+func (_u *BotRunnerUpdateOne) AddBacktests(v ...*Backtest) *BotRunnerUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBacktestIDs(ids...)
+}
+
 // Mutation returns the BotRunnerMutation object of the builder.
 func (_u *BotRunnerUpdateOne) Mutation() *BotRunnerMutation {
 	return _u.mutation
@@ -352,6 +449,27 @@ func (_u *BotRunnerUpdateOne) RemoveBots(v ...*Bot) *BotRunnerUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBotIDs(ids...)
+}
+
+// ClearBacktests clears all "backtests" edges to the Backtest entity.
+func (_u *BotRunnerUpdateOne) ClearBacktests() *BotRunnerUpdateOne {
+	_u.mutation.ClearBacktests()
+	return _u
+}
+
+// RemoveBacktestIDs removes the "backtests" edge to Backtest entities by IDs.
+func (_u *BotRunnerUpdateOne) RemoveBacktestIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
+	_u.mutation.RemoveBacktestIDs(ids...)
+	return _u
+}
+
+// RemoveBacktests removes "backtests" edges to Backtest entities.
+func (_u *BotRunnerUpdateOne) RemoveBacktests(v ...*Backtest) *BotRunnerUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBacktestIDs(ids...)
 }
 
 // Where appends a list predicates to the BotRunnerUpdate builder.
@@ -506,6 +624,51 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BacktestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBacktestsIDs(); len(nodes) > 0 && !_u.mutation.BacktestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BacktestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.BacktestsTable,
+			Columns: []string{botrunner.BacktestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -3,14 +3,10 @@
 package exchange
 
 import (
-	"anytrade/internal/enum"
-	"fmt"
 	"time"
 
-	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 )
 
@@ -21,8 +17,6 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldTestMode holds the string denoting the test_mode field in the database.
-	FieldTestMode = "test_mode"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -46,7 +40,6 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
-	FieldTestMode,
 	FieldConfig,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -62,15 +55,9 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// Note that the variables below are initialized by the runtime
-// package on the initialization of the application. Therefore,
-// it should be imported in the main as follows:
-//
-//	import _ "anytrade/internal/ent/runtime"
 var (
-	Hooks [1]ent.Hook
-	// DefaultTestMode holds the default value on creation for the "test_mode" field.
-	DefaultTestMode bool
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -80,16 +67,6 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
-
-// NameValidator is a validator for the "name" field enum values. It is called by the builders before save.
-func NameValidator(n enum.ExchangeType) error {
-	switch n {
-	case "binance", "binanceus", "coinbase", "kraken", "kucoin", "bybit", "okx", "bitfinex":
-		return nil
-	default:
-		return fmt.Errorf("exchange: invalid enum value for name field: %q", n)
-	}
-}
 
 // OrderOption defines the ordering options for the Exchange queries.
 type OrderOption func(*sql.Selector)
@@ -102,11 +79,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByTestMode orders the results by the test_mode field.
-func ByTestMode(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTestMode, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -139,10 +111,3 @@ func newBotsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, BotsTable, BotsColumn),
 	)
 }
-
-var (
-	// enum.ExchangeType must implement graphql.Marshaler.
-	_ graphql.Marshaler = (*enum.ExchangeType)(nil)
-	// enum.ExchangeType must implement graphql.Unmarshaler.
-	_ graphql.Unmarshaler = (*enum.ExchangeType)(nil)
-)

@@ -52,6 +52,8 @@ func (BotRunner) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("bots", Bot.Type).
 			Annotations(entgql.RelayConnection()),
+		edge.To("backtests", Backtest.Type).
+			Annotations(entgql.RelayConnection()),
 	}
 }
 

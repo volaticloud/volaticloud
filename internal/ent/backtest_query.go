@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/backtest"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
 	"context"
@@ -25,6 +26,7 @@ type BacktestQuery struct {
 	inters       []Interceptor
 	predicates   []predicate.Backtest
 	withStrategy *StrategyQuery
+	withRunner   *BotRunnerQuery
 	modifiers    []func(*sql.Selector)
 	loadTotal    []func(context.Context, []*Backtest) error
 	// intermediate query (i.e. traversal path).
@@ -78,6 +80,28 @@ func (_q *BacktestQuery) QueryStrategy() *StrategyQuery {
 			sqlgraph.From(backtest.Table, backtest.FieldID, selector),
 			sqlgraph.To(strategy.Table, strategy.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, backtest.StrategyTable, backtest.StrategyColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRunner chains the current query on the "runner" edge.
+func (_q *BacktestQuery) QueryRunner() *BotRunnerQuery {
+	query := (&BotRunnerClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(backtest.Table, backtest.FieldID, selector),
+			sqlgraph.To(botrunner.Table, botrunner.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, backtest.RunnerTable, backtest.RunnerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -278,6 +302,7 @@ func (_q *BacktestQuery) Clone() *BacktestQuery {
 		inters:       append([]Interceptor{}, _q.inters...),
 		predicates:   append([]predicate.Backtest{}, _q.predicates...),
 		withStrategy: _q.withStrategy.Clone(),
+		withRunner:   _q.withRunner.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -292,6 +317,17 @@ func (_q *BacktestQuery) WithStrategy(opts ...func(*StrategyQuery)) *BacktestQue
 		opt(query)
 	}
 	_q.withStrategy = query
+	return _q
+}
+
+// WithRunner tells the query-builder to eager-load the nodes that are connected to
+// the "runner" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BacktestQuery) WithRunner(opts ...func(*BotRunnerQuery)) *BacktestQuery {
+	query := (&BotRunnerClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withRunner = query
 	return _q
 }
 
@@ -373,8 +409,9 @@ func (_q *BacktestQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bac
 	var (
 		nodes       = []*Backtest{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withStrategy != nil,
+			_q.withRunner != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -401,6 +438,12 @@ func (_q *BacktestQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bac
 	if query := _q.withStrategy; query != nil {
 		if err := _q.loadStrategy(ctx, query, nodes, nil,
 			func(n *Backtest, e *Strategy) { n.Edges.Strategy = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withRunner; query != nil {
+		if err := _q.loadRunner(ctx, query, nodes, nil,
+			func(n *Backtest, e *BotRunner) { n.Edges.Runner = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -441,6 +484,35 @@ func (_q *BacktestQuery) loadStrategy(ctx context.Context, query *StrategyQuery,
 	}
 	return nil
 }
+func (_q *BacktestQuery) loadRunner(ctx context.Context, query *BotRunnerQuery, nodes []*Backtest, init func(*Backtest), assign func(*Backtest, *BotRunner)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Backtest)
+	for i := range nodes {
+		fk := nodes[i].RunnerID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(botrunner.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "runner_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (_q *BacktestQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
@@ -472,6 +544,9 @@ func (_q *BacktestQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withStrategy != nil {
 			_spec.Node.AddColumnOnce(backtest.FieldStrategyID)
+		}
+		if _q.withRunner != nil {
+			_spec.Node.AddColumnOnce(backtest.FieldRunnerID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

@@ -1,0 +1,14 @@
+{
+  "query": "mutation CreateBotRunner($input: CreateBotRunnerInput!) { createBotRunner(input: $input) { id name type } }",
+  "variables": {
+    "input": {
+      "name": "Local Docker",
+      "type": "docker",
+      "config": {
+        "docker": {
+          "host": "unix:///var/run/docker.sock"
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/backtest"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/predicate"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
@@ -69,6 +70,46 @@ func (_u *BacktestUpdate) ClearResult() *BacktestUpdate {
 	return _u
 }
 
+// SetContainerID sets the "container_id" field.
+func (_u *BacktestUpdate) SetContainerID(v string) *BacktestUpdate {
+	_u.mutation.SetContainerID(v)
+	return _u
+}
+
+// SetNillableContainerID sets the "container_id" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableContainerID(v *string) *BacktestUpdate {
+	if v != nil {
+		_u.SetContainerID(*v)
+	}
+	return _u
+}
+
+// ClearContainerID clears the value of the "container_id" field.
+func (_u *BacktestUpdate) ClearContainerID() *BacktestUpdate {
+	_u.mutation.ClearContainerID()
+	return _u
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (_u *BacktestUpdate) SetErrorMessage(v string) *BacktestUpdate {
+	_u.mutation.SetErrorMessage(v)
+	return _u
+}
+
+// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableErrorMessage(v *string) *BacktestUpdate {
+	if v != nil {
+		_u.SetErrorMessage(*v)
+	}
+	return _u
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (_u *BacktestUpdate) ClearErrorMessage() *BacktestUpdate {
+	_u.mutation.ClearErrorMessage()
+	return _u
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (_u *BacktestUpdate) SetStrategyID(v uuid.UUID) *BacktestUpdate {
 	_u.mutation.SetStrategyID(v)
@@ -79,6 +120,20 @@ func (_u *BacktestUpdate) SetStrategyID(v uuid.UUID) *BacktestUpdate {
 func (_u *BacktestUpdate) SetNillableStrategyID(v *uuid.UUID) *BacktestUpdate {
 	if v != nil {
 		_u.SetStrategyID(*v)
+	}
+	return _u
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (_u *BacktestUpdate) SetRunnerID(v uuid.UUID) *BacktestUpdate {
+	_u.mutation.SetRunnerID(v)
+	return _u
+}
+
+// SetNillableRunnerID sets the "runner_id" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableRunnerID(v *uuid.UUID) *BacktestUpdate {
+	if v != nil {
+		_u.SetRunnerID(*v)
 	}
 	return _u
 }
@@ -114,6 +169,11 @@ func (_u *BacktestUpdate) SetStrategy(v *Strategy) *BacktestUpdate {
 	return _u.SetStrategyID(v.ID)
 }
 
+// SetRunner sets the "runner" edge to the BotRunner entity.
+func (_u *BacktestUpdate) SetRunner(v *BotRunner) *BacktestUpdate {
+	return _u.SetRunnerID(v.ID)
+}
+
 // Mutation returns the BacktestMutation object of the builder.
 func (_u *BacktestUpdate) Mutation() *BacktestMutation {
 	return _u.mutation
@@ -122,6 +182,12 @@ func (_u *BacktestUpdate) Mutation() *BacktestMutation {
 // ClearStrategy clears the "strategy" edge to the Strategy entity.
 func (_u *BacktestUpdate) ClearStrategy() *BacktestUpdate {
 	_u.mutation.ClearStrategy()
+	return _u
+}
+
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (_u *BacktestUpdate) ClearRunner() *BacktestUpdate {
+	_u.mutation.ClearRunner()
 	return _u
 }
 
@@ -171,6 +237,9 @@ func (_u *BacktestUpdate) check() error {
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Backtest.strategy"`)
 	}
+	if _u.mutation.RunnerCleared() && len(_u.mutation.RunnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Backtest.runner"`)
+	}
 	return nil
 }
 
@@ -200,6 +269,18 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ResultCleared() {
 		_spec.ClearField(backtest.FieldResult, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ContainerID(); ok {
+		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
+	}
+	if _u.mutation.ContainerIDCleared() {
+		_spec.ClearField(backtest.FieldContainerID, field.TypeString)
+	}
+	if value, ok := _u.mutation.ErrorMessage(); ok {
+		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
+	}
+	if _u.mutation.ErrorMessageCleared() {
+		_spec.ClearField(backtest.FieldErrorMessage, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(backtest.FieldUpdatedAt, field.TypeTime, value)
@@ -232,6 +313,35 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RunnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   backtest.RunnerTable,
+			Columns: []string{backtest.RunnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RunnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   backtest.RunnerTable,
+			Columns: []string{backtest.RunnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -297,6 +407,46 @@ func (_u *BacktestUpdateOne) ClearResult() *BacktestUpdateOne {
 	return _u
 }
 
+// SetContainerID sets the "container_id" field.
+func (_u *BacktestUpdateOne) SetContainerID(v string) *BacktestUpdateOne {
+	_u.mutation.SetContainerID(v)
+	return _u
+}
+
+// SetNillableContainerID sets the "container_id" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableContainerID(v *string) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetContainerID(*v)
+	}
+	return _u
+}
+
+// ClearContainerID clears the value of the "container_id" field.
+func (_u *BacktestUpdateOne) ClearContainerID() *BacktestUpdateOne {
+	_u.mutation.ClearContainerID()
+	return _u
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (_u *BacktestUpdateOne) SetErrorMessage(v string) *BacktestUpdateOne {
+	_u.mutation.SetErrorMessage(v)
+	return _u
+}
+
+// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableErrorMessage(v *string) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetErrorMessage(*v)
+	}
+	return _u
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (_u *BacktestUpdateOne) ClearErrorMessage() *BacktestUpdateOne {
+	_u.mutation.ClearErrorMessage()
+	return _u
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (_u *BacktestUpdateOne) SetStrategyID(v uuid.UUID) *BacktestUpdateOne {
 	_u.mutation.SetStrategyID(v)
@@ -307,6 +457,20 @@ func (_u *BacktestUpdateOne) SetStrategyID(v uuid.UUID) *BacktestUpdateOne {
 func (_u *BacktestUpdateOne) SetNillableStrategyID(v *uuid.UUID) *BacktestUpdateOne {
 	if v != nil {
 		_u.SetStrategyID(*v)
+	}
+	return _u
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (_u *BacktestUpdateOne) SetRunnerID(v uuid.UUID) *BacktestUpdateOne {
+	_u.mutation.SetRunnerID(v)
+	return _u
+}
+
+// SetNillableRunnerID sets the "runner_id" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableRunnerID(v *uuid.UUID) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetRunnerID(*v)
 	}
 	return _u
 }
@@ -342,6 +506,11 @@ func (_u *BacktestUpdateOne) SetStrategy(v *Strategy) *BacktestUpdateOne {
 	return _u.SetStrategyID(v.ID)
 }
 
+// SetRunner sets the "runner" edge to the BotRunner entity.
+func (_u *BacktestUpdateOne) SetRunner(v *BotRunner) *BacktestUpdateOne {
+	return _u.SetRunnerID(v.ID)
+}
+
 // Mutation returns the BacktestMutation object of the builder.
 func (_u *BacktestUpdateOne) Mutation() *BacktestMutation {
 	return _u.mutation
@@ -350,6 +519,12 @@ func (_u *BacktestUpdateOne) Mutation() *BacktestMutation {
 // ClearStrategy clears the "strategy" edge to the Strategy entity.
 func (_u *BacktestUpdateOne) ClearStrategy() *BacktestUpdateOne {
 	_u.mutation.ClearStrategy()
+	return _u
+}
+
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (_u *BacktestUpdateOne) ClearRunner() *BacktestUpdateOne {
+	_u.mutation.ClearRunner()
 	return _u
 }
 
@@ -412,6 +587,9 @@ func (_u *BacktestUpdateOne) check() error {
 	if _u.mutation.StrategyCleared() && len(_u.mutation.StrategyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Backtest.strategy"`)
 	}
+	if _u.mutation.RunnerCleared() && len(_u.mutation.RunnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Backtest.runner"`)
+	}
 	return nil
 }
 
@@ -459,6 +637,18 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	if _u.mutation.ResultCleared() {
 		_spec.ClearField(backtest.FieldResult, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.ContainerID(); ok {
+		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
+	}
+	if _u.mutation.ContainerIDCleared() {
+		_spec.ClearField(backtest.FieldContainerID, field.TypeString)
+	}
+	if value, ok := _u.mutation.ErrorMessage(); ok {
+		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
+	}
+	if _u.mutation.ErrorMessageCleared() {
+		_spec.ClearField(backtest.FieldErrorMessage, field.TypeString)
+	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(backtest.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -490,6 +680,35 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RunnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   backtest.RunnerTable,
+			Columns: []string{backtest.RunnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RunnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   backtest.RunnerTable,
+			Columns: []string{backtest.RunnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

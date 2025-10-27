@@ -7,7 +7,7 @@ import {
   Typography,
   FormHelperText,
 } from '@mui/material';
-import { useDeleteExchangeMutation, ExchangeExchangeType } from '../../generated/graphql';
+import { useDeleteExchangeMutation } from '../../generated/graphql';
 
 interface DeleteExchangeDialogProps {
   open: boolean;
@@ -15,7 +15,7 @@ interface DeleteExchangeDialogProps {
   onSuccess: () => void;
   exchange: {
     id: string;
-    name: ExchangeExchangeType;
+    name: string;
   } | null;
 }
 

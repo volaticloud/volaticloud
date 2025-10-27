@@ -6,7 +6,6 @@ import (
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/schema/uuidgql"
 	"anytrade/internal/enum"
-	"anytrade/internal/exchange"
 	"anytrade/internal/graph/model"
 	"anytrade/internal/runner"
 	"bytes"
@@ -50,9 +49,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	CreateBotRunnerInput() CreateBotRunnerInputResolver
-	CreateExchangeInput() CreateExchangeInputResolver
 	UpdateBotRunnerInput() UpdateBotRunnerInputResolver
-	UpdateExchangeInput() UpdateExchangeInputResolver
 }
 
 type DirectiveRoot struct {
@@ -60,13 +57,19 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Backtest struct {
-		CompletedAt func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Status      func(childComplexity int) int
-		Strategy    func(childComplexity int) int
-		StrategyID  func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		CompletedAt  func(childComplexity int) int
+		Config       func(childComplexity int) int
+		ContainerID  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ErrorMessage func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Result       func(childComplexity int) int
+		Runner       func(childComplexity int) int
+		RunnerID     func(childComplexity int) int
+		Status       func(childComplexity int) int
+		Strategy     func(childComplexity int) int
+		StrategyID   func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
 	}
 
 	BacktestConnection struct {
@@ -81,8 +84,6 @@ type ComplexityRoot struct {
 	}
 
 	Bot struct {
-		APIURL           func(childComplexity int) int
-		APIUsername      func(childComplexity int) int
 		Config           func(childComplexity int) int
 		ContainerID      func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
@@ -115,6 +116,7 @@ type ComplexityRoot struct {
 	}
 
 	BotRunner struct {
+		Backtests func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		Bots      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
@@ -152,10 +154,10 @@ type ComplexityRoot struct {
 
 	Exchange struct {
 		Bots      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) int
+		Config    func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
-		TestMode  func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
 
@@ -173,7 +175,9 @@ type ComplexityRoot struct {
 		DeleteStrategy  func(childComplexity int, id uuid.UUID) int
 		DeleteTrade     func(childComplexity int, id uuid.UUID) int
 		RestartBot      func(childComplexity int, id uuid.UUID) int
+		RunBacktest     func(childComplexity int, id uuid.UUID) int
 		StartBot        func(childComplexity int, id uuid.UUID) int
+		StopBacktest    func(childComplexity int, id uuid.UUID) int
 		StopBot         func(childComplexity int, id uuid.UUID) int
 		UpdateBacktest  func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
 		UpdateBot       func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
@@ -279,6 +283,8 @@ type MutationResolver interface {
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
+	RunBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
+	StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
 	CreateTrade(ctx context.Context, input ent.CreateTradeInput) (*ent.Trade, error)
 	UpdateTrade(ctx context.Context, id uuid.UUID, input ent.UpdateTradeInput) (*ent.Trade, error)
 	DeleteTrade(ctx context.Context, id uuid.UUID) (bool, error)
@@ -298,14 +304,8 @@ type QueryResolver interface {
 type CreateBotRunnerInputResolver interface {
 	Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error
 }
-type CreateExchangeInputResolver interface {
-	Config(ctx context.Context, obj *ent.CreateExchangeInput, data *exchange.ExchangeConfigInput) error
-}
 type UpdateBotRunnerInputResolver interface {
 	Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error
-}
-type UpdateExchangeInputResolver interface {
-	Config(ctx context.Context, obj *ent.UpdateExchangeInput, data *exchange.ExchangeConfigInput) error
 }
 
 type executableSchema struct {
@@ -333,18 +333,54 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.CompletedAt(childComplexity), true
+	case "Backtest.config":
+		if e.complexity.Backtest.Config == nil {
+			break
+		}
+
+		return e.complexity.Backtest.Config(childComplexity), true
+	case "Backtest.containerID":
+		if e.complexity.Backtest.ContainerID == nil {
+			break
+		}
+
+		return e.complexity.Backtest.ContainerID(childComplexity), true
 	case "Backtest.createdAt":
 		if e.complexity.Backtest.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.Backtest.CreatedAt(childComplexity), true
+	case "Backtest.errorMessage":
+		if e.complexity.Backtest.ErrorMessage == nil {
+			break
+		}
+
+		return e.complexity.Backtest.ErrorMessage(childComplexity), true
 	case "Backtest.id":
 		if e.complexity.Backtest.ID == nil {
 			break
 		}
 
 		return e.complexity.Backtest.ID(childComplexity), true
+	case "Backtest.result":
+		if e.complexity.Backtest.Result == nil {
+			break
+		}
+
+		return e.complexity.Backtest.Result(childComplexity), true
+	case "Backtest.runner":
+		if e.complexity.Backtest.Runner == nil {
+			break
+		}
+
+		return e.complexity.Backtest.Runner(childComplexity), true
+	case "Backtest.runnerID":
+		if e.complexity.Backtest.RunnerID == nil {
+			break
+		}
+
+		return e.complexity.Backtest.RunnerID(childComplexity), true
 	case "Backtest.status":
 		if e.complexity.Backtest.Status == nil {
 			break
@@ -402,18 +438,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BacktestEdge.Node(childComplexity), true
 
-	case "Bot.apiURL":
-		if e.complexity.Bot.APIURL == nil {
-			break
-		}
-
-		return e.complexity.Bot.APIURL(childComplexity), true
-	case "Bot.apiUsername":
-		if e.complexity.Bot.APIUsername == nil {
-			break
-		}
-
-		return e.complexity.Bot.APIUsername(childComplexity), true
 	case "Bot.config":
 		if e.complexity.Bot.Config == nil {
 			break
@@ -560,6 +584,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BotEdge.Node(childComplexity), true
 
+	case "BotRunner.backtests":
+		if e.complexity.BotRunner.Backtests == nil {
+			break
+		}
+
+		args, err := ec.field_BotRunner_backtests_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.BotRunner.Backtests(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
 	case "BotRunner.bots":
 		if e.complexity.BotRunner.Bots == nil {
 			break
@@ -724,6 +759,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Exchange.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int)), true
+	case "Exchange.config":
+		if e.complexity.Exchange.Config == nil {
+			break
+		}
+
+		return e.complexity.Exchange.Config(childComplexity), true
 	case "Exchange.createdAt":
 		if e.complexity.Exchange.CreatedAt == nil {
 			break
@@ -742,12 +783,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Exchange.Name(childComplexity), true
-	case "Exchange.testMode":
-		if e.complexity.Exchange.TestMode == nil {
-			break
-		}
-
-		return e.complexity.Exchange.TestMode(childComplexity), true
 	case "Exchange.updatedAt":
 		if e.complexity.Exchange.UpdatedAt == nil {
 			break
@@ -898,6 +933,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RestartBot(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.runBacktest":
+		if e.complexity.Mutation.RunBacktest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_runBacktest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RunBacktest(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.startBot":
 		if e.complexity.Mutation.StartBot == nil {
 			break
@@ -909,6 +955,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.StartBot(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.stopBacktest":
+		if e.complexity.Mutation.StopBacktest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_stopBacktest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.StopBacktest(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.stopBot":
 		if e.complexity.Mutation.StopBot == nil {
 			break
@@ -1505,6 +1562,32 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_BotRunner_backtests_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field_BotRunner_bots_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1726,7 +1809,29 @@ func (ec *executionContext) field_Mutation_restartBot_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_runBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_startBot_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_stopBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -2180,6 +2285,122 @@ func (ec *executionContext) fieldContext_Backtest_status(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Backtest_config(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_config,
+		func(ctx context.Context) (any, error) {
+			return obj.Config, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Backtest_result(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_result,
+		func(ctx context.Context) (any, error) {
+			return obj.Result, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_result(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Backtest_containerID(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_containerID,
+		func(ctx context.Context) (any, error) {
+			return obj.ContainerID, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_containerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Backtest_errorMessage(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_errorMessage,
+		func(ctx context.Context) (any, error) {
+			return obj.ErrorMessage, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_errorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Backtest_strategyID(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2197,6 +2418,35 @@ func (ec *executionContext) _Backtest_strategyID(ctx context.Context, field grap
 }
 
 func (ec *executionContext) fieldContext_Backtest_strategyID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Backtest_runnerID(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_runnerID,
+		func(ctx context.Context) (any, error) {
+			return obj.RunnerID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_runnerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Backtest",
 		Field:      field,
@@ -2347,6 +2597,51 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Backtest_runner(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_runner,
+		func(ctx context.Context) (any, error) {
+			return obj.Runner(ctx)
+		},
+		nil,
+		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BotRunner_id(ctx, field)
+			case "name":
+				return ec.fieldContext_BotRunner_name(ctx, field)
+			case "type":
+				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BacktestConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.BacktestConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2478,8 +2773,18 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_id(ctx, field)
 			case "status":
 				return ec.fieldContext_Backtest_status(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Backtest_containerID(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Backtest_createdAt(ctx, field)
 			case "updatedAt":
@@ -2488,6 +2793,8 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -2657,64 +2964,6 @@ func (ec *executionContext) _Bot_containerID(ctx context.Context, field graphql.
 }
 
 func (ec *executionContext) fieldContext_Bot_containerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Bot",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Bot_apiURL(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Bot_apiURL,
-		func(ctx context.Context) (any, error) {
-			return obj.APIURL, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Bot_apiURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Bot",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Bot_apiUsername(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Bot_apiUsername,
-		func(ctx context.Context) (any, error) {
-			return obj.APIUsername, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Bot_apiUsername(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bot",
 		Field:      field,
@@ -3016,8 +3265,8 @@ func (ec *executionContext) fieldContext_Bot_exchange(_ context.Context, field g
 				return ec.fieldContext_Exchange_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Exchange_name(ctx, field)
-			case "testMode":
-				return ec.fieldContext_Exchange_testMode(ctx, field)
+			case "config":
+				return ec.fieldContext_Exchange_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -3118,6 +3367,8 @@ func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field gra
 				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
@@ -3311,10 +3562,6 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -3571,6 +3818,55 @@ func (ec *executionContext) fieldContext_BotRunner_bots(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _BotRunner_backtests(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_backtests,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return obj.Backtests(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int))
+		},
+		nil,
+		ec.marshalNBacktestConnection2ᚖanytradeᚋinternalᚋentᚐBacktestConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_backtests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_BacktestConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_BacktestConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BacktestConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BacktestConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_BotRunner_backtests_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BotRunnerConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunnerConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3710,6 +4006,8 @@ func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, f
 				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
@@ -4162,7 +4460,7 @@ func (ec *executionContext) _Exchange_name(ctx context.Context, field graphql.Co
 			return obj.Name, nil
 		},
 		nil,
-		ec.marshalNExchangeExchangeType2anytradeᚋinternalᚋenumᚐExchangeType,
+		ec.marshalNString2string,
 		true,
 		true,
 	)
@@ -4175,36 +4473,36 @@ func (ec *executionContext) fieldContext_Exchange_name(_ context.Context, field 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ExchangeExchangeType does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Exchange_testMode(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
+func (ec *executionContext) _Exchange_config(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Exchange_testMode,
+		ec.fieldContext_Exchange_config,
 		func(ctx context.Context) (any, error) {
-			return obj.TestMode, nil
+			return obj.Config, nil
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalOMap2map,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Exchange_testMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Exchange_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Exchange",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type Map does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4346,8 +4644,8 @@ func (ec *executionContext) fieldContext_Mutation_createExchange(ctx context.Con
 				return ec.fieldContext_Exchange_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Exchange_name(ctx, field)
-			case "testMode":
-				return ec.fieldContext_Exchange_testMode(ctx, field)
+			case "config":
+				return ec.fieldContext_Exchange_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -4401,8 +4699,8 @@ func (ec *executionContext) fieldContext_Mutation_updateExchange(ctx context.Con
 				return ec.fieldContext_Exchange_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Exchange_name(ctx, field)
-			case "testMode":
-				return ec.fieldContext_Exchange_testMode(ctx, field)
+			case "config":
+				return ec.fieldContext_Exchange_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -4670,10 +4968,6 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -4753,10 +5047,6 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -4877,10 +5167,6 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -4960,10 +5246,6 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -5043,10 +5325,6 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -5128,6 +5406,8 @@ func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
@@ -5183,6 +5463,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
@@ -5271,8 +5553,18 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_id(ctx, field)
 			case "status":
 				return ec.fieldContext_Backtest_status(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Backtest_containerID(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Backtest_createdAt(ctx, field)
 			case "updatedAt":
@@ -5281,6 +5573,8 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -5328,8 +5622,18 @@ func (ec *executionContext) fieldContext_Mutation_updateBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_id(ctx, field)
 			case "status":
 				return ec.fieldContext_Backtest_status(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Backtest_containerID(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Backtest_createdAt(ctx, field)
 			case "updatedAt":
@@ -5338,6 +5642,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -5391,6 +5697,144 @@ func (ec *executionContext) fieldContext_Mutation_deleteBacktest(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_runBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_runBacktest,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RunBacktest(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Backtest_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Backtest_status(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Backtest_containerID(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Backtest_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Backtest_updatedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_runBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_stopBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_stopBacktest,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().StopBacktest(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Backtest_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Backtest_status(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Backtest_containerID(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Backtest_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Backtest_updatedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_stopBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5973,8 +6417,8 @@ func (ec *executionContext) fieldContext_Query_exchanges(_ context.Context, fiel
 				return ec.fieldContext_Exchange_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Exchange_name(ctx, field)
-			case "testMode":
-				return ec.fieldContext_Exchange_testMode(ctx, field)
+			case "config":
+				return ec.fieldContext_Exchange_config(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -7332,10 +7776,6 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_mode(ctx, field)
 			case "containerID":
 				return ec.fieldContext_Bot_containerID(ctx, field)
-			case "apiURL":
-				return ec.fieldContext_Bot_apiURL(ctx, field)
-			case "apiUsername":
-				return ec.fieldContext_Bot_apiUsername(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -9016,8 +9456,8 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputBinanceConfigInput(ctx context.Context, obj any) (exchange.BinanceConfigInput, error) {
-	var it exchange.BinanceConfigInput
+func (ec *executionContext) unmarshalInputBinanceConfigInput(ctx context.Context, obj any) (model.BinanceConfigInput, error) {
+	var it model.BinanceConfigInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -9050,8 +9490,8 @@ func (ec *executionContext) unmarshalInputBinanceConfigInput(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBitfinexConfigInput(ctx context.Context, obj any) (exchange.BitfinexConfigInput, error) {
-	var it exchange.BitfinexConfigInput
+func (ec *executionContext) unmarshalInputBitfinexConfigInput(ctx context.Context, obj any) (model.BitfinexConfigInput, error) {
+	var it model.BitfinexConfigInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -9084,8 +9524,8 @@ func (ec *executionContext) unmarshalInputBitfinexConfigInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBybitConfigInput(ctx context.Context, obj any) (exchange.BybitConfigInput, error) {
-	var it exchange.BybitConfigInput
+func (ec *executionContext) unmarshalInputBybitConfigInput(ctx context.Context, obj any) (model.BybitConfigInput, error) {
+	var it model.BybitConfigInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -9125,7 +9565,7 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "createdAt", "updatedAt", "completedAt", "strategyID"}
+	fieldsInOrder := [...]string{"status", "config", "result", "containerID", "errorMessage", "createdAt", "updatedAt", "completedAt", "strategyID", "runnerID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9139,6 +9579,34 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.Status = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
+		case "result":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("result"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Result = data
+		case "containerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContainerID = data
+		case "errorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ErrorMessage = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -9167,6 +9635,13 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.StrategyID = data
+		case "runnerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerID = data
 		}
 	}
 
@@ -9180,7 +9655,7 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "apiURL", "apiUsername", "apiPassword", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs"}
+	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9215,27 +9690,6 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ContainerID = data
-		case "apiURL":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiURL"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIURL = data
-		case "apiUsername":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiUsername"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIUsername = data
-		case "apiPassword":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiPassword"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIPassword = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
@@ -9319,7 +9773,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "config", "createdAt", "updatedAt", "botIDs"}
+	fieldsInOrder := [...]string{"name", "type", "config", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9370,6 +9824,13 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.BotIDs = data
+		case "backtestIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backtestIDs"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BacktestIDs = data
 		}
 	}
 
@@ -9383,7 +9844,7 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "testMode", "config", "createdAt", "updatedAt", "botIDs"}
+	fieldsInOrder := [...]string{"name", "config", "createdAt", "updatedAt", "botIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9392,27 +9853,18 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 		switch k {
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNExchangeExchangeType2anytradeᚋinternalᚋenumᚐExchangeType(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Name = data
-		case "testMode":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("testMode"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TestMode = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			data, err := ec.unmarshalOExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.CreateExchangeInput().Config(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.Config = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -9738,8 +10190,8 @@ func (ec *executionContext) unmarshalInputDockerConfigInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputExchangeConfigInput(ctx context.Context, obj any) (exchange.ExchangeConfigInput, error) {
-	var it exchange.ExchangeConfigInput
+func (ec *executionContext) unmarshalInputExchangeConfigInput(ctx context.Context, obj any) (model.ExchangeConfigInput, error) {
+	var it model.ExchangeConfigInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -9754,56 +10206,56 @@ func (ec *executionContext) unmarshalInputExchangeConfigInput(ctx context.Contex
 		switch k {
 		case "binance":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binance"))
-			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBinanceConfigInput(ctx, v)
+			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Binance = data
 		case "binanceus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binanceus"))
-			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBinanceConfigInput(ctx, v)
+			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.BinanceUS = data
+			it.Binanceus = data
 		case "coinbase":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coinbase"))
-			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Coinbase = data
 		case "kraken":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kraken"))
-			data, err := ec.unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐKrakenConfigInput(ctx, v)
+			data, err := ec.unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKrakenConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kraken = data
 		case "kucoin":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kucoin"))
-			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kucoin = data
 		case "bybit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bybit"))
-			data, err := ec.unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBybitConfigInput(ctx, v)
+			data, err := ec.unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBybitConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Bybit = data
 		case "okx":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("okx"))
-			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.OKX = data
+			it.Okx = data
 		case "bitfinex":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bitfinex"))
-			data, err := ec.unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBitfinexConfigInput(ctx, v)
+			data, err := ec.unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBitfinexConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9814,8 +10266,8 @@ func (ec *executionContext) unmarshalInputExchangeConfigInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputKrakenConfigInput(ctx context.Context, obj any) (exchange.KrakenConfigInput, error) {
-	var it exchange.KrakenConfigInput
+func (ec *executionContext) unmarshalInputKrakenConfigInput(ctx context.Context, obj any) (model.KrakenConfigInput, error) {
+	var it model.KrakenConfigInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -9916,8 +10368,8 @@ func (ec *executionContext) unmarshalInputLocalConfigInput(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPassphraseExchangeConfigInput(ctx context.Context, obj any) (exchange.PassphraseExchangeConfigInput, error) {
-	var it exchange.PassphraseExchangeConfigInput
+func (ec *executionContext) unmarshalInputPassphraseExchangeConfigInput(ctx context.Context, obj any) (model.PassphraseExchangeConfigInput, error) {
+	var it model.PassphraseExchangeConfigInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -10046,7 +10498,7 @@ func (ec *executionContext) unmarshalInputUpdateBacktestInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "updatedAt", "completedAt", "clearCompletedAt", "strategyID"}
+	fieldsInOrder := [...]string{"status", "config", "clearConfig", "result", "clearResult", "containerID", "clearContainerID", "errorMessage", "clearErrorMessage", "updatedAt", "completedAt", "clearCompletedAt", "strategyID", "runnerID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10060,6 +10512,62 @@ func (ec *executionContext) unmarshalInputUpdateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.Status = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
+		case "clearConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearConfig = data
+		case "result":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("result"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Result = data
+		case "clearResult":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearResult"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearResult = data
+		case "containerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContainerID = data
+		case "clearContainerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearContainerID"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearContainerID = data
+		case "errorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ErrorMessage = data
+		case "clearErrorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearErrorMessage"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearErrorMessage = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -10088,6 +10596,13 @@ func (ec *executionContext) unmarshalInputUpdateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.StrategyID = data
+		case "runnerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerID = data
 		}
 	}
 
@@ -10101,7 +10616,7 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "clearContainerID", "apiURL", "clearAPIURL", "apiUsername", "clearAPIUsername", "apiPassword", "clearAPIPassword", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades"}
+	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "clearContainerID", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10143,48 +10658,6 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ClearContainerID = data
-		case "apiURL":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiURL"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIURL = data
-		case "clearAPIURL":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAPIURL"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearAPIURL = data
-		case "apiUsername":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiUsername"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIUsername = data
-		case "clearAPIUsername":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAPIUsername"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearAPIUsername = data
-		case "apiPassword":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiPassword"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIPassword = data
-		case "clearAPIPassword":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAPIPassword"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearAPIPassword = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
@@ -10296,7 +10769,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
+	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10361,6 +10834,27 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.ClearBots = data
+		case "addBacktestIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addBacktestIDs"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddBacktestIDs = data
+		case "removeBacktestIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeBacktestIDs"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemoveBacktestIDs = data
+		case "clearBacktests":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearBacktests"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearBacktests = data
 		}
 	}
 
@@ -10374,7 +10868,7 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "testMode", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
+	fieldsInOrder := [...]string{"name", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10383,27 +10877,18 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 		switch k {
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOExchangeExchangeType2ᚖanytradeᚋinternalᚋenumᚐExchangeType(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Name = data
-		case "testMode":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("testMode"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TestMode = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			data, err := ec.unmarshalOExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.UpdateExchangeInput().Config(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.Config = data
 		case "clearConfig":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
 			data, err := ec.unmarshalOBoolean2bool(ctx, v)
@@ -10798,8 +11283,21 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "config":
+			out.Values[i] = ec._Backtest_config(ctx, field, obj)
+		case "result":
+			out.Values[i] = ec._Backtest_result(ctx, field, obj)
+		case "containerID":
+			out.Values[i] = ec._Backtest_containerID(ctx, field, obj)
+		case "errorMessage":
+			out.Values[i] = ec._Backtest_errorMessage(ctx, field, obj)
 		case "strategyID":
 			out.Values[i] = ec._Backtest_strategyID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "runnerID":
+			out.Values[i] = ec._Backtest_runnerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -10825,6 +11323,42 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Backtest_strategy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "runner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Backtest_runner(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -10994,10 +11528,6 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 		case "containerID":
 			out.Values[i] = ec._Bot_containerID(ctx, field, obj)
-		case "apiURL":
-			out.Values[i] = ec._Bot_apiURL(ctx, field, obj)
-		case "apiUsername":
-			out.Values[i] = ec._Bot_apiUsername(ctx, field, obj)
 		case "config":
 			out.Values[i] = ec._Bot_config(ctx, field, obj)
 		case "freqtradeVersion":
@@ -11360,6 +11890,42 @@ func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "backtests":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BotRunner_backtests(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11581,11 +12147,8 @@ func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "testMode":
-			out.Values[i] = ec._Exchange_testMode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
+		case "config":
+			out.Values[i] = ec._Exchange_config(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Exchange_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11796,6 +12359,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteBacktest":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteBacktest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "runBacktest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_runBacktest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopBacktest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_stopBacktest(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -13166,16 +13743,6 @@ func (ec *executionContext) marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExch
 	return ec._Exchange(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNExchangeExchangeType2anytradeᚋinternalᚋenumᚐExchangeType(ctx context.Context, v any) (enum.ExchangeType, error) {
-	var res enum.ExchangeType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNExchangeExchangeType2anytradeᚋinternalᚋenumᚐExchangeType(ctx context.Context, sel ast.SelectionSet, v enum.ExchangeType) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -13754,7 +14321,7 @@ func (ec *executionContext) marshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋ
 	return v
 }
 
-func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBinanceConfigInput(ctx context.Context, v any) (*exchange.BinanceConfigInput, error) {
+func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx context.Context, v any) (*model.BinanceConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -13762,7 +14329,7 @@ func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖanytradeᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBitfinexConfigInput(ctx context.Context, v any) (*exchange.BitfinexConfigInput, error) {
+func (ec *executionContext) unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBitfinexConfigInput(ctx context.Context, v any) (*model.BitfinexConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -13965,7 +14532,7 @@ func (ec *executionContext) marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐ
 	return ec._BotStatus(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐBybitConfigInput(ctx context.Context, v any) (*exchange.BybitConfigInput, error) {
+func (ec *executionContext) unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBybitConfigInput(ctx context.Context, v any) (*model.BybitConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -13995,30 +14562,6 @@ func (ec *executionContext) unmarshalODockerConfigInput2ᚖanytradeᚋinternal�
 	}
 	res, err := ec.unmarshalInputDockerConfigInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐExchangeConfigInput(ctx context.Context, v any) (*exchange.ExchangeConfigInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputExchangeConfigInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOExchangeExchangeType2ᚖanytradeᚋinternalᚋenumᚐExchangeType(ctx context.Context, v any) (*enum.ExchangeType, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(enum.ExchangeType)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOExchangeExchangeType2ᚖanytradeᚋinternalᚋenumᚐExchangeType(ctx context.Context, sel ast.SelectionSet, v *enum.ExchangeType) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {
@@ -14110,7 +14653,7 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐKrakenConfigInput(ctx context.Context, v any) (*exchange.KrakenConfigInput, error) {
+func (ec *executionContext) unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKrakenConfigInput(ctx context.Context, v any) (*model.KrakenConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -14159,7 +14702,7 @@ func (ec *executionContext) marshalONode2anytradeᚋinternalᚋentᚐNoder(ctx c
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋexchangeᚐPassphraseExchangeConfigInput(ctx context.Context, v any) (*exchange.PassphraseExchangeConfigInput, error) {
+func (ec *executionContext) unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx context.Context, v any) (*model.PassphraseExchangeConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}

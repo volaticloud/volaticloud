@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/backtest"
+	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
 	"context"
@@ -49,9 +50,43 @@ func (_c *BacktestCreate) SetResult(v map[string]interface{}) *BacktestCreate {
 	return _c
 }
 
+// SetContainerID sets the "container_id" field.
+func (_c *BacktestCreate) SetContainerID(v string) *BacktestCreate {
+	_c.mutation.SetContainerID(v)
+	return _c
+}
+
+// SetNillableContainerID sets the "container_id" field if the given value is not nil.
+func (_c *BacktestCreate) SetNillableContainerID(v *string) *BacktestCreate {
+	if v != nil {
+		_c.SetContainerID(*v)
+	}
+	return _c
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (_c *BacktestCreate) SetErrorMessage(v string) *BacktestCreate {
+	_c.mutation.SetErrorMessage(v)
+	return _c
+}
+
+// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
+func (_c *BacktestCreate) SetNillableErrorMessage(v *string) *BacktestCreate {
+	if v != nil {
+		_c.SetErrorMessage(*v)
+	}
+	return _c
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (_c *BacktestCreate) SetStrategyID(v uuid.UUID) *BacktestCreate {
 	_c.mutation.SetStrategyID(v)
+	return _c
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (_c *BacktestCreate) SetRunnerID(v uuid.UUID) *BacktestCreate {
+	_c.mutation.SetRunnerID(v)
 	return _c
 }
 
@@ -114,6 +149,11 @@ func (_c *BacktestCreate) SetNillableID(v *uuid.UUID) *BacktestCreate {
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_c *BacktestCreate) SetStrategy(v *Strategy) *BacktestCreate {
 	return _c.SetStrategyID(v.ID)
+}
+
+// SetRunner sets the "runner" edge to the BotRunner entity.
+func (_c *BacktestCreate) SetRunner(v *BotRunner) *BacktestCreate {
+	return _c.SetRunnerID(v.ID)
 }
 
 // Mutation returns the BacktestMutation object of the builder.
@@ -182,6 +222,9 @@ func (_c *BacktestCreate) check() error {
 	if _, ok := _c.mutation.StrategyID(); !ok {
 		return &ValidationError{Name: "strategy_id", err: errors.New(`ent: missing required field "Backtest.strategy_id"`)}
 	}
+	if _, ok := _c.mutation.RunnerID(); !ok {
+		return &ValidationError{Name: "runner_id", err: errors.New(`ent: missing required field "Backtest.runner_id"`)}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Backtest.created_at"`)}
 	}
@@ -190,6 +233,9 @@ func (_c *BacktestCreate) check() error {
 	}
 	if len(_c.mutation.StrategyIDs()) == 0 {
 		return &ValidationError{Name: "strategy", err: errors.New(`ent: missing required edge "Backtest.strategy"`)}
+	}
+	if len(_c.mutation.RunnerIDs()) == 0 {
+		return &ValidationError{Name: "runner", err: errors.New(`ent: missing required edge "Backtest.runner"`)}
 	}
 	return nil
 }
@@ -238,6 +284,14 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)
 		_node.Result = value
 	}
+	if value, ok := _c.mutation.ContainerID(); ok {
+		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
+		_node.ContainerID = value
+	}
+	if value, ok := _c.mutation.ErrorMessage(); ok {
+		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
+		_node.ErrorMessage = value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(backtest.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -265,6 +319,23 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.StrategyID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RunnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   backtest.RunnerTable,
+			Columns: []string{backtest.RunnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.RunnerID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

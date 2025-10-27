@@ -1,0 +1,116 @@
+query GetBacktests($first: Int, $after: Cursor) {
+  backtests(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        status
+        config
+        result
+        containerID
+        errorMessage
+        createdAt
+        updatedAt
+        completedAt
+        strategy {
+          id
+          name
+        }
+        runner {
+          id
+          name
+          type
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetBacktest($id: ID!) {
+  node(id: $id) {
+    ... on Backtest {
+      id
+      status
+      config
+      result
+      containerID
+      errorMessage
+      createdAt
+      updatedAt
+      completedAt
+      strategy {
+        id
+        name
+        description
+        version
+      }
+      runner {
+        id
+        name
+        type
+      }
+    }
+  }
+}
+
+query GetBacktestOptions {
+  strategies(first: 50) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+  botRunners(first: 50) {
+    edges {
+      node {
+        id
+        name
+        type
+      }
+    }
+  }
+}
+
+mutation CreateBacktest($input: CreateBacktestInput!) {
+  createBacktest(input: $input) {
+    id
+    status
+    config
+    createdAt
+  }
+}
+
+mutation UpdateBacktest($id: ID!, $input: UpdateBacktestInput!) {
+  updateBacktest(id: $id, input: $input) {
+    id
+    status
+    config
+  }
+}
+
+mutation DeleteBacktest($id: ID!) {
+  deleteBacktest(id: $id)
+}
+
+mutation RunBacktest($id: ID!) {
+  runBacktest(id: $id) {
+    id
+    status
+    containerID
+  }
+}
+
+mutation StopBacktest($id: ID!) {
+  stopBacktest(id: $id) {
+    id
+    status
+  }
+}
