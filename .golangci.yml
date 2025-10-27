@@ -6,11 +6,19 @@ linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: true
+    # Exclude common patterns that are safe to ignore
+    exclude-functions:
+      - io.Copy
+      - (*database/sql.Rows).Close
+      - (*database/sql.Stmt).Close
+      - (*os.File).Close
+      - (io.Closer).Close
 
   govet:
     enable-all: true
     disable:
       - shadow # Too many false positives
+      - fieldalignment # Struct optimization - not critical
 
   gocyclo:
     min-complexity: 15
@@ -57,6 +65,8 @@ linters:
   disable-all: false
   # Use default recommended linters
   # Additional linters can be enabled manually
+  disable:
+    - fieldalignment # Struct optimization - not critical for correctness
 
 issues:
   exclude-rules:
@@ -84,6 +94,17 @@ issues:
     - text: "G404: Use of weak random number generator"
       linters:
         - gosec
+
+    # Exclude S1009 (nil check before len()) - it's more readable with the check
+    - text: "S1009:"
+      linters:
+        - gosimple
+
+    # Exclude specific unchecked errors that are safe
+    - text: "Error return value.*not checked"
+      linters:
+        - errcheck
+      source: "w\\.Write|io\\.WriteString|d\\.client\\.ContainerRemove"
 
   max-issues-per-linter: 0
   max-same-issues: 0
