@@ -71,7 +71,7 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
           id: runner.id,
           input: {
             name,
-            type,
+            type: type as any,
             config,
           },
         },

@@ -120,7 +120,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             exchangeID,
             strategyID,
             runnerID,
-            mode,
+            mode: mode as any,
             freqtradeVersion: '2024.1',
             config: config || undefined,
           },

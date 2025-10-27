@@ -95,7 +95,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
             exchangeID,
             strategyID,
             runnerID,
-            mode,
+            mode: mode as any,
             config: config || undefined,
           },
         },

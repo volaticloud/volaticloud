@@ -340,7 +340,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "nil config",
 			exchange: &ent.Exchange{
-				Name:   enum.ExchangeBinance,
+				Name:   string(enum.ExchangeBinance),
 				Config: nil,
 			},
 			wantErr: true,
@@ -349,7 +349,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "empty config",
 			exchange: &ent.Exchange{
-				Name:   enum.ExchangeBinance,
+				Name:   string(enum.ExchangeBinance),
 				Config: map[string]interface{}{},
 			},
 			wantErr: true,
@@ -358,7 +358,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "config missing exchange key",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"other": map[string]interface{}{},
 				},
@@ -369,7 +369,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "exchange config not a map",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": "invalid",
 				},
@@ -380,7 +380,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "missing api_key",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_secret": "secret123",
@@ -393,7 +393,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "empty api_key",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_key":    "",
@@ -407,7 +407,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "api_key not a string",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_key":    123,
@@ -421,7 +421,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "missing api_secret",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_key": "key123",
@@ -434,7 +434,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "empty api_secret",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_key":    "key123",
@@ -448,7 +448,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "api_secret not a string",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_key":    "key123",
@@ -462,7 +462,7 @@ func TestExtractExchangeCredentials(t *testing.T) {
 		{
 			name: "valid binance credentials",
 			exchange: &ent.Exchange{
-				Name: enum.ExchangeBinance,
+				Name: string(enum.ExchangeBinance),
 				Config: map[string]interface{}{
 					"binance": map[string]interface{}{
 						"api_key":    "my_api_key",
@@ -534,7 +534,7 @@ func TestBuildBotSpec(t *testing.T) {
 			Config:           map[string]interface{}{},
 			Edges: ent.BotEdges{
 				Exchange: &ent.Exchange{
-					Name: enum.ExchangeBinance,
+					Name: string(enum.ExchangeBinance),
 					Config: map[string]interface{}{
 						"binance": map[string]interface{}{
 							"api_key":    "key",
@@ -568,7 +568,7 @@ func TestBuildBotSpec(t *testing.T) {
 			APIPassword:      "pass123",
 			Edges: ent.BotEdges{
 				Exchange: &ent.Exchange{
-					Name: enum.ExchangeBinance,
+					Name: string(enum.ExchangeBinance),
 					Config: map[string]interface{}{
 						"binance": map[string]interface{}{
 							"api_key":    "my_key",
@@ -627,7 +627,7 @@ func TestBuildBotSpec(t *testing.T) {
 			},
 			Edges: ent.BotEdges{
 				Exchange: &ent.Exchange{
-					Name: enum.ExchangeBinance,
+					Name: string(enum.ExchangeBinance),
 					Config: map[string]interface{}{
 						"binance": map[string]interface{}{
 							"api_key":    "key",
@@ -659,7 +659,7 @@ func TestBuildBotSpec(t *testing.T) {
 			Config:           nil,
 			Edges: ent.BotEdges{
 				Exchange: &ent.Exchange{
-					Name: enum.ExchangeBinance,
+					Name: string(enum.ExchangeBinance),
 					Config: map[string]interface{}{
 						"binance": map[string]interface{}{
 							"api_key":    "key",
@@ -692,7 +692,7 @@ func TestBuildBotSpec(t *testing.T) {
 			Config:           map[string]interface{}{},
 			Edges: ent.BotEdges{
 				Exchange: &ent.Exchange{
-					Name:   enum.ExchangeBinance,
+					Name: string(enum.ExchangeBinance),
 					Config: nil, // Invalid - will cause extraction error
 				},
 				Strategy: &ent.Strategy{

@@ -89,6 +89,8 @@ func validateExchangeConfig(config map[string]interface{}) error {
 }
 
 // validateFreqtradeConfig validates that bot config contains all required Freqtrade fields
+//
+//nolint:unused // Used in helpers_test.go (tests excluded from linting)
 func validateFreqtradeConfig(config map[string]interface{}) error {
 	if config == nil {
 		return fmt.Errorf("bot config is required")
@@ -249,7 +251,11 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	}
 	pairStrings := make([]string, len(pairs))
 	for i, p := range pairs {
-		pairStrings[i] = p.(string)
+		str, ok := p.(string)
+		if !ok {
+			return nil, fmt.Errorf("pair at index %d is not a string", i)
+		}
+		pairStrings[i] = str
 	}
 
 	timeframe, ok := bt.Config["timeframe"].(string)

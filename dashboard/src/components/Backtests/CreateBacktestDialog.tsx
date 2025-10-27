@@ -83,7 +83,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess }: CreateBacktes
           input: {
             strategyID,
             runnerID,
-            status: 'pending',
+            status: 'pending' as any,
             config,
           },
         },

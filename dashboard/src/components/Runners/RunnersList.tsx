@@ -45,7 +45,9 @@ export const RunnersList = () => {
   if (loading) return <LoadingSpinner message="Loading runners..." />;
   if (error) return <ErrorAlert error={error} />;
 
-  const runners = data?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
+  const runners = (data?.botRunners?.edges
+    ?.map(edge => edge?.node)
+    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
     <Box>

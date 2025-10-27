@@ -59,7 +59,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         variables: {
           input: {
             name,
-            type,
+            type: type as any,
             config,
           },
         },

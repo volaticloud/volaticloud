@@ -57,7 +57,9 @@ export const StrategiesList = () => {
   if (loading) return <LoadingSpinner message="Loading strategies..." />;
   if (error) return <ErrorAlert error={error} />;
 
-  const strategies = data?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
+  const strategies = (data?.strategies?.edges
+    ?.map(edge => edge?.node)
+    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
     <Box>

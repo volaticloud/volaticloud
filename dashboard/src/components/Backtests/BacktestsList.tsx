@@ -118,7 +118,7 @@ export const BacktestsList = () => {
     return new Date(dateStr).toLocaleString();
   };
 
-  const getConfigSummary = (config: unknown) => {
+  const getConfigSummary = (config: any) => {
     if (!config) return 'No config';
     const pairs = config.pairs?.length || 0;
     const timeframe = config.timeframe || 'N/A';
@@ -128,7 +128,9 @@ export const BacktestsList = () => {
   if (loading) return <LoadingSpinner message="Loading backtests..." />;
   if (error) return <ErrorAlert error={error} />;
 
-  const backtests = data?.backtests?.edges?.map(edge => edge?.node).filter(Boolean) || [];
+  const backtests = (data?.backtests?.edges
+    ?.map(edge => edge?.node)
+    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
     <Box>

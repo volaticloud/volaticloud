@@ -144,7 +144,9 @@ export const BotsList = () => {
   if (loading) return <LoadingSpinner message="Loading bots..." />;
   if (error) return <ErrorAlert error={error} />;
 
-  const bots = data?.bots?.edges?.map(edge => edge?.node).filter(Boolean) || [];
+  const bots = (data?.bots?.edges
+    ?.map(edge => edge?.node)
+    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
     <Box>
