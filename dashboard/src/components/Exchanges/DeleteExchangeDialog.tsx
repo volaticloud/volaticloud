@@ -5,8 +5,9 @@ import {
   DialogActions,
   Button,
   Typography,
-  FormHelperText,
+  Alert,
 } from '@mui/material';
+import { useState } from 'react';
 import { useDeleteExchangeMutation } from '../../generated/graphql';
 
 interface DeleteExchangeDialogProps {
@@ -20,20 +21,31 @@ interface DeleteExchangeDialogProps {
 }
 
 export const DeleteExchangeDialog = ({ open, onClose, onSuccess, exchange }: DeleteExchangeDialogProps) => {
-  const [deleteExchange, { loading, error }] = useDeleteExchangeMutation();
+  const [deleteExchange, { loading }] = useDeleteExchangeMutation();
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!exchange) return;
 
     try {
-      await deleteExchange({
+      setError(null);
+      const result = await deleteExchange({
         variables: { id: exchange.id },
       });
+
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.deleteExchange) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to delete exchange';
+        setError(errorMsg);
+        return;
+      }
 
       onSuccess();
       onClose();
     } catch (err) {
+      // Catch network errors
       console.error('Failed to delete exchange:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete exchange');
     }
   };
 
@@ -48,9 +60,9 @@ export const DeleteExchangeDialog = ({ open, onClose, onSuccess, exchange }: Del
           This action cannot be undone.
         </Typography>
         {error && (
-          <FormHelperText error sx={{ mt: 2 }}>
-            Error deleting exchange: {error.message}
-          </FormHelperText>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
         )}
       </DialogContent>
       <DialogActions>

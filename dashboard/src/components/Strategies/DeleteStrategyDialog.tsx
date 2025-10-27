@@ -5,8 +5,9 @@ import {
   DialogActions,
   Button,
   Typography,
-  FormHelperText,
+  Alert,
 } from '@mui/material';
+import { useState } from 'react';
 import { useDeleteStrategyMutation } from '../../generated/graphql';
 
 interface DeleteStrategyDialogProps {
@@ -20,20 +21,31 @@ interface DeleteStrategyDialogProps {
 }
 
 export const DeleteStrategyDialog = ({ open, onClose, onSuccess, strategy }: DeleteStrategyDialogProps) => {
-  const [deleteStrategy, { loading, error }] = useDeleteStrategyMutation();
+  const [deleteStrategy, { loading }] = useDeleteStrategyMutation();
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     try {
-      await deleteStrategy({
+      setError(null);
+      const result = await deleteStrategy({
         variables: {
           id: strategy.id,
         },
       });
 
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.deleteStrategy) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to delete strategy';
+        setError(errorMsg);
+        return;
+      }
+
       onSuccess();
       onClose();
     } catch (err) {
+      // Catch network errors
       console.error('Failed to delete strategy:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete strategy');
     }
   };
 
@@ -49,9 +61,9 @@ export const DeleteStrategyDialog = ({ open, onClose, onSuccess, strategy }: Del
         </Typography>
 
         {error && (
-          <FormHelperText error sx={{ mt: 2 }}>
-            Error deleting strategy: {error.message}
-          </FormHelperText>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
         )}
       </DialogContent>
       <DialogActions>

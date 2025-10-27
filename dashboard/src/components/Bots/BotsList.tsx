@@ -72,13 +72,25 @@ export const BotsList = () => {
 
   const handleStartBot = async (id: string) => {
     try {
-      await startBot({ variables: { id } });
-      setSnackbar({
-        open: true,
-        message: 'Bot started successfully',
-        severity: 'success',
-      });
+      const result = await startBot({ variables: { id } });
+
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.startBot) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to start bot';
+        setSnackbar({
+          open: true,
+          message: errorMsg,
+          severity: 'error',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Bot started successfully',
+          severity: 'success',
+        });
+      }
     } catch (err) {
+      // Catch network errors
       console.error('Failed to start bot:', err);
       setSnackbar({
         open: true,
@@ -90,13 +102,25 @@ export const BotsList = () => {
 
   const handleStopBot = async (id: string) => {
     try {
-      await stopBot({ variables: { id } });
-      setSnackbar({
-        open: true,
-        message: 'Bot stopped successfully',
-        severity: 'success',
-      });
+      const result = await stopBot({ variables: { id } });
+
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.stopBot) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to stop bot';
+        setSnackbar({
+          open: true,
+          message: errorMsg,
+          severity: 'error',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Bot stopped successfully',
+          severity: 'success',
+        });
+      }
     } catch (err) {
+      // Catch network errors
       console.error('Failed to stop bot:', err);
       setSnackbar({
         open: true,
@@ -108,13 +132,25 @@ export const BotsList = () => {
 
   const handleRestartBot = async (id: string) => {
     try {
-      await restartBot({ variables: { id } });
-      setSnackbar({
-        open: true,
-        message: 'Bot restarted successfully',
-        severity: 'success',
-      });
+      const result = await restartBot({ variables: { id } });
+
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.restartBot) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to restart bot';
+        setSnackbar({
+          open: true,
+          message: errorMsg,
+          severity: 'error',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Bot restarted successfully',
+          severity: 'success',
+        });
+      }
     } catch (err) {
+      // Catch network errors
       console.error('Failed to restart bot:', err);
       setSnackbar({
         open: true,

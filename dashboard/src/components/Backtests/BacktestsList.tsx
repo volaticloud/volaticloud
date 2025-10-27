@@ -61,13 +61,25 @@ export const BacktestsList = () => {
 
   const handleRunBacktest = async (id: string) => {
     try {
-      await runBacktest({ variables: { id } });
-      setSnackbar({
-        open: true,
-        message: 'Backtest started successfully',
-        severity: 'success',
-      });
+      const result = await runBacktest({ variables: { id } });
+
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.runBacktest) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to run backtest';
+        setSnackbar({
+          open: true,
+          message: errorMsg,
+          severity: 'error',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Backtest started successfully',
+          severity: 'success',
+        });
+      }
     } catch (err) {
+      // Catch network errors
       console.error('Failed to run backtest:', err);
       setSnackbar({
         open: true,
@@ -79,13 +91,25 @@ export const BacktestsList = () => {
 
   const handleStopBacktest = async (id: string) => {
     try {
-      await stopBacktest({ variables: { id } });
-      setSnackbar({
-        open: true,
-        message: 'Backtest stopped successfully',
-        severity: 'success',
-      });
+      const result = await stopBacktest({ variables: { id } });
+
+      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
+      if (result.errors || !result.data?.stopBacktest) {
+        const errorMsg = result.errors?.[0]?.message || 'Failed to stop backtest';
+        setSnackbar({
+          open: true,
+          message: errorMsg,
+          severity: 'error',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Backtest stopped successfully',
+          severity: 'success',
+        });
+      }
     } catch (err) {
+      // Catch network errors
       console.error('Failed to stop backtest:', err);
       setSnackbar({
         open: true,
