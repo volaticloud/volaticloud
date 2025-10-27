@@ -1,10 +1,12 @@
 package graph
 
 import (
+	"fmt"
+
 	"anytrade/internal/ent"
 	"anytrade/internal/enum"
+	"anytrade/internal/exchange"
 	"anytrade/internal/runner"
-	"fmt"
 )
 
 // buildBotSpec builds a BotSpec from a Bot entity
@@ -59,33 +61,9 @@ func buildBotSpec(b *ent.Bot) (*runner.BotSpec, error) {
 	return spec, nil
 }
 
-// validateExchangeConfig validates exchange config has required fields
+// validateExchangeConfig validates exchange config using Freqtrade JSON schema
 func validateExchangeConfig(config map[string]interface{}) error {
-	if config == nil {
-		return fmt.Errorf("exchange config is required")
-	}
-
-	// Check if config has the nested "exchange" structure
-	exchangeConfig, hasNested := config["exchange"].(map[string]interface{})
-	if !hasNested {
-		// Fall back to checking at the top level
-		exchangeConfig = config
-	}
-
-	required := []string{"name", "key", "secret"}
-	var missing []string
-
-	for _, field := range required {
-		if _, exists := exchangeConfig[field]; !exists {
-			missing = append(missing, field)
-		}
-	}
-
-	if len(missing) > 0 {
-		return fmt.Errorf("missing required exchange config fields: %v", missing)
-	}
-
-	return nil
+	return exchange.ValidateConfigWithSchema(config)
 }
 
 // validateFreqtradeConfig validates that bot config contains all required Freqtrade fields

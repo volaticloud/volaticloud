@@ -53,3 +53,10 @@ func (Exchange) Annotations() []schema.Annotation {
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
 	}
 }
+
+// Hooks of the Exchange.
+func (Exchange) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateExchangeConfig,
+	}
+}

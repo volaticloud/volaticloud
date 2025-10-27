@@ -1,4 +1,4 @@
-package graph
+package exchange
 
 import (
 	"encoding/json"
@@ -32,51 +32,9 @@ func getSchemaLoader() (gojsonschema.JSONLoader, error) {
 	return schemaLoader, schemaLoaderErr
 }
 
-// validateFreqtradeConfigWithSchema validates a config against the Freqtrade JSON schema
-func validateFreqtradeConfigWithSchema(config map[string]interface{}) error {
-	if config == nil {
-		return fmt.Errorf("config cannot be nil")
-	}
-
-	// Get the schema loader
-	schemaLoader, err := getSchemaLoader()
-	if err != nil {
-		return err
-	}
-
-	// Convert config to JSON for validation
-	configJSON, err := json.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
-	}
-
-	// Create document loader from config
-	documentLoader := gojsonschema.NewBytesLoader(configJSON)
-
-	// Validate
-	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-	if err != nil {
-		return fmt.Errorf("schema validation failed: %w", err)
-	}
-
-	if !result.Valid() {
-		// Build error message from validation errors
-		var errMsg string
-		for i, desc := range result.Errors() {
-			if i > 0 {
-				errMsg += "; "
-			}
-			errMsg += fmt.Sprintf("%s: %s", desc.Field(), desc.Description())
-		}
-		return fmt.Errorf("config validation failed: %s", errMsg)
-	}
-
-	return nil
-}
-
-// ValidateExchangeConfigWithSchema validates an exchange config against Freqtrade schema
+// ValidateConfigWithSchema validates an exchange config against Freqtrade schema
 // Exchange configs should contain the "exchange" object with name, key, secret, and optional settings
-func ValidateExchangeConfigWithSchema(config map[string]interface{}) error {
+func ValidateConfigWithSchema(config map[string]interface{}) error {
 	if config == nil {
 		return fmt.Errorf("exchange config cannot be nil")
 	}
@@ -87,7 +45,7 @@ func ValidateExchangeConfigWithSchema(config map[string]interface{}) error {
 		"exchange": config,
 		// Add minimal required fields to satisfy schema validation
 		"stake_currency": "USDT",
-		"dry_run": true,
+		"dry_run":        true,
 	}
 
 	// Check if config is already wrapped (has "exchange" key)
@@ -123,7 +81,7 @@ func ValidateExchangeConfigWithSchema(config map[string]interface{}) error {
 		for _, desc := range result.Errors() {
 			field := desc.Field()
 			// Only include errors related to exchange fields
-			if field == "exchange" || len(field) > 9 && field[:9] == "exchange." {
+			if field == "exchange" || (len(field) > 9 && field[:9] == "exchange.") {
 				if errorCount > 0 {
 					errMsg += "; "
 				}

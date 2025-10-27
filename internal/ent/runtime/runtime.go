@@ -81,6 +81,8 @@ func init() {
 	botrunnerDescID := botrunnerFields[0].Descriptor()
 	// botrunner.DefaultID holds the default value on creation for the id field.
 	botrunner.DefaultID = botrunnerDescID.Default.(func() uuid.UUID)
+	exchangeHooks := schema.Exchange{}.Hooks()
+	exchange.Hooks[0] = exchangeHooks[0]
 	exchangeFields := schema.Exchange{}.Fields()
 	_ = exchangeFields
 	// exchangeDescName is the schema descriptor for name field.

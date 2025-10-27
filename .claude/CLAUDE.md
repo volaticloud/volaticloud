@@ -518,32 +518,41 @@ Before committing:
 5. **Edge Case Coverage** - Test nil, empty, boundary values
 ## JSON Schema Validation
 
-**Updated: 2025-10-24** - Implemented automatic JSON schema validation using the official Freqtrade schema.
+**Updated: 2025-10-27** - Implemented automatic JSON schema validation using the official Freqtrade schema.
 
 ### Implementation
 
-All bot and backtest configs are now validated against the official Freqtrade JSON schema from `https://schema.freqtrade.io/schema.json`.
+Configs are validated against the official Freqtrade JSON schema from `https://schema.freqtrade.io/schema.json`.
 
 **Files:**
-- `internal/graph/schema_validator.go` - Schema validation helper
+- `internal/graph/schema_validator.go` - Bot config validation
+- `internal/exchange/validator.go` - Exchange config validation
+- `internal/ent/schema/exchange_hooks.go` - ENT hooks for exchange validation
 - Uses `github.com/xeipuuv/gojsonschema` library
 
 **Validation happens:**
-- `createBot` mutation - Validates before database save
-- `updateBot` mutation - Validates config changes
+
+**Bot Configs:**
+- `updateBot` mutation - Validates config changes using `validateFreqtradeConfigWithSchema()`
+- Validates against complete Freqtrade schema
+
+**Exchange Configs:**
+- `createExchange` mutation - Validates via ENT hooks
+- `updateExchange` mutation - Validates via ENT hooks
+- Uses `exchange.ValidateConfigWithSchema()` which validates exchange-specific fields
+- Wraps config in minimal Freqtrade structure for schema validation
+- Filters validation errors to only show exchange-related issues
 
 **Benefits:**
 1. Automatic validation against official Freqtrade requirements
 2. Schema is fetched once and cached
 3. Clear, descriptive error messages from the schema
 4. No manual validation code to maintain
+5. ENT hooks ensure validation happens before database save
 
-**Note:** The schema validates the complete Freqtrade config. Since we store configs separately (Exchange, Strategy, Bot), you may need to include required fields or adjust validation logic for partial configs.
-
-### Next Steps
-
-Consider implementing:
-1. Partial schema validation (only validate bot-specific fields)
-2. Schema merging (merge Exchange/Strategy/Bot configs before validation)
-3. Custom schema for our architecture
+**Architecture:**
+- Exchange configs are validated at the ENT layer via hooks
+- Bot configs are validated at the resolver layer
+- Both use the same underlying Freqtrade JSON schema
+- Exchange validation wraps partial config to satisfy schema requirements
 

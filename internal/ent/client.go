@@ -901,7 +901,8 @@ func (c *ExchangeClient) QueryBots(_m *Exchange) *BotQuery {
 
 // Hooks returns the client hooks.
 func (c *ExchangeClient) Hooks() []Hook {
-	return c.hooks.Exchange
+	hooks := c.hooks.Exchange
+	return append(hooks[:len(hooks):len(hooks)], exchange.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
