@@ -51,8 +51,11 @@ func (f *Factory) CreateBacktestRunner(ctx context.Context, runnerType enum.Runn
 
 // createDockerRuntime creates a Docker runtime instance
 func (f *Factory) createDockerRuntime(ctx context.Context, configData map[string]interface{}) (Runtime, error) {
-	// Parse and validate Docker configuration (passed directly, not nested)
-	config, err := ParseDockerConfig(configData)
+	// Extract Docker-specific config from the runner config
+	dockerConfig := ExtractRunnerConfig(configData, enum.RunnerDocker)
+
+	// Parse and validate Docker configuration
+	config, err := ParseDockerConfig(dockerConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
 	}
@@ -88,8 +91,11 @@ func (f *Factory) createLocalRuntime(ctx context.Context, configData map[string]
 
 // createDockerBacktestRunner creates a Docker backtest runner instance
 func (f *Factory) createDockerBacktestRunner(ctx context.Context, configData map[string]interface{}) (BacktestRunner, error) {
-	// Parse and validate Docker configuration (passed directly, not nested)
-	config, err := ParseDockerConfig(configData)
+	// Extract Docker-specific config from the runner config
+	dockerConfig := ExtractRunnerConfig(configData, enum.RunnerDocker)
+
+	// Parse and validate Docker configuration
+	config, err := ParseDockerConfig(dockerConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
 	}
