@@ -65,8 +65,7 @@ linters:
   disable-all: false
   # Use default recommended linters
   # Additional linters can be enabled manually
-  disable:
-    - fieldalignment # Struct optimization - not critical for correctness
+  # fieldalignment is disabled via govet.disable (it's a govet analyzer, not a standalone linter)
 
 issues:
   exclude-rules:
