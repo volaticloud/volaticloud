@@ -42,15 +42,25 @@ func ValidateConfigWithSchema(config map[string]interface{}) error {
 	// Wrap config in a minimal Freqtrade config structure for validation
 	// The Freqtrade schema expects exchange config to be under the "exchange" key
 	wrappedConfig := map[string]interface{}{
-		"exchange": config,
-		// Add minimal required fields to satisfy schema validation
+		"exchange":       config,
 		"stake_currency": "USDT",
 		"dry_run":        true,
 	}
 
 	// Check if config is already wrapped (has "exchange" key)
 	if _, hasExchange := config["exchange"]; hasExchange {
-		wrappedConfig = config
+		// Config is already in Freqtrade format, just add required fields if missing
+		wrappedConfig = make(map[string]interface{})
+		for k, v := range config {
+			wrappedConfig[k] = v
+		}
+		// Add minimal required fields if they don't exist
+		if _, hasStakeCurrency := wrappedConfig["stake_currency"]; !hasStakeCurrency {
+			wrappedConfig["stake_currency"] = "USDT"
+		}
+		if _, hasDryRun := wrappedConfig["dry_run"]; !hasDryRun {
+			wrappedConfig["dry_run"] = true
+		}
 	}
 
 	// Get the schema loader
