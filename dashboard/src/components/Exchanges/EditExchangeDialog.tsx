@@ -20,6 +20,7 @@ interface EditExchangeDialogProps {
   exchange: {
     id: string;
     name: string;
+    config?: any;
   } | null;
 }
 
@@ -33,7 +34,8 @@ export const EditExchangeDialog = ({ open, onClose, onSuccess, exchange }: EditE
   useEffect(() => {
     if (exchange) {
       setName(exchange.name);
-      setConfig(null); // Leave config empty by default
+      // Populate config if it exists
+      setConfig(exchange.config || null);
     }
   }, [exchange]);
 

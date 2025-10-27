@@ -1128,7 +1128,7 @@ export type GetDashboardDataQuery = { __typename?: 'Query', bots: { __typename?:
 export type GetExchangesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetExchangesQuery = { __typename?: 'Query', exchanges: Array<{ __typename?: 'Exchange', id: string, name: string, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number } }> };
+export type GetExchangesQuery = { __typename?: 'Query', exchanges: Array<{ __typename?: 'Exchange', id: string, name: string, config?: any | null, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number } }> };
 
 export type GetExchangeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1139,7 +1139,7 @@ export type GetExchangeQuery = { __typename?: 'Query', node?:
     | { __typename?: 'Backtest' }
     | { __typename?: 'Bot' }
     | { __typename?: 'BotRunner' }
-    | { __typename?: 'Exchange', id: string, name: string, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: BotBotStatus } | null } | null> | null } }
+    | { __typename?: 'Exchange', id: string, name: string, config?: any | null, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: BotBotStatus } | null } | null> | null } }
     | { __typename?: 'Strategy' }
     | { __typename?: 'Trade' }
    | null };
@@ -1149,7 +1149,7 @@ export type CreateExchangeMutationVariables = Exact<{
 }>;
 
 
-export type CreateExchangeMutation = { __typename?: 'Mutation', createExchange: { __typename?: 'Exchange', id: string, name: string } };
+export type CreateExchangeMutation = { __typename?: 'Mutation', createExchange: { __typename?: 'Exchange', id: string, name: string, config?: any | null } };
 
 export type UpdateExchangeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1157,7 +1157,7 @@ export type UpdateExchangeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateExchangeMutation = { __typename?: 'Mutation', updateExchange: { __typename?: 'Exchange', id: string, name: string } };
+export type UpdateExchangeMutation = { __typename?: 'Mutation', updateExchange: { __typename?: 'Exchange', id: string, name: string, config?: any | null } };
 
 export type DeleteExchangeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2119,6 +2119,7 @@ export const GetExchangesDocument = gql`
   exchanges {
     id
     name
+    config
     createdAt
     updatedAt
     bots(first: 10) {
@@ -2165,6 +2166,7 @@ export const GetExchangeDocument = gql`
     ... on Exchange {
       id
       name
+      config
       createdAt
       updatedAt
       bots(first: 50) {
@@ -2219,6 +2221,7 @@ export const CreateExchangeDocument = gql`
   createExchange(input: $input) {
     id
     name
+    config
   }
 }
     `;
@@ -2253,6 +2256,7 @@ export const UpdateExchangeDocument = gql`
   updateExchange(id: $id, input: $input) {
     id
     name
+    config
   }
 }
     `;

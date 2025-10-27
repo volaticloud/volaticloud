@@ -27,11 +27,12 @@ export const ExchangesList = () => {
   const [selectedExchange, setSelectedExchange] = useState<{
     id: string;
     name: string;
+    config?: any;
   } | null>(null);
 
   const { data, loading, error, refetch } = useGetExchangesQuery();
 
-  const handleEdit = (exchange: { id: string; name: string }) => {
+  const handleEdit = (exchange: { id: string; name: string; config?: any }) => {
     setSelectedExchange(exchange);
     setEditDialogOpen(true);
   };
