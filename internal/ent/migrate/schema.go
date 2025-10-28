@@ -46,7 +46,7 @@ var (
 	BotsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "unhealthy", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},

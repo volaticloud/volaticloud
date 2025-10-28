@@ -164,6 +164,7 @@ BotBotStatus is enum for the field status
 enum BotBotStatus @goModel(model: "anytrade/internal/enum.BotStatus") {
   creating
   running
+  unhealthy
   stopped
   error
   backtesting

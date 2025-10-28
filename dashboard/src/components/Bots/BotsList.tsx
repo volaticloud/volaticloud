@@ -52,9 +52,10 @@ export const BotsList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  // Use generated Apollo hooks - fully type-safe!
+  // Use generated Apollo hooks with polling for real-time updates
   const { data, loading, error, refetch } = useGetBotsQuery({
-    variables: { first: 50 }
+    variables: { first: 50 },
+    pollInterval: 30000, // Poll every 30 seconds to sync with monitor interval
   });
 
   // Mutations with refetch on completion
@@ -168,13 +169,30 @@ export const BotsList = () => {
     switch (status) {
       case 'running':
         return 'success';
+      case 'unhealthy':
+        return 'warning'; // Orange/yellow for unhealthy but running
       case 'stopped':
         return 'default';
+      case 'creating':
+        return 'info';
       case 'error':
         return 'error';
+      case 'backtesting':
+      case 'hyperopt':
+        return 'info';
       default:
-        return 'warning';
+        return 'default';
     }
+  };
+
+  // Helper to check if bot can be started
+  const canStart = (status: string) => {
+    return status === 'stopped' || status === 'error';
+  };
+
+  // Helper to check if bot can be stopped/restarted
+  const canStopOrRestart = (status: string) => {
+    return status === 'running' || status === 'unhealthy';
   };
 
   if (loading) return <LoadingSpinner message="Loading bots..." />;
@@ -270,7 +288,7 @@ export const BotsList = () => {
                         size="small"
                         color="success"
                         onClick={() => handleStartBot(bot.id)}
-                        disabled={bot.status === 'running'}
+                        disabled={!canStart(bot.status)}
                       >
                         <StartIcon fontSize="small" />
                       </IconButton>
@@ -280,7 +298,7 @@ export const BotsList = () => {
                         size="small"
                         color="error"
                         onClick={() => handleStopBot(bot.id)}
-                        disabled={bot.status !== 'running'}
+                        disabled={!canStopOrRestart(bot.status)}
                       >
                         <StopIcon fontSize="small" />
                       </IconButton>
@@ -290,7 +308,7 @@ export const BotsList = () => {
                         size="small"
                         color="warning"
                         onClick={() => handleRestartBot(bot.id)}
-                        disabled={bot.status !== 'running'}
+                        disabled={!canStopOrRestart(bot.status)}
                       >
                         <RestartIcon fontSize="small" />
                       </IconButton>

@@ -132,7 +132,7 @@ const DefaultStatus enum.BotStatus = "creating"
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s enum.BotStatus) error {
 	switch s {
-	case "creating", "running", "stopped", "error", "backtesting", "hyperopt":
+	case "creating", "running", "unhealthy", "stopped", "error", "backtesting", "hyperopt":
 		return nil
 	default:
 		return fmt.Errorf("bot: invalid enum value for status field: %q", s)

@@ -236,12 +236,15 @@ func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotSta
 		stats = &container.StatsResponse{}
 	}
 
+	// Check if container is healthy
+	healthy := inspect.State.Running && (inspect.State.Health == nil || inspect.State.Health.Status == "healthy")
+
 	// Build status
 	status := &BotStatus{
 		BotID:       botID,
 		ContainerID: containerID,
-		Status:      d.mapDockerState(inspect.State),
-		Healthy:     inspect.State.Running && (inspect.State.Health == nil || inspect.State.Health.Status == "healthy"),
+		Status:      d.mapDockerState(inspect.State, healthy),
+		Healthy:     healthy,
 	}
 
 	// Set timestamps
@@ -685,13 +688,17 @@ func (d *DockerRuntime) getContainerStats(ctx context.Context, containerID strin
 	return &v, nil
 }
 
-func (d *DockerRuntime) mapDockerState(state *container.State) enum.BotStatus {
+func (d *DockerRuntime) mapDockerState(state *container.State, healthy bool) enum.BotStatus {
 	if state == nil {
 		return enum.BotStatusError
 	}
 
 	if state.Running {
-		return enum.BotStatusRunning
+		// Distinguish between healthy and unhealthy running containers
+		if healthy {
+			return enum.BotStatusRunning
+		}
+		return enum.BotStatusUnhealthy
 	}
 
 	if state.Restarting {

@@ -11,7 +11,8 @@ type BotStatus string
 
 const (
 	BotStatusCreating    BotStatus = "creating"
-	BotStatusRunning     BotStatus = "running"
+	BotStatusRunning     BotStatus = "running"    // Container running and healthy
+	BotStatusUnhealthy   BotStatus = "unhealthy"  // Container running but health check failing
 	BotStatusStopped     BotStatus = "stopped"
 	BotStatusError       BotStatus = "error"
 	BotStatusBacktesting BotStatus = "backtesting"
@@ -23,6 +24,7 @@ func (BotStatus) Values() []string {
 	return []string{
 		string(BotStatusCreating),
 		string(BotStatusRunning),
+		string(BotStatusUnhealthy),
 		string(BotStatusStopped),
 		string(BotStatusError),
 		string(BotStatusBacktesting),

@@ -24,6 +24,7 @@ import (
 	"anytrade/internal/ent"
 	_ "anytrade/internal/ent/runtime"
 	"anytrade/internal/graph"
+	"anytrade/internal/monitor"
 )
 
 func main() {
@@ -53,6 +54,17 @@ func main() {
 						Usage:   "Database connection string (sqlite://path/to/db.sqlite or postgresql://...)",
 						Value:   "sqlite://./data/anytrade.db",
 						EnvVars: []string{"ANYTRADE_DATABASE"},
+					},
+					&cli.StringSliceFlag{
+						Name:    "etcd-endpoints",
+						Usage:   "Etcd endpoints for distributed monitoring (comma-separated). If empty, runs in single-instance mode",
+						EnvVars: []string{"ANYTRADE_ETCD_ENDPOINTS"},
+					},
+					&cli.DurationFlag{
+						Name:    "monitor-interval",
+						Usage:   "How often to check bot status",
+						Value:   30 * time.Second,
+						EnvVars: []string{"ANYTRADE_MONITOR_INTERVAL"},
 					},
 				},
 				Action: runServer,
@@ -144,6 +156,31 @@ func runServer(c *cli.Context) error {
 	host := c.String("host")
 	port := c.Int("port")
 
+	// Initialize monitor manager
+	etcdEndpoints := c.StringSlice("etcd-endpoints")
+	monitorInterval := c.Duration("monitor-interval")
+
+	monitorManager, err := monitor.NewManager(monitor.Config{
+		DatabaseClient:  client,
+		EtcdEndpoints:   etcdEndpoints,
+		MonitorInterval: monitorInterval,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create monitor manager: %w", err)
+	}
+
+	// Start monitor manager
+	if err := monitorManager.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start monitor manager: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := monitorManager.Stop(shutdownCtx); err != nil {
+			log.Printf("Error stopping monitor manager: %v", err)
+		}
+	}()
+
 	// Setup GraphQL server
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: graph.NewResolver(client),
@@ -197,8 +234,17 @@ func runServer(c *cli.Context) error {
 	log.Printf("✓ GraphQL playground: http://%s/\n", addr)
 	log.Printf("✓ Health check: http://%s/health\n", addr)
 	log.Println("")
-	log.Println("TODO: Start runner manager")
-	log.Println("TODO: Start health monitoring")
+
+	// Display monitor status
+	if monitorManager.IsDistributed() {
+		log.Printf("✓ Bot monitoring: DISTRIBUTED mode (instance: %s)\n", monitorManager.GetInstanceID())
+		log.Printf("  - Active instances: %d\n", monitorManager.GetInstanceCount())
+		log.Printf("  - Monitor interval: %v\n", monitorInterval)
+	} else {
+		log.Printf("✓ Bot monitoring: SINGLE-INSTANCE mode (instance: %s)\n", monitorManager.GetInstanceID())
+		log.Printf("  - Monitor interval: %v\n", monitorInterval)
+	}
+
 	log.Println("")
 	log.Printf("🚀 Server ready at http://%s\n", addr)
 
