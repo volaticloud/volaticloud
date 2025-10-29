@@ -33,6 +33,8 @@ type Bot struct {
 	ContainerID string `json:"container_id,omitempty"`
 	// Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
+	// System-forced configuration (api_server, initial_state) - NEVER exposed via GraphQL
+	SecureConfig map[string]interface{} `json:"secure_config,omitempty"`
 	// Freqtrade Docker image version tag
 	FreqtradeVersion string `json:"freqtrade_version,omitempty"`
 	// Last successful health check
@@ -121,7 +123,7 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case bot.FieldConfig:
+		case bot.FieldConfig, bot.FieldSecureConfig:
 			values[i] = new([]byte)
 		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldFreqtradeVersion, bot.FieldErrorMessage:
 			values[i] = new(sql.NullString)
@@ -180,6 +182,14 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &_m.Config); err != nil {
 					return fmt.Errorf("unmarshal field config: %w", err)
+				}
+			}
+		case bot.FieldSecureConfig:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field secure_config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.SecureConfig); err != nil {
+					return fmt.Errorf("unmarshal field secure_config: %w", err)
 				}
 			}
 		case bot.FieldFreqtradeVersion:
@@ -300,6 +310,9 @@ func (_m *Bot) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))
+	builder.WriteString(", ")
+	builder.WriteString("secure_config=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SecureConfig))
 	builder.WriteString(", ")
 	builder.WriteString("freqtrade_version=")
 	builder.WriteString(_m.FreqtradeVersion)

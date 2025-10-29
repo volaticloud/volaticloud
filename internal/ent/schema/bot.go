@@ -42,6 +42,10 @@ func (Bot) Fields() []ent.Field {
 			Optional().
 			Annotations(entgql.Type("Map")).
 			Comment("Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)"),
+		field.JSON("secure_config", map[string]interface{}{}).
+			Optional().
+			Annotations(entgql.Skip()).
+			Comment("System-forced configuration (api_server, initial_state) - NEVER exposed via GraphQL"),
 		field.String("freqtrade_version").
 			Default("stable").
 			Comment("Freqtrade Docker image version tag"),

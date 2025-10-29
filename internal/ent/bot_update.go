@@ -108,6 +108,18 @@ func (_u *BotUpdate) ClearConfig() *BotUpdate {
 	return _u
 }
 
+// SetSecureConfig sets the "secure_config" field.
+func (_u *BotUpdate) SetSecureConfig(v map[string]interface{}) *BotUpdate {
+	_u.mutation.SetSecureConfig(v)
+	return _u
+}
+
+// ClearSecureConfig clears the value of the "secure_config" field.
+func (_u *BotUpdate) ClearSecureConfig() *BotUpdate {
+	_u.mutation.ClearSecureConfig()
+	return _u
+}
+
 // SetFreqtradeVersion sets the "freqtrade_version" field.
 func (_u *BotUpdate) SetFreqtradeVersion(v string) *BotUpdate {
 	_u.mutation.SetFreqtradeVersion(v)
@@ -382,6 +394,12 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(bot.FieldConfig, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.SecureConfig(); ok {
+		_spec.SetField(bot.FieldSecureConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.SecureConfigCleared() {
+		_spec.ClearField(bot.FieldSecureConfig, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.FreqtradeVersion(); ok {
 		_spec.SetField(bot.FieldFreqtradeVersion, field.TypeString, value)
 	}
@@ -623,6 +641,18 @@ func (_u *BotUpdateOne) SetConfig(v map[string]interface{}) *BotUpdateOne {
 // ClearConfig clears the value of the "config" field.
 func (_u *BotUpdateOne) ClearConfig() *BotUpdateOne {
 	_u.mutation.ClearConfig()
+	return _u
+}
+
+// SetSecureConfig sets the "secure_config" field.
+func (_u *BotUpdateOne) SetSecureConfig(v map[string]interface{}) *BotUpdateOne {
+	_u.mutation.SetSecureConfig(v)
+	return _u
+}
+
+// ClearSecureConfig clears the value of the "secure_config" field.
+func (_u *BotUpdateOne) ClearSecureConfig() *BotUpdateOne {
+	_u.mutation.ClearSecureConfig()
 	return _u
 }
 
@@ -929,6 +959,12 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(bot.FieldConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.SecureConfig(); ok {
+		_spec.SetField(bot.FieldSecureConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.SecureConfigCleared() {
+		_spec.ClearField(bot.FieldSecureConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.FreqtradeVersion(); ok {
 		_spec.SetField(bot.FieldFreqtradeVersion, field.TypeString, value)

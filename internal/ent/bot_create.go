@@ -80,6 +80,12 @@ func (_c *BotCreate) SetConfig(v map[string]interface{}) *BotCreate {
 	return _c
 }
 
+// SetSecureConfig sets the "secure_config" field.
+func (_c *BotCreate) SetSecureConfig(v map[string]interface{}) *BotCreate {
+	_c.mutation.SetSecureConfig(v)
+	return _c
+}
+
 // SetFreqtradeVersion sets the "freqtrade_version" field.
 func (_c *BotCreate) SetFreqtradeVersion(v string) *BotCreate {
 	_c.mutation.SetFreqtradeVersion(v)
@@ -380,6 +386,10 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
+	}
+	if value, ok := _c.mutation.SecureConfig(); ok {
+		_spec.SetField(bot.FieldSecureConfig, field.TypeJSON, value)
+		_node.SecureConfig = value
 	}
 	if value, ok := _c.mutation.FreqtradeVersion(); ok {
 		_spec.SetField(bot.FieldFreqtradeVersion, field.TypeString, value)

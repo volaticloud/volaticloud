@@ -28,6 +28,8 @@ const (
 	FieldContainerID = "container_id"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
+	// FieldSecureConfig holds the string denoting the secure_config field in the database.
+	FieldSecureConfig = "secure_config"
 	// FieldFreqtradeVersion holds the string denoting the freqtrade_version field in the database.
 	FieldFreqtradeVersion = "freqtrade_version"
 	// FieldLastSeenAt holds the string denoting the last_seen_at field in the database.
@@ -92,6 +94,7 @@ var Columns = []string{
 	FieldMode,
 	FieldContainerID,
 	FieldConfig,
+	FieldSecureConfig,
 	FieldFreqtradeVersion,
 	FieldLastSeenAt,
 	FieldErrorMessage,

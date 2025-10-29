@@ -462,12 +462,13 @@ func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFi
 	exposedPorts[nat.Port(fmt.Sprintf("%d/tcp", apiPort))] = struct{}{}
 
 	// Build command with config files
-	// Format: trade --config <exchange_config> --config <strategy_config> --config <bot_config> --strategy <strategy_name>
+	// Format: trade --config <exchange_config> --config <strategy_config> --config <bot_config> --config <secure_config> --strategy <strategy_name>
 	// Note: The freqtrade image already has "freqtrade" as its entrypoint
 	// Config files are layered - later configs override earlier ones
+	// Secure config is LAST to ensure it has highest priority
 	cmd := []string{"trade"}
 
-	// Add config file arguments in order: exchange -> strategy -> bot
+	// Add config file arguments in order: exchange -> strategy -> bot -> secure
 	if configPaths.exchangeConfigHost != "" {
 		cmd = append(cmd, "--config", configPaths.exchangeConfigContainer)
 	}
@@ -476,6 +477,9 @@ func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFi
 	}
 	if configPaths.botConfigHost != "" {
 		cmd = append(cmd, "--config", configPaths.botConfigContainer)
+	}
+	if configPaths.secureConfigHost != "" {
+		cmd = append(cmd, "--config", configPaths.secureConfigContainer)
 	}
 
 	// Add strategy name
@@ -504,7 +508,7 @@ func (d *DockerRuntime) buildHostConfig(spec BotSpec, configPaths *configFilePat
 		Mounts: []mount.Mount{},
 	}
 
-	// Add volume mounts for config files in order
+	// Add volume mounts for config files in order: exchange -> strategy -> bot -> secure
 	if configPaths.exchangeConfigHost != "" {
 		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
 			Type:     mount.TypeBind,
@@ -526,6 +530,14 @@ func (d *DockerRuntime) buildHostConfig(spec BotSpec, configPaths *configFilePat
 			Type:     mount.TypeBind,
 			Source:   configPaths.botConfigHost,
 			Target:   configPaths.botConfigContainer,
+			ReadOnly: true,
+		})
+	}
+	if configPaths.secureConfigHost != "" {
+		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   configPaths.secureConfigHost,
+			Target:   configPaths.secureConfigContainer,
 			ReadOnly: true,
 		})
 	}
@@ -764,6 +776,8 @@ type configFilePaths struct {
 	strategyConfigContainer string // Container path to strategy config file
 	botConfigHost           string // Host path to bot config file
 	botConfigContainer      string // Container path to bot config file
+	secureConfigHost        string // Host path to secure config file (system-forced)
+	secureConfigContainer   string // Container path to secure config file
 	strategyFileHost        string // Host path to strategy Python file
 	strategyFileContainer   string // Container path to strategy Python file
 }
@@ -780,6 +794,7 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 		exchangeConfigContainer: "/freqtrade/user_data/config.exchange.json",
 		strategyConfigContainer: "/freqtrade/user_data/config.strategy.json",
 		botConfigContainer:      "/freqtrade/user_data/config.bot.json",
+		secureConfigContainer:   "/freqtrade/user_data/config.secure.json",
 	}
 
 	// Create exchange config file - write as-is (NO BUILDING, NO WRAPPING)
@@ -826,6 +841,22 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 			return nil, fmt.Errorf("failed to write bot config file: %w", err)
 		}
 		paths.botConfigHost = botConfigPath
+	}
+
+	// Create secure config file (system-forced settings, NEVER exposed to users)
+	// This config has highest priority and overrides all other configs
+	if spec.SecureConfig != nil && len(spec.SecureConfig) > 0 {
+		secureConfigPath := filepath.Join(configDir, "config.secure.json")
+		secureConfigJSON, err := json.MarshalIndent(spec.SecureConfig, "", "  ")
+		if err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to marshal secure config: %w", err)
+		}
+		if err := os.WriteFile(secureConfigPath, secureConfigJSON, 0644); err != nil {
+			d.cleanupConfigFiles(spec.ID)
+			return nil, fmt.Errorf("failed to write secure config file: %w", err)
+		}
+		paths.secureConfigHost = secureConfigPath
 	}
 
 	// Create strategy Python file if strategy code exists

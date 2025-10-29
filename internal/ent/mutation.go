@@ -1066,6 +1066,7 @@ type BotMutation struct {
 	mode              *enum.BotMode
 	container_id      *string
 	_config           *map[string]interface{}
+	secure_config     *map[string]interface{}
 	freqtrade_version *string
 	last_seen_at      *time.Time
 	error_message     *string
@@ -1394,6 +1395,55 @@ func (m *BotMutation) ConfigCleared() bool {
 func (m *BotMutation) ResetConfig() {
 	m._config = nil
 	delete(m.clearedFields, bot.FieldConfig)
+}
+
+// SetSecureConfig sets the "secure_config" field.
+func (m *BotMutation) SetSecureConfig(value map[string]interface{}) {
+	m.secure_config = &value
+}
+
+// SecureConfig returns the value of the "secure_config" field in the mutation.
+func (m *BotMutation) SecureConfig() (r map[string]interface{}, exists bool) {
+	v := m.secure_config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecureConfig returns the old "secure_config" field's value of the Bot entity.
+// If the Bot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMutation) OldSecureConfig(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecureConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecureConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecureConfig: %w", err)
+	}
+	return oldValue.SecureConfig, nil
+}
+
+// ClearSecureConfig clears the value of the "secure_config" field.
+func (m *BotMutation) ClearSecureConfig() {
+	m.secure_config = nil
+	m.clearedFields[bot.FieldSecureConfig] = struct{}{}
+}
+
+// SecureConfigCleared returns if the "secure_config" field was cleared in this mutation.
+func (m *BotMutation) SecureConfigCleared() bool {
+	_, ok := m.clearedFields[bot.FieldSecureConfig]
+	return ok
+}
+
+// ResetSecureConfig resets all changes to the "secure_config" field.
+func (m *BotMutation) ResetSecureConfig() {
+	m.secure_config = nil
+	delete(m.clearedFields, bot.FieldSecureConfig)
 }
 
 // SetFreqtradeVersion sets the "freqtrade_version" field.
@@ -1879,7 +1929,7 @@ func (m *BotMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.name != nil {
 		fields = append(fields, bot.FieldName)
 	}
@@ -1894,6 +1944,9 @@ func (m *BotMutation) Fields() []string {
 	}
 	if m._config != nil {
 		fields = append(fields, bot.FieldConfig)
+	}
+	if m.secure_config != nil {
+		fields = append(fields, bot.FieldSecureConfig)
 	}
 	if m.freqtrade_version != nil {
 		fields = append(fields, bot.FieldFreqtradeVersion)
@@ -1937,6 +1990,8 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 		return m.ContainerID()
 	case bot.FieldConfig:
 		return m.Config()
+	case bot.FieldSecureConfig:
+		return m.SecureConfig()
 	case bot.FieldFreqtradeVersion:
 		return m.FreqtradeVersion()
 	case bot.FieldLastSeenAt:
@@ -1972,6 +2027,8 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldContainerID(ctx)
 	case bot.FieldConfig:
 		return m.OldConfig(ctx)
+	case bot.FieldSecureConfig:
+		return m.OldSecureConfig(ctx)
 	case bot.FieldFreqtradeVersion:
 		return m.OldFreqtradeVersion(ctx)
 	case bot.FieldLastSeenAt:
@@ -2031,6 +2088,13 @@ func (m *BotMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetConfig(v)
+		return nil
+	case bot.FieldSecureConfig:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecureConfig(v)
 		return nil
 	case bot.FieldFreqtradeVersion:
 		v, ok := value.(string)
@@ -2124,6 +2188,9 @@ func (m *BotMutation) ClearedFields() []string {
 	if m.FieldCleared(bot.FieldConfig) {
 		fields = append(fields, bot.FieldConfig)
 	}
+	if m.FieldCleared(bot.FieldSecureConfig) {
+		fields = append(fields, bot.FieldSecureConfig)
+	}
 	if m.FieldCleared(bot.FieldLastSeenAt) {
 		fields = append(fields, bot.FieldLastSeenAt)
 	}
@@ -2149,6 +2216,9 @@ func (m *BotMutation) ClearField(name string) error {
 		return nil
 	case bot.FieldConfig:
 		m.ClearConfig()
+		return nil
+	case bot.FieldSecureConfig:
+		m.ClearSecureConfig()
 		return nil
 	case bot.FieldLastSeenAt:
 		m.ClearLastSeenAt()
@@ -2178,6 +2248,9 @@ func (m *BotMutation) ResetField(name string) error {
 		return nil
 	case bot.FieldConfig:
 		m.ResetConfig()
+		return nil
+	case bot.FieldSecureConfig:
+		m.ResetSecureConfig()
 		return nil
 	case bot.FieldFreqtradeVersion:
 		m.ResetFreqtradeVersion()

@@ -317,6 +317,16 @@ func ConfigNotNil() predicate.Bot {
 	return predicate.Bot(sql.FieldNotNull(FieldConfig))
 }
 
+// SecureConfigIsNil applies the IsNil predicate on the "secure_config" field.
+func SecureConfigIsNil() predicate.Bot {
+	return predicate.Bot(sql.FieldIsNull(FieldSecureConfig))
+}
+
+// SecureConfigNotNil applies the NotNil predicate on the "secure_config" field.
+func SecureConfigNotNil() predicate.Bot {
+	return predicate.Bot(sql.FieldNotNull(FieldSecureConfig))
+}
+
 // FreqtradeVersionEQ applies the EQ predicate on the "freqtrade_version" field.
 func FreqtradeVersionEQ(v string) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldFreqtradeVersion, v))

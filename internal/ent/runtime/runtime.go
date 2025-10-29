@@ -42,15 +42,15 @@ func init() {
 	// bot.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	bot.NameValidator = botDescName.Validators[0].(func(string) error)
 	// botDescFreqtradeVersion is the schema descriptor for freqtrade_version field.
-	botDescFreqtradeVersion := botFields[6].Descriptor()
+	botDescFreqtradeVersion := botFields[7].Descriptor()
 	// bot.DefaultFreqtradeVersion holds the default value on creation for the freqtrade_version field.
 	bot.DefaultFreqtradeVersion = botDescFreqtradeVersion.Default.(string)
 	// botDescCreatedAt is the schema descriptor for created_at field.
-	botDescCreatedAt := botFields[12].Descriptor()
+	botDescCreatedAt := botFields[13].Descriptor()
 	// bot.DefaultCreatedAt holds the default value on creation for the created_at field.
 	bot.DefaultCreatedAt = botDescCreatedAt.Default.(func() time.Time)
 	// botDescUpdatedAt is the schema descriptor for updated_at field.
-	botDescUpdatedAt := botFields[13].Descriptor()
+	botDescUpdatedAt := botFields[14].Descriptor()
 	// bot.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	bot.DefaultUpdatedAt = botDescUpdatedAt.Default.(func() time.Time)
 	// bot.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

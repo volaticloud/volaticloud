@@ -31,6 +31,9 @@ type BotSpec struct {
 	// Exchange configuration
 	ExchangeConfig map[string]interface{} // Exchange config.json (separate file, includes credentials)
 
+	// Secure system configuration (NEVER exposed to users)
+	SecureConfig map[string]interface{} // System-forced config.json (api_server, initial_state, etc.)
+
 	// Runner configuration
 	Environment    map[string]string // Additional environment variables
 	ResourceLimits *ResourceLimits   // CPU/memory limits

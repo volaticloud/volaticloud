@@ -50,6 +50,7 @@ var (
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
+		{Name: "secure_config", Type: field.TypeJSON, Nullable: true},
 		{Name: "freqtrade_version", Type: field.TypeString, Default: "stable"},
 		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -67,19 +68,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bots_bot_runners_bots",
-				Columns:    []*schema.Column{BotsColumns[11]},
+				Columns:    []*schema.Column{BotsColumns[12]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_exchanges_bots",
-				Columns:    []*schema.Column{BotsColumns[12]},
+				Columns:    []*schema.Column{BotsColumns[13]},
 				RefColumns: []*schema.Column{ExchangesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_strategies_bots",
-				Columns:    []*schema.Column{BotsColumns[13]},
+				Columns:    []*schema.Column{BotsColumns[14]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

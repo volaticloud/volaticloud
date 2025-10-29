@@ -57,6 +57,21 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
 
+	// Step 2.5: Generate secure_config and update the bot
+	// This config contains system-forced settings that users cannot override
+	secureConfig, err := generateSecureConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate secure config: %w", err)
+	}
+
+	// Update the bot with secure_config
+	createdBot, err = r.client.Bot.UpdateOneID(createdBot.ID).
+		SetSecureConfig(secureConfig).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update bot with secure config: %w", err)
+	}
+
 	// Step 2: Load the bot with all its relations
 	createdBot, err = r.client.Bot.Query().
 		Where(bot.IDEQ(createdBot.ID)).

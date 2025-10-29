@@ -323,3 +323,55 @@ func TestValidateFreqtradeConfig(t *testing.T) {
 	}
 }
 
+// TestGenerateSecureConfig tests the secure config generation
+func TestGenerateSecureConfig(t *testing.T) {
+	// Generate multiple configs to test uniqueness
+	configs := make([]map[string]interface{}, 10)
+	usernames := make(map[string]bool)
+	passwords := make(map[string]bool)
+
+	for i := 0; i < 10; i++ {
+		config, err := generateSecureConfig()
+		assert.NoError(t, err, "Should not error when generating secure config")
+		assert.NotNil(t, config, "Config should not be nil")
+
+		configs[i] = config
+
+		// Verify initial_state is always "running"
+		initialState, ok := config["initial_state"].(string)
+		assert.True(t, ok, "initial_state should be a string")
+		assert.Equal(t, "running", initialState, "initial_state should always be 'running'")
+
+		// Verify api_server exists and is a map
+		apiServer, ok := config["api_server"].(map[string]interface{})
+		assert.True(t, ok, "api_server should be a map")
+		assert.NotNil(t, apiServer, "api_server should not be nil")
+
+		// Verify api_server fields
+		assert.Equal(t, true, apiServer["enabled"], "api_server.enabled should be true")
+		assert.Equal(t, "0.0.0.0", apiServer["listen_ip_address"], "api_server.listen_ip_address should be 0.0.0.0")
+		assert.Equal(t, 8080, apiServer["listen_port"], "api_server.listen_port should be 8080")
+		assert.Equal(t, true, apiServer["enable_openapi"], "api_server.enable_openapi should be true")
+
+		// Verify username format
+		username, ok := apiServer["username"].(string)
+		assert.True(t, ok, "username should be a string")
+		assert.NotEmpty(t, username, "username should not be empty")
+		assert.True(t, len(username) >= 7, "username should be at least 7 characters (admin_ + random)")
+		assert.True(t, username[:6] == "admin_", "username should start with admin_")
+		usernames[username] = true
+
+		// Verify password
+		password, ok := apiServer["password"].(string)
+		assert.True(t, ok, "password should be a string")
+		assert.NotEmpty(t, password, "password should not be empty")
+		assert.Equal(t, 32, len(password), "password should be 32 characters")
+		passwords[password] = true
+	}
+
+	// Verify all usernames are unique
+	assert.Equal(t, 10, len(usernames), "All usernames should be unique")
+
+	// Verify all passwords are unique
+	assert.Equal(t, 10, len(passwords), "All passwords should be unique")
+}

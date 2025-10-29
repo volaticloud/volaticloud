@@ -7,6 +7,7 @@ import (
 	"anytrade/internal/enum"
 	"anytrade/internal/exchange"
 	"anytrade/internal/runner"
+	"anytrade/internal/utils"
 )
 
 // buildBotSpec builds a BotSpec from a Bot entity
@@ -54,7 +55,8 @@ func buildBotSpec(b *ent.Bot) (*runner.BotSpec, error) {
 		StrategyCode:     strategy.Code,
 		StrategyConfig:   strategy.Config,   // Separate config file
 		Config:           botConfig,          // Separate config file
-		ExchangeConfig:   exchange.Config,    // Separate config file (NEW)
+		ExchangeConfig:   exchange.Config,    // Separate config file
+		SecureConfig:     b.SecureConfig,     // System-forced config (NEVER exposed to users)
 		Environment:      make(map[string]string),
 	}
 
@@ -305,4 +307,34 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	}
 
 	return spec, nil
+}
+
+// generateSecureConfig generates a secure configuration with API server credentials
+// This config contains system-forced settings that users cannot override:
+// - initial_state: Always "running"
+// - api_server: Enabled with auto-generated credentials
+func generateSecureConfig() (map[string]interface{}, error) {
+	username, err := utils.GenerateSecureUsername()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate username: %w", err)
+	}
+
+	password, err := utils.GenerateSecurePassword()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate password: %w", err)
+	}
+
+	secureConfig := map[string]interface{}{
+		"initial_state": "running",
+		"api_server": map[string]interface{}{
+			"enabled":           true,
+			"listen_ip_address": "0.0.0.0",
+			"listen_port":       8080,
+			"username":          username,
+			"password":          password,
+			"enable_openapi":    true,
+		},
+	}
+
+	return secureConfig, nil
 }
