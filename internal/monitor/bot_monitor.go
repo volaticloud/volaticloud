@@ -9,7 +9,9 @@ import (
 
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/enum"
+	"anytrade/internal/freqtrade"
 	"anytrade/internal/runner"
 
 	"github.com/google/uuid"
@@ -204,7 +206,20 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 	errorMsg := status.ErrorMessage
 
 	// Update database
-	return m.updateBotStatus(ctx, b.ID, botStatus, healthy, lastSeenAt, errorMsg)
+	err = m.updateBotStatus(ctx, b.ID, botStatus, healthy, lastSeenAt, errorMsg)
+	if err != nil {
+		return err
+	}
+
+	// Fetch and update bot metrics if bot is running and healthy
+	if botStatus == enum.BotStatusRunning && healthy {
+		if err := m.fetchAndUpdateBotMetrics(ctx, b, status); err != nil {
+			// Log error but don't fail the status check
+			log.Printf("Bot %s (%s) failed to fetch metrics: %v", b.Name, b.ID, err)
+		}
+	}
+
+	return nil
 }
 
 // updateBotStatus updates bot status in the database
@@ -225,6 +240,152 @@ func (m *BotMonitor) updateBotStatus(ctx context.Context, botID uuid.UUID, statu
 	_, err := update.Save(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to update bot status: %w", err)
+	}
+
+	return nil
+}
+
+// fetchAndUpdateBotMetrics fetches metrics from Freqtrade API and updates BotMetrics entity
+func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, status *runner.BotStatus) error {
+	// Extract API credentials from secure_config
+	secureConfig := b.SecureConfig
+	if secureConfig == nil {
+		return fmt.Errorf("bot has no secure_config")
+	}
+
+	apiServerConfig, ok := secureConfig["api_server"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("secure_config has no api_server configuration")
+	}
+
+	username, ok := apiServerConfig["username"].(string)
+	if !ok || username == "" {
+		return fmt.Errorf("api_server has no username")
+	}
+
+	password, ok := apiServerConfig["password"].(string)
+	if !ok || password == "" {
+		return fmt.Errorf("api_server has no password")
+	}
+
+	// Get API port from secure_config or use default
+	apiPort := 8080
+	if listenPort, ok := apiServerConfig["listen_port"].(float64); ok {
+		apiPort = int(listenPort)
+	}
+
+	// Try to fetch metrics with fallback:
+	// 1. Try container IP first (works when server is in same Docker network)
+	// 2. Fallback to localhost:hostPort (works when server is on host machine)
+	var profit *freqtrade.Profit
+	var err error
+
+	// Try container IP first with short timeout
+	if status.IPAddress != "" {
+		containerCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+
+		client := freqtrade.NewBotClientFromContainerIP(status.IPAddress, apiPort, username, password)
+		profit, err = client.GetProfit(containerCtx)
+
+		if err == nil {
+			// Success with container IP
+			goto processMetrics
+		}
+		// Log the container IP failure but continue to fallback
+		log.Printf("Bot %s: container IP (%s) failed, trying localhost fallback: %v", b.Name, status.IPAddress, err)
+	}
+
+	// Fallback to localhost:hostPort
+	if status.HostPort > 0 {
+		localhostURL := fmt.Sprintf("http://localhost:%d", status.HostPort)
+		client := freqtrade.NewBotClient(localhostURL, username, password)
+		profit, err = client.GetProfit(ctx)
+
+		if err == nil {
+			// Success with localhost
+			log.Printf("Bot %s: successfully connected via localhost:%d", b.Name, status.HostPort)
+			goto processMetrics
+		}
+		return fmt.Errorf("failed to fetch profit from both container IP and localhost: %w", err)
+	}
+
+	return fmt.Errorf("no accessible endpoint: container IP=%s, hostPort=%d", status.IPAddress, status.HostPort)
+
+processMetrics:
+
+	// Convert timestamps from Unix to time.Time
+	var firstTradeTime, latestTradeTime *time.Time
+	if profit.FirstTradeTimestamp != 0 {
+		t := time.Unix(int64(profit.FirstTradeTimestamp), 0)
+		firstTradeTime = &t
+	}
+	if profit.LatestTradeTimestamp != 0 {
+		t := time.Unix(int64(profit.LatestTradeTimestamp), 0)
+		latestTradeTime = &t
+	}
+
+	// Check if bot metrics already exist
+	existingMetrics, err := m.dbClient.BotMetrics.Query().
+		Where(botmetrics.BotIDEQ(b.ID)).
+		Only(ctx)
+
+	if err != nil && !ent.IsNotFound(err) {
+		return fmt.Errorf("failed to query bot metrics: %w", err)
+	}
+
+	// Update or create BotMetrics
+	if existingMetrics != nil {
+		// Update existing metrics
+		err = m.dbClient.BotMetrics.
+			UpdateOneID(existingMetrics.ID).
+			SetProfitClosedCoin(float64(profit.ProfitClosedCoin)).
+			SetProfitClosedPercent(float64(profit.ProfitClosedPercent)).
+			SetProfitAllCoin(float64(profit.ProfitAllCoin)).
+			SetProfitAllPercent(float64(profit.ProfitAllPercent)).
+			SetTradeCount(int(profit.TradeCount)).
+			SetClosedTradeCount(int(profit.ClosedTradeCount)).
+			SetWinningTrades(int(profit.WinningTrades)).
+			SetLosingTrades(int(profit.LosingTrades)).
+			SetWinrate(float64(profit.Winrate)).
+			SetExpectancy(float64(profit.Expectancy)).
+			SetProfitFactor(float64(profit.ProfitFactor)).
+			SetMaxDrawdown(float64(profit.MaxDrawdown)).
+			SetMaxDrawdownAbs(float64(profit.MaxDrawdownAbs)).
+			SetBestPair(profit.BestPair).
+			SetBestRate(float64(profit.BestRate)).
+			SetNillableFirstTradeTimestamp(firstTradeTime).
+			SetNillableLatestTradeTimestamp(latestTradeTime).
+			SetFetchedAt(time.Now()).
+			Exec(ctx)
+	} else {
+		// Create new metrics
+		err = m.dbClient.BotMetrics.
+			Create().
+			SetBotID(b.ID).
+			SetProfitClosedCoin(float64(profit.ProfitClosedCoin)).
+			SetProfitClosedPercent(float64(profit.ProfitClosedPercent)).
+			SetProfitAllCoin(float64(profit.ProfitAllCoin)).
+			SetProfitAllPercent(float64(profit.ProfitAllPercent)).
+			SetTradeCount(int(profit.TradeCount)).
+			SetClosedTradeCount(int(profit.ClosedTradeCount)).
+			SetWinningTrades(int(profit.WinningTrades)).
+			SetLosingTrades(int(profit.LosingTrades)).
+			SetWinrate(float64(profit.Winrate)).
+			SetExpectancy(float64(profit.Expectancy)).
+			SetProfitFactor(float64(profit.ProfitFactor)).
+			SetMaxDrawdown(float64(profit.MaxDrawdown)).
+			SetMaxDrawdownAbs(float64(profit.MaxDrawdownAbs)).
+			SetBestPair(profit.BestPair).
+			SetBestRate(float64(profit.BestRate)).
+			SetNillableFirstTradeTimestamp(firstTradeTime).
+			SetNillableLatestTradeTimestamp(latestTradeTime).
+			SetFetchedAt(time.Now()).
+			Exec(ctx)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to upsert bot metrics: %w", err)
 	}
 
 	return nil

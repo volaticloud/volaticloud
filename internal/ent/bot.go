@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
@@ -67,11 +68,13 @@ type BotEdges struct {
 	Runner *BotRunner `json:"runner,omitempty"`
 	// Trades holds the value of the trades edge.
 	Trades []*Trade `json:"trades,omitempty"`
+	// Metrics holds the value of the metrics edge.
+	Metrics *BotMetrics `json:"metrics,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 	// totalCount holds the count of the edges above.
-	totalCount [4]map[string]int
+	totalCount [5]map[string]int
 
 	namedTrades map[string][]*Trade
 }
@@ -116,6 +119,17 @@ func (e BotEdges) TradesOrErr() ([]*Trade, error) {
 		return e.Trades, nil
 	}
 	return nil, &NotLoadedError{edge: "trades"}
+}
+
+// MetricsOrErr returns the Metrics value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e BotEdges) MetricsOrErr() (*BotMetrics, error) {
+	if e.Metrics != nil {
+		return e.Metrics, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: botmetrics.Label}
+	}
+	return nil, &NotLoadedError{edge: "metrics"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -271,6 +285,11 @@ func (_m *Bot) QueryRunner() *BotRunnerQuery {
 // QueryTrades queries the "trades" edge of the Bot entity.
 func (_m *Bot) QueryTrades() *TradeQuery {
 	return NewBotClient(_m.config).QueryTrades(_m)
+}
+
+// QueryMetrics queries the "metrics" edge of the Bot entity.
+func (_m *Bot) QueryMetrics() *BotMetricsQuery {
+	return NewBotClient(_m.config).QueryMetrics(_m)
 }
 
 // Update returns a builder for updating this Bot.

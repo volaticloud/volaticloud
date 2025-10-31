@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
@@ -78,12 +79,13 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			backtest.Table:  backtest.ValidColumn,
-			bot.Table:       bot.ValidColumn,
-			botrunner.Table: botrunner.ValidColumn,
-			exchange.Table:  exchange.ValidColumn,
-			strategy.Table:  strategy.ValidColumn,
-			trade.Table:     trade.ValidColumn,
+			backtest.Table:   backtest.ValidColumn,
+			bot.Table:        bot.ValidColumn,
+			botmetrics.Table: botmetrics.ValidColumn,
+			botrunner.Table:  botrunner.ValidColumn,
+			exchange.Table:   exchange.ValidColumn,
+			strategy.Table:   strategy.ValidColumn,
+			trade.Table:      trade.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

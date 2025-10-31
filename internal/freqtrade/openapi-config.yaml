@@ -1,0 +1,9 @@
+generatorName: go
+outputDir: internal/freqtrade
+inputSpec: internal/freqtrade/openapi.json
+packageName: freqtrade
+additionalProperties:
+  enumClassPrefix: true
+  withGoMod: false
+  isGoSubmodule: true
+  packageVersion: 1.0.0

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
@@ -32,6 +33,7 @@ type BotQuery struct {
 	withStrategy    *StrategyQuery
 	withRunner      *BotRunnerQuery
 	withTrades      *TradeQuery
+	withMetrics     *BotMetricsQuery
 	modifiers       []func(*sql.Selector)
 	loadTotal       []func(context.Context, []*Bot) error
 	withNamedTrades map[string]*TradeQuery
@@ -152,6 +154,28 @@ func (_q *BotQuery) QueryTrades() *TradeQuery {
 			sqlgraph.From(bot.Table, bot.FieldID, selector),
 			sqlgraph.To(trade.Table, trade.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, bot.TradesTable, bot.TradesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMetrics chains the current query on the "metrics" edge.
+func (_q *BotQuery) QueryMetrics() *BotMetricsQuery {
+	query := (&BotMetricsClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bot.Table, bot.FieldID, selector),
+			sqlgraph.To(botmetrics.Table, botmetrics.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, bot.MetricsTable, bot.MetricsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -355,6 +379,7 @@ func (_q *BotQuery) Clone() *BotQuery {
 		withStrategy: _q.withStrategy.Clone(),
 		withRunner:   _q.withRunner.Clone(),
 		withTrades:   _q.withTrades.Clone(),
+		withMetrics:  _q.withMetrics.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -402,6 +427,17 @@ func (_q *BotQuery) WithTrades(opts ...func(*TradeQuery)) *BotQuery {
 		opt(query)
 	}
 	_q.withTrades = query
+	return _q
+}
+
+// WithMetrics tells the query-builder to eager-load the nodes that are connected to
+// the "metrics" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotQuery) WithMetrics(opts ...func(*BotMetricsQuery)) *BotQuery {
+	query := (&BotMetricsClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withMetrics = query
 	return _q
 }
 
@@ -483,11 +519,12 @@ func (_q *BotQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bot, err
 	var (
 		nodes       = []*Bot{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withExchange != nil,
 			_q.withStrategy != nil,
 			_q.withRunner != nil,
 			_q.withTrades != nil,
+			_q.withMetrics != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -533,6 +570,12 @@ func (_q *BotQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bot, err
 		if err := _q.loadTrades(ctx, query, nodes,
 			func(n *Bot) { n.Edges.Trades = []*Trade{} },
 			func(n *Bot, e *Trade) { n.Edges.Trades = append(n.Edges.Trades, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withMetrics; query != nil {
+		if err := _q.loadMetrics(ctx, query, nodes, nil,
+			func(n *Bot, e *BotMetrics) { n.Edges.Metrics = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -653,6 +696,33 @@ func (_q *BotQuery) loadTrades(ctx context.Context, query *TradeQuery, nodes []*
 	}
 	query.Where(predicate.Trade(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(bot.TradesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.BotID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "bot_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *BotQuery) loadMetrics(ctx context.Context, query *BotMetricsQuery, nodes []*Bot, init func(*Bot), assign func(*Bot, *BotMetrics)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Bot)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(botmetrics.FieldBotID)
+	}
+	query.Where(predicate.BotMetrics(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(bot.MetricsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

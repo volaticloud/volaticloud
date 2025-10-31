@@ -20,10 +20,11 @@ resolver:
   filename_template: "{name}.resolvers.go"
   omit_template_comment: true
 
-# Autobind ENT types and runner types
+# Autobind ENT types, runner types, and Freqtrade types
 autobind:
   - anytrade/internal/ent
   - anytrade/internal/runner
+  - anytrade/internal/freqtrade
 
 # Type mappings
 models:

@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
@@ -31,12 +32,13 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeBacktest  = "Backtest"
-	TypeBot       = "Bot"
-	TypeBotRunner = "BotRunner"
-	TypeExchange  = "Exchange"
-	TypeStrategy  = "Strategy"
-	TypeTrade     = "Trade"
+	TypeBacktest   = "Backtest"
+	TypeBot        = "Bot"
+	TypeBotMetrics = "BotMetrics"
+	TypeBotRunner  = "BotRunner"
+	TypeExchange   = "Exchange"
+	TypeStrategy   = "Strategy"
+	TypeTrade      = "Trade"
 )
 
 // BacktestMutation represents an operation that mutates the Backtest nodes in the graph.
@@ -1082,6 +1084,8 @@ type BotMutation struct {
 	trades            map[uuid.UUID]struct{}
 	removedtrades     map[uuid.UUID]struct{}
 	clearedtrades     bool
+	metrics           *uuid.UUID
+	clearedmetrics    bool
 	done              bool
 	oldValue          func(context.Context) (*Bot, error)
 	predicates        []predicate.Bot
@@ -1895,6 +1899,45 @@ func (m *BotMutation) ResetTrades() {
 	m.removedtrades = nil
 }
 
+// SetMetricsID sets the "metrics" edge to the BotMetrics entity by id.
+func (m *BotMutation) SetMetricsID(id uuid.UUID) {
+	m.metrics = &id
+}
+
+// ClearMetrics clears the "metrics" edge to the BotMetrics entity.
+func (m *BotMutation) ClearMetrics() {
+	m.clearedmetrics = true
+}
+
+// MetricsCleared reports if the "metrics" edge to the BotMetrics entity was cleared.
+func (m *BotMutation) MetricsCleared() bool {
+	return m.clearedmetrics
+}
+
+// MetricsID returns the "metrics" edge ID in the mutation.
+func (m *BotMutation) MetricsID() (id uuid.UUID, exists bool) {
+	if m.metrics != nil {
+		return *m.metrics, true
+	}
+	return
+}
+
+// MetricsIDs returns the "metrics" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// MetricsID instead. It exists only for internal usage by the builders.
+func (m *BotMutation) MetricsIDs() (ids []uuid.UUID) {
+	if id := m.metrics; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetMetrics resets all changes to the "metrics" edge.
+func (m *BotMutation) ResetMetrics() {
+	m.metrics = nil
+	m.clearedmetrics = false
+}
+
 // Where appends a list predicates to the BotMutation builder.
 func (m *BotMutation) Where(ps ...predicate.Bot) {
 	m.predicates = append(m.predicates, ps...)
@@ -2282,7 +2325,7 @@ func (m *BotMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *BotMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.exchange != nil {
 		edges = append(edges, bot.EdgeExchange)
 	}
@@ -2294,6 +2337,9 @@ func (m *BotMutation) AddedEdges() []string {
 	}
 	if m.trades != nil {
 		edges = append(edges, bot.EdgeTrades)
+	}
+	if m.metrics != nil {
+		edges = append(edges, bot.EdgeMetrics)
 	}
 	return edges
 }
@@ -2320,13 +2366,17 @@ func (m *BotMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case bot.EdgeMetrics:
+		if id := m.metrics; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *BotMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedtrades != nil {
 		edges = append(edges, bot.EdgeTrades)
 	}
@@ -2349,7 +2399,7 @@ func (m *BotMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *BotMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedexchange {
 		edges = append(edges, bot.EdgeExchange)
 	}
@@ -2361,6 +2411,9 @@ func (m *BotMutation) ClearedEdges() []string {
 	}
 	if m.clearedtrades {
 		edges = append(edges, bot.EdgeTrades)
+	}
+	if m.clearedmetrics {
+		edges = append(edges, bot.EdgeMetrics)
 	}
 	return edges
 }
@@ -2377,6 +2430,8 @@ func (m *BotMutation) EdgeCleared(name string) bool {
 		return m.clearedrunner
 	case bot.EdgeTrades:
 		return m.clearedtrades
+	case bot.EdgeMetrics:
+		return m.clearedmetrics
 	}
 	return false
 }
@@ -2393,6 +2448,9 @@ func (m *BotMutation) ClearEdge(name string) error {
 		return nil
 	case bot.EdgeRunner:
 		m.ClearRunner()
+		return nil
+	case bot.EdgeMetrics:
+		m.ClearMetrics()
 		return nil
 	}
 	return fmt.Errorf("unknown Bot unique edge %s", name)
@@ -2414,8 +2472,2335 @@ func (m *BotMutation) ResetEdge(name string) error {
 	case bot.EdgeTrades:
 		m.ResetTrades()
 		return nil
+	case bot.EdgeMetrics:
+		m.ResetMetrics()
+		return nil
 	}
 	return fmt.Errorf("unknown Bot edge %s", name)
+}
+
+// BotMetricsMutation represents an operation that mutates the BotMetrics nodes in the graph.
+type BotMetricsMutation struct {
+	config
+	op                       Op
+	typ                      string
+	id                       *uuid.UUID
+	profit_closed_coin       *float64
+	addprofit_closed_coin    *float64
+	profit_closed_percent    *float64
+	addprofit_closed_percent *float64
+	profit_all_coin          *float64
+	addprofit_all_coin       *float64
+	profit_all_percent       *float64
+	addprofit_all_percent    *float64
+	trade_count              *int
+	addtrade_count           *int
+	closed_trade_count       *int
+	addclosed_trade_count    *int
+	open_trade_count         *int
+	addopen_trade_count      *int
+	winning_trades           *int
+	addwinning_trades        *int
+	losing_trades            *int
+	addlosing_trades         *int
+	winrate                  *float64
+	addwinrate               *float64
+	expectancy               *float64
+	addexpectancy            *float64
+	profit_factor            *float64
+	addprofit_factor         *float64
+	max_drawdown             *float64
+	addmax_drawdown          *float64
+	max_drawdown_abs         *float64
+	addmax_drawdown_abs      *float64
+	best_pair                *string
+	best_rate                *float64
+	addbest_rate             *float64
+	first_trade_timestamp    *time.Time
+	latest_trade_timestamp   *time.Time
+	fetched_at               *time.Time
+	updated_at               *time.Time
+	clearedFields            map[string]struct{}
+	bot                      *uuid.UUID
+	clearedbot               bool
+	done                     bool
+	oldValue                 func(context.Context) (*BotMetrics, error)
+	predicates               []predicate.BotMetrics
+}
+
+var _ ent.Mutation = (*BotMetricsMutation)(nil)
+
+// botmetricsOption allows management of the mutation configuration using functional options.
+type botmetricsOption func(*BotMetricsMutation)
+
+// newBotMetricsMutation creates new mutation for the BotMetrics entity.
+func newBotMetricsMutation(c config, op Op, opts ...botmetricsOption) *BotMetricsMutation {
+	m := &BotMetricsMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeBotMetrics,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withBotMetricsID sets the ID field of the mutation.
+func withBotMetricsID(id uuid.UUID) botmetricsOption {
+	return func(m *BotMetricsMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *BotMetrics
+		)
+		m.oldValue = func(ctx context.Context) (*BotMetrics, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().BotMetrics.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withBotMetrics sets the old BotMetrics of the mutation.
+func withBotMetrics(node *BotMetrics) botmetricsOption {
+	return func(m *BotMetricsMutation) {
+		m.oldValue = func(context.Context) (*BotMetrics, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m BotMetricsMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m BotMetricsMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of BotMetrics entities.
+func (m *BotMetricsMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *BotMetricsMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *BotMetricsMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().BotMetrics.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBotID sets the "bot_id" field.
+func (m *BotMetricsMutation) SetBotID(u uuid.UUID) {
+	m.bot = &u
+}
+
+// BotID returns the value of the "bot_id" field in the mutation.
+func (m *BotMetricsMutation) BotID() (r uuid.UUID, exists bool) {
+	v := m.bot
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBotID returns the old "bot_id" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldBotID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBotID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBotID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBotID: %w", err)
+	}
+	return oldValue.BotID, nil
+}
+
+// ResetBotID resets all changes to the "bot_id" field.
+func (m *BotMetricsMutation) ResetBotID() {
+	m.bot = nil
+}
+
+// SetProfitClosedCoin sets the "profit_closed_coin" field.
+func (m *BotMetricsMutation) SetProfitClosedCoin(f float64) {
+	m.profit_closed_coin = &f
+	m.addprofit_closed_coin = nil
+}
+
+// ProfitClosedCoin returns the value of the "profit_closed_coin" field in the mutation.
+func (m *BotMetricsMutation) ProfitClosedCoin() (r float64, exists bool) {
+	v := m.profit_closed_coin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfitClosedCoin returns the old "profit_closed_coin" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldProfitClosedCoin(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfitClosedCoin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfitClosedCoin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfitClosedCoin: %w", err)
+	}
+	return oldValue.ProfitClosedCoin, nil
+}
+
+// AddProfitClosedCoin adds f to the "profit_closed_coin" field.
+func (m *BotMetricsMutation) AddProfitClosedCoin(f float64) {
+	if m.addprofit_closed_coin != nil {
+		*m.addprofit_closed_coin += f
+	} else {
+		m.addprofit_closed_coin = &f
+	}
+}
+
+// AddedProfitClosedCoin returns the value that was added to the "profit_closed_coin" field in this mutation.
+func (m *BotMetricsMutation) AddedProfitClosedCoin() (r float64, exists bool) {
+	v := m.addprofit_closed_coin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProfitClosedCoin clears the value of the "profit_closed_coin" field.
+func (m *BotMetricsMutation) ClearProfitClosedCoin() {
+	m.profit_closed_coin = nil
+	m.addprofit_closed_coin = nil
+	m.clearedFields[botmetrics.FieldProfitClosedCoin] = struct{}{}
+}
+
+// ProfitClosedCoinCleared returns if the "profit_closed_coin" field was cleared in this mutation.
+func (m *BotMetricsMutation) ProfitClosedCoinCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldProfitClosedCoin]
+	return ok
+}
+
+// ResetProfitClosedCoin resets all changes to the "profit_closed_coin" field.
+func (m *BotMetricsMutation) ResetProfitClosedCoin() {
+	m.profit_closed_coin = nil
+	m.addprofit_closed_coin = nil
+	delete(m.clearedFields, botmetrics.FieldProfitClosedCoin)
+}
+
+// SetProfitClosedPercent sets the "profit_closed_percent" field.
+func (m *BotMetricsMutation) SetProfitClosedPercent(f float64) {
+	m.profit_closed_percent = &f
+	m.addprofit_closed_percent = nil
+}
+
+// ProfitClosedPercent returns the value of the "profit_closed_percent" field in the mutation.
+func (m *BotMetricsMutation) ProfitClosedPercent() (r float64, exists bool) {
+	v := m.profit_closed_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfitClosedPercent returns the old "profit_closed_percent" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldProfitClosedPercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfitClosedPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfitClosedPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfitClosedPercent: %w", err)
+	}
+	return oldValue.ProfitClosedPercent, nil
+}
+
+// AddProfitClosedPercent adds f to the "profit_closed_percent" field.
+func (m *BotMetricsMutation) AddProfitClosedPercent(f float64) {
+	if m.addprofit_closed_percent != nil {
+		*m.addprofit_closed_percent += f
+	} else {
+		m.addprofit_closed_percent = &f
+	}
+}
+
+// AddedProfitClosedPercent returns the value that was added to the "profit_closed_percent" field in this mutation.
+func (m *BotMetricsMutation) AddedProfitClosedPercent() (r float64, exists bool) {
+	v := m.addprofit_closed_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProfitClosedPercent clears the value of the "profit_closed_percent" field.
+func (m *BotMetricsMutation) ClearProfitClosedPercent() {
+	m.profit_closed_percent = nil
+	m.addprofit_closed_percent = nil
+	m.clearedFields[botmetrics.FieldProfitClosedPercent] = struct{}{}
+}
+
+// ProfitClosedPercentCleared returns if the "profit_closed_percent" field was cleared in this mutation.
+func (m *BotMetricsMutation) ProfitClosedPercentCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldProfitClosedPercent]
+	return ok
+}
+
+// ResetProfitClosedPercent resets all changes to the "profit_closed_percent" field.
+func (m *BotMetricsMutation) ResetProfitClosedPercent() {
+	m.profit_closed_percent = nil
+	m.addprofit_closed_percent = nil
+	delete(m.clearedFields, botmetrics.FieldProfitClosedPercent)
+}
+
+// SetProfitAllCoin sets the "profit_all_coin" field.
+func (m *BotMetricsMutation) SetProfitAllCoin(f float64) {
+	m.profit_all_coin = &f
+	m.addprofit_all_coin = nil
+}
+
+// ProfitAllCoin returns the value of the "profit_all_coin" field in the mutation.
+func (m *BotMetricsMutation) ProfitAllCoin() (r float64, exists bool) {
+	v := m.profit_all_coin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfitAllCoin returns the old "profit_all_coin" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldProfitAllCoin(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfitAllCoin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfitAllCoin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfitAllCoin: %w", err)
+	}
+	return oldValue.ProfitAllCoin, nil
+}
+
+// AddProfitAllCoin adds f to the "profit_all_coin" field.
+func (m *BotMetricsMutation) AddProfitAllCoin(f float64) {
+	if m.addprofit_all_coin != nil {
+		*m.addprofit_all_coin += f
+	} else {
+		m.addprofit_all_coin = &f
+	}
+}
+
+// AddedProfitAllCoin returns the value that was added to the "profit_all_coin" field in this mutation.
+func (m *BotMetricsMutation) AddedProfitAllCoin() (r float64, exists bool) {
+	v := m.addprofit_all_coin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProfitAllCoin clears the value of the "profit_all_coin" field.
+func (m *BotMetricsMutation) ClearProfitAllCoin() {
+	m.profit_all_coin = nil
+	m.addprofit_all_coin = nil
+	m.clearedFields[botmetrics.FieldProfitAllCoin] = struct{}{}
+}
+
+// ProfitAllCoinCleared returns if the "profit_all_coin" field was cleared in this mutation.
+func (m *BotMetricsMutation) ProfitAllCoinCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldProfitAllCoin]
+	return ok
+}
+
+// ResetProfitAllCoin resets all changes to the "profit_all_coin" field.
+func (m *BotMetricsMutation) ResetProfitAllCoin() {
+	m.profit_all_coin = nil
+	m.addprofit_all_coin = nil
+	delete(m.clearedFields, botmetrics.FieldProfitAllCoin)
+}
+
+// SetProfitAllPercent sets the "profit_all_percent" field.
+func (m *BotMetricsMutation) SetProfitAllPercent(f float64) {
+	m.profit_all_percent = &f
+	m.addprofit_all_percent = nil
+}
+
+// ProfitAllPercent returns the value of the "profit_all_percent" field in the mutation.
+func (m *BotMetricsMutation) ProfitAllPercent() (r float64, exists bool) {
+	v := m.profit_all_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfitAllPercent returns the old "profit_all_percent" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldProfitAllPercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfitAllPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfitAllPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfitAllPercent: %w", err)
+	}
+	return oldValue.ProfitAllPercent, nil
+}
+
+// AddProfitAllPercent adds f to the "profit_all_percent" field.
+func (m *BotMetricsMutation) AddProfitAllPercent(f float64) {
+	if m.addprofit_all_percent != nil {
+		*m.addprofit_all_percent += f
+	} else {
+		m.addprofit_all_percent = &f
+	}
+}
+
+// AddedProfitAllPercent returns the value that was added to the "profit_all_percent" field in this mutation.
+func (m *BotMetricsMutation) AddedProfitAllPercent() (r float64, exists bool) {
+	v := m.addprofit_all_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProfitAllPercent clears the value of the "profit_all_percent" field.
+func (m *BotMetricsMutation) ClearProfitAllPercent() {
+	m.profit_all_percent = nil
+	m.addprofit_all_percent = nil
+	m.clearedFields[botmetrics.FieldProfitAllPercent] = struct{}{}
+}
+
+// ProfitAllPercentCleared returns if the "profit_all_percent" field was cleared in this mutation.
+func (m *BotMetricsMutation) ProfitAllPercentCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldProfitAllPercent]
+	return ok
+}
+
+// ResetProfitAllPercent resets all changes to the "profit_all_percent" field.
+func (m *BotMetricsMutation) ResetProfitAllPercent() {
+	m.profit_all_percent = nil
+	m.addprofit_all_percent = nil
+	delete(m.clearedFields, botmetrics.FieldProfitAllPercent)
+}
+
+// SetTradeCount sets the "trade_count" field.
+func (m *BotMetricsMutation) SetTradeCount(i int) {
+	m.trade_count = &i
+	m.addtrade_count = nil
+}
+
+// TradeCount returns the value of the "trade_count" field in the mutation.
+func (m *BotMetricsMutation) TradeCount() (r int, exists bool) {
+	v := m.trade_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTradeCount returns the old "trade_count" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldTradeCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTradeCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTradeCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTradeCount: %w", err)
+	}
+	return oldValue.TradeCount, nil
+}
+
+// AddTradeCount adds i to the "trade_count" field.
+func (m *BotMetricsMutation) AddTradeCount(i int) {
+	if m.addtrade_count != nil {
+		*m.addtrade_count += i
+	} else {
+		m.addtrade_count = &i
+	}
+}
+
+// AddedTradeCount returns the value that was added to the "trade_count" field in this mutation.
+func (m *BotMetricsMutation) AddedTradeCount() (r int, exists bool) {
+	v := m.addtrade_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTradeCount clears the value of the "trade_count" field.
+func (m *BotMetricsMutation) ClearTradeCount() {
+	m.trade_count = nil
+	m.addtrade_count = nil
+	m.clearedFields[botmetrics.FieldTradeCount] = struct{}{}
+}
+
+// TradeCountCleared returns if the "trade_count" field was cleared in this mutation.
+func (m *BotMetricsMutation) TradeCountCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldTradeCount]
+	return ok
+}
+
+// ResetTradeCount resets all changes to the "trade_count" field.
+func (m *BotMetricsMutation) ResetTradeCount() {
+	m.trade_count = nil
+	m.addtrade_count = nil
+	delete(m.clearedFields, botmetrics.FieldTradeCount)
+}
+
+// SetClosedTradeCount sets the "closed_trade_count" field.
+func (m *BotMetricsMutation) SetClosedTradeCount(i int) {
+	m.closed_trade_count = &i
+	m.addclosed_trade_count = nil
+}
+
+// ClosedTradeCount returns the value of the "closed_trade_count" field in the mutation.
+func (m *BotMetricsMutation) ClosedTradeCount() (r int, exists bool) {
+	v := m.closed_trade_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClosedTradeCount returns the old "closed_trade_count" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldClosedTradeCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClosedTradeCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClosedTradeCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClosedTradeCount: %w", err)
+	}
+	return oldValue.ClosedTradeCount, nil
+}
+
+// AddClosedTradeCount adds i to the "closed_trade_count" field.
+func (m *BotMetricsMutation) AddClosedTradeCount(i int) {
+	if m.addclosed_trade_count != nil {
+		*m.addclosed_trade_count += i
+	} else {
+		m.addclosed_trade_count = &i
+	}
+}
+
+// AddedClosedTradeCount returns the value that was added to the "closed_trade_count" field in this mutation.
+func (m *BotMetricsMutation) AddedClosedTradeCount() (r int, exists bool) {
+	v := m.addclosed_trade_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearClosedTradeCount clears the value of the "closed_trade_count" field.
+func (m *BotMetricsMutation) ClearClosedTradeCount() {
+	m.closed_trade_count = nil
+	m.addclosed_trade_count = nil
+	m.clearedFields[botmetrics.FieldClosedTradeCount] = struct{}{}
+}
+
+// ClosedTradeCountCleared returns if the "closed_trade_count" field was cleared in this mutation.
+func (m *BotMetricsMutation) ClosedTradeCountCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldClosedTradeCount]
+	return ok
+}
+
+// ResetClosedTradeCount resets all changes to the "closed_trade_count" field.
+func (m *BotMetricsMutation) ResetClosedTradeCount() {
+	m.closed_trade_count = nil
+	m.addclosed_trade_count = nil
+	delete(m.clearedFields, botmetrics.FieldClosedTradeCount)
+}
+
+// SetOpenTradeCount sets the "open_trade_count" field.
+func (m *BotMetricsMutation) SetOpenTradeCount(i int) {
+	m.open_trade_count = &i
+	m.addopen_trade_count = nil
+}
+
+// OpenTradeCount returns the value of the "open_trade_count" field in the mutation.
+func (m *BotMetricsMutation) OpenTradeCount() (r int, exists bool) {
+	v := m.open_trade_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOpenTradeCount returns the old "open_trade_count" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldOpenTradeCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOpenTradeCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOpenTradeCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOpenTradeCount: %w", err)
+	}
+	return oldValue.OpenTradeCount, nil
+}
+
+// AddOpenTradeCount adds i to the "open_trade_count" field.
+func (m *BotMetricsMutation) AddOpenTradeCount(i int) {
+	if m.addopen_trade_count != nil {
+		*m.addopen_trade_count += i
+	} else {
+		m.addopen_trade_count = &i
+	}
+}
+
+// AddedOpenTradeCount returns the value that was added to the "open_trade_count" field in this mutation.
+func (m *BotMetricsMutation) AddedOpenTradeCount() (r int, exists bool) {
+	v := m.addopen_trade_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOpenTradeCount clears the value of the "open_trade_count" field.
+func (m *BotMetricsMutation) ClearOpenTradeCount() {
+	m.open_trade_count = nil
+	m.addopen_trade_count = nil
+	m.clearedFields[botmetrics.FieldOpenTradeCount] = struct{}{}
+}
+
+// OpenTradeCountCleared returns if the "open_trade_count" field was cleared in this mutation.
+func (m *BotMetricsMutation) OpenTradeCountCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldOpenTradeCount]
+	return ok
+}
+
+// ResetOpenTradeCount resets all changes to the "open_trade_count" field.
+func (m *BotMetricsMutation) ResetOpenTradeCount() {
+	m.open_trade_count = nil
+	m.addopen_trade_count = nil
+	delete(m.clearedFields, botmetrics.FieldOpenTradeCount)
+}
+
+// SetWinningTrades sets the "winning_trades" field.
+func (m *BotMetricsMutation) SetWinningTrades(i int) {
+	m.winning_trades = &i
+	m.addwinning_trades = nil
+}
+
+// WinningTrades returns the value of the "winning_trades" field in the mutation.
+func (m *BotMetricsMutation) WinningTrades() (r int, exists bool) {
+	v := m.winning_trades
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWinningTrades returns the old "winning_trades" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldWinningTrades(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWinningTrades is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWinningTrades requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWinningTrades: %w", err)
+	}
+	return oldValue.WinningTrades, nil
+}
+
+// AddWinningTrades adds i to the "winning_trades" field.
+func (m *BotMetricsMutation) AddWinningTrades(i int) {
+	if m.addwinning_trades != nil {
+		*m.addwinning_trades += i
+	} else {
+		m.addwinning_trades = &i
+	}
+}
+
+// AddedWinningTrades returns the value that was added to the "winning_trades" field in this mutation.
+func (m *BotMetricsMutation) AddedWinningTrades() (r int, exists bool) {
+	v := m.addwinning_trades
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearWinningTrades clears the value of the "winning_trades" field.
+func (m *BotMetricsMutation) ClearWinningTrades() {
+	m.winning_trades = nil
+	m.addwinning_trades = nil
+	m.clearedFields[botmetrics.FieldWinningTrades] = struct{}{}
+}
+
+// WinningTradesCleared returns if the "winning_trades" field was cleared in this mutation.
+func (m *BotMetricsMutation) WinningTradesCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldWinningTrades]
+	return ok
+}
+
+// ResetWinningTrades resets all changes to the "winning_trades" field.
+func (m *BotMetricsMutation) ResetWinningTrades() {
+	m.winning_trades = nil
+	m.addwinning_trades = nil
+	delete(m.clearedFields, botmetrics.FieldWinningTrades)
+}
+
+// SetLosingTrades sets the "losing_trades" field.
+func (m *BotMetricsMutation) SetLosingTrades(i int) {
+	m.losing_trades = &i
+	m.addlosing_trades = nil
+}
+
+// LosingTrades returns the value of the "losing_trades" field in the mutation.
+func (m *BotMetricsMutation) LosingTrades() (r int, exists bool) {
+	v := m.losing_trades
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLosingTrades returns the old "losing_trades" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldLosingTrades(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLosingTrades is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLosingTrades requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLosingTrades: %w", err)
+	}
+	return oldValue.LosingTrades, nil
+}
+
+// AddLosingTrades adds i to the "losing_trades" field.
+func (m *BotMetricsMutation) AddLosingTrades(i int) {
+	if m.addlosing_trades != nil {
+		*m.addlosing_trades += i
+	} else {
+		m.addlosing_trades = &i
+	}
+}
+
+// AddedLosingTrades returns the value that was added to the "losing_trades" field in this mutation.
+func (m *BotMetricsMutation) AddedLosingTrades() (r int, exists bool) {
+	v := m.addlosing_trades
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLosingTrades clears the value of the "losing_trades" field.
+func (m *BotMetricsMutation) ClearLosingTrades() {
+	m.losing_trades = nil
+	m.addlosing_trades = nil
+	m.clearedFields[botmetrics.FieldLosingTrades] = struct{}{}
+}
+
+// LosingTradesCleared returns if the "losing_trades" field was cleared in this mutation.
+func (m *BotMetricsMutation) LosingTradesCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldLosingTrades]
+	return ok
+}
+
+// ResetLosingTrades resets all changes to the "losing_trades" field.
+func (m *BotMetricsMutation) ResetLosingTrades() {
+	m.losing_trades = nil
+	m.addlosing_trades = nil
+	delete(m.clearedFields, botmetrics.FieldLosingTrades)
+}
+
+// SetWinrate sets the "winrate" field.
+func (m *BotMetricsMutation) SetWinrate(f float64) {
+	m.winrate = &f
+	m.addwinrate = nil
+}
+
+// Winrate returns the value of the "winrate" field in the mutation.
+func (m *BotMetricsMutation) Winrate() (r float64, exists bool) {
+	v := m.winrate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWinrate returns the old "winrate" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldWinrate(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWinrate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWinrate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWinrate: %w", err)
+	}
+	return oldValue.Winrate, nil
+}
+
+// AddWinrate adds f to the "winrate" field.
+func (m *BotMetricsMutation) AddWinrate(f float64) {
+	if m.addwinrate != nil {
+		*m.addwinrate += f
+	} else {
+		m.addwinrate = &f
+	}
+}
+
+// AddedWinrate returns the value that was added to the "winrate" field in this mutation.
+func (m *BotMetricsMutation) AddedWinrate() (r float64, exists bool) {
+	v := m.addwinrate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearWinrate clears the value of the "winrate" field.
+func (m *BotMetricsMutation) ClearWinrate() {
+	m.winrate = nil
+	m.addwinrate = nil
+	m.clearedFields[botmetrics.FieldWinrate] = struct{}{}
+}
+
+// WinrateCleared returns if the "winrate" field was cleared in this mutation.
+func (m *BotMetricsMutation) WinrateCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldWinrate]
+	return ok
+}
+
+// ResetWinrate resets all changes to the "winrate" field.
+func (m *BotMetricsMutation) ResetWinrate() {
+	m.winrate = nil
+	m.addwinrate = nil
+	delete(m.clearedFields, botmetrics.FieldWinrate)
+}
+
+// SetExpectancy sets the "expectancy" field.
+func (m *BotMetricsMutation) SetExpectancy(f float64) {
+	m.expectancy = &f
+	m.addexpectancy = nil
+}
+
+// Expectancy returns the value of the "expectancy" field in the mutation.
+func (m *BotMetricsMutation) Expectancy() (r float64, exists bool) {
+	v := m.expectancy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpectancy returns the old "expectancy" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldExpectancy(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpectancy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpectancy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpectancy: %w", err)
+	}
+	return oldValue.Expectancy, nil
+}
+
+// AddExpectancy adds f to the "expectancy" field.
+func (m *BotMetricsMutation) AddExpectancy(f float64) {
+	if m.addexpectancy != nil {
+		*m.addexpectancy += f
+	} else {
+		m.addexpectancy = &f
+	}
+}
+
+// AddedExpectancy returns the value that was added to the "expectancy" field in this mutation.
+func (m *BotMetricsMutation) AddedExpectancy() (r float64, exists bool) {
+	v := m.addexpectancy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearExpectancy clears the value of the "expectancy" field.
+func (m *BotMetricsMutation) ClearExpectancy() {
+	m.expectancy = nil
+	m.addexpectancy = nil
+	m.clearedFields[botmetrics.FieldExpectancy] = struct{}{}
+}
+
+// ExpectancyCleared returns if the "expectancy" field was cleared in this mutation.
+func (m *BotMetricsMutation) ExpectancyCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldExpectancy]
+	return ok
+}
+
+// ResetExpectancy resets all changes to the "expectancy" field.
+func (m *BotMetricsMutation) ResetExpectancy() {
+	m.expectancy = nil
+	m.addexpectancy = nil
+	delete(m.clearedFields, botmetrics.FieldExpectancy)
+}
+
+// SetProfitFactor sets the "profit_factor" field.
+func (m *BotMetricsMutation) SetProfitFactor(f float64) {
+	m.profit_factor = &f
+	m.addprofit_factor = nil
+}
+
+// ProfitFactor returns the value of the "profit_factor" field in the mutation.
+func (m *BotMetricsMutation) ProfitFactor() (r float64, exists bool) {
+	v := m.profit_factor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfitFactor returns the old "profit_factor" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldProfitFactor(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfitFactor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfitFactor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfitFactor: %w", err)
+	}
+	return oldValue.ProfitFactor, nil
+}
+
+// AddProfitFactor adds f to the "profit_factor" field.
+func (m *BotMetricsMutation) AddProfitFactor(f float64) {
+	if m.addprofit_factor != nil {
+		*m.addprofit_factor += f
+	} else {
+		m.addprofit_factor = &f
+	}
+}
+
+// AddedProfitFactor returns the value that was added to the "profit_factor" field in this mutation.
+func (m *BotMetricsMutation) AddedProfitFactor() (r float64, exists bool) {
+	v := m.addprofit_factor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProfitFactor clears the value of the "profit_factor" field.
+func (m *BotMetricsMutation) ClearProfitFactor() {
+	m.profit_factor = nil
+	m.addprofit_factor = nil
+	m.clearedFields[botmetrics.FieldProfitFactor] = struct{}{}
+}
+
+// ProfitFactorCleared returns if the "profit_factor" field was cleared in this mutation.
+func (m *BotMetricsMutation) ProfitFactorCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldProfitFactor]
+	return ok
+}
+
+// ResetProfitFactor resets all changes to the "profit_factor" field.
+func (m *BotMetricsMutation) ResetProfitFactor() {
+	m.profit_factor = nil
+	m.addprofit_factor = nil
+	delete(m.clearedFields, botmetrics.FieldProfitFactor)
+}
+
+// SetMaxDrawdown sets the "max_drawdown" field.
+func (m *BotMetricsMutation) SetMaxDrawdown(f float64) {
+	m.max_drawdown = &f
+	m.addmax_drawdown = nil
+}
+
+// MaxDrawdown returns the value of the "max_drawdown" field in the mutation.
+func (m *BotMetricsMutation) MaxDrawdown() (r float64, exists bool) {
+	v := m.max_drawdown
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxDrawdown returns the old "max_drawdown" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldMaxDrawdown(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxDrawdown is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxDrawdown requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxDrawdown: %w", err)
+	}
+	return oldValue.MaxDrawdown, nil
+}
+
+// AddMaxDrawdown adds f to the "max_drawdown" field.
+func (m *BotMetricsMutation) AddMaxDrawdown(f float64) {
+	if m.addmax_drawdown != nil {
+		*m.addmax_drawdown += f
+	} else {
+		m.addmax_drawdown = &f
+	}
+}
+
+// AddedMaxDrawdown returns the value that was added to the "max_drawdown" field in this mutation.
+func (m *BotMetricsMutation) AddedMaxDrawdown() (r float64, exists bool) {
+	v := m.addmax_drawdown
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMaxDrawdown clears the value of the "max_drawdown" field.
+func (m *BotMetricsMutation) ClearMaxDrawdown() {
+	m.max_drawdown = nil
+	m.addmax_drawdown = nil
+	m.clearedFields[botmetrics.FieldMaxDrawdown] = struct{}{}
+}
+
+// MaxDrawdownCleared returns if the "max_drawdown" field was cleared in this mutation.
+func (m *BotMetricsMutation) MaxDrawdownCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldMaxDrawdown]
+	return ok
+}
+
+// ResetMaxDrawdown resets all changes to the "max_drawdown" field.
+func (m *BotMetricsMutation) ResetMaxDrawdown() {
+	m.max_drawdown = nil
+	m.addmax_drawdown = nil
+	delete(m.clearedFields, botmetrics.FieldMaxDrawdown)
+}
+
+// SetMaxDrawdownAbs sets the "max_drawdown_abs" field.
+func (m *BotMetricsMutation) SetMaxDrawdownAbs(f float64) {
+	m.max_drawdown_abs = &f
+	m.addmax_drawdown_abs = nil
+}
+
+// MaxDrawdownAbs returns the value of the "max_drawdown_abs" field in the mutation.
+func (m *BotMetricsMutation) MaxDrawdownAbs() (r float64, exists bool) {
+	v := m.max_drawdown_abs
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxDrawdownAbs returns the old "max_drawdown_abs" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldMaxDrawdownAbs(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxDrawdownAbs is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxDrawdownAbs requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxDrawdownAbs: %w", err)
+	}
+	return oldValue.MaxDrawdownAbs, nil
+}
+
+// AddMaxDrawdownAbs adds f to the "max_drawdown_abs" field.
+func (m *BotMetricsMutation) AddMaxDrawdownAbs(f float64) {
+	if m.addmax_drawdown_abs != nil {
+		*m.addmax_drawdown_abs += f
+	} else {
+		m.addmax_drawdown_abs = &f
+	}
+}
+
+// AddedMaxDrawdownAbs returns the value that was added to the "max_drawdown_abs" field in this mutation.
+func (m *BotMetricsMutation) AddedMaxDrawdownAbs() (r float64, exists bool) {
+	v := m.addmax_drawdown_abs
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMaxDrawdownAbs clears the value of the "max_drawdown_abs" field.
+func (m *BotMetricsMutation) ClearMaxDrawdownAbs() {
+	m.max_drawdown_abs = nil
+	m.addmax_drawdown_abs = nil
+	m.clearedFields[botmetrics.FieldMaxDrawdownAbs] = struct{}{}
+}
+
+// MaxDrawdownAbsCleared returns if the "max_drawdown_abs" field was cleared in this mutation.
+func (m *BotMetricsMutation) MaxDrawdownAbsCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldMaxDrawdownAbs]
+	return ok
+}
+
+// ResetMaxDrawdownAbs resets all changes to the "max_drawdown_abs" field.
+func (m *BotMetricsMutation) ResetMaxDrawdownAbs() {
+	m.max_drawdown_abs = nil
+	m.addmax_drawdown_abs = nil
+	delete(m.clearedFields, botmetrics.FieldMaxDrawdownAbs)
+}
+
+// SetBestPair sets the "best_pair" field.
+func (m *BotMetricsMutation) SetBestPair(s string) {
+	m.best_pair = &s
+}
+
+// BestPair returns the value of the "best_pair" field in the mutation.
+func (m *BotMetricsMutation) BestPair() (r string, exists bool) {
+	v := m.best_pair
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBestPair returns the old "best_pair" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldBestPair(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBestPair is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBestPair requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBestPair: %w", err)
+	}
+	return oldValue.BestPair, nil
+}
+
+// ClearBestPair clears the value of the "best_pair" field.
+func (m *BotMetricsMutation) ClearBestPair() {
+	m.best_pair = nil
+	m.clearedFields[botmetrics.FieldBestPair] = struct{}{}
+}
+
+// BestPairCleared returns if the "best_pair" field was cleared in this mutation.
+func (m *BotMetricsMutation) BestPairCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldBestPair]
+	return ok
+}
+
+// ResetBestPair resets all changes to the "best_pair" field.
+func (m *BotMetricsMutation) ResetBestPair() {
+	m.best_pair = nil
+	delete(m.clearedFields, botmetrics.FieldBestPair)
+}
+
+// SetBestRate sets the "best_rate" field.
+func (m *BotMetricsMutation) SetBestRate(f float64) {
+	m.best_rate = &f
+	m.addbest_rate = nil
+}
+
+// BestRate returns the value of the "best_rate" field in the mutation.
+func (m *BotMetricsMutation) BestRate() (r float64, exists bool) {
+	v := m.best_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBestRate returns the old "best_rate" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldBestRate(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBestRate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBestRate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBestRate: %w", err)
+	}
+	return oldValue.BestRate, nil
+}
+
+// AddBestRate adds f to the "best_rate" field.
+func (m *BotMetricsMutation) AddBestRate(f float64) {
+	if m.addbest_rate != nil {
+		*m.addbest_rate += f
+	} else {
+		m.addbest_rate = &f
+	}
+}
+
+// AddedBestRate returns the value that was added to the "best_rate" field in this mutation.
+func (m *BotMetricsMutation) AddedBestRate() (r float64, exists bool) {
+	v := m.addbest_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearBestRate clears the value of the "best_rate" field.
+func (m *BotMetricsMutation) ClearBestRate() {
+	m.best_rate = nil
+	m.addbest_rate = nil
+	m.clearedFields[botmetrics.FieldBestRate] = struct{}{}
+}
+
+// BestRateCleared returns if the "best_rate" field was cleared in this mutation.
+func (m *BotMetricsMutation) BestRateCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldBestRate]
+	return ok
+}
+
+// ResetBestRate resets all changes to the "best_rate" field.
+func (m *BotMetricsMutation) ResetBestRate() {
+	m.best_rate = nil
+	m.addbest_rate = nil
+	delete(m.clearedFields, botmetrics.FieldBestRate)
+}
+
+// SetFirstTradeTimestamp sets the "first_trade_timestamp" field.
+func (m *BotMetricsMutation) SetFirstTradeTimestamp(t time.Time) {
+	m.first_trade_timestamp = &t
+}
+
+// FirstTradeTimestamp returns the value of the "first_trade_timestamp" field in the mutation.
+func (m *BotMetricsMutation) FirstTradeTimestamp() (r time.Time, exists bool) {
+	v := m.first_trade_timestamp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstTradeTimestamp returns the old "first_trade_timestamp" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldFirstTradeTimestamp(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstTradeTimestamp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstTradeTimestamp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstTradeTimestamp: %w", err)
+	}
+	return oldValue.FirstTradeTimestamp, nil
+}
+
+// ClearFirstTradeTimestamp clears the value of the "first_trade_timestamp" field.
+func (m *BotMetricsMutation) ClearFirstTradeTimestamp() {
+	m.first_trade_timestamp = nil
+	m.clearedFields[botmetrics.FieldFirstTradeTimestamp] = struct{}{}
+}
+
+// FirstTradeTimestampCleared returns if the "first_trade_timestamp" field was cleared in this mutation.
+func (m *BotMetricsMutation) FirstTradeTimestampCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldFirstTradeTimestamp]
+	return ok
+}
+
+// ResetFirstTradeTimestamp resets all changes to the "first_trade_timestamp" field.
+func (m *BotMetricsMutation) ResetFirstTradeTimestamp() {
+	m.first_trade_timestamp = nil
+	delete(m.clearedFields, botmetrics.FieldFirstTradeTimestamp)
+}
+
+// SetLatestTradeTimestamp sets the "latest_trade_timestamp" field.
+func (m *BotMetricsMutation) SetLatestTradeTimestamp(t time.Time) {
+	m.latest_trade_timestamp = &t
+}
+
+// LatestTradeTimestamp returns the value of the "latest_trade_timestamp" field in the mutation.
+func (m *BotMetricsMutation) LatestTradeTimestamp() (r time.Time, exists bool) {
+	v := m.latest_trade_timestamp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLatestTradeTimestamp returns the old "latest_trade_timestamp" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldLatestTradeTimestamp(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLatestTradeTimestamp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLatestTradeTimestamp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLatestTradeTimestamp: %w", err)
+	}
+	return oldValue.LatestTradeTimestamp, nil
+}
+
+// ClearLatestTradeTimestamp clears the value of the "latest_trade_timestamp" field.
+func (m *BotMetricsMutation) ClearLatestTradeTimestamp() {
+	m.latest_trade_timestamp = nil
+	m.clearedFields[botmetrics.FieldLatestTradeTimestamp] = struct{}{}
+}
+
+// LatestTradeTimestampCleared returns if the "latest_trade_timestamp" field was cleared in this mutation.
+func (m *BotMetricsMutation) LatestTradeTimestampCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldLatestTradeTimestamp]
+	return ok
+}
+
+// ResetLatestTradeTimestamp resets all changes to the "latest_trade_timestamp" field.
+func (m *BotMetricsMutation) ResetLatestTradeTimestamp() {
+	m.latest_trade_timestamp = nil
+	delete(m.clearedFields, botmetrics.FieldLatestTradeTimestamp)
+}
+
+// SetFetchedAt sets the "fetched_at" field.
+func (m *BotMetricsMutation) SetFetchedAt(t time.Time) {
+	m.fetched_at = &t
+}
+
+// FetchedAt returns the value of the "fetched_at" field in the mutation.
+func (m *BotMetricsMutation) FetchedAt() (r time.Time, exists bool) {
+	v := m.fetched_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFetchedAt returns the old "fetched_at" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldFetchedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFetchedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFetchedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFetchedAt: %w", err)
+	}
+	return oldValue.FetchedAt, nil
+}
+
+// ResetFetchedAt resets all changes to the "fetched_at" field.
+func (m *BotMetricsMutation) ResetFetchedAt() {
+	m.fetched_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *BotMetricsMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *BotMetricsMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *BotMetricsMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearBot clears the "bot" edge to the Bot entity.
+func (m *BotMetricsMutation) ClearBot() {
+	m.clearedbot = true
+	m.clearedFields[botmetrics.FieldBotID] = struct{}{}
+}
+
+// BotCleared reports if the "bot" edge to the Bot entity was cleared.
+func (m *BotMetricsMutation) BotCleared() bool {
+	return m.clearedbot
+}
+
+// BotIDs returns the "bot" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BotID instead. It exists only for internal usage by the builders.
+func (m *BotMetricsMutation) BotIDs() (ids []uuid.UUID) {
+	if id := m.bot; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBot resets all changes to the "bot" edge.
+func (m *BotMetricsMutation) ResetBot() {
+	m.bot = nil
+	m.clearedbot = false
+}
+
+// Where appends a list predicates to the BotMetricsMutation builder.
+func (m *BotMetricsMutation) Where(ps ...predicate.BotMetrics) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the BotMetricsMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *BotMetricsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.BotMetrics, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *BotMetricsMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *BotMetricsMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (BotMetrics).
+func (m *BotMetricsMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *BotMetricsMutation) Fields() []string {
+	fields := make([]string, 0, 21)
+	if m.bot != nil {
+		fields = append(fields, botmetrics.FieldBotID)
+	}
+	if m.profit_closed_coin != nil {
+		fields = append(fields, botmetrics.FieldProfitClosedCoin)
+	}
+	if m.profit_closed_percent != nil {
+		fields = append(fields, botmetrics.FieldProfitClosedPercent)
+	}
+	if m.profit_all_coin != nil {
+		fields = append(fields, botmetrics.FieldProfitAllCoin)
+	}
+	if m.profit_all_percent != nil {
+		fields = append(fields, botmetrics.FieldProfitAllPercent)
+	}
+	if m.trade_count != nil {
+		fields = append(fields, botmetrics.FieldTradeCount)
+	}
+	if m.closed_trade_count != nil {
+		fields = append(fields, botmetrics.FieldClosedTradeCount)
+	}
+	if m.open_trade_count != nil {
+		fields = append(fields, botmetrics.FieldOpenTradeCount)
+	}
+	if m.winning_trades != nil {
+		fields = append(fields, botmetrics.FieldWinningTrades)
+	}
+	if m.losing_trades != nil {
+		fields = append(fields, botmetrics.FieldLosingTrades)
+	}
+	if m.winrate != nil {
+		fields = append(fields, botmetrics.FieldWinrate)
+	}
+	if m.expectancy != nil {
+		fields = append(fields, botmetrics.FieldExpectancy)
+	}
+	if m.profit_factor != nil {
+		fields = append(fields, botmetrics.FieldProfitFactor)
+	}
+	if m.max_drawdown != nil {
+		fields = append(fields, botmetrics.FieldMaxDrawdown)
+	}
+	if m.max_drawdown_abs != nil {
+		fields = append(fields, botmetrics.FieldMaxDrawdownAbs)
+	}
+	if m.best_pair != nil {
+		fields = append(fields, botmetrics.FieldBestPair)
+	}
+	if m.best_rate != nil {
+		fields = append(fields, botmetrics.FieldBestRate)
+	}
+	if m.first_trade_timestamp != nil {
+		fields = append(fields, botmetrics.FieldFirstTradeTimestamp)
+	}
+	if m.latest_trade_timestamp != nil {
+		fields = append(fields, botmetrics.FieldLatestTradeTimestamp)
+	}
+	if m.fetched_at != nil {
+		fields = append(fields, botmetrics.FieldFetchedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, botmetrics.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *BotMetricsMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case botmetrics.FieldBotID:
+		return m.BotID()
+	case botmetrics.FieldProfitClosedCoin:
+		return m.ProfitClosedCoin()
+	case botmetrics.FieldProfitClosedPercent:
+		return m.ProfitClosedPercent()
+	case botmetrics.FieldProfitAllCoin:
+		return m.ProfitAllCoin()
+	case botmetrics.FieldProfitAllPercent:
+		return m.ProfitAllPercent()
+	case botmetrics.FieldTradeCount:
+		return m.TradeCount()
+	case botmetrics.FieldClosedTradeCount:
+		return m.ClosedTradeCount()
+	case botmetrics.FieldOpenTradeCount:
+		return m.OpenTradeCount()
+	case botmetrics.FieldWinningTrades:
+		return m.WinningTrades()
+	case botmetrics.FieldLosingTrades:
+		return m.LosingTrades()
+	case botmetrics.FieldWinrate:
+		return m.Winrate()
+	case botmetrics.FieldExpectancy:
+		return m.Expectancy()
+	case botmetrics.FieldProfitFactor:
+		return m.ProfitFactor()
+	case botmetrics.FieldMaxDrawdown:
+		return m.MaxDrawdown()
+	case botmetrics.FieldMaxDrawdownAbs:
+		return m.MaxDrawdownAbs()
+	case botmetrics.FieldBestPair:
+		return m.BestPair()
+	case botmetrics.FieldBestRate:
+		return m.BestRate()
+	case botmetrics.FieldFirstTradeTimestamp:
+		return m.FirstTradeTimestamp()
+	case botmetrics.FieldLatestTradeTimestamp:
+		return m.LatestTradeTimestamp()
+	case botmetrics.FieldFetchedAt:
+		return m.FetchedAt()
+	case botmetrics.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *BotMetricsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case botmetrics.FieldBotID:
+		return m.OldBotID(ctx)
+	case botmetrics.FieldProfitClosedCoin:
+		return m.OldProfitClosedCoin(ctx)
+	case botmetrics.FieldProfitClosedPercent:
+		return m.OldProfitClosedPercent(ctx)
+	case botmetrics.FieldProfitAllCoin:
+		return m.OldProfitAllCoin(ctx)
+	case botmetrics.FieldProfitAllPercent:
+		return m.OldProfitAllPercent(ctx)
+	case botmetrics.FieldTradeCount:
+		return m.OldTradeCount(ctx)
+	case botmetrics.FieldClosedTradeCount:
+		return m.OldClosedTradeCount(ctx)
+	case botmetrics.FieldOpenTradeCount:
+		return m.OldOpenTradeCount(ctx)
+	case botmetrics.FieldWinningTrades:
+		return m.OldWinningTrades(ctx)
+	case botmetrics.FieldLosingTrades:
+		return m.OldLosingTrades(ctx)
+	case botmetrics.FieldWinrate:
+		return m.OldWinrate(ctx)
+	case botmetrics.FieldExpectancy:
+		return m.OldExpectancy(ctx)
+	case botmetrics.FieldProfitFactor:
+		return m.OldProfitFactor(ctx)
+	case botmetrics.FieldMaxDrawdown:
+		return m.OldMaxDrawdown(ctx)
+	case botmetrics.FieldMaxDrawdownAbs:
+		return m.OldMaxDrawdownAbs(ctx)
+	case botmetrics.FieldBestPair:
+		return m.OldBestPair(ctx)
+	case botmetrics.FieldBestRate:
+		return m.OldBestRate(ctx)
+	case botmetrics.FieldFirstTradeTimestamp:
+		return m.OldFirstTradeTimestamp(ctx)
+	case botmetrics.FieldLatestTradeTimestamp:
+		return m.OldLatestTradeTimestamp(ctx)
+	case botmetrics.FieldFetchedAt:
+		return m.OldFetchedAt(ctx)
+	case botmetrics.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown BotMetrics field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BotMetricsMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case botmetrics.FieldBotID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBotID(v)
+		return nil
+	case botmetrics.FieldProfitClosedCoin:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfitClosedCoin(v)
+		return nil
+	case botmetrics.FieldProfitClosedPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfitClosedPercent(v)
+		return nil
+	case botmetrics.FieldProfitAllCoin:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfitAllCoin(v)
+		return nil
+	case botmetrics.FieldProfitAllPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfitAllPercent(v)
+		return nil
+	case botmetrics.FieldTradeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTradeCount(v)
+		return nil
+	case botmetrics.FieldClosedTradeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClosedTradeCount(v)
+		return nil
+	case botmetrics.FieldOpenTradeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOpenTradeCount(v)
+		return nil
+	case botmetrics.FieldWinningTrades:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWinningTrades(v)
+		return nil
+	case botmetrics.FieldLosingTrades:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLosingTrades(v)
+		return nil
+	case botmetrics.FieldWinrate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWinrate(v)
+		return nil
+	case botmetrics.FieldExpectancy:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpectancy(v)
+		return nil
+	case botmetrics.FieldProfitFactor:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfitFactor(v)
+		return nil
+	case botmetrics.FieldMaxDrawdown:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxDrawdown(v)
+		return nil
+	case botmetrics.FieldMaxDrawdownAbs:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxDrawdownAbs(v)
+		return nil
+	case botmetrics.FieldBestPair:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBestPair(v)
+		return nil
+	case botmetrics.FieldBestRate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBestRate(v)
+		return nil
+	case botmetrics.FieldFirstTradeTimestamp:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstTradeTimestamp(v)
+		return nil
+	case botmetrics.FieldLatestTradeTimestamp:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLatestTradeTimestamp(v)
+		return nil
+	case botmetrics.FieldFetchedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFetchedAt(v)
+		return nil
+	case botmetrics.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown BotMetrics field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *BotMetricsMutation) AddedFields() []string {
+	var fields []string
+	if m.addprofit_closed_coin != nil {
+		fields = append(fields, botmetrics.FieldProfitClosedCoin)
+	}
+	if m.addprofit_closed_percent != nil {
+		fields = append(fields, botmetrics.FieldProfitClosedPercent)
+	}
+	if m.addprofit_all_coin != nil {
+		fields = append(fields, botmetrics.FieldProfitAllCoin)
+	}
+	if m.addprofit_all_percent != nil {
+		fields = append(fields, botmetrics.FieldProfitAllPercent)
+	}
+	if m.addtrade_count != nil {
+		fields = append(fields, botmetrics.FieldTradeCount)
+	}
+	if m.addclosed_trade_count != nil {
+		fields = append(fields, botmetrics.FieldClosedTradeCount)
+	}
+	if m.addopen_trade_count != nil {
+		fields = append(fields, botmetrics.FieldOpenTradeCount)
+	}
+	if m.addwinning_trades != nil {
+		fields = append(fields, botmetrics.FieldWinningTrades)
+	}
+	if m.addlosing_trades != nil {
+		fields = append(fields, botmetrics.FieldLosingTrades)
+	}
+	if m.addwinrate != nil {
+		fields = append(fields, botmetrics.FieldWinrate)
+	}
+	if m.addexpectancy != nil {
+		fields = append(fields, botmetrics.FieldExpectancy)
+	}
+	if m.addprofit_factor != nil {
+		fields = append(fields, botmetrics.FieldProfitFactor)
+	}
+	if m.addmax_drawdown != nil {
+		fields = append(fields, botmetrics.FieldMaxDrawdown)
+	}
+	if m.addmax_drawdown_abs != nil {
+		fields = append(fields, botmetrics.FieldMaxDrawdownAbs)
+	}
+	if m.addbest_rate != nil {
+		fields = append(fields, botmetrics.FieldBestRate)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *BotMetricsMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case botmetrics.FieldProfitClosedCoin:
+		return m.AddedProfitClosedCoin()
+	case botmetrics.FieldProfitClosedPercent:
+		return m.AddedProfitClosedPercent()
+	case botmetrics.FieldProfitAllCoin:
+		return m.AddedProfitAllCoin()
+	case botmetrics.FieldProfitAllPercent:
+		return m.AddedProfitAllPercent()
+	case botmetrics.FieldTradeCount:
+		return m.AddedTradeCount()
+	case botmetrics.FieldClosedTradeCount:
+		return m.AddedClosedTradeCount()
+	case botmetrics.FieldOpenTradeCount:
+		return m.AddedOpenTradeCount()
+	case botmetrics.FieldWinningTrades:
+		return m.AddedWinningTrades()
+	case botmetrics.FieldLosingTrades:
+		return m.AddedLosingTrades()
+	case botmetrics.FieldWinrate:
+		return m.AddedWinrate()
+	case botmetrics.FieldExpectancy:
+		return m.AddedExpectancy()
+	case botmetrics.FieldProfitFactor:
+		return m.AddedProfitFactor()
+	case botmetrics.FieldMaxDrawdown:
+		return m.AddedMaxDrawdown()
+	case botmetrics.FieldMaxDrawdownAbs:
+		return m.AddedMaxDrawdownAbs()
+	case botmetrics.FieldBestRate:
+		return m.AddedBestRate()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BotMetricsMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case botmetrics.FieldProfitClosedCoin:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProfitClosedCoin(v)
+		return nil
+	case botmetrics.FieldProfitClosedPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProfitClosedPercent(v)
+		return nil
+	case botmetrics.FieldProfitAllCoin:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProfitAllCoin(v)
+		return nil
+	case botmetrics.FieldProfitAllPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProfitAllPercent(v)
+		return nil
+	case botmetrics.FieldTradeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTradeCount(v)
+		return nil
+	case botmetrics.FieldClosedTradeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddClosedTradeCount(v)
+		return nil
+	case botmetrics.FieldOpenTradeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOpenTradeCount(v)
+		return nil
+	case botmetrics.FieldWinningTrades:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWinningTrades(v)
+		return nil
+	case botmetrics.FieldLosingTrades:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLosingTrades(v)
+		return nil
+	case botmetrics.FieldWinrate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWinrate(v)
+		return nil
+	case botmetrics.FieldExpectancy:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExpectancy(v)
+		return nil
+	case botmetrics.FieldProfitFactor:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProfitFactor(v)
+		return nil
+	case botmetrics.FieldMaxDrawdown:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxDrawdown(v)
+		return nil
+	case botmetrics.FieldMaxDrawdownAbs:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxDrawdownAbs(v)
+		return nil
+	case botmetrics.FieldBestRate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBestRate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown BotMetrics numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *BotMetricsMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(botmetrics.FieldProfitClosedCoin) {
+		fields = append(fields, botmetrics.FieldProfitClosedCoin)
+	}
+	if m.FieldCleared(botmetrics.FieldProfitClosedPercent) {
+		fields = append(fields, botmetrics.FieldProfitClosedPercent)
+	}
+	if m.FieldCleared(botmetrics.FieldProfitAllCoin) {
+		fields = append(fields, botmetrics.FieldProfitAllCoin)
+	}
+	if m.FieldCleared(botmetrics.FieldProfitAllPercent) {
+		fields = append(fields, botmetrics.FieldProfitAllPercent)
+	}
+	if m.FieldCleared(botmetrics.FieldTradeCount) {
+		fields = append(fields, botmetrics.FieldTradeCount)
+	}
+	if m.FieldCleared(botmetrics.FieldClosedTradeCount) {
+		fields = append(fields, botmetrics.FieldClosedTradeCount)
+	}
+	if m.FieldCleared(botmetrics.FieldOpenTradeCount) {
+		fields = append(fields, botmetrics.FieldOpenTradeCount)
+	}
+	if m.FieldCleared(botmetrics.FieldWinningTrades) {
+		fields = append(fields, botmetrics.FieldWinningTrades)
+	}
+	if m.FieldCleared(botmetrics.FieldLosingTrades) {
+		fields = append(fields, botmetrics.FieldLosingTrades)
+	}
+	if m.FieldCleared(botmetrics.FieldWinrate) {
+		fields = append(fields, botmetrics.FieldWinrate)
+	}
+	if m.FieldCleared(botmetrics.FieldExpectancy) {
+		fields = append(fields, botmetrics.FieldExpectancy)
+	}
+	if m.FieldCleared(botmetrics.FieldProfitFactor) {
+		fields = append(fields, botmetrics.FieldProfitFactor)
+	}
+	if m.FieldCleared(botmetrics.FieldMaxDrawdown) {
+		fields = append(fields, botmetrics.FieldMaxDrawdown)
+	}
+	if m.FieldCleared(botmetrics.FieldMaxDrawdownAbs) {
+		fields = append(fields, botmetrics.FieldMaxDrawdownAbs)
+	}
+	if m.FieldCleared(botmetrics.FieldBestPair) {
+		fields = append(fields, botmetrics.FieldBestPair)
+	}
+	if m.FieldCleared(botmetrics.FieldBestRate) {
+		fields = append(fields, botmetrics.FieldBestRate)
+	}
+	if m.FieldCleared(botmetrics.FieldFirstTradeTimestamp) {
+		fields = append(fields, botmetrics.FieldFirstTradeTimestamp)
+	}
+	if m.FieldCleared(botmetrics.FieldLatestTradeTimestamp) {
+		fields = append(fields, botmetrics.FieldLatestTradeTimestamp)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *BotMetricsMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *BotMetricsMutation) ClearField(name string) error {
+	switch name {
+	case botmetrics.FieldProfitClosedCoin:
+		m.ClearProfitClosedCoin()
+		return nil
+	case botmetrics.FieldProfitClosedPercent:
+		m.ClearProfitClosedPercent()
+		return nil
+	case botmetrics.FieldProfitAllCoin:
+		m.ClearProfitAllCoin()
+		return nil
+	case botmetrics.FieldProfitAllPercent:
+		m.ClearProfitAllPercent()
+		return nil
+	case botmetrics.FieldTradeCount:
+		m.ClearTradeCount()
+		return nil
+	case botmetrics.FieldClosedTradeCount:
+		m.ClearClosedTradeCount()
+		return nil
+	case botmetrics.FieldOpenTradeCount:
+		m.ClearOpenTradeCount()
+		return nil
+	case botmetrics.FieldWinningTrades:
+		m.ClearWinningTrades()
+		return nil
+	case botmetrics.FieldLosingTrades:
+		m.ClearLosingTrades()
+		return nil
+	case botmetrics.FieldWinrate:
+		m.ClearWinrate()
+		return nil
+	case botmetrics.FieldExpectancy:
+		m.ClearExpectancy()
+		return nil
+	case botmetrics.FieldProfitFactor:
+		m.ClearProfitFactor()
+		return nil
+	case botmetrics.FieldMaxDrawdown:
+		m.ClearMaxDrawdown()
+		return nil
+	case botmetrics.FieldMaxDrawdownAbs:
+		m.ClearMaxDrawdownAbs()
+		return nil
+	case botmetrics.FieldBestPair:
+		m.ClearBestPair()
+		return nil
+	case botmetrics.FieldBestRate:
+		m.ClearBestRate()
+		return nil
+	case botmetrics.FieldFirstTradeTimestamp:
+		m.ClearFirstTradeTimestamp()
+		return nil
+	case botmetrics.FieldLatestTradeTimestamp:
+		m.ClearLatestTradeTimestamp()
+		return nil
+	}
+	return fmt.Errorf("unknown BotMetrics nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *BotMetricsMutation) ResetField(name string) error {
+	switch name {
+	case botmetrics.FieldBotID:
+		m.ResetBotID()
+		return nil
+	case botmetrics.FieldProfitClosedCoin:
+		m.ResetProfitClosedCoin()
+		return nil
+	case botmetrics.FieldProfitClosedPercent:
+		m.ResetProfitClosedPercent()
+		return nil
+	case botmetrics.FieldProfitAllCoin:
+		m.ResetProfitAllCoin()
+		return nil
+	case botmetrics.FieldProfitAllPercent:
+		m.ResetProfitAllPercent()
+		return nil
+	case botmetrics.FieldTradeCount:
+		m.ResetTradeCount()
+		return nil
+	case botmetrics.FieldClosedTradeCount:
+		m.ResetClosedTradeCount()
+		return nil
+	case botmetrics.FieldOpenTradeCount:
+		m.ResetOpenTradeCount()
+		return nil
+	case botmetrics.FieldWinningTrades:
+		m.ResetWinningTrades()
+		return nil
+	case botmetrics.FieldLosingTrades:
+		m.ResetLosingTrades()
+		return nil
+	case botmetrics.FieldWinrate:
+		m.ResetWinrate()
+		return nil
+	case botmetrics.FieldExpectancy:
+		m.ResetExpectancy()
+		return nil
+	case botmetrics.FieldProfitFactor:
+		m.ResetProfitFactor()
+		return nil
+	case botmetrics.FieldMaxDrawdown:
+		m.ResetMaxDrawdown()
+		return nil
+	case botmetrics.FieldMaxDrawdownAbs:
+		m.ResetMaxDrawdownAbs()
+		return nil
+	case botmetrics.FieldBestPair:
+		m.ResetBestPair()
+		return nil
+	case botmetrics.FieldBestRate:
+		m.ResetBestRate()
+		return nil
+	case botmetrics.FieldFirstTradeTimestamp:
+		m.ResetFirstTradeTimestamp()
+		return nil
+	case botmetrics.FieldLatestTradeTimestamp:
+		m.ResetLatestTradeTimestamp()
+		return nil
+	case botmetrics.FieldFetchedAt:
+		m.ResetFetchedAt()
+		return nil
+	case botmetrics.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown BotMetrics field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *BotMetricsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.bot != nil {
+		edges = append(edges, botmetrics.EdgeBot)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *BotMetricsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case botmetrics.EdgeBot:
+		if id := m.bot; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *BotMetricsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *BotMetricsMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *BotMetricsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedbot {
+		edges = append(edges, botmetrics.EdgeBot)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *BotMetricsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case botmetrics.EdgeBot:
+		return m.clearedbot
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *BotMetricsMutation) ClearEdge(name string) error {
+	switch name {
+	case botmetrics.EdgeBot:
+		m.ClearBot()
+		return nil
+	}
+	return fmt.Errorf("unknown BotMetrics unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *BotMetricsMutation) ResetEdge(name string) error {
+	switch name {
+	case botmetrics.EdgeBot:
+		m.ResetBot()
+		return nil
+	}
+	return fmt.Errorf("unknown BotMetrics edge %s", name)
 }
 
 // BotRunnerMutation represents an operation that mutates the BotRunner nodes in the graph.

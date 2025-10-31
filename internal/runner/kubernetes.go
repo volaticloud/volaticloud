@@ -41,6 +41,10 @@ func (k *KubernetesRuntime) GetBotStatus(ctx context.Context, botID string) (*Bo
 	return nil, fmt.Errorf("Kubernetes runtime is not yet supported")
 }
 
+func (k *KubernetesRuntime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
+	return "", fmt.Errorf("Kubernetes runtime is not yet supported")
+}
+
 func (k *KubernetesRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {
 	return nil, fmt.Errorf("Kubernetes runtime is not yet supported")
 }

@@ -306,6 +306,28 @@ func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotSta
 	return status, nil
 }
 
+// GetContainerIP retrieves the container's IP address
+func (d *DockerRuntime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
+	// Inspect container directly by container ID
+	inspect, err := d.client.ContainerInspect(ctx, containerID)
+	if err != nil {
+		return "", NewRunnerError("GetContainerIP", containerID, err, true)
+	}
+
+	// Extract IP address from network settings
+	if len(inspect.NetworkSettings.Networks) > 0 {
+		for _, network := range inspect.NetworkSettings.Networks {
+			if network.IPAddress != "" {
+				return network.IPAddress, nil
+			}
+		}
+	}
+
+	// No IP address found
+	return "", NewRunnerError("GetContainerIP", containerID,
+		fmt.Errorf("container has no network IP address"), false)
+}
+
 // GetBotLogs retrieves logs from a bot container
 func (d *DockerRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {
 	containerID, err := d.findContainer(ctx, botID)

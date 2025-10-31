@@ -43,14 +43,16 @@ Server runs on port 8080 by default:
 ### Available Queries
 
 - `exchanges` - List all exchanges
-- `bots` - List all trading bots
+- `bots` - List all trading bots with `where` filters (e.g., `bots(where: {id: $id}, first: 1)`)
 - `strategies` - List all strategies
 - `backtests` - List all backtests
 - `trades` - List all trades
 - `node(id: ID!)` - Fetch single node by ID
 - `nodes(ids: [ID!]!)` - Fetch multiple nodes by IDs
 
-All list queries support Relay-style pagination with `first`, `last`, `after`, `before` arguments.
+All list queries support:
+- Relay-style pagination with `first`, `last`, `after`, `before` arguments
+- ENT where filters enabled via `entgql.WithWhereInputs(true)` in entc.go
 
 ### Available Mutations
 
@@ -555,4 +557,197 @@ Configs are validated against the official Freqtrade JSON schema from `https://s
 - Bot configs are validated at the resolver layer
 - Both use the same underlying Freqtrade JSON schema
 - Exchange validation wraps partial config to satisfy schema requirements
+
+## Bot Monitoring and Metrics
+
+**Updated: 2025-10-30** - Implemented universal connection strategy for bot monitoring across all deployment scenarios.
+
+### Architecture
+
+The monitor system periodically checks bot status and fetches metrics from Freqtrade API:
+
+**Components:**
+- `internal/monitor/bot_monitor.go` - Core monitoring logic
+- `internal/monitor/coordinator.go` - Distributed coordination via etcd
+- `internal/freqtrade/bot_client.go` - Freqtrade REST API client
+
+**Monitor Interval:** 30 seconds (configurable)
+
+### Universal Connection Strategy
+
+**Problem:** Container IPs not accessible from host on macOS/Windows Docker Desktop
+
+**Solution:** Implemented fallback mechanism with automatic detection:
+
+```go
+// Try container IP first (2-second timeout)
+if status.IPAddress != "" {
+    containerCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+    client := freqtrade.NewBotClientFromContainerIP(status.IPAddress, apiPort, ...)
+    profit, err = client.GetProfit(containerCtx)
+    if err == nil {
+        goto processMetrics  // Success!
+    }
+    log.Printf("Container IP (%s) failed, trying localhost fallback", status.IPAddress)
+}
+
+// Fallback to localhost:hostPort
+if status.HostPort > 0 {
+    localhostURL := fmt.Sprintf("http://localhost:%d", status.HostPort)
+    client := freqtrade.NewBotClient(localhostURL, ...)
+    profit, err = client.GetProfit(ctx)
+    if err == nil {
+        log.Printf("Successfully connected via localhost:%d", status.HostPort)
+        goto processMetrics  // Success!
+    }
+}
+```
+
+**Deployment Scenarios Supported:**
+- ✅ Development on host machine (localhost fallback works)
+- ✅ Docker Compose with shared network (container IP works)
+- ✅ Kubernetes within cluster (container IP works)
+- ✅ Mixed deployments (automatic detection and fallback)
+
+**Benefits:**
+- No manual configuration needed per environment
+- Fast failure with 2-second timeout on container IP
+- Detailed logging for debugging connection issues
+- Graceful degradation if one method fails
+
+### Metrics Collection
+
+**Fetched from Freqtrade `/api/v1/profit` endpoint:**
+
+- Profit metrics (closed/all, coin/percent/fiat)
+- Trade counts (total/closed/open)
+- Performance metrics (win rate, profit factor, expectancy)
+- Drawdown metrics (max drawdown, absolute drawdown)
+- Trade timing (first trade, latest trade timestamps)
+- Best performing pair
+
+**Database Storage:**
+- Metrics stored in `bot_metrics` table (one-to-one with bots)
+- Upsert operation (updates existing or creates new)
+- Timestamps converted from Unix to `time.Time`
+- `fetched_at` field tracks last successful fetch
+
+### Dashboard Integration
+
+**Bot Detail Page:** `dashboard/src/components/Bots/BotDetail.tsx`
+- Real-time updates via Apollo polling (10 seconds)
+- Comprehensive bot information display
+- Control buttons (Start/Stop/Restart/Delete)
+- Recent trades table
+
+**BotMetrics Component:** `dashboard/src/components/Bots/BotMetrics.tsx`
+
+**Smart State Handling:**
+1. **Bot Not Running**: Info alert explaining metrics require running bot
+2. **Fetching Metrics**: Skeleton loaders with "Fetching" alert
+3. **Metrics Available**: 7 professional metric cards with icons
+
+**Metric Cards:**
+- Total Profit (trending indicator)
+- Closed Profit
+- Total Trades (breakdown)
+- Win Rate (W/L ratio)
+- Best Pair
+- Max Drawdown (red warning)
+- Profit Factor + Expectancy
+
+### GraphQL Integration
+
+**Query with ENT Where Filters:**
+```graphql
+query GetBot($id: ID!) {
+  bots(where: {id: $id}, first: 1) {
+    edges {
+      node {
+        id
+        name
+        status
+        metrics {
+          profitAllCoin
+          profitAllPercent
+          tradeCount
+          winrate
+          # ... all other fields
+        }
+      }
+    }
+  }
+}
+```
+
+**Benefits:**
+- Uses ENT's built-in where filters (enabled via `entgql.WithWhereInputs(true)`)
+- No custom resolvers needed
+- Type-safe queries with generated TypeScript hooks
+
+## Freqtrade API Client Generation
+
+**Updated: 2025-10-30** - Configured OpenAPI generator to use int64 for all integer types.
+
+### Problem
+
+Freqtrade returns Unix timestamps in milliseconds (>2.1 billion) which overflow int32:
+
+```
+json: cannot unmarshal number 1761743045808 into Go struct field
+_Profit.bot_start_timestamp of type int32
+```
+
+### Solution
+
+Updated Makefile to configure OpenAPI generator with type mapping:
+
+```makefile
+generate-freqtrade:
+	@docker run --rm -v $${PWD}:/local openapitools/openapi-generator-cli generate \
+		-i /local/internal/freqtrade/openapi.json \
+		-g go \
+		-o /local/internal/freqtrade \
+		--package-name freqtrade \
+		--additional-properties=withGoMod=false,enumClassPrefix=true \
+		--type-mappings=integer=int64 \
+		--openapi-normalizer SET_TAGS_FOR_ALL_OPERATIONS=freqtrade
+```
+
+**Key Addition:** `--type-mappings=integer=int64`
+
+### Benefits
+
+1. ✅ **No Manual Edits**: Generated code is correct by default
+2. ✅ **Future-Proof**: Regeneration maintains int64 types
+3. ✅ **Proper Timestamps**: Handles large Unix millisecond timestamps
+4. ✅ **Type Safety**: All integer fields consistently use int64
+
+### Regeneration
+
+```bash
+make generate-freqtrade  # Regenerate Freqtrade client
+make generate            # Regenerate all (ENT + GraphQL + Freqtrade)
+make build               # Rebuild binary
+```
+
+**Important:** Never manually edit files in `internal/freqtrade/` - they are generated. Update the OpenAPI spec or generator config instead.
+
+### Timestamp Handling
+
+**In Go Code:**
+```go
+// Timestamps are now int64
+profit.BotStartTimestamp      // int64 (milliseconds since epoch)
+profit.FirstTradeTimestamp    // int64
+profit.LatestTradeTimestamp   // int64
+
+// Convert to time.Time for database
+if profit.FirstTradeTimestamp != 0 {
+    t := time.Unix(int64(profit.FirstTradeTimestamp), 0)
+    firstTradeTime = &t
+}
+```
+
+**In Database:** Stored as `time.Time` in ENT entities
 

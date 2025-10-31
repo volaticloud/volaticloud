@@ -54,6 +54,8 @@ const (
 	EdgeRunner = "runner"
 	// EdgeTrades holds the string denoting the trades edge name in mutations.
 	EdgeTrades = "trades"
+	// EdgeMetrics holds the string denoting the metrics edge name in mutations.
+	EdgeMetrics = "metrics"
 	// Table holds the table name of the bot in the database.
 	Table = "bots"
 	// ExchangeTable is the table that holds the exchange relation/edge.
@@ -84,6 +86,13 @@ const (
 	TradesInverseTable = "trades"
 	// TradesColumn is the table column denoting the trades relation/edge.
 	TradesColumn = "bot_id"
+	// MetricsTable is the table that holds the metrics relation/edge.
+	MetricsTable = "bot_metrics"
+	// MetricsInverseTable is the table name for the BotMetrics entity.
+	// It exists in this package in order to avoid circular dependency with the "botmetrics" package.
+	MetricsInverseTable = "bot_metrics"
+	// MetricsColumn is the table column denoting the metrics relation/edge.
+	MetricsColumn = "bot_id"
 )
 
 // Columns holds all SQL columns for bot fields.
@@ -256,6 +265,13 @@ func ByTrades(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTradesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByMetricsField orders the results by metrics field.
+func ByMetricsField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMetricsStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newExchangeStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -282,6 +298,13 @@ func newTradesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TradesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, TradesTable, TradesColumn),
+	)
+}
+func newMetricsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MetricsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, MetricsTable, MetricsColumn),
 	)
 }
 

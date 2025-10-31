@@ -13,6 +13,7 @@ import (
 
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
@@ -34,6 +35,8 @@ type Client struct {
 	Backtest *BacktestClient
 	// Bot is the client for interacting with the Bot builders.
 	Bot *BotClient
+	// BotMetrics is the client for interacting with the BotMetrics builders.
+	BotMetrics *BotMetricsClient
 	// BotRunner is the client for interacting with the BotRunner builders.
 	BotRunner *BotRunnerClient
 	// Exchange is the client for interacting with the Exchange builders.
@@ -55,6 +58,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Backtest = NewBacktestClient(c.config)
 	c.Bot = NewBotClient(c.config)
+	c.BotMetrics = NewBotMetricsClient(c.config)
 	c.BotRunner = NewBotRunnerClient(c.config)
 	c.Exchange = NewExchangeClient(c.config)
 	c.Strategy = NewStrategyClient(c.config)
@@ -149,14 +153,15 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		Backtest:  NewBacktestClient(cfg),
-		Bot:       NewBotClient(cfg),
-		BotRunner: NewBotRunnerClient(cfg),
-		Exchange:  NewExchangeClient(cfg),
-		Strategy:  NewStrategyClient(cfg),
-		Trade:     NewTradeClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Backtest:   NewBacktestClient(cfg),
+		Bot:        NewBotClient(cfg),
+		BotMetrics: NewBotMetricsClient(cfg),
+		BotRunner:  NewBotRunnerClient(cfg),
+		Exchange:   NewExchangeClient(cfg),
+		Strategy:   NewStrategyClient(cfg),
+		Trade:      NewTradeClient(cfg),
 	}, nil
 }
 
@@ -174,14 +179,15 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		Backtest:  NewBacktestClient(cfg),
-		Bot:       NewBotClient(cfg),
-		BotRunner: NewBotRunnerClient(cfg),
-		Exchange:  NewExchangeClient(cfg),
-		Strategy:  NewStrategyClient(cfg),
-		Trade:     NewTradeClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Backtest:   NewBacktestClient(cfg),
+		Bot:        NewBotClient(cfg),
+		BotMetrics: NewBotMetricsClient(cfg),
+		BotRunner:  NewBotRunnerClient(cfg),
+		Exchange:   NewExchangeClient(cfg),
+		Strategy:   NewStrategyClient(cfg),
+		Trade:      NewTradeClient(cfg),
 	}, nil
 }
 
@@ -211,7 +217,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Backtest, c.Bot, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
+		c.Backtest, c.Bot, c.BotMetrics, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
 	} {
 		n.Use(hooks...)
 	}
@@ -221,7 +227,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Backtest, c.Bot, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
+		c.Backtest, c.Bot, c.BotMetrics, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -234,6 +240,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Backtest.mutate(ctx, m)
 	case *BotMutation:
 		return c.Bot.mutate(ctx, m)
+	case *BotMetricsMutation:
+		return c.BotMetrics.mutate(ctx, m)
 	case *BotRunnerMutation:
 		return c.BotRunner.mutate(ctx, m)
 	case *ExchangeMutation:
@@ -584,6 +592,22 @@ func (c *BotClient) QueryTrades(_m *Bot) *TradeQuery {
 	return query
 }
 
+// QueryMetrics queries the metrics edge of a Bot.
+func (c *BotClient) QueryMetrics(_m *Bot) *BotMetricsQuery {
+	query := (&BotMetricsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bot.Table, bot.FieldID, id),
+			sqlgraph.To(botmetrics.Table, botmetrics.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, bot.MetricsTable, bot.MetricsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *BotClient) Hooks() []Hook {
 	return c.hooks.Bot
@@ -606,6 +630,155 @@ func (c *BotClient) mutate(ctx context.Context, m *BotMutation) (Value, error) {
 		return (&BotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Bot mutation op: %q", m.Op())
+	}
+}
+
+// BotMetricsClient is a client for the BotMetrics schema.
+type BotMetricsClient struct {
+	config
+}
+
+// NewBotMetricsClient returns a client for the BotMetrics from the given config.
+func NewBotMetricsClient(c config) *BotMetricsClient {
+	return &BotMetricsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `botmetrics.Hooks(f(g(h())))`.
+func (c *BotMetricsClient) Use(hooks ...Hook) {
+	c.hooks.BotMetrics = append(c.hooks.BotMetrics, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `botmetrics.Intercept(f(g(h())))`.
+func (c *BotMetricsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BotMetrics = append(c.inters.BotMetrics, interceptors...)
+}
+
+// Create returns a builder for creating a BotMetrics entity.
+func (c *BotMetricsClient) Create() *BotMetricsCreate {
+	mutation := newBotMetricsMutation(c.config, OpCreate)
+	return &BotMetricsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BotMetrics entities.
+func (c *BotMetricsClient) CreateBulk(builders ...*BotMetricsCreate) *BotMetricsCreateBulk {
+	return &BotMetricsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BotMetricsClient) MapCreateBulk(slice any, setFunc func(*BotMetricsCreate, int)) *BotMetricsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BotMetricsCreateBulk{err: fmt.Errorf("calling to BotMetricsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BotMetricsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BotMetricsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BotMetrics.
+func (c *BotMetricsClient) Update() *BotMetricsUpdate {
+	mutation := newBotMetricsMutation(c.config, OpUpdate)
+	return &BotMetricsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BotMetricsClient) UpdateOne(_m *BotMetrics) *BotMetricsUpdateOne {
+	mutation := newBotMetricsMutation(c.config, OpUpdateOne, withBotMetrics(_m))
+	return &BotMetricsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BotMetricsClient) UpdateOneID(id uuid.UUID) *BotMetricsUpdateOne {
+	mutation := newBotMetricsMutation(c.config, OpUpdateOne, withBotMetricsID(id))
+	return &BotMetricsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BotMetrics.
+func (c *BotMetricsClient) Delete() *BotMetricsDelete {
+	mutation := newBotMetricsMutation(c.config, OpDelete)
+	return &BotMetricsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BotMetricsClient) DeleteOne(_m *BotMetrics) *BotMetricsDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BotMetricsClient) DeleteOneID(id uuid.UUID) *BotMetricsDeleteOne {
+	builder := c.Delete().Where(botmetrics.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BotMetricsDeleteOne{builder}
+}
+
+// Query returns a query builder for BotMetrics.
+func (c *BotMetricsClient) Query() *BotMetricsQuery {
+	return &BotMetricsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBotMetrics},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BotMetrics entity by its id.
+func (c *BotMetricsClient) Get(ctx context.Context, id uuid.UUID) (*BotMetrics, error) {
+	return c.Query().Where(botmetrics.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BotMetricsClient) GetX(ctx context.Context, id uuid.UUID) *BotMetrics {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBot queries the bot edge of a BotMetrics.
+func (c *BotMetricsClient) QueryBot(_m *BotMetrics) *BotQuery {
+	query := (&BotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botmetrics.Table, botmetrics.FieldID, id),
+			sqlgraph.To(bot.Table, bot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, botmetrics.BotTable, botmetrics.BotColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BotMetricsClient) Hooks() []Hook {
+	return c.hooks.BotMetrics
+}
+
+// Interceptors returns the client interceptors.
+func (c *BotMetricsClient) Interceptors() []Interceptor {
+	return c.inters.BotMetrics
+}
+
+func (c *BotMetricsClient) mutate(ctx context.Context, m *BotMetricsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BotMetricsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BotMetricsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BotMetricsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BotMetricsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BotMetrics mutation op: %q", m.Op())
 	}
 }
 
@@ -1242,9 +1415,10 @@ func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Backtest, Bot, BotRunner, Exchange, Strategy, Trade []ent.Hook
+		Backtest, Bot, BotMetrics, BotRunner, Exchange, Strategy, Trade []ent.Hook
 	}
 	inters struct {
-		Backtest, Bot, BotRunner, Exchange, Strategy, Trade []ent.Interceptor
+		Backtest, Bot, BotMetrics, BotRunner, Exchange, Strategy,
+		Trade []ent.Interceptor
 	}
 )

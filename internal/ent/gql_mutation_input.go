@@ -151,6 +151,7 @@ type CreateBotInput struct {
 	StrategyID       uuid.UUID
 	RunnerID         uuid.UUID
 	TradeIDs         []uuid.UUID
+	MetricsID        *uuid.UUID
 }
 
 // Mutate applies the CreateBotInput on the BotMutation builder.
@@ -189,6 +190,9 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	if v := i.TradeIDs; len(v) > 0 {
 		m.AddTradeIDs(v...)
 	}
+	if v := i.MetricsID; v != nil {
+		m.SetMetricsID(*v)
+	}
 }
 
 // SetInput applies the change-set in the CreateBotInput on the BotCreate builder.
@@ -218,6 +222,8 @@ type UpdateBotInput struct {
 	ClearTrades       bool
 	AddTradeIDs       []uuid.UUID
 	RemoveTradeIDs    []uuid.UUID
+	ClearMetrics      bool
+	MetricsID         *uuid.UUID
 }
 
 // Mutate applies the UpdateBotInput on the BotMutation builder.
@@ -279,6 +285,12 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	if v := i.RemoveTradeIDs; len(v) > 0 {
 		m.RemoveTradeIDs(v...)
 	}
+	if i.ClearMetrics {
+		m.ClearMetrics()
+	}
+	if v := i.MetricsID; v != nil {
+		m.SetMetricsID(*v)
+	}
 }
 
 // SetInput applies the change-set in the UpdateBotInput on the BotUpdate builder.
@@ -289,6 +301,278 @@ func (c *BotUpdate) SetInput(i UpdateBotInput) *BotUpdate {
 
 // SetInput applies the change-set in the UpdateBotInput on the BotUpdateOne builder.
 func (c *BotUpdateOne) SetInput(i UpdateBotInput) *BotUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// CreateBotMetricsInput represents a mutation input for creating botmetricsslice.
+type CreateBotMetricsInput struct {
+	ProfitClosedCoin     *float64
+	ProfitClosedPercent  *float64
+	ProfitAllCoin        *float64
+	ProfitAllPercent     *float64
+	TradeCount           *int
+	ClosedTradeCount     *int
+	OpenTradeCount       *int
+	WinningTrades        *int
+	LosingTrades         *int
+	Winrate              *float64
+	Expectancy           *float64
+	ProfitFactor         *float64
+	MaxDrawdown          *float64
+	MaxDrawdownAbs       *float64
+	BestPair             *string
+	BestRate             *float64
+	FirstTradeTimestamp  *time.Time
+	LatestTradeTimestamp *time.Time
+	FetchedAt            *time.Time
+	UpdatedAt            *time.Time
+	BotID                uuid.UUID
+}
+
+// Mutate applies the CreateBotMetricsInput on the BotMetricsMutation builder.
+func (i *CreateBotMetricsInput) Mutate(m *BotMetricsMutation) {
+	if v := i.ProfitClosedCoin; v != nil {
+		m.SetProfitClosedCoin(*v)
+	}
+	if v := i.ProfitClosedPercent; v != nil {
+		m.SetProfitClosedPercent(*v)
+	}
+	if v := i.ProfitAllCoin; v != nil {
+		m.SetProfitAllCoin(*v)
+	}
+	if v := i.ProfitAllPercent; v != nil {
+		m.SetProfitAllPercent(*v)
+	}
+	if v := i.TradeCount; v != nil {
+		m.SetTradeCount(*v)
+	}
+	if v := i.ClosedTradeCount; v != nil {
+		m.SetClosedTradeCount(*v)
+	}
+	if v := i.OpenTradeCount; v != nil {
+		m.SetOpenTradeCount(*v)
+	}
+	if v := i.WinningTrades; v != nil {
+		m.SetWinningTrades(*v)
+	}
+	if v := i.LosingTrades; v != nil {
+		m.SetLosingTrades(*v)
+	}
+	if v := i.Winrate; v != nil {
+		m.SetWinrate(*v)
+	}
+	if v := i.Expectancy; v != nil {
+		m.SetExpectancy(*v)
+	}
+	if v := i.ProfitFactor; v != nil {
+		m.SetProfitFactor(*v)
+	}
+	if v := i.MaxDrawdown; v != nil {
+		m.SetMaxDrawdown(*v)
+	}
+	if v := i.MaxDrawdownAbs; v != nil {
+		m.SetMaxDrawdownAbs(*v)
+	}
+	if v := i.BestPair; v != nil {
+		m.SetBestPair(*v)
+	}
+	if v := i.BestRate; v != nil {
+		m.SetBestRate(*v)
+	}
+	if v := i.FirstTradeTimestamp; v != nil {
+		m.SetFirstTradeTimestamp(*v)
+	}
+	if v := i.LatestTradeTimestamp; v != nil {
+		m.SetLatestTradeTimestamp(*v)
+	}
+	if v := i.FetchedAt; v != nil {
+		m.SetFetchedAt(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	m.SetBotID(i.BotID)
+}
+
+// SetInput applies the change-set in the CreateBotMetricsInput on the BotMetricsCreate builder.
+func (c *BotMetricsCreate) SetInput(i CreateBotMetricsInput) *BotMetricsCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateBotMetricsInput represents a mutation input for updating botmetricsslice.
+type UpdateBotMetricsInput struct {
+	ClearProfitClosedCoin     bool
+	ProfitClosedCoin          *float64
+	ClearProfitClosedPercent  bool
+	ProfitClosedPercent       *float64
+	ClearProfitAllCoin        bool
+	ProfitAllCoin             *float64
+	ClearProfitAllPercent     bool
+	ProfitAllPercent          *float64
+	ClearTradeCount           bool
+	TradeCount                *int
+	ClearClosedTradeCount     bool
+	ClosedTradeCount          *int
+	ClearOpenTradeCount       bool
+	OpenTradeCount            *int
+	ClearWinningTrades        bool
+	WinningTrades             *int
+	ClearLosingTrades         bool
+	LosingTrades              *int
+	ClearWinrate              bool
+	Winrate                   *float64
+	ClearExpectancy           bool
+	Expectancy                *float64
+	ClearProfitFactor         bool
+	ProfitFactor              *float64
+	ClearMaxDrawdown          bool
+	MaxDrawdown               *float64
+	ClearMaxDrawdownAbs       bool
+	MaxDrawdownAbs            *float64
+	ClearBestPair             bool
+	BestPair                  *string
+	ClearBestRate             bool
+	BestRate                  *float64
+	ClearFirstTradeTimestamp  bool
+	FirstTradeTimestamp       *time.Time
+	ClearLatestTradeTimestamp bool
+	LatestTradeTimestamp      *time.Time
+	FetchedAt                 *time.Time
+	UpdatedAt                 *time.Time
+	BotID                     *uuid.UUID
+}
+
+// Mutate applies the UpdateBotMetricsInput on the BotMetricsMutation builder.
+func (i *UpdateBotMetricsInput) Mutate(m *BotMetricsMutation) {
+	if i.ClearProfitClosedCoin {
+		m.ClearProfitClosedCoin()
+	}
+	if v := i.ProfitClosedCoin; v != nil {
+		m.SetProfitClosedCoin(*v)
+	}
+	if i.ClearProfitClosedPercent {
+		m.ClearProfitClosedPercent()
+	}
+	if v := i.ProfitClosedPercent; v != nil {
+		m.SetProfitClosedPercent(*v)
+	}
+	if i.ClearProfitAllCoin {
+		m.ClearProfitAllCoin()
+	}
+	if v := i.ProfitAllCoin; v != nil {
+		m.SetProfitAllCoin(*v)
+	}
+	if i.ClearProfitAllPercent {
+		m.ClearProfitAllPercent()
+	}
+	if v := i.ProfitAllPercent; v != nil {
+		m.SetProfitAllPercent(*v)
+	}
+	if i.ClearTradeCount {
+		m.ClearTradeCount()
+	}
+	if v := i.TradeCount; v != nil {
+		m.SetTradeCount(*v)
+	}
+	if i.ClearClosedTradeCount {
+		m.ClearClosedTradeCount()
+	}
+	if v := i.ClosedTradeCount; v != nil {
+		m.SetClosedTradeCount(*v)
+	}
+	if i.ClearOpenTradeCount {
+		m.ClearOpenTradeCount()
+	}
+	if v := i.OpenTradeCount; v != nil {
+		m.SetOpenTradeCount(*v)
+	}
+	if i.ClearWinningTrades {
+		m.ClearWinningTrades()
+	}
+	if v := i.WinningTrades; v != nil {
+		m.SetWinningTrades(*v)
+	}
+	if i.ClearLosingTrades {
+		m.ClearLosingTrades()
+	}
+	if v := i.LosingTrades; v != nil {
+		m.SetLosingTrades(*v)
+	}
+	if i.ClearWinrate {
+		m.ClearWinrate()
+	}
+	if v := i.Winrate; v != nil {
+		m.SetWinrate(*v)
+	}
+	if i.ClearExpectancy {
+		m.ClearExpectancy()
+	}
+	if v := i.Expectancy; v != nil {
+		m.SetExpectancy(*v)
+	}
+	if i.ClearProfitFactor {
+		m.ClearProfitFactor()
+	}
+	if v := i.ProfitFactor; v != nil {
+		m.SetProfitFactor(*v)
+	}
+	if i.ClearMaxDrawdown {
+		m.ClearMaxDrawdown()
+	}
+	if v := i.MaxDrawdown; v != nil {
+		m.SetMaxDrawdown(*v)
+	}
+	if i.ClearMaxDrawdownAbs {
+		m.ClearMaxDrawdownAbs()
+	}
+	if v := i.MaxDrawdownAbs; v != nil {
+		m.SetMaxDrawdownAbs(*v)
+	}
+	if i.ClearBestPair {
+		m.ClearBestPair()
+	}
+	if v := i.BestPair; v != nil {
+		m.SetBestPair(*v)
+	}
+	if i.ClearBestRate {
+		m.ClearBestRate()
+	}
+	if v := i.BestRate; v != nil {
+		m.SetBestRate(*v)
+	}
+	if i.ClearFirstTradeTimestamp {
+		m.ClearFirstTradeTimestamp()
+	}
+	if v := i.FirstTradeTimestamp; v != nil {
+		m.SetFirstTradeTimestamp(*v)
+	}
+	if i.ClearLatestTradeTimestamp {
+		m.ClearLatestTradeTimestamp()
+	}
+	if v := i.LatestTradeTimestamp; v != nil {
+		m.SetLatestTradeTimestamp(*v)
+	}
+	if v := i.FetchedAt; v != nil {
+		m.SetFetchedAt(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if v := i.BotID; v != nil {
+		m.SetBotID(*v)
+	}
+}
+
+// SetInput applies the change-set in the UpdateBotMetricsInput on the BotMetricsUpdate builder.
+func (c *BotMetricsUpdate) SetInput(i UpdateBotMetricsInput) *BotMetricsUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateBotMetricsInput on the BotMetricsUpdateOne builder.
+func (c *BotMetricsUpdateOne) SetInput(i UpdateBotMetricsInput) *BotMetricsUpdateOne {
 	i.Mutate(c.Mutation())
 	return c
 }

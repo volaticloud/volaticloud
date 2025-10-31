@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/predicate"
@@ -252,6 +253,25 @@ func (_u *BotUpdate) AddTrades(v ...*Trade) *BotUpdate {
 	return _u.AddTradeIDs(ids...)
 }
 
+// SetMetricsID sets the "metrics" edge to the BotMetrics entity by ID.
+func (_u *BotUpdate) SetMetricsID(id uuid.UUID) *BotUpdate {
+	_u.mutation.SetMetricsID(id)
+	return _u
+}
+
+// SetNillableMetricsID sets the "metrics" edge to the BotMetrics entity by ID if the given value is not nil.
+func (_u *BotUpdate) SetNillableMetricsID(id *uuid.UUID) *BotUpdate {
+	if id != nil {
+		_u = _u.SetMetricsID(*id)
+	}
+	return _u
+}
+
+// SetMetrics sets the "metrics" edge to the BotMetrics entity.
+func (_u *BotUpdate) SetMetrics(v *BotMetrics) *BotUpdate {
+	return _u.SetMetricsID(v.ID)
+}
+
 // Mutation returns the BotMutation object of the builder.
 func (_u *BotUpdate) Mutation() *BotMutation {
 	return _u.mutation
@@ -294,6 +314,12 @@ func (_u *BotUpdate) RemoveTrades(v ...*Trade) *BotUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTradeIDs(ids...)
+}
+
+// ClearMetrics clears the "metrics" edge to the BotMetrics entity.
+func (_u *BotUpdate) ClearMetrics() *BotUpdate {
+	_u.mutation.ClearMetrics()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -550,6 +576,35 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.MetricsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bot.MetricsTable,
+			Columns: []string{bot.MetricsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botmetrics.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MetricsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bot.MetricsTable,
+			Columns: []string{bot.MetricsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botmetrics.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{bot.Label}
@@ -788,6 +843,25 @@ func (_u *BotUpdateOne) AddTrades(v ...*Trade) *BotUpdateOne {
 	return _u.AddTradeIDs(ids...)
 }
 
+// SetMetricsID sets the "metrics" edge to the BotMetrics entity by ID.
+func (_u *BotUpdateOne) SetMetricsID(id uuid.UUID) *BotUpdateOne {
+	_u.mutation.SetMetricsID(id)
+	return _u
+}
+
+// SetNillableMetricsID sets the "metrics" edge to the BotMetrics entity by ID if the given value is not nil.
+func (_u *BotUpdateOne) SetNillableMetricsID(id *uuid.UUID) *BotUpdateOne {
+	if id != nil {
+		_u = _u.SetMetricsID(*id)
+	}
+	return _u
+}
+
+// SetMetrics sets the "metrics" edge to the BotMetrics entity.
+func (_u *BotUpdateOne) SetMetrics(v *BotMetrics) *BotUpdateOne {
+	return _u.SetMetricsID(v.ID)
+}
+
 // Mutation returns the BotMutation object of the builder.
 func (_u *BotUpdateOne) Mutation() *BotMutation {
 	return _u.mutation
@@ -830,6 +904,12 @@ func (_u *BotUpdateOne) RemoveTrades(v ...*Trade) *BotUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTradeIDs(ids...)
+}
+
+// ClearMetrics clears the "metrics" edge to the BotMetrics entity.
+func (_u *BotUpdateOne) ClearMetrics() *BotUpdateOne {
+	_u.mutation.ClearMetrics()
+	return _u
 }
 
 // Where appends a list predicates to the BotUpdate builder.
@@ -1109,6 +1189,35 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(trade.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MetricsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bot.MetricsTable,
+			Columns: []string{bot.MetricsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botmetrics.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MetricsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bot.MetricsTable,
+			Columns: []string{bot.MetricsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botmetrics.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -38,8 +38,9 @@ query GetBots($first: Int, $after: Cursor) {
 }
 
 query GetBot($id: ID!) {
-  node(id: $id) {
-    ... on Bot {
+  bots(where: {id: $id}, first: 1) {
+    edges {
+      node {
       id
       name
       status
@@ -66,6 +67,29 @@ query GetBot($id: ID!) {
         name
         type
       }
+      metrics {
+        id
+        profitClosedCoin
+        profitClosedPercent
+        profitAllCoin
+        profitAllPercent
+        tradeCount
+        closedTradeCount
+        openTradeCount
+        winningTrades
+        losingTrades
+        winrate
+        expectancy
+        profitFactor
+        maxDrawdown
+        maxDrawdownAbs
+        bestPair
+        bestRate
+        firstTradeTimestamp
+        latestTradeTimestamp
+        fetchedAt
+        updatedAt
+      }
       trades(first: 10) {
         edges {
           node {
@@ -79,6 +103,7 @@ query GetBot($id: ID!) {
           }
         }
         totalCount
+      }
       }
     }
   }

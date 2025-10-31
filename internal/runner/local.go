@@ -41,6 +41,10 @@ func (l *LocalRuntime) GetBotStatus(ctx context.Context, botID string) (*BotStat
 	return nil, fmt.Errorf("Local runtime is not yet supported")
 }
 
+func (l *LocalRuntime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
+	return "", fmt.Errorf("Local runtime is not yet supported")
+}
+
 func (l *LocalRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {
 	return nil, fmt.Errorf("Local runtime is not yet supported")
 }

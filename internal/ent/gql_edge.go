@@ -49,9 +49,11 @@ func (_m *Bot) Runner(ctx context.Context) (*BotRunner, error) {
 }
 
 func (_m *Bot) Trades(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *TradeWhereInput,
 ) (*TradeConnection, error) {
-	opts := []TradePaginateOption{}
+	opts := []TradePaginateOption{
+		WithTradeFilter(where.Filter),
+	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
 	totalCount, hasTotalCount := _m.Edges.totalCount[3][alias]
 	if nodes, err := _m.NamedTrades(alias); err == nil || hasTotalCount {
@@ -66,10 +68,28 @@ func (_m *Bot) Trades(
 	return _m.QueryTrades().Paginate(ctx, after, first, before, last, opts...)
 }
 
+func (_m *Bot) Metrics(ctx context.Context) (*BotMetrics, error) {
+	result, err := _m.Edges.MetricsOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryMetrics().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
+func (_m *BotMetrics) Bot(ctx context.Context) (*Bot, error) {
+	result, err := _m.Edges.BotOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryBot().Only(ctx)
+	}
+	return result, err
+}
+
 func (_m *BotRunner) Bots(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BotWhereInput,
 ) (*BotConnection, error) {
-	opts := []BotPaginateOption{}
+	opts := []BotPaginateOption{
+		WithBotFilter(where.Filter),
+	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
 	totalCount, hasTotalCount := _m.Edges.totalCount[0][alias]
 	if nodes, err := _m.NamedBots(alias); err == nil || hasTotalCount {
@@ -85,9 +105,11 @@ func (_m *BotRunner) Bots(
 }
 
 func (_m *BotRunner) Backtests(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BacktestWhereInput,
 ) (*BacktestConnection, error) {
-	opts := []BacktestPaginateOption{}
+	opts := []BacktestPaginateOption{
+		WithBacktestFilter(where.Filter),
+	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
 	totalCount, hasTotalCount := _m.Edges.totalCount[1][alias]
 	if nodes, err := _m.NamedBacktests(alias); err == nil || hasTotalCount {
@@ -103,9 +125,11 @@ func (_m *BotRunner) Backtests(
 }
 
 func (_m *Exchange) Bots(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BotWhereInput,
 ) (*BotConnection, error) {
-	opts := []BotPaginateOption{}
+	opts := []BotPaginateOption{
+		WithBotFilter(where.Filter),
+	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
 	totalCount, hasTotalCount := _m.Edges.totalCount[0][alias]
 	if nodes, err := _m.NamedBots(alias); err == nil || hasTotalCount {
@@ -121,9 +145,11 @@ func (_m *Exchange) Bots(
 }
 
 func (_m *Strategy) Bots(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BotWhereInput,
 ) (*BotConnection, error) {
-	opts := []BotPaginateOption{}
+	opts := []BotPaginateOption{
+		WithBotFilter(where.Filter),
+	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
 	totalCount, hasTotalCount := _m.Edges.totalCount[0][alias]
 	if nodes, err := _m.NamedBots(alias); err == nil || hasTotalCount {
@@ -139,9 +165,11 @@ func (_m *Strategy) Bots(
 }
 
 func (_m *Strategy) Backtests(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BacktestWhereInput,
 ) (*BacktestConnection, error) {
-	opts := []BacktestPaginateOption{}
+	opts := []BacktestPaginateOption{
+		WithBacktestFilter(where.Filter),
+	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias
 	totalCount, hasTotalCount := _m.Edges.totalCount[1][alias]
 	if nodes, err := _m.NamedBacktests(alias); err == nil || hasTotalCount {

@@ -5,6 +5,7 @@ package ent
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
@@ -155,6 +156,9 @@ func newBacktestPaginateArgs(rv map[string]any) *backtestPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[whereField].(*BacktestWhereInput); ok {
+		args.opts = append(args.opts, WithBacktestFilter(v.Filter))
+	}
 	return args
 }
 
@@ -231,7 +235,7 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				path  = append(path, alias)
 				query = (&TradeClient{config: _q.config}).Query()
 			)
-			args := newTradePaginateArgs(fieldArgs(ctx, nil, path...))
+			args := newTradePaginateArgs(fieldArgs(ctx, new(TradeWhereInput), path...))
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
@@ -313,6 +317,17 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 			_q.WithNamedTrades(alias, func(wq *TradeQuery) {
 				*wq = *query
 			})
+
+		case "metrics":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BotMetricsClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botmetricsImplementors)...); err != nil {
+				return err
+			}
+			_q.withMetrics = query
 		case "name":
 			if _, ok := fieldSeen[bot.FieldName]; !ok {
 				selectedFields = append(selectedFields, bot.FieldName)
@@ -413,6 +428,191 @@ func newBotPaginateArgs(rv map[string]any) *botPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[whereField].(*BotWhereInput); ok {
+		args.opts = append(args.opts, WithBotFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (_q *BotMetricsQuery) CollectFields(ctx context.Context, satisfies ...string) (*BotMetricsQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return _q, nil
+	}
+	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return _q, nil
+}
+
+func (_q *BotMetricsQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(botmetrics.Columns))
+		selectedFields = []string{botmetrics.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+
+		case "bot":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BotClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botImplementors)...); err != nil {
+				return err
+			}
+			_q.withBot = query
+			if _, ok := fieldSeen[botmetrics.FieldBotID]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldBotID)
+				fieldSeen[botmetrics.FieldBotID] = struct{}{}
+			}
+		case "botID":
+			if _, ok := fieldSeen[botmetrics.FieldBotID]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldBotID)
+				fieldSeen[botmetrics.FieldBotID] = struct{}{}
+			}
+		case "profitClosedCoin":
+			if _, ok := fieldSeen[botmetrics.FieldProfitClosedCoin]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldProfitClosedCoin)
+				fieldSeen[botmetrics.FieldProfitClosedCoin] = struct{}{}
+			}
+		case "profitClosedPercent":
+			if _, ok := fieldSeen[botmetrics.FieldProfitClosedPercent]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldProfitClosedPercent)
+				fieldSeen[botmetrics.FieldProfitClosedPercent] = struct{}{}
+			}
+		case "profitAllCoin":
+			if _, ok := fieldSeen[botmetrics.FieldProfitAllCoin]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldProfitAllCoin)
+				fieldSeen[botmetrics.FieldProfitAllCoin] = struct{}{}
+			}
+		case "profitAllPercent":
+			if _, ok := fieldSeen[botmetrics.FieldProfitAllPercent]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldProfitAllPercent)
+				fieldSeen[botmetrics.FieldProfitAllPercent] = struct{}{}
+			}
+		case "tradeCount":
+			if _, ok := fieldSeen[botmetrics.FieldTradeCount]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldTradeCount)
+				fieldSeen[botmetrics.FieldTradeCount] = struct{}{}
+			}
+		case "closedTradeCount":
+			if _, ok := fieldSeen[botmetrics.FieldClosedTradeCount]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldClosedTradeCount)
+				fieldSeen[botmetrics.FieldClosedTradeCount] = struct{}{}
+			}
+		case "openTradeCount":
+			if _, ok := fieldSeen[botmetrics.FieldOpenTradeCount]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldOpenTradeCount)
+				fieldSeen[botmetrics.FieldOpenTradeCount] = struct{}{}
+			}
+		case "winningTrades":
+			if _, ok := fieldSeen[botmetrics.FieldWinningTrades]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldWinningTrades)
+				fieldSeen[botmetrics.FieldWinningTrades] = struct{}{}
+			}
+		case "losingTrades":
+			if _, ok := fieldSeen[botmetrics.FieldLosingTrades]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLosingTrades)
+				fieldSeen[botmetrics.FieldLosingTrades] = struct{}{}
+			}
+		case "winrate":
+			if _, ok := fieldSeen[botmetrics.FieldWinrate]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldWinrate)
+				fieldSeen[botmetrics.FieldWinrate] = struct{}{}
+			}
+		case "expectancy":
+			if _, ok := fieldSeen[botmetrics.FieldExpectancy]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldExpectancy)
+				fieldSeen[botmetrics.FieldExpectancy] = struct{}{}
+			}
+		case "profitFactor":
+			if _, ok := fieldSeen[botmetrics.FieldProfitFactor]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldProfitFactor)
+				fieldSeen[botmetrics.FieldProfitFactor] = struct{}{}
+			}
+		case "maxDrawdown":
+			if _, ok := fieldSeen[botmetrics.FieldMaxDrawdown]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldMaxDrawdown)
+				fieldSeen[botmetrics.FieldMaxDrawdown] = struct{}{}
+			}
+		case "maxDrawdownAbs":
+			if _, ok := fieldSeen[botmetrics.FieldMaxDrawdownAbs]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldMaxDrawdownAbs)
+				fieldSeen[botmetrics.FieldMaxDrawdownAbs] = struct{}{}
+			}
+		case "bestPair":
+			if _, ok := fieldSeen[botmetrics.FieldBestPair]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldBestPair)
+				fieldSeen[botmetrics.FieldBestPair] = struct{}{}
+			}
+		case "bestRate":
+			if _, ok := fieldSeen[botmetrics.FieldBestRate]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldBestRate)
+				fieldSeen[botmetrics.FieldBestRate] = struct{}{}
+			}
+		case "firstTradeTimestamp":
+			if _, ok := fieldSeen[botmetrics.FieldFirstTradeTimestamp]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldFirstTradeTimestamp)
+				fieldSeen[botmetrics.FieldFirstTradeTimestamp] = struct{}{}
+			}
+		case "latestTradeTimestamp":
+			if _, ok := fieldSeen[botmetrics.FieldLatestTradeTimestamp]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLatestTradeTimestamp)
+				fieldSeen[botmetrics.FieldLatestTradeTimestamp] = struct{}{}
+			}
+		case "fetchedAt":
+			if _, ok := fieldSeen[botmetrics.FieldFetchedAt]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldFetchedAt)
+				fieldSeen[botmetrics.FieldFetchedAt] = struct{}{}
+			}
+		case "updatedAt":
+			if _, ok := fieldSeen[botmetrics.FieldUpdatedAt]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldUpdatedAt)
+				fieldSeen[botmetrics.FieldUpdatedAt] = struct{}{}
+			}
+		case "id":
+		case "__typename":
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		_q.Select(selectedFields...)
+	}
+	return nil
+}
+
+type botmetricsPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []BotMetricsPaginateOption
+}
+
+func newBotMetricsPaginateArgs(rv map[string]any) *botmetricsPaginateArgs {
+	args := &botmetricsPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*BotMetricsWhereInput); ok {
+		args.opts = append(args.opts, WithBotMetricsFilter(v.Filter))
+	}
 	return args
 }
 
@@ -444,7 +644,7 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				path  = append(path, alias)
 				query = (&BotClient{config: _q.config}).Query()
 			)
-			args := newBotPaginateArgs(fieldArgs(ctx, nil, path...))
+			args := newBotPaginateArgs(fieldArgs(ctx, new(BotWhereInput), path...))
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
@@ -533,7 +733,7 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				path  = append(path, alias)
 				query = (&BacktestClient{config: _q.config}).Query()
 			)
-			args := newBacktestPaginateArgs(fieldArgs(ctx, nil, path...))
+			args := newBacktestPaginateArgs(fieldArgs(ctx, new(BacktestWhereInput), path...))
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
@@ -670,6 +870,9 @@ func newBotRunnerPaginateArgs(rv map[string]any) *botrunnerPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[whereField].(*BotRunnerWhereInput); ok {
+		args.opts = append(args.opts, WithBotRunnerFilter(v.Filter))
+	}
 	return args
 }
 
@@ -701,7 +904,7 @@ func (_q *ExchangeQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				path  = append(path, alias)
 				query = (&BotClient{config: _q.config}).Query()
 			)
-			args := newBotPaginateArgs(fieldArgs(ctx, nil, path...))
+			args := newBotPaginateArgs(fieldArgs(ctx, new(BotWhereInput), path...))
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
@@ -838,6 +1041,9 @@ func newExchangePaginateArgs(rv map[string]any) *exchangePaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[whereField].(*ExchangeWhereInput); ok {
+		args.opts = append(args.opts, WithExchangeFilter(v.Filter))
+	}
 	return args
 }
 
@@ -869,7 +1075,7 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				path  = append(path, alias)
 				query = (&BotClient{config: _q.config}).Query()
 			)
-			args := newBotPaginateArgs(fieldArgs(ctx, nil, path...))
+			args := newBotPaginateArgs(fieldArgs(ctx, new(BotWhereInput), path...))
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
@@ -958,7 +1164,7 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				path  = append(path, alias)
 				query = (&BacktestClient{config: _q.config}).Query()
 			)
-			args := newBacktestPaginateArgs(fieldArgs(ctx, nil, path...))
+			args := newBacktestPaginateArgs(fieldArgs(ctx, new(BacktestWhereInput), path...))
 			if err := validateFirstLast(args.first, args.last); err != nil {
 				return fmt.Errorf("validate first and last in path %q: %w", path, err)
 			}
@@ -1109,6 +1315,9 @@ func newStrategyPaginateArgs(rv map[string]any) *strategyPaginateArgs {
 	}
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*StrategyWhereInput); ok {
+		args.opts = append(args.opts, WithStrategyFilter(v.Filter))
 	}
 	return args
 }
@@ -1268,6 +1477,9 @@ func newTradePaginateArgs(rv map[string]any) *tradePaginateArgs {
 	}
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*TradeWhereInput); ok {
+		args.opts = append(args.opts, WithTradeFilter(v.Filter))
 	}
 	return args
 }

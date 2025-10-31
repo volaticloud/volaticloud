@@ -7,6 +7,7 @@ import { client } from './graphql/client';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { BotsPage } from './pages/Bots/BotsPage';
+import { BotDetailPage } from './pages/Bots/BotDetailPage';
 import { ExchangesPage } from './pages/Exchanges/ExchangesPage';
 import { StrategiesPage } from './pages/Strategies/StrategiesPage';
 import { RunnersPage } from './pages/Runners/RunnersPage';
@@ -33,6 +34,7 @@ function App() {
             >
               <Route index element={<DashboardPage />} />
               <Route path="bots" element={<BotsPage />} />
+              <Route path="bots/:id" element={<BotDetailPage />} />
               <Route path="exchanges" element={<ExchangesPage />} />
               <Route path="strategies" element={<StrategiesPage />} />
               <Route path="backtests" element={<BacktestsPage />} />

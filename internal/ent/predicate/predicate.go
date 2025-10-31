@@ -12,6 +12,9 @@ type Backtest func(*sql.Selector)
 // Bot is the predicate function for bot builders.
 type Bot func(*sql.Selector)
 
+// BotMetrics is the predicate function for botmetrics builders.
+type BotMetrics func(*sql.Selector)
+
 // BotRunner is the predicate function for botrunner builders.
 type BotRunner func(*sql.Selector)
 

@@ -3,7 +3,12 @@ package graph
 import (
 	"testing"
 
+	"anytrade/internal/ent"
+	"anytrade/internal/enum"
+	"anytrade/internal/runner"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestValidateFreqtradeConfig tests the validation function with various scenarios
@@ -374,4 +379,320 @@ func TestGenerateSecureConfig(t *testing.T) {
 
 	// Verify all passwords are unique
 	assert.Equal(t, 10, len(passwords), "All passwords should be unique")
+}
+
+// TestBuildBotSpec tests the bot spec building function
+func TestBuildBotSpec(t *testing.T) {
+	tests := []struct {
+		name    string
+		bot     *ent.Bot
+		wantErr bool
+		errMsg  string
+		validate func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot)
+	}{
+		{
+			name: "missing exchange",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "TestBot",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeDryRun,
+				Edges: ent.BotEdges{
+					Exchange: nil,
+					Strategy: &ent.Strategy{
+						Name: "TestStrategy",
+						Code: "# test code",
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "bot has no exchange",
+		},
+		{
+			name: "missing strategy",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "TestBot",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeDryRun,
+				Edges: ent.BotEdges{
+					Exchange: &ent.Exchange{
+						Name: "Binance",
+						Config: map[string]interface{}{
+							"name": "binance",
+						},
+					},
+					Strategy: nil,
+				},
+			},
+			wantErr: true,
+			errMsg:  "bot has no strategy",
+		},
+		{
+			name: "dry_run injected for dry run mode",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "DryRunBot",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeDryRun,
+				Config: map[string]interface{}{
+					"stake_currency": "USDT",
+					"stake_amount":   100,
+				},
+				SecureConfig: map[string]interface{}{
+					"api_server": map[string]interface{}{
+						"enabled": true,
+					},
+				},
+				Edges: ent.BotEdges{
+					Exchange: &ent.Exchange{
+						Name: "Binance",
+						Config: map[string]interface{}{
+							"name": "binance",
+						},
+					},
+					Strategy: &ent.Strategy{
+						Name: "TestStrategy",
+						Code: "# test code",
+					},
+				},
+			},
+			wantErr: false,
+			validate: func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot) {
+				// Verify dry_run is true for dry run mode
+				dryRun, ok := spec.Config["dry_run"].(bool)
+				require.True(t, ok, "dry_run should be a bool")
+				assert.True(t, dryRun, "dry_run should be true for dry run mode")
+
+				// Verify original config not mutated
+				_, exists := bot.Config["dry_run"]
+				assert.False(t, exists, "original bot config should not be mutated")
+			},
+		},
+		{
+			name: "dry_run injected for live mode",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "LiveBot",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeLive,
+				Config: map[string]interface{}{
+					"stake_currency": "USDT",
+					"stake_amount":   100,
+				},
+				SecureConfig: map[string]interface{}{
+					"api_server": map[string]interface{}{
+						"enabled": true,
+					},
+				},
+				Edges: ent.BotEdges{
+					Exchange: &ent.Exchange{
+						Name: "Binance",
+						Config: map[string]interface{}{
+							"name": "binance",
+						},
+					},
+					Strategy: &ent.Strategy{
+						Name: "TestStrategy",
+						Code: "# test code",
+					},
+				},
+			},
+			wantErr: false,
+			validate: func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot) {
+				// Verify dry_run is false for live mode
+				dryRun, ok := spec.Config["dry_run"].(bool)
+				require.True(t, ok, "dry_run should be a bool")
+				assert.False(t, dryRun, "dry_run should be false for live mode")
+
+				// Verify original config not mutated
+				_, exists := bot.Config["dry_run"]
+				assert.False(t, exists, "original bot config should not be mutated")
+			},
+		},
+		{
+			name: "config mutation prevention - original config unchanged",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "MutationTest",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeDryRun,
+				Config: map[string]interface{}{
+					"stake_currency": "USDT",
+					"stake_amount":   100,
+					"custom_field":   "original_value",
+				},
+				SecureConfig: map[string]interface{}{
+					"api_server": map[string]interface{}{
+						"enabled": true,
+					},
+				},
+				Edges: ent.BotEdges{
+					Exchange: &ent.Exchange{
+						Name: "Binance",
+						Config: map[string]interface{}{
+							"name": "binance",
+						},
+					},
+					Strategy: &ent.Strategy{
+						Name: "TestStrategy",
+						Code: "# test code",
+						Config: map[string]interface{}{
+							"stoploss": -0.1,
+						},
+					},
+				},
+			},
+			wantErr: false,
+			validate: func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot) {
+				// Verify spec has dry_run
+				_, ok := spec.Config["dry_run"]
+				require.True(t, ok, "spec config should have dry_run")
+
+				// Verify original bot config is unchanged (CRITICAL: regression test for mutation bug)
+				_, exists := bot.Config["dry_run"]
+				assert.False(t, exists, "original bot config should NOT have dry_run (no mutation)")
+
+				// Verify other original fields are preserved
+				assert.Equal(t, "USDT", bot.Config["stake_currency"])
+				assert.Equal(t, 100, bot.Config["stake_amount"])
+				assert.Equal(t, "original_value", bot.Config["custom_field"])
+
+				// Verify spec has all original fields plus dry_run
+				assert.Equal(t, "USDT", spec.Config["stake_currency"])
+				assert.Equal(t, 100, spec.Config["stake_amount"])
+				assert.Equal(t, "original_value", spec.Config["custom_field"])
+			},
+		},
+		{
+			name: "nil config handled correctly",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "NilConfigBot",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeDryRun,
+				Config:           nil, // No config provided
+				SecureConfig: map[string]interface{}{
+					"api_server": map[string]interface{}{
+						"enabled": true,
+					},
+				},
+				Edges: ent.BotEdges{
+					Exchange: &ent.Exchange{
+						Name: "Binance",
+						Config: map[string]interface{}{
+							"name": "binance",
+						},
+					},
+					Strategy: &ent.Strategy{
+						Name: "TestStrategy",
+						Code: "# test code",
+					},
+				},
+			},
+			wantErr: false,
+			validate: func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot) {
+				// Verify spec config is not nil and has dry_run
+				require.NotNil(t, spec.Config, "spec config should not be nil")
+				dryRun, ok := spec.Config["dry_run"].(bool)
+				require.True(t, ok, "dry_run should be a bool")
+				assert.True(t, dryRun, "dry_run should be true")
+
+				// Verify only dry_run is in the config
+				assert.Equal(t, 1, len(spec.Config), "spec config should only have dry_run")
+			},
+		},
+		{
+			name: "all fields populated correctly",
+			bot: &ent.Bot{
+				ID:               uuid.New(),
+				Name:             "CompleteBot",
+				FreqtradeVersion: "2024.1",
+				Mode:             enum.BotModeDryRun,
+				Config: map[string]interface{}{
+					"stake_currency": "USDT",
+					"stake_amount":   100,
+				},
+				SecureConfig: map[string]interface{}{
+					"api_server": map[string]interface{}{
+						"enabled": true,
+						"username": "admin",
+						"password": "secret",
+					},
+				},
+				Edges: ent.BotEdges{
+					Exchange: &ent.Exchange{
+						Name: "Binance",
+						Config: map[string]interface{}{
+							"name":       "binance",
+							"api_key":    "key123",
+							"api_secret": "secret456",
+						},
+					},
+					Strategy: &ent.Strategy{
+						Name: "MyStrategy",
+						Code: "# strategy code here",
+						Config: map[string]interface{}{
+							"stoploss":     -0.1,
+							"take_profit":  0.2,
+						},
+					},
+				},
+			},
+			wantErr: false,
+			validate: func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot) {
+				// Verify basic fields
+				assert.Equal(t, bot.ID.String(), spec.ID)
+				assert.Equal(t, bot.Name, spec.Name)
+				assert.Equal(t, "freqtradeorg/freqtrade:2024.1", spec.Image)
+				assert.Equal(t, "2024.1", spec.FreqtradeVersion)
+				assert.Equal(t, "MyStrategy", spec.StrategyName)
+				assert.Equal(t, "# strategy code here", spec.StrategyCode)
+
+				// Verify configs are separate
+				assert.NotNil(t, spec.Config)
+				assert.NotNil(t, spec.StrategyConfig)
+				assert.NotNil(t, spec.ExchangeConfig)
+				assert.NotNil(t, spec.SecureConfig)
+
+				// Verify strategy config
+				assert.Equal(t, -0.1, spec.StrategyConfig["stoploss"])
+				assert.Equal(t, 0.2, spec.StrategyConfig["take_profit"])
+
+				// Verify exchange config
+				assert.Equal(t, "binance", spec.ExchangeConfig["name"])
+				assert.Equal(t, "key123", spec.ExchangeConfig["api_key"])
+
+				// Verify secure config
+				apiServer, ok := spec.SecureConfig["api_server"].(map[string]interface{})
+				require.True(t, ok)
+				assert.Equal(t, true, apiServer["enabled"])
+				assert.Equal(t, "admin", apiServer["username"])
+
+				// Verify environment map exists
+				assert.NotNil(t, spec.Environment)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec, err := buildBotSpec(tt.bot)
+
+			if tt.wantErr {
+				require.Error(t, err, "Expected error but got none")
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg, "Error message should contain expected text")
+				}
+				return
+			}
+
+			require.NoError(t, err, "Expected no error but got: %v", err)
+			require.NotNil(t, spec, "Spec should not be nil")
+
+			if tt.validate != nil {
+				tt.validate(t, spec, tt.bot)
+			}
+		})
+	}
 }

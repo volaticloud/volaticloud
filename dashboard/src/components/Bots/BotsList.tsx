@@ -26,6 +26,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation } from '../../generated/graphql';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
@@ -35,6 +36,7 @@ import { DeleteBotDialog } from './DeleteBotDialog';
 
 // Reusable BotsList component
 export const BotsList = () => {
+  const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -247,7 +249,12 @@ export const BotsList = () => {
             </TableHead>
             <TableBody>
               {bots.map((bot) => (
-                <TableRow key={bot.id} hover>
+                <TableRow
+                  key={bot.id}
+                  hover
+                  onClick={() => navigate(`/bots/${bot.id}`)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
                       {bot.name}
@@ -287,7 +294,10 @@ export const BotsList = () => {
                       <IconButton
                         size="small"
                         color="success"
-                        onClick={() => handleStartBot(bot.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartBot(bot.id);
+                        }}
                         disabled={!canStart(bot.status)}
                       >
                         <StartIcon fontSize="small" />
@@ -297,7 +307,10 @@ export const BotsList = () => {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => handleStopBot(bot.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStopBot(bot.id);
+                        }}
                         disabled={!canStopOrRestart(bot.status)}
                       >
                         <StopIcon fontSize="small" />
@@ -307,7 +320,10 @@ export const BotsList = () => {
                       <IconButton
                         size="small"
                         color="warning"
-                        onClick={() => handleRestartBot(bot.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestartBot(bot.id);
+                        }}
                         disabled={!canStopOrRestart(bot.status)}
                       >
                         <RestartIcon fontSize="small" />
@@ -316,7 +332,8 @@ export const BotsList = () => {
                     <Tooltip title="Edit">
                       <IconButton
                         size="small"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedBot(bot);
                           setEditDialogOpen(true);
                         }}
@@ -328,7 +345,8 @@ export const BotsList = () => {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedBot(bot);
                           setDeleteDialogOpen(true);
                         }}

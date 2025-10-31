@@ -17,6 +17,8 @@ func main() {
 		entgql.WithSchemaPath("../graph/ent.graphql"),
 		// Configure ID type
 		entgql.WithConfigPath("../../gqlgen.yml"),
+		// Enable where filters on queries
+		entgql.WithWhereInputs(true),
 	)
 	if err != nil {
 		log.Fatalf("creating entgql extension: %v", err)

@@ -5,6 +5,7 @@ package runtime
 import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/schema"
@@ -59,6 +60,22 @@ func init() {
 	botDescID := botFields[0].Descriptor()
 	// bot.DefaultID holds the default value on creation for the id field.
 	bot.DefaultID = botDescID.Default.(func() uuid.UUID)
+	botmetricsFields := schema.BotMetrics{}.Fields()
+	_ = botmetricsFields
+	// botmetricsDescFetchedAt is the schema descriptor for fetched_at field.
+	botmetricsDescFetchedAt := botmetricsFields[20].Descriptor()
+	// botmetrics.DefaultFetchedAt holds the default value on creation for the fetched_at field.
+	botmetrics.DefaultFetchedAt = botmetricsDescFetchedAt.Default.(func() time.Time)
+	// botmetricsDescUpdatedAt is the schema descriptor for updated_at field.
+	botmetricsDescUpdatedAt := botmetricsFields[21].Descriptor()
+	// botmetrics.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	botmetrics.DefaultUpdatedAt = botmetricsDescUpdatedAt.Default.(func() time.Time)
+	// botmetrics.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	botmetrics.UpdateDefaultUpdatedAt = botmetricsDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// botmetricsDescID is the schema descriptor for id field.
+	botmetricsDescID := botmetricsFields[0].Descriptor()
+	// botmetrics.DefaultID holds the default value on creation for the id field.
+	botmetrics.DefaultID = botmetricsDescID.Default.(func() uuid.UUID)
 	botrunnerHooks := schema.BotRunner{}.Hooks()
 	botrunner.Hooks[0] = botrunnerHooks[0]
 	botrunnerFields := schema.BotRunner{}.Fields()

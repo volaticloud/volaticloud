@@ -29,6 +29,11 @@ type Runtime interface {
 	// Returns BotNotFound error if the bot doesn't exist
 	GetBotStatus(ctx context.Context, botID string) (*BotStatus, error)
 
+	// GetContainerIP retrieves the container's IP address
+	// Returns the IP address for accessing the bot's Freqtrade API
+	// Returns error if the container doesn't exist or network info unavailable
+	GetContainerIP(ctx context.Context, containerID string) (string, error)
+
 	// GetBotLogs retrieves or streams logs from a bot
 	// Use LogOptions to configure filtering, tailing, and streaming
 	GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error)
@@ -62,6 +67,7 @@ type MockRuntime struct {
 	StopBotFunc        func(ctx context.Context, botID string) error
 	RestartBotFunc     func(ctx context.Context, botID string) error
 	GetBotStatusFunc   func(ctx context.Context, botID string) (*BotStatus, error)
+	GetContainerIPFunc func(ctx context.Context, containerID string) (string, error)
 	GetBotLogsFunc     func(ctx context.Context, botID string, opts LogOptions) (*LogReader, error)
 	UpdateBotFunc      func(ctx context.Context, botID string, spec UpdateBotSpec) error
 	ListBotsFunc       func(ctx context.Context) ([]BotStatus, error)
@@ -113,6 +119,13 @@ func (m *MockRuntime) GetBotStatus(ctx context.Context, botID string) (*BotStatu
 		return m.GetBotStatusFunc(ctx, botID)
 	}
 	return &BotStatus{BotID: botID}, nil
+}
+
+func (m *MockRuntime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
+	if m.GetContainerIPFunc != nil {
+		return m.GetContainerIPFunc(ctx, containerID)
+	}
+	return "127.0.0.1", nil
 }
 
 func (m *MockRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {

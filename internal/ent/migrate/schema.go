@@ -86,6 +86,45 @@ var (
 			},
 		},
 	}
+	// BotMetricsColumns holds the columns for the "bot_metrics" table.
+	BotMetricsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "profit_closed_coin", Type: field.TypeFloat64, Nullable: true},
+		{Name: "profit_closed_percent", Type: field.TypeFloat64, Nullable: true},
+		{Name: "profit_all_coin", Type: field.TypeFloat64, Nullable: true},
+		{Name: "profit_all_percent", Type: field.TypeFloat64, Nullable: true},
+		{Name: "trade_count", Type: field.TypeInt, Nullable: true},
+		{Name: "closed_trade_count", Type: field.TypeInt, Nullable: true},
+		{Name: "open_trade_count", Type: field.TypeInt, Nullable: true},
+		{Name: "winning_trades", Type: field.TypeInt, Nullable: true},
+		{Name: "losing_trades", Type: field.TypeInt, Nullable: true},
+		{Name: "winrate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "expectancy", Type: field.TypeFloat64, Nullable: true},
+		{Name: "profit_factor", Type: field.TypeFloat64, Nullable: true},
+		{Name: "max_drawdown", Type: field.TypeFloat64, Nullable: true},
+		{Name: "max_drawdown_abs", Type: field.TypeFloat64, Nullable: true},
+		{Name: "best_pair", Type: field.TypeString, Nullable: true},
+		{Name: "best_rate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "first_trade_timestamp", Type: field.TypeTime, Nullable: true},
+		{Name: "latest_trade_timestamp", Type: field.TypeTime, Nullable: true},
+		{Name: "fetched_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "bot_id", Type: field.TypeUUID, Unique: true},
+	}
+	// BotMetricsTable holds the schema information for the "bot_metrics" table.
+	BotMetricsTable = &schema.Table{
+		Name:       "bot_metrics",
+		Columns:    BotMetricsColumns,
+		PrimaryKey: []*schema.Column{BotMetricsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "bot_metrics_bots_metrics",
+				Columns:    []*schema.Column{BotMetricsColumns[21]},
+				RefColumns: []*schema.Column{BotsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// BotRunnersColumns holds the columns for the "bot_runners" table.
 	BotRunnersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -188,6 +227,7 @@ var (
 	Tables = []*schema.Table{
 		BacktestsTable,
 		BotsTable,
+		BotMetricsTable,
 		BotRunnersTable,
 		ExchangesTable,
 		StrategiesTable,
@@ -201,5 +241,6 @@ func init() {
 	BotsTable.ForeignKeys[0].RefTable = BotRunnersTable
 	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[2].RefTable = StrategiesTable
+	BotMetricsTable.ForeignKeys[0].RefTable = BotsTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

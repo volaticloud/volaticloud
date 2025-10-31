@@ -90,6 +90,8 @@ func (Bot) Edges() []ent.Edge {
 			Unique(),
 		edge.To("trades", Trade.Type).
 			Annotations(entgql.RelayConnection()),
+		edge.To("metrics", BotMetrics.Type).
+			Unique(),
 	}
 }
 

@@ -749,6 +749,29 @@ func HasTradesWith(preds ...predicate.Trade) predicate.Bot {
 	})
 }
 
+// HasMetrics applies the HasEdge predicate on the "metrics" edge.
+func HasMetrics() predicate.Bot {
+	return predicate.Bot(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, MetricsTable, MetricsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMetricsWith applies the HasEdge predicate on the "metrics" edge with a given conditions (other predicates).
+func HasMetricsWith(preds ...predicate.BotMetrics) predicate.Bot {
+	return predicate.Bot(func(s *sql.Selector) {
+		step := newMetricsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Bot) predicate.Bot {
 	return predicate.Bot(sql.AndPredicates(predicates...))

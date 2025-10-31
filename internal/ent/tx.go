@@ -16,6 +16,8 @@ type Tx struct {
 	Backtest *BacktestClient
 	// Bot is the client for interacting with the Bot builders.
 	Bot *BotClient
+	// BotMetrics is the client for interacting with the BotMetrics builders.
+	BotMetrics *BotMetricsClient
 	// BotRunner is the client for interacting with the BotRunner builders.
 	BotRunner *BotRunnerClient
 	// Exchange is the client for interacting with the Exchange builders.
@@ -157,6 +159,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Backtest = NewBacktestClient(tx.config)
 	tx.Bot = NewBotClient(tx.config)
+	tx.BotMetrics = NewBotMetricsClient(tx.config)
 	tx.BotRunner = NewBotRunnerClient(tx.config)
 	tx.Exchange = NewExchangeClient(tx.config)
 	tx.Strategy = NewStrategyClient(tx.config)

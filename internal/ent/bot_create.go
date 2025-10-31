@@ -4,6 +4,7 @@ package ent
 
 import (
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/botmetrics"
 	"anytrade/internal/ent/botrunner"
 	"anytrade/internal/ent/exchange"
 	"anytrade/internal/ent/strategy"
@@ -216,6 +217,25 @@ func (_c *BotCreate) AddTrades(v ...*Trade) *BotCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddTradeIDs(ids...)
+}
+
+// SetMetricsID sets the "metrics" edge to the BotMetrics entity by ID.
+func (_c *BotCreate) SetMetricsID(id uuid.UUID) *BotCreate {
+	_c.mutation.SetMetricsID(id)
+	return _c
+}
+
+// SetNillableMetricsID sets the "metrics" edge to the BotMetrics entity by ID if the given value is not nil.
+func (_c *BotCreate) SetNillableMetricsID(id *uuid.UUID) *BotCreate {
+	if id != nil {
+		_c = _c.SetMetricsID(*id)
+	}
+	return _c
+}
+
+// SetMetrics sets the "metrics" edge to the BotMetrics entity.
+func (_c *BotCreate) SetMetrics(v *BotMetrics) *BotCreate {
+	return _c.SetMetricsID(v.ID)
 }
 
 // Mutation returns the BotMutation object of the builder.
@@ -471,6 +491,22 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(trade.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MetricsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bot.MetricsTable,
+			Columns: []string{bot.MetricsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(botmetrics.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

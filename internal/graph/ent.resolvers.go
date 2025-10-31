@@ -22,15 +22,19 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder
 	return r.client.Noders(ctx, ids)
 }
 
-func (r *queryResolver) Backtests(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BacktestConnection, error) {
+func (r *queryResolver) Backtests(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) (*ent.BacktestConnection, error) {
 	return r.client.Backtest.Query().Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotConnection, error) {
+func (r *queryResolver) Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) (*ent.BotConnection, error) {
 	return r.client.Bot.Query().Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.BotRunnerConnection, error) {
+func (r *queryResolver) BotMetricsSlice(ctx context.Context) ([]*ent.BotMetrics, error) {
+	panic(fmt.Errorf("not implemented: BotMetricsSlice - botMetricsSlice"))
+}
+
+func (r *queryResolver) BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) (*ent.BotRunnerConnection, error) {
 	return r.client.BotRunner.Query().Paginate(ctx, after, first, before, last)
 }
 
@@ -38,11 +42,11 @@ func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) 
 	return r.client.Exchange.Query().All(ctx)
 }
 
-func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.StrategyConnection, error) {
+func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
 	return r.client.Strategy.Query().Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int) (*ent.TradeConnection, error) {
+func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error) {
 	return r.client.Trade.Query().Paginate(ctx, after, first, before, last)
 }
 
