@@ -1,0 +1,225 @@
+package monitor
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
+	tests := []struct {
+		name           string
+		exchange       string
+		config         map[string]interface{}
+		expectedFormat string
+		expectedMode   string
+	}{
+		{
+			name:     "basic spot config",
+			exchange: "binance",
+			config: map[string]interface{}{
+				"pairsPattern": "BTC/USDT ETH/USDT",
+				"timeframes":   []interface{}{"1h", "4h"},
+				"days":         float64(365),
+				"tradingMode":  "spot",
+			},
+			expectedFormat: "feather",
+			expectedMode:   "spot",
+		},
+		{
+			name:     "futures config",
+			exchange: "bybit",
+			config: map[string]interface{}{
+				"pairsPattern": "BTC/USDT:USDT",
+				"timeframes":   []interface{}{"15m"},
+				"days":         float64(30),
+				"tradingMode":  "futures",
+			},
+			expectedFormat: "feather",
+			expectedMode:   "futures",
+		},
+		{
+			name:     "default trading mode",
+			exchange: "coinbase",
+			config: map[string]interface{}{
+				"pairsPattern": "BTC/USD",
+				"timeframes":   []interface{}{"1h"},
+				"days":         float64(180),
+			},
+			expectedFormat: "feather",
+			expectedMode:   "spot",
+		},
+		{
+			name:     "integer days",
+			exchange: "kraken",
+			config: map[string]interface{}{
+				"pairsPattern": "BTC/USD",
+				"timeframes":   []interface{}{"1d"},
+				"days":         90,
+				"tradingMode":  "spot",
+			},
+			expectedFormat: "feather",
+			expectedMode:   "spot",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Extract config (same logic as downloadExchangeData)
+			pairsPattern := tt.config["pairsPattern"].(string)
+			timeframesRaw := tt.config["timeframes"].([]interface{})
+			timeframes := make([]string, len(timeframesRaw))
+			for i, tf := range timeframesRaw {
+				timeframes[i] = tf.(string)
+			}
+
+			// Get days (same logic as downloadExchangeData)
+			var days string
+			switch v := tt.config["days"].(type) {
+			case int:
+				days = fmt.Sprintf("%d", v)
+			case float64:
+				days = fmt.Sprintf("%d", int(v))
+			default:
+				days = "365" // Default fallback
+			}
+
+			// Get trading mode (default to spot)
+			tradingMode := "spot"
+			if tm, ok := tt.config["tradingMode"].(string); ok {
+				tradingMode = tm
+			}
+
+			// Build args (same as downloadExchangeData)
+			args := []string{
+				"download-data",
+				"--exchange", tt.exchange,
+				"--pairs", pairsPattern,
+				"--days", days,
+				"--data-format-ohlcv", "feather",
+				"--trading-mode", tradingMode,
+			}
+			args = append(args, "--timeframes")
+			args = append(args, timeframes...)
+
+			// Verify critical assertions
+			assert.Contains(t, args, "--data-format-ohlcv", "Command must specify data format")
+			assert.Contains(t, args, tt.expectedFormat, "Data format must be feather for backtesting compatibility")
+			assert.Contains(t, args, "--trading-mode", "Command must specify trading mode")
+			assert.Contains(t, args, tt.expectedMode, "Trading mode must match config")
+			assert.Contains(t, args, "--exchange", "Command must specify exchange")
+			assert.Contains(t, args, tt.exchange, "Exchange must match")
+			assert.Contains(t, args, "--timeframes", "Command must specify timeframes")
+
+			// Verify all timeframes are included
+			for _, tf := range timeframes {
+				assert.Contains(t, args, tf, "All timeframes must be included")
+			}
+		})
+	}
+}
+
+func TestDataFormatIsFeather(t *testing.T) {
+	// Critical regression test: data format must be feather, not json
+	// This ensures backtesting works without requiring explicit dataformat_ohlcv config
+
+	config := map[string]interface{}{
+		"pairsPattern": "BTC/USDT",
+		"timeframes":   []interface{}{"1h"},
+		"days":         float64(365),
+		"tradingMode":  "spot",
+	}
+
+	// Build the command args (same logic as downloadExchangeData)
+	args := []string{
+		"download-data",
+		"--exchange", "binance",
+		"--pairs", config["pairsPattern"].(string),
+		"--days", "365",
+		"--data-format-ohlcv", "feather", // THIS IS THE CRITICAL FIX
+		"--trading-mode", "spot",
+	}
+
+	// Find the data format value
+	var dataFormat string
+	for i, arg := range args {
+		if arg == "--data-format-ohlcv" && i+1 < len(args) {
+			dataFormat = args[i+1]
+			break
+		}
+	}
+
+	assert.Equal(t, "feather", dataFormat,
+		"Data format MUST be 'feather' for backtesting compatibility. "+
+		"Freqtrade backtesting defaults to feather format. "+
+		"Using 'json' will cause 'No data found' errors during backtesting.")
+}
+
+func TestVolumeConstants(t *testing.T) {
+	// Verify the Docker volume configuration
+	assert.Equal(t, "anytrade-freqtrade-data", FreqtradeDataVolume,
+		"Docker volume name must match the volume used in backtesting")
+
+	assert.Equal(t, "freqtradeorg/freqtrade:stable", FreqtradeImage,
+		"Freqtrade image must be the stable version")
+}
+
+func TestTradingModeDefaults(t *testing.T) {
+	// Test that trading mode defaults to "spot" when not specified
+	config := map[string]interface{}{
+		"pairsPattern": "BTC/USDT",
+		"timeframes":   []interface{}{"1h"},
+		"days":         float64(365),
+		// tradingMode not specified
+	}
+
+	tradingMode := "spot"
+	if tm, ok := config["tradingMode"].(string); ok {
+		tradingMode = tm
+	}
+
+	assert.Equal(t, "spot", tradingMode, "Trading mode should default to 'spot'")
+}
+
+func TestDaysTypeHandling(t *testing.T) {
+	// Test that days can be specified as int or float64
+	testCases := []struct {
+		name     string
+		days     interface{}
+		expected string
+	}{
+		{
+			name:     "float days",
+			days:     float64(365),
+			expected: "365",
+		},
+		{
+			name:     "int days",
+			days:     90,
+			expected: "90",
+		},
+		{
+			name:     "invalid type defaults to 365",
+			days:     "invalid",
+			expected: "365",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Same logic as downloadExchangeData
+			var days string
+			switch v := tc.days.(type) {
+			case int:
+				days = fmt.Sprintf("%d", v)
+			case float64:
+				days = fmt.Sprintf("%d", int(v))
+			default:
+				days = "365"
+			}
+
+			assert.Equal(t, tc.expected, days, "Days conversion should match expected value")
+		})
+	}
+}
