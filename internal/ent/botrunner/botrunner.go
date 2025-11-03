@@ -25,6 +25,18 @@ const (
 	FieldType = "type"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
+	// FieldDataIsReady holds the string denoting the data_is_ready field in the database.
+	FieldDataIsReady = "data_is_ready"
+	// FieldDataLastUpdated holds the string denoting the data_last_updated field in the database.
+	FieldDataLastUpdated = "data_last_updated"
+	// FieldDataDownloadStatus holds the string denoting the data_download_status field in the database.
+	FieldDataDownloadStatus = "data_download_status"
+	// FieldDataDownloadProgress holds the string denoting the data_download_progress field in the database.
+	FieldDataDownloadProgress = "data_download_progress"
+	// FieldDataErrorMessage holds the string denoting the data_error_message field in the database.
+	FieldDataErrorMessage = "data_error_message"
+	// FieldDataDownloadConfig holds the string denoting the data_download_config field in the database.
+	FieldDataDownloadConfig = "data_download_config"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -57,6 +69,12 @@ var Columns = []string{
 	FieldName,
 	FieldType,
 	FieldConfig,
+	FieldDataIsReady,
+	FieldDataLastUpdated,
+	FieldDataDownloadStatus,
+	FieldDataDownloadProgress,
+	FieldDataErrorMessage,
+	FieldDataDownloadConfig,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -77,9 +95,11 @@ func ValidColumn(column string) bool {
 //
 //	import _ "anytrade/internal/ent/runtime"
 var (
-	Hooks [1]ent.Hook
+	Hooks [2]ent.Hook
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultDataIsReady holds the default value on creation for the "data_is_ready" field.
+	DefaultDataIsReady bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -102,6 +122,18 @@ func TypeValidator(_type enum.RunnerType) error {
 	}
 }
 
+const DefaultDataDownloadStatus enum.DataDownloadStatus = "idle"
+
+// DataDownloadStatusValidator is a validator for the "data_download_status" field enum values. It is called by the builders before save.
+func DataDownloadStatusValidator(dds enum.DataDownloadStatus) error {
+	switch dds {
+	case "idle", "downloading", "completed", "failed":
+		return nil
+	default:
+		return fmt.Errorf("botrunner: invalid enum value for data_download_status field: %q", dds)
+	}
+}
+
 // OrderOption defines the ordering options for the BotRunner queries.
 type OrderOption func(*sql.Selector)
 
@@ -118,6 +150,26 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByType orders the results by the type field.
 func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
+}
+
+// ByDataIsReady orders the results by the data_is_ready field.
+func ByDataIsReady(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataIsReady, opts...).ToFunc()
+}
+
+// ByDataLastUpdated orders the results by the data_last_updated field.
+func ByDataLastUpdated(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataLastUpdated, opts...).ToFunc()
+}
+
+// ByDataDownloadStatus orders the results by the data_download_status field.
+func ByDataDownloadStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataDownloadStatus, opts...).ToFunc()
+}
+
+// ByDataErrorMessage orders the results by the data_error_message field.
+func ByDataErrorMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataErrorMessage, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -177,4 +229,11 @@ var (
 	_ graphql.Marshaler = (*enum.RunnerType)(nil)
 	// enum.RunnerType must implement graphql.Unmarshaler.
 	_ graphql.Unmarshaler = (*enum.RunnerType)(nil)
+)
+
+var (
+	// enum.DataDownloadStatus must implement graphql.Marshaler.
+	_ graphql.Marshaler = (*enum.DataDownloadStatus)(nil)
+	// enum.DataDownloadStatus must implement graphql.Unmarshaler.
+	_ graphql.Unmarshaler = (*enum.DataDownloadStatus)(nil)
 )

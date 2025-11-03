@@ -17,6 +17,19 @@ type BybitConfigInput struct {
 	APISecret string `json:"apiSecret"`
 }
 
+type DataDownloadConfigInput struct {
+	Exchanges []*DataDownloadExchangeConfigInput `json:"exchanges"`
+}
+
+type DataDownloadExchangeConfigInput struct {
+	Name         string   `json:"name"`
+	Enabled      bool     `json:"enabled"`
+	Timeframes   []string `json:"timeframes,omitempty"`
+	PairsPattern *string  `json:"pairsPattern,omitempty"`
+	Days         *int     `json:"days,omitempty"`
+	TradingMode  *string  `json:"tradingMode,omitempty"`
+}
+
 type DockerConfigInput struct {
 	Host         string             `json:"host"`
 	TLSVerify    *bool              `json:"tlsVerify,omitempty"`

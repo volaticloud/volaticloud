@@ -120,6 +120,11 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 				Target:   configPaths.strategyFileContainer,
 				ReadOnly: true,
 			},
+			{
+				Type:   mount.TypeVolume,
+				Source: "anytrade-freqtrade-data",
+				Target: "/freqtrade/user_data/data",
+			},
 		},
 	}
 
@@ -521,7 +526,8 @@ func (d *DockerBacktestRunner) buildBacktestCommand(spec BacktestSpec) []string 
 		cmd = append(cmd, "--strategy", spec.StrategyName)
 	}
 
-	// All other configuration (timeframe, pairs, timerange, etc.) is in config.json
+	// All other configuration (timeframe, pairs, timerange, trading_mode, etc.) is in config.json
+	// Freqtrade will automatically use the trading_mode from config to look in the correct subdirectory
 	return cmd
 }
 

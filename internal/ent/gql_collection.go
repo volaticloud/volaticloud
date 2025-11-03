@@ -825,6 +825,41 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				selectedFields = append(selectedFields, botrunner.FieldType)
 				fieldSeen[botrunner.FieldType] = struct{}{}
 			}
+		case "config":
+			if _, ok := fieldSeen[botrunner.FieldConfig]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldConfig)
+				fieldSeen[botrunner.FieldConfig] = struct{}{}
+			}
+		case "dataIsReady":
+			if _, ok := fieldSeen[botrunner.FieldDataIsReady]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataIsReady)
+				fieldSeen[botrunner.FieldDataIsReady] = struct{}{}
+			}
+		case "dataLastUpdated":
+			if _, ok := fieldSeen[botrunner.FieldDataLastUpdated]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataLastUpdated)
+				fieldSeen[botrunner.FieldDataLastUpdated] = struct{}{}
+			}
+		case "dataDownloadStatus":
+			if _, ok := fieldSeen[botrunner.FieldDataDownloadStatus]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataDownloadStatus)
+				fieldSeen[botrunner.FieldDataDownloadStatus] = struct{}{}
+			}
+		case "dataDownloadProgress":
+			if _, ok := fieldSeen[botrunner.FieldDataDownloadProgress]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataDownloadProgress)
+				fieldSeen[botrunner.FieldDataDownloadProgress] = struct{}{}
+			}
+		case "dataErrorMessage":
+			if _, ok := fieldSeen[botrunner.FieldDataErrorMessage]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataErrorMessage)
+				fieldSeen[botrunner.FieldDataErrorMessage] = struct{}{}
+			}
+		case "dataDownloadConfig":
+			if _, ok := fieldSeen[botrunner.FieldDataDownloadConfig]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataDownloadConfig)
+				fieldSeen[botrunner.FieldDataDownloadConfig] = struct{}{}
+			}
 		case "createdAt":
 			if _, ok := fieldSeen[botrunner.FieldCreatedAt]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldCreatedAt)

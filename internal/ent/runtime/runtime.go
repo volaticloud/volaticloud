@@ -78,18 +78,23 @@ func init() {
 	botmetrics.DefaultID = botmetricsDescID.Default.(func() uuid.UUID)
 	botrunnerHooks := schema.BotRunner{}.Hooks()
 	botrunner.Hooks[0] = botrunnerHooks[0]
+	botrunner.Hooks[1] = botrunnerHooks[1]
 	botrunnerFields := schema.BotRunner{}.Fields()
 	_ = botrunnerFields
 	// botrunnerDescName is the schema descriptor for name field.
 	botrunnerDescName := botrunnerFields[1].Descriptor()
 	// botrunner.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	botrunner.NameValidator = botrunnerDescName.Validators[0].(func(string) error)
+	// botrunnerDescDataIsReady is the schema descriptor for data_is_ready field.
+	botrunnerDescDataIsReady := botrunnerFields[4].Descriptor()
+	// botrunner.DefaultDataIsReady holds the default value on creation for the data_is_ready field.
+	botrunner.DefaultDataIsReady = botrunnerDescDataIsReady.Default.(bool)
 	// botrunnerDescCreatedAt is the schema descriptor for created_at field.
-	botrunnerDescCreatedAt := botrunnerFields[4].Descriptor()
+	botrunnerDescCreatedAt := botrunnerFields[10].Descriptor()
 	// botrunner.DefaultCreatedAt holds the default value on creation for the created_at field.
 	botrunner.DefaultCreatedAt = botrunnerDescCreatedAt.Default.(func() time.Time)
 	// botrunnerDescUpdatedAt is the schema descriptor for updated_at field.
-	botrunnerDescUpdatedAt := botrunnerFields[5].Descriptor()
+	botrunnerDescUpdatedAt := botrunnerFields[11].Descriptor()
 	// botrunner.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	botrunner.DefaultUpdatedAt = botrunnerDescUpdatedAt.Default.(func() time.Time)
 	// botrunner.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -563,7 +563,21 @@ export type BotRunner = Node & {
   __typename?: 'BotRunner';
   backtests: BacktestConnection;
   bots: BotConnection;
+  /** Runner connection configuration (host, port, credentials, etc.) */
+  config?: Maybe<Scalars['Map']['output']>;
   createdAt: Scalars['Time']['output'];
+  /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
+  dataDownloadConfig?: Maybe<Scalars['Map']['output']>;
+  /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
+  dataDownloadProgress?: Maybe<Scalars['Map']['output']>;
+  /** Current data download status (idle, downloading, completed, failed) */
+  dataDownloadStatus: BotRunnerDataDownloadStatus;
+  /** Error message if data download failed */
+  dataErrorMessage?: Maybe<Scalars['String']['output']>;
+  /** Whether runner has downloaded historical data for backtesting */
+  dataIsReady: Scalars['Boolean']['output'];
+  /** When data was last refreshed */
+  dataLastUpdated?: Maybe<Scalars['Time']['output']>;
   id: Scalars['ID']['output'];
   /** Runner display name */
   name: Scalars['String']['output'];
@@ -601,6 +615,14 @@ export type BotRunnerConnection = {
   totalCount: Scalars['Int']['output'];
 };
 
+/** BotRunnerDataDownloadStatus is enum for the field data_download_status */
+export enum BotRunnerDataDownloadStatus {
+  Completed = 'completed',
+  Downloading = 'downloading',
+  Failed = 'failed',
+  Idle = 'idle'
+}
+
 /** An edge in a connection. */
 export type BotRunnerEdge = {
   __typename?: 'BotRunnerEdge';
@@ -632,6 +654,41 @@ export type BotRunnerWhereInput = {
   createdAtLTE?: InputMaybe<Scalars['Time']['input']>;
   createdAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   createdAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** data_download_status field predicates */
+  dataDownloadStatus?: InputMaybe<BotRunnerDataDownloadStatus>;
+  dataDownloadStatusIn?: InputMaybe<Array<BotRunnerDataDownloadStatus>>;
+  dataDownloadStatusNEQ?: InputMaybe<BotRunnerDataDownloadStatus>;
+  dataDownloadStatusNotIn?: InputMaybe<Array<BotRunnerDataDownloadStatus>>;
+  /** data_error_message field predicates */
+  dataErrorMessage?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageContains?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageContainsFold?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageEqualFold?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageGT?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageGTE?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  dataErrorMessageIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  dataErrorMessageLT?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageLTE?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageNEQ?: InputMaybe<Scalars['String']['input']>;
+  dataErrorMessageNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  dataErrorMessageNotNil?: InputMaybe<Scalars['Boolean']['input']>;
+  /** data_is_ready field predicates */
+  dataIsReady?: InputMaybe<Scalars['Boolean']['input']>;
+  dataIsReadyNEQ?: InputMaybe<Scalars['Boolean']['input']>;
+  /** data_last_updated field predicates */
+  dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
+  dataLastUpdatedGT?: InputMaybe<Scalars['Time']['input']>;
+  dataLastUpdatedGTE?: InputMaybe<Scalars['Time']['input']>;
+  dataLastUpdatedIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  dataLastUpdatedIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  dataLastUpdatedLT?: InputMaybe<Scalars['Time']['input']>;
+  dataLastUpdatedLTE?: InputMaybe<Scalars['Time']['input']>;
+  dataLastUpdatedNEQ?: InputMaybe<Scalars['Time']['input']>;
+  dataLastUpdatedNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  dataLastUpdatedNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** backtests edge predicates */
   hasBacktests?: InputMaybe<Scalars['Boolean']['input']>;
   hasBacktestsWith?: InputMaybe<Array<BacktestWhereInput>>;
@@ -957,8 +1014,20 @@ export type CreateBotRunnerInput = {
   backtestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   botIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Runner connection configuration (host, port, credentials, etc.) */
-  config?: InputMaybe<RunnerConfigInput>;
+  config?: InputMaybe<Scalars['Map']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
+  /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
+  dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
+  /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
+  dataDownloadProgress?: InputMaybe<Scalars['Map']['input']>;
+  /** Current data download status (idle, downloading, completed, failed) */
+  dataDownloadStatus?: InputMaybe<BotRunnerDataDownloadStatus>;
+  /** Error message if data download failed */
+  dataErrorMessage?: InputMaybe<Scalars['String']['input']>;
+  /** Whether runner has downloaded historical data for backtesting */
+  dataIsReady?: InputMaybe<Scalars['Boolean']['input']>;
+  /** When data was last refreshed */
+  dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
   /** Runner display name */
   name: Scalars['String']['input'];
   /** Runner environment type (docker, kubernetes, local) */
@@ -1037,6 +1106,19 @@ export type CreateTradeInput = {
   /** Timeframe used */
   timeframe?: InputMaybe<Scalars['String']['input']>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
+};
+
+export type DataDownloadConfigInput = {
+  exchanges: Array<DataDownloadExchangeConfigInput>;
+};
+
+export type DataDownloadExchangeConfigInput = {
+  days?: InputMaybe<Scalars['Int']['input']>;
+  enabled: Scalars['Boolean']['input'];
+  name: Scalars['String']['input'];
+  pairsPattern?: InputMaybe<Scalars['String']['input']>;
+  timeframes?: InputMaybe<Array<Scalars['String']['input']>>;
+  tradingMode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DockerConfigInput = {
@@ -1165,6 +1247,7 @@ export type Mutation = {
   deleteExchange: Scalars['Boolean']['output'];
   deleteStrategy: Scalars['Boolean']['output'];
   deleteTrade: Scalars['Boolean']['output'];
+  refreshRunnerData: BotRunner;
   restartBot: Bot;
   runBacktest: Backtest;
   startBot: Bot;
@@ -1235,6 +1318,11 @@ export type MutationDeleteStrategyArgs = {
 
 
 export type MutationDeleteTradeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRefreshRunnerDataArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -1975,8 +2063,24 @@ export type UpdateBotRunnerInput = {
   clearBacktests?: InputMaybe<Scalars['Boolean']['input']>;
   clearBots?: InputMaybe<Scalars['Boolean']['input']>;
   clearConfig?: InputMaybe<Scalars['Boolean']['input']>;
+  clearDataDownloadConfig?: InputMaybe<Scalars['Boolean']['input']>;
+  clearDataDownloadProgress?: InputMaybe<Scalars['Boolean']['input']>;
+  clearDataErrorMessage?: InputMaybe<Scalars['Boolean']['input']>;
+  clearDataLastUpdated?: InputMaybe<Scalars['Boolean']['input']>;
   /** Runner connection configuration (host, port, credentials, etc.) */
-  config?: InputMaybe<RunnerConfigInput>;
+  config?: InputMaybe<Scalars['Map']['input']>;
+  /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
+  dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
+  /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
+  dataDownloadProgress?: InputMaybe<Scalars['Map']['input']>;
+  /** Current data download status (idle, downloading, completed, failed) */
+  dataDownloadStatus?: InputMaybe<BotRunnerDataDownloadStatus>;
+  /** Error message if data download failed */
+  dataErrorMessage?: InputMaybe<Scalars['String']['input']>;
+  /** Whether runner has downloaded historical data for backtesting */
+  dataIsReady?: InputMaybe<Scalars['Boolean']['input']>;
+  /** When data was last refreshed */
+  dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
   /** Runner display name */
   name?: InputMaybe<Scalars['String']['input']>;
   removeBacktestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -2262,7 +2366,7 @@ export type GetRunnersQueryVariables = Exact<{
 }>;
 
 
-export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: BotRunnerDataDownloadStatus, dataDownloadProgress?: any | null, dataDownloadConfig?: any | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetRunnerQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2273,7 +2377,7 @@ export type GetRunnerQuery = { __typename?: 'Query', node?:
     | { __typename?: 'Backtest' }
     | { __typename?: 'Bot' }
     | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number } }
+    | { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: BotRunnerDataDownloadStatus, dataDownloadProgress?: any | null, dataDownloadConfig?: any | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } }
     | { __typename?: 'Exchange' }
     | { __typename?: 'Strategy' }
     | { __typename?: 'Trade' }
@@ -2284,7 +2388,7 @@ export type CreateRunnerMutationVariables = Exact<{
 }>;
 
 
-export type CreateRunnerMutation = { __typename?: 'Mutation', createBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType } };
+export type CreateRunnerMutation = { __typename?: 'Mutation', createBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, dataDownloadConfig?: any | null } };
 
 export type UpdateRunnerMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2292,7 +2396,7 @@ export type UpdateRunnerMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRunnerMutation = { __typename?: 'Mutation', updateBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType } };
+export type UpdateRunnerMutation = { __typename?: 'Mutation', updateBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, dataDownloadConfig?: any | null } };
 
 export type DeleteRunnerMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2300,6 +2404,13 @@ export type DeleteRunnerMutationVariables = Exact<{
 
 
 export type DeleteRunnerMutation = { __typename?: 'Mutation', deleteBotRunner: boolean };
+
+export type RefreshRunnerDataMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RefreshRunnerDataMutation = { __typename?: 'Mutation', refreshRunnerData: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: BotRunnerDataDownloadStatus, dataDownloadProgress?: any | null, dataErrorMessage?: string | null } };
 
 export type GetStrategiesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -3512,6 +3623,12 @@ export const GetRunnersDocument = gql`
         name
         type
         createdAt
+        dataIsReady
+        dataLastUpdated
+        dataDownloadStatus
+        dataDownloadProgress
+        dataDownloadConfig
+        dataErrorMessage
         bots {
           totalCount
         }
@@ -3569,6 +3686,12 @@ export const GetRunnerDocument = gql`
       name
       type
       createdAt
+      dataIsReady
+      dataLastUpdated
+      dataDownloadStatus
+      dataDownloadProgress
+      dataDownloadConfig
+      dataErrorMessage
       bots {
         totalCount
       }
@@ -3615,6 +3738,7 @@ export const CreateRunnerDocument = gql`
     id
     name
     type
+    dataDownloadConfig
   }
 }
     `;
@@ -3650,6 +3774,7 @@ export const UpdateRunnerDocument = gql`
     id
     name
     type
+    dataDownloadConfig
   }
 }
     `;
@@ -3711,6 +3836,46 @@ export function useDeleteRunnerMutation(baseOptions?: Apollo.MutationHookOptions
 export type DeleteRunnerMutationHookResult = ReturnType<typeof useDeleteRunnerMutation>;
 export type DeleteRunnerMutationResult = Apollo.MutationResult<DeleteRunnerMutation>;
 export type DeleteRunnerMutationOptions = Apollo.BaseMutationOptions<DeleteRunnerMutation, DeleteRunnerMutationVariables>;
+export const RefreshRunnerDataDocument = gql`
+    mutation RefreshRunnerData($id: ID!) {
+  refreshRunnerData(id: $id) {
+    id
+    name
+    type
+    dataIsReady
+    dataLastUpdated
+    dataDownloadStatus
+    dataDownloadProgress
+    dataErrorMessage
+  }
+}
+    `;
+export type RefreshRunnerDataMutationFn = Apollo.MutationFunction<RefreshRunnerDataMutation, RefreshRunnerDataMutationVariables>;
+
+/**
+ * __useRefreshRunnerDataMutation__
+ *
+ * To run a mutation, you first call `useRefreshRunnerDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRefreshRunnerDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [refreshRunnerDataMutation, { data, loading, error }] = useRefreshRunnerDataMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRefreshRunnerDataMutation(baseOptions?: Apollo.MutationHookOptions<RefreshRunnerDataMutation, RefreshRunnerDataMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RefreshRunnerDataMutation, RefreshRunnerDataMutationVariables>(RefreshRunnerDataDocument, options);
+      }
+export type RefreshRunnerDataMutationHookResult = ReturnType<typeof useRefreshRunnerDataMutation>;
+export type RefreshRunnerDataMutationResult = Apollo.MutationResult<RefreshRunnerDataMutation>;
+export type RefreshRunnerDataMutationOptions = Apollo.BaseMutationOptions<RefreshRunnerDataMutation, RefreshRunnerDataMutationVariables>;
 export const GetStrategiesDocument = gql`
     query GetStrategies($first: Int, $after: Cursor) {
   strategies(first: $first, after: $after) {

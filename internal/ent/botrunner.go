@@ -26,6 +26,18 @@ type BotRunner struct {
 	Type enum.RunnerType `json:"type,omitempty"`
 	// Runner connection configuration (host, port, credentials, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
+	// Whether runner has downloaded historical data for backtesting
+	DataIsReady bool `json:"data_is_ready,omitempty"`
+	// When data was last refreshed
+	DataLastUpdated time.Time `json:"data_last_updated,omitempty"`
+	// Current data download status (idle, downloading, completed, failed)
+	DataDownloadStatus enum.DataDownloadStatus `json:"data_download_status,omitempty"`
+	// Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}
+	DataDownloadProgress map[string]interface{} `json:"data_download_progress,omitempty"`
+	// Error message if data download failed
+	DataErrorMessage string `json:"data_error_message,omitempty"`
+	// Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
+	DataDownloadConfig map[string]interface{} `json:"data_download_config,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -75,11 +87,13 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case botrunner.FieldConfig:
+		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig:
 			values[i] = new([]byte)
-		case botrunner.FieldName, botrunner.FieldType:
+		case botrunner.FieldDataIsReady:
+			values[i] = new(sql.NullBool)
+		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage:
 			values[i] = new(sql.NullString)
-		case botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
+		case botrunner.FieldDataLastUpdated, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case botrunner.FieldID:
 			values[i] = new(uuid.UUID)
@@ -122,6 +136,46 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &_m.Config); err != nil {
 					return fmt.Errorf("unmarshal field config: %w", err)
+				}
+			}
+		case botrunner.FieldDataIsReady:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field data_is_ready", values[i])
+			} else if value.Valid {
+				_m.DataIsReady = value.Bool
+			}
+		case botrunner.FieldDataLastUpdated:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field data_last_updated", values[i])
+			} else if value.Valid {
+				_m.DataLastUpdated = value.Time
+			}
+		case botrunner.FieldDataDownloadStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field data_download_status", values[i])
+			} else if value.Valid {
+				_m.DataDownloadStatus = enum.DataDownloadStatus(value.String)
+			}
+		case botrunner.FieldDataDownloadProgress:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field data_download_progress", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DataDownloadProgress); err != nil {
+					return fmt.Errorf("unmarshal field data_download_progress: %w", err)
+				}
+			}
+		case botrunner.FieldDataErrorMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field data_error_message", values[i])
+			} else if value.Valid {
+				_m.DataErrorMessage = value.String
+			}
+		case botrunner.FieldDataDownloadConfig:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field data_download_config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DataDownloadConfig); err != nil {
+					return fmt.Errorf("unmarshal field data_download_config: %w", err)
 				}
 			}
 		case botrunner.FieldCreatedAt:
@@ -190,6 +244,24 @@ func (_m *BotRunner) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))
+	builder.WriteString(", ")
+	builder.WriteString("data_is_ready=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DataIsReady))
+	builder.WriteString(", ")
+	builder.WriteString("data_last_updated=")
+	builder.WriteString(_m.DataLastUpdated.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("data_download_status=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadStatus))
+	builder.WriteString(", ")
+	builder.WriteString("data_download_progress=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadProgress))
+	builder.WriteString(", ")
+	builder.WriteString("data_error_message=")
+	builder.WriteString(_m.DataErrorMessage)
+	builder.WriteString(", ")
+	builder.WriteString("data_download_config=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadConfig))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

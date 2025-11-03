@@ -6,7 +6,6 @@ package graph
 
 import (
 	"anytrade/internal/ent"
-	"anytrade/internal/graph/model"
 	"context"
 	"fmt"
 
@@ -50,7 +49,18 @@ func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UU
 	return r.client.Trade.Query().Paginate(ctx, after, first, before, last)
 }
 
-func (r *createBotRunnerInputResolver) Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error {
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *createBotRunnerInputResolver) Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error {
 	if data == nil {
 		return nil
 	}
@@ -64,7 +74,9 @@ func (r *createBotRunnerInputResolver) Config(ctx context.Context, obj *ent.Crea
 	obj.Config = configMap
 	return nil
 }
-
+func (r *createBotRunnerInputResolver) DataDownloadConfig(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.DataDownloadConfigInput) error {
+	panic(fmt.Errorf("not implemented: DataDownloadConfig - dataDownloadConfig"))
+}
 func (r *updateBotRunnerInputResolver) Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error {
 	if data == nil {
 		return nil
@@ -79,17 +91,15 @@ func (r *updateBotRunnerInputResolver) Config(ctx context.Context, obj *ent.Upda
 	obj.Config = configMap
 	return nil
 }
-
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
+func (r *updateBotRunnerInputResolver) DataDownloadConfig(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.DataDownloadConfigInput) error {
+	panic(fmt.Errorf("not implemented: DataDownloadConfig - dataDownloadConfig"))
+}
 func (r *Resolver) CreateBotRunnerInput() CreateBotRunnerInputResolver {
 	return &createBotRunnerInputResolver{r}
 }
-
 func (r *Resolver) UpdateBotRunnerInput() UpdateBotRunnerInputResolver {
 	return &updateBotRunnerInputResolver{r}
 }
-
-type queryResolver struct{ *Resolver }
 type createBotRunnerInputResolver struct{ *Resolver }
 type updateBotRunnerInputResolver struct{ *Resolver }
+*/

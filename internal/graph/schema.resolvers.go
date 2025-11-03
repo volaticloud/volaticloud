@@ -9,10 +9,13 @@ import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
 	"anytrade/internal/enum"
+	"anytrade/internal/monitor"
 	"anytrade/internal/runner"
 	"context"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -377,6 +380,65 @@ func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, in
 func (r *mutationResolver) DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error) {
 	err := r.client.BotRunner.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
+}
+
+func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) (*ent.BotRunner, error) {
+	// Load the runner
+	runner, err := r.client.BotRunner.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load runner: %w", err)
+	}
+
+	// Check if already downloading
+	if runner.DataDownloadStatus == enum.DataDownloadStatusDownloading {
+		return nil, fmt.Errorf("data download already in progress for runner %s", runner.Name)
+	}
+
+	// Update status to downloading and clear any previous errors
+	runner, err = r.client.BotRunner.UpdateOneID(id).
+		SetDataDownloadStatus(enum.DataDownloadStatusDownloading).
+		SetDataDownloadProgress(map[string]interface{}{
+			"pairs_completed":  0,
+			"pairs_total":      0,
+			"current_pair":     "",
+			"percent_complete": 0.0,
+		}).
+		ClearDataErrorMessage().
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update runner status: %w", err)
+	}
+
+	// Trigger download in background goroutine
+	go func() {
+		downloadCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		defer cancel()
+
+		if err := monitor.DownloadRunnerData(downloadCtx, r.client, runner); err != nil {
+			log.Printf("Runner %s: data download failed: %v", runner.Name, err)
+
+			// Update status to failed
+			r.client.BotRunner.UpdateOne(runner).
+				SetDataDownloadStatus(enum.DataDownloadStatusFailed).
+				SetDataIsReady(false).
+				SetDataErrorMessage(err.Error()).
+				Save(context.Background())
+		} else {
+			log.Printf("Runner %s: data download completed successfully", runner.Name)
+
+			// Update status to completed
+			now := time.Now()
+			r.client.BotRunner.UpdateOne(runner).
+				SetDataDownloadStatus(enum.DataDownloadStatusCompleted).
+				SetDataIsReady(true).
+				SetDataLastUpdated(now).
+				ClearDataErrorMessage().
+				ClearDataDownloadProgress().
+				Save(context.Background())
+		}
+	}()
+
+	return runner, nil
 }
 
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {

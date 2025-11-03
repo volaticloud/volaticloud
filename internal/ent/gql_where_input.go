@@ -2187,6 +2187,45 @@ type BotRunnerWhereInput struct {
 	TypeIn    []enum.RunnerType `json:"typeIn,omitempty"`
 	TypeNotIn []enum.RunnerType `json:"typeNotIn,omitempty"`
 
+	// "data_is_ready" field predicates.
+	DataIsReady    *bool `json:"dataIsReady,omitempty"`
+	DataIsReadyNEQ *bool `json:"dataIsReadyNEQ,omitempty"`
+
+	// "data_last_updated" field predicates.
+	DataLastUpdated       *time.Time  `json:"dataLastUpdated,omitempty"`
+	DataLastUpdatedNEQ    *time.Time  `json:"dataLastUpdatedNEQ,omitempty"`
+	DataLastUpdatedIn     []time.Time `json:"dataLastUpdatedIn,omitempty"`
+	DataLastUpdatedNotIn  []time.Time `json:"dataLastUpdatedNotIn,omitempty"`
+	DataLastUpdatedGT     *time.Time  `json:"dataLastUpdatedGT,omitempty"`
+	DataLastUpdatedGTE    *time.Time  `json:"dataLastUpdatedGTE,omitempty"`
+	DataLastUpdatedLT     *time.Time  `json:"dataLastUpdatedLT,omitempty"`
+	DataLastUpdatedLTE    *time.Time  `json:"dataLastUpdatedLTE,omitempty"`
+	DataLastUpdatedIsNil  bool        `json:"dataLastUpdatedIsNil,omitempty"`
+	DataLastUpdatedNotNil bool        `json:"dataLastUpdatedNotNil,omitempty"`
+
+	// "data_download_status" field predicates.
+	DataDownloadStatus      *enum.DataDownloadStatus  `json:"dataDownloadStatus,omitempty"`
+	DataDownloadStatusNEQ   *enum.DataDownloadStatus  `json:"dataDownloadStatusNEQ,omitempty"`
+	DataDownloadStatusIn    []enum.DataDownloadStatus `json:"dataDownloadStatusIn,omitempty"`
+	DataDownloadStatusNotIn []enum.DataDownloadStatus `json:"dataDownloadStatusNotIn,omitempty"`
+
+	// "data_error_message" field predicates.
+	DataErrorMessage             *string  `json:"dataErrorMessage,omitempty"`
+	DataErrorMessageNEQ          *string  `json:"dataErrorMessageNEQ,omitempty"`
+	DataErrorMessageIn           []string `json:"dataErrorMessageIn,omitempty"`
+	DataErrorMessageNotIn        []string `json:"dataErrorMessageNotIn,omitempty"`
+	DataErrorMessageGT           *string  `json:"dataErrorMessageGT,omitempty"`
+	DataErrorMessageGTE          *string  `json:"dataErrorMessageGTE,omitempty"`
+	DataErrorMessageLT           *string  `json:"dataErrorMessageLT,omitempty"`
+	DataErrorMessageLTE          *string  `json:"dataErrorMessageLTE,omitempty"`
+	DataErrorMessageContains     *string  `json:"dataErrorMessageContains,omitempty"`
+	DataErrorMessageHasPrefix    *string  `json:"dataErrorMessageHasPrefix,omitempty"`
+	DataErrorMessageHasSuffix    *string  `json:"dataErrorMessageHasSuffix,omitempty"`
+	DataErrorMessageIsNil        bool     `json:"dataErrorMessageIsNil,omitempty"`
+	DataErrorMessageNotNil       bool     `json:"dataErrorMessageNotNil,omitempty"`
+	DataErrorMessageEqualFold    *string  `json:"dataErrorMessageEqualFold,omitempty"`
+	DataErrorMessageContainsFold *string  `json:"dataErrorMessageContainsFold,omitempty"`
+
 	// "created_at" field predicates.
 	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
 	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
@@ -2361,6 +2400,99 @@ func (i *BotRunnerWhereInput) P() (predicate.BotRunner, error) {
 	}
 	if len(i.TypeNotIn) > 0 {
 		predicates = append(predicates, botrunner.TypeNotIn(i.TypeNotIn...))
+	}
+	if i.DataIsReady != nil {
+		predicates = append(predicates, botrunner.DataIsReadyEQ(*i.DataIsReady))
+	}
+	if i.DataIsReadyNEQ != nil {
+		predicates = append(predicates, botrunner.DataIsReadyNEQ(*i.DataIsReadyNEQ))
+	}
+	if i.DataLastUpdated != nil {
+		predicates = append(predicates, botrunner.DataLastUpdatedEQ(*i.DataLastUpdated))
+	}
+	if i.DataLastUpdatedNEQ != nil {
+		predicates = append(predicates, botrunner.DataLastUpdatedNEQ(*i.DataLastUpdatedNEQ))
+	}
+	if len(i.DataLastUpdatedIn) > 0 {
+		predicates = append(predicates, botrunner.DataLastUpdatedIn(i.DataLastUpdatedIn...))
+	}
+	if len(i.DataLastUpdatedNotIn) > 0 {
+		predicates = append(predicates, botrunner.DataLastUpdatedNotIn(i.DataLastUpdatedNotIn...))
+	}
+	if i.DataLastUpdatedGT != nil {
+		predicates = append(predicates, botrunner.DataLastUpdatedGT(*i.DataLastUpdatedGT))
+	}
+	if i.DataLastUpdatedGTE != nil {
+		predicates = append(predicates, botrunner.DataLastUpdatedGTE(*i.DataLastUpdatedGTE))
+	}
+	if i.DataLastUpdatedLT != nil {
+		predicates = append(predicates, botrunner.DataLastUpdatedLT(*i.DataLastUpdatedLT))
+	}
+	if i.DataLastUpdatedLTE != nil {
+		predicates = append(predicates, botrunner.DataLastUpdatedLTE(*i.DataLastUpdatedLTE))
+	}
+	if i.DataLastUpdatedIsNil {
+		predicates = append(predicates, botrunner.DataLastUpdatedIsNil())
+	}
+	if i.DataLastUpdatedNotNil {
+		predicates = append(predicates, botrunner.DataLastUpdatedNotNil())
+	}
+	if i.DataDownloadStatus != nil {
+		predicates = append(predicates, botrunner.DataDownloadStatusEQ(*i.DataDownloadStatus))
+	}
+	if i.DataDownloadStatusNEQ != nil {
+		predicates = append(predicates, botrunner.DataDownloadStatusNEQ(*i.DataDownloadStatusNEQ))
+	}
+	if len(i.DataDownloadStatusIn) > 0 {
+		predicates = append(predicates, botrunner.DataDownloadStatusIn(i.DataDownloadStatusIn...))
+	}
+	if len(i.DataDownloadStatusNotIn) > 0 {
+		predicates = append(predicates, botrunner.DataDownloadStatusNotIn(i.DataDownloadStatusNotIn...))
+	}
+	if i.DataErrorMessage != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageEQ(*i.DataErrorMessage))
+	}
+	if i.DataErrorMessageNEQ != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageNEQ(*i.DataErrorMessageNEQ))
+	}
+	if len(i.DataErrorMessageIn) > 0 {
+		predicates = append(predicates, botrunner.DataErrorMessageIn(i.DataErrorMessageIn...))
+	}
+	if len(i.DataErrorMessageNotIn) > 0 {
+		predicates = append(predicates, botrunner.DataErrorMessageNotIn(i.DataErrorMessageNotIn...))
+	}
+	if i.DataErrorMessageGT != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageGT(*i.DataErrorMessageGT))
+	}
+	if i.DataErrorMessageGTE != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageGTE(*i.DataErrorMessageGTE))
+	}
+	if i.DataErrorMessageLT != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageLT(*i.DataErrorMessageLT))
+	}
+	if i.DataErrorMessageLTE != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageLTE(*i.DataErrorMessageLTE))
+	}
+	if i.DataErrorMessageContains != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageContains(*i.DataErrorMessageContains))
+	}
+	if i.DataErrorMessageHasPrefix != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageHasPrefix(*i.DataErrorMessageHasPrefix))
+	}
+	if i.DataErrorMessageHasSuffix != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageHasSuffix(*i.DataErrorMessageHasSuffix))
+	}
+	if i.DataErrorMessageIsNil {
+		predicates = append(predicates, botrunner.DataErrorMessageIsNil())
+	}
+	if i.DataErrorMessageNotNil {
+		predicates = append(predicates, botrunner.DataErrorMessageNotNil())
+	}
+	if i.DataErrorMessageEqualFold != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageEqualFold(*i.DataErrorMessageEqualFold))
+	}
+	if i.DataErrorMessageContainsFold != nil {
+		predicates = append(predicates, botrunner.DataErrorMessageContainsFold(*i.DataErrorMessageContainsFold))
 	}
 	if i.CreatedAt != nil {
 		predicates = append(predicates, botrunner.CreatedAtEQ(*i.CreatedAt))

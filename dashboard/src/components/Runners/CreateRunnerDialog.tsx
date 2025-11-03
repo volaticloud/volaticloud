@@ -17,7 +17,8 @@ import {
   Checkbox,
 } from '@mui/material';
 import { useState } from 'react';
-import { useCreateRunnerMutation, type DockerConfigInput, type KubernetesConfigInput, type LocalConfigInput } from '../../generated/graphql';
+import { useCreateRunnerMutation, type DockerConfigInput, type KubernetesConfigInput, type LocalConfigInput, type DataDownloadConfigInput } from '../../generated/graphql';
+import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 
 interface CreateRunnerDialogProps {
   open: boolean;
@@ -40,6 +41,9 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
   // Local config state
   const [localConfig, setLocalConfig] = useState<LocalConfigInput>({});
 
+  // Data download config state
+  const [dataDownloadConfig, setDataDownloadConfig] = useState<DataDownloadConfigInput | null>(null);
+
   const [createRunner, { loading, error }] = useCreateRunnerMutation();
 
   const handleSubmit = async () => {
@@ -61,6 +65,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             name,
             type: type as any,
             config,
+            dataDownloadConfig,
           },
         },
       });
@@ -73,6 +78,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         setDockerConfig({ host: 'unix:///var/run/docker.sock' });
         setKubernetesConfig({});
         setLocalConfig({});
+        setDataDownloadConfig(null);
 
         onSuccess();
         onClose();
@@ -235,6 +241,13 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
               </FormHelperText>
             </Box>
           )}
+
+          <Divider sx={{ my: 2 }} />
+
+          <DataDownloadConfigEditor
+            value={dataDownloadConfig}
+            onChange={setDataDownloadConfig}
+          />
 
           {error && (
             <FormHelperText error>

@@ -50,6 +50,74 @@ func (_c *BotRunnerCreate) SetConfig(v map[string]interface{}) *BotRunnerCreate 
 	return _c
 }
 
+// SetDataIsReady sets the "data_is_ready" field.
+func (_c *BotRunnerCreate) SetDataIsReady(v bool) *BotRunnerCreate {
+	_c.mutation.SetDataIsReady(v)
+	return _c
+}
+
+// SetNillableDataIsReady sets the "data_is_ready" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableDataIsReady(v *bool) *BotRunnerCreate {
+	if v != nil {
+		_c.SetDataIsReady(*v)
+	}
+	return _c
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (_c *BotRunnerCreate) SetDataLastUpdated(v time.Time) *BotRunnerCreate {
+	_c.mutation.SetDataLastUpdated(v)
+	return _c
+}
+
+// SetNillableDataLastUpdated sets the "data_last_updated" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableDataLastUpdated(v *time.Time) *BotRunnerCreate {
+	if v != nil {
+		_c.SetDataLastUpdated(*v)
+	}
+	return _c
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (_c *BotRunnerCreate) SetDataDownloadStatus(v enum.DataDownloadStatus) *BotRunnerCreate {
+	_c.mutation.SetDataDownloadStatus(v)
+	return _c
+}
+
+// SetNillableDataDownloadStatus sets the "data_download_status" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableDataDownloadStatus(v *enum.DataDownloadStatus) *BotRunnerCreate {
+	if v != nil {
+		_c.SetDataDownloadStatus(*v)
+	}
+	return _c
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (_c *BotRunnerCreate) SetDataDownloadProgress(v map[string]interface{}) *BotRunnerCreate {
+	_c.mutation.SetDataDownloadProgress(v)
+	return _c
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (_c *BotRunnerCreate) SetDataErrorMessage(v string) *BotRunnerCreate {
+	_c.mutation.SetDataErrorMessage(v)
+	return _c
+}
+
+// SetNillableDataErrorMessage sets the "data_error_message" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableDataErrorMessage(v *string) *BotRunnerCreate {
+	if v != nil {
+		_c.SetDataErrorMessage(*v)
+	}
+	return _c
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (_c *BotRunnerCreate) SetDataDownloadConfig(v map[string]interface{}) *BotRunnerCreate {
+	_c.mutation.SetDataDownloadConfig(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *BotRunnerCreate) SetCreatedAt(v time.Time) *BotRunnerCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -163,6 +231,14 @@ func (_c *BotRunnerCreate) defaults() error {
 		v := botrunner.DefaultType
 		_c.mutation.SetType(v)
 	}
+	if _, ok := _c.mutation.DataIsReady(); !ok {
+		v := botrunner.DefaultDataIsReady
+		_c.mutation.SetDataIsReady(v)
+	}
+	if _, ok := _c.mutation.DataDownloadStatus(); !ok {
+		v := botrunner.DefaultDataDownloadStatus
+		_c.mutation.SetDataDownloadStatus(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		if botrunner.DefaultCreatedAt == nil {
 			return fmt.Errorf("ent: uninitialized botrunner.DefaultCreatedAt (forgotten import ent/runtime?)")
@@ -203,6 +279,17 @@ func (_c *BotRunnerCreate) check() error {
 	if v, ok := _c.mutation.GetType(); ok {
 		if err := botrunner.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRunner.type": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.DataIsReady(); !ok {
+		return &ValidationError{Name: "data_is_ready", err: errors.New(`ent: missing required field "BotRunner.data_is_ready"`)}
+	}
+	if _, ok := _c.mutation.DataDownloadStatus(); !ok {
+		return &ValidationError{Name: "data_download_status", err: errors.New(`ent: missing required field "BotRunner.data_download_status"`)}
+	}
+	if v, ok := _c.mutation.DataDownloadStatus(); ok {
+		if err := botrunner.DataDownloadStatusValidator(v); err != nil {
+			return &ValidationError{Name: "data_download_status", err: fmt.Errorf(`ent: validator failed for field "BotRunner.data_download_status": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
@@ -257,6 +344,30 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(botrunner.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
+	}
+	if value, ok := _c.mutation.DataIsReady(); ok {
+		_spec.SetField(botrunner.FieldDataIsReady, field.TypeBool, value)
+		_node.DataIsReady = value
+	}
+	if value, ok := _c.mutation.DataLastUpdated(); ok {
+		_spec.SetField(botrunner.FieldDataLastUpdated, field.TypeTime, value)
+		_node.DataLastUpdated = value
+	}
+	if value, ok := _c.mutation.DataDownloadStatus(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadStatus, field.TypeEnum, value)
+		_node.DataDownloadStatus = value
+	}
+	if value, ok := _c.mutation.DataDownloadProgress(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadProgress, field.TypeJSON, value)
+		_node.DataDownloadProgress = value
+	}
+	if value, ok := _c.mutation.DataErrorMessage(); ok {
+		_spec.SetField(botrunner.FieldDataErrorMessage, field.TypeString, value)
+		_node.DataErrorMessage = value
+	}
+	if value, ok := _c.mutation.DataDownloadConfig(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadConfig, field.TypeJSON, value)
+		_node.DataDownloadConfig = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(botrunner.FieldCreatedAt, field.TypeTime, value)

@@ -40,6 +40,21 @@ input RunnerConfigInput {
   local: LocalConfigInput
 }
 
+# Runner data download configuration
+
+input DataDownloadExchangeConfigInput {
+  name: String!
+  enabled: Boolean!
+  timeframes: [String!]
+  pairsPattern: String
+  days: Int
+  tradingMode: String
+}
+
+input DataDownloadConfigInput {
+  exchanges: [DataDownloadExchangeConfigInput!]!
+}
+
 # Exchange configuration inputs
 
 input BinanceConfigInput {
@@ -129,6 +144,9 @@ type Mutation {
   createBotRunner(input: CreateBotRunnerInput!): BotRunner!
   updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner!
   deleteBotRunner(id: ID!): Boolean!
+
+  # Runner data management
+  refreshRunnerData(id: ID!): BotRunner!
 
   # Backtest mutations
   createBacktest(input: CreateBacktestInput!): Backtest!

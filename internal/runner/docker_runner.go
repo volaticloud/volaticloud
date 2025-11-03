@@ -448,6 +448,11 @@ func (d *DockerRuntime) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
+// GetClient returns the Docker client for direct API access
+func (d *DockerRuntime) GetClient() *client.Client {
+	return d.client
+}
+
 // Close closes the Docker client
 func (d *DockerRuntime) Close() error {
 	if d.client != nil {

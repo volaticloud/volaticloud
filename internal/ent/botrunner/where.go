@@ -62,6 +62,21 @@ func Name(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldName, v))
 }
 
+// DataIsReady applies equality check predicate on the "data_is_ready" field. It's identical to DataIsReadyEQ.
+func DataIsReady(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataIsReady, v))
+}
+
+// DataLastUpdated applies equality check predicate on the "data_last_updated" field. It's identical to DataLastUpdatedEQ.
+func DataLastUpdated(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataLastUpdated, v))
+}
+
+// DataErrorMessage applies equality check predicate on the "data_error_message" field. It's identical to DataErrorMessageEQ.
+func DataErrorMessage(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataErrorMessage, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldCreatedAt, v))
@@ -175,6 +190,191 @@ func ConfigIsNil() predicate.BotRunner {
 // ConfigNotNil applies the NotNil predicate on the "config" field.
 func ConfigNotNil() predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldNotNull(FieldConfig))
+}
+
+// DataIsReadyEQ applies the EQ predicate on the "data_is_ready" field.
+func DataIsReadyEQ(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataIsReady, v))
+}
+
+// DataIsReadyNEQ applies the NEQ predicate on the "data_is_ready" field.
+func DataIsReadyNEQ(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldDataIsReady, v))
+}
+
+// DataLastUpdatedEQ applies the EQ predicate on the "data_last_updated" field.
+func DataLastUpdatedEQ(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataLastUpdated, v))
+}
+
+// DataLastUpdatedNEQ applies the NEQ predicate on the "data_last_updated" field.
+func DataLastUpdatedNEQ(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldDataLastUpdated, v))
+}
+
+// DataLastUpdatedIn applies the In predicate on the "data_last_updated" field.
+func DataLastUpdatedIn(vs ...time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldDataLastUpdated, vs...))
+}
+
+// DataLastUpdatedNotIn applies the NotIn predicate on the "data_last_updated" field.
+func DataLastUpdatedNotIn(vs ...time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldDataLastUpdated, vs...))
+}
+
+// DataLastUpdatedGT applies the GT predicate on the "data_last_updated" field.
+func DataLastUpdatedGT(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldDataLastUpdated, v))
+}
+
+// DataLastUpdatedGTE applies the GTE predicate on the "data_last_updated" field.
+func DataLastUpdatedGTE(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldDataLastUpdated, v))
+}
+
+// DataLastUpdatedLT applies the LT predicate on the "data_last_updated" field.
+func DataLastUpdatedLT(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldDataLastUpdated, v))
+}
+
+// DataLastUpdatedLTE applies the LTE predicate on the "data_last_updated" field.
+func DataLastUpdatedLTE(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldDataLastUpdated, v))
+}
+
+// DataLastUpdatedIsNil applies the IsNil predicate on the "data_last_updated" field.
+func DataLastUpdatedIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldDataLastUpdated))
+}
+
+// DataLastUpdatedNotNil applies the NotNil predicate on the "data_last_updated" field.
+func DataLastUpdatedNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldDataLastUpdated))
+}
+
+// DataDownloadStatusEQ applies the EQ predicate on the "data_download_status" field.
+func DataDownloadStatusEQ(v enum.DataDownloadStatus) predicate.BotRunner {
+	vc := v
+	return predicate.BotRunner(sql.FieldEQ(FieldDataDownloadStatus, vc))
+}
+
+// DataDownloadStatusNEQ applies the NEQ predicate on the "data_download_status" field.
+func DataDownloadStatusNEQ(v enum.DataDownloadStatus) predicate.BotRunner {
+	vc := v
+	return predicate.BotRunner(sql.FieldNEQ(FieldDataDownloadStatus, vc))
+}
+
+// DataDownloadStatusIn applies the In predicate on the "data_download_status" field.
+func DataDownloadStatusIn(vs ...enum.DataDownloadStatus) predicate.BotRunner {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.BotRunner(sql.FieldIn(FieldDataDownloadStatus, v...))
+}
+
+// DataDownloadStatusNotIn applies the NotIn predicate on the "data_download_status" field.
+func DataDownloadStatusNotIn(vs ...enum.DataDownloadStatus) predicate.BotRunner {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.BotRunner(sql.FieldNotIn(FieldDataDownloadStatus, v...))
+}
+
+// DataDownloadProgressIsNil applies the IsNil predicate on the "data_download_progress" field.
+func DataDownloadProgressIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldDataDownloadProgress))
+}
+
+// DataDownloadProgressNotNil applies the NotNil predicate on the "data_download_progress" field.
+func DataDownloadProgressNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldDataDownloadProgress))
+}
+
+// DataErrorMessageEQ applies the EQ predicate on the "data_error_message" field.
+func DataErrorMessageEQ(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageNEQ applies the NEQ predicate on the "data_error_message" field.
+func DataErrorMessageNEQ(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageIn applies the In predicate on the "data_error_message" field.
+func DataErrorMessageIn(vs ...string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldDataErrorMessage, vs...))
+}
+
+// DataErrorMessageNotIn applies the NotIn predicate on the "data_error_message" field.
+func DataErrorMessageNotIn(vs ...string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldDataErrorMessage, vs...))
+}
+
+// DataErrorMessageGT applies the GT predicate on the "data_error_message" field.
+func DataErrorMessageGT(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageGTE applies the GTE predicate on the "data_error_message" field.
+func DataErrorMessageGTE(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageLT applies the LT predicate on the "data_error_message" field.
+func DataErrorMessageLT(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageLTE applies the LTE predicate on the "data_error_message" field.
+func DataErrorMessageLTE(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageContains applies the Contains predicate on the "data_error_message" field.
+func DataErrorMessageContains(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldContains(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageHasPrefix applies the HasPrefix predicate on the "data_error_message" field.
+func DataErrorMessageHasPrefix(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldHasPrefix(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageHasSuffix applies the HasSuffix predicate on the "data_error_message" field.
+func DataErrorMessageHasSuffix(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldHasSuffix(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageIsNil applies the IsNil predicate on the "data_error_message" field.
+func DataErrorMessageIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldDataErrorMessage))
+}
+
+// DataErrorMessageNotNil applies the NotNil predicate on the "data_error_message" field.
+func DataErrorMessageNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldDataErrorMessage))
+}
+
+// DataErrorMessageEqualFold applies the EqualFold predicate on the "data_error_message" field.
+func DataErrorMessageEqualFold(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEqualFold(FieldDataErrorMessage, v))
+}
+
+// DataErrorMessageContainsFold applies the ContainsFold predicate on the "data_error_message" field.
+func DataErrorMessageContainsFold(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldContainsFold(FieldDataErrorMessage, v))
+}
+
+// DataDownloadConfigIsNil applies the IsNil predicate on the "data_download_config" field.
+func DataDownloadConfigIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldDataDownloadConfig))
+}
+
+// DataDownloadConfigNotNil applies the NotNil predicate on the "data_download_config" field.
+func DataDownloadConfigNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldDataDownloadConfig))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

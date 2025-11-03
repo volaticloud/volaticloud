@@ -6,6 +6,12 @@ query GetRunners($first: Int, $after: Cursor) {
         name
         type
         createdAt
+        dataIsReady
+        dataLastUpdated
+        dataDownloadStatus
+        dataDownloadProgress
+        dataDownloadConfig
+        dataErrorMessage
         bots {
           totalCount
         }
@@ -28,6 +34,12 @@ query GetRunner($id: ID!) {
       name
       type
       createdAt
+      dataIsReady
+      dataLastUpdated
+      dataDownloadStatus
+      dataDownloadProgress
+      dataDownloadConfig
+      dataErrorMessage
       bots {
         totalCount
       }
@@ -40,6 +52,7 @@ mutation CreateRunner($input: CreateBotRunnerInput!) {
     id
     name
     type
+    dataDownloadConfig
   }
 }
 
@@ -48,9 +61,23 @@ mutation UpdateRunner($id: ID!, $input: UpdateBotRunnerInput!) {
     id
     name
     type
+    dataDownloadConfig
   }
 }
 
 mutation DeleteRunner($id: ID!) {
   deleteBotRunner(id: $id)
+}
+
+mutation RefreshRunnerData($id: ID!) {
+  refreshRunnerData(id: $id) {
+    id
+    name
+    type
+    dataIsReady
+    dataLastUpdated
+    dataDownloadStatus
+    dataDownloadProgress
+    dataErrorMessage
+  }
 }

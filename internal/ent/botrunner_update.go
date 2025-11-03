@@ -72,6 +72,98 @@ func (_u *BotRunnerUpdate) ClearConfig() *BotRunnerUpdate {
 	return _u
 }
 
+// SetDataIsReady sets the "data_is_ready" field.
+func (_u *BotRunnerUpdate) SetDataIsReady(v bool) *BotRunnerUpdate {
+	_u.mutation.SetDataIsReady(v)
+	return _u
+}
+
+// SetNillableDataIsReady sets the "data_is_ready" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableDataIsReady(v *bool) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetDataIsReady(*v)
+	}
+	return _u
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (_u *BotRunnerUpdate) SetDataLastUpdated(v time.Time) *BotRunnerUpdate {
+	_u.mutation.SetDataLastUpdated(v)
+	return _u
+}
+
+// SetNillableDataLastUpdated sets the "data_last_updated" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableDataLastUpdated(v *time.Time) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetDataLastUpdated(*v)
+	}
+	return _u
+}
+
+// ClearDataLastUpdated clears the value of the "data_last_updated" field.
+func (_u *BotRunnerUpdate) ClearDataLastUpdated() *BotRunnerUpdate {
+	_u.mutation.ClearDataLastUpdated()
+	return _u
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (_u *BotRunnerUpdate) SetDataDownloadStatus(v enum.DataDownloadStatus) *BotRunnerUpdate {
+	_u.mutation.SetDataDownloadStatus(v)
+	return _u
+}
+
+// SetNillableDataDownloadStatus sets the "data_download_status" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableDataDownloadStatus(v *enum.DataDownloadStatus) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetDataDownloadStatus(*v)
+	}
+	return _u
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (_u *BotRunnerUpdate) SetDataDownloadProgress(v map[string]interface{}) *BotRunnerUpdate {
+	_u.mutation.SetDataDownloadProgress(v)
+	return _u
+}
+
+// ClearDataDownloadProgress clears the value of the "data_download_progress" field.
+func (_u *BotRunnerUpdate) ClearDataDownloadProgress() *BotRunnerUpdate {
+	_u.mutation.ClearDataDownloadProgress()
+	return _u
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (_u *BotRunnerUpdate) SetDataErrorMessage(v string) *BotRunnerUpdate {
+	_u.mutation.SetDataErrorMessage(v)
+	return _u
+}
+
+// SetNillableDataErrorMessage sets the "data_error_message" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableDataErrorMessage(v *string) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetDataErrorMessage(*v)
+	}
+	return _u
+}
+
+// ClearDataErrorMessage clears the value of the "data_error_message" field.
+func (_u *BotRunnerUpdate) ClearDataErrorMessage() *BotRunnerUpdate {
+	_u.mutation.ClearDataErrorMessage()
+	return _u
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (_u *BotRunnerUpdate) SetDataDownloadConfig(v map[string]interface{}) *BotRunnerUpdate {
+	_u.mutation.SetDataDownloadConfig(v)
+	return _u
+}
+
+// ClearDataDownloadConfig clears the value of the "data_download_config" field.
+func (_u *BotRunnerUpdate) ClearDataDownloadConfig() *BotRunnerUpdate {
+	_u.mutation.ClearDataDownloadConfig()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotRunnerUpdate) SetUpdatedAt(v time.Time) *BotRunnerUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -209,6 +301,11 @@ func (_u *BotRunnerUpdate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRunner.type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.DataDownloadStatus(); ok {
+		if err := botrunner.DataDownloadStatusValidator(v); err != nil {
+			return &ValidationError{Name: "data_download_status", err: fmt.Errorf(`ent: validator failed for field "BotRunner.data_download_status": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -235,6 +332,36 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(botrunner.FieldConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.DataIsReady(); ok {
+		_spec.SetField(botrunner.FieldDataIsReady, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DataLastUpdated(); ok {
+		_spec.SetField(botrunner.FieldDataLastUpdated, field.TypeTime, value)
+	}
+	if _u.mutation.DataLastUpdatedCleared() {
+		_spec.ClearField(botrunner.FieldDataLastUpdated, field.TypeTime)
+	}
+	if value, ok := _u.mutation.DataDownloadStatus(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.DataDownloadProgress(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadProgress, field.TypeJSON, value)
+	}
+	if _u.mutation.DataDownloadProgressCleared() {
+		_spec.ClearField(botrunner.FieldDataDownloadProgress, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.DataErrorMessage(); ok {
+		_spec.SetField(botrunner.FieldDataErrorMessage, field.TypeString, value)
+	}
+	if _u.mutation.DataErrorMessageCleared() {
+		_spec.ClearField(botrunner.FieldDataErrorMessage, field.TypeString)
+	}
+	if value, ok := _u.mutation.DataDownloadConfig(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.DataDownloadConfigCleared() {
+		_spec.ClearField(botrunner.FieldDataDownloadConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
@@ -389,6 +516,98 @@ func (_u *BotRunnerUpdateOne) ClearConfig() *BotRunnerUpdateOne {
 	return _u
 }
 
+// SetDataIsReady sets the "data_is_ready" field.
+func (_u *BotRunnerUpdateOne) SetDataIsReady(v bool) *BotRunnerUpdateOne {
+	_u.mutation.SetDataIsReady(v)
+	return _u
+}
+
+// SetNillableDataIsReady sets the "data_is_ready" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableDataIsReady(v *bool) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetDataIsReady(*v)
+	}
+	return _u
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (_u *BotRunnerUpdateOne) SetDataLastUpdated(v time.Time) *BotRunnerUpdateOne {
+	_u.mutation.SetDataLastUpdated(v)
+	return _u
+}
+
+// SetNillableDataLastUpdated sets the "data_last_updated" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableDataLastUpdated(v *time.Time) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetDataLastUpdated(*v)
+	}
+	return _u
+}
+
+// ClearDataLastUpdated clears the value of the "data_last_updated" field.
+func (_u *BotRunnerUpdateOne) ClearDataLastUpdated() *BotRunnerUpdateOne {
+	_u.mutation.ClearDataLastUpdated()
+	return _u
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (_u *BotRunnerUpdateOne) SetDataDownloadStatus(v enum.DataDownloadStatus) *BotRunnerUpdateOne {
+	_u.mutation.SetDataDownloadStatus(v)
+	return _u
+}
+
+// SetNillableDataDownloadStatus sets the "data_download_status" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableDataDownloadStatus(v *enum.DataDownloadStatus) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetDataDownloadStatus(*v)
+	}
+	return _u
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (_u *BotRunnerUpdateOne) SetDataDownloadProgress(v map[string]interface{}) *BotRunnerUpdateOne {
+	_u.mutation.SetDataDownloadProgress(v)
+	return _u
+}
+
+// ClearDataDownloadProgress clears the value of the "data_download_progress" field.
+func (_u *BotRunnerUpdateOne) ClearDataDownloadProgress() *BotRunnerUpdateOne {
+	_u.mutation.ClearDataDownloadProgress()
+	return _u
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (_u *BotRunnerUpdateOne) SetDataErrorMessage(v string) *BotRunnerUpdateOne {
+	_u.mutation.SetDataErrorMessage(v)
+	return _u
+}
+
+// SetNillableDataErrorMessage sets the "data_error_message" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableDataErrorMessage(v *string) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetDataErrorMessage(*v)
+	}
+	return _u
+}
+
+// ClearDataErrorMessage clears the value of the "data_error_message" field.
+func (_u *BotRunnerUpdateOne) ClearDataErrorMessage() *BotRunnerUpdateOne {
+	_u.mutation.ClearDataErrorMessage()
+	return _u
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (_u *BotRunnerUpdateOne) SetDataDownloadConfig(v map[string]interface{}) *BotRunnerUpdateOne {
+	_u.mutation.SetDataDownloadConfig(v)
+	return _u
+}
+
+// ClearDataDownloadConfig clears the value of the "data_download_config" field.
+func (_u *BotRunnerUpdateOne) ClearDataDownloadConfig() *BotRunnerUpdateOne {
+	_u.mutation.ClearDataDownloadConfig()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotRunnerUpdateOne) SetUpdatedAt(v time.Time) *BotRunnerUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -539,6 +758,11 @@ func (_u *BotRunnerUpdateOne) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "BotRunner.type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.DataDownloadStatus(); ok {
+		if err := botrunner.DataDownloadStatusValidator(v); err != nil {
+			return &ValidationError{Name: "data_download_status", err: fmt.Errorf(`ent: validator failed for field "BotRunner.data_download_status": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -582,6 +806,36 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(botrunner.FieldConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.DataIsReady(); ok {
+		_spec.SetField(botrunner.FieldDataIsReady, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DataLastUpdated(); ok {
+		_spec.SetField(botrunner.FieldDataLastUpdated, field.TypeTime, value)
+	}
+	if _u.mutation.DataLastUpdatedCleared() {
+		_spec.ClearField(botrunner.FieldDataLastUpdated, field.TypeTime)
+	}
+	if value, ok := _u.mutation.DataDownloadStatus(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.DataDownloadProgress(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadProgress, field.TypeJSON, value)
+	}
+	if _u.mutation.DataDownloadProgressCleared() {
+		_spec.ClearField(botrunner.FieldDataDownloadProgress, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.DataErrorMessage(); ok {
+		_spec.SetField(botrunner.FieldDataErrorMessage, field.TypeString, value)
+	}
+	if _u.mutation.DataErrorMessageCleared() {
+		_spec.ClearField(botrunner.FieldDataErrorMessage, field.TypeString)
+	}
+	if value, ok := _u.mutation.DataDownloadConfig(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.DataDownloadConfigCleared() {
+		_spec.ClearField(botrunner.FieldDataDownloadConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)

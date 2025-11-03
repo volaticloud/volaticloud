@@ -17,17 +17,14 @@ import {
   Checkbox,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { useUpdateRunnerMutation, type DockerConfigInput, type KubernetesConfigInput, type LocalConfigInput } from '../../generated/graphql';
+import { useUpdateRunnerMutation, type DockerConfigInput, type KubernetesConfigInput, type LocalConfigInput, type DataDownloadConfigInput } from '../../generated/graphql';
+import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 
 interface EditRunnerDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  runner: {
-    id: string;
-    name: string;
-    type: 'docker' | 'kubernetes' | 'local';
-  };
+  runner: any; // Full runner data from GetRunners query
 }
 
 export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunnerDialogProps) => {
@@ -45,13 +42,21 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
   // Local config state
   const [localConfig, setLocalConfig] = useState<LocalConfigInput>({});
 
+  // Data download config state
+  const [dataDownloadConfig, setDataDownloadConfig] = useState<DataDownloadConfigInput | null>(null);
+
   const [updateRunner, { loading, error }] = useUpdateRunnerMutation();
 
-  // Reset form when runner changes
+  // Reset form when runner changes or dialog opens
   useEffect(() => {
-    setName(runner.name);
-    setType(runner.type);
-  }, [runner]);
+    if (open) {
+      setName(runner.name);
+      setType(runner.type);
+
+      // Load data download config if available
+      setDataDownloadConfig(runner.dataDownloadConfig || null);
+    }
+  }, [runner, open]);
 
   const handleSubmit = async () => {
     if (!name) {
@@ -73,6 +78,7 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
             name,
             type: type as any,
             config,
+            dataDownloadConfig,
           },
         },
       });
@@ -240,6 +246,13 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
               </FormHelperText>
             </Box>
           )}
+
+          <Divider sx={{ my: 2 }} />
+
+          <DataDownloadConfigEditor
+            value={dataDownloadConfig}
+            onChange={setDataDownloadConfig}
+          />
 
           {error && (
             <FormHelperText error>

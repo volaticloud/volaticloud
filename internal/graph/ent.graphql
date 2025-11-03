@@ -716,6 +716,34 @@ type BotRunner implements Node {
   Runner environment type (docker, kubernetes, local)
   """
   type: BotRunnerRunnerType!
+  """
+  Runner connection configuration (host, port, credentials, etc.)
+  """
+  config: Map
+  """
+  Whether runner has downloaded historical data for backtesting
+  """
+  dataIsReady: Boolean!
+  """
+  When data was last refreshed
+  """
+  dataLastUpdated: Time
+  """
+  Current data download status (idle, downloading, completed, failed)
+  """
+  dataDownloadStatus: BotRunnerDataDownloadStatus!
+  """
+  Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}
+  """
+  dataDownloadProgress: Map
+  """
+  Error message if data download failed
+  """
+  dataErrorMessage: String
+  """
+  Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
+  """
+  dataDownloadConfig: Map
   createdAt: Time!
   updatedAt: Time!
   bots(
@@ -789,6 +817,15 @@ type BotRunnerConnection {
   totalCount: Int!
 }
 """
+BotRunnerDataDownloadStatus is enum for the field data_download_status
+"""
+enum BotRunnerDataDownloadStatus @goModel(model: "anytrade/internal/enum.DataDownloadStatus") {
+  idle
+  downloading
+  completed
+  failed
+}
+"""
 An edge in a connection.
 """
 type BotRunnerEdge {
@@ -851,6 +888,49 @@ input BotRunnerWhereInput {
   typeNEQ: BotRunnerRunnerType
   typeIn: [BotRunnerRunnerType!]
   typeNotIn: [BotRunnerRunnerType!]
+  """
+  data_is_ready field predicates
+  """
+  dataIsReady: Boolean
+  dataIsReadyNEQ: Boolean
+  """
+  data_last_updated field predicates
+  """
+  dataLastUpdated: Time
+  dataLastUpdatedNEQ: Time
+  dataLastUpdatedIn: [Time!]
+  dataLastUpdatedNotIn: [Time!]
+  dataLastUpdatedGT: Time
+  dataLastUpdatedGTE: Time
+  dataLastUpdatedLT: Time
+  dataLastUpdatedLTE: Time
+  dataLastUpdatedIsNil: Boolean
+  dataLastUpdatedNotNil: Boolean
+  """
+  data_download_status field predicates
+  """
+  dataDownloadStatus: BotRunnerDataDownloadStatus
+  dataDownloadStatusNEQ: BotRunnerDataDownloadStatus
+  dataDownloadStatusIn: [BotRunnerDataDownloadStatus!]
+  dataDownloadStatusNotIn: [BotRunnerDataDownloadStatus!]
+  """
+  data_error_message field predicates
+  """
+  dataErrorMessage: String
+  dataErrorMessageNEQ: String
+  dataErrorMessageIn: [String!]
+  dataErrorMessageNotIn: [String!]
+  dataErrorMessageGT: String
+  dataErrorMessageGTE: String
+  dataErrorMessageLT: String
+  dataErrorMessageLTE: String
+  dataErrorMessageContains: String
+  dataErrorMessageHasPrefix: String
+  dataErrorMessageHasSuffix: String
+  dataErrorMessageIsNil: Boolean
+  dataErrorMessageNotNil: Boolean
+  dataErrorMessageEqualFold: String
+  dataErrorMessageContainsFold: String
   """
   created_at field predicates
   """
@@ -1246,7 +1326,31 @@ input CreateBotRunnerInput {
   """
   Runner connection configuration (host, port, credentials, etc.)
   """
-  config: RunnerConfigInput
+  config: Map
+  """
+  Whether runner has downloaded historical data for backtesting
+  """
+  dataIsReady: Boolean
+  """
+  When data was last refreshed
+  """
+  dataLastUpdated: Time
+  """
+  Current data download status (idle, downloading, completed, failed)
+  """
+  dataDownloadStatus: BotRunnerDataDownloadStatus
+  """
+  Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}
+  """
+  dataDownloadProgress: Map
+  """
+  Error message if data download failed
+  """
+  dataErrorMessage: String
+  """
+  Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
+  """
+  dataDownloadConfig: Map
   createdAt: Time
   updatedAt: Time
   botIDs: [ID!]
@@ -2428,8 +2532,36 @@ input UpdateBotRunnerInput {
   """
   Runner connection configuration (host, port, credentials, etc.)
   """
-  config: RunnerConfigInput
+  config: Map
   clearConfig: Boolean
+  """
+  Whether runner has downloaded historical data for backtesting
+  """
+  dataIsReady: Boolean
+  """
+  When data was last refreshed
+  """
+  dataLastUpdated: Time
+  clearDataLastUpdated: Boolean
+  """
+  Current data download status (idle, downloading, completed, failed)
+  """
+  dataDownloadStatus: BotRunnerDataDownloadStatus
+  """
+  Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}
+  """
+  dataDownloadProgress: Map
+  clearDataDownloadProgress: Boolean
+  """
+  Error message if data download failed
+  """
+  dataErrorMessage: String
+  clearDataErrorMessage: Boolean
+  """
+  Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
+  """
+  dataDownloadConfig: Map
+  clearDataDownloadConfig: Boolean
   updatedAt: Time
   addBotIDs: [ID!]
   removeBotIDs: [ID!]

@@ -579,13 +579,19 @@ func (c *BotMetricsUpdateOne) SetInput(i UpdateBotMetricsInput) *BotMetricsUpdat
 
 // CreateBotRunnerInput represents a mutation input for creating botrunners.
 type CreateBotRunnerInput struct {
-	Name        string
-	Type        *enum.RunnerType
-	Config      map[string]interface{}
-	CreatedAt   *time.Time
-	UpdatedAt   *time.Time
-	BotIDs      []uuid.UUID
-	BacktestIDs []uuid.UUID
+	Name                 string
+	Type                 *enum.RunnerType
+	Config               map[string]interface{}
+	DataIsReady          *bool
+	DataLastUpdated      *time.Time
+	DataDownloadStatus   *enum.DataDownloadStatus
+	DataDownloadProgress map[string]interface{}
+	DataErrorMessage     *string
+	DataDownloadConfig   map[string]interface{}
+	CreatedAt            *time.Time
+	UpdatedAt            *time.Time
+	BotIDs               []uuid.UUID
+	BacktestIDs          []uuid.UUID
 }
 
 // Mutate applies the CreateBotRunnerInput on the BotRunnerMutation builder.
@@ -596,6 +602,24 @@ func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
+	}
+	if v := i.DataIsReady; v != nil {
+		m.SetDataIsReady(*v)
+	}
+	if v := i.DataLastUpdated; v != nil {
+		m.SetDataLastUpdated(*v)
+	}
+	if v := i.DataDownloadStatus; v != nil {
+		m.SetDataDownloadStatus(*v)
+	}
+	if v := i.DataDownloadProgress; v != nil {
+		m.SetDataDownloadProgress(v)
+	}
+	if v := i.DataErrorMessage; v != nil {
+		m.SetDataErrorMessage(*v)
+	}
+	if v := i.DataDownloadConfig; v != nil {
+		m.SetDataDownloadConfig(v)
 	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
@@ -619,17 +643,27 @@ func (c *BotRunnerCreate) SetInput(i CreateBotRunnerInput) *BotRunnerCreate {
 
 // UpdateBotRunnerInput represents a mutation input for updating botrunners.
 type UpdateBotRunnerInput struct {
-	Name              *string
-	Type              *enum.RunnerType
-	ClearConfig       bool
-	Config            map[string]interface{}
-	UpdatedAt         *time.Time
-	ClearBots         bool
-	AddBotIDs         []uuid.UUID
-	RemoveBotIDs      []uuid.UUID
-	ClearBacktests    bool
-	AddBacktestIDs    []uuid.UUID
-	RemoveBacktestIDs []uuid.UUID
+	Name                      *string
+	Type                      *enum.RunnerType
+	ClearConfig               bool
+	Config                    map[string]interface{}
+	DataIsReady               *bool
+	ClearDataLastUpdated      bool
+	DataLastUpdated           *time.Time
+	DataDownloadStatus        *enum.DataDownloadStatus
+	ClearDataDownloadProgress bool
+	DataDownloadProgress      map[string]interface{}
+	ClearDataErrorMessage     bool
+	DataErrorMessage          *string
+	ClearDataDownloadConfig   bool
+	DataDownloadConfig        map[string]interface{}
+	UpdatedAt                 *time.Time
+	ClearBots                 bool
+	AddBotIDs                 []uuid.UUID
+	RemoveBotIDs              []uuid.UUID
+	ClearBacktests            bool
+	AddBacktestIDs            []uuid.UUID
+	RemoveBacktestIDs         []uuid.UUID
 }
 
 // Mutate applies the UpdateBotRunnerInput on the BotRunnerMutation builder.
@@ -645,6 +679,36 @@ func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
+	}
+	if v := i.DataIsReady; v != nil {
+		m.SetDataIsReady(*v)
+	}
+	if i.ClearDataLastUpdated {
+		m.ClearDataLastUpdated()
+	}
+	if v := i.DataLastUpdated; v != nil {
+		m.SetDataLastUpdated(*v)
+	}
+	if v := i.DataDownloadStatus; v != nil {
+		m.SetDataDownloadStatus(*v)
+	}
+	if i.ClearDataDownloadProgress {
+		m.ClearDataDownloadProgress()
+	}
+	if v := i.DataDownloadProgress; v != nil {
+		m.SetDataDownloadProgress(v)
+	}
+	if i.ClearDataErrorMessage {
+		m.ClearDataErrorMessage()
+	}
+	if v := i.DataErrorMessage; v != nil {
+		m.SetDataErrorMessage(*v)
+	}
+	if i.ClearDataDownloadConfig {
+		m.ClearDataDownloadConfig()
+	}
+	if v := i.DataDownloadConfig; v != nil {
+		m.SetDataDownloadConfig(v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)

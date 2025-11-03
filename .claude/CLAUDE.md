@@ -393,6 +393,67 @@ Always ensure:
 3. Bot mode is set correctly (dry_run or live)
 4. Bot config includes all required Freqtrade fields (validated automatically)
 
+## Backtesting and Historical Data
+
+### Data Download and Format
+
+**Default Data Format**: Feather (configured in `internal/monitor/data_download.go:154`)
+
+Data is downloaded using the `download-data` command with the following defaults:
+- Format: `feather` (freqtrade's default, optimized for backtesting)
+- Directory structure: `/freqtrade/user_data/data/{exchange}/{tradingMode}/`
+  - Example: `/freqtrade/user_data/data/binance/spot/BTC_USDT-1h.feather`
+- Trading mode subdirectories are automatically created based on `tradingMode` config
+
+**Why Feather Format:**
+- Freqtrade's default format for backtesting
+- Faster loading and smaller file sizes compared to JSON
+- Backtesting works seamlessly without requiring `dataformat_ohlcv` config
+
+**Data Download Configuration:**
+```go
+// internal/monitor/data_download.go:148-156
+args := []string{
+    "download-data",
+    "--exchange", exchange,
+    "--pairs", pairsPattern,
+    "--days", days,
+    "--data-format-ohlcv", "feather",  // Default format
+    "--trading-mode", tradingMode,      // Creates spot/futures subdirectory
+}
+```
+
+### Backtesting
+
+Backtests run in one-time Docker containers (non-persistent) that:
+1. Mount the data volume (`anytrade-freqtrade-data`)
+2. Use downloaded historical data
+3. Execute the strategy against historical candles
+4. Generate performance metrics
+
+**Backtest Configuration:**
+```json
+{
+  "timeframe": "1h",
+  "timerange": "20240101-20241101",
+  "pairs": ["BTC/USDT"],
+  "stake_amount": 100,
+  "stake_currency": "USDT",
+  "max_open_trades": 3,
+  "entry_pricing": { "price_side": "same", "use_order_book": false },
+  "exit_pricing": { "price_side": "same", "use_order_book": false }
+}
+```
+
+**Key Implementation Files:**
+- `internal/runner/docker_backtest.go` - Backtest execution
+- `internal/graph/helpers.go:buildBacktestSpec()` - Config preparation
+- Volume mount ensures data access without manual path configuration
+
+**Data Format Compatibility:**
+- Feather format (default): Works out-of-the-box
+- JSON format: Requires adding `"dataformat_ohlcv": "json"` to backtest config
+
 ---
 
 ## Testing & Code Quality

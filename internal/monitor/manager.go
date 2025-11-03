@@ -15,9 +15,10 @@ type Manager struct {
 	dbClient   *ent.Client
 	etcdClient *etcd.Client
 
-	registry    *Registry
-	coordinator *Coordinator
-	botMonitor  *BotMonitor
+	registry      *Registry
+	coordinator   *Coordinator
+	botMonitor    *BotMonitor
+	runnerMonitor *RunnerMonitor
 
 	instanceID string
 	enabled    bool
@@ -39,6 +40,10 @@ type Config struct {
 	// MonitorInterval is how often to check bot status
 	// Default: 30s
 	MonitorInterval time.Duration
+
+	// RunnerMonitorInterval is how often to check runner data status
+	// Default: 5m
+	RunnerMonitorInterval time.Duration
 
 	// HeartbeatInterval is how often to send heartbeats to etcd
 	// Default: 10s
@@ -111,6 +116,12 @@ func NewManager(cfg Config) (*Manager, error) {
 		m.botMonitor.SetInterval(cfg.MonitorInterval)
 	}
 
+	// Create runner monitor
+	m.runnerMonitor = NewRunnerMonitor(cfg.DatabaseClient, m.coordinator)
+	if cfg.RunnerMonitorInterval > 0 {
+		m.runnerMonitor.SetInterval(cfg.RunnerMonitorInterval)
+	}
+
 	return m, nil
 }
 
@@ -143,6 +154,15 @@ func (m *Manager) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start bot monitor: %w", err)
 	}
 
+	// Start runner monitor
+	if err := m.runnerMonitor.Start(ctx); err != nil {
+		m.botMonitor.Stop()
+		if m.enabled {
+			m.registry.Stop(ctx)
+		}
+		return fmt.Errorf("failed to start runner monitor: %w", err)
+	}
+
 	log.Println("Monitor manager started successfully")
 	return nil
 }
@@ -153,6 +173,9 @@ func (m *Manager) Stop(ctx context.Context) error {
 
 	// Stop bot monitor
 	m.botMonitor.Stop()
+
+	// Stop runner monitor
+	m.runnerMonitor.Stop()
 
 	// Stop registry if using etcd
 	if m.enabled {

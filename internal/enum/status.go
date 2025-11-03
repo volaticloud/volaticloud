@@ -147,3 +147,38 @@ func (o *OptimizationMetric) UnmarshalGQL(v interface{}) error {
 	*o = OptimizationMetric(str)
 	return nil
 }
+
+// DataDownloadStatus represents the status of data download for a runner
+type DataDownloadStatus string
+
+const (
+	DataDownloadStatusIdle        DataDownloadStatus = "idle"
+	DataDownloadStatusDownloading DataDownloadStatus = "downloading"
+	DataDownloadStatusCompleted   DataDownloadStatus = "completed"
+	DataDownloadStatusFailed      DataDownloadStatus = "failed"
+)
+
+// Values returns all possible data download status values
+func (DataDownloadStatus) Values() []string {
+	return []string{
+		string(DataDownloadStatusIdle),
+		string(DataDownloadStatusDownloading),
+		string(DataDownloadStatusCompleted),
+		string(DataDownloadStatusFailed),
+	}
+}
+
+// MarshalGQL implements graphql.Marshaler for DataDownloadStatus
+func (d DataDownloadStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(string(d)))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler for DataDownloadStatus
+func (d *DataDownloadStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("data download status must be a string")
+	}
+	*d = DataDownloadStatus(str)
+	return nil
+}

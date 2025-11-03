@@ -14,14 +14,20 @@ import {
   Paper,
   IconButton,
   Tooltip,
+  LinearProgress,
+  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Refresh as RefreshIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  CloudDownload as CloudDownloadIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useGetRunnersQuery } from '../../generated/graphql';
+import { useGetRunnersQuery, useRefreshRunnerDataMutation } from '../../generated/graphql';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateRunnerDialog } from './CreateRunnerDialog';
@@ -32,15 +38,103 @@ export const RunnersList = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedRunner, setSelectedRunner] = useState<{
-    id: string;
-    name: string;
-    type: 'docker' | 'kubernetes' | 'local';
-  } | null>(null);
+  const [selectedRunner, setSelectedRunner] = useState<any | null>(null);
 
   const { data, loading, error, refetch } = useGetRunnersQuery({
-    variables: { first: 50 }
+    variables: { first: 50 },
+    pollInterval: 10000, // Poll every 10 seconds to update download status
   });
+
+  const [refreshRunnerData, { loading: refreshing }] = useRefreshRunnerDataMutation();
+
+  const handleRefreshData = async (id: string, name: string) => {
+    try {
+      await refreshRunnerData({ variables: { id } });
+      // Refetch immediately to show the updated status
+      refetch();
+    } catch (err) {
+      console.error(`Failed to refresh data for runner ${name}:`, err);
+    }
+  };
+
+  const renderDataStatus = (runner: any) => {
+    const status = runner.dataDownloadStatus;
+    const progress = runner.dataDownloadProgress;
+    const isReady = runner.dataIsReady;
+    const lastUpdated = runner.dataLastUpdated;
+    const errorMsg = runner.dataErrorMessage;
+
+    // Downloading status
+    if (status === 'downloading') {
+      const percentComplete = progress?.percent_complete || 0;
+      return (
+        <Box sx={{ width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <CloudDownloadIcon fontSize="small" color="primary" />
+            <Typography variant="caption">
+              Downloading... {Math.round(percentComplete)}%
+            </Typography>
+          </Box>
+          <LinearProgress variant="determinate" value={percentComplete} />
+          {progress?.current_pair && (
+            <Typography variant="caption" color="text.secondary">
+              {progress.current_pair} ({progress.pairs_completed}/{progress.pairs_total})
+            </Typography>
+          )}
+        </Box>
+      );
+    }
+
+    // Failed status
+    if (status === 'failed') {
+      return (
+        <Box>
+          <Chip
+            icon={<ErrorIcon />}
+            label="Failed"
+            color="error"
+            size="small"
+            sx={{ mb: 0.5 }}
+          />
+          {errorMsg && (
+            <Typography variant="caption" color="error" display="block">
+              {errorMsg.substring(0, 50)}...
+            </Typography>
+          )}
+        </Box>
+      );
+    }
+
+    // Completed/Ready status
+    if (isReady && status === 'completed') {
+      return (
+        <Box>
+          <Chip
+            icon={<CheckCircleIcon />}
+            label="Ready"
+            color="success"
+            size="small"
+            sx={{ mb: 0.5 }}
+          />
+          {lastUpdated && (
+            <Typography variant="caption" color="text.secondary" display="block">
+              Updated {new Date(lastUpdated).toLocaleDateString()}
+            </Typography>
+          )}
+        </Box>
+      );
+    }
+
+    // Idle/Not ready status
+    return (
+      <Chip
+        label="No Data"
+        color="default"
+        size="small"
+        variant="outlined"
+      />
+    );
+  };
 
   if (loading) return <LoadingSpinner message="Loading runners..." />;
   if (error) return <ErrorAlert error={error} />;
@@ -84,6 +178,7 @@ export const RunnersList = () => {
               <TableRow>
                 <TableCell>Name</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Data Status</TableCell>
                 <TableCell>Bots</TableCell>
                 <TableCell>Created</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -104,6 +199,9 @@ export const RunnersList = () => {
                       size="small"
                     />
                   </TableCell>
+                  <TableCell sx={{ minWidth: 200 }}>
+                    {renderDataStatus(runner)}
+                  </TableCell>
                   <TableCell>{runner.bots?.totalCount || 0}</TableCell>
                   <TableCell>
                     <Typography variant="caption" color="text.secondary">
@@ -111,6 +209,16 @@ export const RunnersList = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
+                    <Tooltip title="Refresh Data">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        disabled={runner.dataDownloadStatus === 'downloading'}
+                        onClick={() => handleRefreshData(runner.id, runner.name)}
+                      >
+                        <RefreshIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Edit Runner">
                       <IconButton
                         size="small"

@@ -33,11 +33,26 @@ func (BotRunner) Fields() []ent.Field {
 			Comment("Runner environment type (docker, kubernetes, local)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(
-				entgql.Type("RunnerConfigInput"),
-				entgql.Skip(entgql.SkipType), // Skip in type output, but allow in mutations
-			).
 			Comment("Runner connection configuration (host, port, credentials, etc.)"),
+		field.Bool("data_is_ready").
+			Default(false).
+			Comment("Whether runner has downloaded historical data for backtesting"),
+		field.Time("data_last_updated").
+			Optional().
+			Comment("When data was last refreshed"),
+		field.Enum("data_download_status").
+			GoType(enum.DataDownloadStatus("")).
+			Default(string(enum.DataDownloadStatusIdle)).
+			Comment("Current data download status (idle, downloading, completed, failed)"),
+		field.JSON("data_download_progress", map[string]interface{}{}).
+			Optional().
+			Comment("Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}"),
+		field.String("data_error_message").
+			Optional().
+			Comment("Error message if data download failed"),
+		field.JSON("data_download_config", map[string]interface{}{}).
+			Optional().
+			Comment("Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -70,5 +85,6 @@ func (BotRunner) Annotations() []schema.Annotation {
 func (BotRunner) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateRunnerConfig,
+		validateDataDownloadConfig,
 	}
 }

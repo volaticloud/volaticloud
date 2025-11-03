@@ -48,8 +48,6 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
-	CreateBotRunnerInput() CreateBotRunnerInputResolver
-	UpdateBotRunnerInput() UpdateBotRunnerInputResolver
 }
 
 type DirectiveRoot struct {
@@ -143,13 +141,20 @@ type ComplexityRoot struct {
 	}
 
 	BotRunner struct {
-		Backtests func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
-		Bots      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Type      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		Backtests            func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
+		Bots                 func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
+		Config               func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		DataDownloadConfig   func(childComplexity int) int
+		DataDownloadProgress func(childComplexity int) int
+		DataDownloadStatus   func(childComplexity int) int
+		DataErrorMessage     func(childComplexity int) int
+		DataIsReady          func(childComplexity int) int
+		DataLastUpdated      func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		Type                 func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
 	}
 
 	BotRunnerConnection struct {
@@ -189,29 +194,30 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateBacktest  func(childComplexity int, input ent.CreateBacktestInput) int
-		CreateBot       func(childComplexity int, input ent.CreateBotInput) int
-		CreateBotRunner func(childComplexity int, input ent.CreateBotRunnerInput) int
-		CreateExchange  func(childComplexity int, input ent.CreateExchangeInput) int
-		CreateStrategy  func(childComplexity int, input ent.CreateStrategyInput) int
-		CreateTrade     func(childComplexity int, input ent.CreateTradeInput) int
-		DeleteBacktest  func(childComplexity int, id uuid.UUID) int
-		DeleteBot       func(childComplexity int, id uuid.UUID) int
-		DeleteBotRunner func(childComplexity int, id uuid.UUID) int
-		DeleteExchange  func(childComplexity int, id uuid.UUID) int
-		DeleteStrategy  func(childComplexity int, id uuid.UUID) int
-		DeleteTrade     func(childComplexity int, id uuid.UUID) int
-		RestartBot      func(childComplexity int, id uuid.UUID) int
-		RunBacktest     func(childComplexity int, id uuid.UUID) int
-		StartBot        func(childComplexity int, id uuid.UUID) int
-		StopBacktest    func(childComplexity int, id uuid.UUID) int
-		StopBot         func(childComplexity int, id uuid.UUID) int
-		UpdateBacktest  func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
-		UpdateBot       func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
-		UpdateBotRunner func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
-		UpdateExchange  func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
-		UpdateStrategy  func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
-		UpdateTrade     func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
+		CreateBacktest    func(childComplexity int, input ent.CreateBacktestInput) int
+		CreateBot         func(childComplexity int, input ent.CreateBotInput) int
+		CreateBotRunner   func(childComplexity int, input ent.CreateBotRunnerInput) int
+		CreateExchange    func(childComplexity int, input ent.CreateExchangeInput) int
+		CreateStrategy    func(childComplexity int, input ent.CreateStrategyInput) int
+		CreateTrade       func(childComplexity int, input ent.CreateTradeInput) int
+		DeleteBacktest    func(childComplexity int, id uuid.UUID) int
+		DeleteBot         func(childComplexity int, id uuid.UUID) int
+		DeleteBotRunner   func(childComplexity int, id uuid.UUID) int
+		DeleteExchange    func(childComplexity int, id uuid.UUID) int
+		DeleteStrategy    func(childComplexity int, id uuid.UUID) int
+		DeleteTrade       func(childComplexity int, id uuid.UUID) int
+		RefreshRunnerData func(childComplexity int, id uuid.UUID) int
+		RestartBot        func(childComplexity int, id uuid.UUID) int
+		RunBacktest       func(childComplexity int, id uuid.UUID) int
+		StartBot          func(childComplexity int, id uuid.UUID) int
+		StopBacktest      func(childComplexity int, id uuid.UUID) int
+		StopBot           func(childComplexity int, id uuid.UUID) int
+		UpdateBacktest    func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
+		UpdateBot         func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
+		UpdateBotRunner   func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
+		UpdateExchange    func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
+		UpdateStrategy    func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
+		UpdateTrade       func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
 	}
 
 	PageInfo struct {
@@ -308,6 +314,7 @@ type MutationResolver interface {
 	CreateBotRunner(ctx context.Context, input ent.CreateBotRunnerInput) (*ent.BotRunner, error)
 	UpdateBotRunner(ctx context.Context, id uuid.UUID, input ent.UpdateBotRunnerInput) (*ent.BotRunner, error)
 	DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error)
+	RefreshRunnerData(ctx context.Context, id uuid.UUID) (*ent.BotRunner, error)
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
@@ -328,13 +335,6 @@ type QueryResolver interface {
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
 	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
-}
-
-type CreateBotRunnerInputResolver interface {
-	Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error
-}
-type UpdateBotRunnerInputResolver interface {
-	Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error
 }
 
 type executableSchema struct {
@@ -780,12 +780,54 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BotWhereInput)), true
+	case "BotRunner.config":
+		if e.complexity.BotRunner.Config == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.Config(childComplexity), true
 	case "BotRunner.createdAt":
 		if e.complexity.BotRunner.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.BotRunner.CreatedAt(childComplexity), true
+	case "BotRunner.dataDownloadConfig":
+		if e.complexity.BotRunner.DataDownloadConfig == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataDownloadConfig(childComplexity), true
+	case "BotRunner.dataDownloadProgress":
+		if e.complexity.BotRunner.DataDownloadProgress == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataDownloadProgress(childComplexity), true
+	case "BotRunner.dataDownloadStatus":
+		if e.complexity.BotRunner.DataDownloadStatus == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataDownloadStatus(childComplexity), true
+	case "BotRunner.dataErrorMessage":
+		if e.complexity.BotRunner.DataErrorMessage == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataErrorMessage(childComplexity), true
+	case "BotRunner.dataIsReady":
+		if e.complexity.BotRunner.DataIsReady == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataIsReady(childComplexity), true
+	case "BotRunner.dataLastUpdated":
+		if e.complexity.BotRunner.DataLastUpdated == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataLastUpdated(childComplexity), true
 	case "BotRunner.id":
 		if e.complexity.BotRunner.ID == nil {
 			break
@@ -1096,6 +1138,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteTrade(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.refreshRunnerData":
+		if e.complexity.Mutation.RefreshRunnerData == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_refreshRunnerData_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RefreshRunnerData(childComplexity, args["id"].(uuid.UUID)), true
 	case "Mutation.restartBot":
 		if e.complexity.Mutation.RestartBot == nil {
 			break
@@ -1616,6 +1669,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateExchangeInput,
 		ec.unmarshalInputCreateStrategyInput,
 		ec.unmarshalInputCreateTradeInput,
+		ec.unmarshalInputDataDownloadConfigInput,
+		ec.unmarshalInputDataDownloadExchangeConfigInput,
 		ec.unmarshalInputDockerConfigInput,
 		ec.unmarshalInputExchangeConfigInput,
 		ec.unmarshalInputExchangeWhereInput,
@@ -1997,6 +2052,17 @@ func (ec *executionContext) field_Mutation_deleteStrategy_args(ctx context.Conte
 }
 
 func (ec *executionContext) field_Mutation_deleteTrade_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_refreshRunnerData_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
@@ -2871,6 +2937,20 @@ func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, fiel
 				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
 				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -3605,6 +3685,20 @@ func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field gra
 				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
 				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -4741,6 +4835,209 @@ func (ec *executionContext) fieldContext_BotRunner_type(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _BotRunner_config(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_config,
+		func(ctx context.Context) (any, error) {
+			return obj.Config, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_dataIsReady(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataIsReady,
+		func(ctx context.Context) (any, error) {
+			return obj.DataIsReady, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataIsReady(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_dataLastUpdated(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataLastUpdated,
+		func(ctx context.Context) (any, error) {
+			return obj.DataLastUpdated, nil
+		},
+		nil,
+		ec.marshalOTime2timeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataLastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_dataDownloadStatus(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataDownloadStatus,
+		func(ctx context.Context) (any, error) {
+			return obj.DataDownloadStatus, nil
+		},
+		nil,
+		ec.marshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataDownloadStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BotRunnerDataDownloadStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_dataDownloadProgress(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataDownloadProgress,
+		func(ctx context.Context) (any, error) {
+			return obj.DataDownloadProgress, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataDownloadProgress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_dataErrorMessage(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataErrorMessage,
+		func(ctx context.Context) (any, error) {
+			return obj.DataErrorMessage, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataErrorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_dataDownloadConfig(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataDownloadConfig,
+		func(ctx context.Context) (any, error) {
+			return obj.DataDownloadConfig, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataDownloadConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BotRunner_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5030,6 +5327,20 @@ func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, f
 				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
 				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -6440,6 +6751,20 @@ func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
 				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -6497,6 +6822,20 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_name(ctx, field)
 			case "type":
 				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -6558,6 +6897,77 @@ func (ec *executionContext) fieldContext_Mutation_deleteBotRunner(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteBotRunner_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_refreshRunnerData(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_refreshRunnerData,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RefreshRunnerData(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		nil,
+		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_refreshRunnerData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BotRunner_id(ctx, field)
+			case "name":
+				return ec.fieldContext_BotRunner_name(ctx, field)
+			case "type":
+				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_refreshRunnerData_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12797,7 +13207,7 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13000,6 +13410,223 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 				return it, err
 			}
 			it.TypeNotIn = data
+		case "dataIsReady":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataIsReady"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataIsReady = data
+		case "dataIsReadyNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataIsReadyNEQ"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataIsReadyNEQ = data
+		case "dataLastUpdated":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdated"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdated = data
+		case "dataLastUpdatedNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedNEQ = data
+		case "dataLastUpdatedIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedIn = data
+		case "dataLastUpdatedNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedNotIn = data
+		case "dataLastUpdatedGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedGT = data
+		case "dataLastUpdatedGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedGTE = data
+		case "dataLastUpdatedLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedLT = data
+		case "dataLastUpdatedLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedLTE = data
+		case "dataLastUpdatedIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedIsNil = data
+		case "dataLastUpdatedNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdatedNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdatedNotNil = data
+		case "dataDownloadStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatus"))
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadStatus = data
+		case "dataDownloadStatusNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatusNEQ"))
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadStatusNEQ = data
+		case "dataDownloadStatusIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatusIn"))
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadStatusIn = data
+		case "dataDownloadStatusNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatusNotIn"))
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadStatusNotIn = data
+		case "dataErrorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessage"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessage = data
+		case "dataErrorMessageNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageNEQ = data
+		case "dataErrorMessageIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageIn = data
+		case "dataErrorMessageNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageNotIn = data
+		case "dataErrorMessageGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageGT = data
+		case "dataErrorMessageGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageGTE = data
+		case "dataErrorMessageLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageLT = data
+		case "dataErrorMessageLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageLTE = data
+		case "dataErrorMessageContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageContains = data
+		case "dataErrorMessageHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageHasPrefix = data
+		case "dataErrorMessageHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageHasSuffix = data
+		case "dataErrorMessageIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageIsNil = data
+		case "dataErrorMessageNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageNotNil = data
+		case "dataErrorMessageEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageEqualFold = data
+		case "dataErrorMessageContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessageContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessageContainsFold = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -14450,7 +15077,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "config", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14473,13 +15100,53 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 			it.Type = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			data, err := ec.unmarshalORunnerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.CreateBotRunnerInput().Config(ctx, &it, data); err != nil {
+			it.Config = data
+		case "dataIsReady":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataIsReady"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
 				return it, err
 			}
+			it.DataIsReady = data
+		case "dataLastUpdated":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdated"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdated = data
+		case "dataDownloadStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatus"))
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadStatus = data
+		case "dataDownloadProgress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadProgress"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadProgress = data
+		case "dataErrorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessage"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessage = data
+		case "dataDownloadConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadConfig"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadConfig = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -14785,6 +15452,95 @@ func (ec *executionContext) unmarshalInputCreateTradeInput(ctx context.Context, 
 				return it, err
 			}
 			it.BotID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDataDownloadConfigInput(ctx context.Context, obj any) (model.DataDownloadConfigInput, error) {
+	var it model.DataDownloadConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"exchanges"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "exchanges":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exchanges"))
+			data, err := ec.unmarshalNDataDownloadExchangeConfigInput2ᚕᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Exchanges = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDataDownloadExchangeConfigInput(ctx context.Context, obj any) (model.DataDownloadExchangeConfigInput, error) {
+	var it model.DataDownloadExchangeConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "enabled", "timeframes", "pairsPattern", "days", "tradingMode"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "timeframes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeframes"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timeframes = data
+		case "pairsPattern":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pairsPattern"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PairsPattern = data
+		case "days":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("days"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Days = data
+		case "tradingMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tradingMode"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TradingMode = data
 		}
 	}
 
@@ -17885,7 +18641,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17908,13 +18664,11 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 			it.Type = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			data, err := ec.unmarshalORunnerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.UpdateBotRunnerInput().Config(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.Config = data
 		case "clearConfig":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
 			data, err := ec.unmarshalOBoolean2bool(ctx, v)
@@ -17922,6 +18676,76 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.ClearConfig = data
+		case "dataIsReady":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataIsReady"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataIsReady = data
+		case "dataLastUpdated":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataLastUpdated"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataLastUpdated = data
+		case "clearDataLastUpdated":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDataLastUpdated"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDataLastUpdated = data
+		case "dataDownloadStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatus"))
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadStatus = data
+		case "dataDownloadProgress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadProgress"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadProgress = data
+		case "clearDataDownloadProgress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDataDownloadProgress"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDataDownloadProgress = data
+		case "dataErrorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataErrorMessage"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataErrorMessage = data
+		case "clearDataErrorMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDataErrorMessage"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDataErrorMessage = data
+		case "dataDownloadConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadConfig"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataDownloadConfig = data
+		case "clearDataDownloadConfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDataDownloadConfig"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDataDownloadConfig = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -19124,6 +19948,26 @@ func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "config":
+			out.Values[i] = ec._BotRunner_config(ctx, field, obj)
+		case "dataIsReady":
+			out.Values[i] = ec._BotRunner_dataIsReady(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataLastUpdated":
+			out.Values[i] = ec._BotRunner_dataLastUpdated(ctx, field, obj)
+		case "dataDownloadStatus":
+			out.Values[i] = ec._BotRunner_dataDownloadStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataDownloadProgress":
+			out.Values[i] = ec._BotRunner_dataDownloadProgress(ctx, field, obj)
+		case "dataErrorMessage":
+			out.Values[i] = ec._BotRunner_dataErrorMessage(ctx, field, obj)
+		case "dataDownloadConfig":
+			out.Values[i] = ec._BotRunner_dataDownloadConfig(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._BotRunner_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19618,6 +20462,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteBotRunner":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteBotRunner(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "refreshRunnerData":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_refreshRunnerData(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -21001,6 +21852,16 @@ func (ec *executionContext) marshalNBotRunnerConnection2ᚖanytradeᚋinternal�
 	return ec._BotRunnerConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, v any) (enum.DataDownloadStatus, error) {
+	var res enum.DataDownloadStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, sel ast.SelectionSet, v enum.DataDownloadStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (enum.RunnerType, error) {
 	var res enum.RunnerType
 	err := res.UnmarshalGQL(v)
@@ -21059,6 +21920,26 @@ func (ec *executionContext) unmarshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCur
 
 func (ec *executionContext) marshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCursor(ctx context.Context, sel ast.SelectionSet, v entgql.Cursor[uuid.UUID]) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚕᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInputᚄ(ctx context.Context, v any) ([]*model.DataDownloadExchangeConfigInput, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.DataDownloadExchangeConfigInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNDataDownloadExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInput(ctx context.Context, v any) (*model.DataDownloadExchangeConfigInput, error) {
+	res, err := ec.unmarshalInputDataDownloadExchangeConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNExchange2anytradeᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v ent.Exchange) graphql.Marshaler {
@@ -22106,6 +22987,87 @@ func (ec *executionContext) marshalOBotRunner2ᚖanytradeᚋinternalᚋentᚐBot
 	return ec._BotRunner(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx context.Context, v any) ([]enum.DataDownloadStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]enum.DataDownloadStatus, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.DataDownloadStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, v any) (*enum.DataDownloadStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(enum.DataDownloadStatus)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, sel ast.SelectionSet, v *enum.DataDownloadStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotRunnerEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -22598,14 +23560,6 @@ func (ec *executionContext) unmarshalORegistryAuthInput2ᚖanytradeᚋinternal�
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputRegistryAuthInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalORunnerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx context.Context, v any) (*model.RunnerConfigInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputRunnerConfigInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

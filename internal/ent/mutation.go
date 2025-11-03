@@ -4806,24 +4806,30 @@ func (m *BotMetricsMutation) ResetEdge(name string) error {
 // BotRunnerMutation represents an operation that mutates the BotRunner nodes in the graph.
 type BotRunnerMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *uuid.UUID
-	name             *string
-	_type            *enum.RunnerType
-	_config          *map[string]interface{}
-	created_at       *time.Time
-	updated_at       *time.Time
-	clearedFields    map[string]struct{}
-	bots             map[uuid.UUID]struct{}
-	removedbots      map[uuid.UUID]struct{}
-	clearedbots      bool
-	backtests        map[uuid.UUID]struct{}
-	removedbacktests map[uuid.UUID]struct{}
-	clearedbacktests bool
-	done             bool
-	oldValue         func(context.Context) (*BotRunner, error)
-	predicates       []predicate.BotRunner
+	op                     Op
+	typ                    string
+	id                     *uuid.UUID
+	name                   *string
+	_type                  *enum.RunnerType
+	_config                *map[string]interface{}
+	data_is_ready          *bool
+	data_last_updated      *time.Time
+	data_download_status   *enum.DataDownloadStatus
+	data_download_progress *map[string]interface{}
+	data_error_message     *string
+	data_download_config   *map[string]interface{}
+	created_at             *time.Time
+	updated_at             *time.Time
+	clearedFields          map[string]struct{}
+	bots                   map[uuid.UUID]struct{}
+	removedbots            map[uuid.UUID]struct{}
+	clearedbots            bool
+	backtests              map[uuid.UUID]struct{}
+	removedbacktests       map[uuid.UUID]struct{}
+	clearedbacktests       bool
+	done                   bool
+	oldValue               func(context.Context) (*BotRunner, error)
+	predicates             []predicate.BotRunner
 }
 
 var _ ent.Mutation = (*BotRunnerMutation)(nil)
@@ -5051,6 +5057,274 @@ func (m *BotRunnerMutation) ResetConfig() {
 	delete(m.clearedFields, botrunner.FieldConfig)
 }
 
+// SetDataIsReady sets the "data_is_ready" field.
+func (m *BotRunnerMutation) SetDataIsReady(b bool) {
+	m.data_is_ready = &b
+}
+
+// DataIsReady returns the value of the "data_is_ready" field in the mutation.
+func (m *BotRunnerMutation) DataIsReady() (r bool, exists bool) {
+	v := m.data_is_ready
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataIsReady returns the old "data_is_ready" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataIsReady(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataIsReady is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataIsReady requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataIsReady: %w", err)
+	}
+	return oldValue.DataIsReady, nil
+}
+
+// ResetDataIsReady resets all changes to the "data_is_ready" field.
+func (m *BotRunnerMutation) ResetDataIsReady() {
+	m.data_is_ready = nil
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (m *BotRunnerMutation) SetDataLastUpdated(t time.Time) {
+	m.data_last_updated = &t
+}
+
+// DataLastUpdated returns the value of the "data_last_updated" field in the mutation.
+func (m *BotRunnerMutation) DataLastUpdated() (r time.Time, exists bool) {
+	v := m.data_last_updated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataLastUpdated returns the old "data_last_updated" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataLastUpdated(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataLastUpdated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataLastUpdated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataLastUpdated: %w", err)
+	}
+	return oldValue.DataLastUpdated, nil
+}
+
+// ClearDataLastUpdated clears the value of the "data_last_updated" field.
+func (m *BotRunnerMutation) ClearDataLastUpdated() {
+	m.data_last_updated = nil
+	m.clearedFields[botrunner.FieldDataLastUpdated] = struct{}{}
+}
+
+// DataLastUpdatedCleared returns if the "data_last_updated" field was cleared in this mutation.
+func (m *BotRunnerMutation) DataLastUpdatedCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldDataLastUpdated]
+	return ok
+}
+
+// ResetDataLastUpdated resets all changes to the "data_last_updated" field.
+func (m *BotRunnerMutation) ResetDataLastUpdated() {
+	m.data_last_updated = nil
+	delete(m.clearedFields, botrunner.FieldDataLastUpdated)
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (m *BotRunnerMutation) SetDataDownloadStatus(eds enum.DataDownloadStatus) {
+	m.data_download_status = &eds
+}
+
+// DataDownloadStatus returns the value of the "data_download_status" field in the mutation.
+func (m *BotRunnerMutation) DataDownloadStatus() (r enum.DataDownloadStatus, exists bool) {
+	v := m.data_download_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataDownloadStatus returns the old "data_download_status" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataDownloadStatus(ctx context.Context) (v enum.DataDownloadStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataDownloadStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataDownloadStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataDownloadStatus: %w", err)
+	}
+	return oldValue.DataDownloadStatus, nil
+}
+
+// ResetDataDownloadStatus resets all changes to the "data_download_status" field.
+func (m *BotRunnerMutation) ResetDataDownloadStatus() {
+	m.data_download_status = nil
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (m *BotRunnerMutation) SetDataDownloadProgress(value map[string]interface{}) {
+	m.data_download_progress = &value
+}
+
+// DataDownloadProgress returns the value of the "data_download_progress" field in the mutation.
+func (m *BotRunnerMutation) DataDownloadProgress() (r map[string]interface{}, exists bool) {
+	v := m.data_download_progress
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataDownloadProgress returns the old "data_download_progress" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataDownloadProgress(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataDownloadProgress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataDownloadProgress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataDownloadProgress: %w", err)
+	}
+	return oldValue.DataDownloadProgress, nil
+}
+
+// ClearDataDownloadProgress clears the value of the "data_download_progress" field.
+func (m *BotRunnerMutation) ClearDataDownloadProgress() {
+	m.data_download_progress = nil
+	m.clearedFields[botrunner.FieldDataDownloadProgress] = struct{}{}
+}
+
+// DataDownloadProgressCleared returns if the "data_download_progress" field was cleared in this mutation.
+func (m *BotRunnerMutation) DataDownloadProgressCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldDataDownloadProgress]
+	return ok
+}
+
+// ResetDataDownloadProgress resets all changes to the "data_download_progress" field.
+func (m *BotRunnerMutation) ResetDataDownloadProgress() {
+	m.data_download_progress = nil
+	delete(m.clearedFields, botrunner.FieldDataDownloadProgress)
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (m *BotRunnerMutation) SetDataErrorMessage(s string) {
+	m.data_error_message = &s
+}
+
+// DataErrorMessage returns the value of the "data_error_message" field in the mutation.
+func (m *BotRunnerMutation) DataErrorMessage() (r string, exists bool) {
+	v := m.data_error_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataErrorMessage returns the old "data_error_message" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataErrorMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataErrorMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataErrorMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataErrorMessage: %w", err)
+	}
+	return oldValue.DataErrorMessage, nil
+}
+
+// ClearDataErrorMessage clears the value of the "data_error_message" field.
+func (m *BotRunnerMutation) ClearDataErrorMessage() {
+	m.data_error_message = nil
+	m.clearedFields[botrunner.FieldDataErrorMessage] = struct{}{}
+}
+
+// DataErrorMessageCleared returns if the "data_error_message" field was cleared in this mutation.
+func (m *BotRunnerMutation) DataErrorMessageCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldDataErrorMessage]
+	return ok
+}
+
+// ResetDataErrorMessage resets all changes to the "data_error_message" field.
+func (m *BotRunnerMutation) ResetDataErrorMessage() {
+	m.data_error_message = nil
+	delete(m.clearedFields, botrunner.FieldDataErrorMessage)
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (m *BotRunnerMutation) SetDataDownloadConfig(value map[string]interface{}) {
+	m.data_download_config = &value
+}
+
+// DataDownloadConfig returns the value of the "data_download_config" field in the mutation.
+func (m *BotRunnerMutation) DataDownloadConfig() (r map[string]interface{}, exists bool) {
+	v := m.data_download_config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataDownloadConfig returns the old "data_download_config" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataDownloadConfig(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataDownloadConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataDownloadConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataDownloadConfig: %w", err)
+	}
+	return oldValue.DataDownloadConfig, nil
+}
+
+// ClearDataDownloadConfig clears the value of the "data_download_config" field.
+func (m *BotRunnerMutation) ClearDataDownloadConfig() {
+	m.data_download_config = nil
+	m.clearedFields[botrunner.FieldDataDownloadConfig] = struct{}{}
+}
+
+// DataDownloadConfigCleared returns if the "data_download_config" field was cleared in this mutation.
+func (m *BotRunnerMutation) DataDownloadConfigCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldDataDownloadConfig]
+	return ok
+}
+
+// ResetDataDownloadConfig resets all changes to the "data_download_config" field.
+func (m *BotRunnerMutation) ResetDataDownloadConfig() {
+	m.data_download_config = nil
+	delete(m.clearedFields, botrunner.FieldDataDownloadConfig)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *BotRunnerMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -5265,7 +5539,7 @@ func (m *BotRunnerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotRunnerMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 11)
 	if m.name != nil {
 		fields = append(fields, botrunner.FieldName)
 	}
@@ -5274,6 +5548,24 @@ func (m *BotRunnerMutation) Fields() []string {
 	}
 	if m._config != nil {
 		fields = append(fields, botrunner.FieldConfig)
+	}
+	if m.data_is_ready != nil {
+		fields = append(fields, botrunner.FieldDataIsReady)
+	}
+	if m.data_last_updated != nil {
+		fields = append(fields, botrunner.FieldDataLastUpdated)
+	}
+	if m.data_download_status != nil {
+		fields = append(fields, botrunner.FieldDataDownloadStatus)
+	}
+	if m.data_download_progress != nil {
+		fields = append(fields, botrunner.FieldDataDownloadProgress)
+	}
+	if m.data_error_message != nil {
+		fields = append(fields, botrunner.FieldDataErrorMessage)
+	}
+	if m.data_download_config != nil {
+		fields = append(fields, botrunner.FieldDataDownloadConfig)
 	}
 	if m.created_at != nil {
 		fields = append(fields, botrunner.FieldCreatedAt)
@@ -5295,6 +5587,18 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case botrunner.FieldConfig:
 		return m.Config()
+	case botrunner.FieldDataIsReady:
+		return m.DataIsReady()
+	case botrunner.FieldDataLastUpdated:
+		return m.DataLastUpdated()
+	case botrunner.FieldDataDownloadStatus:
+		return m.DataDownloadStatus()
+	case botrunner.FieldDataDownloadProgress:
+		return m.DataDownloadProgress()
+	case botrunner.FieldDataErrorMessage:
+		return m.DataErrorMessage()
+	case botrunner.FieldDataDownloadConfig:
+		return m.DataDownloadConfig()
 	case botrunner.FieldCreatedAt:
 		return m.CreatedAt()
 	case botrunner.FieldUpdatedAt:
@@ -5314,6 +5618,18 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldType(ctx)
 	case botrunner.FieldConfig:
 		return m.OldConfig(ctx)
+	case botrunner.FieldDataIsReady:
+		return m.OldDataIsReady(ctx)
+	case botrunner.FieldDataLastUpdated:
+		return m.OldDataLastUpdated(ctx)
+	case botrunner.FieldDataDownloadStatus:
+		return m.OldDataDownloadStatus(ctx)
+	case botrunner.FieldDataDownloadProgress:
+		return m.OldDataDownloadProgress(ctx)
+	case botrunner.FieldDataErrorMessage:
+		return m.OldDataErrorMessage(ctx)
+	case botrunner.FieldDataDownloadConfig:
+		return m.OldDataDownloadConfig(ctx)
 	case botrunner.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case botrunner.FieldUpdatedAt:
@@ -5347,6 +5663,48 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetConfig(v)
+		return nil
+	case botrunner.FieldDataIsReady:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataIsReady(v)
+		return nil
+	case botrunner.FieldDataLastUpdated:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataLastUpdated(v)
+		return nil
+	case botrunner.FieldDataDownloadStatus:
+		v, ok := value.(enum.DataDownloadStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataDownloadStatus(v)
+		return nil
+	case botrunner.FieldDataDownloadProgress:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataDownloadProgress(v)
+		return nil
+	case botrunner.FieldDataErrorMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataErrorMessage(v)
+		return nil
+	case botrunner.FieldDataDownloadConfig:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataDownloadConfig(v)
 		return nil
 	case botrunner.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -5395,6 +5753,18 @@ func (m *BotRunnerMutation) ClearedFields() []string {
 	if m.FieldCleared(botrunner.FieldConfig) {
 		fields = append(fields, botrunner.FieldConfig)
 	}
+	if m.FieldCleared(botrunner.FieldDataLastUpdated) {
+		fields = append(fields, botrunner.FieldDataLastUpdated)
+	}
+	if m.FieldCleared(botrunner.FieldDataDownloadProgress) {
+		fields = append(fields, botrunner.FieldDataDownloadProgress)
+	}
+	if m.FieldCleared(botrunner.FieldDataErrorMessage) {
+		fields = append(fields, botrunner.FieldDataErrorMessage)
+	}
+	if m.FieldCleared(botrunner.FieldDataDownloadConfig) {
+		fields = append(fields, botrunner.FieldDataDownloadConfig)
+	}
 	return fields
 }
 
@@ -5412,6 +5782,18 @@ func (m *BotRunnerMutation) ClearField(name string) error {
 	case botrunner.FieldConfig:
 		m.ClearConfig()
 		return nil
+	case botrunner.FieldDataLastUpdated:
+		m.ClearDataLastUpdated()
+		return nil
+	case botrunner.FieldDataDownloadProgress:
+		m.ClearDataDownloadProgress()
+		return nil
+	case botrunner.FieldDataErrorMessage:
+		m.ClearDataErrorMessage()
+		return nil
+	case botrunner.FieldDataDownloadConfig:
+		m.ClearDataDownloadConfig()
+		return nil
 	}
 	return fmt.Errorf("unknown BotRunner nullable field %s", name)
 }
@@ -5428,6 +5810,24 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 		return nil
 	case botrunner.FieldConfig:
 		m.ResetConfig()
+		return nil
+	case botrunner.FieldDataIsReady:
+		m.ResetDataIsReady()
+		return nil
+	case botrunner.FieldDataLastUpdated:
+		m.ResetDataLastUpdated()
+		return nil
+	case botrunner.FieldDataDownloadStatus:
+		m.ResetDataDownloadStatus()
+		return nil
+	case botrunner.FieldDataDownloadProgress:
+		m.ResetDataDownloadProgress()
+		return nil
+	case botrunner.FieldDataErrorMessage:
+		m.ResetDataErrorMessage()
+		return nil
+	case botrunner.FieldDataDownloadConfig:
+		m.ResetDataDownloadConfig()
 		return nil
 	case botrunner.FieldCreatedAt:
 		m.ResetCreatedAt()
