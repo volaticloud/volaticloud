@@ -486,6 +486,15 @@ go tool cover -html=coverage.out -o coverage.html
 
 **Test File:** `internal/graph/helpers_test.go`
 
+**Data Download Functions (`internal/monitor/data_download.go`):** 100%
+- ✅ Command builder logic - 4 config scenarios (spot, futures, defaults, type handling)
+- ✅ Feather format validation - Critical regression test
+- ✅ Docker volume constants
+- ✅ Trading mode defaults
+- ✅ Days type conversion (int/float64)
+
+**Test File:** `internal/monitor/data_download_test.go`
+
 **Key Test Categories:**
 1. **Missing Required Fields** - Validates all required field checks
 2. **Invalid Types** - Ensures type validation works (string/number/object)
