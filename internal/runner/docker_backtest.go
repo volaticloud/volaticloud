@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -862,41 +861,6 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
 	configDir := filepath.Join("/tmp", "anytrade-backtest-configs", backtestID)
 	os.RemoveAll(configDir) // Best effort cleanup
-}
-
-// readFileFromContainer reads a file from a Docker container
-func (d *DockerBacktestRunner) readFileFromContainer(ctx context.Context, containerID string, filePath string) ([]byte, error) {
-	// Copy file from container
-	reader, _, err := d.client.CopyFromContainer(ctx, containerID, filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to copy file from container: %w", err)
-	}
-	defer reader.Close()
-
-	// Extract file from tar archive
-	tarReader := tar.NewReader(reader)
-
-	// Read the first (and only) file from the archive
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("failed to read tar header: %w", err)
-		}
-
-		// Read the file content
-		if header.Typeflag == tar.TypeReg {
-			buf := new(bytes.Buffer)
-			if _, err := io.Copy(buf, tarReader); err != nil {
-				return nil, fmt.Errorf("failed to read file from tar: %w", err)
-			}
-			return buf.Bytes(), nil
-		}
-	}
-
-	return nil, fmt.Errorf("no regular file found in tar archive")
 }
 
 // readFileFromVolume reads a file from a Docker volume using a temporary container

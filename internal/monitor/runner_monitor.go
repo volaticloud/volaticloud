@@ -190,23 +190,27 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.Bot
 			log.Printf("Runner %s: data download failed: %v", runner.Name, err)
 
 			// Update status to failed
-			m.dbClient.BotRunner.UpdateOne(runner).
+			if _, saveErr := m.dbClient.BotRunner.UpdateOne(runner).
 				SetDataDownloadStatus(enum.DataDownloadStatusFailed).
 				SetDataIsReady(false).
 				SetDataErrorMessage(err.Error()).
-				Save(context.Background())
+				Save(context.Background()); saveErr != nil {
+				log.Printf("Runner %s: failed to update runner status after download error: %v", runner.Name, saveErr)
+			}
 		} else {
 			log.Printf("Runner %s: data download completed successfully", runner.Name)
 
 			// Update status to completed
 			now := time.Now()
-			m.dbClient.BotRunner.UpdateOne(runner).
+			if _, saveErr := m.dbClient.BotRunner.UpdateOne(runner).
 				SetDataDownloadStatus(enum.DataDownloadStatusCompleted).
 				SetDataIsReady(true).
 				SetDataLastUpdated(now).
 				ClearDataErrorMessage().
 				ClearDataDownloadProgress().
-				Save(context.Background())
+				Save(context.Background()); saveErr != nil {
+				log.Printf("Runner %s: failed to update runner status after successful download: %v", runner.Name, saveErr)
+			}
 		}
 	}()
 

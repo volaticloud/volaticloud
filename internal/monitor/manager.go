@@ -86,7 +86,9 @@ func NewManager(cfg Config) (*Manager, error) {
 		// Create registry
 		registry, err := NewRegistry(etcdClient, cfg.InstanceID)
 		if err != nil {
-			etcdClient.Close()
+			if closeErr := etcdClient.Close(); closeErr != nil {
+				log.Printf("Warning: failed to close etcd client after registry error: %v", closeErr)
+			}
 			return nil, fmt.Errorf("failed to create registry: %w", err)
 		}
 
@@ -142,7 +144,9 @@ func (m *Manager) Start(ctx context.Context) error {
 
 		// Start coordinator (watches for instance changes)
 		if err := m.coordinator.Start(ctx); err != nil {
-			m.registry.Stop(ctx)
+			if stopErr := m.registry.Stop(ctx); stopErr != nil {
+				log.Printf("Warning: failed to stop registry after coordinator error: %v", stopErr)
+			}
 			return fmt.Errorf("failed to start coordinator: %w", err)
 		}
 
@@ -153,7 +157,9 @@ func (m *Manager) Start(ctx context.Context) error {
 	// Start bot monitor
 	if err := m.botMonitor.Start(ctx); err != nil {
 		if m.enabled {
-			m.registry.Stop(ctx)
+			if stopErr := m.registry.Stop(ctx); stopErr != nil {
+				log.Printf("Warning: failed to stop registry after bot monitor error: %v", stopErr)
+			}
 		}
 		return fmt.Errorf("failed to start bot monitor: %w", err)
 	}
@@ -162,7 +168,9 @@ func (m *Manager) Start(ctx context.Context) error {
 	if err := m.runnerMonitor.Start(ctx); err != nil {
 		m.botMonitor.Stop()
 		if m.enabled {
-			m.registry.Stop(ctx)
+			if stopErr := m.registry.Stop(ctx); stopErr != nil {
+				log.Printf("Warning: failed to stop registry after runner monitor error: %v", stopErr)
+			}
 		}
 		return fmt.Errorf("failed to start runner monitor: %w", err)
 	}

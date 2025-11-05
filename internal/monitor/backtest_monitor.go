@@ -107,7 +107,11 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 		log.Printf("Failed to create backtest runner for %s: %v", bt.ID, err)
 		return
 	}
-	defer backtestRunner.Close()
+	defer func() {
+		if err := backtestRunner.Close(); err != nil {
+			log.Printf("Warning: failed to close backtest runner: %v", err)
+		}
+	}()
 
 	// Get backtest status
 	status, err := backtestRunner.GetBacktestStatus(ctx, bt.ID.String())
@@ -141,11 +145,13 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 	if err != nil {
 		log.Printf("Failed to get backtest results for %s: %v", bt.ID, err)
 		// Mark as completed but without results
-		m.client.Backtest.UpdateOneID(bt.ID).
+		if _, saveErr := m.client.Backtest.UpdateOneID(bt.ID).
 			SetStatus(enum.TaskStatusCompleted).
 			SetCompletedAt(time.Now()).
 			SetErrorMessage("Failed to retrieve results").
-			Save(ctx)
+			Save(ctx); saveErr != nil {
+			log.Printf("Failed to update backtest %s after result error: %v", bt.ID, saveErr)
+		}
 		return
 	}
 

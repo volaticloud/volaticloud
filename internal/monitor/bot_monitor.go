@@ -158,7 +158,9 @@ func (m *BotMonitor) checkAllBots(ctx context.Context) {
 func (m *BotMonitor) checkBotBatch(ctx context.Context, bots []*ent.Bot) {
 	for _, b := range bots {
 		// Check each bot - errors are already logged inside checkBot
-		_ = m.checkBot(ctx, b)
+		if err := m.checkBot(ctx, b); err != nil {
+			log.Printf("Bot %s (%s) check failed: %v", b.Name, b.ID, err)
+		}
 	}
 }
 
@@ -181,7 +183,11 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 	if err != nil {
 		return fmt.Errorf("failed to create runner client: %w", err)
 	}
-	defer rt.Close()
+	defer func() {
+		if err := rt.Close(); err != nil {
+			log.Printf("Warning: failed to close runtime: %v", err)
+		}
+	}()
 
 	// Get bot status from runner
 	status, err := rt.GetBotStatus(ctx, b.ContainerID)

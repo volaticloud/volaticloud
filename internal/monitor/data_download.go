@@ -74,7 +74,11 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	if err != nil {
 		return fmt.Errorf("failed to create runtime: %w", err)
 	}
-	defer rt.Close()
+	defer func() {
+		if err := rt.Close(); err != nil {
+			log.Printf("Warning: failed to close runtime: %v", err)
+		}
+	}()
 
 	// Get Docker client from runtime (already configured with remote host)
 	dockerRT, ok := rt.(*runner.DockerRuntime)
@@ -102,9 +106,11 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 			"current_pair":     exchangeName,
 			"percent_complete": float64(idx) / float64(len(enabledExchanges)) * 100,
 		}
-		dbClient.BotRunner.UpdateOne(r).
+		if _, err := dbClient.BotRunner.UpdateOne(r).
 			SetDataDownloadProgress(progress).
-			Save(context.Background())
+			Save(context.Background()); err != nil {
+			log.Printf("Warning: failed to update runner progress: %v", err)
+		}
 
 		if err := downloadExchangeData(ctx, cli, exchangeName, exchConfig); err != nil {
 			return fmt.Errorf("failed to download %s data: %w", exchangeName, err)
@@ -246,7 +252,11 @@ func pullImage(ctx context.Context, cli *client.Client, imageName string) error 
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			log.Printf("Warning: failed to close image pull reader: %v", err)
+		}
+	}()
 
 	// Wait for pull to complete
 	// In production, you might want to show progress
@@ -266,7 +276,11 @@ func getContainerLogs(ctx context.Context, cli *client.Client, containerID strin
 	if err != nil {
 		return "", err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			log.Printf("Warning: failed to close container logs reader: %v", err)
+		}
+	}()
 
 	logs, err := io.ReadAll(reader)
 	if err != nil {

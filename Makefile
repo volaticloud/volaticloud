@@ -45,7 +45,7 @@ generate-freqtrade:
 		--openapi-normalizer SET_TAGS_FOR_ALL_OPERATIONS=freqtrade \
 		> /dev/null 2>&1
 	@echo "Cleaning up generated files (removing tests and docs)..."
-	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md
+	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md || true
 	@echo "Freqtrade client generated successfully!"
 
 # Generate ENT and GraphQL code
