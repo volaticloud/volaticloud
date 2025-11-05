@@ -245,7 +245,7 @@ func (r *Registry) heartbeatLoop(ctx context.Context) {
 			if err := r.register(ctx); err != nil {
 				log.Printf("Failed to update heartbeat: %v", err)
 			}
-		case ka, ok := <-keepAliveChan:
+		case _, ok := <-keepAliveChan:
 			if !ok {
 				log.Println("Keep-alive channel closed, re-establishing lease")
 				// Lease expired or lost connection, try to re-register
@@ -260,7 +260,7 @@ func (r *Registry) heartbeatLoop(ctx context.Context) {
 					return
 				}
 			}
-			// If ka != nil, lease renewed successfully (no action needed)
+			// If keepalive response received, lease renewed successfully (no action needed)
 		}
 	}
 }
