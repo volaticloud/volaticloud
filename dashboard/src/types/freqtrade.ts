@@ -261,9 +261,9 @@ export interface TagResult {
 }
 
 /**
- * Exit reason statistics
+ * Exit reason statistics (alias for TagResult)
  */
-export interface ExitReasonResult extends TagResult {}
+export type ExitReasonResult = TagResult;
 
 /**
  * Daily/periodic statistics

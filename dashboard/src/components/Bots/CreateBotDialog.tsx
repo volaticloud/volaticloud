@@ -121,7 +121,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             strategyID,
             runnerID,
             mode: mode as any,
-            freqtradeVersion: '2024.1',
+            freqtradeVersion: '2025.10',
             config: config || undefined,
           },
         },

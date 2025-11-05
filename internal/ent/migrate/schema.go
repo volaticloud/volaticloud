@@ -52,7 +52,7 @@ var (
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "secure_config", Type: field.TypeJSON, Nullable: true},
-		{Name: "freqtrade_version", Type: field.TypeString, Default: "stable"},
+		{Name: "freqtrade_version", Type: field.TypeString, Default: "2025.10"},
 		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},

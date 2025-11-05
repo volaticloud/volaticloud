@@ -15,7 +15,6 @@ import {
   IconButton,
   Tooltip,
   LinearProgress,
-  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -45,7 +44,7 @@ export const RunnersList = () => {
     pollInterval: 10000, // Poll every 10 seconds to update download status
   });
 
-  const [refreshRunnerData, { loading: refreshing }] = useRefreshRunnerDataMutation();
+  const [refreshRunnerData] = useRefreshRunnerDataMutation();
 
   const handleRefreshData = async (id: string, name: string) => {
     try {

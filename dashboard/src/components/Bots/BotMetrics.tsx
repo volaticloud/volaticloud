@@ -19,23 +19,23 @@ import {
 
 interface BotMetricsProps {
   metrics: {
-    profitClosedCoin: number | null;
-    profitClosedPercent: number | null;
-    profitAllCoin: number | null;
-    profitAllPercent: number | null;
-    tradeCount: number | null;
-    closedTradeCount: number | null;
-    openTradeCount: number | null;
-    winningTrades: number | null;
-    losingTrades: number | null;
-    winrate: number | null;
-    expectancy: number | null;
-    profitFactor: number | null;
-    maxDrawdown: number | null;
-    maxDrawdownAbs: number | null;
-    bestPair: string | null;
-    bestRate: number | null;
-    fetchedAt: string | null;
+    profitClosedCoin?: number | null;
+    profitClosedPercent?: number | null;
+    profitAllCoin?: number | null;
+    profitAllPercent?: number | null;
+    tradeCount?: number | null;
+    closedTradeCount?: number | null;
+    openTradeCount?: number | null;
+    winningTrades?: number | null;
+    losingTrades?: number | null;
+    winrate?: number | null;
+    expectancy?: number | null;
+    profitFactor?: number | null;
+    maxDrawdown?: number | null;
+    maxDrawdownAbs?: number | null;
+    bestPair?: string | null;
+    bestRate?: number | null;
+    fetchedAt?: string | null;
   } | null;
   botStatus: string;
 }

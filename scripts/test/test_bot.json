@@ -3,7 +3,7 @@
   "variables": {
     "input": {
       "name": "Test Bot",
-      "freqtradeVersion": "2024.1",
+      "freqtradeVersion": "2025.10",
       "apiUsername": "testuser",
       "apiPassword": "testpass",
       "exchangeID": "e22ebec7-6ebc-496e-ab79-d2d5fa07cdb0",

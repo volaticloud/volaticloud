@@ -395,7 +395,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "TestBot",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeDryRun,
 				Edges: ent.BotEdges{
 					Exchange: nil,
@@ -413,7 +413,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "TestBot",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeDryRun,
 				Edges: ent.BotEdges{
 					Exchange: &ent.Exchange{
@@ -433,7 +433,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "DryRunBot",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeDryRun,
 				Config: map[string]interface{}{
 					"stake_currency": "USDT",
@@ -474,7 +474,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "LiveBot",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeLive,
 				Config: map[string]interface{}{
 					"stake_currency": "USDT",
@@ -515,7 +515,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "MutationTest",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeDryRun,
 				Config: map[string]interface{}{
 					"stake_currency": "USDT",
@@ -569,7 +569,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "NilConfigBot",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeDryRun,
 				Config:           nil, // No config provided
 				SecureConfig: map[string]interface{}{
@@ -607,7 +607,7 @@ func TestBuildBotSpec(t *testing.T) {
 			bot: &ent.Bot{
 				ID:               uuid.New(),
 				Name:             "CompleteBot",
-				FreqtradeVersion: "2024.1",
+				FreqtradeVersion: "2025.10",
 				Mode:             enum.BotModeDryRun,
 				Config: map[string]interface{}{
 					"stake_currency": "USDT",
@@ -645,7 +645,7 @@ func TestBuildBotSpec(t *testing.T) {
 				assert.Equal(t, bot.ID.String(), spec.ID)
 				assert.Equal(t, bot.Name, spec.Name)
 				assert.Equal(t, "freqtradeorg/freqtrade:2025.10", spec.Image)
-				assert.Equal(t, "2024.1", spec.FreqtradeVersion)
+				assert.Equal(t, "2025.10", spec.FreqtradeVersion)
 				assert.Equal(t, "MyStrategy", spec.StrategyName)
 				assert.Equal(t, "# strategy code here", spec.StrategyCode)
 

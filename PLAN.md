@@ -121,7 +121,7 @@ Represents a running freqtrade bot instance.
 - `api_username` (string) - Freqtrade API username
 - `api_password` (string, encrypted) - Freqtrade API password
 - `config` (JSON) - Bot-specific freqtrade config overrides
-- `freqtrade_version` (string) - Freqtrade version (e.g., "2024.1")
+- `freqtrade_version` (string) - Freqtrade version (e.g., "2025.10")
 - `last_seen_at` (timestamp) - Last successful health check
 - `error_message` (text) - Last error message if status is error
 - `created_at` (timestamp)

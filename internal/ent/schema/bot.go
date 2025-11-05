@@ -47,7 +47,7 @@ func (Bot) Fields() []ent.Field {
 			Annotations(entgql.Skip()).
 			Comment("System-forced configuration (api_server, initial_state) - NEVER exposed via GraphQL"),
 		field.String("freqtrade_version").
-			Default("stable").
+			Default("2025.10").
 			Comment("Freqtrade Docker image version tag"),
 		field.Time("last_seen_at").
 			Optional().
