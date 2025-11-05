@@ -35,7 +35,7 @@ setup:
 generate-freqtrade:
 	@echo "Generating Freqtrade API client from OpenAPI spec..."
 	@which docker > /dev/null || (echo "Docker not installed. Please install Docker." && exit 1)
-	@docker run --rm -v $${PWD}:/local openapitools/openapi-generator-cli generate \
+	@docker run --rm --user $$(id -u):$$(id -g) -v $${PWD}:/local openapitools/openapi-generator-cli generate \
 		-i /local/internal/freqtrade/openapi.json \
 		-g go \
 		-o /local/internal/freqtrade \
@@ -45,7 +45,8 @@ generate-freqtrade:
 		--openapi-normalizer SET_TAGS_FOR_ALL_OPERATIONS=freqtrade \
 		> /dev/null 2>&1
 	@echo "Cleaning up generated files (removing tests and docs)..."
-	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md || true
+	@chmod -R u+w internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator 2>/dev/null || true
+	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md 2>/dev/null || true
 	@echo "Freqtrade client generated successfully!"
 
 # Generate ENT and GraphQL code
