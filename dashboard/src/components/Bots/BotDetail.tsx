@@ -16,8 +16,8 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Grid,
 } from '@mui/material';
-import Grid2 from '@mui/material/Grid2';
 import {
   PlayArrow,
   Stop,
@@ -239,73 +239,73 @@ const BotDetail = () => {
       <BotMetrics metrics={bot.metrics} botStatus={bot.status} />
 
       {/* Bot Information */}
-      <Grid2 container spacing={3}>
-        <Grid2 xs={12} md={6}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Bot Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <Grid2 container spacing={2}>
-              <Grid2 xs={6}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Container ID
                 </Typography>
                 <Typography variant="body1" sx={{ wordBreak: 'break-all' }}>
                   {bot.containerID || 'N/A'}
                 </Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Freqtrade Version
                 </Typography>
                 <Typography variant="body1">{bot.freqtradeVersion}</Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Exchange
                 </Typography>
                 <Typography variant="body1">
                   {bot.exchange?.name}
                 </Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Strategy
                 </Typography>
                 <Typography variant="body1">{bot.strategy?.name}</Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Runner
                 </Typography>
                 <Typography variant="body1">
                   {bot.runner?.name} ({bot.runner?.type})
                 </Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Last Seen
                 </Typography>
                 <Typography variant="body1">{formatDate(bot.lastSeenAt)}</Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Created
                 </Typography>
                 <Typography variant="body1">{formatDate(bot.createdAt)}</Typography>
-              </Grid2>
-              <Grid2 xs={6}>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
                   Updated
                 </Typography>
                 <Typography variant="body1">{formatDate(bot.updatedAt)}</Typography>
-              </Grid2>
-            </Grid2>
+              </Grid>
+            </Grid>
           </Paper>
-        </Grid2>
+        </Grid>
 
-        <Grid2 xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Strategy Information
@@ -324,8 +324,8 @@ const BotDetail = () => {
               {bot.strategy?.description || 'No description available'}
             </Typography>
           </Paper>
-        </Grid2>
-      </Grid2>
+        </Grid>
+      </Grid>
 
       {/* Recent Trades */}
       {bot.trades?.edges && bot.trades.edges.length > 0 && (

@@ -6,8 +6,8 @@ import {
   Skeleton,
   Alert,
   AlertTitle,
+  Grid,
 } from '@mui/material';
-import Grid2 from '@mui/material/Grid2';
 import {
   TrendingUp,
   TrendingDown,
@@ -77,9 +77,9 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
           <AlertTitle>Fetching Metrics</AlertTitle>
           Waiting for the monitor to collect metrics from the bot. This may take up to 30 seconds...
         </Alert>
-        <Grid2 container spacing={3}>
+        <Grid container spacing={3}>
           {[...Array(6)].map((_, index) => (
-            <Grid2 xs={12} sm={6} md={4} key={index}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
               <Card>
                 <CardContent>
                   <Skeleton variant="text" width="60%" />
@@ -87,9 +87,9 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
                   <Skeleton variant="text" width="40%" />
                 </CardContent>
               </Card>
-            </Grid2>
+            </Grid>
           ))}
-        </Grid2>
+        </Grid>
       </Box>
     );
   }
@@ -100,9 +100,9 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
       <Typography variant="h6" gutterBottom>
         Performance Metrics
       </Typography>
-      <Grid2 container spacing={3}>
+      <Grid container spacing={3}>
         {/* Total Profit */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -126,10 +126,10 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
 
         {/* Closed Profit */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -153,10 +153,10 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
 
         {/* Total Trades */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -171,10 +171,10 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
 
         {/* Win Rate */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -189,10 +189,10 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
 
         {/* Best Pair */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -207,10 +207,10 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
 
         {/* Max Drawdown */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -227,10 +227,10 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
 
         {/* Profit Factor */}
-        <Grid2 xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography color="textSecondary" variant="body2" gutterBottom>
@@ -242,8 +242,8 @@ const BotMetrics = ({ metrics, botStatus }: BotMetricsProps) => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid2>
-      </Grid2>
+        </Grid>
+      </Grid>
 
       {/* Metrics Last Updated */}
       <Box mt={2} textAlign="right">
