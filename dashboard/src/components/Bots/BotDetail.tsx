@@ -344,7 +344,6 @@ const BotDetail = () => {
                   <TableCell align="right">Close Date</TableCell>
                   <TableCell align="right">Profit</TableCell>
                   <TableCell align="right">Profit %</TableCell>
-                  <TableCell align="right">Stake</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -382,7 +381,6 @@ const BotDetail = () => {
                       >
                         {formatPercent(trade.profitRatio ? trade.profitRatio * 100 : null)}
                       </TableCell>
-                      <TableCell align="right">{formatNumber(trade.stakeAmount)}</TableCell>
                     </TableRow>
                   );
                 })}

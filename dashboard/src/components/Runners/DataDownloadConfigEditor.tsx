@@ -24,23 +24,11 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-
-interface ExchangeConfig {
-  name: string;
-  enabled: boolean;
-  timeframes: string[];
-  pairsPattern: string;
-  days: number;
-  tradingMode: string;
-}
-
-interface DataDownloadConfig {
-  exchanges: ExchangeConfig[];
-}
+import { DataDownloadConfigInput, DataDownloadExchangeConfigInput } from '../../generated/graphql';
 
 interface DataDownloadConfigEditorProps {
-  value: DataDownloadConfig | null;
-  onChange: (config: DataDownloadConfig) => void;
+  value: DataDownloadConfigInput | null;
+  onChange: (config: DataDownloadConfigInput) => void;
 }
 
 const AVAILABLE_EXCHANGES = ['binance', 'bybit', 'kraken', 'okx', 'coinbase', 'kucoin'];
@@ -48,12 +36,12 @@ const AVAILABLE_TIMEFRAMES = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', 
 const TRADING_MODES = ['spot', 'futures', 'margin'];
 
 export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfigEditorProps) => {
-  const [config, setConfig] = useState<DataDownloadConfig>(
+  const [config, setConfig] = useState<DataDownloadConfigInput>(
     value || { exchanges: [] }
   );
 
   const handleAddExchange = () => {
-    const newExchange: ExchangeConfig = {
+    const newExchange: DataDownloadExchangeConfigInput = {
       name: 'binance',
       enabled: true,
       timeframes: ['1h', '1d'],
@@ -63,7 +51,7 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
     };
 
     const updatedConfig = {
-      exchanges: [...config.exchanges, newExchange],
+      exchanges: [...(config.exchanges || []), newExchange],
     };
     setConfig(updatedConfig);
     onChange(updatedConfig);
@@ -71,14 +59,14 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
 
   const handleRemoveExchange = (index: number) => {
     const updatedConfig = {
-      exchanges: config.exchanges.filter((_, i) => i !== index),
+      exchanges: (config.exchanges || []).filter((_, i) => i !== index),
     };
     setConfig(updatedConfig);
     onChange(updatedConfig);
   };
 
-  const handleExchangeChange = (index: number, field: keyof ExchangeConfig, value: any) => {
-    const updatedExchanges = [...config.exchanges];
+  const handleExchangeChange = (index: number, field: keyof DataDownloadExchangeConfigInput, value: any) => {
+    const updatedExchanges = [...(config.exchanges || [])];
     updatedExchanges[index] = {
       ...updatedExchanges[index],
       [field]: value,
@@ -90,7 +78,8 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
   };
 
   const handleTimeframeToggle = (index: number, timeframe: string) => {
-    const exchange = config.exchanges[index];
+    const exchanges = config.exchanges || [];
+    const exchange = exchanges[index];
     const currentTimeframes = exchange.timeframes || [];
     const newTimeframes = currentTimeframes.includes(timeframe)
       ? currentTimeframes.filter(tf => tf !== timeframe)
@@ -113,7 +102,7 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
         </Button>
       </Box>
 
-      {config.exchanges.length === 0 ? (
+      {(config.exchanges || []).length === 0 ? (
         <Card variant="outlined">
           <CardContent>
             <Typography variant="body2" color="text.secondary">
