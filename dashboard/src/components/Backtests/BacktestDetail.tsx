@@ -12,7 +12,7 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
-import Grid2 from '@mui/material/Unstable_Grid2';
+import Grid2 from '@mui/material/Grid2';
 import { ArrowBack, Timeline, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { useGetBacktestQuery } from '../../generated/graphql';
 import TradesTable from './TradesTable';
