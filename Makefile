@@ -40,7 +40,7 @@ generate-freqtrade:
 		-g go \
 		-o /local/internal/freqtrade \
 		--package-name freqtrade \
-		--additional-properties=withGoMod=false,enumClassPrefix=true \
+		--additional-properties=withGoMod=false,enumClassPrefix=true,generateTests=false \
 		--type-mappings=integer=int64 \
 		--openapi-normalizer SET_TAGS_FOR_ALL_OPERATIONS=freqtrade \
 		> /dev/null 2>&1

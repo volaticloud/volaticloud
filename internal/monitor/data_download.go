@@ -96,7 +96,11 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 
 	// Download data for each enabled exchange
 	for idx, exchConfig := range enabledExchanges {
-		exchangeName := exchConfig["name"].(string)
+		exchangeName, ok := exchConfig["name"].(string)
+		if !ok {
+			log.Printf("Warning: exchange name is not a string, skipping")
+			continue
+		}
 		log.Printf("Runner %s: downloading %s data (%d/%d)", r.Name, exchangeName, idx+1, len(enabledExchanges))
 
 		// Update progress
@@ -125,13 +129,23 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 func downloadExchangeData(ctx context.Context, cli *client.Client, exchange string, config map[string]interface{}) error {
 
 	// Extract configuration (using camelCase field names from GraphQL)
-	pairsPattern := config["pairsPattern"].(string)
+	pairsPattern, ok := config["pairsPattern"].(string)
+	if !ok {
+		return fmt.Errorf("pairsPattern is not a string")
+	}
 
 	// Get timeframes
-	timeframesRaw := config["timeframes"].([]interface{})
-	timeframes := make([]string, len(timeframesRaw))
-	for i, tf := range timeframesRaw {
-		timeframes[i] = tf.(string)
+	timeframesRaw, ok := config["timeframes"].([]interface{})
+	if !ok {
+		return fmt.Errorf("timeframes is not an array")
+	}
+	timeframes := make([]string, 0, len(timeframesRaw))
+	for _, tf := range timeframesRaw {
+		if tfStr, ok := tf.(string); ok {
+			timeframes = append(timeframes, tfStr)
+		} else {
+			log.Printf("Warning: skipping non-string timeframe: %v", tf)
+		}
 	}
 
 	// Get days
@@ -227,7 +241,11 @@ func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName 
 	case status := <-statusCh:
 		if status.StatusCode != 0 {
 			// Get container logs for error details
-			logs, _ := getContainerLogs(ctx, cli, resp.ID)
+			logs, logErr := getContainerLogs(ctx, cli, resp.ID)
+			if logErr != nil {
+				log.Printf("Warning: failed to get container logs: %v", logErr)
+				return fmt.Errorf("container exited with status %d", status.StatusCode)
+			}
 			return fmt.Errorf("container exited with status %d: %s", status.StatusCode, logs)
 		}
 		log.Printf("Data download container completed successfully")
