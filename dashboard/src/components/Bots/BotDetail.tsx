@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  Grid,
   Chip,
   Button,
   CircularProgress,
@@ -18,6 +17,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import Grid2 from '@mui/material/Unstable_Grid2';
 import {
   PlayArrow,
   Stop,
@@ -239,73 +239,73 @@ const BotDetail = () => {
       <BotMetrics metrics={bot.metrics} botStatus={bot.status} />
 
       {/* Bot Information */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Grid2 container spacing={3}>
+        <Grid2 xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Bot Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
+            <Grid2 container spacing={2}>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Container ID
                 </Typography>
                 <Typography variant="body1" sx={{ wordBreak: 'break-all' }}>
                   {bot.containerID || 'N/A'}
                 </Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Freqtrade Version
                 </Typography>
                 <Typography variant="body1">{bot.freqtradeVersion}</Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Exchange
                 </Typography>
                 <Typography variant="body1">
                   {bot.exchange?.name}
                 </Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Strategy
                 </Typography>
                 <Typography variant="body1">{bot.strategy?.name}</Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Runner
                 </Typography>
                 <Typography variant="body1">
                   {bot.runner?.name} ({bot.runner?.type})
                 </Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Last Seen
                 </Typography>
                 <Typography variant="body1">{formatDate(bot.lastSeenAt)}</Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Created
                 </Typography>
                 <Typography variant="body1">{formatDate(bot.createdAt)}</Typography>
-              </Grid>
-              <Grid item xs={6}>
+              </Grid2>
+              <Grid2 xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   Updated
                 </Typography>
                 <Typography variant="body1">{formatDate(bot.updatedAt)}</Typography>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
           </Paper>
-        </Grid>
+        </Grid2>
 
-        <Grid item xs={12} md={6}>
+        <Grid2 xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Strategy Information
@@ -324,8 +324,8 @@ const BotDetail = () => {
               {bot.strategy?.description || 'No description available'}
             </Typography>
           </Paper>
-        </Grid>
-      </Grid>
+        </Grid2>
+      </Grid2>
 
       {/* Recent Trades */}
       {bot.trades?.edges && bot.trades.edges.length > 0 && (

@@ -259,10 +259,8 @@ func (r *Registry) heartbeatLoop(ctx context.Context) {
 					log.Printf("Failed to restart keep-alive: %v", err)
 					return
 				}
-			} else if ka != nil {
-				// Lease renewed successfully
-				// log.Printf("Lease renewed: TTL=%d", ka.TTL)
 			}
+			// If ka != nil, lease renewed successfully (no action needed)
 		}
 	}
 }

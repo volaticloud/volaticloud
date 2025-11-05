@@ -235,7 +235,7 @@ func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName 
 // pullImage pulls a Docker image if not already present
 func pullImage(ctx context.Context, cli *client.Client, imageName string) error {
 	// Check if image exists
-	_, _, err := cli.ImageInspectWithRaw(ctx, imageName)
+	_, err := cli.ImageInspect(ctx, imageName)
 	if err == nil {
 		log.Printf("Image %s already exists", imageName)
 		return nil

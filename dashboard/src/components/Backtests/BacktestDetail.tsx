@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Chip,
   CircularProgress,
   Alert,
@@ -13,6 +12,7 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
+import Grid2 from '@mui/material/Unstable_Grid2';
 import { ArrowBack, Timeline, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { useGetBacktestQuery } from '../../generated/graphql';
 import TradesTable from './TradesTable';
@@ -100,24 +100,24 @@ const BacktestDetail: React.FC = () => {
       {/* Backtest Info */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+          <Grid2 container spacing={2}>
+            <Grid2 xs={12} md={6}>
               <Typography variant="subtitle2" color="text.secondary">
                 Strategy
               </Typography>
               <Typography variant="body1">
                 {backtest.strategy?.name || 'N/A'}
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Grid2>
+            <Grid2 xs={12} md={6}>
               <Typography variant="subtitle2" color="text.secondary">
                 Runner
               </Typography>
               <Typography variant="body1">
                 {backtest.runner?.name || 'N/A'}
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Grid2>
+            <Grid2 xs={12} md={6}>
               <Typography variant="subtitle2" color="text.secondary">
                 Status
               </Typography>
@@ -126,8 +126,8 @@ const BacktestDetail: React.FC = () => {
                 color={getStatusColor(backtest.status)}
                 size="small"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Grid2>
+            <Grid2 xs={12} md={6}>
               <Typography variant="subtitle2" color="text.secondary">
                 Completed At
               </Typography>
@@ -136,8 +136,8 @@ const BacktestDetail: React.FC = () => {
                   ? new Date(backtest.completedAt).toLocaleString()
                   : 'N/A'}
               </Typography>
-            </Grid>
-          </Grid>
+            </Grid2>
+          </Grid2>
 
           {backtest.errorMessage && (
             <Alert severity="error" sx={{ mt: 2 }}>
@@ -154,9 +154,9 @@ const BacktestDetail: React.FC = () => {
             Performance Summary
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid2 container spacing={2} sx={{ mb: 4 }}>
             {/* Total Profit */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid2 xs={12} sm={6} md={3}>
               <Paper elevation={2} sx={{ p: 2 }}>
                 <Box display="flex" alignItems="center" mb={1}>
                   {profitTotal >= 0 ? (
@@ -175,10 +175,10 @@ const BacktestDetail: React.FC = () => {
                   {profitPercent.toFixed(2)}%
                 </Typography>
               </Paper>
-            </Grid>
+            </Grid2>
 
             {/* Total Trades */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid2 xs={12} sm={6} md={3}>
               <Paper elevation={2} sx={{ p: 2 }}>
                 <Box display="flex" alignItems="center" mb={1}>
                   <Timeline sx={{ mr: 1 }} />
@@ -191,10 +191,10 @@ const BacktestDetail: React.FC = () => {
                   W: {strategyData.wins || 0} / L: {strategyData.losses || 0}
                 </Typography>
               </Paper>
-            </Grid>
+            </Grid2>
 
             {/* Win Rate */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid2 xs={12} sm={6} md={3}>
               <Paper elevation={2} sx={{ p: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Win Rate
@@ -204,10 +204,10 @@ const BacktestDetail: React.FC = () => {
                   Avg Profit: {avgProfit}%
                 </Typography>
               </Paper>
-            </Grid>
+            </Grid2>
 
             {/* Max Drawdown */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid2 xs={12} sm={6} md={3}>
               <Paper elevation={2} sx={{ p: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Max Drawdown
@@ -219,8 +219,8 @@ const BacktestDetail: React.FC = () => {
                   PF: {profitFactor.toFixed(2)} | Exp: {expectancy.toFixed(2)}
                 </Typography>
               </Paper>
-            </Grid>
-          </Grid>
+            </Grid2>
+          </Grid2>
 
           <Divider sx={{ my: 3 }} />
 
