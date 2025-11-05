@@ -15,10 +15,11 @@ type Manager struct {
 	dbClient   *ent.Client
 	etcdClient *etcd.Client
 
-	registry      *Registry
-	coordinator   *Coordinator
-	botMonitor    *BotMonitor
-	runnerMonitor *RunnerMonitor
+	registry        *Registry
+	coordinator     *Coordinator
+	botMonitor      *BotMonitor
+	runnerMonitor   *RunnerMonitor
+	backtestMonitor *BacktestMonitor
 
 	instanceID string
 	enabled    bool
@@ -122,6 +123,9 @@ func NewManager(cfg Config) (*Manager, error) {
 		m.runnerMonitor.SetInterval(cfg.RunnerMonitorInterval)
 	}
 
+	// Create backtest monitor (uses same interval as bot monitor)
+	m.backtestMonitor = NewBacktestMonitor(cfg.DatabaseClient, cfg.MonitorInterval)
+
 	return m, nil
 }
 
@@ -163,6 +167,9 @@ func (m *Manager) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start runner monitor: %w", err)
 	}
 
+	// Start backtest monitor
+	go m.backtestMonitor.Start(ctx)
+
 	log.Println("Monitor manager started successfully")
 	return nil
 }
@@ -176,6 +183,9 @@ func (m *Manager) Stop(ctx context.Context) error {
 
 	// Stop runner monitor
 	m.runnerMonitor.Stop()
+
+	// Stop backtest monitor
+	m.backtestMonitor.Stop()
 
 	// Stop registry if using etcd
 	if m.enabled {

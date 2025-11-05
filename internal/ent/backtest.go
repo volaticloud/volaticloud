@@ -28,6 +28,8 @@ type Backtest struct {
 	Config map[string]interface{} `json:"config,omitempty"`
 	// Backtest result data (metrics, logs, trades, etc.)
 	Result map[string]interface{} `json:"result,omitempty"`
+	// Typed summary of key backtest metrics
+	Summary map[string]interface{} `json:"summary,omitempty"`
 	// Docker container ID for running backtest
 	ContainerID string `json:"container_id,omitempty"`
 	// Error message if backtest failed
@@ -88,7 +90,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case backtest.FieldConfig, backtest.FieldResult:
+		case backtest.FieldConfig, backtest.FieldResult, backtest.FieldSummary:
 			values[i] = new([]byte)
 		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage:
 			values[i] = new(sql.NullString)
@@ -137,6 +139,14 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &_m.Result); err != nil {
 					return fmt.Errorf("unmarshal field result: %w", err)
+				}
+			}
+		case backtest.FieldSummary:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field summary", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Summary); err != nil {
+					return fmt.Errorf("unmarshal field summary: %w", err)
 				}
 			}
 		case backtest.FieldContainerID:
@@ -235,6 +245,9 @@ func (_m *Backtest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("result=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Result))
+	builder.WriteString(", ")
+	builder.WriteString("summary=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Summary))
 	builder.WriteString(", ")
 	builder.WriteString("container_id=")
 	builder.WriteString(_m.ContainerID)

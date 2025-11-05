@@ -362,7 +362,7 @@ const (
 
 #### Bot Container Specification
 ```yaml
-Image: freqtrade:2024.1
+Image: freqtrade:2025.10
 Volumes:
   - /data/{bot_id}/user_data:/freqtrade/user_data
   - /data/{bot_id}/config.json:/freqtrade/config.json:ro
@@ -385,7 +385,7 @@ Resources:
 
 #### Backtest Container Specification
 ```yaml
-Image: freqtrade:2024.1
+Image: freqtrade:2025.10
 Volumes:
   - /data/backtests/{backtest_id}:/freqtrade/user_data
 Command: backtesting --strategy {strategy_name} --config {config}
@@ -401,7 +401,7 @@ Resources:
 
 #### HyperOpt Container Specification
 ```yaml
-Image: freqtrade:2024.1
+Image: freqtrade:2025.10
 Volumes:
   - /data/hyperopts/{hyperopt_id}:/freqtrade/user_data
 Command: hyperopt --strategy {strategy_name} --epochs {epochs} --spaces {spaces}
@@ -458,7 +458,7 @@ spec:
     spec:
       containers:
       - name: freqtrade
-        image: freqtrade:2024.1
+        image: freqtrade:2025.10
         ports:
         - containerPort: 8080
         env:
@@ -516,7 +516,7 @@ spec:
     spec:
       containers:
       - name: freqtrade
-        image: freqtrade:2024.1
+        image: freqtrade:2025.10
         command: ["freqtrade", "backtesting"]
         args: ["--strategy", "{strategy_name}", "--config", "/config/config.json"]
         volumeMounts:

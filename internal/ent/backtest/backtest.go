@@ -24,6 +24,8 @@ const (
 	FieldConfig = "config"
 	// FieldResult holds the string denoting the result field in the database.
 	FieldResult = "result"
+	// FieldSummary holds the string denoting the summary field in the database.
+	FieldSummary = "summary"
 	// FieldContainerID holds the string denoting the container_id field in the database.
 	FieldContainerID = "container_id"
 	// FieldErrorMessage holds the string denoting the error_message field in the database.
@@ -66,6 +68,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldConfig,
 	FieldResult,
+	FieldSummary,
 	FieldContainerID,
 	FieldErrorMessage,
 	FieldStrategyID,

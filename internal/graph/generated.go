@@ -3,6 +3,7 @@
 package graph
 
 import (
+	"anytrade/internal/backtest"
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/schema/uuidgql"
 	"anytrade/internal/enum"
@@ -46,6 +47,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Backtest() BacktestResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -67,6 +69,7 @@ type ComplexityRoot struct {
 		Status       func(childComplexity int) int
 		Strategy     func(childComplexity int) int
 		StrategyID   func(childComplexity int) int
+		Summary      func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -79,6 +82,28 @@ type ComplexityRoot struct {
 	BacktestEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	BacktestSummary struct {
+		AvgStakeAmount func(childComplexity int) int
+		BacktestDays   func(childComplexity int) int
+		BacktestEnd    func(childComplexity int) int
+		BacktestStart  func(childComplexity int) int
+		Calmar         func(childComplexity int) int
+		Expectancy     func(childComplexity int) int
+		Losses         func(childComplexity int) int
+		MaxDrawdown    func(childComplexity int) int
+		ProfitFactor   func(childComplexity int) int
+		ProfitMean     func(childComplexity int) int
+		ProfitTotal    func(childComplexity int) int
+		ProfitTotalAbs func(childComplexity int) int
+		Sharpe         func(childComplexity int) int
+		Sortino        func(childComplexity int) int
+		StakeCurrency  func(childComplexity int) int
+		StrategyName   func(childComplexity int) int
+		TotalTrades    func(childComplexity int) int
+		WinRate        func(childComplexity int) int
+		Wins           func(childComplexity int) int
 	}
 
 	Bot struct {
@@ -298,6 +323,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type BacktestResolver interface {
+	Summary(ctx context.Context, obj *ent.Backtest) (*backtest.BacktestSummary, error)
+}
 type MutationResolver interface {
 	CreateExchange(ctx context.Context, input ent.CreateExchangeInput) (*ent.Exchange, error)
 	UpdateExchange(ctx context.Context, id uuid.UUID, input ent.UpdateExchangeInput) (*ent.Exchange, error)
@@ -428,6 +456,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.StrategyID(childComplexity), true
+	case "Backtest.summary":
+		if e.complexity.Backtest.Summary == nil {
+			break
+		}
+
+		return e.complexity.Backtest.Summary(childComplexity), true
 	case "Backtest.updatedAt":
 		if e.complexity.Backtest.UpdatedAt == nil {
 			break
@@ -466,6 +500,121 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BacktestEdge.Node(childComplexity), true
+
+	case "BacktestSummary.avgStakeAmount":
+		if e.complexity.BacktestSummary.AvgStakeAmount == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.AvgStakeAmount(childComplexity), true
+	case "BacktestSummary.backtestDays":
+		if e.complexity.BacktestSummary.BacktestDays == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.BacktestDays(childComplexity), true
+	case "BacktestSummary.backtestEnd":
+		if e.complexity.BacktestSummary.BacktestEnd == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.BacktestEnd(childComplexity), true
+	case "BacktestSummary.backtestStart":
+		if e.complexity.BacktestSummary.BacktestStart == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.BacktestStart(childComplexity), true
+	case "BacktestSummary.calmar":
+		if e.complexity.BacktestSummary.Calmar == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.Calmar(childComplexity), true
+	case "BacktestSummary.expectancy":
+		if e.complexity.BacktestSummary.Expectancy == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.Expectancy(childComplexity), true
+	case "BacktestSummary.losses":
+		if e.complexity.BacktestSummary.Losses == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.Losses(childComplexity), true
+	case "BacktestSummary.maxDrawdown":
+		if e.complexity.BacktestSummary.MaxDrawdown == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.MaxDrawdown(childComplexity), true
+	case "BacktestSummary.profitFactor":
+		if e.complexity.BacktestSummary.ProfitFactor == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.ProfitFactor(childComplexity), true
+	case "BacktestSummary.profitMean":
+		if e.complexity.BacktestSummary.ProfitMean == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.ProfitMean(childComplexity), true
+	case "BacktestSummary.profitTotal":
+		if e.complexity.BacktestSummary.ProfitTotal == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.ProfitTotal(childComplexity), true
+	case "BacktestSummary.profitTotalAbs":
+		if e.complexity.BacktestSummary.ProfitTotalAbs == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.ProfitTotalAbs(childComplexity), true
+	case "BacktestSummary.sharpe":
+		if e.complexity.BacktestSummary.Sharpe == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.Sharpe(childComplexity), true
+	case "BacktestSummary.sortino":
+		if e.complexity.BacktestSummary.Sortino == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.Sortino(childComplexity), true
+	case "BacktestSummary.stakeCurrency":
+		if e.complexity.BacktestSummary.StakeCurrency == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.StakeCurrency(childComplexity), true
+	case "BacktestSummary.strategyName":
+		if e.complexity.BacktestSummary.StrategyName == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.StrategyName(childComplexity), true
+	case "BacktestSummary.totalTrades":
+		if e.complexity.BacktestSummary.TotalTrades == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.TotalTrades(childComplexity), true
+	case "BacktestSummary.winRate":
+		if e.complexity.BacktestSummary.WinRate == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.WinRate(childComplexity), true
+	case "BacktestSummary.wins":
+		if e.complexity.BacktestSummary.Wins == nil {
+			break
+		}
+
+		return e.complexity.BacktestSummary.Wins(childComplexity), true
 
 	case "Bot.config":
 		if e.complexity.Bot.Config == nil {
@@ -2966,6 +3115,75 @@ func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Backtest_summary(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_summary,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Backtest().Summary(ctx, obj)
+		},
+		nil,
+		ec.marshalOBacktestSummary2ᚖanytradeᚋinternalᚋbacktestᚐBacktestSummary,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "strategyName":
+				return ec.fieldContext_BacktestSummary_strategyName(ctx, field)
+			case "totalTrades":
+				return ec.fieldContext_BacktestSummary_totalTrades(ctx, field)
+			case "wins":
+				return ec.fieldContext_BacktestSummary_wins(ctx, field)
+			case "losses":
+				return ec.fieldContext_BacktestSummary_losses(ctx, field)
+			case "profitTotalAbs":
+				return ec.fieldContext_BacktestSummary_profitTotalAbs(ctx, field)
+			case "profitTotal":
+				return ec.fieldContext_BacktestSummary_profitTotal(ctx, field)
+			case "profitMean":
+				return ec.fieldContext_BacktestSummary_profitMean(ctx, field)
+			case "winRate":
+				return ec.fieldContext_BacktestSummary_winRate(ctx, field)
+			case "maxDrawdown":
+				return ec.fieldContext_BacktestSummary_maxDrawdown(ctx, field)
+			case "profitFactor":
+				return ec.fieldContext_BacktestSummary_profitFactor(ctx, field)
+			case "expectancy":
+				return ec.fieldContext_BacktestSummary_expectancy(ctx, field)
+			case "sharpe":
+				return ec.fieldContext_BacktestSummary_sharpe(ctx, field)
+			case "sortino":
+				return ec.fieldContext_BacktestSummary_sortino(ctx, field)
+			case "calmar":
+				return ec.fieldContext_BacktestSummary_calmar(ctx, field)
+			case "avgStakeAmount":
+				return ec.fieldContext_BacktestSummary_avgStakeAmount(ctx, field)
+			case "stakeCurrency":
+				return ec.fieldContext_BacktestSummary_stakeCurrency(ctx, field)
+			case "backtestStart":
+				return ec.fieldContext_BacktestSummary_backtestStart(ctx, field)
+			case "backtestEnd":
+				return ec.fieldContext_BacktestSummary_backtestEnd(ctx, field)
+			case "backtestDays":
+				return ec.fieldContext_BacktestSummary_backtestDays(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BacktestSummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BacktestConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.BacktestConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3119,6 +3337,8 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
 				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -3150,6 +3370,557 @@ func (ec *executionContext) fieldContext_BacktestEdge_cursor(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_strategyName(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_strategyName,
+		func(ctx context.Context) (any, error) {
+			return obj.StrategyName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_strategyName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_totalTrades(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_totalTrades,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalTrades, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_totalTrades(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_wins(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_wins,
+		func(ctx context.Context) (any, error) {
+			return obj.Wins, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_wins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_losses(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_losses,
+		func(ctx context.Context) (any, error) {
+			return obj.Losses, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_losses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_profitTotalAbs(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_profitTotalAbs,
+		func(ctx context.Context) (any, error) {
+			return obj.ProfitTotalAbs, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_profitTotalAbs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_profitTotal(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_profitTotal,
+		func(ctx context.Context) (any, error) {
+			return obj.ProfitTotal, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_profitTotal(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_profitMean(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_profitMean,
+		func(ctx context.Context) (any, error) {
+			return obj.ProfitMean, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_profitMean(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_winRate(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_winRate,
+		func(ctx context.Context) (any, error) {
+			return obj.WinRate, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_winRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_maxDrawdown(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_maxDrawdown,
+		func(ctx context.Context) (any, error) {
+			return obj.MaxDrawdown, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_maxDrawdown(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_profitFactor(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_profitFactor,
+		func(ctx context.Context) (any, error) {
+			return obj.ProfitFactor, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_profitFactor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_expectancy(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_expectancy,
+		func(ctx context.Context) (any, error) {
+			return obj.Expectancy, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_expectancy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_sharpe(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_sharpe,
+		func(ctx context.Context) (any, error) {
+			return obj.Sharpe, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_sharpe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_sortino(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_sortino,
+		func(ctx context.Context) (any, error) {
+			return obj.Sortino, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_sortino(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_calmar(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_calmar,
+		func(ctx context.Context) (any, error) {
+			return obj.Calmar, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_calmar(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_avgStakeAmount(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_avgStakeAmount,
+		func(ctx context.Context) (any, error) {
+			return obj.AvgStakeAmount, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_avgStakeAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_stakeCurrency(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_stakeCurrency,
+		func(ctx context.Context) (any, error) {
+			return obj.StakeCurrency, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_stakeCurrency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_backtestStart(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_backtestStart,
+		func(ctx context.Context) (any, error) {
+			return obj.BacktestStart, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_backtestStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_backtestEnd(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_backtestEnd,
+		func(ctx context.Context) (any, error) {
+			return obj.BacktestEnd, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_backtestEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BacktestSummary_backtestDays(ctx context.Context, field graphql.CollectedField, obj *backtest.BacktestSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BacktestSummary_backtestDays,
+		func(ctx context.Context) (any, error) {
+			return obj.BacktestDays, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BacktestSummary_backtestDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BacktestSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7025,6 +7796,8 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
 				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -7094,6 +7867,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
 				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -7204,6 +7979,8 @@ func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Contex
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
 				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -7273,6 +8050,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
 				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -19330,6 +20109,39 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "summary":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Backtest_summary(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19417,6 +20229,99 @@ func (ec *executionContext) _BacktestEdge(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var backtestSummaryImplementors = []string{"BacktestSummary"}
+
+func (ec *executionContext) _BacktestSummary(ctx context.Context, sel ast.SelectionSet, obj *backtest.BacktestSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, backtestSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BacktestSummary")
+		case "strategyName":
+			out.Values[i] = ec._BacktestSummary_strategyName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalTrades":
+			out.Values[i] = ec._BacktestSummary_totalTrades(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "wins":
+			out.Values[i] = ec._BacktestSummary_wins(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "losses":
+			out.Values[i] = ec._BacktestSummary_losses(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "profitTotalAbs":
+			out.Values[i] = ec._BacktestSummary_profitTotalAbs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "profitTotal":
+			out.Values[i] = ec._BacktestSummary_profitTotal(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "profitMean":
+			out.Values[i] = ec._BacktestSummary_profitMean(ctx, field, obj)
+		case "winRate":
+			out.Values[i] = ec._BacktestSummary_winRate(ctx, field, obj)
+		case "maxDrawdown":
+			out.Values[i] = ec._BacktestSummary_maxDrawdown(ctx, field, obj)
+		case "profitFactor":
+			out.Values[i] = ec._BacktestSummary_profitFactor(ctx, field, obj)
+		case "expectancy":
+			out.Values[i] = ec._BacktestSummary_expectancy(ctx, field, obj)
+		case "sharpe":
+			out.Values[i] = ec._BacktestSummary_sharpe(ctx, field, obj)
+		case "sortino":
+			out.Values[i] = ec._BacktestSummary_sortino(ctx, field, obj)
+		case "calmar":
+			out.Values[i] = ec._BacktestSummary_calmar(ctx, field, obj)
+		case "avgStakeAmount":
+			out.Values[i] = ec._BacktestSummary_avgStakeAmount(ctx, field, obj)
+		case "stakeCurrency":
+			out.Values[i] = ec._BacktestSummary_stakeCurrency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "backtestStart":
+			out.Values[i] = ec._BacktestSummary_backtestStart(ctx, field, obj)
+		case "backtestEnd":
+			out.Values[i] = ec._BacktestSummary_backtestEnd(ctx, field, obj)
+		case "backtestDays":
+			out.Values[i] = ec._BacktestSummary_backtestDays(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22575,6 +23480,13 @@ func (ec *executionContext) marshalOBacktestEdge2ᚖanytradeᚋinternalᚋentᚐ
 		return graphql.Null
 	}
 	return ec._BacktestEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOBacktestSummary2ᚖanytradeᚋinternalᚋbacktestᚐBacktestSummary(ctx context.Context, sel ast.SelectionSet, v *backtest.BacktestSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BacktestSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋenumᚐTaskStatusᚄ(ctx context.Context, v any) ([]enum.TaskStatus, error) {

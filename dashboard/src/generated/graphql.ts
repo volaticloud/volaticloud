@@ -42,6 +42,8 @@ export type Backtest = Node & {
   strategy: Strategy;
   /** Foreign key to strategy */
   strategyID: Scalars['ID']['output'];
+  /** Typed summary of key backtest metrics extracted from result */
+  summary?: Maybe<BacktestSummary>;
   updatedAt: Scalars['Time']['output'];
 };
 
@@ -63,6 +65,29 @@ export type BacktestEdge = {
   cursor: Scalars['Cursor']['output'];
   /** The item at the end of the edge. */
   node?: Maybe<Backtest>;
+};
+
+export type BacktestSummary = {
+  __typename?: 'BacktestSummary';
+  avgStakeAmount?: Maybe<Scalars['Float']['output']>;
+  backtestDays?: Maybe<Scalars['Int']['output']>;
+  backtestEnd?: Maybe<Scalars['Time']['output']>;
+  backtestStart?: Maybe<Scalars['Time']['output']>;
+  calmar?: Maybe<Scalars['Float']['output']>;
+  expectancy?: Maybe<Scalars['Float']['output']>;
+  losses: Scalars['Int']['output'];
+  maxDrawdown?: Maybe<Scalars['Float']['output']>;
+  profitFactor?: Maybe<Scalars['Float']['output']>;
+  profitMean?: Maybe<Scalars['Float']['output']>;
+  profitTotal: Scalars['Float']['output'];
+  profitTotalAbs: Scalars['Float']['output'];
+  sharpe?: Maybe<Scalars['Float']['output']>;
+  sortino?: Maybe<Scalars['Float']['output']>;
+  stakeCurrency: Scalars['String']['output'];
+  strategyName: Scalars['String']['output'];
+  totalTrades: Scalars['Int']['output'];
+  winRate?: Maybe<Scalars['Float']['output']>;
+  wins: Scalars['Int']['output'];
 };
 
 /** BacktestTaskStatus is enum for the field status */
@@ -2187,15 +2212,7 @@ export type GetBacktestQueryVariables = Exact<{
 }>;
 
 
-export type GetBacktestQuery = { __typename?: 'Query', node?:
-    | { __typename?: 'Backtest', id: string, status: BacktestTaskStatus, config?: any | null, result?: any | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, version: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType } }
-    | { __typename?: 'Bot' }
-    | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner' }
-    | { __typename?: 'Exchange' }
-    | { __typename?: 'Strategy' }
-    | { __typename?: 'Trade' }
-   | null };
+export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: BacktestTaskStatus, config?: any | null, result?: any | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: BotRunnerRunnerType } } | null } | null> | null } };
 
 export type GetBacktestOptionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2514,27 +2531,28 @@ export type GetBacktestsSuspenseQueryHookResult = ReturnType<typeof useGetBackte
 export type GetBacktestsQueryResult = Apollo.QueryResult<GetBacktestsQuery, GetBacktestsQueryVariables>;
 export const GetBacktestDocument = gql`
     query GetBacktest($id: ID!) {
-  node(id: $id) {
-    ... on Backtest {
-      id
-      status
-      config
-      result
-      containerID
-      errorMessage
-      createdAt
-      updatedAt
-      completedAt
-      strategy {
+  backtests(where: {id: $id}, first: 1) {
+    edges {
+      node {
         id
-        name
-        description
-        version
-      }
-      runner {
-        id
-        name
-        type
+        status
+        config
+        result
+        containerID
+        errorMessage
+        createdAt
+        updatedAt
+        completedAt
+        strategy {
+          id
+          name
+          description
+        }
+        runner {
+          id
+          name
+          type
+        }
       }
     }
   }

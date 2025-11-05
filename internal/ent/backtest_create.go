@@ -50,6 +50,12 @@ func (_c *BacktestCreate) SetResult(v map[string]interface{}) *BacktestCreate {
 	return _c
 }
 
+// SetSummary sets the "summary" field.
+func (_c *BacktestCreate) SetSummary(v map[string]interface{}) *BacktestCreate {
+	_c.mutation.SetSummary(v)
+	return _c
+}
+
 // SetContainerID sets the "container_id" field.
 func (_c *BacktestCreate) SetContainerID(v string) *BacktestCreate {
 	_c.mutation.SetContainerID(v)
@@ -283,6 +289,10 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Result(); ok {
 		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)
 		_node.Result = value
+	}
+	if value, ok := _c.mutation.Summary(); ok {
+		_spec.SetField(backtest.FieldSummary, field.TypeJSON, value)
+		_node.Summary = value
 	}
 	if value, ok := _c.mutation.ContainerID(); ok {
 		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)

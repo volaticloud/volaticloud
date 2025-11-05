@@ -22,11 +22,27 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder
 }
 
 func (r *queryResolver) Backtests(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) (*ent.BacktestConnection, error) {
-	return r.client.Backtest.Query().Paginate(ctx, after, first, before, last)
+	query := r.client.Backtest.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last)
 }
 
 func (r *queryResolver) Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) (*ent.BotConnection, error) {
-	return r.client.Bot.Query().Paginate(ctx, after, first, before, last)
+	query := r.client.Bot.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last)
 }
 
 func (r *queryResolver) BotMetricsSlice(ctx context.Context) ([]*ent.BotMetrics, error) {
@@ -34,7 +50,15 @@ func (r *queryResolver) BotMetricsSlice(ctx context.Context) ([]*ent.BotMetrics,
 }
 
 func (r *queryResolver) BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) (*ent.BotRunnerConnection, error) {
-	return r.client.BotRunner.Query().Paginate(ctx, after, first, before, last)
+	query := r.client.BotRunner.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last)
 }
 
 func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) {
@@ -42,64 +66,32 @@ func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) 
 }
 
 func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
-	return r.client.Strategy.Query().Paginate(ctx, after, first, before, last)
+	query := r.client.Strategy.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last)
 }
 
 func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error) {
-	return r.client.Trade.Query().Paginate(ctx, after, first, before, last)
+	query := r.client.Trade.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last)
 }
+
+func (r *Resolver) Backtest() BacktestResolver { return &backtestResolver{r} }
 
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type backtestResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *createBotRunnerInputResolver) Config(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.RunnerConfigInput) error {
-	if data == nil {
-		return nil
-	}
-
-	// Convert the typed config to map[string]interface{}
-	configMap, err := convertRunnerConfigToMap(data)
-	if err != nil {
-		return fmt.Errorf("failed to convert runner config: %w", err)
-	}
-
-	obj.Config = configMap
-	return nil
-}
-func (r *createBotRunnerInputResolver) DataDownloadConfig(ctx context.Context, obj *ent.CreateBotRunnerInput, data *model.DataDownloadConfigInput) error {
-	panic(fmt.Errorf("not implemented: DataDownloadConfig - dataDownloadConfig"))
-}
-func (r *updateBotRunnerInputResolver) Config(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.RunnerConfigInput) error {
-	if data == nil {
-		return nil
-	}
-
-	// Convert the typed config to map[string]interface{}
-	configMap, err := convertRunnerConfigToMap(data)
-	if err != nil {
-		return fmt.Errorf("failed to convert runner config: %w", err)
-	}
-
-	obj.Config = configMap
-	return nil
-}
-func (r *updateBotRunnerInputResolver) DataDownloadConfig(ctx context.Context, obj *ent.UpdateBotRunnerInput, data *model.DataDownloadConfigInput) error {
-	panic(fmt.Errorf("not implemented: DataDownloadConfig - dataDownloadConfig"))
-}
-func (r *Resolver) CreateBotRunnerInput() CreateBotRunnerInputResolver {
-	return &createBotRunnerInputResolver{r}
-}
-func (r *Resolver) UpdateBotRunnerInput() UpdateBotRunnerInputResolver {
-	return &updateBotRunnerInputResolver{r}
-}
-type createBotRunnerInputResolver struct{ *Resolver }
-type updateBotRunnerInputResolver struct{ *Resolver }
-*/

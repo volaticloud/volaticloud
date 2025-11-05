@@ -1,6 +1,8 @@
 # Custom GraphQL schema
 
 # Scalar declarations
+# These must be declared here (not in ent.graphql) because ENT uses them before defining them
+# See: https://github.com/ent/ent/issues/2518
 scalar Time
 scalar Map
 
@@ -110,6 +112,40 @@ type BotStatus {
   createdAt: Time!
   startedAt: Time
   stoppedAt: Time
+}
+
+# Type extensions
+
+# Backtest result summary for type-safe access to common metrics
+# Mapped to internal/backtest.BacktestSummary via gqlgen autobind
+type BacktestSummary {
+  strategyName: String!
+  totalTrades: Int!
+  wins: Int!
+  losses: Int!
+  profitTotalAbs: Float!
+  profitTotal: Float!
+  profitMean: Float
+  winRate: Float
+  maxDrawdown: Float
+  profitFactor: Float
+  expectancy: Float
+  sharpe: Float
+  sortino: Float
+  calmar: Float
+  avgStakeAmount: Float
+  stakeCurrency: String!
+  backtestStart: Time
+  backtestEnd: Time
+  backtestDays: Int
+}
+
+# Extend Backtest with typed summary field
+extend type Backtest {
+  """
+  Typed summary of key backtest metrics extracted from result
+  """
+  summary: BacktestSummary
 }
 
 # Query extensions

@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +17,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"anytrade/internal/enum"
 )
@@ -124,6 +127,11 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 				Type:   mount.TypeVolume,
 				Source: "anytrade-freqtrade-data",
 				Target: "/freqtrade/user_data/data",
+			},
+			{
+				Type:   mount.TypeVolume,
+				Source: "anytrade-backtest-results",
+				Target: "/freqtrade/user_data/backtest_results",
 			},
 		},
 	}
@@ -709,11 +717,68 @@ func (d *DockerBacktestRunner) listHyperOptTasks(ctx context.Context, taskType s
 }
 
 func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
-	// TODO: Parse freqtrade backtest JSON output from logs
-	// For now, just store raw logs
-	result.RawResult = map[string]interface{}{
-		"logs": result.Logs,
+	// Read backtest results from the Docker volume
+	// With the volume mount, results persist even after container stops
+	ctx := context.Background()
+
+	// Step 1: Read .last_result.json from the volume to get the actual results filename
+	lastResultJSON, err := d.readFileFromVolume(ctx, "anytrade-backtest-results", ".last_result.json")
+	if err != nil {
+		// If we can't read the results file, store logs as fallback
+		result.RawResult = map[string]interface{}{
+			"error": fmt.Sprintf("Failed to read .last_result.json from volume: %v", err),
+			"logs":  result.Logs,
+		}
+		return
 	}
+
+	// Parse .last_result.json to get the filename
+	var lastResult map[string]interface{}
+	if err := json.Unmarshal(lastResultJSON, &lastResult); err != nil {
+		result.RawResult = map[string]interface{}{
+			"error":       fmt.Sprintf("Failed to parse .last_result.json: %v", err),
+			"raw_results": string(lastResultJSON),
+			"logs":        result.Logs,
+		}
+		return
+	}
+
+	// Step 2: Get the actual results filename (replace .zip with .json)
+	latestBacktest, ok := lastResult["latest_backtest"].(string)
+	if !ok || latestBacktest == "" {
+		result.RawResult = map[string]interface{}{
+			"error": "No latest_backtest found in .last_result.json",
+			"logs":  result.Logs,
+		}
+		return
+	}
+
+	// Step 3: Extract and read the JSON file from the zip archive
+	zipFilename := latestBacktest
+	jsonFilename := strings.Replace(latestBacktest, ".zip", ".json", 1)
+
+	resultsJSON, err := d.readFileFromZipInVolume(ctx, "anytrade-backtest-results", zipFilename, jsonFilename)
+	if err != nil {
+		result.RawResult = map[string]interface{}{
+			"error": fmt.Sprintf("Failed to read results from zip %s: %v", zipFilename, err),
+			"logs":  result.Logs,
+		}
+		return
+	}
+
+	// Parse the actual results
+	var backtestData map[string]interface{}
+	if err := json.Unmarshal(resultsJSON, &backtestData); err != nil {
+		result.RawResult = map[string]interface{}{
+			"error":       fmt.Sprintf("Failed to parse results JSON: %v", err),
+			"raw_results": string(resultsJSON),
+			"logs":        result.Logs,
+		}
+		return
+	}
+
+	// Store the parsed results
+	result.RawResult = backtestData
 }
 
 func (d *DockerBacktestRunner) parseHyperOptResults(result *HyperOptResult) {
@@ -797,4 +862,177 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
 	configDir := filepath.Join("/tmp", "anytrade-backtest-configs", backtestID)
 	os.RemoveAll(configDir) // Best effort cleanup
+}
+
+// readFileFromContainer reads a file from a Docker container
+func (d *DockerBacktestRunner) readFileFromContainer(ctx context.Context, containerID string, filePath string) ([]byte, error) {
+	// Copy file from container
+	reader, _, err := d.client.CopyFromContainer(ctx, containerID, filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy file from container: %w", err)
+	}
+	defer reader.Close()
+
+	// Extract file from tar archive
+	tarReader := tar.NewReader(reader)
+
+	// Read the first (and only) file from the archive
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read tar header: %w", err)
+		}
+
+		// Read the file content
+		if header.Typeflag == tar.TypeReg {
+			buf := new(bytes.Buffer)
+			if _, err := io.Copy(buf, tarReader); err != nil {
+				return nil, fmt.Errorf("failed to read file from tar: %w", err)
+			}
+			return buf.Bytes(), nil
+		}
+	}
+
+	return nil, fmt.Errorf("no regular file found in tar archive")
+}
+
+// readFileFromVolume reads a file from a Docker volume using a temporary container
+func (d *DockerBacktestRunner) readFileFromVolume(ctx context.Context, volumeName string, filePath string) ([]byte, error) {
+	// Create a temporary alpine container to read from the volume
+	containerConfig := &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"cat", filepath.Join("/data", filePath)},
+	}
+
+	hostConfig := &container.HostConfig{
+		AutoRemove: false, // Don't auto-remove so we can read logs
+		Mounts: []mount.Mount{
+			{
+				Type:     mount.TypeVolume,
+				Source:   volumeName,
+				Target:   "/data",
+				ReadOnly: true,
+			},
+		},
+	}
+
+	// Create container
+	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp container: %w", err)
+	}
+
+	// Ensure cleanup
+	defer d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+
+	// Start container
+	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return nil, fmt.Errorf("failed to start temp container: %w", err)
+	}
+
+	// Wait for container to finish
+	statusCh, errCh := d.client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return nil, fmt.Errorf("error waiting for container: %w", err)
+		}
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			// Get logs to see error (with Docker framing removed)
+			logs := d.getRawContainerOutput(ctx, resp.ID)
+			return nil, fmt.Errorf("container exited with code %d: %s", status.StatusCode, logs)
+		}
+	}
+
+	// Get file content (stripped of Docker log framing)
+	fileContent := d.getRawContainerOutput(ctx, resp.ID)
+	if fileContent == "" {
+		return nil, fmt.Errorf("no file content returned")
+	}
+
+	return []byte(fileContent), nil
+}
+
+// getRawContainerOutput reads container stdout/stderr and strips Docker log framing
+func (d *DockerBacktestRunner) getRawContainerOutput(ctx context.Context, containerID string) string {
+	reader, err := d.client.ContainerLogs(ctx, containerID, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+	})
+	if err != nil {
+		return ""
+	}
+	defer reader.Close()
+
+	// Use stdcopy to demultiplex Docker log streams and remove framing bytes
+	var stdout, stderr bytes.Buffer
+	_, err = stdcopy.StdCopy(&stdout, &stderr, reader)
+	if err != nil {
+		return ""
+	}
+
+	// Return stdout content (file content from cat command)
+	return stdout.String()
+}
+
+// readFileFromZipInVolume reads a specific file from a zip archive in a Docker volume
+func (d *DockerBacktestRunner) readFileFromZipInVolume(ctx context.Context, volumeName string, zipPath string, fileInZip string) ([]byte, error) {
+	// Create a temporary alpine container with unzip to extract the file
+	containerConfig := &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"sh", "-c", fmt.Sprintf("unzip -p /data/%s %s", zipPath, fileInZip)},
+	}
+
+	hostConfig := &container.HostConfig{
+		AutoRemove: false,
+		Mounts: []mount.Mount{
+			{
+				Type:     mount.TypeVolume,
+				Source:   volumeName,
+				Target:   "/data",
+				ReadOnly: true,
+			},
+		},
+	}
+
+	// Create container
+	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp container: %w", err)
+	}
+
+	// Ensure cleanup
+	defer d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+
+	// Start container
+	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return nil, fmt.Errorf("failed to start temp container: %w", err)
+	}
+
+	// Wait for container to finish
+	statusCh, errCh := d.client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return nil, fmt.Errorf("error waiting for container: %w", err)
+		}
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			// Get logs to see error
+			logs := d.getRawContainerOutput(ctx, resp.ID)
+			return nil, fmt.Errorf("container exited with code %d: %s", status.StatusCode, logs)
+		}
+	}
+
+	// Get file content (stripped of Docker log framing)
+	fileContent := d.getRawContainerOutput(ctx, resp.ID)
+	if fileContent == "" {
+		return nil, fmt.Errorf("no file content returned")
+	}
+
+	return []byte(fileContent), nil
 }

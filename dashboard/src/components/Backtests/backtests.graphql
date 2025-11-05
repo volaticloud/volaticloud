@@ -33,27 +33,28 @@ query GetBacktests($first: Int, $after: Cursor) {
 }
 
 query GetBacktest($id: ID!) {
-  node(id: $id) {
-    ... on Backtest {
-      id
-      status
-      config
-      result
-      containerID
-      errorMessage
-      createdAt
-      updatedAt
-      completedAt
-      strategy {
+  backtests(where: {id: $id}, first: 1) {
+    edges {
+      node {
         id
-        name
-        description
-        version
-      }
-      runner {
-        id
-        name
-        type
+        status
+        config
+        result
+        containerID
+        errorMessage
+        createdAt
+        updatedAt
+        completedAt
+        strategy {
+          id
+          name
+          description
+        }
+        runner {
+          id
+          name
+          type
+        }
       }
     }
   }

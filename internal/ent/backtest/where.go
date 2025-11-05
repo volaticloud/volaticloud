@@ -142,6 +142,16 @@ func ResultNotNil() predicate.Backtest {
 	return predicate.Backtest(sql.FieldNotNull(FieldResult))
 }
 
+// SummaryIsNil applies the IsNil predicate on the "summary" field.
+func SummaryIsNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldIsNull(FieldSummary))
+}
+
+// SummaryNotNil applies the NotNil predicate on the "summary" field.
+func SummaryNotNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotNull(FieldSummary))
+}
+
 // ContainerIDEQ applies the EQ predicate on the "container_id" field.
 func ContainerIDEQ(v string) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldContainerID, v))

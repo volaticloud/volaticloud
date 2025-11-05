@@ -291,14 +291,14 @@ func TestValidateFreqtradeConfig(t *testing.T) {
 					"order_book_top":     1,
 					"price_last_balance": 0.0,
 					"check_depth_of_market": map[string]interface{}{
-						"enabled":          false,
+						"enabled":           false,
 						"bids_to_ask_delta": 1,
 					},
 				},
 				"order_types": map[string]interface{}{
-					"entry":     "limit",
-					"exit":      "limit",
-					"stoploss":  "market",
+					"entry":    "limit",
+					"exit":     "limit",
+					"stoploss": "market",
 				},
 				"pairlists": []interface{}{
 					map[string]interface{}{
@@ -384,10 +384,10 @@ func TestGenerateSecureConfig(t *testing.T) {
 // TestBuildBotSpec tests the bot spec building function
 func TestBuildBotSpec(t *testing.T) {
 	tests := []struct {
-		name    string
-		bot     *ent.Bot
-		wantErr bool
-		errMsg  string
+		name     string
+		bot      *ent.Bot
+		wantErr  bool
+		errMsg   string
 		validate func(t *testing.T, spec *runner.BotSpec, bot *ent.Bot)
 	}{
 		{
@@ -615,7 +615,7 @@ func TestBuildBotSpec(t *testing.T) {
 				},
 				SecureConfig: map[string]interface{}{
 					"api_server": map[string]interface{}{
-						"enabled": true,
+						"enabled":  true,
 						"username": "admin",
 						"password": "secret",
 					},
@@ -633,8 +633,8 @@ func TestBuildBotSpec(t *testing.T) {
 						Name: "MyStrategy",
 						Code: "# strategy code here",
 						Config: map[string]interface{}{
-							"stoploss":     -0.1,
-							"take_profit":  0.2,
+							"stoploss":    -0.1,
+							"take_profit": 0.2,
 						},
 					},
 				},
@@ -644,7 +644,7 @@ func TestBuildBotSpec(t *testing.T) {
 				// Verify basic fields
 				assert.Equal(t, bot.ID.String(), spec.ID)
 				assert.Equal(t, bot.Name, spec.Name)
-				assert.Equal(t, "freqtradeorg/freqtrade:2024.1", spec.Image)
+				assert.Equal(t, "freqtradeorg/freqtrade:2025.10", spec.Image)
 				assert.Equal(t, "2024.1", spec.FreqtradeVersion)
 				assert.Equal(t, "MyStrategy", spec.StrategyName)
 				assert.Equal(t, "# strategy code here", spec.StrategyCode)

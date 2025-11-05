@@ -70,6 +70,18 @@ func (_u *BacktestUpdate) ClearResult() *BacktestUpdate {
 	return _u
 }
 
+// SetSummary sets the "summary" field.
+func (_u *BacktestUpdate) SetSummary(v map[string]interface{}) *BacktestUpdate {
+	_u.mutation.SetSummary(v)
+	return _u
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (_u *BacktestUpdate) ClearSummary() *BacktestUpdate {
+	_u.mutation.ClearSummary()
+	return _u
+}
+
 // SetContainerID sets the "container_id" field.
 func (_u *BacktestUpdate) SetContainerID(v string) *BacktestUpdate {
 	_u.mutation.SetContainerID(v)
@@ -270,6 +282,12 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ResultCleared() {
 		_spec.ClearField(backtest.FieldResult, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.Summary(); ok {
+		_spec.SetField(backtest.FieldSummary, field.TypeJSON, value)
+	}
+	if _u.mutation.SummaryCleared() {
+		_spec.ClearField(backtest.FieldSummary, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.ContainerID(); ok {
 		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
 	}
@@ -404,6 +422,18 @@ func (_u *BacktestUpdateOne) SetResult(v map[string]interface{}) *BacktestUpdate
 // ClearResult clears the value of the "result" field.
 func (_u *BacktestUpdateOne) ClearResult() *BacktestUpdateOne {
 	_u.mutation.ClearResult()
+	return _u
+}
+
+// SetSummary sets the "summary" field.
+func (_u *BacktestUpdateOne) SetSummary(v map[string]interface{}) *BacktestUpdateOne {
+	_u.mutation.SetSummary(v)
+	return _u
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (_u *BacktestUpdateOne) ClearSummary() *BacktestUpdateOne {
+	_u.mutation.ClearSummary()
 	return _u
 }
 
@@ -636,6 +666,12 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	}
 	if _u.mutation.ResultCleared() {
 		_spec.ClearField(backtest.FieldResult, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.Summary(); ok {
+		_spec.SetField(backtest.FieldSummary, field.TypeJSON, value)
+	}
+	if _u.mutation.SummaryCleared() {
+		_spec.ClearField(backtest.FieldSummary, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ContainerID(); ok {
 		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)

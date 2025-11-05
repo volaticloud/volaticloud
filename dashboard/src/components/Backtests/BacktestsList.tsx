@@ -25,6 +25,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation } from '../../generated/graphql';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
@@ -32,6 +33,7 @@ import { CreateBacktestDialog } from './CreateBacktestDialog';
 import { DeleteBacktestDialog } from './DeleteBacktestDialog';
 
 export const BacktestsList = () => {
+  const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedBacktest, setSelectedBacktest] = useState<{
@@ -59,7 +61,8 @@ export const BacktestsList = () => {
     onCompleted: () => refetch()
   });
 
-  const handleRunBacktest = async (id: string) => {
+  const handleRunBacktest = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent row click
     try {
       const result = await runBacktest({ variables: { id } });
 
@@ -89,7 +92,8 @@ export const BacktestsList = () => {
     }
   };
 
-  const handleStopBacktest = async (id: string) => {
+  const handleStopBacktest = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent row click
     try {
       const result = await stopBacktest({ variables: { id } });
 
@@ -200,7 +204,12 @@ export const BacktestsList = () => {
             </TableHead>
             <TableBody>
               {backtests.map((backtest) => (
-                <TableRow key={backtest.id} hover>
+                <TableRow
+                  key={backtest.id}
+                  hover
+                  onClick={() => navigate(`/backtests/${backtest.id}`)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
                       {backtest.strategy.name}
@@ -241,7 +250,7 @@ export const BacktestsList = () => {
                       <IconButton
                         size="small"
                         color="primary"
-                        onClick={() => handleRunBacktest(backtest.id)}
+                        onClick={(e) => handleRunBacktest(e, backtest.id)}
                         disabled={backtest.status === 'running'}
                       >
                         <RunIcon fontSize="small" />
@@ -251,7 +260,7 @@ export const BacktestsList = () => {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => handleStopBacktest(backtest.id)}
+                        onClick={(e) => handleStopBacktest(e, backtest.id)}
                         disabled={backtest.status !== 'running'}
                       >
                         <StopIcon fontSize="small" />
@@ -262,6 +271,10 @@ export const BacktestsList = () => {
                         size="small"
                         color="info"
                         disabled={!backtest.result || backtest.status !== 'completed'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/backtests/${backtest.id}`);
+                        }}
                       >
                         <ResultsIcon fontSize="small" />
                       </IconButton>
@@ -270,7 +283,8 @@ export const BacktestsList = () => {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedBacktest(backtest);
                           setDeleteDialogOpen(true);
                         }}

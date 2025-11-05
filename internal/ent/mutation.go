@@ -50,6 +50,7 @@ type BacktestMutation struct {
 	status          *enum.TaskStatus
 	_config         *map[string]interface{}
 	result          *map[string]interface{}
+	summary         *map[string]interface{}
 	container_id    *string
 	error_message   *string
 	created_at      *time.Time
@@ -301,6 +302,55 @@ func (m *BacktestMutation) ResultCleared() bool {
 func (m *BacktestMutation) ResetResult() {
 	m.result = nil
 	delete(m.clearedFields, backtest.FieldResult)
+}
+
+// SetSummary sets the "summary" field.
+func (m *BacktestMutation) SetSummary(value map[string]interface{}) {
+	m.summary = &value
+}
+
+// Summary returns the value of the "summary" field in the mutation.
+func (m *BacktestMutation) Summary() (r map[string]interface{}, exists bool) {
+	v := m.summary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSummary returns the old "summary" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldSummary(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSummary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSummary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSummary: %w", err)
+	}
+	return oldValue.Summary, nil
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (m *BacktestMutation) ClearSummary() {
+	m.summary = nil
+	m.clearedFields[backtest.FieldSummary] = struct{}{}
+}
+
+// SummaryCleared returns if the "summary" field was cleared in this mutation.
+func (m *BacktestMutation) SummaryCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldSummary]
+	return ok
+}
+
+// ResetSummary resets all changes to the "summary" field.
+func (m *BacktestMutation) ResetSummary() {
+	m.summary = nil
+	delete(m.clearedFields, backtest.FieldSummary)
 }
 
 // SetContainerID sets the "container_id" field.
@@ -682,7 +732,7 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.status != nil {
 		fields = append(fields, backtest.FieldStatus)
 	}
@@ -691,6 +741,9 @@ func (m *BacktestMutation) Fields() []string {
 	}
 	if m.result != nil {
 		fields = append(fields, backtest.FieldResult)
+	}
+	if m.summary != nil {
+		fields = append(fields, backtest.FieldSummary)
 	}
 	if m.container_id != nil {
 		fields = append(fields, backtest.FieldContainerID)
@@ -727,6 +780,8 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 		return m.Config()
 	case backtest.FieldResult:
 		return m.Result()
+	case backtest.FieldSummary:
+		return m.Summary()
 	case backtest.FieldContainerID:
 		return m.ContainerID()
 	case backtest.FieldErrorMessage:
@@ -756,6 +811,8 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldConfig(ctx)
 	case backtest.FieldResult:
 		return m.OldResult(ctx)
+	case backtest.FieldSummary:
+		return m.OldSummary(ctx)
 	case backtest.FieldContainerID:
 		return m.OldContainerID(ctx)
 	case backtest.FieldErrorMessage:
@@ -799,6 +856,13 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetResult(v)
+		return nil
+	case backtest.FieldSummary:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSummary(v)
 		return nil
 	case backtest.FieldContainerID:
 		v, ok := value.(string)
@@ -885,6 +949,9 @@ func (m *BacktestMutation) ClearedFields() []string {
 	if m.FieldCleared(backtest.FieldResult) {
 		fields = append(fields, backtest.FieldResult)
 	}
+	if m.FieldCleared(backtest.FieldSummary) {
+		fields = append(fields, backtest.FieldSummary)
+	}
 	if m.FieldCleared(backtest.FieldContainerID) {
 		fields = append(fields, backtest.FieldContainerID)
 	}
@@ -914,6 +981,9 @@ func (m *BacktestMutation) ClearField(name string) error {
 	case backtest.FieldResult:
 		m.ClearResult()
 		return nil
+	case backtest.FieldSummary:
+		m.ClearSummary()
+		return nil
 	case backtest.FieldContainerID:
 		m.ClearContainerID()
 		return nil
@@ -939,6 +1009,9 @@ func (m *BacktestMutation) ResetField(name string) error {
 		return nil
 	case backtest.FieldResult:
 		m.ResetResult()
+		return nil
+	case backtest.FieldSummary:
+		m.ResetSummary()
 		return nil
 	case backtest.FieldContainerID:
 		m.ResetContainerID()

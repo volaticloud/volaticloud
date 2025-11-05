@@ -34,6 +34,12 @@ func (Backtest) Fields() []ent.Field {
 		field.JSON("result", map[string]interface{}{}).
 			Optional().
 			Comment("Backtest result data (metrics, logs, trades, etc.)"),
+		field.JSON("summary", map[string]interface{}{}).
+			Optional().
+			Comment("Typed summary of key backtest metrics").
+			Annotations(
+				entgql.Skip(entgql.SkipAll),
+			),
 		field.String("container_id").
 			Optional().
 			Comment("Docker container ID for running backtest"),

@@ -14,6 +14,7 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "result", Type: field.TypeJSON, Nullable: true},
+		{Name: "summary", Type: field.TypeJSON, Nullable: true},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
@@ -30,13 +31,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_bot_runners_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[9]},
+				Columns:    []*schema.Column{BacktestsColumns[10]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "backtests_strategies_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[10]},
+				Columns:    []*schema.Column{BacktestsColumns[11]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

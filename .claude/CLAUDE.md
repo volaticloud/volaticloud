@@ -454,6 +454,114 @@ Backtests run in one-time Docker containers (non-persistent) that:
 - Feather format (default): Works out-of-the-box
 - JSON format: Requires adding `"dataformat_ohlcv": "json"` to backtest config
 
+### Backtest Result Types (Hybrid Approach)
+
+**Problem:** Freqtrade backtest results contain 103+ fields. Defining all fields in GraphQL schema creates maintenance overhead.
+
+**Solution:** Hybrid type system combining typed summaries with flexible JSON.
+
+**Architecture:**
+```
+Freqtrade Result (ZIP) → Parse JSON → Extract Summary → Store Both
+                                           ↓
+                              summary (typed) + result (full JSON)
+                                           ↓
+                              GraphQL serves both fields
+                                           ↓
+                              Dashboard uses typed helpers
+```
+
+**Backend Components:**
+
+1. **Go Struct** (`internal/backtest/summary.go`):
+   ```go
+   type BacktestSummary struct {
+       StrategyName    string   `json:"strategyName"`
+       TotalTrades     int      `json:"totalTrades"`
+       Wins            int      `json:"wins"`
+       Losses          int      `json:"losses"`
+       ProfitTotalAbs  float64  `json:"profitTotalAbs"`
+       // ... 15 more key metrics
+   }
+   ```
+
+2. **GraphQL Type** (`internal/graph/schema.graphqls`):
+   ```graphql
+   # Mapped to internal/backtest.BacktestSummary via gqlgen autobind
+   type BacktestSummary {
+     strategyName: String!
+     totalTrades: Int!
+     # ... fields match Go struct
+   }
+
+   extend type Backtest {
+     summary: BacktestSummary  # Typed access
+     result: Map                # Full JSON
+   }
+   ```
+
+3. **Auto-Extraction** (`internal/monitor/backtest_monitor.go`):
+   - When backtest completes, `ExtractSummaryFromResult()` parses full JSON
+   - Extracts 20 key metrics into typed `BacktestSummary`
+   - Stores both `summary` (typed) and `result` (full JSON) in database
+
+4. **GraphQL Resolver** (`internal/graph/ent.resolvers.go`):
+   ```go
+   func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*backtest.BacktestSummary, error) {
+       // Deserialize summary map to typed struct
+       // Returns nil if no summary available (not an error)
+   }
+   ```
+
+**Frontend Components:**
+
+1. **TypeScript Interfaces** (`dashboard/src/types/freqtrade.ts`):
+   ```typescript
+   export interface FreqtradeBacktestResult {
+     strategy: Record<string, StrategyResult>;  // Dynamic strategy name
+   }
+
+   export interface StrategyResult {
+     total_trades: number;
+     trades: Trade[];
+     // ... 100+ fields documented
+   }
+
+   // Helper functions
+   export function extractStrategyData(result: any): StrategyResult | null
+   export function extractTrades(result: any): Trade[]
+   ```
+
+2. **Usage in Components** (`dashboard/src/components/Backtests/BacktestDetail.tsx`):
+   ```typescript
+   import { extractStrategyData, extractTrades } from '../../types/freqtrade';
+
+   // Type-safe extraction
+   const strategyData = extractStrategyData(backtest.result);
+   const trades = extractTrades(backtest.result);
+
+   // Access metrics safely
+   const totalTrades = strategyData?.total_trades || 0;
+   ```
+
+**Benefits:**
+- ✅ **Type safety** for common metrics via `BacktestSummary`
+- ✅ **Flexibility** for advanced use cases via full `result` JSON
+- ✅ **No schema overhead** - only 20 fields vs 103
+- ✅ **Future-proof** - Freqtrade changes won't break backend
+- ✅ **Auto-mapping** - gqlgen autobind connects Go struct to GraphQL type
+- ✅ **Single source of truth** - Go struct JSON tags define field names
+
+**Test Coverage:**
+- `internal/backtest/summary_test.go` - 96.4% coverage
+- 11 test cases covering extraction, type conversion, edge cases
+
+**Important Notes:**
+- gqlgen is **schema-first**: GraphQL types must be manually defined
+- `autobind` feature only **maps** types, doesn't **generate** them
+- This is standard practice for gqlgen projects
+- Full result JSON remains available for power users
+
 ---
 
 ## Testing & Code Quality
@@ -494,6 +602,15 @@ go tool cover -html=coverage.out -o coverage.html
 - ✅ Days type conversion (int/float64)
 
 **Test File:** `internal/monitor/data_download_test.go`
+
+**Backtest Summary Functions (`internal/backtest/summary.go`):** 96.4%
+- ✅ `ExtractSummaryFromResult` - 11 test scenarios
+- ✅ Type conversion helpers (getInt, getFloat, getFloatPtr, getString)
+- ✅ Edge cases: nil/empty results, invalid timestamps, type conversions
+- ✅ Multiple strategies handling
+- ✅ Optional fields (nil vs zero values)
+
+**Test File:** `internal/backtest/summary_test.go`
 
 **Key Test Categories:**
 1. **Missing Required Fields** - Validates all required field checks
