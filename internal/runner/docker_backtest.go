@@ -23,8 +23,8 @@ import (
 
 const (
 	// Docker labels for backtest containers
-	labelBacktestID = "anytrade.backtest.id"
-	labelTaskType   = "anytrade.task.type"
+	labelBacktestID  = "anytrade.backtest.id"
+	labelTaskType    = "anytrade.task.type"
 	taskTypeBacktest = "backtest"
 	taskTypeHyperOpt = "hyperopt"
 
@@ -97,9 +97,9 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 
 	// Prepare container config
 	containerConfig := &container.Config{
-		Image:  imageName,
-		Cmd:    cmd,
-		Env:    d.buildEnvironment(spec.Environment),
+		Image: imageName,
+		Cmd:   cmd,
+		Env:   d.buildEnvironment(spec.Environment),
 		Labels: map[string]string{
 			labelBacktestID: spec.ID,
 			labelTaskType:   taskTypeBacktest,
@@ -237,12 +237,12 @@ func (d *DockerBacktestRunner) GetBacktestResult(ctx context.Context, backtestID
 	}
 
 	result := &BacktestResult{
-		BacktestID:  backtestID,
-		Status:      status.Status,
-		ContainerID: status.ContainerID,
-		ExitCode:    status.ExitCode,
-		StartedAt:   status.StartedAt,
-		CompletedAt: status.CompletedAt,
+		BacktestID:   backtestID,
+		Status:       status.Status,
+		ContainerID:  status.ContainerID,
+		ExitCode:     status.ExitCode,
+		StartedAt:    status.StartedAt,
+		CompletedAt:  status.CompletedAt,
 		ErrorMessage: status.ErrorMessage,
 	}
 
@@ -324,9 +324,9 @@ func (d *DockerBacktestRunner) RunHyperOpt(ctx context.Context, spec HyperOptSpe
 	cmd := d.buildHyperOptCommand(spec)
 
 	containerConfig := &container.Config{
-		Image:  imageName,
-		Cmd:    cmd,
-		Env:    d.buildEnvironment(spec.Environment),
+		Image: imageName,
+		Cmd:   cmd,
+		Env:   d.buildEnvironment(spec.Environment),
 		Labels: map[string]string{
 			labelBacktestID: spec.ID,
 			labelTaskType:   taskTypeHyperOpt,
@@ -413,12 +413,12 @@ func (d *DockerBacktestRunner) GetHyperOptResult(ctx context.Context, hyperOptID
 	}
 
 	result := &HyperOptResult{
-		HyperOptID:  hyperOptID,
-		Status:      status.Status,
-		ContainerID: status.ContainerID,
-		ExitCode:    status.ExitCode,
-		StartedAt:   status.StartedAt,
-		CompletedAt: status.CompletedAt,
+		HyperOptID:   hyperOptID,
+		Status:       status.Status,
+		ContainerID:  status.ContainerID,
+		ExitCode:     status.ExitCode,
+		StartedAt:    status.StartedAt,
+		CompletedAt:  status.CompletedAt,
 		ErrorMessage: status.ErrorMessage,
 	}
 
@@ -797,9 +797,9 @@ func getHyperOptContainerName(hyperOptID string) string {
 
 // backtestConfigPaths holds the paths to config files for a backtest
 type backtestConfigPaths struct {
-	configFileHost      string // Host path to main config file
-	configFileContainer string // Container path to main config file
-	strategyFileHost    string // Host path to strategy Python file
+	configFileHost        string // Host path to main config file
+	configFileContainer   string // Container path to main config file
+	strategyFileHost      string // Host path to strategy Python file
 	strategyFileContainer string // Container path to strategy Python file
 }
 

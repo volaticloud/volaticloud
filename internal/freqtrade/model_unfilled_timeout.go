@@ -19,10 +19,10 @@ var _ MappedNullable = &UnfilledTimeout{}
 
 // UnfilledTimeout struct for UnfilledTimeout
 type UnfilledTimeout struct {
-	Entry NullableInt64 `json:"entry,omitempty"`
-	Exit NullableInt64 `json:"exit,omitempty"`
-	Unit NullableString `json:"unit,omitempty"`
-	ExitTimeoutCount NullableInt64 `json:"exit_timeout_count,omitempty"`
+	Entry            NullableInt64  `json:"entry,omitempty"`
+	Exit             NullableInt64  `json:"exit,omitempty"`
+	Unit             NullableString `json:"unit,omitempty"`
+	ExitTimeoutCount NullableInt64  `json:"exit_timeout_count,omitempty"`
 }
 
 // NewUnfilledTimeout instantiates a new UnfilledTimeout object
@@ -74,6 +74,7 @@ func (o *UnfilledTimeout) HasEntry() bool {
 func (o *UnfilledTimeout) SetEntry(v int64) {
 	o.Entry.Set(&v)
 }
+
 // SetEntryNil sets the value for Entry to be an explicit nil
 func (o *UnfilledTimeout) SetEntryNil() {
 	o.Entry.Set(nil)
@@ -116,6 +117,7 @@ func (o *UnfilledTimeout) HasExit() bool {
 func (o *UnfilledTimeout) SetExit(v int64) {
 	o.Exit.Set(&v)
 }
+
 // SetExitNil sets the value for Exit to be an explicit nil
 func (o *UnfilledTimeout) SetExitNil() {
 	o.Exit.Set(nil)
@@ -158,6 +160,7 @@ func (o *UnfilledTimeout) HasUnit() bool {
 func (o *UnfilledTimeout) SetUnit(v string) {
 	o.Unit.Set(&v)
 }
+
 // SetUnitNil sets the value for Unit to be an explicit nil
 func (o *UnfilledTimeout) SetUnitNil() {
 	o.Unit.Set(nil)
@@ -200,6 +203,7 @@ func (o *UnfilledTimeout) HasExitTimeoutCount() bool {
 func (o *UnfilledTimeout) SetExitTimeoutCount(v int64) {
 	o.ExitTimeoutCount.Set(&v)
 }
+
 // SetExitTimeoutCountNil sets the value for ExitTimeoutCount to be an explicit nil
 func (o *UnfilledTimeout) SetExitTimeoutCountNil() {
 	o.ExitTimeoutCount.Set(nil)
@@ -211,7 +215,7 @@ func (o *UnfilledTimeout) UnsetExitTimeoutCount() {
 }
 
 func (o UnfilledTimeout) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -270,5 +274,3 @@ func (v *NullableUnfilledTimeout) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

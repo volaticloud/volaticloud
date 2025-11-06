@@ -16,16 +16,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"reflect"
+	"strings"
 )
-
 
 // FreqtradeAPIService FreqtradeAPI service
 type FreqtradeAPIService service
 
 type ApiApiBacktestAbortApiV1BacktestAbortGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -36,24 +35,25 @@ func (r ApiApiBacktestAbortApiV1BacktestAbortGetRequest) Execute() (*BacktestRes
 /*
 ApiBacktestAbortApiV1BacktestAbortGet Api Backtest Abort
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiBacktestAbortApiV1BacktestAbortGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiBacktestAbortApiV1BacktestAbortGetRequest
 */
 func (a *FreqtradeAPIService) ApiBacktestAbortApiV1BacktestAbortGet(ctx context.Context) ApiApiBacktestAbortApiV1BacktestAbortGetRequest {
 	return ApiApiBacktestAbortApiV1BacktestAbortGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BacktestResponse
+//
+//	@return BacktestResponse
 func (a *FreqtradeAPIService) ApiBacktestAbortApiV1BacktestAbortGetExecute(r ApiApiBacktestAbortApiV1BacktestAbortGetRequest) (*BacktestResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BacktestResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BacktestResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiBacktestAbortApiV1BacktestAbortGet")
@@ -122,7 +122,7 @@ func (a *FreqtradeAPIService) ApiBacktestAbortApiV1BacktestAbortGetExecute(r Api
 }
 
 type ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -133,24 +133,25 @@ func (r ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest) Execute() ([]Backte
 /*
 ApiBacktestHistoryApiV1BacktestHistoryGet Api Backtest History
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest
 */
 func (a *FreqtradeAPIService) ApiBacktestHistoryApiV1BacktestHistoryGet(ctx context.Context) ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest {
 	return ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []BacktestHistoryEntry
+//
+//	@return []BacktestHistoryEntry
 func (a *FreqtradeAPIService) ApiBacktestHistoryApiV1BacktestHistoryGetExecute(r ApiApiBacktestHistoryApiV1BacktestHistoryGetRequest) ([]BacktestHistoryEntry, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []BacktestHistoryEntry
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []BacktestHistoryEntry
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiBacktestHistoryApiV1BacktestHistoryGet")
@@ -219,10 +220,10 @@ func (a *FreqtradeAPIService) ApiBacktestHistoryApiV1BacktestHistoryGetExecute(r
 }
 
 type ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	filename *string
-	strategy *string
+	filename   *string
+	strategy   *string
 }
 
 func (r ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest) Filename(filename string) ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest {
@@ -242,24 +243,25 @@ func (r ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest) Execute
 /*
 ApiBacktestHistoryResultApiV1BacktestHistoryResultGet Api Backtest History Result
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest
 */
 func (a *FreqtradeAPIService) ApiBacktestHistoryResultApiV1BacktestHistoryResultGet(ctx context.Context) ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest {
 	return ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BacktestResponse
+//
+//	@return BacktestResponse
 func (a *FreqtradeAPIService) ApiBacktestHistoryResultApiV1BacktestHistoryResultGetExecute(r ApiApiBacktestHistoryResultApiV1BacktestHistoryResultGetRequest) (*BacktestResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BacktestResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BacktestResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiBacktestHistoryResultApiV1BacktestHistoryResultGet")
@@ -327,8 +329,8 @@ func (a *FreqtradeAPIService) ApiBacktestHistoryResultApiV1BacktestHistoryResult
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -346,7 +348,7 @@ func (a *FreqtradeAPIService) ApiBacktestHistoryResultApiV1BacktestHistoryResult
 }
 
 type ApiApiDeleteBacktestApiV1BacktestDeleteRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -359,24 +361,25 @@ ApiDeleteBacktestApiV1BacktestDelete Api Delete Backtest
 
 Reset backtesting
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiDeleteBacktestApiV1BacktestDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiDeleteBacktestApiV1BacktestDeleteRequest
 */
 func (a *FreqtradeAPIService) ApiDeleteBacktestApiV1BacktestDelete(ctx context.Context) ApiApiDeleteBacktestApiV1BacktestDeleteRequest {
 	return ApiApiDeleteBacktestApiV1BacktestDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BacktestResponse
+//
+//	@return BacktestResponse
 func (a *FreqtradeAPIService) ApiDeleteBacktestApiV1BacktestDeleteExecute(r ApiApiDeleteBacktestApiV1BacktestDeleteRequest) (*BacktestResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BacktestResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BacktestResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiDeleteBacktestApiV1BacktestDelete")
@@ -445,9 +448,9 @@ func (a *FreqtradeAPIService) ApiDeleteBacktestApiV1BacktestDeleteExecute(r ApiA
 }
 
 type ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	file string
+	file       string
 }
 
 func (r ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest) Execute() ([]BacktestHistoryEntry, *http.Response, error) {
@@ -457,26 +460,27 @@ func (r ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest) E
 /*
 ApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDelete Api Delete Backtest History Entry
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param file
- @return ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param file
+	@return ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest
 */
 func (a *FreqtradeAPIService) ApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDelete(ctx context.Context, file string) ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest {
 	return ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
-		file: file,
+		ctx:        ctx,
+		file:       file,
 	}
 }
 
 // Execute executes the request
-//  @return []BacktestHistoryEntry
+//
+//	@return []BacktestHistoryEntry
 func (a *FreqtradeAPIService) ApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteExecute(r ApiApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDeleteRequest) ([]BacktestHistoryEntry, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []BacktestHistoryEntry
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []BacktestHistoryEntry
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiDeleteBacktestHistoryEntryApiV1BacktestHistoryFileDelete")
@@ -537,8 +541,8 @@ func (a *FreqtradeAPIService) ApiDeleteBacktestHistoryEntryApiV1BacktestHistoryF
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -556,7 +560,7 @@ func (a *FreqtradeAPIService) ApiDeleteBacktestHistoryEntryApiV1BacktestHistoryF
 }
 
 type ApiApiGetBacktestApiV1BacktestGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -570,24 +574,25 @@ ApiGetBacktestApiV1BacktestGet Api Get Backtest
 Get backtesting result.
 Returns Result after backtesting has been ran.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiGetBacktestApiV1BacktestGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiGetBacktestApiV1BacktestGetRequest
 */
 func (a *FreqtradeAPIService) ApiGetBacktestApiV1BacktestGet(ctx context.Context) ApiApiGetBacktestApiV1BacktestGetRequest {
 	return ApiApiGetBacktestApiV1BacktestGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BacktestResponse
+//
+//	@return BacktestResponse
 func (a *FreqtradeAPIService) ApiGetBacktestApiV1BacktestGetExecute(r ApiApiGetBacktestApiV1BacktestGetRequest) (*BacktestResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BacktestResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BacktestResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiGetBacktestApiV1BacktestGet")
@@ -656,8 +661,8 @@ func (a *FreqtradeAPIService) ApiGetBacktestApiV1BacktestGetExecute(r ApiApiGetB
 }
 
 type ApiApiStartBacktestApiV1BacktestPostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx             context.Context
+	ApiService      *FreqtradeAPIService
 	backtestRequest *BacktestRequest
 }
 
@@ -673,24 +678,25 @@ func (r ApiApiStartBacktestApiV1BacktestPostRequest) Execute() (*BacktestRespons
 /*
 ApiStartBacktestApiV1BacktestPost Api Start Backtest
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiApiStartBacktestApiV1BacktestPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiApiStartBacktestApiV1BacktestPostRequest
 */
 func (a *FreqtradeAPIService) ApiStartBacktestApiV1BacktestPost(ctx context.Context) ApiApiStartBacktestApiV1BacktestPostRequest {
 	return ApiApiStartBacktestApiV1BacktestPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BacktestResponse
+//
+//	@return BacktestResponse
 func (a *FreqtradeAPIService) ApiStartBacktestApiV1BacktestPostExecute(r ApiApiStartBacktestApiV1BacktestPostRequest) (*BacktestResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BacktestResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BacktestResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiStartBacktestApiV1BacktestPost")
@@ -755,8 +761,8 @@ func (a *FreqtradeAPIService) ApiStartBacktestApiV1BacktestPostExecute(r ApiApiS
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -774,9 +780,9 @@ func (a *FreqtradeAPIService) ApiStartBacktestApiV1BacktestPostExecute(r ApiApiS
 }
 
 type ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
-	file string
+	ctx                    context.Context
+	ApiService             *FreqtradeAPIService
+	file                   string
 	backtestMetadataUpdate *BacktestMetadataUpdate
 }
 
@@ -792,26 +798,27 @@ func (r ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest) Ex
 /*
 ApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatch Api Update Backtest History Entry
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param file
- @return ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param file
+	@return ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest
 */
 func (a *FreqtradeAPIService) ApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatch(ctx context.Context, file string) ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest {
 	return ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest{
 		ApiService: a,
-		ctx: ctx,
-		file: file,
+		ctx:        ctx,
+		file:       file,
 	}
 }
 
 // Execute executes the request
-//  @return []BacktestHistoryEntry
+//
+//	@return []BacktestHistoryEntry
 func (a *FreqtradeAPIService) ApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchExecute(r ApiApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatchRequest) ([]BacktestHistoryEntry, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []BacktestHistoryEntry
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []BacktestHistoryEntry
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiUpdateBacktestHistoryEntryApiV1BacktestHistoryFilePatch")
@@ -877,8 +884,8 @@ func (a *FreqtradeAPIService) ApiUpdateBacktestHistoryEntryApiV1BacktestHistoryF
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -896,9 +903,9 @@ func (a *FreqtradeAPIService) ApiUpdateBacktestHistoryEntryApiV1BacktestHistoryF
 }
 
 type ApiBackgroundJobApiV1BackgroundJobidGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	jobid string
+	jobid      string
 }
 
 func (r ApiBackgroundJobApiV1BackgroundJobidGetRequest) Execute() (*BackgroundTaskStatus, *http.Response, error) {
@@ -908,26 +915,27 @@ func (r ApiBackgroundJobApiV1BackgroundJobidGetRequest) Execute() (*BackgroundTa
 /*
 BackgroundJobApiV1BackgroundJobidGet Background Job
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param jobid
- @return ApiBackgroundJobApiV1BackgroundJobidGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param jobid
+	@return ApiBackgroundJobApiV1BackgroundJobidGetRequest
 */
 func (a *FreqtradeAPIService) BackgroundJobApiV1BackgroundJobidGet(ctx context.Context, jobid string) ApiBackgroundJobApiV1BackgroundJobidGetRequest {
 	return ApiBackgroundJobApiV1BackgroundJobidGetRequest{
 		ApiService: a,
-		ctx: ctx,
-		jobid: jobid,
+		ctx:        ctx,
+		jobid:      jobid,
 	}
 }
 
 // Execute executes the request
-//  @return BackgroundTaskStatus
+//
+//	@return BackgroundTaskStatus
 func (a *FreqtradeAPIService) BackgroundJobApiV1BackgroundJobidGetExecute(r ApiBackgroundJobApiV1BackgroundJobidGetRequest) (*BackgroundTaskStatus, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BackgroundTaskStatus
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BackgroundTaskStatus
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.BackgroundJobApiV1BackgroundJobidGet")
@@ -988,8 +996,8 @@ func (a *FreqtradeAPIService) BackgroundJobApiV1BackgroundJobidGetExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1007,7 +1015,7 @@ func (a *FreqtradeAPIService) BackgroundJobApiV1BackgroundJobidGetExecute(r ApiB
 }
 
 type ApiBalanceApiV1BalanceGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -1020,24 +1028,25 @@ BalanceApiV1BalanceGet Balance
 
 Account Balances
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiBalanceApiV1BalanceGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBalanceApiV1BalanceGetRequest
 */
 func (a *FreqtradeAPIService) BalanceApiV1BalanceGet(ctx context.Context) ApiBalanceApiV1BalanceGetRequest {
 	return ApiBalanceApiV1BalanceGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Balances
+//
+//	@return Balances
 func (a *FreqtradeAPIService) BalanceApiV1BalanceGetExecute(r ApiBalanceApiV1BalanceGetRequest) (*Balances, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Balances
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Balances
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.BalanceApiV1BalanceGet")
@@ -1106,7 +1115,7 @@ func (a *FreqtradeAPIService) BalanceApiV1BalanceGetExecute(r ApiBalanceApiV1Bal
 }
 
 type ApiBlacklistApiV1BlacklistGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -1117,24 +1126,25 @@ func (r ApiBlacklistApiV1BlacklistGetRequest) Execute() (*BlacklistResponse, *ht
 /*
 BlacklistApiV1BlacklistGet Blacklist
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiBlacklistApiV1BlacklistGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBlacklistApiV1BlacklistGetRequest
 */
 func (a *FreqtradeAPIService) BlacklistApiV1BlacklistGet(ctx context.Context) ApiBlacklistApiV1BlacklistGetRequest {
 	return ApiBlacklistApiV1BlacklistGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BlacklistResponse
+//
+//	@return BlacklistResponse
 func (a *FreqtradeAPIService) BlacklistApiV1BlacklistGetExecute(r ApiBlacklistApiV1BlacklistGetRequest) (*BlacklistResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BlacklistResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BlacklistResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.BlacklistApiV1BlacklistGet")
@@ -1203,8 +1213,8 @@ func (a *FreqtradeAPIService) BlacklistApiV1BlacklistGetExecute(r ApiBlacklistAp
 }
 
 type ApiBlacklistDeleteApiV1BlacklistDeleteRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx           context.Context
+	ApiService    *FreqtradeAPIService
 	pairsToDelete *[]*string
 }
 
@@ -1222,24 +1232,25 @@ BlacklistDeleteApiV1BlacklistDelete Blacklist Delete
 
 Provide a list of pairs to delete from the blacklist
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiBlacklistDeleteApiV1BlacklistDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBlacklistDeleteApiV1BlacklistDeleteRequest
 */
 func (a *FreqtradeAPIService) BlacklistDeleteApiV1BlacklistDelete(ctx context.Context) ApiBlacklistDeleteApiV1BlacklistDeleteRequest {
 	return ApiBlacklistDeleteApiV1BlacklistDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BlacklistResponse
+//
+//	@return BlacklistResponse
 func (a *FreqtradeAPIService) BlacklistDeleteApiV1BlacklistDeleteExecute(r ApiBlacklistDeleteApiV1BlacklistDeleteRequest) (*BlacklistResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BlacklistResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BlacklistResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.BlacklistDeleteApiV1BlacklistDelete")
@@ -1264,9 +1275,9 @@ func (a *FreqtradeAPIService) BlacklistDeleteApiV1BlacklistDeleteExecute(r ApiBl
 			parameterAddToHeaderOrQuery(localVarQueryParams, "pairs_to_delete", t, "form", "multi")
 		}
 	} else {
-        var defaultValue []*string = []*string{}
-        parameterAddToHeaderOrQuery(localVarQueryParams, "pairs_to_delete", defaultValue, "form", "multi")
-        r.pairsToDelete = &defaultValue
+		var defaultValue []*string = []*string{}
+		parameterAddToHeaderOrQuery(localVarQueryParams, "pairs_to_delete", defaultValue, "form", "multi")
+		r.pairsToDelete = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1314,8 +1325,8 @@ func (a *FreqtradeAPIService) BlacklistDeleteApiV1BlacklistDeleteExecute(r ApiBl
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1333,8 +1344,8 @@ func (a *FreqtradeAPIService) BlacklistDeleteApiV1BlacklistDeleteExecute(r ApiBl
 }
 
 type ApiBlacklistPostApiV1BlacklistPostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx              context.Context
+	ApiService       *FreqtradeAPIService
 	blacklistPayload *BlacklistPayload
 }
 
@@ -1350,24 +1361,25 @@ func (r ApiBlacklistPostApiV1BlacklistPostRequest) Execute() (*BlacklistResponse
 /*
 BlacklistPostApiV1BlacklistPost Blacklist Post
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiBlacklistPostApiV1BlacklistPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBlacklistPostApiV1BlacklistPostRequest
 */
 func (a *FreqtradeAPIService) BlacklistPostApiV1BlacklistPost(ctx context.Context) ApiBlacklistPostApiV1BlacklistPostRequest {
 	return ApiBlacklistPostApiV1BlacklistPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BlacklistResponse
+//
+//	@return BlacklistResponse
 func (a *FreqtradeAPIService) BlacklistPostApiV1BlacklistPostExecute(r ApiBlacklistPostApiV1BlacklistPostRequest) (*BlacklistResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BlacklistResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BlacklistResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.BlacklistPostApiV1BlacklistPost")
@@ -1432,8 +1444,8 @@ func (a *FreqtradeAPIService) BlacklistPostApiV1BlacklistPostExecute(r ApiBlackl
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1451,7 +1463,7 @@ func (a *FreqtradeAPIService) BlacklistPostApiV1BlacklistPostExecute(r ApiBlackl
 }
 
 type ApiCountApiV1CountGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -1462,24 +1474,25 @@ func (r ApiCountApiV1CountGetRequest) Execute() (*Count, *http.Response, error) 
 /*
 CountApiV1CountGet Count
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCountApiV1CountGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCountApiV1CountGetRequest
 */
 func (a *FreqtradeAPIService) CountApiV1CountGet(ctx context.Context) ApiCountApiV1CountGetRequest {
 	return ApiCountApiV1CountGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Count
+//
+//	@return Count
 func (a *FreqtradeAPIService) CountApiV1CountGetExecute(r ApiCountApiV1CountGetRequest) (*Count, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Count
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Count
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.CountApiV1CountGet")
@@ -1548,9 +1561,9 @@ func (a *FreqtradeAPIService) CountApiV1CountGetExecute(r ApiCountApiV1CountGetR
 }
 
 type ApiDailyApiV1DailyGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	timescale *int64
+	timescale  *int64
 }
 
 func (r ApiDailyApiV1DailyGetRequest) Timescale(timescale int64) ApiDailyApiV1DailyGetRequest {
@@ -1565,24 +1578,25 @@ func (r ApiDailyApiV1DailyGetRequest) Execute() (*DailyWeeklyMonthly, *http.Resp
 /*
 DailyApiV1DailyGet Daily
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiDailyApiV1DailyGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiDailyApiV1DailyGetRequest
 */
 func (a *FreqtradeAPIService) DailyApiV1DailyGet(ctx context.Context) ApiDailyApiV1DailyGetRequest {
 	return ApiDailyApiV1DailyGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return DailyWeeklyMonthly
+//
+//	@return DailyWeeklyMonthly
 func (a *FreqtradeAPIService) DailyApiV1DailyGetExecute(r ApiDailyApiV1DailyGetRequest) (*DailyWeeklyMonthly, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DailyWeeklyMonthly
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DailyWeeklyMonthly
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.DailyApiV1DailyGet")
@@ -1599,9 +1613,9 @@ func (a *FreqtradeAPIService) DailyApiV1DailyGetExecute(r ApiDailyApiV1DailyGetR
 	if r.timescale != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", r.timescale, "form", "")
 	} else {
-        var defaultValue int64 = 7
-        parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", defaultValue, "form", "")
-        r.timescale = &defaultValue
+		var defaultValue int64 = 7
+		parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", defaultValue, "form", "")
+		r.timescale = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1649,8 +1663,8 @@ func (a *FreqtradeAPIService) DailyApiV1DailyGetExecute(r ApiDailyApiV1DailyGetR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1668,9 +1682,9 @@ func (a *FreqtradeAPIService) DailyApiV1DailyGetExecute(r ApiDailyApiV1DailyGetR
 }
 
 type ApiDeleteLockApiV1LocksLockidDeleteRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	lockid int64
+	lockid     int64
 }
 
 func (r ApiDeleteLockApiV1LocksLockidDeleteRequest) Execute() (*Locks, *http.Response, error) {
@@ -1680,26 +1694,27 @@ func (r ApiDeleteLockApiV1LocksLockidDeleteRequest) Execute() (*Locks, *http.Res
 /*
 DeleteLockApiV1LocksLockidDelete Delete Lock
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param lockid
- @return ApiDeleteLockApiV1LocksLockidDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param lockid
+	@return ApiDeleteLockApiV1LocksLockidDeleteRequest
 */
 func (a *FreqtradeAPIService) DeleteLockApiV1LocksLockidDelete(ctx context.Context, lockid int64) ApiDeleteLockApiV1LocksLockidDeleteRequest {
 	return ApiDeleteLockApiV1LocksLockidDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
-		lockid: lockid,
+		ctx:        ctx,
+		lockid:     lockid,
 	}
 }
 
 // Execute executes the request
-//  @return Locks
+//
+//	@return Locks
 func (a *FreqtradeAPIService) DeleteLockApiV1LocksLockidDeleteExecute(r ApiDeleteLockApiV1LocksLockidDeleteRequest) (*Locks, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Locks
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Locks
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.DeleteLockApiV1LocksLockidDelete")
@@ -1760,8 +1775,8 @@ func (a *FreqtradeAPIService) DeleteLockApiV1LocksLockidDeleteExecute(r ApiDelet
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1779,8 +1794,8 @@ func (a *FreqtradeAPIService) DeleteLockApiV1LocksLockidDeleteExecute(r ApiDelet
 }
 
 type ApiDeleteLockPairApiV1LocksDeletePostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx               context.Context
+	ApiService        *FreqtradeAPIService
 	deleteLockRequest *DeleteLockRequest
 }
 
@@ -1796,24 +1811,25 @@ func (r ApiDeleteLockPairApiV1LocksDeletePostRequest) Execute() (*Locks, *http.R
 /*
 DeleteLockPairApiV1LocksDeletePost Delete Lock Pair
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiDeleteLockPairApiV1LocksDeletePostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiDeleteLockPairApiV1LocksDeletePostRequest
 */
 func (a *FreqtradeAPIService) DeleteLockPairApiV1LocksDeletePost(ctx context.Context) ApiDeleteLockPairApiV1LocksDeletePostRequest {
 	return ApiDeleteLockPairApiV1LocksDeletePostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Locks
+//
+//	@return Locks
 func (a *FreqtradeAPIService) DeleteLockPairApiV1LocksDeletePostExecute(r ApiDeleteLockPairApiV1LocksDeletePostRequest) (*Locks, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Locks
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Locks
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.DeleteLockPairApiV1LocksDeletePost")
@@ -1878,8 +1894,8 @@ func (a *FreqtradeAPIService) DeleteLockPairApiV1LocksDeletePostExecute(r ApiDel
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1897,7 +1913,7 @@ func (a *FreqtradeAPIService) DeleteLockPairApiV1LocksDeletePostExecute(r ApiDel
 }
 
 type ApiEdgeApiV1EdgeGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -1908,24 +1924,25 @@ func (r ApiEdgeApiV1EdgeGetRequest) Execute() (interface{}, *http.Response, erro
 /*
 EdgeApiV1EdgeGet Edge
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiEdgeApiV1EdgeGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiEdgeApiV1EdgeGetRequest
 */
 func (a *FreqtradeAPIService) EdgeApiV1EdgeGet(ctx context.Context) ApiEdgeApiV1EdgeGetRequest {
 	return ApiEdgeApiV1EdgeGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *FreqtradeAPIService) EdgeApiV1EdgeGetExecute(r ApiEdgeApiV1EdgeGetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.EdgeApiV1EdgeGet")
@@ -1994,9 +2011,9 @@ func (a *FreqtradeAPIService) EdgeApiV1EdgeGetExecute(r ApiEdgeApiV1EdgeGetReque
 }
 
 type ApiEntriesApiV1EntriesGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	pair *string
+	pair       *string
 }
 
 func (r ApiEntriesApiV1EntriesGetRequest) Pair(pair string) ApiEntriesApiV1EntriesGetRequest {
@@ -2011,24 +2028,25 @@ func (r ApiEntriesApiV1EntriesGetRequest) Execute() ([]Entry, *http.Response, er
 /*
 EntriesApiV1EntriesGet Entries
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiEntriesApiV1EntriesGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiEntriesApiV1EntriesGetRequest
 */
 func (a *FreqtradeAPIService) EntriesApiV1EntriesGet(ctx context.Context) ApiEntriesApiV1EntriesGetRequest {
 	return ApiEntriesApiV1EntriesGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []Entry
+//
+//	@return []Entry
 func (a *FreqtradeAPIService) EntriesApiV1EntriesGetExecute(r ApiEntriesApiV1EntriesGetRequest) ([]Entry, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []Entry
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []Entry
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.EntriesApiV1EntriesGet")
@@ -2091,8 +2109,8 @@ func (a *FreqtradeAPIService) EntriesApiV1EntriesGetExecute(r ApiEntriesApiV1Ent
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2110,9 +2128,9 @@ func (a *FreqtradeAPIService) EntriesApiV1EntriesGetExecute(r ApiEntriesApiV1Ent
 }
 
 type ApiExitsApiV1ExitsGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	pair *string
+	pair       *string
 }
 
 func (r ApiExitsApiV1ExitsGetRequest) Pair(pair string) ApiExitsApiV1ExitsGetRequest {
@@ -2127,24 +2145,25 @@ func (r ApiExitsApiV1ExitsGetRequest) Execute() ([]Exit, *http.Response, error) 
 /*
 ExitsApiV1ExitsGet Exits
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiExitsApiV1ExitsGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiExitsApiV1ExitsGetRequest
 */
 func (a *FreqtradeAPIService) ExitsApiV1ExitsGet(ctx context.Context) ApiExitsApiV1ExitsGetRequest {
 	return ApiExitsApiV1ExitsGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []Exit
+//
+//	@return []Exit
 func (a *FreqtradeAPIService) ExitsApiV1ExitsGetExecute(r ApiExitsApiV1ExitsGetRequest) ([]Exit, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []Exit
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []Exit
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ExitsApiV1ExitsGet")
@@ -2207,8 +2226,8 @@ func (a *FreqtradeAPIService) ExitsApiV1ExitsGetExecute(r ApiExitsApiV1ExitsGetR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2226,8 +2245,8 @@ func (a *FreqtradeAPIService) ExitsApiV1ExitsGetExecute(r ApiExitsApiV1ExitsGetR
 }
 
 type ApiForceEntryApiV1ForcebuyPostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx               context.Context
+	ApiService        *FreqtradeAPIService
 	forceEnterPayload *ForceEnterPayload
 }
 
@@ -2243,24 +2262,25 @@ func (r ApiForceEntryApiV1ForcebuyPostRequest) Execute() (*RootModelUnionTradeSc
 /*
 ForceEntryApiV1ForcebuyPost Force Entry
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiForceEntryApiV1ForcebuyPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiForceEntryApiV1ForcebuyPostRequest
 */
 func (a *FreqtradeAPIService) ForceEntryApiV1ForcebuyPost(ctx context.Context) ApiForceEntryApiV1ForcebuyPostRequest {
 	return ApiForceEntryApiV1ForcebuyPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return RootModelUnionTradeSchemaStatusMsg
+//
+//	@return RootModelUnionTradeSchemaStatusMsg
 func (a *FreqtradeAPIService) ForceEntryApiV1ForcebuyPostExecute(r ApiForceEntryApiV1ForcebuyPostRequest) (*RootModelUnionTradeSchemaStatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RootModelUnionTradeSchemaStatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RootModelUnionTradeSchemaStatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ForceEntryApiV1ForcebuyPost")
@@ -2325,8 +2345,8 @@ func (a *FreqtradeAPIService) ForceEntryApiV1ForcebuyPostExecute(r ApiForceEntry
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2344,8 +2364,8 @@ func (a *FreqtradeAPIService) ForceEntryApiV1ForcebuyPostExecute(r ApiForceEntry
 }
 
 type ApiForceEntryApiV1ForceenterPostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx               context.Context
+	ApiService        *FreqtradeAPIService
 	forceEnterPayload *ForceEnterPayload
 }
 
@@ -2361,24 +2381,25 @@ func (r ApiForceEntryApiV1ForceenterPostRequest) Execute() (*RootModelUnionTrade
 /*
 ForceEntryApiV1ForceenterPost Force Entry
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiForceEntryApiV1ForceenterPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiForceEntryApiV1ForceenterPostRequest
 */
 func (a *FreqtradeAPIService) ForceEntryApiV1ForceenterPost(ctx context.Context) ApiForceEntryApiV1ForceenterPostRequest {
 	return ApiForceEntryApiV1ForceenterPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return RootModelUnionTradeSchemaStatusMsg
+//
+//	@return RootModelUnionTradeSchemaStatusMsg
 func (a *FreqtradeAPIService) ForceEntryApiV1ForceenterPostExecute(r ApiForceEntryApiV1ForceenterPostRequest) (*RootModelUnionTradeSchemaStatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RootModelUnionTradeSchemaStatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RootModelUnionTradeSchemaStatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ForceEntryApiV1ForceenterPost")
@@ -2443,8 +2464,8 @@ func (a *FreqtradeAPIService) ForceEntryApiV1ForceenterPostExecute(r ApiForceEnt
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2462,8 +2483,8 @@ func (a *FreqtradeAPIService) ForceEntryApiV1ForceenterPostExecute(r ApiForceEnt
 }
 
 type ApiForceexitApiV1ForceexitPostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx              context.Context
+	ApiService       *FreqtradeAPIService
 	forceExitPayload *ForceExitPayload
 }
 
@@ -2479,24 +2500,25 @@ func (r ApiForceexitApiV1ForceexitPostRequest) Execute() (*ResultMsg, *http.Resp
 /*
 ForceexitApiV1ForceexitPost Forceexit
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiForceexitApiV1ForceexitPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiForceexitApiV1ForceexitPostRequest
 */
 func (a *FreqtradeAPIService) ForceexitApiV1ForceexitPost(ctx context.Context) ApiForceexitApiV1ForceexitPostRequest {
 	return ApiForceexitApiV1ForceexitPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return ResultMsg
+//
+//	@return ResultMsg
 func (a *FreqtradeAPIService) ForceexitApiV1ForceexitPostExecute(r ApiForceexitApiV1ForceexitPostRequest) (*ResultMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ResultMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ResultMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ForceexitApiV1ForceexitPost")
@@ -2561,8 +2583,8 @@ func (a *FreqtradeAPIService) ForceexitApiV1ForceexitPostExecute(r ApiForceexitA
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2580,8 +2602,8 @@ func (a *FreqtradeAPIService) ForceexitApiV1ForceexitPostExecute(r ApiForceexitA
 }
 
 type ApiForceexitApiV1ForcesellPostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx              context.Context
+	ApiService       *FreqtradeAPIService
 	forceExitPayload *ForceExitPayload
 }
 
@@ -2597,24 +2619,25 @@ func (r ApiForceexitApiV1ForcesellPostRequest) Execute() (*ResultMsg, *http.Resp
 /*
 ForceexitApiV1ForcesellPost Forceexit
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiForceexitApiV1ForcesellPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiForceexitApiV1ForcesellPostRequest
 */
 func (a *FreqtradeAPIService) ForceexitApiV1ForcesellPost(ctx context.Context) ApiForceexitApiV1ForcesellPostRequest {
 	return ApiForceexitApiV1ForcesellPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return ResultMsg
+//
+//	@return ResultMsg
 func (a *FreqtradeAPIService) ForceexitApiV1ForcesellPostExecute(r ApiForceexitApiV1ForcesellPostRequest) (*ResultMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ResultMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ResultMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ForceexitApiV1ForcesellPost")
@@ -2679,8 +2702,8 @@ func (a *FreqtradeAPIService) ForceexitApiV1ForcesellPostExecute(r ApiForceexitA
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2698,9 +2721,9 @@ func (a *FreqtradeAPIService) ForceexitApiV1ForcesellPostExecute(r ApiForceexitA
 }
 
 type ApiGetStrategyApiV1StrategyStrategyGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	strategy string
+	strategy   string
 }
 
 func (r ApiGetStrategyApiV1StrategyStrategyGetRequest) Execute() (*StrategyResponse, *http.Response, error) {
@@ -2710,26 +2733,27 @@ func (r ApiGetStrategyApiV1StrategyStrategyGetRequest) Execute() (*StrategyRespo
 /*
 GetStrategyApiV1StrategyStrategyGet Get Strategy
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param strategy
- @return ApiGetStrategyApiV1StrategyStrategyGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param strategy
+	@return ApiGetStrategyApiV1StrategyStrategyGetRequest
 */
 func (a *FreqtradeAPIService) GetStrategyApiV1StrategyStrategyGet(ctx context.Context, strategy string) ApiGetStrategyApiV1StrategyStrategyGetRequest {
 	return ApiGetStrategyApiV1StrategyStrategyGetRequest{
 		ApiService: a,
-		ctx: ctx,
-		strategy: strategy,
+		ctx:        ctx,
+		strategy:   strategy,
 	}
 }
 
 // Execute executes the request
-//  @return StrategyResponse
+//
+//	@return StrategyResponse
 func (a *FreqtradeAPIService) GetStrategyApiV1StrategyStrategyGetExecute(r ApiGetStrategyApiV1StrategyStrategyGetRequest) (*StrategyResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StrategyResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StrategyResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.GetStrategyApiV1StrategyStrategyGet")
@@ -2790,8 +2814,8 @@ func (a *FreqtradeAPIService) GetStrategyApiV1StrategyStrategyGetExecute(r ApiGe
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2809,7 +2833,7 @@ func (a *FreqtradeAPIService) GetStrategyApiV1StrategyStrategyGetExecute(r ApiGe
 }
 
 type ApiHealthApiV1HealthGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -2820,24 +2844,25 @@ func (r ApiHealthApiV1HealthGetRequest) Execute() (*Health, *http.Response, erro
 /*
 HealthApiV1HealthGet Health
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiHealthApiV1HealthGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiHealthApiV1HealthGetRequest
 */
 func (a *FreqtradeAPIService) HealthApiV1HealthGet(ctx context.Context) ApiHealthApiV1HealthGetRequest {
 	return ApiHealthApiV1HealthGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Health
+//
+//	@return Health
 func (a *FreqtradeAPIService) HealthApiV1HealthGetExecute(r ApiHealthApiV1HealthGetRequest) (*Health, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Health
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Health
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.HealthApiV1HealthGet")
@@ -2906,11 +2931,11 @@ func (a *FreqtradeAPIService) HealthApiV1HealthGetExecute(r ApiHealthApiV1Health
 }
 
 type ApiListAvailablePairsApiV1AvailablePairsGetRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
-	timeframe *string
+	ctx           context.Context
+	ApiService    *FreqtradeAPIService
+	timeframe     *string
 	stakeCurrency *string
-	candletype *CandleType
+	candletype    *CandleType
 }
 
 func (r ApiListAvailablePairsApiV1AvailablePairsGetRequest) Timeframe(timeframe string) ApiListAvailablePairsApiV1AvailablePairsGetRequest {
@@ -2935,24 +2960,25 @@ func (r ApiListAvailablePairsApiV1AvailablePairsGetRequest) Execute() (*Availabl
 /*
 ListAvailablePairsApiV1AvailablePairsGet List Available Pairs
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListAvailablePairsApiV1AvailablePairsGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListAvailablePairsApiV1AvailablePairsGetRequest
 */
 func (a *FreqtradeAPIService) ListAvailablePairsApiV1AvailablePairsGet(ctx context.Context) ApiListAvailablePairsApiV1AvailablePairsGetRequest {
 	return ApiListAvailablePairsApiV1AvailablePairsGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return AvailablePairs
+//
+//	@return AvailablePairs
 func (a *FreqtradeAPIService) ListAvailablePairsApiV1AvailablePairsGetExecute(r ApiListAvailablePairsApiV1AvailablePairsGetRequest) (*AvailablePairs, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AvailablePairs
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AvailablePairs
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListAvailablePairsApiV1AvailablePairsGet")
@@ -3021,8 +3047,8 @@ func (a *FreqtradeAPIService) ListAvailablePairsApiV1AvailablePairsGetExecute(r 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3040,7 +3066,7 @@ func (a *FreqtradeAPIService) ListAvailablePairsApiV1AvailablePairsGetExecute(r 
 }
 
 type ApiListExchangesApiV1ExchangesGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -3051,24 +3077,25 @@ func (r ApiListExchangesApiV1ExchangesGetRequest) Execute() (*ExchangeListRespon
 /*
 ListExchangesApiV1ExchangesGet List Exchanges
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListExchangesApiV1ExchangesGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListExchangesApiV1ExchangesGetRequest
 */
 func (a *FreqtradeAPIService) ListExchangesApiV1ExchangesGet(ctx context.Context) ApiListExchangesApiV1ExchangesGetRequest {
 	return ApiListExchangesApiV1ExchangesGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return ExchangeListResponse
+//
+//	@return ExchangeListResponse
 func (a *FreqtradeAPIService) ListExchangesApiV1ExchangesGetExecute(r ApiListExchangesApiV1ExchangesGetRequest) (*ExchangeListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExchangeListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExchangeListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListExchangesApiV1ExchangesGet")
@@ -3137,7 +3164,7 @@ func (a *FreqtradeAPIService) ListExchangesApiV1ExchangesGetExecute(r ApiListExc
 }
 
 type ApiListFreqaimodelsApiV1FreqaimodelsGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -3148,24 +3175,25 @@ func (r ApiListFreqaimodelsApiV1FreqaimodelsGetRequest) Execute() (*FreqAIModelL
 /*
 ListFreqaimodelsApiV1FreqaimodelsGet List Freqaimodels
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListFreqaimodelsApiV1FreqaimodelsGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListFreqaimodelsApiV1FreqaimodelsGetRequest
 */
 func (a *FreqtradeAPIService) ListFreqaimodelsApiV1FreqaimodelsGet(ctx context.Context) ApiListFreqaimodelsApiV1FreqaimodelsGetRequest {
 	return ApiListFreqaimodelsApiV1FreqaimodelsGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return FreqAIModelListResponse
+//
+//	@return FreqAIModelListResponse
 func (a *FreqtradeAPIService) ListFreqaimodelsApiV1FreqaimodelsGetExecute(r ApiListFreqaimodelsApiV1FreqaimodelsGetRequest) (*FreqAIModelListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *FreqAIModelListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *FreqAIModelListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListFreqaimodelsApiV1FreqaimodelsGet")
@@ -3234,7 +3262,7 @@ func (a *FreqtradeAPIService) ListFreqaimodelsApiV1FreqaimodelsGetExecute(r ApiL
 }
 
 type ApiListPairlistsApiV1PairlistsAvailableGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -3245,24 +3273,25 @@ func (r ApiListPairlistsApiV1PairlistsAvailableGetRequest) Execute() (*PairLists
 /*
 ListPairlistsApiV1PairlistsAvailableGet List Pairlists
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListPairlistsApiV1PairlistsAvailableGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListPairlistsApiV1PairlistsAvailableGetRequest
 */
 func (a *FreqtradeAPIService) ListPairlistsApiV1PairlistsAvailableGet(ctx context.Context) ApiListPairlistsApiV1PairlistsAvailableGetRequest {
 	return ApiListPairlistsApiV1PairlistsAvailableGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return PairListsResponse
+//
+//	@return PairListsResponse
 func (a *FreqtradeAPIService) ListPairlistsApiV1PairlistsAvailableGetExecute(r ApiListPairlistsApiV1PairlistsAvailableGetRequest) (*PairListsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *PairListsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PairListsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListPairlistsApiV1PairlistsAvailableGet")
@@ -3331,7 +3360,7 @@ func (a *FreqtradeAPIService) ListPairlistsApiV1PairlistsAvailableGetExecute(r A
 }
 
 type ApiListStrategiesApiV1StrategiesGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -3342,24 +3371,25 @@ func (r ApiListStrategiesApiV1StrategiesGetRequest) Execute() (*StrategyListResp
 /*
 ListStrategiesApiV1StrategiesGet List Strategies
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListStrategiesApiV1StrategiesGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListStrategiesApiV1StrategiesGetRequest
 */
 func (a *FreqtradeAPIService) ListStrategiesApiV1StrategiesGet(ctx context.Context) ApiListStrategiesApiV1StrategiesGetRequest {
 	return ApiListStrategiesApiV1StrategiesGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return StrategyListResponse
+//
+//	@return StrategyListResponse
 func (a *FreqtradeAPIService) ListStrategiesApiV1StrategiesGetExecute(r ApiListStrategiesApiV1StrategiesGetRequest) (*StrategyListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StrategyListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StrategyListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListStrategiesApiV1StrategiesGet")
@@ -3428,7 +3458,7 @@ func (a *FreqtradeAPIService) ListStrategiesApiV1StrategiesGetExecute(r ApiListS
 }
 
 type ApiLocksApiV1LocksGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -3439,24 +3469,25 @@ func (r ApiLocksApiV1LocksGetRequest) Execute() (*Locks, *http.Response, error) 
 /*
 LocksApiV1LocksGet Locks
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiLocksApiV1LocksGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiLocksApiV1LocksGetRequest
 */
 func (a *FreqtradeAPIService) LocksApiV1LocksGet(ctx context.Context) ApiLocksApiV1LocksGetRequest {
 	return ApiLocksApiV1LocksGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Locks
+//
+//	@return Locks
 func (a *FreqtradeAPIService) LocksApiV1LocksGetExecute(r ApiLocksApiV1LocksGetRequest) (*Locks, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Locks
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Locks
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.LocksApiV1LocksGet")
@@ -3525,9 +3556,9 @@ func (a *FreqtradeAPIService) LocksApiV1LocksGetExecute(r ApiLocksApiV1LocksGetR
 }
 
 type ApiLogsApiV1LogsGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	limit *int64
+	limit      *int64
 }
 
 func (r ApiLogsApiV1LogsGetRequest) Limit(limit int64) ApiLogsApiV1LogsGetRequest {
@@ -3542,24 +3573,25 @@ func (r ApiLogsApiV1LogsGetRequest) Execute() (*Logs, *http.Response, error) {
 /*
 LogsApiV1LogsGet Logs
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiLogsApiV1LogsGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiLogsApiV1LogsGetRequest
 */
 func (a *FreqtradeAPIService) LogsApiV1LogsGet(ctx context.Context) ApiLogsApiV1LogsGetRequest {
 	return ApiLogsApiV1LogsGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Logs
+//
+//	@return Logs
 func (a *FreqtradeAPIService) LogsApiV1LogsGetExecute(r ApiLogsApiV1LogsGetRequest) (*Logs, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Logs
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Logs
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.LogsApiV1LogsGet")
@@ -3622,8 +3654,8 @@ func (a *FreqtradeAPIService) LogsApiV1LogsGetExecute(r ApiLogsApiV1LogsGetReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3641,9 +3673,9 @@ func (a *FreqtradeAPIService) LogsApiV1LogsGetExecute(r ApiLogsApiV1LogsGetReque
 }
 
 type ApiMixTagsApiV1MixTagsGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	pair *string
+	pair       *string
 }
 
 func (r ApiMixTagsApiV1MixTagsGetRequest) Pair(pair string) ApiMixTagsApiV1MixTagsGetRequest {
@@ -3658,24 +3690,25 @@ func (r ApiMixTagsApiV1MixTagsGetRequest) Execute() ([]MixTag, *http.Response, e
 /*
 MixTagsApiV1MixTagsGet Mix Tags
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiMixTagsApiV1MixTagsGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiMixTagsApiV1MixTagsGetRequest
 */
 func (a *FreqtradeAPIService) MixTagsApiV1MixTagsGet(ctx context.Context) ApiMixTagsApiV1MixTagsGetRequest {
 	return ApiMixTagsApiV1MixTagsGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []MixTag
+//
+//	@return []MixTag
 func (a *FreqtradeAPIService) MixTagsApiV1MixTagsGetExecute(r ApiMixTagsApiV1MixTagsGetRequest) ([]MixTag, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []MixTag
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []MixTag
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.MixTagsApiV1MixTagsGet")
@@ -3738,8 +3771,8 @@ func (a *FreqtradeAPIService) MixTagsApiV1MixTagsGetExecute(r ApiMixTagsApiV1Mix
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3757,9 +3790,9 @@ func (a *FreqtradeAPIService) MixTagsApiV1MixTagsGetExecute(r ApiMixTagsApiV1Mix
 }
 
 type ApiMonthlyApiV1MonthlyGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	timescale *int64
+	timescale  *int64
 }
 
 func (r ApiMonthlyApiV1MonthlyGetRequest) Timescale(timescale int64) ApiMonthlyApiV1MonthlyGetRequest {
@@ -3774,24 +3807,25 @@ func (r ApiMonthlyApiV1MonthlyGetRequest) Execute() (*DailyWeeklyMonthly, *http.
 /*
 MonthlyApiV1MonthlyGet Monthly
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiMonthlyApiV1MonthlyGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiMonthlyApiV1MonthlyGetRequest
 */
 func (a *FreqtradeAPIService) MonthlyApiV1MonthlyGet(ctx context.Context) ApiMonthlyApiV1MonthlyGetRequest {
 	return ApiMonthlyApiV1MonthlyGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return DailyWeeklyMonthly
+//
+//	@return DailyWeeklyMonthly
 func (a *FreqtradeAPIService) MonthlyApiV1MonthlyGetExecute(r ApiMonthlyApiV1MonthlyGetRequest) (*DailyWeeklyMonthly, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DailyWeeklyMonthly
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DailyWeeklyMonthly
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.MonthlyApiV1MonthlyGet")
@@ -3808,9 +3842,9 @@ func (a *FreqtradeAPIService) MonthlyApiV1MonthlyGetExecute(r ApiMonthlyApiV1Mon
 	if r.timescale != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", r.timescale, "form", "")
 	} else {
-        var defaultValue int64 = 3
-        parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", defaultValue, "form", "")
-        r.timescale = &defaultValue
+		var defaultValue int64 = 3
+		parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", defaultValue, "form", "")
+		r.timescale = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -3858,8 +3892,8 @@ func (a *FreqtradeAPIService) MonthlyApiV1MonthlyGetExecute(r ApiMonthlyApiV1Mon
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3877,11 +3911,11 @@ func (a *FreqtradeAPIService) MonthlyApiV1MonthlyGetExecute(r ApiMonthlyApiV1Mon
 }
 
 type ApiPairCandlesApiV1PairCandlesGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	pair *string
-	timeframe *string
-	limit *int64
+	pair       *string
+	timeframe  *string
+	limit      *int64
 }
 
 func (r ApiPairCandlesApiV1PairCandlesGetRequest) Pair(pair string) ApiPairCandlesApiV1PairCandlesGetRequest {
@@ -3906,24 +3940,25 @@ func (r ApiPairCandlesApiV1PairCandlesGetRequest) Execute() (*PairHistory, *http
 /*
 PairCandlesApiV1PairCandlesGet Pair Candles
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiPairCandlesApiV1PairCandlesGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPairCandlesApiV1PairCandlesGetRequest
 */
 func (a *FreqtradeAPIService) PairCandlesApiV1PairCandlesGet(ctx context.Context) ApiPairCandlesApiV1PairCandlesGetRequest {
 	return ApiPairCandlesApiV1PairCandlesGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return PairHistory
+//
+//	@return PairHistory
 func (a *FreqtradeAPIService) PairCandlesApiV1PairCandlesGetExecute(r ApiPairCandlesApiV1PairCandlesGetRequest) (*PairHistory, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *PairHistory
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PairHistory
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairCandlesApiV1PairCandlesGet")
@@ -3994,8 +4029,8 @@ func (a *FreqtradeAPIService) PairCandlesApiV1PairCandlesGetExecute(r ApiPairCan
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -4013,12 +4048,12 @@ func (a *FreqtradeAPIService) PairCandlesApiV1PairCandlesGetExecute(r ApiPairCan
 }
 
 type ApiPairHistoryApiV1PairHistoryGetRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
-	pair *string
-	timeframe *string
-	timerange *string
-	strategy *string
+	ctx         context.Context
+	ApiService  *FreqtradeAPIService
+	pair        *string
+	timeframe   *string
+	timerange   *string
+	strategy    *string
 	freqaimodel *string
 }
 
@@ -4054,24 +4089,25 @@ func (r ApiPairHistoryApiV1PairHistoryGetRequest) Execute() (*PairHistory, *http
 /*
 PairHistoryApiV1PairHistoryGet Pair History
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiPairHistoryApiV1PairHistoryGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPairHistoryApiV1PairHistoryGetRequest
 */
 func (a *FreqtradeAPIService) PairHistoryApiV1PairHistoryGet(ctx context.Context) ApiPairHistoryApiV1PairHistoryGetRequest {
 	return ApiPairHistoryApiV1PairHistoryGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return PairHistory
+//
+//	@return PairHistory
 func (a *FreqtradeAPIService) PairHistoryApiV1PairHistoryGetExecute(r ApiPairHistoryApiV1PairHistoryGetRequest) (*PairHistory, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *PairHistory
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PairHistory
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairHistoryApiV1PairHistoryGet")
@@ -4150,8 +4186,8 @@ func (a *FreqtradeAPIService) PairHistoryApiV1PairHistoryGetExecute(r ApiPairHis
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -4169,8 +4205,8 @@ func (a *FreqtradeAPIService) PairHistoryApiV1PairHistoryGetExecute(r ApiPairHis
 }
 
 type ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest struct {
-	ctx context.Context
-	ApiService *FreqtradeAPIService
+	ctx              context.Context
+	ApiService       *FreqtradeAPIService
 	pairListsPayload *PairListsPayload
 }
 
@@ -4186,24 +4222,25 @@ func (r ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest) Execute() (*BgJob
 /*
 PairlistsEvaluateApiV1PairlistsEvaluatePost Pairlists Evaluate
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest
 */
 func (a *FreqtradeAPIService) PairlistsEvaluateApiV1PairlistsEvaluatePost(ctx context.Context) ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest {
 	return ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BgJobStarted
+//
+//	@return BgJobStarted
 func (a *FreqtradeAPIService) PairlistsEvaluateApiV1PairlistsEvaluatePostExecute(r ApiPairlistsEvaluateApiV1PairlistsEvaluatePostRequest) (*BgJobStarted, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BgJobStarted
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BgJobStarted
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairlistsEvaluateApiV1PairlistsEvaluatePost")
@@ -4268,8 +4305,8 @@ func (a *FreqtradeAPIService) PairlistsEvaluateApiV1PairlistsEvaluatePostExecute
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -4287,9 +4324,9 @@ func (a *FreqtradeAPIService) PairlistsEvaluateApiV1PairlistsEvaluatePostExecute
 }
 
 type ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	jobid string
+	jobid      string
 }
 
 func (r ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest) Execute() (*WhitelistEvaluateResponse, *http.Response, error) {
@@ -4299,26 +4336,27 @@ func (r ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest) Execute() 
 /*
 PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGet Pairlists Evaluate Get
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param jobid
- @return ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param jobid
+	@return ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest
 */
 func (a *FreqtradeAPIService) PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGet(ctx context.Context, jobid string) ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest {
 	return ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest{
 		ApiService: a,
-		ctx: ctx,
-		jobid: jobid,
+		ctx:        ctx,
+		jobid:      jobid,
 	}
 }
 
 // Execute executes the request
-//  @return WhitelistEvaluateResponse
+//
+//	@return WhitelistEvaluateResponse
 func (a *FreqtradeAPIService) PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetExecute(r ApiPairlistsEvaluateGetApiV1PairlistsEvaluateJobidGetRequest) (*WhitelistEvaluateResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WhitelistEvaluateResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WhitelistEvaluateResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGet")
@@ -4379,8 +4417,8 @@ func (a *FreqtradeAPIService) PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGet
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -4398,7 +4436,7 @@ func (a *FreqtradeAPIService) PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGet
 }
 
 type ApiPerformanceApiV1PerformanceGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -4409,24 +4447,25 @@ func (r ApiPerformanceApiV1PerformanceGetRequest) Execute() ([]PerformanceEntry,
 /*
 PerformanceApiV1PerformanceGet Performance
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiPerformanceApiV1PerformanceGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPerformanceApiV1PerformanceGetRequest
 */
 func (a *FreqtradeAPIService) PerformanceApiV1PerformanceGet(ctx context.Context) ApiPerformanceApiV1PerformanceGetRequest {
 	return ApiPerformanceApiV1PerformanceGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []PerformanceEntry
+//
+//	@return []PerformanceEntry
 func (a *FreqtradeAPIService) PerformanceApiV1PerformanceGetExecute(r ApiPerformanceApiV1PerformanceGetRequest) ([]PerformanceEntry, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []PerformanceEntry
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []PerformanceEntry
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PerformanceApiV1PerformanceGet")
@@ -4495,7 +4534,7 @@ func (a *FreqtradeAPIService) PerformanceApiV1PerformanceGetExecute(r ApiPerform
 }
 
 type ApiPingApiV1PingGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -4508,24 +4547,25 @@ PingApiV1PingGet Ping
 
 simple ping
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiPingApiV1PingGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPingApiV1PingGetRequest
 */
 func (a *FreqtradeAPIService) PingApiV1PingGet(ctx context.Context) ApiPingApiV1PingGetRequest {
 	return ApiPingApiV1PingGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Ping
+//
+//	@return Ping
 func (a *FreqtradeAPIService) PingApiV1PingGetExecute(r ApiPingApiV1PingGetRequest) (*Ping, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Ping
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Ping
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PingApiV1PingGet")
@@ -4594,9 +4634,9 @@ func (a *FreqtradeAPIService) PingApiV1PingGetExecute(r ApiPingApiV1PingGetReque
 }
 
 type ApiPlotConfigApiV1PlotConfigGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	strategy *string
+	strategy   *string
 }
 
 func (r ApiPlotConfigApiV1PlotConfigGetRequest) Strategy(strategy string) ApiPlotConfigApiV1PlotConfigGetRequest {
@@ -4611,24 +4651,25 @@ func (r ApiPlotConfigApiV1PlotConfigGetRequest) Execute() (*RootModelUnionPlotCo
 /*
 PlotConfigApiV1PlotConfigGet Plot Config
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiPlotConfigApiV1PlotConfigGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPlotConfigApiV1PlotConfigGetRequest
 */
 func (a *FreqtradeAPIService) PlotConfigApiV1PlotConfigGet(ctx context.Context) ApiPlotConfigApiV1PlotConfigGetRequest {
 	return ApiPlotConfigApiV1PlotConfigGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return RootModelUnionPlotConfigDict
+//
+//	@return RootModelUnionPlotConfigDict
 func (a *FreqtradeAPIService) PlotConfigApiV1PlotConfigGetExecute(r ApiPlotConfigApiV1PlotConfigGetRequest) (*RootModelUnionPlotConfigDict, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RootModelUnionPlotConfigDict
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RootModelUnionPlotConfigDict
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PlotConfigApiV1PlotConfigGet")
@@ -4691,8 +4732,8 @@ func (a *FreqtradeAPIService) PlotConfigApiV1PlotConfigGetExecute(r ApiPlotConfi
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -4710,7 +4751,7 @@ func (a *FreqtradeAPIService) PlotConfigApiV1PlotConfigGetExecute(r ApiPlotConfi
 }
 
 type ApiProfitApiV1ProfitGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -4721,24 +4762,25 @@ func (r ApiProfitApiV1ProfitGetRequest) Execute() (*Profit, *http.Response, erro
 /*
 ProfitApiV1ProfitGet Profit
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiProfitApiV1ProfitGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiProfitApiV1ProfitGetRequest
 */
 func (a *FreqtradeAPIService) ProfitApiV1ProfitGet(ctx context.Context) ApiProfitApiV1ProfitGetRequest {
 	return ApiProfitApiV1ProfitGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Profit
+//
+//	@return Profit
 func (a *FreqtradeAPIService) ProfitApiV1ProfitGetExecute(r ApiProfitApiV1ProfitGetRequest) (*Profit, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Profit
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Profit
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ProfitApiV1ProfitGet")
@@ -4807,7 +4849,7 @@ func (a *FreqtradeAPIService) ProfitApiV1ProfitGetExecute(r ApiProfitApiV1Profit
 }
 
 type ApiReloadConfigApiV1ReloadConfigPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -4818,24 +4860,25 @@ func (r ApiReloadConfigApiV1ReloadConfigPostRequest) Execute() (*StatusMsg, *htt
 /*
 ReloadConfigApiV1ReloadConfigPost Reload Config
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiReloadConfigApiV1ReloadConfigPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiReloadConfigApiV1ReloadConfigPostRequest
 */
 func (a *FreqtradeAPIService) ReloadConfigApiV1ReloadConfigPost(ctx context.Context) ApiReloadConfigApiV1ReloadConfigPostRequest {
 	return ApiReloadConfigApiV1ReloadConfigPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return StatusMsg
+//
+//	@return StatusMsg
 func (a *FreqtradeAPIService) ReloadConfigApiV1ReloadConfigPostExecute(r ApiReloadConfigApiV1ReloadConfigPostRequest) (*StatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ReloadConfigApiV1ReloadConfigPost")
@@ -4904,7 +4947,7 @@ func (a *FreqtradeAPIService) ReloadConfigApiV1ReloadConfigPostExecute(r ApiRelo
 }
 
 type ApiShowConfigApiV1ShowConfigGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -4915,24 +4958,25 @@ func (r ApiShowConfigApiV1ShowConfigGetRequest) Execute() (*ShowConfig, *http.Re
 /*
 ShowConfigApiV1ShowConfigGet Show Config
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiShowConfigApiV1ShowConfigGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiShowConfigApiV1ShowConfigGetRequest
 */
 func (a *FreqtradeAPIService) ShowConfigApiV1ShowConfigGet(ctx context.Context) ApiShowConfigApiV1ShowConfigGetRequest {
 	return ApiShowConfigApiV1ShowConfigGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return ShowConfig
+//
+//	@return ShowConfig
 func (a *FreqtradeAPIService) ShowConfigApiV1ShowConfigGetExecute(r ApiShowConfigApiV1ShowConfigGetRequest) (*ShowConfig, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ShowConfig
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ShowConfig
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ShowConfigApiV1ShowConfigGet")
@@ -5001,7 +5045,7 @@ func (a *FreqtradeAPIService) ShowConfigApiV1ShowConfigGetExecute(r ApiShowConfi
 }
 
 type ApiStartApiV1StartPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5012,24 +5056,25 @@ func (r ApiStartApiV1StartPostRequest) Execute() (*StatusMsg, *http.Response, er
 /*
 StartApiV1StartPost Start
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiStartApiV1StartPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiStartApiV1StartPostRequest
 */
 func (a *FreqtradeAPIService) StartApiV1StartPost(ctx context.Context) ApiStartApiV1StartPostRequest {
 	return ApiStartApiV1StartPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return StatusMsg
+//
+//	@return StatusMsg
 func (a *FreqtradeAPIService) StartApiV1StartPostExecute(r ApiStartApiV1StartPostRequest) (*StatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StartApiV1StartPost")
@@ -5098,7 +5143,7 @@ func (a *FreqtradeAPIService) StartApiV1StartPostExecute(r ApiStartApiV1StartPos
 }
 
 type ApiStatsApiV1StatsGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5109,24 +5154,25 @@ func (r ApiStatsApiV1StatsGetRequest) Execute() (*Stats, *http.Response, error) 
 /*
 StatsApiV1StatsGet Stats
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiStatsApiV1StatsGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiStatsApiV1StatsGetRequest
 */
 func (a *FreqtradeAPIService) StatsApiV1StatsGet(ctx context.Context) ApiStatsApiV1StatsGetRequest {
 	return ApiStatsApiV1StatsGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Stats
+//
+//	@return Stats
 func (a *FreqtradeAPIService) StatsApiV1StatsGetExecute(r ApiStatsApiV1StatsGetRequest) (*Stats, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Stats
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Stats
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StatsApiV1StatsGet")
@@ -5195,7 +5241,7 @@ func (a *FreqtradeAPIService) StatsApiV1StatsGetExecute(r ApiStatsApiV1StatsGetR
 }
 
 type ApiStatusApiV1StatusGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5206,24 +5252,25 @@ func (r ApiStatusApiV1StatusGetRequest) Execute() ([]OpenTradeSchema, *http.Resp
 /*
 StatusApiV1StatusGet Status
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiStatusApiV1StatusGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiStatusApiV1StatusGetRequest
 */
 func (a *FreqtradeAPIService) StatusApiV1StatusGet(ctx context.Context) ApiStatusApiV1StatusGetRequest {
 	return ApiStatusApiV1StatusGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []OpenTradeSchema
+//
+//	@return []OpenTradeSchema
 func (a *FreqtradeAPIService) StatusApiV1StatusGetExecute(r ApiStatusApiV1StatusGetRequest) ([]OpenTradeSchema, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []OpenTradeSchema
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []OpenTradeSchema
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StatusApiV1StatusGet")
@@ -5292,7 +5339,7 @@ func (a *FreqtradeAPIService) StatusApiV1StatusGetExecute(r ApiStatusApiV1Status
 }
 
 type ApiStopApiV1StopPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5303,24 +5350,25 @@ func (r ApiStopApiV1StopPostRequest) Execute() (*StatusMsg, *http.Response, erro
 /*
 StopApiV1StopPost Stop
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiStopApiV1StopPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiStopApiV1StopPostRequest
 */
 func (a *FreqtradeAPIService) StopApiV1StopPost(ctx context.Context) ApiStopApiV1StopPostRequest {
 	return ApiStopApiV1StopPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return StatusMsg
+//
+//	@return StatusMsg
 func (a *FreqtradeAPIService) StopApiV1StopPostExecute(r ApiStopApiV1StopPostRequest) (*StatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StopApiV1StopPost")
@@ -5389,7 +5437,7 @@ func (a *FreqtradeAPIService) StopApiV1StopPostExecute(r ApiStopApiV1StopPostReq
 }
 
 type ApiStopBuyApiV1StopbuyPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5400,24 +5448,25 @@ func (r ApiStopBuyApiV1StopbuyPostRequest) Execute() (*StatusMsg, *http.Response
 /*
 StopBuyApiV1StopbuyPost Stop Buy
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiStopBuyApiV1StopbuyPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiStopBuyApiV1StopbuyPostRequest
 */
 func (a *FreqtradeAPIService) StopBuyApiV1StopbuyPost(ctx context.Context) ApiStopBuyApiV1StopbuyPostRequest {
 	return ApiStopBuyApiV1StopbuyPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return StatusMsg
+//
+//	@return StatusMsg
 func (a *FreqtradeAPIService) StopBuyApiV1StopbuyPostExecute(r ApiStopBuyApiV1StopbuyPostRequest) (*StatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StopBuyApiV1StopbuyPost")
@@ -5486,7 +5535,7 @@ func (a *FreqtradeAPIService) StopBuyApiV1StopbuyPostExecute(r ApiStopBuyApiV1St
 }
 
 type ApiStopBuyApiV1StopentryPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5497,24 +5546,25 @@ func (r ApiStopBuyApiV1StopentryPostRequest) Execute() (*StatusMsg, *http.Respon
 /*
 StopBuyApiV1StopentryPost Stop Buy
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiStopBuyApiV1StopentryPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiStopBuyApiV1StopentryPostRequest
 */
 func (a *FreqtradeAPIService) StopBuyApiV1StopentryPost(ctx context.Context) ApiStopBuyApiV1StopentryPostRequest {
 	return ApiStopBuyApiV1StopentryPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return StatusMsg
+//
+//	@return StatusMsg
 func (a *FreqtradeAPIService) StopBuyApiV1StopentryPostExecute(r ApiStopBuyApiV1StopentryPostRequest) (*StatusMsg, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *StatusMsg
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StopBuyApiV1StopentryPost")
@@ -5583,7 +5633,7 @@ func (a *FreqtradeAPIService) StopBuyApiV1StopentryPostExecute(r ApiStopBuyApiV1
 }
 
 type ApiSysinfoApiV1SysinfoGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5594,24 +5644,25 @@ func (r ApiSysinfoApiV1SysinfoGetRequest) Execute() (*SysInfo, *http.Response, e
 /*
 SysinfoApiV1SysinfoGet Sysinfo
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiSysinfoApiV1SysinfoGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSysinfoApiV1SysinfoGetRequest
 */
 func (a *FreqtradeAPIService) SysinfoApiV1SysinfoGet(ctx context.Context) ApiSysinfoApiV1SysinfoGetRequest {
 	return ApiSysinfoApiV1SysinfoGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return SysInfo
+//
+//	@return SysInfo
 func (a *FreqtradeAPIService) SysinfoApiV1SysinfoGetExecute(r ApiSysinfoApiV1SysinfoGetRequest) (*SysInfo, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SysInfo
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SysInfo
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.SysinfoApiV1SysinfoGet")
@@ -5680,7 +5731,7 @@ func (a *FreqtradeAPIService) SysinfoApiV1SysinfoGetExecute(r ApiSysinfoApiV1Sys
 }
 
 type ApiTokenLoginApiV1TokenLoginPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5691,24 +5742,25 @@ func (r ApiTokenLoginApiV1TokenLoginPostRequest) Execute() (*AccessAndRefreshTok
 /*
 TokenLoginApiV1TokenLoginPost Token Login
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiTokenLoginApiV1TokenLoginPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiTokenLoginApiV1TokenLoginPostRequest
 */
 func (a *FreqtradeAPIService) TokenLoginApiV1TokenLoginPost(ctx context.Context) ApiTokenLoginApiV1TokenLoginPostRequest {
 	return ApiTokenLoginApiV1TokenLoginPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return AccessAndRefreshToken
+//
+//	@return AccessAndRefreshToken
 func (a *FreqtradeAPIService) TokenLoginApiV1TokenLoginPostExecute(r ApiTokenLoginApiV1TokenLoginPostRequest) (*AccessAndRefreshToken, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AccessAndRefreshToken
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AccessAndRefreshToken
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TokenLoginApiV1TokenLoginPost")
@@ -5777,7 +5829,7 @@ func (a *FreqtradeAPIService) TokenLoginApiV1TokenLoginPostExecute(r ApiTokenLog
 }
 
 type ApiTokenRefreshApiV1TokenRefreshPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -5788,24 +5840,25 @@ func (r ApiTokenRefreshApiV1TokenRefreshPostRequest) Execute() (*AccessToken, *h
 /*
 TokenRefreshApiV1TokenRefreshPost Token Refresh
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiTokenRefreshApiV1TokenRefreshPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiTokenRefreshApiV1TokenRefreshPostRequest
 */
 func (a *FreqtradeAPIService) TokenRefreshApiV1TokenRefreshPost(ctx context.Context) ApiTokenRefreshApiV1TokenRefreshPostRequest {
 	return ApiTokenRefreshApiV1TokenRefreshPostRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return AccessToken
+//
+//	@return AccessToken
 func (a *FreqtradeAPIService) TokenRefreshApiV1TokenRefreshPostExecute(r ApiTokenRefreshApiV1TokenRefreshPostRequest) (*AccessToken, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AccessToken
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AccessToken
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TokenRefreshApiV1TokenRefreshPost")
@@ -5874,9 +5927,9 @@ func (a *FreqtradeAPIService) TokenRefreshApiV1TokenRefreshPostExecute(r ApiToke
 }
 
 type ApiTradeApiV1TradeTradeidGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	tradeid int64
+	tradeid    int64
 }
 
 func (r ApiTradeApiV1TradeTradeidGetRequest) Execute() (*OpenTradeSchema, *http.Response, error) {
@@ -5886,26 +5939,27 @@ func (r ApiTradeApiV1TradeTradeidGetRequest) Execute() (*OpenTradeSchema, *http.
 /*
 TradeApiV1TradeTradeidGet Trade
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tradeid
- @return ApiTradeApiV1TradeTradeidGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tradeid
+	@return ApiTradeApiV1TradeTradeidGetRequest
 */
 func (a *FreqtradeAPIService) TradeApiV1TradeTradeidGet(ctx context.Context, tradeid int64) ApiTradeApiV1TradeTradeidGetRequest {
 	return ApiTradeApiV1TradeTradeidGetRequest{
 		ApiService: a,
-		ctx: ctx,
-		tradeid: tradeid,
+		ctx:        ctx,
+		tradeid:    tradeid,
 	}
 }
 
 // Execute executes the request
-//  @return OpenTradeSchema
+//
+//	@return OpenTradeSchema
 func (a *FreqtradeAPIService) TradeApiV1TradeTradeidGetExecute(r ApiTradeApiV1TradeTradeidGetRequest) (*OpenTradeSchema, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *OpenTradeSchema
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *OpenTradeSchema
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TradeApiV1TradeTradeidGet")
@@ -5966,8 +6020,8 @@ func (a *FreqtradeAPIService) TradeApiV1TradeTradeidGetExecute(r ApiTradeApiV1Tr
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -5985,9 +6039,9 @@ func (a *FreqtradeAPIService) TradeApiV1TradeTradeidGetExecute(r ApiTradeApiV1Tr
 }
 
 type ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	tradeid int64
+	tradeid    int64
 }
 
 func (r ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest) Execute() (*OpenTradeSchema, *http.Response, error) {
@@ -5997,26 +6051,27 @@ func (r ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest) Execute
 /*
 TradeCancelOpenOrderApiV1TradesTradeidOpenOrderDelete Trade Cancel Open Order
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tradeid
- @return ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tradeid
+	@return ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest
 */
 func (a *FreqtradeAPIService) TradeCancelOpenOrderApiV1TradesTradeidOpenOrderDelete(ctx context.Context, tradeid int64) ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest {
 	return ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
-		tradeid: tradeid,
+		ctx:        ctx,
+		tradeid:    tradeid,
 	}
 }
 
 // Execute executes the request
-//  @return OpenTradeSchema
+//
+//	@return OpenTradeSchema
 func (a *FreqtradeAPIService) TradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteExecute(r ApiTradeCancelOpenOrderApiV1TradesTradeidOpenOrderDeleteRequest) (*OpenTradeSchema, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *OpenTradeSchema
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *OpenTradeSchema
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TradeCancelOpenOrderApiV1TradesTradeidOpenOrderDelete")
@@ -6077,8 +6132,8 @@ func (a *FreqtradeAPIService) TradeCancelOpenOrderApiV1TradesTradeidOpenOrderDel
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -6096,9 +6151,9 @@ func (a *FreqtradeAPIService) TradeCancelOpenOrderApiV1TradesTradeidOpenOrderDel
 }
 
 type ApiTradeReloadApiV1TradesTradeidReloadPostRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	tradeid int64
+	tradeid    int64
 }
 
 func (r ApiTradeReloadApiV1TradesTradeidReloadPostRequest) Execute() (*OpenTradeSchema, *http.Response, error) {
@@ -6108,26 +6163,27 @@ func (r ApiTradeReloadApiV1TradesTradeidReloadPostRequest) Execute() (*OpenTrade
 /*
 TradeReloadApiV1TradesTradeidReloadPost Trade Reload
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tradeid
- @return ApiTradeReloadApiV1TradesTradeidReloadPostRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tradeid
+	@return ApiTradeReloadApiV1TradesTradeidReloadPostRequest
 */
 func (a *FreqtradeAPIService) TradeReloadApiV1TradesTradeidReloadPost(ctx context.Context, tradeid int64) ApiTradeReloadApiV1TradesTradeidReloadPostRequest {
 	return ApiTradeReloadApiV1TradesTradeidReloadPostRequest{
 		ApiService: a,
-		ctx: ctx,
-		tradeid: tradeid,
+		ctx:        ctx,
+		tradeid:    tradeid,
 	}
 }
 
 // Execute executes the request
-//  @return OpenTradeSchema
+//
+//	@return OpenTradeSchema
 func (a *FreqtradeAPIService) TradeReloadApiV1TradesTradeidReloadPostExecute(r ApiTradeReloadApiV1TradesTradeidReloadPostRequest) (*OpenTradeSchema, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *OpenTradeSchema
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *OpenTradeSchema
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TradeReloadApiV1TradesTradeidReloadPost")
@@ -6188,8 +6244,8 @@ func (a *FreqtradeAPIService) TradeReloadApiV1TradesTradeidReloadPostExecute(r A
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -6207,10 +6263,10 @@ func (a *FreqtradeAPIService) TradeReloadApiV1TradesTradeidReloadPostExecute(r A
 }
 
 type ApiTradesApiV1TradesGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	limit *int64
-	offset *int64
+	limit      *int64
+	offset     *int64
 }
 
 func (r ApiTradesApiV1TradesGetRequest) Limit(limit int64) ApiTradesApiV1TradesGetRequest {
@@ -6230,24 +6286,25 @@ func (r ApiTradesApiV1TradesGetRequest) Execute() (interface{}, *http.Response, 
 /*
 TradesApiV1TradesGet Trades
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiTradesApiV1TradesGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiTradesApiV1TradesGetRequest
 */
 func (a *FreqtradeAPIService) TradesApiV1TradesGet(ctx context.Context) ApiTradesApiV1TradesGetRequest {
 	return ApiTradesApiV1TradesGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1TradesGetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TradesApiV1TradesGet")
@@ -6264,16 +6321,16 @@ func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1Trades
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
 	} else {
-        var defaultValue int64 = 500
-        parameterAddToHeaderOrQuery(localVarQueryParams, "limit", defaultValue, "form", "")
-        r.limit = &defaultValue
+		var defaultValue int64 = 500
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", defaultValue, "form", "")
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
 	} else {
-        var defaultValue int64 = 0
-        parameterAddToHeaderOrQuery(localVarQueryParams, "offset", defaultValue, "form", "")
-        r.offset = &defaultValue
+		var defaultValue int64 = 0
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", defaultValue, "form", "")
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -6321,8 +6378,8 @@ func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1Trades
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -6340,9 +6397,9 @@ func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1Trades
 }
 
 type ApiTradesDeleteApiV1TradesTradeidDeleteRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	tradeid int64
+	tradeid    int64
 }
 
 func (r ApiTradesDeleteApiV1TradesTradeidDeleteRequest) Execute() (*DeleteTrade, *http.Response, error) {
@@ -6352,26 +6409,27 @@ func (r ApiTradesDeleteApiV1TradesTradeidDeleteRequest) Execute() (*DeleteTrade,
 /*
 TradesDeleteApiV1TradesTradeidDelete Trades Delete
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tradeid
- @return ApiTradesDeleteApiV1TradesTradeidDeleteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tradeid
+	@return ApiTradesDeleteApiV1TradesTradeidDeleteRequest
 */
 func (a *FreqtradeAPIService) TradesDeleteApiV1TradesTradeidDelete(ctx context.Context, tradeid int64) ApiTradesDeleteApiV1TradesTradeidDeleteRequest {
 	return ApiTradesDeleteApiV1TradesTradeidDeleteRequest{
 		ApiService: a,
-		ctx: ctx,
-		tradeid: tradeid,
+		ctx:        ctx,
+		tradeid:    tradeid,
 	}
 }
 
 // Execute executes the request
-//  @return DeleteTrade
+//
+//	@return DeleteTrade
 func (a *FreqtradeAPIService) TradesDeleteApiV1TradesTradeidDeleteExecute(r ApiTradesDeleteApiV1TradesTradeidDeleteRequest) (*DeleteTrade, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DeleteTrade
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DeleteTrade
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TradesDeleteApiV1TradesTradeidDelete")
@@ -6432,8 +6490,8 @@ func (a *FreqtradeAPIService) TradesDeleteApiV1TradesTradeidDeleteExecute(r ApiT
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -6451,7 +6509,7 @@ func (a *FreqtradeAPIService) TradesDeleteApiV1TradesTradeidDeleteExecute(r ApiT
 }
 
 type ApiVersionApiV1VersionGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -6464,24 +6522,25 @@ VersionApiV1VersionGet Version
 
 Bot Version info
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiVersionApiV1VersionGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiVersionApiV1VersionGetRequest
 */
 func (a *FreqtradeAPIService) VersionApiV1VersionGet(ctx context.Context) ApiVersionApiV1VersionGetRequest {
 	return ApiVersionApiV1VersionGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Version
+//
+//	@return Version
 func (a *FreqtradeAPIService) VersionApiV1VersionGetExecute(r ApiVersionApiV1VersionGetRequest) (*Version, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Version
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Version
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.VersionApiV1VersionGet")
@@ -6550,9 +6609,9 @@ func (a *FreqtradeAPIService) VersionApiV1VersionGetExecute(r ApiVersionApiV1Ver
 }
 
 type ApiWeeklyApiV1WeeklyGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
-	timescale *int64
+	timescale  *int64
 }
 
 func (r ApiWeeklyApiV1WeeklyGetRequest) Timescale(timescale int64) ApiWeeklyApiV1WeeklyGetRequest {
@@ -6567,24 +6626,25 @@ func (r ApiWeeklyApiV1WeeklyGetRequest) Execute() (*DailyWeeklyMonthly, *http.Re
 /*
 WeeklyApiV1WeeklyGet Weekly
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiWeeklyApiV1WeeklyGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiWeeklyApiV1WeeklyGetRequest
 */
 func (a *FreqtradeAPIService) WeeklyApiV1WeeklyGet(ctx context.Context) ApiWeeklyApiV1WeeklyGetRequest {
 	return ApiWeeklyApiV1WeeklyGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return DailyWeeklyMonthly
+//
+//	@return DailyWeeklyMonthly
 func (a *FreqtradeAPIService) WeeklyApiV1WeeklyGetExecute(r ApiWeeklyApiV1WeeklyGetRequest) (*DailyWeeklyMonthly, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DailyWeeklyMonthly
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DailyWeeklyMonthly
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.WeeklyApiV1WeeklyGet")
@@ -6601,9 +6661,9 @@ func (a *FreqtradeAPIService) WeeklyApiV1WeeklyGetExecute(r ApiWeeklyApiV1Weekly
 	if r.timescale != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", r.timescale, "form", "")
 	} else {
-        var defaultValue int64 = 4
-        parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", defaultValue, "form", "")
-        r.timescale = &defaultValue
+		var defaultValue int64 = 4
+		parameterAddToHeaderOrQuery(localVarQueryParams, "timescale", defaultValue, "form", "")
+		r.timescale = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -6651,8 +6711,8 @@ func (a *FreqtradeAPIService) WeeklyApiV1WeeklyGetExecute(r ApiWeeklyApiV1Weekly
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -6670,7 +6730,7 @@ func (a *FreqtradeAPIService) WeeklyApiV1WeeklyGetExecute(r ApiWeeklyApiV1Weekly
 }
 
 type ApiWhitelistApiV1WhitelistGetRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *FreqtradeAPIService
 }
 
@@ -6681,24 +6741,25 @@ func (r ApiWhitelistApiV1WhitelistGetRequest) Execute() (*WhitelistResponse, *ht
 /*
 WhitelistApiV1WhitelistGet Whitelist
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiWhitelistApiV1WhitelistGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiWhitelistApiV1WhitelistGetRequest
 */
 func (a *FreqtradeAPIService) WhitelistApiV1WhitelistGet(ctx context.Context) ApiWhitelistApiV1WhitelistGetRequest {
 	return ApiWhitelistApiV1WhitelistGetRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return WhitelistResponse
+//
+//	@return WhitelistResponse
 func (a *FreqtradeAPIService) WhitelistApiV1WhitelistGetExecute(r ApiWhitelistApiV1WhitelistGetRequest) (*WhitelistResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WhitelistResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WhitelistResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.WhitelistApiV1WhitelistGet")

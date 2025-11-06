@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,10 +22,10 @@ var _ MappedNullable = &Exit{}
 // Exit struct for Exit
 type Exit struct {
 	ProfitRatio float32 `json:"profit_ratio"`
-	ProfitPct float32 `json:"profit_pct"`
-	ProfitAbs float32 `json:"profit_abs"`
-	Count int64 `json:"count"`
-	ExitReason string `json:"exit_reason"`
+	ProfitPct   float32 `json:"profit_pct"`
+	ProfitAbs   float32 `json:"profit_abs"`
+	Count       int64   `json:"count"`
+	ExitReason  string  `json:"exit_reason"`
 }
 
 type _Exit Exit
@@ -173,7 +173,7 @@ func (o *Exit) SetExitReason(v string) {
 }
 
 func (o Exit) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -207,10 +207,10 @@ func (o *Exit) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -266,5 +266,3 @@ func (v *NullableExit) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

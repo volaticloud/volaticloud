@@ -21,12 +21,12 @@ type BacktestSpec struct {
 	EndDate   time.Time
 
 	// Trading Parameters
-	Pairs           []string // Trading pairs (e.g., ["BTC/USDT", "ETH/USDT"])
-	Timeframe       string   // Candlestick timeframe (e.g., "5m", "1h")
-	StakeAmount     float64  // Amount to stake per trade
-	StakeCurrency   string   // Currency to stake (e.g., "USDT")
-	MaxOpenTrades   int      // Maximum number of concurrent trades
-	EnablePositionStacking bool // Allow multiple trades on same pair
+	Pairs                  []string // Trading pairs (e.g., ["BTC/USDT", "ETH/USDT"])
+	Timeframe              string   // Candlestick timeframe (e.g., "5m", "1h")
+	StakeAmount            float64  // Amount to stake per trade
+	StakeCurrency          string   // Currency to stake (e.g., "USDT")
+	MaxOpenTrades          int      // Maximum number of concurrent trades
+	EnablePositionStacking bool     // Allow multiple trades on same pair
 
 	// Runtime Configuration
 	FreqtradeVersion string            // Freqtrade Docker image version
@@ -54,23 +54,23 @@ type BacktestResult struct {
 	Duration    time.Duration
 
 	// Performance Metrics
-	TotalTrades      int
-	WinningTrades    int
-	LosingTrades     int
-	WinRate          float64
-	ProfitFactor     float64
-	TotalProfit      float64
-	TotalProfitPct   float64
-	MaxDrawdown      float64
-	MaxDrawdownPct   float64
-	SharpeRatio      float64
-	SortinoRatio     float64
-	CalmarRatio      float64
-	ExpectancyRatio  float64
-	AvgProfit        float64
-	AvgLoss          float64
-	AvgProfitPct     float64
-	AvgLossPct       float64
+	TotalTrades     int
+	WinningTrades   int
+	LosingTrades    int
+	WinRate         float64
+	ProfitFactor    float64
+	TotalProfit     float64
+	TotalProfitPct  float64
+	MaxDrawdown     float64
+	MaxDrawdownPct  float64
+	SharpeRatio     float64
+	SortinoRatio    float64
+	CalmarRatio     float64
+	ExpectancyRatio float64
+	AvgProfit       float64
+	AvgLoss         float64
+	AvgProfitPct    float64
+	AvgLossPct      float64
 
 	// Trade Statistics
 	BestTrade        float64
@@ -84,9 +84,9 @@ type BacktestResult struct {
 	FinalBalance    float64
 
 	// Raw Data
-	RawResult map[string]interface{} // Full JSON result from freqtrade
-	Logs      string                  // Container logs
-	ErrorMessage string               // Error message if failed
+	RawResult    map[string]interface{} // Full JSON result from freqtrade
+	Logs         string                 // Container logs
+	ErrorMessage string                 // Error message if failed
 }
 
 // BacktestStatus represents the current state of a running or completed backtest
@@ -129,19 +129,19 @@ type HyperOptSpec struct {
 	EndDate   time.Time
 
 	// Optimization Parameters
-	Epochs             int      // Number of optimization epochs
-	Spaces             []string // Spaces to optimize (buy, sell, roi, stoploss, trailing, protection, etc.)
-	LossFunction       string   // Loss function (SharpeHyperOptLoss, SortinoHyperOptLoss, etc.)
-	RandomState        int      // Random seed for reproducibility
-	MinTrades          int      // Minimum trades required
-	EnableMaxDrawdown  bool     // Whether to optimize for max drawdown
+	Epochs            int      // Number of optimization epochs
+	Spaces            []string // Spaces to optimize (buy, sell, roi, stoploss, trailing, protection, etc.)
+	LossFunction      string   // Loss function (SharpeHyperOptLoss, SortinoHyperOptLoss, etc.)
+	RandomState       int      // Random seed for reproducibility
+	MinTrades         int      // Minimum trades required
+	EnableMaxDrawdown bool     // Whether to optimize for max drawdown
 
 	// Trading Parameters (same as backtest)
-	Pairs           []string
-	Timeframe       string
-	StakeAmount     float64
-	StakeCurrency   string
-	MaxOpenTrades   int
+	Pairs         []string
+	Timeframe     string
+	StakeAmount   float64
+	StakeCurrency string
+	MaxOpenTrades int
 
 	// Runtime Configuration
 	FreqtradeVersion string
@@ -169,21 +169,21 @@ type HyperOptResult struct {
 	Duration    time.Duration
 
 	// Optimization Results
-	TotalEpochs      int
-	BestEpoch        int
-	BestObjective    float64
-	BestParams       map[string]interface{} // Best hyperparameters found
+	TotalEpochs   int
+	BestEpoch     int
+	BestObjective float64
+	BestParams    map[string]interface{} // Best hyperparameters found
 
 	// Best Performance Metrics (from best epoch)
-	TotalTrades    int
-	WinRate        float64
-	TotalProfit    float64
-	MaxDrawdown    float64
-	SharpeRatio    float64
+	TotalTrades int
+	WinRate     float64
+	TotalProfit float64
+	MaxDrawdown float64
+	SharpeRatio float64
 
 	// Raw Data
-	RawResult map[string]interface{} // Full JSON result from freqtrade
-	Logs      string
+	RawResult    map[string]interface{} // Full JSON result from freqtrade
+	Logs         string
 	ErrorMessage string
 }
 
@@ -195,11 +195,11 @@ type HyperOptStatus struct {
 	ContainerID string
 
 	// Execution Info
-	StartedAt       *time.Time
-	CompletedAt     *time.Time
-	CurrentEpoch    int
-	TotalEpochs     int
-	Progress        float64 // 0-100 percent complete
+	StartedAt        *time.Time
+	CompletedAt      *time.Time
+	CurrentEpoch     int
+	TotalEpochs      int
+	Progress         float64 // 0-100 percent complete
 	CurrentObjective float64 // Current best objective value
 
 	// Resource Usage

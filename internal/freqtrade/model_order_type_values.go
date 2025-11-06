@@ -20,7 +20,7 @@ type OrderTypeValues string
 
 // List of OrderTypeValues
 const (
-	ORDERTYPEVALUES_LIMIT OrderTypeValues = "limit"
+	ORDERTYPEVALUES_LIMIT  OrderTypeValues = "limit"
 	ORDERTYPEVALUES_MARKET OrderTypeValues = "market"
 )
 
@@ -108,4 +108,3 @@ func (v *NullableOrderTypeValues) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

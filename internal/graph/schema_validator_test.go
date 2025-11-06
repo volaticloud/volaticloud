@@ -53,10 +53,10 @@ func TestValidateFreqtradeConfigWithSchema(t *testing.T) {
 		{
 			name: "valid complete config",
 			config: map[string]interface{}{
-				"stake_currency": "USDT",
-				"stake_amount":   100.0,
-				"dry_run":        true,
-				"timeframe":      "5m",
+				"stake_currency":  "USDT",
+				"stake_amount":    100.0,
+				"dry_run":         true,
+				"timeframe":       "5m",
 				"max_open_trades": 3,
 				"exchange": map[string]interface{}{
 					"name":   "binance",

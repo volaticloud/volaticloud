@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,67 +21,67 @@ var _ MappedNullable = &TradeSchema{}
 
 // TradeSchema struct for TradeSchema
 type TradeSchema struct {
-	TradeId int64 `json:"trade_id"`
-	Pair string `json:"pair"`
-	BaseCurrency string `json:"base_currency"`
-	QuoteCurrency string `json:"quote_currency"`
-	IsOpen bool `json:"is_open"`
-	IsShort bool `json:"is_short"`
-	Exchange string `json:"exchange"`
-	Amount float32 `json:"amount"`
-	AmountRequested float32 `json:"amount_requested"`
-	StakeAmount float32 `json:"stake_amount"`
-	MaxStakeAmount NullableFloat32 `json:"max_stake_amount,omitempty"`
-	Strategy string `json:"strategy"`
-	EnterTag NullableString `json:"enter_tag,omitempty"`
-	Timeframe int64 `json:"timeframe"`
-	FeeOpen NullableFloat32 `json:"fee_open,omitempty"`
-	FeeOpenCost NullableFloat32 `json:"fee_open_cost,omitempty"`
-	FeeOpenCurrency NullableString `json:"fee_open_currency,omitempty"`
-	FeeClose NullableFloat32 `json:"fee_close,omitempty"`
-	FeeCloseCost NullableFloat32 `json:"fee_close_cost,omitempty"`
-	FeeCloseCurrency NullableString `json:"fee_close_currency,omitempty"`
-	OpenDate string `json:"open_date"`
-	OpenTimestamp int64 `json:"open_timestamp"`
-	OpenRate float32 `json:"open_rate"`
-	OpenRateRequested NullableFloat32 `json:"open_rate_requested,omitempty"`
-	OpenTradeValue float32 `json:"open_trade_value"`
-	CloseDate NullableString `json:"close_date,omitempty"`
-	CloseTimestamp NullableInt64 `json:"close_timestamp,omitempty"`
-	CloseRate NullableFloat32 `json:"close_rate,omitempty"`
-	CloseRateRequested NullableFloat32 `json:"close_rate_requested,omitempty"`
-	CloseProfit NullableFloat32 `json:"close_profit,omitempty"`
-	CloseProfitPct NullableFloat32 `json:"close_profit_pct,omitempty"`
-	CloseProfitAbs NullableFloat32 `json:"close_profit_abs,omitempty"`
-	ProfitRatio NullableFloat32 `json:"profit_ratio,omitempty"`
-	ProfitPct NullableFloat32 `json:"profit_pct,omitempty"`
-	ProfitAbs NullableFloat32 `json:"profit_abs,omitempty"`
-	ProfitFiat NullableFloat32 `json:"profit_fiat,omitempty"`
-	RealizedProfit float32 `json:"realized_profit"`
-	RealizedProfitRatio NullableFloat32 `json:"realized_profit_ratio,omitempty"`
-	ExitReason NullableString `json:"exit_reason,omitempty"`
-	ExitOrderStatus NullableString `json:"exit_order_status,omitempty"`
-	StopLossAbs NullableFloat32 `json:"stop_loss_abs,omitempty"`
-	StopLossRatio NullableFloat32 `json:"stop_loss_ratio,omitempty"`
-	StopLossPct NullableFloat32 `json:"stop_loss_pct,omitempty"`
-	StoplossOrderId NullableString `json:"stoploss_order_id,omitempty"`
-	StoplossLastUpdate NullableString `json:"stoploss_last_update,omitempty"`
-	StoplossLastUpdateTimestamp NullableInt64 `json:"stoploss_last_update_timestamp,omitempty"`
-	InitialStopLossAbs NullableFloat32 `json:"initial_stop_loss_abs,omitempty"`
-	InitialStopLossRatio NullableFloat32 `json:"initial_stop_loss_ratio,omitempty"`
-	InitialStopLossPct NullableFloat32 `json:"initial_stop_loss_pct,omitempty"`
-	MinRate NullableFloat32 `json:"min_rate,omitempty"`
-	MaxRate NullableFloat32 `json:"max_rate,omitempty"`
-	HasOpenOrders bool `json:"has_open_orders"`
-	Orders []OrderSchema `json:"orders"`
-	Leverage NullableFloat32 `json:"leverage,omitempty"`
-	InterestRate NullableFloat32 `json:"interest_rate,omitempty"`
-	LiquidationPrice NullableFloat32 `json:"liquidation_price,omitempty"`
-	FundingFees NullableFloat32 `json:"funding_fees,omitempty"`
-	TradingMode NullableTradingMode `json:"trading_mode,omitempty"`
-	AmountPrecision NullableFloat32 `json:"amount_precision,omitempty"`
-	PricePrecision NullableFloat32 `json:"price_precision,omitempty"`
-	PrecisionMode NullableInt64 `json:"precision_mode,omitempty"`
+	TradeId                     int64               `json:"trade_id"`
+	Pair                        string              `json:"pair"`
+	BaseCurrency                string              `json:"base_currency"`
+	QuoteCurrency               string              `json:"quote_currency"`
+	IsOpen                      bool                `json:"is_open"`
+	IsShort                     bool                `json:"is_short"`
+	Exchange                    string              `json:"exchange"`
+	Amount                      float32             `json:"amount"`
+	AmountRequested             float32             `json:"amount_requested"`
+	StakeAmount                 float32             `json:"stake_amount"`
+	MaxStakeAmount              NullableFloat32     `json:"max_stake_amount,omitempty"`
+	Strategy                    string              `json:"strategy"`
+	EnterTag                    NullableString      `json:"enter_tag,omitempty"`
+	Timeframe                   int64               `json:"timeframe"`
+	FeeOpen                     NullableFloat32     `json:"fee_open,omitempty"`
+	FeeOpenCost                 NullableFloat32     `json:"fee_open_cost,omitempty"`
+	FeeOpenCurrency             NullableString      `json:"fee_open_currency,omitempty"`
+	FeeClose                    NullableFloat32     `json:"fee_close,omitempty"`
+	FeeCloseCost                NullableFloat32     `json:"fee_close_cost,omitempty"`
+	FeeCloseCurrency            NullableString      `json:"fee_close_currency,omitempty"`
+	OpenDate                    string              `json:"open_date"`
+	OpenTimestamp               int64               `json:"open_timestamp"`
+	OpenRate                    float32             `json:"open_rate"`
+	OpenRateRequested           NullableFloat32     `json:"open_rate_requested,omitempty"`
+	OpenTradeValue              float32             `json:"open_trade_value"`
+	CloseDate                   NullableString      `json:"close_date,omitempty"`
+	CloseTimestamp              NullableInt64       `json:"close_timestamp,omitempty"`
+	CloseRate                   NullableFloat32     `json:"close_rate,omitempty"`
+	CloseRateRequested          NullableFloat32     `json:"close_rate_requested,omitempty"`
+	CloseProfit                 NullableFloat32     `json:"close_profit,omitempty"`
+	CloseProfitPct              NullableFloat32     `json:"close_profit_pct,omitempty"`
+	CloseProfitAbs              NullableFloat32     `json:"close_profit_abs,omitempty"`
+	ProfitRatio                 NullableFloat32     `json:"profit_ratio,omitempty"`
+	ProfitPct                   NullableFloat32     `json:"profit_pct,omitempty"`
+	ProfitAbs                   NullableFloat32     `json:"profit_abs,omitempty"`
+	ProfitFiat                  NullableFloat32     `json:"profit_fiat,omitempty"`
+	RealizedProfit              float32             `json:"realized_profit"`
+	RealizedProfitRatio         NullableFloat32     `json:"realized_profit_ratio,omitempty"`
+	ExitReason                  NullableString      `json:"exit_reason,omitempty"`
+	ExitOrderStatus             NullableString      `json:"exit_order_status,omitempty"`
+	StopLossAbs                 NullableFloat32     `json:"stop_loss_abs,omitempty"`
+	StopLossRatio               NullableFloat32     `json:"stop_loss_ratio,omitempty"`
+	StopLossPct                 NullableFloat32     `json:"stop_loss_pct,omitempty"`
+	StoplossOrderId             NullableString      `json:"stoploss_order_id,omitempty"`
+	StoplossLastUpdate          NullableString      `json:"stoploss_last_update,omitempty"`
+	StoplossLastUpdateTimestamp NullableInt64       `json:"stoploss_last_update_timestamp,omitempty"`
+	InitialStopLossAbs          NullableFloat32     `json:"initial_stop_loss_abs,omitempty"`
+	InitialStopLossRatio        NullableFloat32     `json:"initial_stop_loss_ratio,omitempty"`
+	InitialStopLossPct          NullableFloat32     `json:"initial_stop_loss_pct,omitempty"`
+	MinRate                     NullableFloat32     `json:"min_rate,omitempty"`
+	MaxRate                     NullableFloat32     `json:"max_rate,omitempty"`
+	HasOpenOrders               bool                `json:"has_open_orders"`
+	Orders                      []OrderSchema       `json:"orders"`
+	Leverage                    NullableFloat32     `json:"leverage,omitempty"`
+	InterestRate                NullableFloat32     `json:"interest_rate,omitempty"`
+	LiquidationPrice            NullableFloat32     `json:"liquidation_price,omitempty"`
+	FundingFees                 NullableFloat32     `json:"funding_fees,omitempty"`
+	TradingMode                 NullableTradingMode `json:"trading_mode,omitempty"`
+	AmountPrecision             NullableFloat32     `json:"amount_precision,omitempty"`
+	PricePrecision              NullableFloat32     `json:"price_precision,omitempty"`
+	PrecisionMode               NullableInt64       `json:"precision_mode,omitempty"`
 }
 
 type _TradeSchema TradeSchema
@@ -394,6 +394,7 @@ func (o *TradeSchema) HasMaxStakeAmount() bool {
 func (o *TradeSchema) SetMaxStakeAmount(v float32) {
 	o.MaxStakeAmount.Set(&v)
 }
+
 // SetMaxStakeAmountNil sets the value for MaxStakeAmount to be an explicit nil
 func (o *TradeSchema) SetMaxStakeAmountNil() {
 	o.MaxStakeAmount.Set(nil)
@@ -460,6 +461,7 @@ func (o *TradeSchema) HasEnterTag() bool {
 func (o *TradeSchema) SetEnterTag(v string) {
 	o.EnterTag.Set(&v)
 }
+
 // SetEnterTagNil sets the value for EnterTag to be an explicit nil
 func (o *TradeSchema) SetEnterTagNil() {
 	o.EnterTag.Set(nil)
@@ -526,6 +528,7 @@ func (o *TradeSchema) HasFeeOpen() bool {
 func (o *TradeSchema) SetFeeOpen(v float32) {
 	o.FeeOpen.Set(&v)
 }
+
 // SetFeeOpenNil sets the value for FeeOpen to be an explicit nil
 func (o *TradeSchema) SetFeeOpenNil() {
 	o.FeeOpen.Set(nil)
@@ -568,6 +571,7 @@ func (o *TradeSchema) HasFeeOpenCost() bool {
 func (o *TradeSchema) SetFeeOpenCost(v float32) {
 	o.FeeOpenCost.Set(&v)
 }
+
 // SetFeeOpenCostNil sets the value for FeeOpenCost to be an explicit nil
 func (o *TradeSchema) SetFeeOpenCostNil() {
 	o.FeeOpenCost.Set(nil)
@@ -610,6 +614,7 @@ func (o *TradeSchema) HasFeeOpenCurrency() bool {
 func (o *TradeSchema) SetFeeOpenCurrency(v string) {
 	o.FeeOpenCurrency.Set(&v)
 }
+
 // SetFeeOpenCurrencyNil sets the value for FeeOpenCurrency to be an explicit nil
 func (o *TradeSchema) SetFeeOpenCurrencyNil() {
 	o.FeeOpenCurrency.Set(nil)
@@ -652,6 +657,7 @@ func (o *TradeSchema) HasFeeClose() bool {
 func (o *TradeSchema) SetFeeClose(v float32) {
 	o.FeeClose.Set(&v)
 }
+
 // SetFeeCloseNil sets the value for FeeClose to be an explicit nil
 func (o *TradeSchema) SetFeeCloseNil() {
 	o.FeeClose.Set(nil)
@@ -694,6 +700,7 @@ func (o *TradeSchema) HasFeeCloseCost() bool {
 func (o *TradeSchema) SetFeeCloseCost(v float32) {
 	o.FeeCloseCost.Set(&v)
 }
+
 // SetFeeCloseCostNil sets the value for FeeCloseCost to be an explicit nil
 func (o *TradeSchema) SetFeeCloseCostNil() {
 	o.FeeCloseCost.Set(nil)
@@ -736,6 +743,7 @@ func (o *TradeSchema) HasFeeCloseCurrency() bool {
 func (o *TradeSchema) SetFeeCloseCurrency(v string) {
 	o.FeeCloseCurrency.Set(&v)
 }
+
 // SetFeeCloseCurrencyNil sets the value for FeeCloseCurrency to be an explicit nil
 func (o *TradeSchema) SetFeeCloseCurrencyNil() {
 	o.FeeCloseCurrency.Set(nil)
@@ -850,6 +858,7 @@ func (o *TradeSchema) HasOpenRateRequested() bool {
 func (o *TradeSchema) SetOpenRateRequested(v float32) {
 	o.OpenRateRequested.Set(&v)
 }
+
 // SetOpenRateRequestedNil sets the value for OpenRateRequested to be an explicit nil
 func (o *TradeSchema) SetOpenRateRequestedNil() {
 	o.OpenRateRequested.Set(nil)
@@ -916,6 +925,7 @@ func (o *TradeSchema) HasCloseDate() bool {
 func (o *TradeSchema) SetCloseDate(v string) {
 	o.CloseDate.Set(&v)
 }
+
 // SetCloseDateNil sets the value for CloseDate to be an explicit nil
 func (o *TradeSchema) SetCloseDateNil() {
 	o.CloseDate.Set(nil)
@@ -958,6 +968,7 @@ func (o *TradeSchema) HasCloseTimestamp() bool {
 func (o *TradeSchema) SetCloseTimestamp(v int64) {
 	o.CloseTimestamp.Set(&v)
 }
+
 // SetCloseTimestampNil sets the value for CloseTimestamp to be an explicit nil
 func (o *TradeSchema) SetCloseTimestampNil() {
 	o.CloseTimestamp.Set(nil)
@@ -1000,6 +1011,7 @@ func (o *TradeSchema) HasCloseRate() bool {
 func (o *TradeSchema) SetCloseRate(v float32) {
 	o.CloseRate.Set(&v)
 }
+
 // SetCloseRateNil sets the value for CloseRate to be an explicit nil
 func (o *TradeSchema) SetCloseRateNil() {
 	o.CloseRate.Set(nil)
@@ -1042,6 +1054,7 @@ func (o *TradeSchema) HasCloseRateRequested() bool {
 func (o *TradeSchema) SetCloseRateRequested(v float32) {
 	o.CloseRateRequested.Set(&v)
 }
+
 // SetCloseRateRequestedNil sets the value for CloseRateRequested to be an explicit nil
 func (o *TradeSchema) SetCloseRateRequestedNil() {
 	o.CloseRateRequested.Set(nil)
@@ -1084,6 +1097,7 @@ func (o *TradeSchema) HasCloseProfit() bool {
 func (o *TradeSchema) SetCloseProfit(v float32) {
 	o.CloseProfit.Set(&v)
 }
+
 // SetCloseProfitNil sets the value for CloseProfit to be an explicit nil
 func (o *TradeSchema) SetCloseProfitNil() {
 	o.CloseProfit.Set(nil)
@@ -1126,6 +1140,7 @@ func (o *TradeSchema) HasCloseProfitPct() bool {
 func (o *TradeSchema) SetCloseProfitPct(v float32) {
 	o.CloseProfitPct.Set(&v)
 }
+
 // SetCloseProfitPctNil sets the value for CloseProfitPct to be an explicit nil
 func (o *TradeSchema) SetCloseProfitPctNil() {
 	o.CloseProfitPct.Set(nil)
@@ -1168,6 +1183,7 @@ func (o *TradeSchema) HasCloseProfitAbs() bool {
 func (o *TradeSchema) SetCloseProfitAbs(v float32) {
 	o.CloseProfitAbs.Set(&v)
 }
+
 // SetCloseProfitAbsNil sets the value for CloseProfitAbs to be an explicit nil
 func (o *TradeSchema) SetCloseProfitAbsNil() {
 	o.CloseProfitAbs.Set(nil)
@@ -1210,6 +1226,7 @@ func (o *TradeSchema) HasProfitRatio() bool {
 func (o *TradeSchema) SetProfitRatio(v float32) {
 	o.ProfitRatio.Set(&v)
 }
+
 // SetProfitRatioNil sets the value for ProfitRatio to be an explicit nil
 func (o *TradeSchema) SetProfitRatioNil() {
 	o.ProfitRatio.Set(nil)
@@ -1252,6 +1269,7 @@ func (o *TradeSchema) HasProfitPct() bool {
 func (o *TradeSchema) SetProfitPct(v float32) {
 	o.ProfitPct.Set(&v)
 }
+
 // SetProfitPctNil sets the value for ProfitPct to be an explicit nil
 func (o *TradeSchema) SetProfitPctNil() {
 	o.ProfitPct.Set(nil)
@@ -1294,6 +1312,7 @@ func (o *TradeSchema) HasProfitAbs() bool {
 func (o *TradeSchema) SetProfitAbs(v float32) {
 	o.ProfitAbs.Set(&v)
 }
+
 // SetProfitAbsNil sets the value for ProfitAbs to be an explicit nil
 func (o *TradeSchema) SetProfitAbsNil() {
 	o.ProfitAbs.Set(nil)
@@ -1336,6 +1355,7 @@ func (o *TradeSchema) HasProfitFiat() bool {
 func (o *TradeSchema) SetProfitFiat(v float32) {
 	o.ProfitFiat.Set(&v)
 }
+
 // SetProfitFiatNil sets the value for ProfitFiat to be an explicit nil
 func (o *TradeSchema) SetProfitFiatNil() {
 	o.ProfitFiat.Set(nil)
@@ -1402,6 +1422,7 @@ func (o *TradeSchema) HasRealizedProfitRatio() bool {
 func (o *TradeSchema) SetRealizedProfitRatio(v float32) {
 	o.RealizedProfitRatio.Set(&v)
 }
+
 // SetRealizedProfitRatioNil sets the value for RealizedProfitRatio to be an explicit nil
 func (o *TradeSchema) SetRealizedProfitRatioNil() {
 	o.RealizedProfitRatio.Set(nil)
@@ -1444,6 +1465,7 @@ func (o *TradeSchema) HasExitReason() bool {
 func (o *TradeSchema) SetExitReason(v string) {
 	o.ExitReason.Set(&v)
 }
+
 // SetExitReasonNil sets the value for ExitReason to be an explicit nil
 func (o *TradeSchema) SetExitReasonNil() {
 	o.ExitReason.Set(nil)
@@ -1486,6 +1508,7 @@ func (o *TradeSchema) HasExitOrderStatus() bool {
 func (o *TradeSchema) SetExitOrderStatus(v string) {
 	o.ExitOrderStatus.Set(&v)
 }
+
 // SetExitOrderStatusNil sets the value for ExitOrderStatus to be an explicit nil
 func (o *TradeSchema) SetExitOrderStatusNil() {
 	o.ExitOrderStatus.Set(nil)
@@ -1528,6 +1551,7 @@ func (o *TradeSchema) HasStopLossAbs() bool {
 func (o *TradeSchema) SetStopLossAbs(v float32) {
 	o.StopLossAbs.Set(&v)
 }
+
 // SetStopLossAbsNil sets the value for StopLossAbs to be an explicit nil
 func (o *TradeSchema) SetStopLossAbsNil() {
 	o.StopLossAbs.Set(nil)
@@ -1570,6 +1594,7 @@ func (o *TradeSchema) HasStopLossRatio() bool {
 func (o *TradeSchema) SetStopLossRatio(v float32) {
 	o.StopLossRatio.Set(&v)
 }
+
 // SetStopLossRatioNil sets the value for StopLossRatio to be an explicit nil
 func (o *TradeSchema) SetStopLossRatioNil() {
 	o.StopLossRatio.Set(nil)
@@ -1612,6 +1637,7 @@ func (o *TradeSchema) HasStopLossPct() bool {
 func (o *TradeSchema) SetStopLossPct(v float32) {
 	o.StopLossPct.Set(&v)
 }
+
 // SetStopLossPctNil sets the value for StopLossPct to be an explicit nil
 func (o *TradeSchema) SetStopLossPctNil() {
 	o.StopLossPct.Set(nil)
@@ -1654,6 +1680,7 @@ func (o *TradeSchema) HasStoplossOrderId() bool {
 func (o *TradeSchema) SetStoplossOrderId(v string) {
 	o.StoplossOrderId.Set(&v)
 }
+
 // SetStoplossOrderIdNil sets the value for StoplossOrderId to be an explicit nil
 func (o *TradeSchema) SetStoplossOrderIdNil() {
 	o.StoplossOrderId.Set(nil)
@@ -1696,6 +1723,7 @@ func (o *TradeSchema) HasStoplossLastUpdate() bool {
 func (o *TradeSchema) SetStoplossLastUpdate(v string) {
 	o.StoplossLastUpdate.Set(&v)
 }
+
 // SetStoplossLastUpdateNil sets the value for StoplossLastUpdate to be an explicit nil
 func (o *TradeSchema) SetStoplossLastUpdateNil() {
 	o.StoplossLastUpdate.Set(nil)
@@ -1738,6 +1766,7 @@ func (o *TradeSchema) HasStoplossLastUpdateTimestamp() bool {
 func (o *TradeSchema) SetStoplossLastUpdateTimestamp(v int64) {
 	o.StoplossLastUpdateTimestamp.Set(&v)
 }
+
 // SetStoplossLastUpdateTimestampNil sets the value for StoplossLastUpdateTimestamp to be an explicit nil
 func (o *TradeSchema) SetStoplossLastUpdateTimestampNil() {
 	o.StoplossLastUpdateTimestamp.Set(nil)
@@ -1780,6 +1809,7 @@ func (o *TradeSchema) HasInitialStopLossAbs() bool {
 func (o *TradeSchema) SetInitialStopLossAbs(v float32) {
 	o.InitialStopLossAbs.Set(&v)
 }
+
 // SetInitialStopLossAbsNil sets the value for InitialStopLossAbs to be an explicit nil
 func (o *TradeSchema) SetInitialStopLossAbsNil() {
 	o.InitialStopLossAbs.Set(nil)
@@ -1822,6 +1852,7 @@ func (o *TradeSchema) HasInitialStopLossRatio() bool {
 func (o *TradeSchema) SetInitialStopLossRatio(v float32) {
 	o.InitialStopLossRatio.Set(&v)
 }
+
 // SetInitialStopLossRatioNil sets the value for InitialStopLossRatio to be an explicit nil
 func (o *TradeSchema) SetInitialStopLossRatioNil() {
 	o.InitialStopLossRatio.Set(nil)
@@ -1864,6 +1895,7 @@ func (o *TradeSchema) HasInitialStopLossPct() bool {
 func (o *TradeSchema) SetInitialStopLossPct(v float32) {
 	o.InitialStopLossPct.Set(&v)
 }
+
 // SetInitialStopLossPctNil sets the value for InitialStopLossPct to be an explicit nil
 func (o *TradeSchema) SetInitialStopLossPctNil() {
 	o.InitialStopLossPct.Set(nil)
@@ -1906,6 +1938,7 @@ func (o *TradeSchema) HasMinRate() bool {
 func (o *TradeSchema) SetMinRate(v float32) {
 	o.MinRate.Set(&v)
 }
+
 // SetMinRateNil sets the value for MinRate to be an explicit nil
 func (o *TradeSchema) SetMinRateNil() {
 	o.MinRate.Set(nil)
@@ -1948,6 +1981,7 @@ func (o *TradeSchema) HasMaxRate() bool {
 func (o *TradeSchema) SetMaxRate(v float32) {
 	o.MaxRate.Set(&v)
 }
+
 // SetMaxRateNil sets the value for MaxRate to be an explicit nil
 func (o *TradeSchema) SetMaxRateNil() {
 	o.MaxRate.Set(nil)
@@ -2038,6 +2072,7 @@ func (o *TradeSchema) HasLeverage() bool {
 func (o *TradeSchema) SetLeverage(v float32) {
 	o.Leverage.Set(&v)
 }
+
 // SetLeverageNil sets the value for Leverage to be an explicit nil
 func (o *TradeSchema) SetLeverageNil() {
 	o.Leverage.Set(nil)
@@ -2080,6 +2115,7 @@ func (o *TradeSchema) HasInterestRate() bool {
 func (o *TradeSchema) SetInterestRate(v float32) {
 	o.InterestRate.Set(&v)
 }
+
 // SetInterestRateNil sets the value for InterestRate to be an explicit nil
 func (o *TradeSchema) SetInterestRateNil() {
 	o.InterestRate.Set(nil)
@@ -2122,6 +2158,7 @@ func (o *TradeSchema) HasLiquidationPrice() bool {
 func (o *TradeSchema) SetLiquidationPrice(v float32) {
 	o.LiquidationPrice.Set(&v)
 }
+
 // SetLiquidationPriceNil sets the value for LiquidationPrice to be an explicit nil
 func (o *TradeSchema) SetLiquidationPriceNil() {
 	o.LiquidationPrice.Set(nil)
@@ -2164,6 +2201,7 @@ func (o *TradeSchema) HasFundingFees() bool {
 func (o *TradeSchema) SetFundingFees(v float32) {
 	o.FundingFees.Set(&v)
 }
+
 // SetFundingFeesNil sets the value for FundingFees to be an explicit nil
 func (o *TradeSchema) SetFundingFeesNil() {
 	o.FundingFees.Set(nil)
@@ -2206,6 +2244,7 @@ func (o *TradeSchema) HasTradingMode() bool {
 func (o *TradeSchema) SetTradingMode(v TradingMode) {
 	o.TradingMode.Set(&v)
 }
+
 // SetTradingModeNil sets the value for TradingMode to be an explicit nil
 func (o *TradeSchema) SetTradingModeNil() {
 	o.TradingMode.Set(nil)
@@ -2248,6 +2287,7 @@ func (o *TradeSchema) HasAmountPrecision() bool {
 func (o *TradeSchema) SetAmountPrecision(v float32) {
 	o.AmountPrecision.Set(&v)
 }
+
 // SetAmountPrecisionNil sets the value for AmountPrecision to be an explicit nil
 func (o *TradeSchema) SetAmountPrecisionNil() {
 	o.AmountPrecision.Set(nil)
@@ -2290,6 +2330,7 @@ func (o *TradeSchema) HasPricePrecision() bool {
 func (o *TradeSchema) SetPricePrecision(v float32) {
 	o.PricePrecision.Set(&v)
 }
+
 // SetPricePrecisionNil sets the value for PricePrecision to be an explicit nil
 func (o *TradeSchema) SetPricePrecisionNil() {
 	o.PricePrecision.Set(nil)
@@ -2332,6 +2373,7 @@ func (o *TradeSchema) HasPrecisionMode() bool {
 func (o *TradeSchema) SetPrecisionMode(v int64) {
 	o.PrecisionMode.Set(&v)
 }
+
 // SetPrecisionModeNil sets the value for PrecisionMode to be an explicit nil
 func (o *TradeSchema) SetPrecisionModeNil() {
 	o.PrecisionMode.Set(nil)
@@ -2343,7 +2385,7 @@ func (o *TradeSchema) UnsetPrecisionMode() {
 }
 
 func (o TradeSchema) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -2531,10 +2573,10 @@ func (o *TradeSchema) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -2590,5 +2632,3 @@ func (v *NullableTradeSchema) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

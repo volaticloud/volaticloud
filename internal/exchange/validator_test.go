@@ -84,8 +84,8 @@ func TestValidateConfigWithSchema(t *testing.T) {
 			errMsg:  "name is required",
 		},
 		{
-			name: "empty config",
-			config: map[string]interface{}{},
+			name:    "empty config",
+			config:  map[string]interface{}{},
 			wantErr: true,
 			errMsg:  "exchange",
 		},

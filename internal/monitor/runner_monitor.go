@@ -170,9 +170,9 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.Bot
 	runner, err := m.dbClient.BotRunner.UpdateOne(runner).
 		SetDataDownloadStatus(enum.DataDownloadStatusDownloading).
 		SetDataDownloadProgress(map[string]interface{}{
-			"pairs_completed": 0,
-			"pairs_total":     0,
-			"current_pair":    "",
+			"pairs_completed":  0,
+			"pairs_total":      0,
+			"current_pair":     "",
 			"percent_complete": 0.0,
 		}).
 		ClearDataErrorMessage().
