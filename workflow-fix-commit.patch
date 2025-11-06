@@ -1,0 +1,87 @@
+From 936181a1db96f459842d1799f26e09a0085df68d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 6 Nov 2025 11:48:58 +0000
+Subject: [PATCH] fix: update GitHub Actions workflows to use Go 1.23.x
+
+Update all workflow files to use Go 1.23.x instead of 1.24.x for
+compatibility with GitHub Actions runners.
+
+Changes:
+- backend-ci.yml: Update 4 instances of go-version to 1.23.x
+- quality.yml: Update 2 instances of go-version to 1.23.x
+
+This fixes CI failures caused by GitHub Actions attempting to install
+non-existent Go 1.24.x. All workflows will now use the stable Go 1.23.x
+release which matches the go.mod configuration.
+
+Resolves: All failing GitHub Actions workflows
+---
+ .github/workflows/backend-ci.yml | 8 ++++----
+ .github/workflows/quality.yml    | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/.github/workflows/backend-ci.yml b/.github/workflows/backend-ci.yml
+index e435a0c..b28dd5b 100644
+--- a/.github/workflows/backend-ci.yml
++++ b/.github/workflows/backend-ci.yml
+@@ -34,7 +34,7 @@ jobs:
+     runs-on: ubuntu-latest
+     strategy:
+       matrix:
+-        go-version: ['1.24.x']
++        go-version: ['1.23.x']
+ 
+     steps:
+       - name: Checkout code
+@@ -85,7 +85,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+ 
+       - name: Run golangci-lint
+@@ -109,7 +109,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+ 
+       - name: Build binary
+@@ -131,7 +131,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+ 
+       - name: Generate code
+diff --git a/.github/workflows/quality.yml b/.github/workflows/quality.yml
+index 950b504..67a6c18 100644
+--- a/.github/workflows/quality.yml
++++ b/.github/workflows/quality.yml
+@@ -20,7 +20,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+ 
+       - name: Run tests with coverage
+@@ -108,7 +108,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+ 
+       - name: gofmt check
+-- 
+2.43.0
+
