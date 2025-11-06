@@ -47,6 +47,8 @@ generate-freqtrade:
 	@echo "Cleaning up generated files (removing tests and docs)..."
 	@chmod -R u+w internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator 2>/dev/null || true
 	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md 2>/dev/null || true
+	@echo "Formatting generated Go files..."
+	@gofmt -w internal/freqtrade/*.go
 	@echo "Freqtrade client generated successfully!"
 
 # Generate ENT and GraphQL code
