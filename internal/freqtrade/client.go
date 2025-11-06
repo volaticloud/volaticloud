@@ -458,22 +458,22 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 		}
 		_, err = f.Write(b)
 		if err != nil {
-			return
+			return err
 		}
 		_, err = f.Seek(0, io.SeekStart)
-		return
+		return err
 	}
 	if f, ok := v.(**os.File); ok {
 		*f, err = os.CreateTemp("", "HttpClientFile")
 		if err != nil {
-			return
+			return err
 		}
 		_, err = (*f).Write(b)
 		if err != nil {
-			return
+			return err
 		}
 		_, err = (*f).Seek(0, io.SeekStart)
-		return
+		return err
 	}
 	if XmlCheck.MatchString(contentType) {
 		if err = xml.Unmarshal(b, v); err != nil {
