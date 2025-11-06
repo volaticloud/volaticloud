@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &DailyWeeklyMonthlyRecord{}
 
 // DailyWeeklyMonthlyRecord struct for DailyWeeklyMonthlyRecord
 type DailyWeeklyMonthlyRecord struct {
-	Date string `json:"date"`
-	AbsProfit float32 `json:"abs_profit"`
-	RelProfit float32 `json:"rel_profit"`
+	Date            string  `json:"date"`
+	AbsProfit       float32 `json:"abs_profit"`
+	RelProfit       float32 `json:"rel_profit"`
 	StartingBalance float32 `json:"starting_balance"`
-	FiatValue float32 `json:"fiat_value"`
-	TradeCount int64 `json:"trade_count"`
+	FiatValue       float32 `json:"fiat_value"`
+	TradeCount      int64   `json:"trade_count"`
 }
 
 type _DailyWeeklyMonthlyRecord DailyWeeklyMonthlyRecord
@@ -199,7 +199,7 @@ func (o *DailyWeeklyMonthlyRecord) SetTradeCount(v int64) {
 }
 
 func (o DailyWeeklyMonthlyRecord) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -235,10 +235,10 @@ func (o *DailyWeeklyMonthlyRecord) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -294,5 +294,3 @@ func (v *NullableDailyWeeklyMonthlyRecord) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

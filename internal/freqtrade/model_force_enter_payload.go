@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &ForceEnterPayload{}
 
 // ForceEnterPayload struct for ForceEnterPayload
 type ForceEnterPayload struct {
-	Pair string `json:"pair"`
-	Side *SignalDirection `json:"side,omitempty"`
-	Price NullableFloat32 `json:"price,omitempty"`
-	Ordertype NullableOrderTypeValues `json:"ordertype,omitempty"`
-	Stakeamount NullableFloat32 `json:"stakeamount,omitempty"`
-	EntryTag NullableString `json:"entry_tag,omitempty"`
-	Leverage NullableFloat32 `json:"leverage,omitempty"`
+	Pair        string                  `json:"pair"`
+	Side        *SignalDirection        `json:"side,omitempty"`
+	Price       NullableFloat32         `json:"price,omitempty"`
+	Ordertype   NullableOrderTypeValues `json:"ordertype,omitempty"`
+	Stakeamount NullableFloat32         `json:"stakeamount,omitempty"`
+	EntryTag    NullableString          `json:"entry_tag,omitempty"`
+	Leverage    NullableFloat32         `json:"leverage,omitempty"`
 }
 
 type _ForceEnterPayload ForceEnterPayload
@@ -142,6 +142,7 @@ func (o *ForceEnterPayload) HasPrice() bool {
 func (o *ForceEnterPayload) SetPrice(v float32) {
 	o.Price.Set(&v)
 }
+
 // SetPriceNil sets the value for Price to be an explicit nil
 func (o *ForceEnterPayload) SetPriceNil() {
 	o.Price.Set(nil)
@@ -184,6 +185,7 @@ func (o *ForceEnterPayload) HasOrdertype() bool {
 func (o *ForceEnterPayload) SetOrdertype(v OrderTypeValues) {
 	o.Ordertype.Set(&v)
 }
+
 // SetOrdertypeNil sets the value for Ordertype to be an explicit nil
 func (o *ForceEnterPayload) SetOrdertypeNil() {
 	o.Ordertype.Set(nil)
@@ -226,6 +228,7 @@ func (o *ForceEnterPayload) HasStakeamount() bool {
 func (o *ForceEnterPayload) SetStakeamount(v float32) {
 	o.Stakeamount.Set(&v)
 }
+
 // SetStakeamountNil sets the value for Stakeamount to be an explicit nil
 func (o *ForceEnterPayload) SetStakeamountNil() {
 	o.Stakeamount.Set(nil)
@@ -268,6 +271,7 @@ func (o *ForceEnterPayload) HasEntryTag() bool {
 func (o *ForceEnterPayload) SetEntryTag(v string) {
 	o.EntryTag.Set(&v)
 }
+
 // SetEntryTagNil sets the value for EntryTag to be an explicit nil
 func (o *ForceEnterPayload) SetEntryTagNil() {
 	o.EntryTag.Set(nil)
@@ -310,6 +314,7 @@ func (o *ForceEnterPayload) HasLeverage() bool {
 func (o *ForceEnterPayload) SetLeverage(v float32) {
 	o.Leverage.Set(&v)
 }
+
 // SetLeverageNil sets the value for Leverage to be an explicit nil
 func (o *ForceEnterPayload) SetLeverageNil() {
 	o.Leverage.Set(nil)
@@ -321,7 +326,7 @@ func (o *ForceEnterPayload) UnsetLeverage() {
 }
 
 func (o ForceEnterPayload) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -365,10 +370,10 @@ func (o *ForceEnterPayload) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -424,5 +429,3 @@ func (v *NullableForceEnterPayload) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

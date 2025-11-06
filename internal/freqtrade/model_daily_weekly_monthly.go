@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &DailyWeeklyMonthly{}
 
 // DailyWeeklyMonthly struct for DailyWeeklyMonthly
 type DailyWeeklyMonthly struct {
-	Data []DailyWeeklyMonthlyRecord `json:"data"`
-	FiatDisplayCurrency string `json:"fiat_display_currency"`
-	StakeCurrency string `json:"stake_currency"`
+	Data                []DailyWeeklyMonthlyRecord `json:"data"`
+	FiatDisplayCurrency string                     `json:"fiat_display_currency"`
+	StakeCurrency       string                     `json:"stake_currency"`
 }
 
 type _DailyWeeklyMonthly DailyWeeklyMonthly
@@ -121,7 +121,7 @@ func (o *DailyWeeklyMonthly) SetStakeCurrency(v string) {
 }
 
 func (o DailyWeeklyMonthly) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -151,10 +151,10 @@ func (o *DailyWeeklyMonthly) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -210,5 +210,3 @@ func (v *NullableDailyWeeklyMonthly) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -152,8 +152,8 @@ func TestDataFormatIsFeather(t *testing.T) {
 
 	assert.Equal(t, "feather", dataFormat,
 		"Data format MUST be 'feather' for backtesting compatibility. "+
-		"Freqtrade backtesting defaults to feather format. "+
-		"Using 'json' will cause 'No data found' errors during backtesting.")
+			"Freqtrade backtesting defaults to feather format. "+
+			"Using 'json' will cause 'No data found' errors during backtesting.")
 }
 
 func TestVolumeConstants(t *testing.T) {

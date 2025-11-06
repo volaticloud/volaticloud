@@ -192,7 +192,7 @@ func TestHashDistribution(t *testing.T) {
 	// Generate 300 bot IDs
 	botIDs := make([]string, 300)
 	for i := 0; i < 300; i++ {
-		botIDs[i] = string(rune('a' + (i % 26))) + string(rune('a' + (i/26)%26)) + "-bot-id"
+		botIDs[i] = string(rune('a'+(i%26))) + string(rune('a'+(i/26)%26)) + "-bot-id"
 	}
 
 	stats := c.GetAssignmentStats(botIDs)

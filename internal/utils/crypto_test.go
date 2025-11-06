@@ -97,12 +97,12 @@ func TestGenerateSecurePassword(t *testing.T) {
 
 func TestGenerateRandomString(t *testing.T) {
 	tests := []struct {
-		name      string
-		length    int
-		charset   string
-		wantErr   bool
-		errMsg    string
-		validate  func(t *testing.T, result string)
+		name     string
+		length   int
+		charset  string
+		wantErr  bool
+		errMsg   string
+		validate func(t *testing.T, result string)
 	}{
 		{
 			name:    "valid length and charset",

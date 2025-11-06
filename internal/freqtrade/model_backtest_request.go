@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &BacktestRequest{}
 
 // BacktestRequest struct for BacktestRequest
 type BacktestRequest struct {
-	Strategy string `json:"strategy"`
-	Timeframe NullableString `json:"timeframe,omitempty"`
-	TimeframeDetail NullableString `json:"timeframe_detail,omitempty"`
-	Timerange NullableString `json:"timerange,omitempty"`
-	MaxOpenTrades NullableFloat32 `json:"max_open_trades,omitempty"`
-	StakeAmount NullableStakeAmount `json:"stake_amount,omitempty"`
-	EnableProtections bool `json:"enable_protections"`
-	DryRunWallet NullableFloat32 `json:"dry_run_wallet,omitempty"`
-	BacktestCache NullableString `json:"backtest_cache,omitempty"`
-	Freqaimodel NullableString `json:"freqaimodel,omitempty"`
-	Freqai NullableBacktestFreqAIInputs `json:"freqai,omitempty"`
+	Strategy          string                       `json:"strategy"`
+	Timeframe         NullableString               `json:"timeframe,omitempty"`
+	TimeframeDetail   NullableString               `json:"timeframe_detail,omitempty"`
+	Timerange         NullableString               `json:"timerange,omitempty"`
+	MaxOpenTrades     NullableFloat32              `json:"max_open_trades,omitempty"`
+	StakeAmount       NullableStakeAmount          `json:"stake_amount,omitempty"`
+	EnableProtections bool                         `json:"enable_protections"`
+	DryRunWallet      NullableFloat32              `json:"dry_run_wallet,omitempty"`
+	BacktestCache     NullableString               `json:"backtest_cache,omitempty"`
+	Freqaimodel       NullableString               `json:"freqaimodel,omitempty"`
+	Freqai            NullableBacktestFreqAIInputs `json:"freqai,omitempty"`
 }
 
 type _BacktestRequest BacktestRequest
@@ -111,6 +111,7 @@ func (o *BacktestRequest) HasTimeframe() bool {
 func (o *BacktestRequest) SetTimeframe(v string) {
 	o.Timeframe.Set(&v)
 }
+
 // SetTimeframeNil sets the value for Timeframe to be an explicit nil
 func (o *BacktestRequest) SetTimeframeNil() {
 	o.Timeframe.Set(nil)
@@ -153,6 +154,7 @@ func (o *BacktestRequest) HasTimeframeDetail() bool {
 func (o *BacktestRequest) SetTimeframeDetail(v string) {
 	o.TimeframeDetail.Set(&v)
 }
+
 // SetTimeframeDetailNil sets the value for TimeframeDetail to be an explicit nil
 func (o *BacktestRequest) SetTimeframeDetailNil() {
 	o.TimeframeDetail.Set(nil)
@@ -195,6 +197,7 @@ func (o *BacktestRequest) HasTimerange() bool {
 func (o *BacktestRequest) SetTimerange(v string) {
 	o.Timerange.Set(&v)
 }
+
 // SetTimerangeNil sets the value for Timerange to be an explicit nil
 func (o *BacktestRequest) SetTimerangeNil() {
 	o.Timerange.Set(nil)
@@ -237,6 +240,7 @@ func (o *BacktestRequest) HasMaxOpenTrades() bool {
 func (o *BacktestRequest) SetMaxOpenTrades(v float32) {
 	o.MaxOpenTrades.Set(&v)
 }
+
 // SetMaxOpenTradesNil sets the value for MaxOpenTrades to be an explicit nil
 func (o *BacktestRequest) SetMaxOpenTradesNil() {
 	o.MaxOpenTrades.Set(nil)
@@ -279,6 +283,7 @@ func (o *BacktestRequest) HasStakeAmount() bool {
 func (o *BacktestRequest) SetStakeAmount(v StakeAmount) {
 	o.StakeAmount.Set(&v)
 }
+
 // SetStakeAmountNil sets the value for StakeAmount to be an explicit nil
 func (o *BacktestRequest) SetStakeAmountNil() {
 	o.StakeAmount.Set(nil)
@@ -345,6 +350,7 @@ func (o *BacktestRequest) HasDryRunWallet() bool {
 func (o *BacktestRequest) SetDryRunWallet(v float32) {
 	o.DryRunWallet.Set(&v)
 }
+
 // SetDryRunWalletNil sets the value for DryRunWallet to be an explicit nil
 func (o *BacktestRequest) SetDryRunWalletNil() {
 	o.DryRunWallet.Set(nil)
@@ -387,6 +393,7 @@ func (o *BacktestRequest) HasBacktestCache() bool {
 func (o *BacktestRequest) SetBacktestCache(v string) {
 	o.BacktestCache.Set(&v)
 }
+
 // SetBacktestCacheNil sets the value for BacktestCache to be an explicit nil
 func (o *BacktestRequest) SetBacktestCacheNil() {
 	o.BacktestCache.Set(nil)
@@ -429,6 +436,7 @@ func (o *BacktestRequest) HasFreqaimodel() bool {
 func (o *BacktestRequest) SetFreqaimodel(v string) {
 	o.Freqaimodel.Set(&v)
 }
+
 // SetFreqaimodelNil sets the value for Freqaimodel to be an explicit nil
 func (o *BacktestRequest) SetFreqaimodelNil() {
 	o.Freqaimodel.Set(nil)
@@ -471,6 +479,7 @@ func (o *BacktestRequest) HasFreqai() bool {
 func (o *BacktestRequest) SetFreqai(v BacktestFreqAIInputs) {
 	o.Freqai.Set(&v)
 }
+
 // SetFreqaiNil sets the value for Freqai to be an explicit nil
 func (o *BacktestRequest) SetFreqaiNil() {
 	o.Freqai.Set(nil)
@@ -482,7 +491,7 @@ func (o *BacktestRequest) UnsetFreqai() {
 }
 
 func (o BacktestRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -537,10 +546,10 @@ func (o *BacktestRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -596,5 +605,3 @@ func (v *NullableBacktestRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

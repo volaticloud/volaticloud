@@ -11,10 +11,10 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
-	"time"
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // checks if the PairHistory type satisfies the MappedNullable interface at compile time
@@ -22,25 +22,25 @@ var _ MappedNullable = &PairHistory{}
 
 // PairHistory struct for PairHistory
 type PairHistory struct {
-	Strategy string `json:"strategy"`
-	Pair string `json:"pair"`
-	Timeframe string `json:"timeframe"`
-	TimeframeMs int64 `json:"timeframe_ms"`
-	Columns []string `json:"columns"`
-	Data []interface{} `json:"data"`
-	Length int64 `json:"length"`
-	BuySignals int64 `json:"buy_signals"`
-	SellSignals int64 `json:"sell_signals"`
-	EnterLongSignals int64 `json:"enter_long_signals"`
-	ExitLongSignals int64 `json:"exit_long_signals"`
-	EnterShortSignals int64 `json:"enter_short_signals"`
-	ExitShortSignals int64 `json:"exit_short_signals"`
-	LastAnalyzed time.Time `json:"last_analyzed"`
-	LastAnalyzedTs int64 `json:"last_analyzed_ts"`
-	DataStartTs int64 `json:"data_start_ts"`
-	DataStart string `json:"data_start"`
-	DataStop string `json:"data_stop"`
-	DataStopTs int64 `json:"data_stop_ts"`
+	Strategy          string        `json:"strategy"`
+	Pair              string        `json:"pair"`
+	Timeframe         string        `json:"timeframe"`
+	TimeframeMs       int64         `json:"timeframe_ms"`
+	Columns           []string      `json:"columns"`
+	Data              []interface{} `json:"data"`
+	Length            int64         `json:"length"`
+	BuySignals        int64         `json:"buy_signals"`
+	SellSignals       int64         `json:"sell_signals"`
+	EnterLongSignals  int64         `json:"enter_long_signals"`
+	ExitLongSignals   int64         `json:"exit_long_signals"`
+	EnterShortSignals int64         `json:"enter_short_signals"`
+	ExitShortSignals  int64         `json:"exit_short_signals"`
+	LastAnalyzed      time.Time     `json:"last_analyzed"`
+	LastAnalyzedTs    int64         `json:"last_analyzed_ts"`
+	DataStartTs       int64         `json:"data_start_ts"`
+	DataStart         string        `json:"data_start"`
+	DataStop          string        `json:"data_stop"`
+	DataStopTs        int64         `json:"data_stop_ts"`
 }
 
 type _PairHistory PairHistory
@@ -538,7 +538,7 @@ func (o *PairHistory) SetDataStopTs(v int64) {
 }
 
 func (o PairHistory) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -600,10 +600,10 @@ func (o *PairHistory) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -659,5 +659,3 @@ func (v *NullablePairHistory) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

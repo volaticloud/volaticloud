@@ -87,7 +87,7 @@ func ValidateExchangeConfigWithSchema(config map[string]interface{}) error {
 		"exchange": config,
 		// Add minimal required fields to satisfy schema validation
 		"stake_currency": "USDT",
-		"dry_run": true,
+		"dry_run":        true,
 	}
 
 	// Check if config is already wrapped (has "exchange" key)

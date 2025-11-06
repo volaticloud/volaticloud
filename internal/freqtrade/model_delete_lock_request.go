@@ -19,8 +19,8 @@ var _ MappedNullable = &DeleteLockRequest{}
 
 // DeleteLockRequest struct for DeleteLockRequest
 type DeleteLockRequest struct {
-	Pair NullableString `json:"pair,omitempty"`
-	Lockid NullableInt64 `json:"lockid,omitempty"`
+	Pair   NullableString `json:"pair,omitempty"`
+	Lockid NullableInt64  `json:"lockid,omitempty"`
 }
 
 // NewDeleteLockRequest instantiates a new DeleteLockRequest object
@@ -72,6 +72,7 @@ func (o *DeleteLockRequest) HasPair() bool {
 func (o *DeleteLockRequest) SetPair(v string) {
 	o.Pair.Set(&v)
 }
+
 // SetPairNil sets the value for Pair to be an explicit nil
 func (o *DeleteLockRequest) SetPairNil() {
 	o.Pair.Set(nil)
@@ -114,6 +115,7 @@ func (o *DeleteLockRequest) HasLockid() bool {
 func (o *DeleteLockRequest) SetLockid(v int64) {
 	o.Lockid.Set(&v)
 }
+
 // SetLockidNil sets the value for Lockid to be an explicit nil
 func (o *DeleteLockRequest) SetLockidNil() {
 	o.Lockid.Set(nil)
@@ -125,7 +127,7 @@ func (o *DeleteLockRequest) UnsetLockid() {
 }
 
 func (o DeleteLockRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -178,5 +180,3 @@ func (v *NullableDeleteLockRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
