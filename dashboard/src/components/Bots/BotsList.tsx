@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation } from '../../generated/graphql';
+import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation } from './bots.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateBotDialog } from './CreateBotDialog';
@@ -205,8 +205,15 @@ export const BotsList = () => {
     .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: 2,
+        mb: 3
+      }}>
         <Box>
           <Typography variant="h4" gutterBottom fontWeight={600}>
             Bots
@@ -219,6 +226,7 @@ export const BotsList = () => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
+          sx={{ flexShrink: 0 }}
         >
           Create Bot
         </Button>
@@ -233,8 +241,9 @@ export const BotsList = () => {
           </CardContent>
         </Card>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <Paper sx={{ width: '100%', mb: 2 }}>
+          <TableContainer>
+            <Table sx={{ minWidth: 750 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
@@ -360,6 +369,7 @@ export const BotsList = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        </Paper>
       )}
 
       <CreateBotDialog

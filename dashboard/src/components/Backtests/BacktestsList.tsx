@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation } from '../../generated/graphql';
+import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation } from './backtests.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateBacktestDialog } from './CreateBacktestDialog';
@@ -161,8 +161,15 @@ export const BacktestsList = () => {
     .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: 2,
+        mb: 3
+      }}>
         <Box>
           <Typography variant="h4" gutterBottom fontWeight={600}>
             Backtests
@@ -175,6 +182,7 @@ export const BacktestsList = () => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
+          sx={{ flexShrink: 0 }}
         >
           Create Backtest
         </Button>
@@ -189,8 +197,9 @@ export const BacktestsList = () => {
           </CardContent>
         </Card>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <Paper sx={{ width: '100%', mb: 2 }}>
+          <TableContainer>
+            <Table sx={{ minWidth: 750 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Strategy</TableCell>
@@ -298,6 +307,7 @@ export const BacktestsList = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        </Paper>
       )}
 
       <CreateBacktestDialog
