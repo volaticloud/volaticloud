@@ -35,7 +35,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	}
 
 	// Check if data download config is provided
-	if r.DataDownloadConfig == nil || len(r.DataDownloadConfig) == 0 {
+	if len(r.DataDownloadConfig) == 0 {
 		return fmt.Errorf("runner %s has no data download configuration", r.Name)
 	}
 
