@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &WhitelistEvaluateResponse{}
 
 // WhitelistEvaluateResponse struct for WhitelistEvaluateResponse
 type WhitelistEvaluateResponse struct {
-	Error  NullableString            `json:"error,omitempty"`
-	Status string                    `json:"status"`
+	Error NullableString `json:"error,omitempty"`
+	Status string `json:"status"`
 	Result NullableWhitelistResponse `json:"result,omitempty"`
 }
 
@@ -78,7 +78,6 @@ func (o *WhitelistEvaluateResponse) HasError() bool {
 func (o *WhitelistEvaluateResponse) SetError(v string) {
 	o.Error.Set(&v)
 }
-
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *WhitelistEvaluateResponse) SetErrorNil() {
 	o.Error.Set(nil)
@@ -145,7 +144,6 @@ func (o *WhitelistEvaluateResponse) HasResult() bool {
 func (o *WhitelistEvaluateResponse) SetResult(v WhitelistResponse) {
 	o.Result.Set(&v)
 }
-
 // SetResultNil sets the value for Result to be an explicit nil
 func (o *WhitelistEvaluateResponse) SetResultNil() {
 	o.Result.Set(nil)
@@ -157,7 +155,7 @@ func (o *WhitelistEvaluateResponse) UnsetResult() {
 }
 
 func (o WhitelistEvaluateResponse) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -189,10 +187,10 @@ func (o *WhitelistEvaluateResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -248,3 +246,5 @@ func (v *NullableWhitelistEvaluateResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

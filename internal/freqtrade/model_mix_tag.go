@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -22,10 +22,10 @@ var _ MappedNullable = &MixTag{}
 // MixTag struct for MixTag
 type MixTag struct {
 	ProfitRatio float32 `json:"profit_ratio"`
-	ProfitPct   float32 `json:"profit_pct"`
-	ProfitAbs   float32 `json:"profit_abs"`
-	Count       int64   `json:"count"`
-	MixTag      string  `json:"mix_tag"`
+	ProfitPct float32 `json:"profit_pct"`
+	ProfitAbs float32 `json:"profit_abs"`
+	Count int64 `json:"count"`
+	MixTag string `json:"mix_tag"`
 }
 
 type _MixTag MixTag
@@ -173,7 +173,7 @@ func (o *MixTag) SetMixTag(v string) {
 }
 
 func (o MixTag) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -207,10 +207,10 @@ func (o *MixTag) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -266,3 +266,5 @@ func (v *NullableMixTag) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

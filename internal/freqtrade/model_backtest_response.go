@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &BacktestResponse{}
 
 // BacktestResponse struct for BacktestResponse
 type BacktestResponse struct {
-	Status         string                 `json:"status"`
-	Running        bool                   `json:"running"`
-	StatusMsg      string                 `json:"status_msg"`
-	Step           string                 `json:"step"`
-	Progress       float32                `json:"progress"`
-	TradeCount     NullableFloat32        `json:"trade_count,omitempty"`
+	Status string `json:"status"`
+	Running bool `json:"running"`
+	StatusMsg string `json:"status_msg"`
+	Step string `json:"step"`
+	Progress float32 `json:"progress"`
+	TradeCount NullableFloat32 `json:"trade_count,omitempty"`
 	BacktestResult map[string]interface{} `json:"backtest_result,omitempty"`
 }
 
@@ -206,7 +206,6 @@ func (o *BacktestResponse) HasTradeCount() bool {
 func (o *BacktestResponse) SetTradeCount(v float32) {
 	o.TradeCount.Set(&v)
 }
-
 // SetTradeCountNil sets the value for TradeCount to be an explicit nil
 func (o *BacktestResponse) SetTradeCountNil() {
 	o.TradeCount.Set(nil)
@@ -251,7 +250,7 @@ func (o *BacktestResponse) SetBacktestResult(v map[string]interface{}) {
 }
 
 func (o BacktestResponse) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -291,10 +290,10 @@ func (o *BacktestResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -350,3 +349,5 @@ func (v *NullableBacktestResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

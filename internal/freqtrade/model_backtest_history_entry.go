@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &BacktestHistoryEntry{}
 
 // BacktestHistoryEntry struct for BacktestHistoryEntry
 type BacktestHistoryEntry struct {
-	Filename          string         `json:"filename"`
-	Strategy          string         `json:"strategy"`
-	RunId             string         `json:"run_id"`
-	BacktestStartTime int64          `json:"backtest_start_time"`
-	Notes             NullableString `json:"notes,omitempty"`
-	BacktestStartTs   NullableInt64  `json:"backtest_start_ts,omitempty"`
-	BacktestEndTs     NullableInt64  `json:"backtest_end_ts,omitempty"`
-	Timeframe         NullableString `json:"timeframe,omitempty"`
-	TimeframeDetail   NullableString `json:"timeframe_detail,omitempty"`
+	Filename string `json:"filename"`
+	Strategy string `json:"strategy"`
+	RunId string `json:"run_id"`
+	BacktestStartTime int64 `json:"backtest_start_time"`
+	Notes NullableString `json:"notes,omitempty"`
+	BacktestStartTs NullableInt64 `json:"backtest_start_ts,omitempty"`
+	BacktestEndTs NullableInt64 `json:"backtest_end_ts,omitempty"`
+	Timeframe NullableString `json:"timeframe,omitempty"`
+	TimeframeDetail NullableString `json:"timeframe_detail,omitempty"`
 }
 
 type _BacktestHistoryEntry BacktestHistoryEntry
@@ -183,7 +183,6 @@ func (o *BacktestHistoryEntry) HasNotes() bool {
 func (o *BacktestHistoryEntry) SetNotes(v string) {
 	o.Notes.Set(&v)
 }
-
 // SetNotesNil sets the value for Notes to be an explicit nil
 func (o *BacktestHistoryEntry) SetNotesNil() {
 	o.Notes.Set(nil)
@@ -226,7 +225,6 @@ func (o *BacktestHistoryEntry) HasBacktestStartTs() bool {
 func (o *BacktestHistoryEntry) SetBacktestStartTs(v int64) {
 	o.BacktestStartTs.Set(&v)
 }
-
 // SetBacktestStartTsNil sets the value for BacktestStartTs to be an explicit nil
 func (o *BacktestHistoryEntry) SetBacktestStartTsNil() {
 	o.BacktestStartTs.Set(nil)
@@ -269,7 +267,6 @@ func (o *BacktestHistoryEntry) HasBacktestEndTs() bool {
 func (o *BacktestHistoryEntry) SetBacktestEndTs(v int64) {
 	o.BacktestEndTs.Set(&v)
 }
-
 // SetBacktestEndTsNil sets the value for BacktestEndTs to be an explicit nil
 func (o *BacktestHistoryEntry) SetBacktestEndTsNil() {
 	o.BacktestEndTs.Set(nil)
@@ -312,7 +309,6 @@ func (o *BacktestHistoryEntry) HasTimeframe() bool {
 func (o *BacktestHistoryEntry) SetTimeframe(v string) {
 	o.Timeframe.Set(&v)
 }
-
 // SetTimeframeNil sets the value for Timeframe to be an explicit nil
 func (o *BacktestHistoryEntry) SetTimeframeNil() {
 	o.Timeframe.Set(nil)
@@ -355,7 +351,6 @@ func (o *BacktestHistoryEntry) HasTimeframeDetail() bool {
 func (o *BacktestHistoryEntry) SetTimeframeDetail(v string) {
 	o.TimeframeDetail.Set(&v)
 }
-
 // SetTimeframeDetailNil sets the value for TimeframeDetail to be an explicit nil
 func (o *BacktestHistoryEntry) SetTimeframeDetailNil() {
 	o.TimeframeDetail.Set(nil)
@@ -367,7 +362,7 @@ func (o *BacktestHistoryEntry) UnsetTimeframeDetail() {
 }
 
 func (o BacktestHistoryEntry) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -414,10 +409,10 @@ func (o *BacktestHistoryEntry) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -473,3 +468,5 @@ func (v *NullableBacktestHistoryEntry) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

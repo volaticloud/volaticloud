@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &DeleteTrade{}
 
 // DeleteTrade struct for DeleteTrade
 type DeleteTrade struct {
-	CancelOrderCount int64  `json:"cancel_order_count"`
-	Result           string `json:"result"`
-	ResultMsg        string `json:"result_msg"`
-	TradeId          int64  `json:"trade_id"`
+	CancelOrderCount int64 `json:"cancel_order_count"`
+	Result string `json:"result"`
+	ResultMsg string `json:"result_msg"`
+	TradeId int64 `json:"trade_id"`
 }
 
 type _DeleteTrade DeleteTrade
@@ -147,7 +147,7 @@ func (o *DeleteTrade) SetTradeId(v int64) {
 }
 
 func (o DeleteTrade) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -179,10 +179,10 @@ func (o *DeleteTrade) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -238,3 +238,5 @@ func (v *NullableDeleteTrade) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

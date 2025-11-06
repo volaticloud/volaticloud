@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &Count{}
 
 // Count struct for Count
 type Count struct {
-	Current    int64   `json:"current"`
-	Max        int64   `json:"max"`
+	Current int64 `json:"current"`
+	Max int64 `json:"max"`
 	TotalStake float32 `json:"total_stake"`
 }
 
@@ -121,7 +121,7 @@ func (o *Count) SetTotalStake(v float32) {
 }
 
 func (o Count) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -151,10 +151,10 @@ func (o *Count) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -210,3 +210,5 @@ func (v *NullableCount) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

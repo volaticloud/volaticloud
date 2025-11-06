@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &BlacklistResponse{}
 
 // BlacklistResponse struct for BlacklistResponse
 type BlacklistResponse struct {
-	Blacklist         []string               `json:"blacklist"`
-	BlacklistExpanded []string               `json:"blacklist_expanded"`
-	Errors            map[string]interface{} `json:"errors"`
-	Length            int64                  `json:"length"`
-	Method            []string               `json:"method"`
+	Blacklist []string `json:"blacklist"`
+	BlacklistExpanded []string `json:"blacklist_expanded"`
+	Errors map[string]interface{} `json:"errors"`
+	Length int64 `json:"length"`
+	Method []string `json:"method"`
 }
 
 type _BlacklistResponse BlacklistResponse
@@ -173,7 +173,7 @@ func (o *BlacklistResponse) SetMethod(v []string) {
 }
 
 func (o BlacklistResponse) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -207,10 +207,10 @@ func (o *BlacklistResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -266,3 +266,5 @@ func (v *NullableBlacklistResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

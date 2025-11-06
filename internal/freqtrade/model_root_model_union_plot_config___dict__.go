@@ -15,9 +15,10 @@ import (
 	"fmt"
 )
 
+
 // RootModelUnionPlotConfigDict struct for RootModelUnionPlotConfigDict
 type RootModelUnionPlotConfigDict struct {
-	PlotConfig        *PlotConfig
+	PlotConfig *PlotConfig
 	MapmapOfStringAny *map[string]interface{}
 }
 
@@ -25,7 +26,7 @@ type RootModelUnionPlotConfigDict struct {
 func (dst *RootModelUnionPlotConfigDict) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into PlotConfig
-	err = json.Unmarshal(data, &dst.PlotConfig)
+	err = json.Unmarshal(data, &dst.PlotConfig);
 	if err == nil {
 		jsonPlotConfig, _ := json.Marshal(dst.PlotConfig)
 		if string(jsonPlotConfig) == "{}" { // empty struct
@@ -38,7 +39,7 @@ func (dst *RootModelUnionPlotConfigDict) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into MapmapOfStringAny
-	err = json.Unmarshal(data, &dst.MapmapOfStringAny)
+	err = json.Unmarshal(data, &dst.MapmapOfStringAny);
 	if err == nil {
 		jsonMapmapOfStringAny, _ := json.Marshal(dst.MapmapOfStringAny)
 		if string(jsonMapmapOfStringAny) == "{}" { // empty struct
@@ -65,6 +66,7 @@ func (src RootModelUnionPlotConfigDict) MarshalJSON() ([]byte, error) {
 
 	return nil, nil // no data in anyOf schemas
 }
+
 
 type NullableRootModelUnionPlotConfigDict struct {
 	value *RootModelUnionPlotConfigDict
@@ -101,3 +103,5 @@ func (v *NullableRootModelUnionPlotConfigDict) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

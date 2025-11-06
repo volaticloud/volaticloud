@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,40 +21,40 @@ var _ MappedNullable = &ShowConfig{}
 
 // ShowConfig struct for ShowConfig
 type ShowConfig struct {
-	Version                     string                  `json:"version"`
-	StrategyVersion             NullableString          `json:"strategy_version,omitempty"`
-	ApiVersion                  float32                 `json:"api_version"`
-	DryRun                      bool                    `json:"dry_run"`
-	TradingMode                 string                  `json:"trading_mode"`
-	ShortAllowed                bool                    `json:"short_allowed"`
-	StakeCurrency               string                  `json:"stake_currency"`
-	StakeAmount                 string                  `json:"stake_amount"`
-	AvailableCapital            NullableFloat32         `json:"available_capital,omitempty"`
-	StakeCurrencyDecimals       int64                   `json:"stake_currency_decimals"`
-	MaxOpenTrades               float32                 `json:"max_open_trades"`
-	MinimalRoi                  map[string]interface{}  `json:"minimal_roi"`
-	Stoploss                    NullableFloat32         `json:"stoploss,omitempty"`
-	StoplossOnExchange          bool                    `json:"stoploss_on_exchange"`
-	TrailingStop                NullableBool            `json:"trailing_stop,omitempty"`
-	TrailingStopPositive        NullableFloat32         `json:"trailing_stop_positive,omitempty"`
-	TrailingStopPositiveOffset  NullableFloat32         `json:"trailing_stop_positive_offset,omitempty"`
-	TrailingOnlyOffsetIsReached NullableBool            `json:"trailing_only_offset_is_reached,omitempty"`
-	Unfilledtimeout             NullableUnfilledTimeout `json:"unfilledtimeout,omitempty"`
-	OrderTypes                  NullableOrderTypes      `json:"order_types,omitempty"`
-	UseCustomStoploss           NullableBool            `json:"use_custom_stoploss,omitempty"`
-	Timeframe                   NullableString          `json:"timeframe,omitempty"`
-	TimeframeMs                 int64                   `json:"timeframe_ms"`
-	TimeframeMin                int64                   `json:"timeframe_min"`
-	Exchange                    string                  `json:"exchange"`
-	Strategy                    NullableString          `json:"strategy,omitempty"`
-	ForceEntryEnable            bool                    `json:"force_entry_enable"`
-	ExitPricing                 map[string]interface{}  `json:"exit_pricing"`
-	EntryPricing                map[string]interface{}  `json:"entry_pricing"`
-	BotName                     string                  `json:"bot_name"`
-	State                       string                  `json:"state"`
-	Runmode                     string                  `json:"runmode"`
-	PositionAdjustmentEnable    bool                    `json:"position_adjustment_enable"`
-	MaxEntryPositionAdjustment  int64                   `json:"max_entry_position_adjustment"`
+	Version string `json:"version"`
+	StrategyVersion NullableString `json:"strategy_version,omitempty"`
+	ApiVersion float32 `json:"api_version"`
+	DryRun bool `json:"dry_run"`
+	TradingMode string `json:"trading_mode"`
+	ShortAllowed bool `json:"short_allowed"`
+	StakeCurrency string `json:"stake_currency"`
+	StakeAmount string `json:"stake_amount"`
+	AvailableCapital NullableFloat32 `json:"available_capital,omitempty"`
+	StakeCurrencyDecimals int64 `json:"stake_currency_decimals"`
+	MaxOpenTrades float32 `json:"max_open_trades"`
+	MinimalRoi map[string]interface{} `json:"minimal_roi"`
+	Stoploss NullableFloat32 `json:"stoploss,omitempty"`
+	StoplossOnExchange bool `json:"stoploss_on_exchange"`
+	TrailingStop NullableBool `json:"trailing_stop,omitempty"`
+	TrailingStopPositive NullableFloat32 `json:"trailing_stop_positive,omitempty"`
+	TrailingStopPositiveOffset NullableFloat32 `json:"trailing_stop_positive_offset,omitempty"`
+	TrailingOnlyOffsetIsReached NullableBool `json:"trailing_only_offset_is_reached,omitempty"`
+	Unfilledtimeout NullableUnfilledTimeout `json:"unfilledtimeout,omitempty"`
+	OrderTypes NullableOrderTypes `json:"order_types,omitempty"`
+	UseCustomStoploss NullableBool `json:"use_custom_stoploss,omitempty"`
+	Timeframe NullableString `json:"timeframe,omitempty"`
+	TimeframeMs int64 `json:"timeframe_ms"`
+	TimeframeMin int64 `json:"timeframe_min"`
+	Exchange string `json:"exchange"`
+	Strategy NullableString `json:"strategy,omitempty"`
+	ForceEntryEnable bool `json:"force_entry_enable"`
+	ExitPricing map[string]interface{} `json:"exit_pricing"`
+	EntryPricing map[string]interface{} `json:"entry_pricing"`
+	BotName string `json:"bot_name"`
+	State string `json:"state"`
+	Runmode string `json:"runmode"`
+	PositionAdjustmentEnable bool `json:"position_adjustment_enable"`
+	MaxEntryPositionAdjustment int64 `json:"max_entry_position_adjustment"`
 }
 
 type _ShowConfig ShowConfig
@@ -154,7 +154,6 @@ func (o *ShowConfig) HasStrategyVersion() bool {
 func (o *ShowConfig) SetStrategyVersion(v string) {
 	o.StrategyVersion.Set(&v)
 }
-
 // SetStrategyVersionNil sets the value for StrategyVersion to be an explicit nil
 func (o *ShowConfig) SetStrategyVersionNil() {
 	o.StrategyVersion.Set(nil)
@@ -341,7 +340,6 @@ func (o *ShowConfig) HasAvailableCapital() bool {
 func (o *ShowConfig) SetAvailableCapital(v float32) {
 	o.AvailableCapital.Set(&v)
 }
-
 // SetAvailableCapitalNil sets the value for AvailableCapital to be an explicit nil
 func (o *ShowConfig) SetAvailableCapitalNil() {
 	o.AvailableCapital.Set(nil)
@@ -456,7 +454,6 @@ func (o *ShowConfig) HasStoploss() bool {
 func (o *ShowConfig) SetStoploss(v float32) {
 	o.Stoploss.Set(&v)
 }
-
 // SetStoplossNil sets the value for Stoploss to be an explicit nil
 func (o *ShowConfig) SetStoplossNil() {
 	o.Stoploss.Set(nil)
@@ -523,7 +520,6 @@ func (o *ShowConfig) HasTrailingStop() bool {
 func (o *ShowConfig) SetTrailingStop(v bool) {
 	o.TrailingStop.Set(&v)
 }
-
 // SetTrailingStopNil sets the value for TrailingStop to be an explicit nil
 func (o *ShowConfig) SetTrailingStopNil() {
 	o.TrailingStop.Set(nil)
@@ -566,7 +562,6 @@ func (o *ShowConfig) HasTrailingStopPositive() bool {
 func (o *ShowConfig) SetTrailingStopPositive(v float32) {
 	o.TrailingStopPositive.Set(&v)
 }
-
 // SetTrailingStopPositiveNil sets the value for TrailingStopPositive to be an explicit nil
 func (o *ShowConfig) SetTrailingStopPositiveNil() {
 	o.TrailingStopPositive.Set(nil)
@@ -609,7 +604,6 @@ func (o *ShowConfig) HasTrailingStopPositiveOffset() bool {
 func (o *ShowConfig) SetTrailingStopPositiveOffset(v float32) {
 	o.TrailingStopPositiveOffset.Set(&v)
 }
-
 // SetTrailingStopPositiveOffsetNil sets the value for TrailingStopPositiveOffset to be an explicit nil
 func (o *ShowConfig) SetTrailingStopPositiveOffsetNil() {
 	o.TrailingStopPositiveOffset.Set(nil)
@@ -652,7 +646,6 @@ func (o *ShowConfig) HasTrailingOnlyOffsetIsReached() bool {
 func (o *ShowConfig) SetTrailingOnlyOffsetIsReached(v bool) {
 	o.TrailingOnlyOffsetIsReached.Set(&v)
 }
-
 // SetTrailingOnlyOffsetIsReachedNil sets the value for TrailingOnlyOffsetIsReached to be an explicit nil
 func (o *ShowConfig) SetTrailingOnlyOffsetIsReachedNil() {
 	o.TrailingOnlyOffsetIsReached.Set(nil)
@@ -695,7 +688,6 @@ func (o *ShowConfig) HasUnfilledtimeout() bool {
 func (o *ShowConfig) SetUnfilledtimeout(v UnfilledTimeout) {
 	o.Unfilledtimeout.Set(&v)
 }
-
 // SetUnfilledtimeoutNil sets the value for Unfilledtimeout to be an explicit nil
 func (o *ShowConfig) SetUnfilledtimeoutNil() {
 	o.Unfilledtimeout.Set(nil)
@@ -738,7 +730,6 @@ func (o *ShowConfig) HasOrderTypes() bool {
 func (o *ShowConfig) SetOrderTypes(v OrderTypes) {
 	o.OrderTypes.Set(&v)
 }
-
 // SetOrderTypesNil sets the value for OrderTypes to be an explicit nil
 func (o *ShowConfig) SetOrderTypesNil() {
 	o.OrderTypes.Set(nil)
@@ -781,7 +772,6 @@ func (o *ShowConfig) HasUseCustomStoploss() bool {
 func (o *ShowConfig) SetUseCustomStoploss(v bool) {
 	o.UseCustomStoploss.Set(&v)
 }
-
 // SetUseCustomStoplossNil sets the value for UseCustomStoploss to be an explicit nil
 func (o *ShowConfig) SetUseCustomStoplossNil() {
 	o.UseCustomStoploss.Set(nil)
@@ -824,7 +814,6 @@ func (o *ShowConfig) HasTimeframe() bool {
 func (o *ShowConfig) SetTimeframe(v string) {
 	o.Timeframe.Set(&v)
 }
-
 // SetTimeframeNil sets the value for Timeframe to be an explicit nil
 func (o *ShowConfig) SetTimeframeNil() {
 	o.Timeframe.Set(nil)
@@ -939,7 +928,6 @@ func (o *ShowConfig) HasStrategy() bool {
 func (o *ShowConfig) SetStrategy(v string) {
 	o.Strategy.Set(&v)
 }
-
 // SetStrategyNil sets the value for Strategy to be an explicit nil
 func (o *ShowConfig) SetStrategyNil() {
 	o.Strategy.Set(nil)
@@ -1143,7 +1131,7 @@ func (o *ShowConfig) SetMaxEntryPositionAdjustment(v int64) {
 }
 
 func (o ShowConfig) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1247,10 +1235,10 @@ func (o *ShowConfig) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -1306,3 +1294,5 @@ func (v *NullableShowConfig) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

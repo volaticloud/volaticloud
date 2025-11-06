@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,20 +21,20 @@ var _ MappedNullable = &OrderSchema{}
 
 // OrderSchema struct for OrderSchema
 type OrderSchema struct {
-	Pair                 string          `json:"pair"`
-	OrderId              string          `json:"order_id"`
-	Status               string          `json:"status"`
-	Remaining            NullableFloat32 `json:"remaining,omitempty"`
-	Amount               float32         `json:"amount"`
-	SafePrice            float32         `json:"safe_price"`
-	Cost                 float32         `json:"cost"`
-	Filled               NullableFloat32 `json:"filled,omitempty"`
-	FtOrderSide          string          `json:"ft_order_side"`
-	OrderType            string          `json:"order_type"`
-	IsOpen               bool            `json:"is_open"`
-	OrderTimestamp       NullableInt64   `json:"order_timestamp,omitempty"`
-	OrderFilledTimestamp NullableInt64   `json:"order_filled_timestamp,omitempty"`
-	FtFeeBase            NullableFloat32 `json:"ft_fee_base,omitempty"`
+	Pair string `json:"pair"`
+	OrderId string `json:"order_id"`
+	Status string `json:"status"`
+	Remaining NullableFloat32 `json:"remaining,omitempty"`
+	Amount float32 `json:"amount"`
+	SafePrice float32 `json:"safe_price"`
+	Cost float32 `json:"cost"`
+	Filled NullableFloat32 `json:"filled,omitempty"`
+	FtOrderSide string `json:"ft_order_side"`
+	OrderType string `json:"order_type"`
+	IsOpen bool `json:"is_open"`
+	OrderTimestamp NullableInt64 `json:"order_timestamp,omitempty"`
+	OrderFilledTimestamp NullableInt64 `json:"order_filled_timestamp,omitempty"`
+	FtFeeBase NullableFloat32 `json:"ft_fee_base,omitempty"`
 }
 
 type _OrderSchema OrderSchema
@@ -169,7 +169,6 @@ func (o *OrderSchema) HasRemaining() bool {
 func (o *OrderSchema) SetRemaining(v float32) {
 	o.Remaining.Set(&v)
 }
-
 // SetRemainingNil sets the value for Remaining to be an explicit nil
 func (o *OrderSchema) SetRemainingNil() {
 	o.Remaining.Set(nil)
@@ -284,7 +283,6 @@ func (o *OrderSchema) HasFilled() bool {
 func (o *OrderSchema) SetFilled(v float32) {
 	o.Filled.Set(&v)
 }
-
 // SetFilledNil sets the value for Filled to be an explicit nil
 func (o *OrderSchema) SetFilledNil() {
 	o.Filled.Set(nil)
@@ -399,7 +397,6 @@ func (o *OrderSchema) HasOrderTimestamp() bool {
 func (o *OrderSchema) SetOrderTimestamp(v int64) {
 	o.OrderTimestamp.Set(&v)
 }
-
 // SetOrderTimestampNil sets the value for OrderTimestamp to be an explicit nil
 func (o *OrderSchema) SetOrderTimestampNil() {
 	o.OrderTimestamp.Set(nil)
@@ -442,7 +439,6 @@ func (o *OrderSchema) HasOrderFilledTimestamp() bool {
 func (o *OrderSchema) SetOrderFilledTimestamp(v int64) {
 	o.OrderFilledTimestamp.Set(&v)
 }
-
 // SetOrderFilledTimestampNil sets the value for OrderFilledTimestamp to be an explicit nil
 func (o *OrderSchema) SetOrderFilledTimestampNil() {
 	o.OrderFilledTimestamp.Set(nil)
@@ -485,7 +481,6 @@ func (o *OrderSchema) HasFtFeeBase() bool {
 func (o *OrderSchema) SetFtFeeBase(v float32) {
 	o.FtFeeBase.Set(&v)
 }
-
 // SetFtFeeBaseNil sets the value for FtFeeBase to be an explicit nil
 func (o *OrderSchema) SetFtFeeBaseNil() {
 	o.FtFeeBase.Set(nil)
@@ -497,7 +492,7 @@ func (o *OrderSchema) UnsetFtFeeBase() {
 }
 
 func (o OrderSchema) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -554,10 +549,10 @@ func (o *OrderSchema) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -613,3 +608,5 @@ func (v *NullableOrderSchema) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

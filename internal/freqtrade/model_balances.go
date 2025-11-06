@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,20 +21,20 @@ var _ MappedNullable = &Balances{}
 
 // Balances struct for Balances
 type Balances struct {
-	Currencies               []Balance `json:"currencies"`
-	Total                    float32   `json:"total"`
-	TotalBot                 float32   `json:"total_bot"`
-	Symbol                   string    `json:"symbol"`
-	Value                    float32   `json:"value"`
-	ValueBot                 float32   `json:"value_bot"`
-	Stake                    string    `json:"stake"`
-	Note                     string    `json:"note"`
-	StartingCapital          float32   `json:"starting_capital"`
-	StartingCapitalRatio     float32   `json:"starting_capital_ratio"`
-	StartingCapitalPct       float32   `json:"starting_capital_pct"`
-	StartingCapitalFiat      float32   `json:"starting_capital_fiat"`
-	StartingCapitalFiatRatio float32   `json:"starting_capital_fiat_ratio"`
-	StartingCapitalFiatPct   float32   `json:"starting_capital_fiat_pct"`
+	Currencies []Balance `json:"currencies"`
+	Total float32 `json:"total"`
+	TotalBot float32 `json:"total_bot"`
+	Symbol string `json:"symbol"`
+	Value float32 `json:"value"`
+	ValueBot float32 `json:"value_bot"`
+	Stake string `json:"stake"`
+	Note string `json:"note"`
+	StartingCapital float32 `json:"starting_capital"`
+	StartingCapitalRatio float32 `json:"starting_capital_ratio"`
+	StartingCapitalPct float32 `json:"starting_capital_pct"`
+	StartingCapitalFiat float32 `json:"starting_capital_fiat"`
+	StartingCapitalFiatRatio float32 `json:"starting_capital_fiat_ratio"`
+	StartingCapitalFiatPct float32 `json:"starting_capital_fiat_pct"`
 }
 
 type _Balances Balances
@@ -407,7 +407,7 @@ func (o *Balances) SetStartingCapitalFiatPct(v float32) {
 }
 
 func (o Balances) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -459,10 +459,10 @@ func (o *Balances) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -518,3 +518,5 @@ func (v *NullableBalances) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

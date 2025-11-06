@@ -15,9 +15,10 @@ import (
 	"fmt"
 )
 
+
 // RootModelUnionTradeSchemaStatusMsg struct for RootModelUnionTradeSchemaStatusMsg
 type RootModelUnionTradeSchemaStatusMsg struct {
-	StatusMsg   *StatusMsg
+	StatusMsg *StatusMsg
 	TradeSchema *TradeSchema
 }
 
@@ -25,7 +26,7 @@ type RootModelUnionTradeSchemaStatusMsg struct {
 func (dst *RootModelUnionTradeSchemaStatusMsg) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into StatusMsg
-	err = json.Unmarshal(data, &dst.StatusMsg)
+	err = json.Unmarshal(data, &dst.StatusMsg);
 	if err == nil {
 		jsonStatusMsg, _ := json.Marshal(dst.StatusMsg)
 		if string(jsonStatusMsg) == "{}" { // empty struct
@@ -38,7 +39,7 @@ func (dst *RootModelUnionTradeSchemaStatusMsg) UnmarshalJSON(data []byte) error 
 	}
 
 	// try to unmarshal JSON data into TradeSchema
-	err = json.Unmarshal(data, &dst.TradeSchema)
+	err = json.Unmarshal(data, &dst.TradeSchema);
 	if err == nil {
 		jsonTradeSchema, _ := json.Marshal(dst.TradeSchema)
 		if string(jsonTradeSchema) == "{}" { // empty struct
@@ -65,6 +66,7 @@ func (src RootModelUnionTradeSchemaStatusMsg) MarshalJSON() ([]byte, error) {
 
 	return nil, nil // no data in anyOf schemas
 }
+
 
 type NullableRootModelUnionTradeSchemaStatusMsg struct {
 	value *RootModelUnionTradeSchemaStatusMsg
@@ -101,3 +103,5 @@ func (v *NullableRootModelUnionTradeSchemaStatusMsg) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

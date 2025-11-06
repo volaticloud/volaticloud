@@ -20,12 +20,12 @@ type CandleType string
 
 // List of CandleType
 const (
-	CANDLETYPE_SPOT          CandleType = "spot"
-	CANDLETYPE_FUTURES       CandleType = "futures"
-	CANDLETYPE_MARK          CandleType = "mark"
-	CANDLETYPE_INDEX         CandleType = "index"
+	CANDLETYPE_SPOT CandleType = "spot"
+	CANDLETYPE_FUTURES CandleType = "futures"
+	CANDLETYPE_MARK CandleType = "mark"
+	CANDLETYPE_INDEX CandleType = "index"
 	CANDLETYPE_PREMIUM_INDEX CandleType = "premiumIndex"
-	CANDLETYPE_FUNDING_RATE  CandleType = "funding_rate"
+	CANDLETYPE_FUNDING_RATE CandleType = "funding_rate"
 )
 
 // All allowed values of CandleType enum
@@ -116,3 +116,4 @@ func (v *NullableCandleType) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+

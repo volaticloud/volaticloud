@@ -15,6 +15,7 @@ import (
 	"fmt"
 )
 
+
 // DurationsValue struct for DurationsValue
 type DurationsValue struct {
 	Float32 *float32
@@ -29,7 +30,7 @@ func (dst *DurationsValue) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into Float32
-	err = json.Unmarshal(data, &dst.Float32)
+	err = json.Unmarshal(data, &dst.Float32);
 	if err == nil {
 		jsonFloat32, _ := json.Marshal(dst.Float32)
 		if string(jsonFloat32) == "{}" { // empty struct
@@ -52,6 +53,7 @@ func (src DurationsValue) MarshalJSON() ([]byte, error) {
 
 	return nil, nil // no data in anyOf schemas
 }
+
 
 type NullableDurationsValue struct {
 	value *DurationsValue
@@ -88,3 +90,5 @@ func (v *NullableDurationsValue) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

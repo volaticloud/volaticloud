@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,49 +21,49 @@ var _ MappedNullable = &Profit{}
 
 // Profit struct for Profit
 type Profit struct {
-	ProfitClosedCoin          float32         `json:"profit_closed_coin"`
-	ProfitClosedPercentMean   float32         `json:"profit_closed_percent_mean"`
-	ProfitClosedRatioMean     float32         `json:"profit_closed_ratio_mean"`
-	ProfitClosedPercentSum    float32         `json:"profit_closed_percent_sum"`
-	ProfitClosedRatioSum      float32         `json:"profit_closed_ratio_sum"`
-	ProfitClosedPercent       float32         `json:"profit_closed_percent"`
-	ProfitClosedRatio         float32         `json:"profit_closed_ratio"`
-	ProfitClosedFiat          float32         `json:"profit_closed_fiat"`
-	ProfitAllCoin             float32         `json:"profit_all_coin"`
-	ProfitAllPercentMean      float32         `json:"profit_all_percent_mean"`
-	ProfitAllRatioMean        float32         `json:"profit_all_ratio_mean"`
-	ProfitAllPercentSum       float32         `json:"profit_all_percent_sum"`
-	ProfitAllRatioSum         float32         `json:"profit_all_ratio_sum"`
-	ProfitAllPercent          float32         `json:"profit_all_percent"`
-	ProfitAllRatio            float32         `json:"profit_all_ratio"`
-	ProfitAllFiat             float32         `json:"profit_all_fiat"`
-	TradeCount                int64           `json:"trade_count"`
-	ClosedTradeCount          int64           `json:"closed_trade_count"`
-	FirstTradeDate            string          `json:"first_trade_date"`
-	FirstTradeHumanized       string          `json:"first_trade_humanized"`
-	FirstTradeTimestamp       int64           `json:"first_trade_timestamp"`
-	LatestTradeDate           string          `json:"latest_trade_date"`
-	LatestTradeHumanized      string          `json:"latest_trade_humanized"`
-	LatestTradeTimestamp      int64           `json:"latest_trade_timestamp"`
-	AvgDuration               string          `json:"avg_duration"`
-	BestPair                  string          `json:"best_pair"`
-	BestRate                  float32         `json:"best_rate"`
-	BestPairProfitRatio       float32         `json:"best_pair_profit_ratio"`
-	WinningTrades             int64           `json:"winning_trades"`
-	LosingTrades              int64           `json:"losing_trades"`
-	ProfitFactor              float32         `json:"profit_factor"`
-	Winrate                   float32         `json:"winrate"`
-	Expectancy                float32         `json:"expectancy"`
-	ExpectancyRatio           float32         `json:"expectancy_ratio"`
-	MaxDrawdown               float32         `json:"max_drawdown"`
-	MaxDrawdownAbs            float32         `json:"max_drawdown_abs"`
-	MaxDrawdownStart          string          `json:"max_drawdown_start"`
-	MaxDrawdownStartTimestamp int64           `json:"max_drawdown_start_timestamp"`
-	MaxDrawdownEnd            string          `json:"max_drawdown_end"`
-	MaxDrawdownEndTimestamp   int64           `json:"max_drawdown_end_timestamp"`
-	TradingVolume             NullableFloat32 `json:"trading_volume,omitempty"`
-	BotStartTimestamp         int64           `json:"bot_start_timestamp"`
-	BotStartDate              string          `json:"bot_start_date"`
+	ProfitClosedCoin float32 `json:"profit_closed_coin"`
+	ProfitClosedPercentMean float32 `json:"profit_closed_percent_mean"`
+	ProfitClosedRatioMean float32 `json:"profit_closed_ratio_mean"`
+	ProfitClosedPercentSum float32 `json:"profit_closed_percent_sum"`
+	ProfitClosedRatioSum float32 `json:"profit_closed_ratio_sum"`
+	ProfitClosedPercent float32 `json:"profit_closed_percent"`
+	ProfitClosedRatio float32 `json:"profit_closed_ratio"`
+	ProfitClosedFiat float32 `json:"profit_closed_fiat"`
+	ProfitAllCoin float32 `json:"profit_all_coin"`
+	ProfitAllPercentMean float32 `json:"profit_all_percent_mean"`
+	ProfitAllRatioMean float32 `json:"profit_all_ratio_mean"`
+	ProfitAllPercentSum float32 `json:"profit_all_percent_sum"`
+	ProfitAllRatioSum float32 `json:"profit_all_ratio_sum"`
+	ProfitAllPercent float32 `json:"profit_all_percent"`
+	ProfitAllRatio float32 `json:"profit_all_ratio"`
+	ProfitAllFiat float32 `json:"profit_all_fiat"`
+	TradeCount int64 `json:"trade_count"`
+	ClosedTradeCount int64 `json:"closed_trade_count"`
+	FirstTradeDate string `json:"first_trade_date"`
+	FirstTradeHumanized string `json:"first_trade_humanized"`
+	FirstTradeTimestamp int64 `json:"first_trade_timestamp"`
+	LatestTradeDate string `json:"latest_trade_date"`
+	LatestTradeHumanized string `json:"latest_trade_humanized"`
+	LatestTradeTimestamp int64 `json:"latest_trade_timestamp"`
+	AvgDuration string `json:"avg_duration"`
+	BestPair string `json:"best_pair"`
+	BestRate float32 `json:"best_rate"`
+	BestPairProfitRatio float32 `json:"best_pair_profit_ratio"`
+	WinningTrades int64 `json:"winning_trades"`
+	LosingTrades int64 `json:"losing_trades"`
+	ProfitFactor float32 `json:"profit_factor"`
+	Winrate float32 `json:"winrate"`
+	Expectancy float32 `json:"expectancy"`
+	ExpectancyRatio float32 `json:"expectancy_ratio"`
+	MaxDrawdown float32 `json:"max_drawdown"`
+	MaxDrawdownAbs float32 `json:"max_drawdown_abs"`
+	MaxDrawdownStart string `json:"max_drawdown_start"`
+	MaxDrawdownStartTimestamp int64 `json:"max_drawdown_start_timestamp"`
+	MaxDrawdownEnd string `json:"max_drawdown_end"`
+	MaxDrawdownEndTimestamp int64 `json:"max_drawdown_end_timestamp"`
+	TradingVolume NullableFloat32 `json:"trading_volume,omitempty"`
+	BotStartTimestamp int64 `json:"bot_start_timestamp"`
+	BotStartDate string `json:"bot_start_date"`
 }
 
 type _Profit Profit
@@ -1119,7 +1119,6 @@ func (o *Profit) HasTradingVolume() bool {
 func (o *Profit) SetTradingVolume(v float32) {
 	o.TradingVolume.Set(&v)
 }
-
 // SetTradingVolumeNil sets the value for TradingVolume to be an explicit nil
 func (o *Profit) SetTradingVolumeNil() {
 	o.TradingVolume.Set(nil)
@@ -1179,7 +1178,7 @@ func (o *Profit) SetBotStartDate(v string) {
 }
 
 func (o Profit) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1290,10 +1289,10 @@ func (o *Profit) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -1349,3 +1348,5 @@ func (v *NullableProfit) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+

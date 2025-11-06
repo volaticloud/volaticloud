@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
+	"bytes"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &LockModel{}
 
 // LockModel struct for LockModel
 type LockModel struct {
-	Id               int64          `json:"id"`
-	Active           bool           `json:"active"`
-	LockEndTime      string         `json:"lock_end_time"`
-	LockEndTimestamp int64          `json:"lock_end_timestamp"`
-	LockTime         string         `json:"lock_time"`
-	LockTimestamp    int64          `json:"lock_timestamp"`
-	Pair             string         `json:"pair"`
-	Side             string         `json:"side"`
-	Reason           NullableString `json:"reason,omitempty"`
+	Id int64 `json:"id"`
+	Active bool `json:"active"`
+	LockEndTime string `json:"lock_end_time"`
+	LockEndTimestamp int64 `json:"lock_end_timestamp"`
+	LockTime string `json:"lock_time"`
+	LockTimestamp int64 `json:"lock_timestamp"`
+	Pair string `json:"pair"`
+	Side string `json:"side"`
+	Reason NullableString `json:"reason,omitempty"`
 }
 
 type _LockModel LockModel
@@ -283,7 +283,6 @@ func (o *LockModel) HasReason() bool {
 func (o *LockModel) SetReason(v string) {
 	o.Reason.Set(&v)
 }
-
 // SetReasonNil sets the value for Reason to be an explicit nil
 func (o *LockModel) SetReasonNil() {
 	o.Reason.Set(nil)
@@ -295,7 +294,7 @@ func (o *LockModel) UnsetReason() {
 }
 
 func (o LockModel) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -338,10 +337,10 @@ func (o *LockModel) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err
+		return err;
 	}
 
-	for _, requiredProperty := range requiredProperties {
+	for _, requiredProperty := range(requiredProperties) {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -397,3 +396,5 @@ func (v *NullableLockModel) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
+
+
