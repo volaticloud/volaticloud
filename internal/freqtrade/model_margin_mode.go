@@ -20,9 +20,9 @@ type MarginMode string
 
 // List of MarginMode
 const (
-	MARGINMODE_CROSS MarginMode = "cross"
+	MARGINMODE_CROSS    MarginMode = "cross"
 	MARGINMODE_ISOLATED MarginMode = "isolated"
-	MARGINMODE_EMPTY MarginMode = ""
+	MARGINMODE_EMPTY    MarginMode = ""
 )
 
 // All allowed values of MarginMode enum
@@ -110,4 +110,3 @@ func (v *NullableMarginMode) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

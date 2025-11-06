@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &ForceExitPayload{}
 
 // ForceExitPayload struct for ForceExitPayload
 type ForceExitPayload struct {
-	Tradeid string `json:"tradeid"`
+	Tradeid   string                  `json:"tradeid"`
 	Ordertype NullableOrderTypeValues `json:"ordertype,omitempty"`
-	Amount NullableFloat32 `json:"amount,omitempty"`
+	Amount    NullableFloat32         `json:"amount,omitempty"`
 }
 
 type _ForceExitPayload ForceExitPayload
@@ -102,6 +102,7 @@ func (o *ForceExitPayload) HasOrdertype() bool {
 func (o *ForceExitPayload) SetOrdertype(v OrderTypeValues) {
 	o.Ordertype.Set(&v)
 }
+
 // SetOrdertypeNil sets the value for Ordertype to be an explicit nil
 func (o *ForceExitPayload) SetOrdertypeNil() {
 	o.Ordertype.Set(nil)
@@ -144,6 +145,7 @@ func (o *ForceExitPayload) HasAmount() bool {
 func (o *ForceExitPayload) SetAmount(v float32) {
 	o.Amount.Set(&v)
 }
+
 // SetAmountNil sets the value for Amount to be an explicit nil
 func (o *ForceExitPayload) SetAmountNil() {
 	o.Amount.Set(nil)
@@ -155,7 +157,7 @@ func (o *ForceExitPayload) UnsetAmount() {
 }
 
 func (o ForceExitPayload) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -187,10 +189,10 @@ func (o *ForceExitPayload) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -246,5 +248,3 @@ func (v *NullableForceExitPayload) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

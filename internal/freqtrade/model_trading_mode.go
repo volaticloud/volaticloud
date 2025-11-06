@@ -20,8 +20,8 @@ type TradingMode string
 
 // List of TradingMode
 const (
-	TRADINGMODE_SPOT TradingMode = "spot"
-	TRADINGMODE_MARGIN TradingMode = "margin"
+	TRADINGMODE_SPOT    TradingMode = "spot"
+	TRADINGMODE_MARGIN  TradingMode = "margin"
 	TRADINGMODE_FUTURES TradingMode = "futures"
 )
 
@@ -110,4 +110,3 @@ func (v *NullableTradingMode) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &PairListsPayload{}
 
 // PairListsPayload struct for PairListsPayload
 type PairListsPayload struct {
-	TradingMode NullableTradingMode `json:"trading_mode,omitempty"`
-	MarginMode NullableMarginMode `json:"margin_mode,omitempty"`
-	Exchange NullableString `json:"exchange,omitempty"`
-	Pairlists []map[string]interface{} `json:"pairlists"`
-	Blacklist []string `json:"blacklist"`
-	StakeCurrency string `json:"stake_currency"`
+	TradingMode   NullableTradingMode      `json:"trading_mode,omitempty"`
+	MarginMode    NullableMarginMode       `json:"margin_mode,omitempty"`
+	Exchange      NullableString           `json:"exchange,omitempty"`
+	Pairlists     []map[string]interface{} `json:"pairlists"`
+	Blacklist     []string                 `json:"blacklist"`
+	StakeCurrency string                   `json:"stake_currency"`
 }
 
 type _PairListsPayload PairListsPayload
@@ -83,6 +83,7 @@ func (o *PairListsPayload) HasTradingMode() bool {
 func (o *PairListsPayload) SetTradingMode(v TradingMode) {
 	o.TradingMode.Set(&v)
 }
+
 // SetTradingModeNil sets the value for TradingMode to be an explicit nil
 func (o *PairListsPayload) SetTradingModeNil() {
 	o.TradingMode.Set(nil)
@@ -125,6 +126,7 @@ func (o *PairListsPayload) HasMarginMode() bool {
 func (o *PairListsPayload) SetMarginMode(v MarginMode) {
 	o.MarginMode.Set(&v)
 }
+
 // SetMarginModeNil sets the value for MarginMode to be an explicit nil
 func (o *PairListsPayload) SetMarginModeNil() {
 	o.MarginMode.Set(nil)
@@ -167,6 +169,7 @@ func (o *PairListsPayload) HasExchange() bool {
 func (o *PairListsPayload) SetExchange(v string) {
 	o.Exchange.Set(&v)
 }
+
 // SetExchangeNil sets the value for Exchange to be an explicit nil
 func (o *PairListsPayload) SetExchangeNil() {
 	o.Exchange.Set(nil)
@@ -250,7 +253,7 @@ func (o *PairListsPayload) SetStakeCurrency(v string) {
 }
 
 func (o PairListsPayload) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -289,10 +292,10 @@ func (o *PairListsPayload) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -348,5 +351,3 @@ func (v *NullablePairListsPayload) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
