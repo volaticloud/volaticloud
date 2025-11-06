@@ -1,0 +1,62 @@
+diff --git a/.github/workflows/backend-ci.yml b/.github/workflows/backend-ci.yml
+index e435a0c..b28dd5b 100644
+--- a/.github/workflows/backend-ci.yml
++++ b/.github/workflows/backend-ci.yml
+@@ -34,7 +34,7 @@ jobs:
+     runs-on: ubuntu-latest
+     strategy:
+       matrix:
+-        go-version: ['1.24.x']
++        go-version: ['1.23.x']
+
+     steps:
+       - name: Checkout code
+@@ -85,7 +85,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+
+       - name: Run golangci-lint
+@@ -109,7 +109,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+
+       - name: Build binary
+@@ -131,7 +131,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+
+       - name: Generate code
+diff --git a/.github/workflows/quality.yml b/.github/workflows/quality.yml
+index 2ba02a8..0eeaeff 100644
+--- a/.github/workflows/quality.yml
++++ b/.github/workflows/quality.yml
+@@ -21,7 +21,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+
+       - name: Run tests with coverage
+@@ -108,7 +108,7 @@ jobs:
+       - name: Set up Go
+         uses: actions/setup-go@v5
+         with:
+-          go-version: '1.24.x'
++          go-version: '1.23.x'
+           cache: true
+
+       - name: gofmt check
