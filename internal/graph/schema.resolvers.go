@@ -24,7 +24,7 @@ import (
 
 func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*backtest1.BacktestSummary, error) {
 	// If no summary stored in database, return nil (not an error)
-	if obj.Summary == nil || len(obj.Summary) == 0 {
+	if len(obj.Summary) == 0 {
 		return nil, nil
 	}
 
