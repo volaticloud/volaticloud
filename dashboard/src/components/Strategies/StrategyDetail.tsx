@@ -108,13 +108,15 @@ const StrategyDetail = () => {
             </Typography>
           )}
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<PlayArrow />}
-          onClick={() => setBacktestDialogOpen(true)}
-        >
-          Quick Backtest
-        </Button>
+        {!strategy.backtest && (
+          <Button
+            variant="contained"
+            startIcon={<PlayArrow />}
+            onClick={() => setBacktestDialogOpen(true)}
+          >
+            Run Backtest
+          </Button>
+        )}
         <IconButton onClick={() => setEditDialogOpen(true)}>
           <Edit />
         </IconButton>
@@ -204,6 +206,112 @@ const StrategyDetail = () => {
             </Card>
           </Box>
         </Box>
+
+        {/* Backtest Results */}
+        {strategy.backtest && (
+          <Box>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Assessment />
+                    <Typography variant="h6">Backtest Results</Typography>
+                  </Box>
+                  <Chip
+                    label={strategy.backtest.status}
+                    color={
+                      strategy.backtest.status === 'completed' ? 'success' :
+                      strategy.backtest.status === 'running' ? 'primary' :
+                      strategy.backtest.status === 'failed' ? 'error' : 'default'
+                    }
+                    size="small"
+                  />
+                </Box>
+                <Divider sx={{ mb: 2 }} />
+
+                {strategy.backtest.summary ? (
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Total Trades
+                      </Typography>
+                      <Typography variant="h6">{strategy.backtest.summary.totalTrades}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Win Rate
+                      </Typography>
+                      <Typography variant="h6" color={strategy.backtest.summary.winRate && strategy.backtest.summary.winRate > 0.5 ? 'success.main' : 'error.main'}>
+                        {strategy.backtest.summary.winRate ? `${(strategy.backtest.summary.winRate * 100).toFixed(2)}%` : 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Total Profit
+                      </Typography>
+                      <Typography variant="h6" color={strategy.backtest.summary.profitTotal && strategy.backtest.summary.profitTotal > 0 ? 'success.main' : 'error.main'}>
+                        {strategy.backtest.summary.profitTotal ? `${strategy.backtest.summary.profitTotal.toFixed(2)}%` : 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Max Drawdown
+                      </Typography>
+                      <Typography variant="h6" color="error.main">
+                        {strategy.backtest.summary.maxDrawdown ? `${(strategy.backtest.summary.maxDrawdown * 100).toFixed(2)}%` : 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Profit Factor
+                      </Typography>
+                      <Typography variant="body1">
+                        {strategy.backtest.summary.profitFactor?.toFixed(2) || 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Expectancy
+                      </Typography>
+                      <Typography variant="body1">
+                        {strategy.backtest.summary.expectancy?.toFixed(2) || 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Wins / Losses
+                      </Typography>
+                      <Typography variant="body1">
+                        {strategy.backtest.summary.wins} / {strategy.backtest.summary.losses}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Created
+                      </Typography>
+                      <Typography variant="body1">
+                        {new Date(strategy.backtest.createdAt).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ) : strategy.backtest.status === 'running' ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <CircularProgress size={20} />
+                    <Typography>Backtest is currently running...</Typography>
+                  </Box>
+                ) : strategy.backtest.status === 'failed' ? (
+                  <Alert severity="error">
+                    Backtest failed. Please try running it again.
+                  </Alert>
+                ) : (
+                  <Alert severity="info">
+                    Backtest is pending. Results will appear once processing is complete.
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        )}
 
         {/* Version History */}
         <Box>
