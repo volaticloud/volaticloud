@@ -6,6 +6,7 @@ import (
 
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/enttest"
+	"anytrade/internal/enum"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -146,10 +147,69 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 }
 
 func TestCreateBacktest_AutoVersionsWhenBacktestExists(t *testing.T) {
-	t.Skip("Skipping - backtest auto-versioning needs schema fix for one-to-one edge")
-	// TODO: The strategy schema has both backtest (one-to-one) and backtests (one-to-many) edges
-	// The mutation checks the singular backtest edge, but it may not be properly populated
-	// This needs investigation and potentially a schema or mutation fix
+	resolver, client := setupTestResolver(t)
+	defer client.Close()
+
+	ctx := context.Background()
+
+	// Create a strategy (v1)
+	strategy, err := client.Strategy.Create().
+		SetName("TestStrategy").
+		SetCode("test code").
+		SetVersionNumber(1).
+		SetIsLatest(true).
+		Save(ctx)
+	require.NoError(t, err)
+
+	// Create a runner for backtests
+	runnerConfig := map[string]interface{}{
+		"docker": map[string]interface{}{
+			"host": "unix:///var/run/docker.sock",
+		},
+	}
+	runner, err := client.BotRunner.Create().
+		SetName("TestRunner").
+		SetType(enum.RunnerDocker).
+		SetConfig(runnerConfig).
+		Save(ctx)
+	require.NoError(t, err)
+
+	// Create first backtest - should use v1
+	backtest1Input := ent.CreateBacktestInput{
+		StrategyID: strategy.ID,
+		RunnerID:   runner.ID,
+	}
+	backtest1, err := resolver.Mutation().CreateBacktest(ctx, backtest1Input)
+	require.NoError(t, err)
+	assert.Equal(t, strategy.ID, backtest1.StrategyID)
+
+	// Create second backtest - should auto-create v2 and use it
+	backtest2Input := ent.CreateBacktestInput{
+		StrategyID: strategy.ID, // Request on v1
+		RunnerID:   runner.ID,
+	}
+	backtest2, err := resolver.Mutation().CreateBacktest(ctx, backtest2Input)
+	require.NoError(t, err)
+
+	// Verify backtest2 is NOT on v1 (should be on v2)
+	assert.NotEqual(t, strategy.ID, backtest2.StrategyID, "Second backtest should be on new strategy version")
+
+	// Load the new strategy version
+	newVersion, err := client.Strategy.Get(ctx, backtest2.StrategyID)
+	require.NoError(t, err)
+
+	// Verify new version properties
+	assert.Equal(t, 2, newVersion.VersionNumber)
+	assert.Equal(t, "TestStrategy", newVersion.Name)
+	assert.Equal(t, "test code", newVersion.Code)
+	assert.True(t, newVersion.IsLatest)
+	assert.NotNil(t, newVersion.ParentID)
+	assert.Equal(t, strategy.ID, *newVersion.ParentID)
+
+	// Verify old version is no longer latest
+	oldVersion, err := client.Strategy.Get(ctx, strategy.ID)
+	require.NoError(t, err)
+	assert.False(t, oldVersion.IsLatest)
 }
 
 func TestLatestStrategies_ReturnsOnlyLatest(t *testing.T) {

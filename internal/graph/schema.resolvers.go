@@ -517,7 +517,7 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 	// Load strategy with backtest relationship to check if it already has one
 	existingStrategy, err := r.client.Strategy.Query().
 		Where(strategy.ID(strategyID)).
-		WithBacktest().
+		WithBacktests().
 		Only(ctx)
 
 	if err != nil {
@@ -525,7 +525,7 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 	}
 
 	// Check if strategy already has a backtest
-	if existingStrategy.Edges.Backtest != nil {
+	if len(existingStrategy.Edges.Backtests) > 0 {
 		// Auto-create new strategy version for this backtest
 		newVersion, err := r.createStrategyVersion(ctx, existingStrategy)
 		if err != nil {
