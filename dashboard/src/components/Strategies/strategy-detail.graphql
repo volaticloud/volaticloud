@@ -7,6 +7,8 @@ query GetStrategyDetail($id: ID!) {
         description
         code
         version
+        versionNumber
+        isLatest
         createdAt
         updatedAt
         bots {
@@ -41,6 +43,23 @@ query GetStrategyDetail($id: ID!) {
           }
         }
       }
+    }
+  }
+}
+
+query GetStrategyVersions($name: String!) {
+  strategyVersions(name: $name) {
+    id
+    name
+    versionNumber
+    version
+    isLatest
+    createdAt
+    bots {
+      totalCount
+    }
+    backtests {
+      totalCount
     }
   }
 }
