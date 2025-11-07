@@ -477,7 +477,7 @@ func HasStrategy() predicate.Backtest {
 	return predicate.Backtest(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, StrategyTable, StrategyColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, StrategyTable, StrategyColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

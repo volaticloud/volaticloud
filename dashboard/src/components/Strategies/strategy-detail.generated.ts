@@ -8,14 +8,14 @@ export type GetStrategyDetailQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetStrategyDetailQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, versionNumber: number, isLatest: boolean, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string, updatedAt: string, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType }, summary?: { __typename?: 'BacktestSummary', strategyName: string, totalTrades: number, wins: number, losses: number, profitTotalAbs: number, profitTotal: number, winRate?: number | null, expectancy?: number | null, profitFactor?: number | null, maxDrawdown?: number | null } | null } | null } | null> | null } } | null } | null> | null } };
+export type GetStrategyDetailQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, versionNumber: number, isLatest: boolean, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string, updatedAt: string, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType }, summary?: { __typename?: 'BacktestSummary', strategyName: string, totalTrades: number, wins: number, losses: number, profitTotalAbs: number, profitTotal: number, winRate?: number | null, expectancy?: number | null, profitFactor?: number | null, maxDrawdown?: number | null } | null } | null } | null } | null> | null } };
 
 export type GetStrategyVersionsQueryVariables = Types.Exact<{
   name: Types.Scalars['String']['input'];
 }>;
 
 
-export type GetStrategyVersionsQuery = { __typename?: 'Query', strategyVersions: Array<{ __typename?: 'Strategy', id: string, name: string, versionNumber: number, version: string, isLatest: boolean, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtests: { __typename?: 'BacktestConnection', totalCount: number } }> };
+export type GetStrategyVersionsQuery = { __typename?: 'Query', strategyVersions: Array<{ __typename?: 'Strategy', id: string, name: string, versionNumber: number, version: string, isLatest: boolean, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null }> };
 
 
 export const GetStrategyDetailDocument = gql`
@@ -35,32 +35,27 @@ export const GetStrategyDetailDocument = gql`
         bots {
           totalCount
         }
-        backtests(first: 50) {
-          totalCount
-          edges {
-            node {
-              id
-              status
-              createdAt
-              updatedAt
-              runner {
-                id
-                name
-                type
-              }
-              summary {
-                strategyName
-                totalTrades
-                wins
-                losses
-                profitTotalAbs
-                profitTotal
-                winRate
-                expectancy
-                profitFactor
-                maxDrawdown
-              }
-            }
+        backtest {
+          id
+          status
+          createdAt
+          updatedAt
+          runner {
+            id
+            name
+            type
+          }
+          summary {
+            strategyName
+            totalTrades
+            wins
+            losses
+            profitTotalAbs
+            profitTotal
+            winRate
+            expectancy
+            profitFactor
+            maxDrawdown
           }
         }
       }
@@ -113,8 +108,9 @@ export const GetStrategyVersionsDocument = gql`
     bots {
       totalCount
     }
-    backtests {
-      totalCount
+    backtest {
+      id
+      status
     }
   }
 }

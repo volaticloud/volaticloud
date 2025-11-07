@@ -42,9 +42,8 @@ type Strategy struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the StrategyQuery when eager-loading is set.
-	Edges             StrategyEdges `json:"edges"`
-	strategy_backtest *uuid.UUID
-	selectValues      sql.SelectValues
+	Edges        StrategyEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // StrategyEdges holds the relations/edges for other nodes in the graph.
@@ -53,21 +52,18 @@ type StrategyEdges struct {
 	Bots []*Bot `json:"bots,omitempty"`
 	// Strategy can have at most one backtest (one-to-one)
 	Backtest *Backtest `json:"backtest,omitempty"`
-	// Backtests holds the value of the backtests edge.
-	Backtests []*Backtest `json:"backtests,omitempty"`
 	// Parent strategy for versioning (self-referential)
 	Children []*Strategy `json:"children,omitempty"`
 	// Parent holds the value of the parent edge.
 	Parent *Strategy `json:"parent,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [5]map[string]int
+	totalCount [4]map[string]int
 
-	namedBots      map[string][]*Bot
-	namedBacktests map[string][]*Backtest
-	namedChildren  map[string][]*Strategy
+	namedBots     map[string][]*Bot
+	namedChildren map[string][]*Strategy
 }
 
 // BotsOrErr returns the Bots value or an error if the edge
@@ -90,19 +86,10 @@ func (e StrategyEdges) BacktestOrErr() (*Backtest, error) {
 	return nil, &NotLoadedError{edge: "backtest"}
 }
 
-// BacktestsOrErr returns the Backtests value or an error if the edge
-// was not loaded in eager-loading.
-func (e StrategyEdges) BacktestsOrErr() ([]*Backtest, error) {
-	if e.loadedTypes[2] {
-		return e.Backtests, nil
-	}
-	return nil, &NotLoadedError{edge: "backtests"}
-}
-
 // ChildrenOrErr returns the Children value or an error if the edge
 // was not loaded in eager-loading.
 func (e StrategyEdges) ChildrenOrErr() ([]*Strategy, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[2] {
 		return e.Children, nil
 	}
 	return nil, &NotLoadedError{edge: "children"}
@@ -113,7 +100,7 @@ func (e StrategyEdges) ChildrenOrErr() ([]*Strategy, error) {
 func (e StrategyEdges) ParentOrErr() (*Strategy, error) {
 	if e.Parent != nil {
 		return e.Parent, nil
-	} else if e.loadedTypes[4] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: strategy.Label}
 	}
 	return nil, &NotLoadedError{edge: "parent"}
@@ -138,8 +125,6 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case strategy.FieldID:
 			values[i] = new(uuid.UUID)
-		case strategy.ForeignKeys[0]: // strategy_backtest
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -224,13 +209,6 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case strategy.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field strategy_backtest", values[i])
-			} else if value.Valid {
-				_m.strategy_backtest = new(uuid.UUID)
-				*_m.strategy_backtest = *value.S.(*uuid.UUID)
-			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -252,11 +230,6 @@ func (_m *Strategy) QueryBots() *BotQuery {
 // QueryBacktest queries the "backtest" edge of the Strategy entity.
 func (_m *Strategy) QueryBacktest() *BacktestQuery {
 	return NewStrategyClient(_m.config).QueryBacktest(_m)
-}
-
-// QueryBacktests queries the "backtests" edge of the Strategy entity.
-func (_m *Strategy) QueryBacktests() *BacktestQuery {
-	return NewStrategyClient(_m.config).QueryBacktests(_m)
 }
 
 // QueryChildren queries the "children" edge of the Strategy entity.
@@ -348,30 +321,6 @@ func (_m *Strategy) appendNamedBots(name string, edges ...*Bot) {
 		_m.Edges.namedBots[name] = []*Bot{}
 	} else {
 		_m.Edges.namedBots[name] = append(_m.Edges.namedBots[name], edges...)
-	}
-}
-
-// NamedBacktests returns the Backtests named value or an error if the edge was not
-// loaded in eager-loading with this name.
-func (_m *Strategy) NamedBacktests(name string) ([]*Backtest, error) {
-	if _m.Edges.namedBacktests == nil {
-		return nil, &NotLoadedError{edge: name}
-	}
-	nodes, ok := _m.Edges.namedBacktests[name]
-	if !ok {
-		return nil, &NotLoadedError{edge: name}
-	}
-	return nodes, nil
-}
-
-func (_m *Strategy) appendNamedBacktests(name string, edges ...*Backtest) {
-	if _m.Edges.namedBacktests == nil {
-		_m.Edges.namedBacktests = make(map[string][]*Backtest)
-	}
-	if len(edges) == 0 {
-		_m.Edges.namedBacktests[name] = []*Backtest{}
-	} else {
-		_m.Edges.namedBacktests[name] = append(_m.Edges.namedBacktests[name], edges...)
 	}
 }
 

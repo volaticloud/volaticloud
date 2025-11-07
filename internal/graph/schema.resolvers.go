@@ -103,14 +103,6 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 	return newVersion.Save(ctx)
 }
 
-// coalesce returns the new value if provided, otherwise returns the old value
-func coalesce[T any](newVal, oldVal *T) T {
-	if newVal != nil {
-		return *newVal
-	}
-	return *oldVal
-}
-
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
 	err := r.client.Strategy.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
@@ -517,7 +509,7 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 	// Load strategy with backtest relationship to check if it already has one
 	existingStrategy, err := r.client.Strategy.Query().
 		Where(strategy.ID(strategyID)).
-		WithBacktests().
+		WithBacktest().
 		Only(ctx)
 
 	if err != nil {
@@ -525,7 +517,7 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 	}
 
 	// Check if strategy already has a backtest
-	if len(existingStrategy.Edges.Backtests) > 0 {
+	if existingStrategy.Edges.Backtest != nil {
 		// Auto-create new strategy version for this backtest
 		newVersion, err := r.createStrategyVersion(ctx, existingStrategy)
 		if err != nil {
@@ -545,31 +537,6 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 	}
 
 	return creator.Save(ctx)
-}
-
-// createStrategyVersion creates a new version of a strategy (helper function)
-func (r *mutationResolver) createStrategyVersion(ctx context.Context, old *ent.Strategy) (*ent.Strategy, error) {
-	// Mark old version as not latest
-	err := r.client.Strategy.UpdateOneID(old.ID).SetIsLatest(false).Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to mark old strategy as not latest: %w", err)
-	}
-
-	// Create new version (exact copy with incremented version number)
-	newVersion := r.client.Strategy.Create().
-		SetName(old.Name).
-		SetDescription(old.Description).
-		SetCode(old.Code).
-		SetVersion(old.Version).
-		SetVersionNumber(old.VersionNumber + 1).
-		SetParentID(old.ID).
-		SetIsLatest(true)
-
-	if old.Config != nil {
-		newVersion.SetConfig(old.Config)
-	}
-
-	return newVersion.Save(ctx)
 }
 
 func (r *mutationResolver) UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error) {

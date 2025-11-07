@@ -176,7 +176,7 @@ func newStrategyStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(StrategyInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, StrategyTable, StrategyColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, StrategyTable, StrategyColumn),
 	)
 }
 func newRunnerStep() *sqlgraph.Step {

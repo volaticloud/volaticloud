@@ -187,21 +187,6 @@ func (_c *StrategyCreate) SetBacktest(v *Backtest) *StrategyCreate {
 	return _c.SetBacktestID(v.ID)
 }
 
-// AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
-func (_c *StrategyCreate) AddBacktestIDs(ids ...uuid.UUID) *StrategyCreate {
-	_c.mutation.AddBacktestIDs(ids...)
-	return _c
-}
-
-// AddBacktests adds the "backtests" edges to the Backtest entity.
-func (_c *StrategyCreate) AddBacktests(v ...*Backtest) *StrategyCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddBacktestIDs(ids...)
-}
-
 // AddChildIDs adds the "children" edge to the Strategy entity by IDs.
 func (_c *StrategyCreate) AddChildIDs(ids ...uuid.UUID) *StrategyCreate {
 	_c.mutation.AddChildIDs(ids...)
@@ -400,27 +385,10 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	}
 	if nodes := _c.mutation.BacktestIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   strategy.BacktestTable,
 			Columns: []string{strategy.BacktestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.strategy_backtest = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.BacktestsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),

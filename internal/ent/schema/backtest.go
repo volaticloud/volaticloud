@@ -66,7 +66,7 @@ func (Backtest) Fields() []ent.Field {
 func (Backtest) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("strategy", Strategy.Type).
-			Ref("backtests").
+			Ref("backtest").
 			Field("strategy_id").
 			Required().
 			Unique(),

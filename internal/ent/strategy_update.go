@@ -200,21 +200,6 @@ func (_u *StrategyUpdate) SetBacktest(v *Backtest) *StrategyUpdate {
 	return _u.SetBacktestID(v.ID)
 }
 
-// AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
-func (_u *StrategyUpdate) AddBacktestIDs(ids ...uuid.UUID) *StrategyUpdate {
-	_u.mutation.AddBacktestIDs(ids...)
-	return _u
-}
-
-// AddBacktests adds the "backtests" edges to the Backtest entity.
-func (_u *StrategyUpdate) AddBacktests(v ...*Backtest) *StrategyUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddBacktestIDs(ids...)
-}
-
 // AddChildIDs adds the "children" edge to the Strategy entity by IDs.
 func (_u *StrategyUpdate) AddChildIDs(ids ...uuid.UUID) *StrategyUpdate {
 	_u.mutation.AddChildIDs(ids...)
@@ -265,27 +250,6 @@ func (_u *StrategyUpdate) RemoveBots(v ...*Bot) *StrategyUpdate {
 func (_u *StrategyUpdate) ClearBacktest() *StrategyUpdate {
 	_u.mutation.ClearBacktest()
 	return _u
-}
-
-// ClearBacktests clears all "backtests" edges to the Backtest entity.
-func (_u *StrategyUpdate) ClearBacktests() *StrategyUpdate {
-	_u.mutation.ClearBacktests()
-	return _u
-}
-
-// RemoveBacktestIDs removes the "backtests" edge to Backtest entities by IDs.
-func (_u *StrategyUpdate) RemoveBacktestIDs(ids ...uuid.UUID) *StrategyUpdate {
-	_u.mutation.RemoveBacktestIDs(ids...)
-	return _u
-}
-
-// RemoveBacktests removes "backtests" edges to Backtest entities.
-func (_u *StrategyUpdate) RemoveBacktests(v ...*Backtest) *StrategyUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveBacktestIDs(ids...)
 }
 
 // ClearChildren clears all "children" edges to the Strategy entity.
@@ -453,7 +417,7 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.BacktestCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   strategy.BacktestTable,
 			Columns: []string{strategy.BacktestColumn},
@@ -466,55 +430,10 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if nodes := _u.mutation.BacktestIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   strategy.BacktestTable,
 			Columns: []string{strategy.BacktestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.BacktestsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedBacktestsIDs(); len(nodes) > 0 && !_u.mutation.BacktestsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.BacktestsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
@@ -788,21 +707,6 @@ func (_u *StrategyUpdateOne) SetBacktest(v *Backtest) *StrategyUpdateOne {
 	return _u.SetBacktestID(v.ID)
 }
 
-// AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
-func (_u *StrategyUpdateOne) AddBacktestIDs(ids ...uuid.UUID) *StrategyUpdateOne {
-	_u.mutation.AddBacktestIDs(ids...)
-	return _u
-}
-
-// AddBacktests adds the "backtests" edges to the Backtest entity.
-func (_u *StrategyUpdateOne) AddBacktests(v ...*Backtest) *StrategyUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddBacktestIDs(ids...)
-}
-
 // AddChildIDs adds the "children" edge to the Strategy entity by IDs.
 func (_u *StrategyUpdateOne) AddChildIDs(ids ...uuid.UUID) *StrategyUpdateOne {
 	_u.mutation.AddChildIDs(ids...)
@@ -853,27 +757,6 @@ func (_u *StrategyUpdateOne) RemoveBots(v ...*Bot) *StrategyUpdateOne {
 func (_u *StrategyUpdateOne) ClearBacktest() *StrategyUpdateOne {
 	_u.mutation.ClearBacktest()
 	return _u
-}
-
-// ClearBacktests clears all "backtests" edges to the Backtest entity.
-func (_u *StrategyUpdateOne) ClearBacktests() *StrategyUpdateOne {
-	_u.mutation.ClearBacktests()
-	return _u
-}
-
-// RemoveBacktestIDs removes the "backtests" edge to Backtest entities by IDs.
-func (_u *StrategyUpdateOne) RemoveBacktestIDs(ids ...uuid.UUID) *StrategyUpdateOne {
-	_u.mutation.RemoveBacktestIDs(ids...)
-	return _u
-}
-
-// RemoveBacktests removes "backtests" edges to Backtest entities.
-func (_u *StrategyUpdateOne) RemoveBacktests(v ...*Backtest) *StrategyUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveBacktestIDs(ids...)
 }
 
 // ClearChildren clears all "children" edges to the Strategy entity.
@@ -1071,7 +954,7 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	}
 	if _u.mutation.BacktestCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   strategy.BacktestTable,
 			Columns: []string{strategy.BacktestColumn},
@@ -1084,55 +967,10 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	}
 	if nodes := _u.mutation.BacktestIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   strategy.BacktestTable,
 			Columns: []string{strategy.BacktestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.BacktestsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedBacktestsIDs(); len(nodes) > 0 && !_u.mutation.BacktestsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.BacktestsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   strategy.BacktestsTable,
-			Columns: []string{strategy.BacktestsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),

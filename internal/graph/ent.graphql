@@ -1410,7 +1410,6 @@ input CreateStrategyInput {
   updatedAt: Time
   botIDs: [ID!]
   backtestID: ID
-  backtestIDs: [ID!]
   childIDs: [ID!]
   parentID: ID
 }
@@ -1849,32 +1848,6 @@ type Strategy implements Node {
   Strategy can have at most one backtest (one-to-one)
   """
   backtest: Backtest
-  backtests(
-    """
-    Returns the elements in the list that come after the specified cursor.
-    """
-    after: Cursor
-
-    """
-    Returns the first _n_ elements from the list.
-    """
-    first: Int
-
-    """
-    Returns the elements in the list that come before the specified cursor.
-    """
-    before: Cursor
-
-    """
-    Returns the last _n_ elements from the list.
-    """
-    last: Int
-
-    """
-    Filtering options for Backtests returned from the connection.
-    """
-    where: BacktestWhereInput
-  ): BacktestConnection!
   """
   Parent strategy for versioning (self-referential)
   """
@@ -2053,11 +2026,6 @@ input StrategyWhereInput {
   """
   hasBacktest: Boolean
   hasBacktestWith: [BacktestWhereInput!]
-  """
-  backtests edge predicates
-  """
-  hasBacktests: Boolean
-  hasBacktestsWith: [BacktestWhereInput!]
   """
   children edge predicates
   """
@@ -2702,9 +2670,6 @@ input UpdateStrategyInput {
   clearBots: Boolean
   backtestID: ID
   clearBacktest: Boolean
-  addBacktestIDs: [ID!]
-  removeBacktestIDs: [ID!]
-  clearBacktests: Boolean
   addChildIDs: [ID!]
   removeChildIDs: [ID!]
   clearChildren: Boolean

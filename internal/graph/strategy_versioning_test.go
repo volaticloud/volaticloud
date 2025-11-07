@@ -6,6 +6,7 @@ import (
 
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/enttest"
+	strategyent "anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -182,6 +183,14 @@ func TestCreateBacktest_AutoVersionsWhenBacktestExists(t *testing.T) {
 	backtest1, err := resolver.Mutation().CreateBacktest(ctx, backtest1Input)
 	require.NoError(t, err)
 	assert.Equal(t, strategy.ID, backtest1.StrategyID)
+
+	// Verify v1 now has a backtest
+	strategyWithBacktest, err := client.Strategy.Query().
+		Where(strategyent.IDEQ(strategy.ID)).
+		WithBacktest().
+		Only(ctx)
+	require.NoError(t, err)
+	assert.NotNil(t, strategyWithBacktest.Edges.Backtest)
 
 	// Create second backtest - should auto-create v2 and use it
 	backtest2Input := ent.CreateBacktestInput{

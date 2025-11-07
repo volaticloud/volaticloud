@@ -79,7 +79,7 @@ func (_q *BacktestQuery) QueryStrategy() *StrategyQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(backtest.Table, backtest.FieldID, selector),
 			sqlgraph.To(strategy.Table, strategy.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, backtest.StrategyTable, backtest.StrategyColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, backtest.StrategyTable, backtest.StrategyColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil

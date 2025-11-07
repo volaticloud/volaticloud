@@ -6653,9 +6653,6 @@ type StrategyMutation struct {
 	clearedbots       bool
 	backtest          *uuid.UUID
 	clearedbacktest   bool
-	backtests         map[uuid.UUID]struct{}
-	removedbacktests  map[uuid.UUID]struct{}
-	clearedbacktests  bool
 	children          map[uuid.UUID]struct{}
 	removedchildren   map[uuid.UUID]struct{}
 	clearedchildren   bool
@@ -7282,60 +7279,6 @@ func (m *StrategyMutation) ResetBacktest() {
 	m.clearedbacktest = false
 }
 
-// AddBacktestIDs adds the "backtests" edge to the Backtest entity by ids.
-func (m *StrategyMutation) AddBacktestIDs(ids ...uuid.UUID) {
-	if m.backtests == nil {
-		m.backtests = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.backtests[ids[i]] = struct{}{}
-	}
-}
-
-// ClearBacktests clears the "backtests" edge to the Backtest entity.
-func (m *StrategyMutation) ClearBacktests() {
-	m.clearedbacktests = true
-}
-
-// BacktestsCleared reports if the "backtests" edge to the Backtest entity was cleared.
-func (m *StrategyMutation) BacktestsCleared() bool {
-	return m.clearedbacktests
-}
-
-// RemoveBacktestIDs removes the "backtests" edge to the Backtest entity by IDs.
-func (m *StrategyMutation) RemoveBacktestIDs(ids ...uuid.UUID) {
-	if m.removedbacktests == nil {
-		m.removedbacktests = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.backtests, ids[i])
-		m.removedbacktests[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedBacktests returns the removed IDs of the "backtests" edge to the Backtest entity.
-func (m *StrategyMutation) RemovedBacktestsIDs() (ids []uuid.UUID) {
-	for id := range m.removedbacktests {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// BacktestsIDs returns the "backtests" edge IDs in the mutation.
-func (m *StrategyMutation) BacktestsIDs() (ids []uuid.UUID) {
-	for id := range m.backtests {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetBacktests resets all changes to the "backtests" edge.
-func (m *StrategyMutation) ResetBacktests() {
-	m.backtests = nil
-	m.clearedbacktests = false
-	m.removedbacktests = nil
-}
-
 // AddChildIDs adds the "children" edge to the Strategy entity by ids.
 func (m *StrategyMutation) AddChildIDs(ids ...uuid.UUID) {
 	if m.children == nil {
@@ -7739,15 +7682,12 @@ func (m *StrategyMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *StrategyMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.bots != nil {
 		edges = append(edges, strategy.EdgeBots)
 	}
 	if m.backtest != nil {
 		edges = append(edges, strategy.EdgeBacktest)
-	}
-	if m.backtests != nil {
-		edges = append(edges, strategy.EdgeBacktests)
 	}
 	if m.children != nil {
 		edges = append(edges, strategy.EdgeChildren)
@@ -7772,12 +7712,6 @@ func (m *StrategyMutation) AddedIDs(name string) []ent.Value {
 		if id := m.backtest; id != nil {
 			return []ent.Value{*id}
 		}
-	case strategy.EdgeBacktests:
-		ids := make([]ent.Value, 0, len(m.backtests))
-		for id := range m.backtests {
-			ids = append(ids, id)
-		}
-		return ids
 	case strategy.EdgeChildren:
 		ids := make([]ent.Value, 0, len(m.children))
 		for id := range m.children {
@@ -7794,12 +7728,9 @@ func (m *StrategyMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *StrategyMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.removedbots != nil {
 		edges = append(edges, strategy.EdgeBots)
-	}
-	if m.removedbacktests != nil {
-		edges = append(edges, strategy.EdgeBacktests)
 	}
 	if m.removedchildren != nil {
 		edges = append(edges, strategy.EdgeChildren)
@@ -7817,12 +7748,6 @@ func (m *StrategyMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case strategy.EdgeBacktests:
-		ids := make([]ent.Value, 0, len(m.removedbacktests))
-		for id := range m.removedbacktests {
-			ids = append(ids, id)
-		}
-		return ids
 	case strategy.EdgeChildren:
 		ids := make([]ent.Value, 0, len(m.removedchildren))
 		for id := range m.removedchildren {
@@ -7835,15 +7760,12 @@ func (m *StrategyMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *StrategyMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.clearedbots {
 		edges = append(edges, strategy.EdgeBots)
 	}
 	if m.clearedbacktest {
 		edges = append(edges, strategy.EdgeBacktest)
-	}
-	if m.clearedbacktests {
-		edges = append(edges, strategy.EdgeBacktests)
 	}
 	if m.clearedchildren {
 		edges = append(edges, strategy.EdgeChildren)
@@ -7862,8 +7784,6 @@ func (m *StrategyMutation) EdgeCleared(name string) bool {
 		return m.clearedbots
 	case strategy.EdgeBacktest:
 		return m.clearedbacktest
-	case strategy.EdgeBacktests:
-		return m.clearedbacktests
 	case strategy.EdgeChildren:
 		return m.clearedchildren
 	case strategy.EdgeParent:
@@ -7895,9 +7815,6 @@ func (m *StrategyMutation) ResetEdge(name string) error {
 		return nil
 	case strategy.EdgeBacktest:
 		m.ResetBacktest()
-		return nil
-	case strategy.EdgeBacktests:
-		m.ResetBacktests()
 		return nil
 	case strategy.EdgeChildren:
 		m.ResetChildren()

@@ -838,7 +838,6 @@ type CreateStrategyInput struct {
 	UpdatedAt     *time.Time
 	BotIDs        []uuid.UUID
 	BacktestID    *uuid.UUID
-	BacktestIDs   []uuid.UUID
 	ChildIDs      []uuid.UUID
 	ParentID      *uuid.UUID
 }
@@ -874,9 +873,6 @@ func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 	if v := i.BacktestID; v != nil {
 		m.SetBacktestID(*v)
 	}
-	if v := i.BacktestIDs; len(v) > 0 {
-		m.AddBacktestIDs(v...)
-	}
 	if v := i.ChildIDs; len(v) > 0 {
 		m.AddChildIDs(v...)
 	}
@@ -893,29 +889,26 @@ func (c *StrategyCreate) SetInput(i CreateStrategyInput) *StrategyCreate {
 
 // UpdateStrategyInput represents a mutation input for updating strategies.
 type UpdateStrategyInput struct {
-	Name              *string
-	ClearDescription  bool
-	Description       *string
-	Code              *string
-	Version           *string
-	ClearConfig       bool
-	Config            map[string]interface{}
-	IsLatest          *bool
-	VersionNumber     *int
-	UpdatedAt         *time.Time
-	ClearBots         bool
-	AddBotIDs         []uuid.UUID
-	RemoveBotIDs      []uuid.UUID
-	ClearBacktest     bool
-	BacktestID        *uuid.UUID
-	ClearBacktests    bool
-	AddBacktestIDs    []uuid.UUID
-	RemoveBacktestIDs []uuid.UUID
-	ClearChildren     bool
-	AddChildIDs       []uuid.UUID
-	RemoveChildIDs    []uuid.UUID
-	ClearParent       bool
-	ParentID          *uuid.UUID
+	Name             *string
+	ClearDescription bool
+	Description      *string
+	Code             *string
+	Version          *string
+	ClearConfig      bool
+	Config           map[string]interface{}
+	IsLatest         *bool
+	VersionNumber    *int
+	UpdatedAt        *time.Time
+	ClearBots        bool
+	AddBotIDs        []uuid.UUID
+	RemoveBotIDs     []uuid.UUID
+	ClearBacktest    bool
+	BacktestID       *uuid.UUID
+	ClearChildren    bool
+	AddChildIDs      []uuid.UUID
+	RemoveChildIDs   []uuid.UUID
+	ClearParent      bool
+	ParentID         *uuid.UUID
 }
 
 // Mutate applies the UpdateStrategyInput on the StrategyMutation builder.
@@ -964,15 +957,6 @@ func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	}
 	if v := i.BacktestID; v != nil {
 		m.SetBacktestID(*v)
-	}
-	if i.ClearBacktests {
-		m.ClearBacktests()
-	}
-	if v := i.AddBacktestIDs; len(v) > 0 {
-		m.AddBacktestIDs(v...)
-	}
-	if v := i.RemoveBacktestIDs; len(v) > 0 {
-		m.RemoveBacktestIDs(v...)
 	}
 	if i.ClearChildren {
 		m.ClearChildren()

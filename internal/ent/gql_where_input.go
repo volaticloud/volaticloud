@@ -2986,10 +2986,6 @@ type StrategyWhereInput struct {
 	HasBacktest     *bool                 `json:"hasBacktest,omitempty"`
 	HasBacktestWith []*BacktestWhereInput `json:"hasBacktestWith,omitempty"`
 
-	// "backtests" edge predicates.
-	HasBacktests     *bool                 `json:"hasBacktests,omitempty"`
-	HasBacktestsWith []*BacktestWhereInput `json:"hasBacktestsWith,omitempty"`
-
 	// "children" edge predicates.
 	HasChildren     *bool                 `json:"hasChildren,omitempty"`
 	HasChildrenWith []*StrategyWhereInput `json:"hasChildrenWith,omitempty"`
@@ -3388,24 +3384,6 @@ func (i *StrategyWhereInput) P() (predicate.Strategy, error) {
 			with = append(with, p)
 		}
 		predicates = append(predicates, strategy.HasBacktestWith(with...))
-	}
-	if i.HasBacktests != nil {
-		p := strategy.HasBacktests()
-		if !*i.HasBacktests {
-			p = strategy.Not(p)
-		}
-		predicates = append(predicates, p)
-	}
-	if len(i.HasBacktestsWith) > 0 {
-		with := make([]predicate.Backtest, 0, len(i.HasBacktestsWith))
-		for _, w := range i.HasBacktestsWith {
-			p, err := w.P()
-			if err != nil {
-				return nil, fmt.Errorf("%w: field 'HasBacktestsWith'", err)
-			}
-			with = append(with, p)
-		}
-		predicates = append(predicates, strategy.HasBacktestsWith(with...))
 	}
 	if i.HasChildren != nil {
 		p := strategy.HasChildren()

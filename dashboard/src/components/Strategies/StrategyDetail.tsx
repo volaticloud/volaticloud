@@ -80,23 +80,6 @@ const StrategyDetail = () => {
     );
   }
 
-  const backtests = strategy.backtests?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'running':
-        return 'primary';
-      case 'failed':
-        return 'error';
-      case 'pending':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
   return (
     <Box sx={{ width: '100%' }}>
       {/* Header */}
@@ -328,88 +311,6 @@ const StrategyDetail = () => {
           </Card>
         </Box>
 
-        {/* Backtests List */}
-        <Box>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Assessment />
-                <Typography variant="h6">Backtests ({backtests.length})</Typography>
-              </Box>
-              {backtests.length === 0 ? (
-                <Alert severity="info">
-                  No backtests yet. Click "Quick Backtest" to create your first backtest for this strategy.
-                </Alert>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Runner</TableCell>
-                        <TableCell>Total Trades</TableCell>
-                        <TableCell>Win Rate</TableCell>
-                        <TableCell>Profit</TableCell>
-                        <TableCell>Max Drawdown</TableCell>
-                        <TableCell>Created</TableCell>
-                        <TableCell align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {backtests.map((backtest) => (
-                        <TableRow key={backtest.id} hover>
-                          <TableCell>
-                            <Chip
-                              label={backtest.status}
-                              color={getStatusColor(backtest.status) as any}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {backtest.runner?.name || 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            {backtest.summary?.totalTrades || 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            {backtest.summary?.winRate
-                              ? `${(backtest.summary.winRate * 100).toFixed(2)}%`
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            {backtest.summary?.profitTotal
-                              ? `${backtest.summary.profitTotal.toFixed(2)}%`
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            {backtest.summary?.maxDrawdown
-                              ? `${(backtest.summary.maxDrawdown * 100).toFixed(2)}%`
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" color="text.secondary">
-                              {new Date(backtest.createdAt).toLocaleDateString()}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Tooltip title="View Details">
-                              <IconButton
-                                size="small"
-                                onClick={() => navigate(`/backtests/${backtest.id}`)}
-                              >
-                                <Assessment fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
       </Box>
 
       {/* Dialogs */}

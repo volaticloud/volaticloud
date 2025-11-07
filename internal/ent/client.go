@@ -371,7 +371,7 @@ func (c *BacktestClient) QueryStrategy(_m *Backtest) *StrategyQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(backtest.Table, backtest.FieldID, id),
 			sqlgraph.To(strategy.Table, strategy.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, backtest.StrategyTable, backtest.StrategyColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, backtest.StrategyTable, backtest.StrategyColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1230,23 +1230,7 @@ func (c *StrategyClient) QueryBacktest(_m *Strategy) *BacktestQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(strategy.Table, strategy.FieldID, id),
 			sqlgraph.To(backtest.Table, backtest.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, strategy.BacktestTable, strategy.BacktestColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryBacktests queries the backtests edge of a Strategy.
-func (c *StrategyClient) QueryBacktests(_m *Strategy) *BacktestQuery {
-	query := (&BacktestClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(strategy.Table, strategy.FieldID, id),
-			sqlgraph.To(backtest.Table, backtest.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, strategy.BacktestsTable, strategy.BacktestsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, strategy.BacktestTable, strategy.BacktestColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

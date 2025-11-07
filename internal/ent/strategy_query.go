@@ -22,21 +22,18 @@ import (
 // StrategyQuery is the builder for querying Strategy entities.
 type StrategyQuery struct {
 	config
-	ctx                *QueryContext
-	order              []strategy.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.Strategy
-	withBots           *BotQuery
-	withBacktest       *BacktestQuery
-	withBacktests      *BacktestQuery
-	withChildren       *StrategyQuery
-	withParent         *StrategyQuery
-	withFKs            bool
-	modifiers          []func(*sql.Selector)
-	loadTotal          []func(context.Context, []*Strategy) error
-	withNamedBots      map[string]*BotQuery
-	withNamedBacktests map[string]*BacktestQuery
-	withNamedChildren  map[string]*StrategyQuery
+	ctx               *QueryContext
+	order             []strategy.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Strategy
+	withBots          *BotQuery
+	withBacktest      *BacktestQuery
+	withChildren      *StrategyQuery
+	withParent        *StrategyQuery
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*Strategy) error
+	withNamedBots     map[string]*BotQuery
+	withNamedChildren map[string]*StrategyQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -109,29 +106,7 @@ func (_q *StrategyQuery) QueryBacktest() *BacktestQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(strategy.Table, strategy.FieldID, selector),
 			sqlgraph.To(backtest.Table, backtest.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, strategy.BacktestTable, strategy.BacktestColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryBacktests chains the current query on the "backtests" edge.
-func (_q *StrategyQuery) QueryBacktests() *BacktestQuery {
-	query := (&BacktestClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(strategy.Table, strategy.FieldID, selector),
-			sqlgraph.To(backtest.Table, backtest.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, strategy.BacktestsTable, strategy.BacktestsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, strategy.BacktestTable, strategy.BacktestColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -370,16 +345,15 @@ func (_q *StrategyQuery) Clone() *StrategyQuery {
 		return nil
 	}
 	return &StrategyQuery{
-		config:        _q.config,
-		ctx:           _q.ctx.Clone(),
-		order:         append([]strategy.OrderOption{}, _q.order...),
-		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.Strategy{}, _q.predicates...),
-		withBots:      _q.withBots.Clone(),
-		withBacktest:  _q.withBacktest.Clone(),
-		withBacktests: _q.withBacktests.Clone(),
-		withChildren:  _q.withChildren.Clone(),
-		withParent:    _q.withParent.Clone(),
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]strategy.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.Strategy{}, _q.predicates...),
+		withBots:     _q.withBots.Clone(),
+		withBacktest: _q.withBacktest.Clone(),
+		withChildren: _q.withChildren.Clone(),
+		withParent:   _q.withParent.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -405,17 +379,6 @@ func (_q *StrategyQuery) WithBacktest(opts ...func(*BacktestQuery)) *StrategyQue
 		opt(query)
 	}
 	_q.withBacktest = query
-	return _q
-}
-
-// WithBacktests tells the query-builder to eager-load the nodes that are connected to
-// the "backtests" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *StrategyQuery) WithBacktests(opts ...func(*BacktestQuery)) *StrategyQuery {
-	query := (&BacktestClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withBacktests = query
 	return _q
 }
 
@@ -518,22 +481,14 @@ func (_q *StrategyQuery) prepareQuery(ctx context.Context) error {
 func (_q *StrategyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Strategy, error) {
 	var (
 		nodes       = []*Strategy{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [4]bool{
 			_q.withBots != nil,
 			_q.withBacktest != nil,
-			_q.withBacktests != nil,
 			_q.withChildren != nil,
 			_q.withParent != nil,
 		}
 	)
-	if _q.withBacktest != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, strategy.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Strategy).scanValues(nil, columns)
 	}
@@ -568,13 +523,6 @@ func (_q *StrategyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Str
 			return nil, err
 		}
 	}
-	if query := _q.withBacktests; query != nil {
-		if err := _q.loadBacktests(ctx, query, nodes,
-			func(n *Strategy) { n.Edges.Backtests = []*Backtest{} },
-			func(n *Strategy, e *Backtest) { n.Edges.Backtests = append(n.Edges.Backtests, e) }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withChildren; query != nil {
 		if err := _q.loadChildren(ctx, query, nodes,
 			func(n *Strategy) { n.Edges.Children = []*Strategy{} },
@@ -592,13 +540,6 @@ func (_q *StrategyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Str
 		if err := _q.loadBots(ctx, query, nodes,
 			func(n *Strategy) { n.appendNamedBots(name) },
 			func(n *Strategy, e *Bot) { n.appendNamedBots(name, e) }); err != nil {
-			return nil, err
-		}
-	}
-	for name, query := range _q.withNamedBacktests {
-		if err := _q.loadBacktests(ctx, query, nodes,
-			func(n *Strategy) { n.appendNamedBacktests(name) },
-			func(n *Strategy, e *Backtest) { n.appendNamedBacktests(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -648,52 +589,17 @@ func (_q *StrategyQuery) loadBots(ctx context.Context, query *BotQuery, nodes []
 	return nil
 }
 func (_q *StrategyQuery) loadBacktest(ctx context.Context, query *BacktestQuery, nodes []*Strategy, init func(*Strategy), assign func(*Strategy, *Backtest)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Strategy)
-	for i := range nodes {
-		if nodes[i].strategy_backtest == nil {
-			continue
-		}
-		fk := *nodes[i].strategy_backtest
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(backtest.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "strategy_backtest" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *StrategyQuery) loadBacktests(ctx context.Context, query *BacktestQuery, nodes []*Strategy, init func(*Strategy), assign func(*Strategy, *Backtest)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Strategy)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
 	}
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(backtest.FieldStrategyID)
 	}
 	query.Where(predicate.Backtest(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(strategy.BacktestsColumn), fks...))
+		s.Where(sql.InValues(s.C(strategy.BacktestColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -719,7 +625,6 @@ func (_q *StrategyQuery) loadChildren(ctx context.Context, query *StrategyQuery,
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(strategy.FieldParentID)
 	}
@@ -874,20 +779,6 @@ func (_q *StrategyQuery) WithNamedBots(name string, opts ...func(*BotQuery)) *St
 		_q.withNamedBots = make(map[string]*BotQuery)
 	}
 	_q.withNamedBots[name] = query
-	return _q
-}
-
-// WithNamedBacktests tells the query-builder to eager-load the nodes that are connected to the "backtests"
-// edge with the given name. The optional arguments are used to configure the query builder of the edge.
-func (_q *StrategyQuery) WithNamedBacktests(name string, opts ...func(*BacktestQuery)) *StrategyQuery {
-	query := (&BacktestClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	if _q.withNamedBacktests == nil {
-		_q.withNamedBacktests = make(map[string]*BacktestQuery)
-	}
-	_q.withNamedBacktests[name] = query
 	return _q
 }
 

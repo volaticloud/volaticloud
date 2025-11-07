@@ -14,32 +14,27 @@ query GetStrategyDetail($id: ID!) {
         bots {
           totalCount
         }
-        backtests(first: 50) {
-          totalCount
-          edges {
-            node {
-              id
-              status
-              createdAt
-              updatedAt
-              runner {
-                id
-                name
-                type
-              }
-              summary {
-                strategyName
-                totalTrades
-                wins
-                losses
-                profitTotalAbs
-                profitTotal
-                winRate
-                expectancy
-                profitFactor
-                maxDrawdown
-              }
-            }
+        backtest {
+          id
+          status
+          createdAt
+          updatedAt
+          runner {
+            id
+            name
+            type
+          }
+          summary {
+            strategyName
+            totalTrades
+            wins
+            losses
+            profitTotalAbs
+            profitTotal
+            winRate
+            expectancy
+            profitFactor
+            maxDrawdown
           }
         }
       }
@@ -58,8 +53,9 @@ query GetStrategyVersions($name: String!) {
     bots {
       totalCount
     }
-    backtests {
-      totalCount
+    backtest {
+      id
+      status
     }
   }
 }

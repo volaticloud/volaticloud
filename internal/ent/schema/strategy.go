@@ -67,9 +67,6 @@ func (Strategy) Edges() []ent.Edge {
 		edge.To("backtest", Backtest.Type).
 			Unique().
 			Comment("Strategy can have at most one backtest (one-to-one)"),
-		// Keep plural for backwards compatibility in queries
-		edge.To("backtests", Backtest.Type).
-			Annotations(entgql.RelayConnection()),
 		// Parent-child relationship for versioning
 		edge.To("parent", Strategy.Type).
 			Unique().

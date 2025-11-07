@@ -21,7 +21,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "runner_id", Type: field.TypeUUID},
-		{Name: "strategy_id", Type: field.TypeUUID},
+		{Name: "strategy_id", Type: field.TypeUUID, Unique: true},
 	}
 	// BacktestsTable holds the schema information for the "backtests" table.
 	BacktestsTable = &schema.Table{
@@ -36,7 +36,7 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "backtests_strategies_backtests",
+				Symbol:     "backtests_strategies_backtest",
 				Columns:    []*schema.Column{BacktestsColumns[11]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
@@ -173,7 +173,6 @@ var (
 		{Name: "version_number", Type: field.TypeInt, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "strategy_backtest", Type: field.TypeUUID, Nullable: true},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// StrategiesTable holds the schema information for the "strategies" table.
@@ -183,14 +182,8 @@ var (
 		PrimaryKey: []*schema.Column{StrategiesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "strategies_backtests_backtest",
-				Columns:    []*schema.Column{StrategiesColumns[10]},
-				RefColumns: []*schema.Column{BacktestsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
 				Symbol:     "strategies_strategies_parent",
-				Columns:    []*schema.Column{StrategiesColumns[11]},
+				Columns:    []*schema.Column{StrategiesColumns[10]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -209,7 +202,7 @@ var (
 			{
 				Name:    "strategy_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[11]},
+				Columns: []*schema.Column{StrategiesColumns[10]},
 			},
 		},
 	}
@@ -284,7 +277,6 @@ func init() {
 	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[2].RefTable = StrategiesTable
 	BotMetricsTable.ForeignKeys[0].RefTable = BotsTable
-	StrategiesTable.ForeignKeys[0].RefTable = BacktestsTable
-	StrategiesTable.ForeignKeys[1].RefTable = StrategiesTable
+	StrategiesTable.ForeignKeys[0].RefTable = StrategiesTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

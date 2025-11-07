@@ -269,7 +269,6 @@ type ComplexityRoot struct {
 
 	Strategy struct {
 		Backtest      func(childComplexity int) int
-		Backtests     func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
 		Bots          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
 		Children      func(childComplexity int) int
 		Code          func(childComplexity int) int
@@ -1584,17 +1583,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Backtest(childComplexity), true
-	case "Strategy.backtests":
-		if e.complexity.Strategy.Backtests == nil {
-			break
-		}
-
-		args, err := ec.field_Strategy_backtests_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Strategy.Backtests(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BacktestWhereInput)), true
 	case "Strategy.bots":
 		if e.complexity.Strategy.Bots == nil {
 			break
@@ -2672,37 +2660,6 @@ func (ec *executionContext) field_Query_trades_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Strategy_backtests_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput)
-	if err != nil {
-		return nil, err
-	}
-	args["where"] = arg4
-	return args, nil
-}
-
 func (ec *executionContext) field_Strategy_bots_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3155,8 +3112,6 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -4537,8 +4492,6 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -7053,8 +7006,6 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -7128,8 +7079,6 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -9153,8 +9102,6 @@ func (ec *executionContext) fieldContext_Query_strategyVersions(ctx context.Cont
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -9712,55 +9659,6 @@ func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Strategy_backtests(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Strategy_backtests,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return obj.Backtests(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BacktestWhereInput))
-		},
-		nil,
-		ec.marshalNBacktestConnection2ᚖanytradeᚋinternalᚋentᚐBacktestConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Strategy_backtests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Strategy",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_BacktestConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_BacktestConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_BacktestConnection_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type BacktestConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Strategy_backtests_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Strategy_children(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9811,8 +9709,6 @@ func (ec *executionContext) fieldContext_Strategy_children(_ context.Context, fi
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -9874,8 +9770,6 @@ func (ec *executionContext) fieldContext_Strategy_parent(_ context.Context, fiel
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -10040,8 +9934,6 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_bots(ctx, field)
 			case "backtest":
 				return ec.fieldContext_Strategy_backtest(ctx, field)
-			case "backtests":
-				return ec.fieldContext_Strategy_backtests(ctx, field)
 			case "children":
 				return ec.fieldContext_Strategy_children(ctx, field)
 			case "parent":
@@ -16578,7 +16470,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code", "version", "config", "isLatest", "versionNumber", "createdAt", "updatedAt", "botIDs", "backtestID", "backtestIDs", "childIDs", "parentID"}
+	fieldsInOrder := [...]string{"name", "description", "code", "version", "config", "isLatest", "versionNumber", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16662,13 +16554,6 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.BacktestID = data
-		case "backtestIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backtestIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BacktestIDs = data
 		case "childIDs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childIDs"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
@@ -17615,7 +17500,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "version", "versionNEQ", "versionIn", "versionNotIn", "versionGT", "versionGTE", "versionLT", "versionLTE", "versionContains", "versionHasPrefix", "versionHasSuffix", "versionEqualFold", "versionContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasBacktests", "hasBacktestsWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "version", "versionNEQ", "versionIn", "versionNotIn", "versionGT", "versionGTE", "versionLT", "versionLTE", "versionContains", "versionHasPrefix", "versionHasSuffix", "versionEqualFold", "versionContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18329,20 +18214,6 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.HasBacktestWith = data
-		case "hasBacktests":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktests"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HasBacktests = data
-		case "hasBacktestsWith":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktestsWith"))
-			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HasBacktestsWith = data
 		case "hasChildren":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasChildren"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -20401,7 +20272,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "config", "clearConfig", "isLatest", "versionNumber", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addBacktestIDs", "removeBacktestIDs", "clearBacktests", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "config", "clearConfig", "isLatest", "versionNumber", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20513,27 +20384,6 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearBacktest = data
-		case "addBacktestIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addBacktestIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AddBacktestIDs = data
-		case "removeBacktestIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeBacktestIDs"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RemoveBacktestIDs = data
-		case "clearBacktests":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearBacktests"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearBacktests = data
 		case "addChildIDs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addChildIDs"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
@@ -22724,42 +22574,6 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Strategy_backtest(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "backtests":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Strategy_backtests(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 

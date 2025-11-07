@@ -316,7 +316,7 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	}
 	if nodes := _c.mutation.StrategyIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   backtest.StrategyTable,
 			Columns: []string{backtest.StrategyColumn},
