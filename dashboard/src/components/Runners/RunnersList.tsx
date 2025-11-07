@@ -26,7 +26,7 @@ import {
   CloudDownload as CloudDownloadIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useGetRunnersQuery, useRefreshRunnerDataMutation } from './runners.generated';
+import { useGetRunnersQuery, useRefreshRunnerDataMutation } from '../../generated/graphql';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateRunnerDialog } from './CreateRunnerDialog';

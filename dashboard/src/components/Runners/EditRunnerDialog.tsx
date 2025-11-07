@@ -17,7 +17,8 @@ import {
   Checkbox,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { useUpdateRunnerMutation, type DockerConfigInput, type KubernetesConfigInput, type LocalConfigInput, type DataDownloadConfigInput } from './runners.generated';
+import { useUpdateRunnerMutation } from '../../generated/graphql';
+import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 
 interface EditRunnerDialogProps {
