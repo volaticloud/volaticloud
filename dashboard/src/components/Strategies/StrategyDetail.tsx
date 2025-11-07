@@ -153,9 +153,9 @@ const StrategyDetail = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Total Backtests
+                      Backtest
                     </Typography>
-                    <Typography variant="body2">{strategy.backtests?.totalCount || 0}</Typography>
+                    <Typography variant="body2">{strategy.backtest ? 'Yes' : 'No'}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -240,7 +240,7 @@ const StrategyDetail = () => {
                           <TableCell>Version</TableCell>
                           <TableCell>Status</TableCell>
                           <TableCell>Bots</TableCell>
-                          <TableCell>Backtests</TableCell>
+                          <TableCell>Backtest</TableCell>
                           <TableCell>Created</TableCell>
                           <TableCell align="right">Actions</TableCell>
                         </TableRow>
@@ -280,7 +280,14 @@ const StrategyDetail = () => {
                                 </Typography>
                               </TableCell>
                               <TableCell>{version.bots?.totalCount || 0}</TableCell>
-                              <TableCell>{version.backtests?.totalCount || 0}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={version.backtest ? 'Yes' : 'No'}
+                                  size="small"
+                                  color={version.backtest ? 'success' : 'default'}
+                                  variant="outlined"
+                                />
+                              </TableCell>
                               <TableCell>
                                 <Typography variant="caption" color="text.secondary">
                                   {new Date(version.createdAt).toLocaleDateString()}
@@ -327,9 +334,10 @@ const StrategyDetail = () => {
       <EditStrategyDialog
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
-        onSuccess={() => {
+        onSuccess={(newStrategyId) => {
           setEditDialogOpen(false);
-          refetch();
+          // Navigate to the new strategy version page
+          navigate(`/strategies/${newStrategyId}`);
         }}
         strategy={strategy}
       />

@@ -15,7 +15,7 @@ import { JSONEditor } from '../JSONEditor';
 interface EditStrategyDialogProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (newStrategyId: string) => void;
   strategy: {
     id: string;
     name: string;
@@ -67,7 +67,8 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
 
       // Only close if mutation was successful
       if (result.data?.updateStrategy) {
-        onSuccess();
+        // Pass the new strategy ID (updateStrategy creates a new version)
+        onSuccess(result.data.updateStrategy.id);
         onClose();
       }
       // If there are errors, they will be displayed via the error state
