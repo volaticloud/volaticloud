@@ -20,6 +20,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useGetStrategiesQuery } from './strategies.generated';
@@ -28,11 +29,14 @@ import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateStrategyDialog } from './CreateStrategyDialog';
 import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
+import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 
 export const StrategiesList = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
+  const [selectedStrategyForBacktest, setSelectedStrategyForBacktest] = useState<string | null>(null);
   const [selectedStrategy, setSelectedStrategy] = useState<{
     id: string;
     name: string;
@@ -136,6 +140,18 @@ export const StrategiesList = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
+                    <Tooltip title="Quick Backtest">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                          setSelectedStrategyForBacktest(strategy.id);
+                          setBacktestDialogOpen(true);
+                        }}
+                      >
+                        <PlayArrowIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Edit">
                       <IconButton
                         size="small"
@@ -220,6 +236,24 @@ export const StrategiesList = () => {
           />
         </>
       )}
+
+      <CreateBacktestDialog
+        open={backtestDialogOpen}
+        onClose={() => {
+          setBacktestDialogOpen(false);
+          setSelectedStrategyForBacktest(null);
+        }}
+        onSuccess={() => {
+          setBacktestDialogOpen(false);
+          setSelectedStrategyForBacktest(null);
+          setSnackbar({
+            open: true,
+            message: 'Backtest created successfully',
+            severity: 'success',
+          });
+        }}
+        preSelectedStrategyId={selectedStrategyForBacktest || undefined}
+      />
 
       <Snackbar
         open={snackbar.open}
