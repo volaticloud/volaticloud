@@ -826,7 +826,7 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 
 	// Create exchange config file - write as-is (NO BUILDING, NO WRAPPING)
 	// Exchange config is already complete freqtrade format: {"exchange": {"name": "...", "key": "...", ...}}
-	if spec.ExchangeConfig != nil && len(spec.ExchangeConfig) > 0 {
+	if len(spec.ExchangeConfig) > 0 {
 		exchangeConfigPath := filepath.Join(configDir, "config.exchange.json")
 		exchangeConfigJSON, err := json.MarshalIndent(spec.ExchangeConfig, "", "  ")
 		if err != nil {
@@ -841,7 +841,7 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 	}
 
 	// Create strategy config file if strategy config exists
-	if spec.StrategyConfig != nil && len(spec.StrategyConfig) > 0 {
+	if len(spec.StrategyConfig) > 0 {
 		strategyConfigPath := filepath.Join(configDir, "config.strategy.json")
 		strategyConfigJSON, err := json.MarshalIndent(spec.StrategyConfig, "", "  ")
 		if err != nil {
@@ -856,7 +856,7 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 	}
 
 	// Create bot config file if bot config exists
-	if spec.Config != nil && len(spec.Config) > 0 {
+	if len(spec.Config) > 0 {
 		botConfigPath := filepath.Join(configDir, "config.bot.json")
 		botConfigJSON, err := json.MarshalIndent(spec.Config, "", "  ")
 		if err != nil {
@@ -872,7 +872,7 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 
 	// Create secure config file (system-forced settings, NEVER exposed to users)
 	// This config has highest priority and overrides all other configs
-	if spec.SecureConfig != nil && len(spec.SecureConfig) > 0 {
+	if len(spec.SecureConfig) > 0 {
 		secureConfigPath := filepath.Join(configDir, "config.secure.json")
 		secureConfigJSON, err := json.MarshalIndent(spec.SecureConfig, "", "  ")
 		if err != nil {
