@@ -15,6 +15,7 @@ import {
   Tooltip,
   Snackbar,
   Alert,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,7 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetStrategiesQuery } from './strategies.generated';
+import { useGetLatestStrategiesQuery } from './strategies.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateStrategyDialog } from './CreateStrategyDialog';
@@ -52,7 +53,7 @@ export const StrategiesList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  const { data, loading, error, refetch } = useGetStrategiesQuery({
+  const { data, loading, error, refetch } = useGetLatestStrategiesQuery({
     variables: { first: 50 }
   });
 
@@ -63,7 +64,7 @@ export const StrategiesList = () => {
   if (loading) return <LoadingSpinner message="Loading strategies..." />;
   if (error) return <ErrorAlert error={error} />;
 
-  const strategies = (data?.strategies?.edges
+  const strategies = (data?.latestStrategies?.edges
     ?.map(edge => edge?.node)
     .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
@@ -82,7 +83,7 @@ export const StrategiesList = () => {
             Strategies
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.strategies?.totalCount || 0} total strategies
+            {data?.latestStrategies?.totalCount || 0} latest strategies
           </Typography>
         </Box>
         <Button
@@ -121,17 +122,25 @@ export const StrategiesList = () => {
               {strategies.map((strategy) => (
                 <TableRow key={strategy.id} hover>
                   <TableCell>
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      sx={{
-                        cursor: 'pointer',
-                        '&:hover': { color: 'primary.main' }
-                      }}
-                      onClick={() => navigate(`/strategies/${strategy.id}`)}
-                    >
-                      {strategy.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={500}
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': { color: 'primary.main' }
+                        }}
+                        onClick={() => navigate(`/strategies/${strategy.id}`)}
+                      >
+                        {strategy.name}
+                      </Typography>
+                      <Chip
+                        label={`v${strategy.versionNumber}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">

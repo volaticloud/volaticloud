@@ -7,10 +7,48 @@ query GetStrategies($first: Int, $after: Cursor) {
         description
         code
         version
+        versionNumber
+        isLatest
         config
         createdAt
         bots {
           totalCount
+        }
+        backtest {
+          id
+          status
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetLatestStrategies($first: Int, $after: Cursor) {
+  latestStrategies(first: $first, after: $after) {
+    edges {
+      node {
+        id
+        name
+        description
+        code
+        version
+        versionNumber
+        isLatest
+        config
+        createdAt
+        bots {
+          totalCount
+        }
+        backtest {
+          id
+          status
         }
       }
     }
