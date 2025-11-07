@@ -23,6 +23,7 @@ import {
   PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGetStrategiesQuery } from './strategies.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
@@ -32,6 +33,7 @@ import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 
 export const StrategiesList = () => {
+  const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -119,7 +121,15 @@ export const StrategiesList = () => {
               {strategies.map((strategy) => (
                 <TableRow key={strategy.id} hover>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { color: 'primary.main' }
+                      }}
+                      onClick={() => navigate(`/strategies/${strategy.id}`)}
+                    >
                       {strategy.name}
                     </Typography>
                   </TableCell>

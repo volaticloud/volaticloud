@@ -1,0 +1,46 @@
+query GetStrategyDetail($id: ID!) {
+  strategies(where: { id: $id }, first: 1) {
+    edges {
+      node {
+        id
+        name
+        description
+        code
+        version
+        createdAt
+        updatedAt
+        bots {
+          totalCount
+        }
+        backtests(first: 50) {
+          totalCount
+          edges {
+            node {
+              id
+              status
+              createdAt
+              updatedAt
+              runner {
+                id
+                name
+                type
+              }
+              summary {
+                strategyName
+                totalTrades
+                wins
+                losses
+                profitTotalAbs
+                profitTotal
+                winRate
+                expectancy
+                profitFactor
+                maxDrawdown
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
