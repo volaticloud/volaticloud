@@ -30,14 +30,6 @@ export type CreateBacktestMutationVariables = Types.Exact<{
 
 export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, createdAt: string } };
 
-export type UpdateBacktestMutationVariables = Types.Exact<{
-  id: Types.Scalars['ID']['input'];
-  input: Types.UpdateBacktestInput;
-}>;
-
-
-export type UpdateBacktestMutation = { __typename?: 'Mutation', updateBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null } };
-
 export type DeleteBacktestMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
@@ -280,42 +272,6 @@ export function useCreateBacktestMutation(baseOptions?: Apollo.MutationHookOptio
 export type CreateBacktestMutationHookResult = ReturnType<typeof useCreateBacktestMutation>;
 export type CreateBacktestMutationResult = Apollo.MutationResult<CreateBacktestMutation>;
 export type CreateBacktestMutationOptions = Apollo.BaseMutationOptions<CreateBacktestMutation, CreateBacktestMutationVariables>;
-export const UpdateBacktestDocument = gql`
-    mutation UpdateBacktest($id: ID!, $input: UpdateBacktestInput!) {
-  updateBacktest(id: $id, input: $input) {
-    id
-    status
-    config
-  }
-}
-    `;
-export type UpdateBacktestMutationFn = Apollo.MutationFunction<UpdateBacktestMutation, UpdateBacktestMutationVariables>;
-
-/**
- * __useUpdateBacktestMutation__
- *
- * To run a mutation, you first call `useUpdateBacktestMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateBacktestMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateBacktestMutation, { data, loading, error }] = useUpdateBacktestMutation({
- *   variables: {
- *      id: // value for 'id'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateBacktestMutation(baseOptions?: Apollo.MutationHookOptions<UpdateBacktestMutation, UpdateBacktestMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateBacktestMutation, UpdateBacktestMutationVariables>(UpdateBacktestDocument, options);
-      }
-export type UpdateBacktestMutationHookResult = ReturnType<typeof useUpdateBacktestMutation>;
-export type UpdateBacktestMutationResult = Apollo.MutationResult<UpdateBacktestMutation>;
-export type UpdateBacktestMutationOptions = Apollo.BaseMutationOptions<UpdateBacktestMutation, UpdateBacktestMutationVariables>;
 export const DeleteBacktestDocument = gql`
     mutation DeleteBacktest($id: ID!) {
   deleteBacktest(id: $id)

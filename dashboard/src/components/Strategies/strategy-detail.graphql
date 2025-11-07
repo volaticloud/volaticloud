@@ -19,6 +19,7 @@ query GetStrategyDetail($id: ID!) {
           status
           createdAt
           updatedAt
+          result
           runner {
             id
             name

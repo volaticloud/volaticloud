@@ -89,14 +89,6 @@ mutation CreateBacktest($input: CreateBacktestInput!) {
   }
 }
 
-mutation UpdateBacktest($id: ID!, $input: UpdateBacktestInput!) {
-  updateBacktest(id: $id, input: $input) {
-    id
-    status
-    config
-  }
-}
-
 mutation DeleteBacktest($id: ID!) {
   deleteBacktest(id: $id)
 }
