@@ -11,7 +11,7 @@ import {
   FormHelperText,
   Box,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCreateBacktestMutation, useGetBacktestOptionsQuery } from './backtests.generated';
 import { JSONEditor } from '../JSONEditor';
 
@@ -19,9 +19,10 @@ interface CreateBacktestDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  preSelectedStrategyId?: string;
 }
 
-export const CreateBacktestDialog = ({ open, onClose, onSuccess }: CreateBacktestDialogProps) => {
+export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStrategyId }: CreateBacktestDialogProps) => {
   const [strategyID, setStrategyID] = useState('');
   const [runnerID, setRunnerID] = useState('');
   const [config, setConfig] = useState<object | null>({
@@ -71,6 +72,13 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess }: CreateBacktes
 
   const { data: optionsData } = useGetBacktestOptionsQuery();
   const [createBacktest, { loading, error }] = useCreateBacktestMutation();
+
+  // Set pre-selected strategy when dialog opens
+  useEffect(() => {
+    if (open && preSelectedStrategyId) {
+      setStrategyID(preSelectedStrategyId);
+    }
+  }, [open, preSelectedStrategyId]);
 
   const handleSubmit = async () => {
     if (!strategyID || !runnerID || !config) {
