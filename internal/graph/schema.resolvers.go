@@ -527,20 +527,34 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 		strategyID = newVersion.ID
 	}
 
-	// Create backtest with the resolved strategy ID
+	// Create backtest with the resolved strategy ID and set status to pending
 	creator := r.client.Backtest.Create().
 		SetStrategyID(strategyID).
-		SetRunnerID(input.RunnerID)
+		SetRunnerID(input.RunnerID).
+		SetStatus(enum.TaskStatusPending)
 
 	if input.Config != nil {
 		creator.SetConfig(input.Config)
 	}
 
-	return creator.Save(ctx)
-}
+	bt, err := creator.Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create backtest: %w", err)
+	}
 
-func (r *mutationResolver) UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error) {
-	return r.client.Backtest.UpdateOneID(id).SetInput(input).Save(ctx)
+	// Automatically run the backtest after creation
+	// Load the backtest with runner and strategy edges for running
+	bt, err = r.client.Backtest.Query().
+		Where(backtest.ID(bt.ID)).
+		WithRunner().
+		WithStrategy().
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload backtest with edges: %w", err)
+	}
+
+	// Run the backtest using the helper
+	return r.runBacktestHelper(ctx, bt)
 }
 
 func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -559,48 +573,8 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, id uuid.UUID) (*ent.
 		return nil, fmt.Errorf("failed to load backtest: %w", err)
 	}
 
-	// Get the runner
-	btRunner := bt.Edges.Runner
-	if btRunner == nil {
-		return nil, fmt.Errorf("backtest has no runner configuration")
-	}
-
-	// Create runner client
-	factory := runner.NewFactory()
-	backtestRunner, err := factory.CreateBacktestRunner(ctx, btRunner.Type, btRunner.Config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
-	}
-	defer backtestRunner.Close()
-
-	// Build BacktestSpec from backtest data
-	spec, err := buildBacktestSpec(bt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build backtest spec: %w", err)
-	}
-
-	// Run the backtest
-	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
-	if err != nil {
-		// Update backtest status to error
-		r.client.Backtest.UpdateOneID(bt.ID).
-			SetStatus(enum.TaskStatusFailed).
-			SetErrorMessage(fmt.Sprintf("Failed to run backtest: %v", err)).
-			Save(ctx)
-		return nil, fmt.Errorf("failed to run backtest: %w", err)
-	}
-
-	// Update backtest with container_id and set status to running
-	bt, err = r.client.Backtest.UpdateOneID(bt.ID).
-		SetContainerID(containerID).
-		SetStatus(enum.TaskStatusRunning).
-		ClearErrorMessage().
-		Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update backtest with container ID: %w", err)
-	}
-
-	return bt, nil
+	// Use the helper to run the backtest
+	return r.runBacktestHelper(ctx, bt)
 }
 
 func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error) {
@@ -742,3 +716,15 @@ func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*e
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 type mutationResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error) {
+	return r.client.Backtest.UpdateOneID(id).SetInput(input).Save(ctx)
+}
+*/

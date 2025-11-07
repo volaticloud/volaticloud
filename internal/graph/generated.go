@@ -237,7 +237,6 @@ type ComplexityRoot struct {
 		StartBot          func(childComplexity int, id uuid.UUID) int
 		StopBacktest      func(childComplexity int, id uuid.UUID) int
 		StopBot           func(childComplexity int, id uuid.UUID) int
-		UpdateBacktest    func(childComplexity int, id uuid.UUID, input ent.UpdateBacktestInput) int
 		UpdateBot         func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
 		UpdateBotRunner   func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
 		UpdateExchange    func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
@@ -351,7 +350,6 @@ type MutationResolver interface {
 	DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error)
 	RefreshRunnerData(ctx context.Context, id uuid.UUID) (*ent.BotRunner, error)
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
-	UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
 	RunBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
 	StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
@@ -1362,17 +1360,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.StopBot(childComplexity, args["id"].(uuid.UUID)), true
-	case "Mutation.updateBacktest":
-		if e.complexity.Mutation.UpdateBacktest == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateBacktest_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateBacktest(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateBacktestInput)), true
 	case "Mutation.updateBot":
 		if e.complexity.Mutation.UpdateBot == nil {
 			break
@@ -1887,7 +1874,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRunnerConfigInput,
 		ec.unmarshalInputStrategyWhereInput,
 		ec.unmarshalInputTradeWhereInput,
-		ec.unmarshalInputUpdateBacktestInput,
 		ec.unmarshalInputUpdateBotInput,
 		ec.unmarshalInputUpdateBotMetricsInput,
 		ec.unmarshalInputUpdateBotRunnerInput,
@@ -2330,22 +2316,6 @@ func (ec *executionContext) field_Mutation_stopBot_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBacktestInput2anytradeᚋinternalᚋentᚐUpdateBacktestInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg1
 	return args, nil
 }
 
@@ -7907,77 +7877,6 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateBacktest,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateBacktest(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBacktestInput))
-		},
-		nil,
-		ec.marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Backtest_id(ctx, field)
-			case "status":
-				return ec.fieldContext_Backtest_status(ctx, field)
-			case "config":
-				return ec.fieldContext_Backtest_config(ctx, field)
-			case "result":
-				return ec.fieldContext_Backtest_result(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Backtest_containerID(ctx, field)
-			case "errorMessage":
-				return ec.fieldContext_Backtest_errorMessage(ctx, field)
-			case "strategyID":
-				return ec.fieldContext_Backtest_strategyID(ctx, field)
-			case "runnerID":
-				return ec.fieldContext_Backtest_runnerID(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Backtest_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Backtest_updatedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_Backtest_completedAt(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Backtest_strategy(ctx, field)
-			case "runner":
-				return ec.fieldContext_Backtest_runner(ctx, field)
-			case "summary":
-				return ec.fieldContext_Backtest_summary(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -19451,124 +19350,6 @@ func (ec *executionContext) unmarshalInputTradeWhereInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateBacktestInput(ctx context.Context, obj any) (ent.UpdateBacktestInput, error) {
-	var it ent.UpdateBacktestInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"status", "config", "clearConfig", "result", "clearResult", "containerID", "clearContainerID", "errorMessage", "clearErrorMessage", "updatedAt", "completedAt", "clearCompletedAt", "strategyID", "runnerID"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Status = data
-		case "config":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			data, err := ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Config = data
-		case "clearConfig":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearConfig"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearConfig = data
-		case "result":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("result"))
-			data, err := ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Result = data
-		case "clearResult":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearResult"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearResult = data
-		case "containerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerID = data
-		case "clearContainerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearContainerID"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearContainerID = data
-		case "errorMessage":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ErrorMessage = data
-		case "clearErrorMessage":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearErrorMessage"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearErrorMessage = data
-		case "updatedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UpdatedAt = data
-		case "completedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("completedAt"))
-			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CompletedAt = data
-		case "clearCompletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCompletedAt"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearCompletedAt = data
-		case "strategyID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StrategyID = data
-		case "runnerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RunnerID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, obj any) (ent.UpdateBotInput, error) {
 	var it ent.UpdateBotInput
 	asMap := map[string]any{}
@@ -22043,13 +21824,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateBacktest":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateBacktest(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "deleteBacktest":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteBacktest(ctx, field)
@@ -23963,11 +23737,6 @@ func (ec *executionContext) marshalNTradeConnection2ᚖanytradeᚋinternalᚋent
 func (ec *executionContext) unmarshalNTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
 	res, err := ec.unmarshalInputTradeWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateBacktestInput2anytradeᚋinternalᚋentᚐUpdateBacktestInput(ctx context.Context, v any) (ent.UpdateBacktestInput, error) {
-	res, err := ec.unmarshalInputUpdateBacktestInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNUpdateBotInput2anytradeᚋinternalᚋentᚐUpdateBotInput(ctx context.Context, v any) (ent.UpdateBotInput, error) {

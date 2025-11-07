@@ -200,8 +200,8 @@ type Mutation {
   refreshRunnerData(id: ID!): BotRunner!
 
   # Backtest mutations
+  # Backtests are immutable - only creation is allowed, no updates
   createBacktest(input: CreateBacktestInput!): Backtest!
-  updateBacktest(id: ID!, input: UpdateBacktestInput!): Backtest!
   deleteBacktest(id: ID!): Boolean!
 
   # Backtest lifecycle mutations

@@ -1,9 +1,11 @@
 package graph
 
 import (
+	"context"
 	"fmt"
 
 	"anytrade/internal/ent"
+	"anytrade/internal/ent/backtest"
 	"anytrade/internal/enum"
 	"anytrade/internal/exchange"
 	"anytrade/internal/runner"
@@ -337,4 +339,65 @@ func generateSecureConfig() (map[string]interface{}, error) {
 	}
 
 	return secureConfig, nil
+}
+
+// runBacktestHelper runs a backtest given its backtest entity
+// This is a helper function used by both CreateBacktest (auto-run) and RunBacktest (manual run)
+func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backtest) (*ent.Backtest, error) {
+	// Ensure backtest has runner and strategy loaded
+	if bt.Edges.Runner == nil || bt.Edges.Strategy == nil {
+		// Reload with edges if not loaded
+		var err error
+		bt, err = r.client.Backtest.Query().
+			Where(backtest.ID(bt.ID)).
+			WithRunner().
+			WithStrategy().
+			Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load backtest with edges: %w", err)
+		}
+	}
+
+	// Get the runner
+	btRunner := bt.Edges.Runner
+	if btRunner == nil {
+		return nil, fmt.Errorf("backtest has no runner configuration")
+	}
+
+	// Create runner client
+	factory := runner.NewFactory()
+	backtestRunner, err := factory.CreateBacktestRunner(ctx, btRunner.Type, btRunner.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
+	}
+	defer backtestRunner.Close()
+
+	// Build BacktestSpec from backtest data
+	spec, err := buildBacktestSpec(bt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build backtest spec: %w", err)
+	}
+
+	// Run the backtest
+	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
+	if err != nil {
+		// Update backtest status to error
+		r.client.Backtest.UpdateOneID(bt.ID).
+			SetStatus(enum.TaskStatusFailed).
+			SetErrorMessage(fmt.Sprintf("Failed to run backtest: %v", err)).
+			Save(ctx)
+		return nil, fmt.Errorf("failed to run backtest: %w", err)
+	}
+
+	// Update backtest with container_id and set status to running
+	bt, err = r.client.Backtest.UpdateOneID(bt.ID).
+		SetContainerID(containerID).
+		SetStatus(enum.TaskStatusRunning).
+		ClearErrorMessage().
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update backtest with container ID: %w", err)
+	}
+
+	return bt, nil
 }

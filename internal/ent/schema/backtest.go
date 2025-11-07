@@ -83,6 +83,7 @@ func (Backtest) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.RelayConnection(),
 		entgql.QueryField(),
-		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+		// Backtests are immutable - only allow creation, no updates
+		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
