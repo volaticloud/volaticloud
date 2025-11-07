@@ -8,7 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useDeleteStrategyMutation } from '../../generated/graphql';
+import { useDeleteStrategyMutation } from './strategies.generated';
 
 interface DeleteStrategyDialogProps {
   open: boolean;

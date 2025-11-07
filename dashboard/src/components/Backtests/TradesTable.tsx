@@ -58,8 +58,8 @@ const TradesTable: React.FC<TradesTableProps> = ({ trades }) => {
 
   return (
     <Paper>
-      <TableContainer>
-        <Table>
+      <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow>
               <TableCell>Pair</TableCell>

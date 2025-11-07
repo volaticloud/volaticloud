@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client/react';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import { createAppTheme } from './theme/theme';
 import { client } from './graphql/client';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
@@ -27,6 +27,12 @@ function App() {
     <ApolloProvider client={client}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <GlobalStyles
+          styles={{
+            html: { overflowX: 'hidden' },
+            body: { overflowX: 'hidden' },
+          }}
+        />
         <BrowserRouter>
           <Routes>
             <Route

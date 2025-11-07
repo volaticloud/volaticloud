@@ -156,11 +156,11 @@ func (e *RunnerError) Unwrap() error {
 
 // Common runner errors
 var (
-	ErrBotNotFound         = fmt.Errorf("bot not found in runner")
-	ErrBotAlreadyExists    = fmt.Errorf("bot already exists in runner")
-	ErrRunnerNotConnected  = fmt.Errorf("runner client not connected")
-	ErrInvalidSpec         = fmt.Errorf("invalid bot specification")
-	ErrResourceLimit       = fmt.Errorf("resource limit exceeded")
+	ErrBotNotFound        = fmt.Errorf("bot not found in runner")
+	ErrBotAlreadyExists   = fmt.Errorf("bot already exists in runner")
+	ErrRunnerNotConnected = fmt.Errorf("runner client not connected")
+	ErrInvalidSpec        = fmt.Errorf("invalid bot specification")
+	ErrResourceLimit      = fmt.Errorf("resource limit exceeded")
 )
 
 // NewRunnerError creates a new runner error

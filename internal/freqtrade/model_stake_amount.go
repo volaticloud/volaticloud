@@ -15,11 +15,10 @@ import (
 	"fmt"
 )
 
-
 // StakeAmount struct for StakeAmount
 type StakeAmount struct {
 	Float32 *float32
-	String *string
+	String  *string
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
@@ -31,7 +30,7 @@ func (dst *StakeAmount) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into Float32
-	err = json.Unmarshal(data, &dst.Float32);
+	err = json.Unmarshal(data, &dst.Float32)
 	if err == nil {
 		jsonFloat32, _ := json.Marshal(dst.Float32)
 		if string(jsonFloat32) == "{}" { // empty struct
@@ -44,7 +43,7 @@ func (dst *StakeAmount) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into String
-	err = json.Unmarshal(data, &dst.String);
+	err = json.Unmarshal(data, &dst.String)
 	if err == nil {
 		jsonString, _ := json.Marshal(dst.String)
 		if string(jsonString) == "{}" { // empty struct
@@ -71,7 +70,6 @@ func (src StakeAmount) MarshalJSON() ([]byte, error) {
 
 	return nil, nil // no data in anyOf schemas
 }
-
 
 type NullableStakeAmount struct {
 	value *StakeAmount
@@ -108,5 +106,3 @@ func (v *NullableStakeAmount) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

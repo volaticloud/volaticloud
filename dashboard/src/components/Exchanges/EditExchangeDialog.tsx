@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { useUpdateExchangeMutation } from '../../generated/graphql';
+import { useUpdateExchangeMutation } from './exchanges.generated';
 import { JSONEditor } from '../JSONEditor';
 
 interface EditExchangeDialogProps {

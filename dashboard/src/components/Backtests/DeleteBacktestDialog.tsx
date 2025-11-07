@@ -8,7 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useDeleteBacktestMutation } from '../../generated/graphql';
+import { useDeleteBacktestMutation } from './backtests.generated';
 
 interface DeleteBacktestDialogProps {
   open: boolean;

@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &OrderTypes{}
 
 // OrderTypes struct for OrderTypes
 type OrderTypes struct {
-	Entry OrderTypeValues `json:"entry"`
-	Exit OrderTypeValues `json:"exit"`
-	EmergencyExit NullableOrderTypeValues `json:"emergency_exit,omitempty"`
-	ForceExit NullableOrderTypeValues `json:"force_exit,omitempty"`
-	ForceEntry NullableOrderTypeValues `json:"force_entry,omitempty"`
-	Stoploss OrderTypeValues `json:"stoploss"`
-	StoplossOnExchange bool `json:"stoploss_on_exchange"`
-	StoplossOnExchangeInterval NullableInt64 `json:"stoploss_on_exchange_interval,omitempty"`
+	Entry                      OrderTypeValues         `json:"entry"`
+	Exit                       OrderTypeValues         `json:"exit"`
+	EmergencyExit              NullableOrderTypeValues `json:"emergency_exit,omitempty"`
+	ForceExit                  NullableOrderTypeValues `json:"force_exit,omitempty"`
+	ForceEntry                 NullableOrderTypeValues `json:"force_entry,omitempty"`
+	Stoploss                   OrderTypeValues         `json:"stoploss"`
+	StoplossOnExchange         bool                    `json:"stoploss_on_exchange"`
+	StoplossOnExchangeInterval NullableInt64           `json:"stoploss_on_exchange_interval,omitempty"`
 }
 
 type _OrderTypes OrderTypes
@@ -134,6 +134,7 @@ func (o *OrderTypes) HasEmergencyExit() bool {
 func (o *OrderTypes) SetEmergencyExit(v OrderTypeValues) {
 	o.EmergencyExit.Set(&v)
 }
+
 // SetEmergencyExitNil sets the value for EmergencyExit to be an explicit nil
 func (o *OrderTypes) SetEmergencyExitNil() {
 	o.EmergencyExit.Set(nil)
@@ -176,6 +177,7 @@ func (o *OrderTypes) HasForceExit() bool {
 func (o *OrderTypes) SetForceExit(v OrderTypeValues) {
 	o.ForceExit.Set(&v)
 }
+
 // SetForceExitNil sets the value for ForceExit to be an explicit nil
 func (o *OrderTypes) SetForceExitNil() {
 	o.ForceExit.Set(nil)
@@ -218,6 +220,7 @@ func (o *OrderTypes) HasForceEntry() bool {
 func (o *OrderTypes) SetForceEntry(v OrderTypeValues) {
 	o.ForceEntry.Set(&v)
 }
+
 // SetForceEntryNil sets the value for ForceEntry to be an explicit nil
 func (o *OrderTypes) SetForceEntryNil() {
 	o.ForceEntry.Set(nil)
@@ -308,6 +311,7 @@ func (o *OrderTypes) HasStoplossOnExchangeInterval() bool {
 func (o *OrderTypes) SetStoplossOnExchangeInterval(v int64) {
 	o.StoplossOnExchangeInterval.Set(&v)
 }
+
 // SetStoplossOnExchangeIntervalNil sets the value for StoplossOnExchangeInterval to be an explicit nil
 func (o *OrderTypes) SetStoplossOnExchangeIntervalNil() {
 	o.StoplossOnExchangeInterval.Set(nil)
@@ -319,7 +323,7 @@ func (o *OrderTypes) UnsetStoplossOnExchangeInterval() {
 }
 
 func (o OrderTypes) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -363,10 +367,10 @@ func (o *OrderTypes) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -422,5 +426,3 @@ func (v *NullableOrderTypes) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

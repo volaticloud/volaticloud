@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,19 +21,19 @@ var _ MappedNullable = &Balance{}
 
 // Balance struct for Balance
 type Balance struct {
-	Currency string `json:"currency"`
-	Free float32 `json:"free"`
-	Balance float32 `json:"balance"`
-	Used float32 `json:"used"`
-	BotOwned NullableFloat32 `json:"bot_owned,omitempty"`
-	EstStake float32 `json:"est_stake"`
-	EstStakeBot NullableFloat32 `json:"est_stake_bot,omitempty"`
-	Stake string `json:"stake"`
-	Side string `json:"side"`
-	Leverage float32 `json:"leverage"`
-	IsPosition bool `json:"is_position"`
-	Position float32 `json:"position"`
-	IsBotManaged bool `json:"is_bot_managed"`
+	Currency     string          `json:"currency"`
+	Free         float32         `json:"free"`
+	Balance      float32         `json:"balance"`
+	Used         float32         `json:"used"`
+	BotOwned     NullableFloat32 `json:"bot_owned,omitempty"`
+	EstStake     float32         `json:"est_stake"`
+	EstStakeBot  NullableFloat32 `json:"est_stake_bot,omitempty"`
+	Stake        string          `json:"stake"`
+	Side         string          `json:"side"`
+	Leverage     float32         `json:"leverage"`
+	IsPosition   bool            `json:"is_position"`
+	Position     float32         `json:"position"`
+	IsBotManaged bool            `json:"is_bot_managed"`
 }
 
 type _Balance Balance
@@ -194,6 +194,7 @@ func (o *Balance) HasBotOwned() bool {
 func (o *Balance) SetBotOwned(v float32) {
 	o.BotOwned.Set(&v)
 }
+
 // SetBotOwnedNil sets the value for BotOwned to be an explicit nil
 func (o *Balance) SetBotOwnedNil() {
 	o.BotOwned.Set(nil)
@@ -260,6 +261,7 @@ func (o *Balance) HasEstStakeBot() bool {
 func (o *Balance) SetEstStakeBot(v float32) {
 	o.EstStakeBot.Set(&v)
 }
+
 // SetEstStakeBotNil sets the value for EstStakeBot to be an explicit nil
 func (o *Balance) SetEstStakeBotNil() {
 	o.EstStakeBot.Set(nil)
@@ -415,7 +417,7 @@ func (o *Balance) SetIsBotManaged(v bool) {
 }
 
 func (o Balance) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -467,10 +469,10 @@ func (o *Balance) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -526,5 +528,3 @@ func (v *NullableBalance) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

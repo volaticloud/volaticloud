@@ -14,7 +14,7 @@ import {
   Grid,
 } from '@mui/material';
 import { ArrowBack, Timeline, TrendingUp, TrendingDown } from '@mui/icons-material';
-import { useGetBacktestQuery } from '../../generated/graphql';
+import { useGetBacktestQuery } from './backtests.generated';
 import TradesTable from './TradesTable';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
 

@@ -11,8 +11,8 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,7 +22,7 @@ var _ MappedNullable = &BgJobStarted{}
 // BgJobStarted struct for BgJobStarted
 type BgJobStarted struct {
 	Status string `json:"status"`
-	JobId string `json:"job_id"`
+	JobId  string `json:"job_id"`
 }
 
 type _BgJobStarted BgJobStarted
@@ -95,7 +95,7 @@ func (o *BgJobStarted) SetJobId(v string) {
 }
 
 func (o BgJobStarted) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -123,10 +123,10 @@ func (o *BgJobStarted) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -182,5 +182,3 @@ func (v *NullableBgJobStarted) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

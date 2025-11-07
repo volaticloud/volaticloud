@@ -92,25 +92,25 @@ type BacktestRunner interface {
 
 // MockBacktestRunner is a no-op implementation for testing
 type MockBacktestRunner struct {
-	RunBacktestFunc        func(ctx context.Context, spec BacktestSpec) (string, error)
-	GetBacktestStatusFunc  func(ctx context.Context, backtestID string) (*BacktestStatus, error)
-	GetBacktestResultFunc  func(ctx context.Context, backtestID string) (*BacktestResult, error)
-	GetBacktestLogsFunc    func(ctx context.Context, backtestID string, opts LogOptions) (*LogReader, error)
-	StopBacktestFunc       func(ctx context.Context, backtestID string) error
-	DeleteBacktestFunc     func(ctx context.Context, backtestID string) error
-	ListBacktestsFunc      func(ctx context.Context) ([]BacktestStatus, error)
+	RunBacktestFunc       func(ctx context.Context, spec BacktestSpec) (string, error)
+	GetBacktestStatusFunc func(ctx context.Context, backtestID string) (*BacktestStatus, error)
+	GetBacktestResultFunc func(ctx context.Context, backtestID string) (*BacktestResult, error)
+	GetBacktestLogsFunc   func(ctx context.Context, backtestID string, opts LogOptions) (*LogReader, error)
+	StopBacktestFunc      func(ctx context.Context, backtestID string) error
+	DeleteBacktestFunc    func(ctx context.Context, backtestID string) error
+	ListBacktestsFunc     func(ctx context.Context) ([]BacktestStatus, error)
 
-	RunHyperOptFunc        func(ctx context.Context, spec HyperOptSpec) (string, error)
-	GetHyperOptStatusFunc  func(ctx context.Context, hyperOptID string) (*HyperOptStatus, error)
-	GetHyperOptResultFunc  func(ctx context.Context, hyperOptID string) (*HyperOptResult, error)
-	GetHyperOptLogsFunc    func(ctx context.Context, hyperOptID string, opts LogOptions) (*LogReader, error)
-	StopHyperOptFunc       func(ctx context.Context, hyperOptID string) error
-	DeleteHyperOptFunc     func(ctx context.Context, hyperOptID string) error
-	ListHyperOptsFunc      func(ctx context.Context) ([]HyperOptStatus, error)
+	RunHyperOptFunc       func(ctx context.Context, spec HyperOptSpec) (string, error)
+	GetHyperOptStatusFunc func(ctx context.Context, hyperOptID string) (*HyperOptStatus, error)
+	GetHyperOptResultFunc func(ctx context.Context, hyperOptID string) (*HyperOptResult, error)
+	GetHyperOptLogsFunc   func(ctx context.Context, hyperOptID string, opts LogOptions) (*LogReader, error)
+	StopHyperOptFunc      func(ctx context.Context, hyperOptID string) error
+	DeleteHyperOptFunc    func(ctx context.Context, hyperOptID string) error
+	ListHyperOptsFunc     func(ctx context.Context) ([]HyperOptStatus, error)
 
-	HealthCheckFunc        func(ctx context.Context) error
-	CloseFunc              func() error
-	TypeFunc               func() string
+	HealthCheckFunc func(ctx context.Context) error
+	CloseFunc       func() error
+	TypeFunc        func() string
 }
 
 // Ensure MockBacktestRunner implements BacktestRunner interface

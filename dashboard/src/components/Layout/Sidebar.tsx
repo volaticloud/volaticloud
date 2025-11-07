@@ -6,7 +6,6 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
-  Typography,
   Box,
   Divider,
 } from '@mui/material';
@@ -20,8 +19,9 @@ import {
   Storage as RuntimeIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Logo } from '../shared/Logo';
 
-const drawerWidth = 260;
+export const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -33,29 +33,24 @@ const menuItems = [
   { text: 'Runners', icon: <RuntimeIcon />, path: '/runners' },
 ];
 
-export const Sidebar = () => {
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: drawerWidth,
-          boxSizing: 'border-box',
-        },
-      }}
-    >
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    onMobileClose(); // Close drawer on mobile after navigation
+  };
+
+  const drawerContent = (
+    <>
       <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <BotIcon sx={{ color: 'primary.main', fontSize: 32 }} />
-          <Typography variant="h6" noWrap component="div" fontWeight={700}>
-            AnyTrade
-          </Typography>
-        </Box>
+        <Logo onClick={() => handleNavigate('/')} />
       </Toolbar>
       <Divider />
       <List>
@@ -63,7 +58,7 @@ export const Sidebar = () => {
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavigate(item.path)}
               sx={{
                 '&.Mui-selected': {
                   backgroundColor: 'primary.main',
@@ -85,6 +80,44 @@ export const Sidebar = () => {
           </ListItem>
         ))}
       </List>
-    </Drawer>
+    </>
+  );
+
+  return (
+    <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+      {/* Mobile drawer */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{
+          keepMounted: true, // Better mobile performance
+        }}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+
+      {/* Desktop drawer */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+          },
+        }}
+        open
+      >
+        {drawerContent}
+      </Drawer>
+    </Box>
   );
 };

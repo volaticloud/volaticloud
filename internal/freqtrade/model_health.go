@@ -20,7 +20,7 @@ var _ MappedNullable = &Health{}
 
 // Health struct for Health
 type Health struct {
-	LastProcess NullableTime `json:"last_process,omitempty"`
+	LastProcess   NullableTime  `json:"last_process,omitempty"`
 	LastProcessTs NullableInt64 `json:"last_process_ts,omitempty"`
 }
 
@@ -73,6 +73,7 @@ func (o *Health) HasLastProcess() bool {
 func (o *Health) SetLastProcess(v time.Time) {
 	o.LastProcess.Set(&v)
 }
+
 // SetLastProcessNil sets the value for LastProcess to be an explicit nil
 func (o *Health) SetLastProcessNil() {
 	o.LastProcess.Set(nil)
@@ -115,6 +116,7 @@ func (o *Health) HasLastProcessTs() bool {
 func (o *Health) SetLastProcessTs(v int64) {
 	o.LastProcessTs.Set(&v)
 }
+
 // SetLastProcessTsNil sets the value for LastProcessTs to be an explicit nil
 func (o *Health) SetLastProcessTsNil() {
 	o.LastProcessTs.Set(nil)
@@ -126,7 +128,7 @@ func (o *Health) UnsetLastProcessTs() {
 }
 
 func (o Health) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -179,5 +181,3 @@ func (v *NullableHealth) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

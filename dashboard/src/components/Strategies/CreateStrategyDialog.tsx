@@ -9,7 +9,7 @@ import {
   Box,
 } from '@mui/material';
 import { useState } from 'react';
-import { useCreateStrategyMutation } from '../../generated/graphql';
+import { useCreateStrategyMutation } from './strategies.generated';
 import { JSONEditor } from '../JSONEditor';
 
 interface CreateStrategyDialogProps {

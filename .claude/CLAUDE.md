@@ -230,7 +230,7 @@ A modern React dashboard is available in the `dashboard/` directory.
 ```bash
 cd dashboard
 npm install
-npm run codegen  # Generate GraphQL types
+npm run codegen  # Generate GraphQL types (requires backend server running)
 npm run dev      # Start development server
 ```
 
@@ -238,11 +238,12 @@ Dashboard runs on http://localhost:5173
 
 ### Architecture
 
-**Centralized Code Generation:**
-All GraphQL operations are generated into a single centralized file:
+**Per-Component Code Generation:**
+GraphQL operations are generated next to their component files:
 - GraphQL files: `src/components/*/[feature].graphql` (e.g., `bots.graphql`, `backtests.graphql`)
-- Generated hooks: `src/generated/graphql.ts` (centralized)
-- Codegen config: `codegen.ts` uses **schema introspection** from `http://localhost:8080/query`
+- Generated hooks: `src/components/*/[feature].generated.ts` (co-located with components)
+- Shared types: `src/generated/types.ts` (centralized base types)
+- Codegen config: `codegen.ts` uses **near-operation-file preset** with schema introspection from `http://localhost:8080/query`
 
 **Important**: The codegen fetches the schema from the running GraphQL server via introspection, NOT from the `internal/graph/ent.graphql` file. This means:
 1. The backend server MUST be running on port 8080 before running `npm run codegen`
@@ -263,21 +264,46 @@ npm run codegen  # Fetches schema from http://localhost:8080/query
 
 **Usage Example:**
 ```typescript
-// Import from centralized generated file
-import { useGetBotsQuery, useStartBotMutation } from '../../generated/graphql';
+// Import from co-located generated file
+import { useGetBotsQuery, useStartBotMutation } from './bots.generated';
 
 const { data, loading } = useGetBotsQuery({ variables: { first: 10 } });
 const [startBot] = useStartBotMutation();
 ```
 
-All GraphQL operation files use the `.graphql` extension. The generated file `src/generated/graphql.ts` is git-ignored.
+All GraphQL operation files use the `.graphql` extension. Generated `.generated.ts` files are git-ignored.
+
+### Responsive Layout
+
+**Mobile-First Design:**
+The dashboard features a fully responsive layout that works on mobile, tablet, and desktop:
+
+**Components:**
+- `Logo` (`src/components/shared/Logo.tsx`) - Reusable logo component with gradient text
+  - Supports `variant` (full/icon) and `size` (small/medium/large) props
+  - Used in both Sidebar and Header
+- `Sidebar` (`src/components/Layout/Sidebar.tsx`) - Responsive navigation drawer
+  - Desktop: Permanent drawer (always visible)
+  - Mobile: Temporary drawer (swipeable, triggered by menu button)
+  - Auto-closes after navigation on mobile
+- `Header` (`src/components/Layout/Header.tsx`) - App bar with actions
+  - Shows hamburger menu button on mobile
+  - Displays logo on mobile, hidden on desktop (sidebar shows it)
+  - Theme toggle, notifications, and settings buttons
+- `DashboardLayout` (`src/components/Layout/DashboardLayout.tsx`) - Main layout container
+  - Manages mobile drawer open/close state
+  - Responsive padding and spacing
+
+**Responsive Breakpoints:**
+- `xs` (0-599px): Mobile - temporary drawer, compact spacing
+- `sm` (600px+): Desktop - permanent drawer, full spacing
 
 ### Key Features
 - Dark/Light mode toggle
-- Responsive Material-UI layout
+- Fully responsive layout (mobile, tablet, desktop)
 - Type-safe GraphQL queries with generated React hooks
-- Sidebar navigation
-- Component-based architecture
+- Component-based architecture with reusable components
+- Modern gradient logo design
 
 See `dashboard/README.md` for detailed documentation.
 

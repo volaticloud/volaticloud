@@ -8,7 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useDeleteExchangeMutation } from '../../generated/graphql';
+import { useDeleteExchangeMutation } from './exchanges.generated';
 
 interface DeleteExchangeDialogProps {
   open: boolean;

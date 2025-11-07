@@ -5,13 +5,31 @@ const config: CodegenConfig = {
   documents: ['src/**/*.graphql'],
   ignoreNoDocuments: true,
   generates: {
-    './src/generated/graphql.ts': {
-      plugins: ['typescript', 'typescript-operations', 'typescript-react-apollo'],
+    // Generate shared types
+    './src/generated/types.ts': {
+      plugins: ['typescript'],
+      config: {
+        scalars: {
+          Time: 'string',
+          Cursor: 'string',
+          Map: 'Record<string, any>'
+        }
+      }
+    },
+    // Generate per-component files next to .graphql files
+    'src/': {
+      preset: 'near-operation-file',
+      presetConfig: {
+        extension: '.generated.ts',
+        baseTypesPath: 'generated/types.ts'
+      },
+      plugins: ['typescript-operations', 'typescript-react-apollo'],
       config: {
         withHooks: true,
         scalars: {
           Time: 'string',
-          Cursor: 'string'
+          Cursor: 'string',
+          Map: 'Record<string, any>'
         }
       }
     }

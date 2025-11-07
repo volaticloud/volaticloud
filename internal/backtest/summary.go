@@ -6,25 +6,25 @@ import "time"
 // This provides type-safe access to commonly used metrics without parsing the full result JSON.
 // GraphQL type is defined in internal/graph/schema.graphqls and auto-mapped via gqlgen autobind.
 type BacktestSummary struct {
-	StrategyName    string     `json:"strategyName"`
-	TotalTrades     int        `json:"totalTrades"`
-	Wins            int        `json:"wins"`
-	Losses          int        `json:"losses"`
-	ProfitTotalAbs  float64    `json:"profitTotalAbs"`
-	ProfitTotal     float64    `json:"profitTotal"`
-	ProfitMean      *float64   `json:"profitMean,omitempty"`
-	WinRate         *float64   `json:"winRate,omitempty"`
-	MaxDrawdown     *float64   `json:"maxDrawdown,omitempty"`
-	ProfitFactor    *float64   `json:"profitFactor,omitempty"`
-	Expectancy      *float64   `json:"expectancy,omitempty"`
-	Sharpe          *float64   `json:"sharpe,omitempty"`
-	Sortino         *float64   `json:"sortino,omitempty"`
-	Calmar          *float64   `json:"calmar,omitempty"`
-	AvgStakeAmount  *float64   `json:"avgStakeAmount,omitempty"`
-	StakeCurrency   string     `json:"stakeCurrency"`
-	BacktestStart   *time.Time `json:"backtestStart,omitempty"`
-	BacktestEnd     *time.Time `json:"backtestEnd,omitempty"`
-	BacktestDays    *int       `json:"backtestDays,omitempty"`
+	StrategyName   string     `json:"strategyName"`
+	TotalTrades    int        `json:"totalTrades"`
+	Wins           int        `json:"wins"`
+	Losses         int        `json:"losses"`
+	ProfitTotalAbs float64    `json:"profitTotalAbs"`
+	ProfitTotal    float64    `json:"profitTotal"`
+	ProfitMean     *float64   `json:"profitMean,omitempty"`
+	WinRate        *float64   `json:"winRate,omitempty"`
+	MaxDrawdown    *float64   `json:"maxDrawdown,omitempty"`
+	ProfitFactor   *float64   `json:"profitFactor,omitempty"`
+	Expectancy     *float64   `json:"expectancy,omitempty"`
+	Sharpe         *float64   `json:"sharpe,omitempty"`
+	Sortino        *float64   `json:"sortino,omitempty"`
+	Calmar         *float64   `json:"calmar,omitempty"`
+	AvgStakeAmount *float64   `json:"avgStakeAmount,omitempty"`
+	StakeCurrency  string     `json:"stakeCurrency"`
+	BacktestStart  *time.Time `json:"backtestStart,omitempty"`
+	BacktestEnd    *time.Time `json:"backtestEnd,omitempty"`
+	BacktestDays   *int       `json:"backtestDays,omitempty"`
 }
 
 // ExtractSummaryFromResult extracts a typed summary from Freqtrade backtest result JSON

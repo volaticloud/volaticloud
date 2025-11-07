@@ -53,10 +53,10 @@ func buildBotSpec(b *ent.Bot) (*runner.BotSpec, error) {
 		FreqtradeVersion: b.FreqtradeVersion,
 		StrategyName:     strategy.Name,
 		StrategyCode:     strategy.Code,
-		StrategyConfig:   strategy.Config,   // Separate config file
-		Config:           botConfig,          // Separate config file
-		ExchangeConfig:   exchange.Config,    // Separate config file
-		SecureConfig:     b.SecureConfig,     // System-forced config (NEVER exposed to users)
+		StrategyConfig:   strategy.Config, // Separate config file
+		Config:           botConfig,       // Separate config file
+		ExchangeConfig:   exchange.Config, // Separate config file
+		SecureConfig:     b.SecureConfig,  // System-forced config (NEVER exposed to users)
 		Environment:      make(map[string]string),
 	}
 
