@@ -69,6 +69,48 @@ func (_c *StrategyCreate) SetConfig(v map[string]interface{}) *StrategyCreate {
 	return _c
 }
 
+// SetParentID sets the "parent_id" field.
+func (_c *StrategyCreate) SetParentID(v uuid.UUID) *StrategyCreate {
+	_c.mutation.SetParentID(v)
+	return _c
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_c *StrategyCreate) SetNillableParentID(v *uuid.UUID) *StrategyCreate {
+	if v != nil {
+		_c.SetParentID(*v)
+	}
+	return _c
+}
+
+// SetIsLatest sets the "is_latest" field.
+func (_c *StrategyCreate) SetIsLatest(v bool) *StrategyCreate {
+	_c.mutation.SetIsLatest(v)
+	return _c
+}
+
+// SetNillableIsLatest sets the "is_latest" field if the given value is not nil.
+func (_c *StrategyCreate) SetNillableIsLatest(v *bool) *StrategyCreate {
+	if v != nil {
+		_c.SetIsLatest(*v)
+	}
+	return _c
+}
+
+// SetVersionNumber sets the "version_number" field.
+func (_c *StrategyCreate) SetVersionNumber(v int) *StrategyCreate {
+	_c.mutation.SetVersionNumber(v)
+	return _c
+}
+
+// SetNillableVersionNumber sets the "version_number" field if the given value is not nil.
+func (_c *StrategyCreate) SetNillableVersionNumber(v *int) *StrategyCreate {
+	if v != nil {
+		_c.SetVersionNumber(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *StrategyCreate) SetCreatedAt(v time.Time) *StrategyCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -126,6 +168,25 @@ func (_c *StrategyCreate) AddBots(v ...*Bot) *StrategyCreate {
 	return _c.AddBotIDs(ids...)
 }
 
+// SetBacktestID sets the "backtest" edge to the Backtest entity by ID.
+func (_c *StrategyCreate) SetBacktestID(id uuid.UUID) *StrategyCreate {
+	_c.mutation.SetBacktestID(id)
+	return _c
+}
+
+// SetNillableBacktestID sets the "backtest" edge to the Backtest entity by ID if the given value is not nil.
+func (_c *StrategyCreate) SetNillableBacktestID(id *uuid.UUID) *StrategyCreate {
+	if id != nil {
+		_c = _c.SetBacktestID(*id)
+	}
+	return _c
+}
+
+// SetBacktest sets the "backtest" edge to the Backtest entity.
+func (_c *StrategyCreate) SetBacktest(v *Backtest) *StrategyCreate {
+	return _c.SetBacktestID(v.ID)
+}
+
 // AddBacktestIDs adds the "backtests" edge to the Backtest entity by IDs.
 func (_c *StrategyCreate) AddBacktestIDs(ids ...uuid.UUID) *StrategyCreate {
 	_c.mutation.AddBacktestIDs(ids...)
@@ -139,6 +200,26 @@ func (_c *StrategyCreate) AddBacktests(v ...*Backtest) *StrategyCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddBacktestIDs(ids...)
+}
+
+// AddChildIDs adds the "children" edge to the Strategy entity by IDs.
+func (_c *StrategyCreate) AddChildIDs(ids ...uuid.UUID) *StrategyCreate {
+	_c.mutation.AddChildIDs(ids...)
+	return _c
+}
+
+// AddChildren adds the "children" edges to the Strategy entity.
+func (_c *StrategyCreate) AddChildren(v ...*Strategy) *StrategyCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddChildIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Strategy entity.
+func (_c *StrategyCreate) SetParent(v *Strategy) *StrategyCreate {
+	return _c.SetParentID(v.ID)
 }
 
 // Mutation returns the StrategyMutation object of the builder.
@@ -180,6 +261,14 @@ func (_c *StrategyCreate) defaults() {
 		v := strategy.DefaultVersion
 		_c.mutation.SetVersion(v)
 	}
+	if _, ok := _c.mutation.IsLatest(); !ok {
+		v := strategy.DefaultIsLatest
+		_c.mutation.SetIsLatest(v)
+	}
+	if _, ok := _c.mutation.VersionNumber(); !ok {
+		v := strategy.DefaultVersionNumber
+		_c.mutation.SetVersionNumber(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := strategy.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -209,6 +298,12 @@ func (_c *StrategyCreate) check() error {
 	}
 	if _, ok := _c.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Strategy.version"`)}
+	}
+	if _, ok := _c.mutation.IsLatest(); !ok {
+		return &ValidationError{Name: "is_latest", err: errors.New(`ent: missing required field "Strategy.is_latest"`)}
+	}
+	if _, ok := _c.mutation.VersionNumber(); !ok {
+		return &ValidationError{Name: "version_number", err: errors.New(`ent: missing required field "Strategy.version_number"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Strategy.created_at"`)}
@@ -271,6 +366,14 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
 	}
+	if value, ok := _c.mutation.IsLatest(); ok {
+		_spec.SetField(strategy.FieldIsLatest, field.TypeBool, value)
+		_node.IsLatest = value
+	}
+	if value, ok := _c.mutation.VersionNumber(); ok {
+		_spec.SetField(strategy.FieldVersionNumber, field.TypeInt, value)
+		_node.VersionNumber = value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(strategy.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -295,6 +398,23 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.BacktestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   strategy.BacktestTable,
+			Columns: []string{strategy.BacktestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.strategy_backtest = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.BacktestsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -309,6 +429,39 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   strategy.ChildrenTable,
+			Columns: []string{strategy.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   strategy.ParentTable,
+			Columns: []string{strategy.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ParentID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -259,23 +259,31 @@ type ComplexityRoot struct {
 		Bots               func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
 		Exchanges          func(childComplexity int) int
 		GetBotRunnerStatus func(childComplexity int, id uuid.UUID) int
+		LatestStrategies   func(childComplexity int, first *int, after *entgql.Cursor[uuid.UUID], where *ent.StrategyWhereInput) int
 		Node               func(childComplexity int, id uuid.UUID) int
 		Nodes              func(childComplexity int, ids []uuid.UUID) int
 		Strategies         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) int
+		StrategyVersions   func(childComplexity int, name string) int
 		Trades             func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
 	}
 
 	Strategy struct {
-		Backtests   func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
-		Bots        func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
-		Code        func(childComplexity int) int
-		Config      func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		Description func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Name        func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Version     func(childComplexity int) int
+		Backtest      func(childComplexity int) int
+		Backtests     func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
+		Bots          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
+		Children      func(childComplexity int) int
+		Code          func(childComplexity int) int
+		Config        func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		Description   func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IsLatest      func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Parent        func(childComplexity int) int
+		ParentID      func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
+		Version       func(childComplexity int) int
+		VersionNumber func(childComplexity int) int
 	}
 
 	StrategyConnection struct {
@@ -363,6 +371,8 @@ type QueryResolver interface {
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
 	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
+	LatestStrategies(ctx context.Context, first *int, after *entgql.Cursor[uuid.UUID], where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
+	StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error)
 }
 
 type executableSchema struct {
@@ -1501,6 +1511,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.GetBotRunnerStatus(childComplexity, args["id"].(uuid.UUID)), true
+	case "Query.latestStrategies":
+		if e.complexity.Query.LatestStrategies == nil {
+			break
+		}
+
+		args, err := ec.field_Query_latestStrategies_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.LatestStrategies(childComplexity, args["first"].(*int), args["after"].(*entgql.Cursor[uuid.UUID]), args["where"].(*ent.StrategyWhereInput)), true
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -1534,6 +1555,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Strategies(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.StrategyWhereInput)), true
+	case "Query.strategyVersions":
+		if e.complexity.Query.StrategyVersions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_strategyVersions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.StrategyVersions(childComplexity, args["name"].(string)), true
 	case "Query.trades":
 		if e.complexity.Query.Trades == nil {
 			break
@@ -1546,6 +1578,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.TradeWhereInput)), true
 
+	case "Strategy.backtest":
+		if e.complexity.Strategy.Backtest == nil {
+			break
+		}
+
+		return e.complexity.Strategy.Backtest(childComplexity), true
 	case "Strategy.backtests":
 		if e.complexity.Strategy.Backtests == nil {
 			break
@@ -1568,6 +1606,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BotWhereInput)), true
+	case "Strategy.children":
+		if e.complexity.Strategy.Children == nil {
+			break
+		}
+
+		return e.complexity.Strategy.Children(childComplexity), true
 	case "Strategy.code":
 		if e.complexity.Strategy.Code == nil {
 			break
@@ -1598,12 +1642,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.ID(childComplexity), true
+	case "Strategy.isLatest":
+		if e.complexity.Strategy.IsLatest == nil {
+			break
+		}
+
+		return e.complexity.Strategy.IsLatest(childComplexity), true
 	case "Strategy.name":
 		if e.complexity.Strategy.Name == nil {
 			break
 		}
 
 		return e.complexity.Strategy.Name(childComplexity), true
+	case "Strategy.parent":
+		if e.complexity.Strategy.Parent == nil {
+			break
+		}
+
+		return e.complexity.Strategy.Parent(childComplexity), true
+	case "Strategy.parentID":
+		if e.complexity.Strategy.ParentID == nil {
+			break
+		}
+
+		return e.complexity.Strategy.ParentID(childComplexity), true
 	case "Strategy.updatedAt":
 		if e.complexity.Strategy.UpdatedAt == nil {
 			break
@@ -1616,6 +1678,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Version(childComplexity), true
+	case "Strategy.versionNumber":
+		if e.complexity.Strategy.VersionNumber == nil {
+			break
+		}
+
+		return e.complexity.Strategy.VersionNumber(childComplexity), true
 
 	case "StrategyConnection.edges":
 		if e.complexity.StrategyConnection.Edges == nil {
@@ -2488,6 +2556,27 @@ func (ec *executionContext) field_Query_getBotRunnerStatus_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_latestStrategies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOStrategyWhereInput2ᚖanytradeᚋinternalᚋentᚐStrategyWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2538,6 +2627,17 @@ func (ec *executionContext) field_Query_strategies_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["where"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_strategyVersions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "name", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -3041,14 +3141,26 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_version(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Strategy_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -4411,14 +4523,26 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_version(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Strategy_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -6915,14 +7039,26 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_version(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Strategy_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -6978,14 +7114,26 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_version(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Strategy_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -8905,6 +9053,130 @@ func (ec *executionContext) fieldContext_Query_getBotRunnerStatus(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_latestStrategies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_latestStrategies,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().LatestStrategies(ctx, fc.Args["first"].(*int), fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["where"].(*ent.StrategyWhereInput))
+		},
+		nil,
+		ec.marshalNStrategyConnection2ᚖanytradeᚋinternalᚋentᚐStrategyConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_latestStrategies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_StrategyConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_StrategyConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_StrategyConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StrategyConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_latestStrategies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_strategyVersions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_strategyVersions,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().StrategyVersions(ctx, fc.Args["name"].(string))
+		},
+		nil,
+		ec.marshalNStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_strategyVersions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Strategy_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Strategy_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Strategy_description(ctx, field)
+			case "code":
+				return ec.fieldContext_Strategy_code(ctx, field)
+			case "version":
+				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Strategy_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Strategy_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
+			case "backtests":
+				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_strategyVersions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9187,6 +9459,93 @@ func (ec *executionContext) fieldContext_Strategy_config(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Strategy_parentID(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_parentID,
+		func(ctx context.Context) (any, error) {
+			return obj.ParentID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_parentID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_isLatest(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_isLatest,
+		func(ctx context.Context) (any, error) {
+			return obj.IsLatest, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_isLatest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_versionNumber(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_versionNumber,
+		func(ctx context.Context) (any, error) {
+			return obj.VersionNumber, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_versionNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Strategy_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9294,6 +9653,65 @@ func (ec *executionContext) fieldContext_Strategy_bots(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Strategy_backtest(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_backtest,
+		func(ctx context.Context) (any, error) {
+			return obj.Backtest(ctx)
+		},
+		nil,
+		ec.marshalOBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Backtest_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Backtest_status(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "containerID":
+				return ec.fieldContext_Backtest_containerID(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Backtest_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Backtest_updatedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Strategy_backtests(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9339,6 +9757,132 @@ func (ec *executionContext) fieldContext_Strategy_backtests(ctx context.Context,
 	if fc.Args, err = ec.field_Strategy_backtests_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_children(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_children,
+		func(ctx context.Context) (any, error) {
+			return obj.Children(ctx)
+		},
+		nil,
+		ec.marshalOStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_children(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Strategy_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Strategy_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Strategy_description(ctx, field)
+			case "code":
+				return ec.fieldContext_Strategy_code(ctx, field)
+			case "version":
+				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Strategy_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Strategy_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
+			case "backtests":
+				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_parent(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_parent,
+		func(ctx context.Context) (any, error) {
+			return obj.Parent(ctx)
+		},
+		nil,
+		ec.marshalOStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_parent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Strategy_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Strategy_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Strategy_description(ctx, field)
+			case "code":
+				return ec.fieldContext_Strategy_code(ctx, field)
+			case "version":
+				return ec.fieldContext_Strategy_version(ctx, field)
+			case "config":
+				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Strategy_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Strategy_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
+			case "backtests":
+				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -9482,14 +10026,26 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_version(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Strategy_parentID(ctx, field)
+			case "isLatest":
+				return ec.fieldContext_Strategy_isLatest(ctx, field)
+			case "versionNumber":
+				return ec.fieldContext_Strategy_versionNumber(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Strategy_updatedAt(ctx, field)
 			case "bots":
 				return ec.fieldContext_Strategy_bots(ctx, field)
+			case "backtest":
+				return ec.fieldContext_Strategy_backtest(ctx, field)
 			case "backtests":
 				return ec.fieldContext_Strategy_backtests(ctx, field)
+			case "children":
+				return ec.fieldContext_Strategy_children(ctx, field)
+			case "parent":
+				return ec.fieldContext_Strategy_parent(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Strategy", field.Name)
 		},
@@ -16022,7 +16578,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code", "version", "config", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"name", "description", "code", "version", "config", "isLatest", "versionNumber", "createdAt", "updatedAt", "botIDs", "backtestID", "backtestIDs", "childIDs", "parentID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16064,6 +16620,20 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.Config = data
+		case "isLatest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLatest"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsLatest = data
+		case "versionNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumber"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumber = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -16085,6 +16655,13 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.BotIDs = data
+		case "backtestID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backtestID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BacktestID = data
 		case "backtestIDs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backtestIDs"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
@@ -16092,6 +16669,20 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.BacktestIDs = data
+		case "childIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childIDs"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChildIDs = data
+		case "parentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentID = data
 		}
 	}
 
@@ -17024,7 +17615,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "version", "versionNEQ", "versionIn", "versionNotIn", "versionGT", "versionGTE", "versionLT", "versionLTE", "versionContains", "versionHasPrefix", "versionHasSuffix", "versionEqualFold", "versionContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "version", "versionNEQ", "versionIn", "versionNotIn", "versionGT", "versionGTE", "versionLT", "versionLTE", "versionContains", "versionHasPrefix", "versionHasSuffix", "versionEqualFold", "versionContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasBacktests", "hasBacktestsWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17486,6 +18077,118 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.VersionContainsFold = data
+		case "parentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentID = data
+		case "parentIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentIDNEQ = data
+		case "parentIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentIDIn = data
+		case "parentIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentIDNotIn = data
+		case "parentIDIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentIDIsNil = data
+		case "parentIDNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentIDNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentIDNotNil = data
+		case "isLatest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLatest"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsLatest = data
+		case "isLatestNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLatestNEQ"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsLatestNEQ = data
+		case "versionNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumber"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumber = data
+		case "versionNumberNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberNEQ = data
+		case "versionNumberIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberIn"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberIn = data
+		case "versionNumberNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberNotIn"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberNotIn = data
+		case "versionNumberGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberGT"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberGT = data
+		case "versionNumberGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberGTE"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberGTE = data
+		case "versionNumberLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberLT"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberLT = data
+		case "versionNumberLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumberLTE"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumberLTE = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -17612,6 +18315,20 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.HasBotsWith = data
+		case "hasBacktest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktest"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasBacktest = data
+		case "hasBacktestWith":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktestWith"))
+			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasBacktestWith = data
 		case "hasBacktests":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktests"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -17626,6 +18343,34 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.HasBacktestsWith = data
+		case "hasChildren":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasChildren"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasChildren = data
+		case "hasChildrenWith":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasChildrenWith"))
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasChildrenWith = data
+		case "hasParent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasParent"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasParent = data
+		case "hasParentWith":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasParentWith"))
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasParentWith = data
 		}
 	}
 
@@ -19656,7 +20401,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "version", "config", "clearConfig", "isLatest", "versionNumber", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addBacktestIDs", "removeBacktestIDs", "clearBacktests", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19712,6 +20457,20 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearConfig = data
+		case "isLatest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLatest"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsLatest = data
+		case "versionNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumber"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumber = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -19740,6 +20499,20 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearBots = data
+		case "backtestID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backtestID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BacktestID = data
+		case "clearBacktest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearBacktest"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearBacktest = data
 		case "addBacktestIDs":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addBacktestIDs"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
@@ -19761,6 +20534,41 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearBacktests = data
+		case "addChildIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addChildIDs"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddChildIDs = data
+		case "removeChildIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeChildIDs"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemoveChildIDs = data
+		case "clearChildren":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearChildren"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearChildren = data
+		case "parentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentID = data
+		case "clearParent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearParent"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearParent = data
 		}
 	}
 
@@ -21738,6 +22546,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "latestStrategies":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_latestStrategies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "strategyVersions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_strategyVersions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -21804,6 +22656,18 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "config":
 			out.Values[i] = ec._Strategy_config(ctx, field, obj)
+		case "parentID":
+			out.Values[i] = ec._Strategy_parentID(ctx, field, obj)
+		case "isLatest":
+			out.Values[i] = ec._Strategy_isLatest(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "versionNumber":
+			out.Values[i] = ec._Strategy_versionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._Strategy_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21850,6 +22714,39 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "backtest":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Strategy_backtest(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "backtests":
 			field := field
 
@@ -21863,6 +22760,72 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "children":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Strategy_children(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "parent":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Strategy_parent(ctx, field, obj)
 				return res
 			}
 
@@ -23048,6 +24011,50 @@ func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPag
 
 func (ec *executionContext) marshalNStrategy2anytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v ent.Strategy) graphql.Marshaler {
 	return ec._Strategy(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Strategy) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {
@@ -24473,6 +25480,53 @@ func (ec *executionContext) unmarshalORegistryAuthInput2ᚖanytradeᚋinternal�
 	}
 	res, err := ec.unmarshalInputRegistryAuthInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Strategy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {

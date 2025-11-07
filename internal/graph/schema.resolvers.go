@@ -9,6 +9,7 @@ import (
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
 	"anytrade/internal/monitor"
 	"anytrade/internal/runner"
@@ -19,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"entgo.io/contrib/entgql"
 	"github.com/google/uuid"
 )
 
@@ -64,7 +66,49 @@ func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateS
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
-	return r.client.Strategy.UpdateOneID(id).SetInput(input).Save(ctx)
+	// Load existing strategy
+	oldStrategy, err := r.client.Strategy.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load strategy: %w", err)
+	}
+
+	// Mark old strategy as not latest
+	err = r.client.Strategy.UpdateOneID(id).SetIsLatest(false).Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark old strategy as not latest: %w", err)
+	}
+
+	// Create new version with input values, falling back to old values
+	newVersion := r.client.Strategy.Create().
+		SetName(coalesce(input.Name, &oldStrategy.Name)).
+		SetDescription(coalesce(input.Description, &oldStrategy.Description)).
+		SetCode(coalesce(input.Code, &oldStrategy.Code)).
+		SetVersionNumber(oldStrategy.VersionNumber + 1).
+		SetParentID(oldStrategy.ID).
+		SetIsLatest(true)
+
+	// Handle optional fields
+	if input.Config != nil {
+		newVersion.SetConfig(input.Config)
+	} else if oldStrategy.Config != nil {
+		newVersion.SetConfig(oldStrategy.Config)
+	}
+
+	if input.Version != nil {
+		newVersion.SetVersion(*input.Version)
+	} else {
+		newVersion.SetVersion(oldStrategy.Version)
+	}
+
+	return newVersion.Save(ctx)
+}
+
+// coalesce returns the new value if provided, otherwise returns the old value
+func coalesce[T any](newVal, oldVal *T) T {
+	if newVal != nil {
+		return *newVal
+	}
+	return *oldVal
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -468,7 +512,64 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 }
 
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
-	return r.client.Backtest.Create().SetInput(input).Save(ctx)
+	strategyID := input.StrategyID
+
+	// Load strategy with backtest relationship to check if it already has one
+	existingStrategy, err := r.client.Strategy.Query().
+		Where(strategy.ID(strategyID)).
+		WithBacktest().
+		Only(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load strategy: %w", err)
+	}
+
+	// Check if strategy already has a backtest
+	if existingStrategy.Edges.Backtest != nil {
+		// Auto-create new strategy version for this backtest
+		newVersion, err := r.createStrategyVersion(ctx, existingStrategy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create strategy version for backtest: %w", err)
+		}
+		// Use the new version's ID for the backtest
+		strategyID = newVersion.ID
+	}
+
+	// Create backtest with the resolved strategy ID
+	creator := r.client.Backtest.Create().
+		SetStrategyID(strategyID).
+		SetRunnerID(input.RunnerID)
+
+	if input.Config != nil {
+		creator.SetConfig(input.Config)
+	}
+
+	return creator.Save(ctx)
+}
+
+// createStrategyVersion creates a new version of a strategy (helper function)
+func (r *mutationResolver) createStrategyVersion(ctx context.Context, old *ent.Strategy) (*ent.Strategy, error) {
+	// Mark old version as not latest
+	err := r.client.Strategy.UpdateOneID(old.ID).SetIsLatest(false).Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark old strategy as not latest: %w", err)
+	}
+
+	// Create new version (exact copy with incremented version number)
+	newVersion := r.client.Strategy.Create().
+		SetName(old.Name).
+		SetDescription(old.Description).
+		SetCode(old.Code).
+		SetVersion(old.Version).
+		SetVersionNumber(old.VersionNumber + 1).
+		SetParentID(old.ID).
+		SetIsLatest(true)
+
+	if old.Config != nil {
+		newVersion.SetConfig(old.Config)
+	}
+
+	return newVersion.Save(ctx)
 }
 
 func (r *mutationResolver) UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error) {
@@ -648,6 +749,27 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	}
 
 	return status, nil
+}
+
+func (r *queryResolver) LatestStrategies(ctx context.Context, first *int, after *entgql.Cursor[uuid.UUID], where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
+	// Query only strategies where is_latest = true
+	query := r.client.Strategy.Query().Where(strategy.IsLatest(true))
+
+	// Apply where filters if provided
+	if where != nil {
+		query, _ = where.Filter(query)
+	}
+
+	// Use ENT's Paginate helper for Relay-style pagination
+	return query.Paginate(ctx, after, first, nil, nil)
+}
+
+func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error) {
+	// Get all versions of a strategy by name, ordered by version number
+	return r.client.Strategy.Query().
+		Where(strategy.Name(name)).
+		Order(ent.Asc(strategy.FieldVersionNumber)).
+		All(ctx)
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

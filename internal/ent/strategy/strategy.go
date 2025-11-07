@@ -25,14 +25,26 @@ const (
 	FieldVersion = "version"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
+	// FieldParentID holds the string denoting the parent_id field in the database.
+	FieldParentID = "parent_id"
+	// FieldIsLatest holds the string denoting the is_latest field in the database.
+	FieldIsLatest = "is_latest"
+	// FieldVersionNumber holds the string denoting the version_number field in the database.
+	FieldVersionNumber = "version_number"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// EdgeBots holds the string denoting the bots edge name in mutations.
 	EdgeBots = "bots"
+	// EdgeBacktest holds the string denoting the backtest edge name in mutations.
+	EdgeBacktest = "backtest"
 	// EdgeBacktests holds the string denoting the backtests edge name in mutations.
 	EdgeBacktests = "backtests"
+	// EdgeChildren holds the string denoting the children edge name in mutations.
+	EdgeChildren = "children"
+	// EdgeParent holds the string denoting the parent edge name in mutations.
+	EdgeParent = "parent"
 	// Table holds the table name of the strategy in the database.
 	Table = "strategies"
 	// BotsTable is the table that holds the bots relation/edge.
@@ -42,6 +54,13 @@ const (
 	BotsInverseTable = "bots"
 	// BotsColumn is the table column denoting the bots relation/edge.
 	BotsColumn = "strategy_id"
+	// BacktestTable is the table that holds the backtest relation/edge.
+	BacktestTable = "strategies"
+	// BacktestInverseTable is the table name for the Backtest entity.
+	// It exists in this package in order to avoid circular dependency with the "backtest" package.
+	BacktestInverseTable = "backtests"
+	// BacktestColumn is the table column denoting the backtest relation/edge.
+	BacktestColumn = "strategy_backtest"
 	// BacktestsTable is the table that holds the backtests relation/edge.
 	BacktestsTable = "backtests"
 	// BacktestsInverseTable is the table name for the Backtest entity.
@@ -49,6 +68,14 @@ const (
 	BacktestsInverseTable = "backtests"
 	// BacktestsColumn is the table column denoting the backtests relation/edge.
 	BacktestsColumn = "strategy_id"
+	// ChildrenTable is the table that holds the children relation/edge.
+	ChildrenTable = "strategies"
+	// ChildrenColumn is the table column denoting the children relation/edge.
+	ChildrenColumn = "parent_id"
+	// ParentTable is the table that holds the parent relation/edge.
+	ParentTable = "strategies"
+	// ParentColumn is the table column denoting the parent relation/edge.
+	ParentColumn = "parent_id"
 )
 
 // Columns holds all SQL columns for strategy fields.
@@ -59,14 +86,28 @@ var Columns = []string{
 	FieldCode,
 	FieldVersion,
 	FieldConfig,
+	FieldParentID,
+	FieldIsLatest,
+	FieldVersionNumber,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "strategies"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"strategy_backtest",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -78,6 +119,10 @@ var (
 	NameValidator func(string) error
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion string
+	// DefaultIsLatest holds the default value on creation for the "is_latest" field.
+	DefaultIsLatest bool
+	// DefaultVersionNumber holds the default value on creation for the "version_number" field.
+	DefaultVersionNumber int
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -116,6 +161,21 @@ func ByVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
+// ByParentID orders the results by the parent_id field.
+func ByParentID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldParentID, opts...).ToFunc()
+}
+
+// ByIsLatest orders the results by the is_latest field.
+func ByIsLatest(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsLatest, opts...).ToFunc()
+}
+
+// ByVersionNumber orders the results by the version_number field.
+func ByVersionNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersionNumber, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -140,6 +200,13 @@ func ByBots(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByBacktestField orders the results by backtest field.
+func ByBacktestField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBacktestStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByBacktestsCount orders the results by backtests count.
 func ByBacktestsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -153,6 +220,27 @@ func ByBacktests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBacktestsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByChildrenCount orders the results by children count.
+func ByChildrenCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newChildrenStep(), opts...)
+	}
+}
+
+// ByChildren orders the results by children terms.
+func ByChildren(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newChildrenStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByParentField orders the results by parent field.
+func ByParentField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newParentStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBotsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -160,10 +248,31 @@ func newBotsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, BotsTable, BotsColumn),
 	)
 }
+func newBacktestStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BacktestInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, BacktestTable, BacktestColumn),
+	)
+}
 func newBacktestsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BacktestsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BacktestsTable, BacktestsColumn),
+	)
+}
+func newChildrenStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, ChildrenTable, ChildrenColumn),
+	)
+}
+func newParentStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, ParentTable, ParentColumn),
 	)
 }

@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 )
 
@@ -24,8 +25,7 @@ func (Strategy) Fields() []ent.Field {
 			Immutable(),
 		field.String("name").
 			NotEmpty().
-			Unique().
-			Comment("Strategy name"),
+			Comment("Strategy name (not unique, allows versions)"),
 		field.Text("description").
 			Optional().
 			Comment("Strategy description"),
@@ -33,11 +33,22 @@ func (Strategy) Fields() []ent.Field {
 			Comment("Python strategy code"),
 		field.String("version").
 			Default("1.0").
-			Comment("Strategy version"),
+			Comment("Strategy version (display string)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
 			Comment("Strategy-specific configuration (config.json)").
 			Annotations(entgql.Type("Map")),
+		// Versioning fields
+		field.UUID("parent_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			Comment("Parent strategy ID for versioning (null for root v1)"),
+		field.Bool("is_latest").
+			Default(true).
+			Comment("Indicates if this is the latest version of the strategy"),
+		field.Int("version_number").
+			Default(1).
+			Comment("Auto-incremented version number"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -52,8 +63,32 @@ func (Strategy) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("bots", Bot.Type).
 			Annotations(entgql.RelayConnection()),
+		// One-to-one relationship with single backtest
+		edge.To("backtest", Backtest.Type).
+			Unique().
+			Comment("Strategy can have at most one backtest (one-to-one)"),
+		// Keep plural for backwards compatibility in queries
 		edge.To("backtests", Backtest.Type).
 			Annotations(entgql.RelayConnection()),
+		// Parent-child relationship for versioning
+		edge.To("parent", Strategy.Type).
+			Unique().
+			Field("parent_id").
+			From("children").
+			Comment("Parent strategy for versioning (self-referential)"),
+	}
+}
+
+// Indexes of the Strategy.
+func (Strategy) Indexes() []ent.Index {
+	return []ent.Index{
+		// Composite index on name and version_number for efficient version queries
+		index.Fields("name", "version_number").
+			Unique(),
+		// Index on is_latest for filtering latest versions
+		index.Fields("is_latest"),
+		// Index on parent_id for traversing version history
+		index.Fields("parent_id"),
 	}
 }
 

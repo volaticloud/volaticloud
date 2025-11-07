@@ -1222,6 +1222,22 @@ func (c *StrategyClient) QueryBots(_m *Strategy) *BotQuery {
 	return query
 }
 
+// QueryBacktest queries the backtest edge of a Strategy.
+func (c *StrategyClient) QueryBacktest(_m *Strategy) *BacktestQuery {
+	query := (&BacktestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(strategy.Table, strategy.FieldID, id),
+			sqlgraph.To(backtest.Table, backtest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, strategy.BacktestTable, strategy.BacktestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryBacktests queries the backtests edge of a Strategy.
 func (c *StrategyClient) QueryBacktests(_m *Strategy) *BacktestQuery {
 	query := (&BacktestClient{config: c.config}).Query()
@@ -1231,6 +1247,38 @@ func (c *StrategyClient) QueryBacktests(_m *Strategy) *BacktestQuery {
 			sqlgraph.From(strategy.Table, strategy.FieldID, id),
 			sqlgraph.To(backtest.Table, backtest.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, strategy.BacktestsTable, strategy.BacktestsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a Strategy.
+func (c *StrategyClient) QueryChildren(_m *Strategy) *StrategyQuery {
+	query := (&StrategyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(strategy.Table, strategy.FieldID, id),
+			sqlgraph.To(strategy.Table, strategy.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, strategy.ChildrenTable, strategy.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParent queries the parent edge of a Strategy.
+func (c *StrategyClient) QueryParent(_m *Strategy) *StrategyQuery {
+	query := (&StrategyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(strategy.Table, strategy.FieldID, id),
+			sqlgraph.To(strategy.Table, strategy.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, strategy.ParentTable, strategy.ParentColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

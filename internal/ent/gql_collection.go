@@ -1193,6 +1193,17 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				*wq = *query
 			})
 
+		case "backtest":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BacktestClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, backtestImplementors)...); err != nil {
+				return err
+			}
+			_q.withBacktest = query
+
 		case "backtests":
 			var (
 				alias = field.Alias
@@ -1236,10 +1247,10 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 						}
 						for i := range nodes {
 							n := m[nodes[i].ID]
-							if nodes[i].Edges.totalCount[1] == nil {
-								nodes[i].Edges.totalCount[1] = make(map[string]int)
+							if nodes[i].Edges.totalCount[2] == nil {
+								nodes[i].Edges.totalCount[2] = make(map[string]int)
 							}
-							nodes[i].Edges.totalCount[1][alias] = n
+							nodes[i].Edges.totalCount[2][alias] = n
 						}
 						return nil
 					})
@@ -1247,10 +1258,10 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*Strategy) error {
 						for i := range nodes {
 							n := len(nodes[i].Edges.Backtests)
-							if nodes[i].Edges.totalCount[1] == nil {
-								nodes[i].Edges.totalCount[1] = make(map[string]int)
+							if nodes[i].Edges.totalCount[2] == nil {
+								nodes[i].Edges.totalCount[2] = make(map[string]int)
 							}
-							nodes[i].Edges.totalCount[1][alias] = n
+							nodes[i].Edges.totalCount[2][alias] = n
 						}
 						return nil
 					})
@@ -1281,6 +1292,34 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			_q.WithNamedBacktests(alias, func(wq *BacktestQuery) {
 				*wq = *query
 			})
+
+		case "children":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&StrategyClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, false, opCtx, field, path, mayAddCondition(satisfies, strategyImplementors)...); err != nil {
+				return err
+			}
+			_q.WithNamedChildren(alias, func(wq *StrategyQuery) {
+				*wq = *query
+			})
+
+		case "parent":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&StrategyClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, strategyImplementors)...); err != nil {
+				return err
+			}
+			_q.withParent = query
+			if _, ok := fieldSeen[strategy.FieldParentID]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldParentID)
+				fieldSeen[strategy.FieldParentID] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[strategy.FieldName]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldName)
@@ -1305,6 +1344,21 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			if _, ok := fieldSeen[strategy.FieldConfig]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldConfig)
 				fieldSeen[strategy.FieldConfig] = struct{}{}
+			}
+		case "parentID":
+			if _, ok := fieldSeen[strategy.FieldParentID]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldParentID)
+				fieldSeen[strategy.FieldParentID] = struct{}{}
+			}
+		case "isLatest":
+			if _, ok := fieldSeen[strategy.FieldIsLatest]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldIsLatest)
+				fieldSeen[strategy.FieldIsLatest] = struct{}{}
+			}
+		case "versionNumber":
+			if _, ok := fieldSeen[strategy.FieldVersionNumber]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldVersionNumber)
+				fieldSeen[strategy.FieldVersionNumber] = struct{}{}
 			}
 		case "createdAt":
 			if _, ok := fieldSeen[strategy.FieldCreatedAt]; !ok {

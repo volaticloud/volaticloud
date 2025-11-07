@@ -6634,26 +6634,36 @@ func (m *ExchangeMutation) ResetEdge(name string) error {
 // StrategyMutation represents an operation that mutates the Strategy nodes in the graph.
 type StrategyMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *uuid.UUID
-	name             *string
-	description      *string
-	code             *string
-	version          *string
-	_config          *map[string]interface{}
-	created_at       *time.Time
-	updated_at       *time.Time
-	clearedFields    map[string]struct{}
-	bots             map[uuid.UUID]struct{}
-	removedbots      map[uuid.UUID]struct{}
-	clearedbots      bool
-	backtests        map[uuid.UUID]struct{}
-	removedbacktests map[uuid.UUID]struct{}
-	clearedbacktests bool
-	done             bool
-	oldValue         func(context.Context) (*Strategy, error)
-	predicates       []predicate.Strategy
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	name              *string
+	description       *string
+	code              *string
+	version           *string
+	_config           *map[string]interface{}
+	is_latest         *bool
+	version_number    *int
+	addversion_number *int
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	bots              map[uuid.UUID]struct{}
+	removedbots       map[uuid.UUID]struct{}
+	clearedbots       bool
+	backtest          *uuid.UUID
+	clearedbacktest   bool
+	backtests         map[uuid.UUID]struct{}
+	removedbacktests  map[uuid.UUID]struct{}
+	clearedbacktests  bool
+	children          map[uuid.UUID]struct{}
+	removedchildren   map[uuid.UUID]struct{}
+	clearedchildren   bool
+	parent            *uuid.UUID
+	clearedparent     bool
+	done              bool
+	oldValue          func(context.Context) (*Strategy, error)
+	predicates        []predicate.Strategy
 }
 
 var _ ent.Mutation = (*StrategyMutation)(nil)
@@ -6966,6 +6976,147 @@ func (m *StrategyMutation) ResetConfig() {
 	delete(m.clearedFields, strategy.FieldConfig)
 }
 
+// SetParentID sets the "parent_id" field.
+func (m *StrategyMutation) SetParentID(u uuid.UUID) {
+	m.parent = &u
+}
+
+// ParentID returns the value of the "parent_id" field in the mutation.
+func (m *StrategyMutation) ParentID() (r uuid.UUID, exists bool) {
+	v := m.parent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParentID returns the old "parent_id" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldParentID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParentID: %w", err)
+	}
+	return oldValue.ParentID, nil
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (m *StrategyMutation) ClearParentID() {
+	m.parent = nil
+	m.clearedFields[strategy.FieldParentID] = struct{}{}
+}
+
+// ParentIDCleared returns if the "parent_id" field was cleared in this mutation.
+func (m *StrategyMutation) ParentIDCleared() bool {
+	_, ok := m.clearedFields[strategy.FieldParentID]
+	return ok
+}
+
+// ResetParentID resets all changes to the "parent_id" field.
+func (m *StrategyMutation) ResetParentID() {
+	m.parent = nil
+	delete(m.clearedFields, strategy.FieldParentID)
+}
+
+// SetIsLatest sets the "is_latest" field.
+func (m *StrategyMutation) SetIsLatest(b bool) {
+	m.is_latest = &b
+}
+
+// IsLatest returns the value of the "is_latest" field in the mutation.
+func (m *StrategyMutation) IsLatest() (r bool, exists bool) {
+	v := m.is_latest
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsLatest returns the old "is_latest" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldIsLatest(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsLatest is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsLatest requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsLatest: %w", err)
+	}
+	return oldValue.IsLatest, nil
+}
+
+// ResetIsLatest resets all changes to the "is_latest" field.
+func (m *StrategyMutation) ResetIsLatest() {
+	m.is_latest = nil
+}
+
+// SetVersionNumber sets the "version_number" field.
+func (m *StrategyMutation) SetVersionNumber(i int) {
+	m.version_number = &i
+	m.addversion_number = nil
+}
+
+// VersionNumber returns the value of the "version_number" field in the mutation.
+func (m *StrategyMutation) VersionNumber() (r int, exists bool) {
+	v := m.version_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersionNumber returns the old "version_number" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldVersionNumber(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersionNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersionNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersionNumber: %w", err)
+	}
+	return oldValue.VersionNumber, nil
+}
+
+// AddVersionNumber adds i to the "version_number" field.
+func (m *StrategyMutation) AddVersionNumber(i int) {
+	if m.addversion_number != nil {
+		*m.addversion_number += i
+	} else {
+		m.addversion_number = &i
+	}
+}
+
+// AddedVersionNumber returns the value that was added to the "version_number" field in this mutation.
+func (m *StrategyMutation) AddedVersionNumber() (r int, exists bool) {
+	v := m.addversion_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersionNumber resets all changes to the "version_number" field.
+func (m *StrategyMutation) ResetVersionNumber() {
+	m.version_number = nil
+	m.addversion_number = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *StrategyMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -7092,6 +7243,45 @@ func (m *StrategyMutation) ResetBots() {
 	m.removedbots = nil
 }
 
+// SetBacktestID sets the "backtest" edge to the Backtest entity by id.
+func (m *StrategyMutation) SetBacktestID(id uuid.UUID) {
+	m.backtest = &id
+}
+
+// ClearBacktest clears the "backtest" edge to the Backtest entity.
+func (m *StrategyMutation) ClearBacktest() {
+	m.clearedbacktest = true
+}
+
+// BacktestCleared reports if the "backtest" edge to the Backtest entity was cleared.
+func (m *StrategyMutation) BacktestCleared() bool {
+	return m.clearedbacktest
+}
+
+// BacktestID returns the "backtest" edge ID in the mutation.
+func (m *StrategyMutation) BacktestID() (id uuid.UUID, exists bool) {
+	if m.backtest != nil {
+		return *m.backtest, true
+	}
+	return
+}
+
+// BacktestIDs returns the "backtest" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BacktestID instead. It exists only for internal usage by the builders.
+func (m *StrategyMutation) BacktestIDs() (ids []uuid.UUID) {
+	if id := m.backtest; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBacktest resets all changes to the "backtest" edge.
+func (m *StrategyMutation) ResetBacktest() {
+	m.backtest = nil
+	m.clearedbacktest = false
+}
+
 // AddBacktestIDs adds the "backtests" edge to the Backtest entity by ids.
 func (m *StrategyMutation) AddBacktestIDs(ids ...uuid.UUID) {
 	if m.backtests == nil {
@@ -7146,6 +7336,87 @@ func (m *StrategyMutation) ResetBacktests() {
 	m.removedbacktests = nil
 }
 
+// AddChildIDs adds the "children" edge to the Strategy entity by ids.
+func (m *StrategyMutation) AddChildIDs(ids ...uuid.UUID) {
+	if m.children == nil {
+		m.children = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.children[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChildren clears the "children" edge to the Strategy entity.
+func (m *StrategyMutation) ClearChildren() {
+	m.clearedchildren = true
+}
+
+// ChildrenCleared reports if the "children" edge to the Strategy entity was cleared.
+func (m *StrategyMutation) ChildrenCleared() bool {
+	return m.clearedchildren
+}
+
+// RemoveChildIDs removes the "children" edge to the Strategy entity by IDs.
+func (m *StrategyMutation) RemoveChildIDs(ids ...uuid.UUID) {
+	if m.removedchildren == nil {
+		m.removedchildren = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.children, ids[i])
+		m.removedchildren[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChildren returns the removed IDs of the "children" edge to the Strategy entity.
+func (m *StrategyMutation) RemovedChildrenIDs() (ids []uuid.UUID) {
+	for id := range m.removedchildren {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChildrenIDs returns the "children" edge IDs in the mutation.
+func (m *StrategyMutation) ChildrenIDs() (ids []uuid.UUID) {
+	for id := range m.children {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChildren resets all changes to the "children" edge.
+func (m *StrategyMutation) ResetChildren() {
+	m.children = nil
+	m.clearedchildren = false
+	m.removedchildren = nil
+}
+
+// ClearParent clears the "parent" edge to the Strategy entity.
+func (m *StrategyMutation) ClearParent() {
+	m.clearedparent = true
+	m.clearedFields[strategy.FieldParentID] = struct{}{}
+}
+
+// ParentCleared reports if the "parent" edge to the Strategy entity was cleared.
+func (m *StrategyMutation) ParentCleared() bool {
+	return m.ParentIDCleared() || m.clearedparent
+}
+
+// ParentIDs returns the "parent" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentID instead. It exists only for internal usage by the builders.
+func (m *StrategyMutation) ParentIDs() (ids []uuid.UUID) {
+	if id := m.parent; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParent resets all changes to the "parent" edge.
+func (m *StrategyMutation) ResetParent() {
+	m.parent = nil
+	m.clearedparent = false
+}
+
 // Where appends a list predicates to the StrategyMutation builder.
 func (m *StrategyMutation) Where(ps ...predicate.Strategy) {
 	m.predicates = append(m.predicates, ps...)
@@ -7180,7 +7451,7 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 10)
 	if m.name != nil {
 		fields = append(fields, strategy.FieldName)
 	}
@@ -7195,6 +7466,15 @@ func (m *StrategyMutation) Fields() []string {
 	}
 	if m._config != nil {
 		fields = append(fields, strategy.FieldConfig)
+	}
+	if m.parent != nil {
+		fields = append(fields, strategy.FieldParentID)
+	}
+	if m.is_latest != nil {
+		fields = append(fields, strategy.FieldIsLatest)
+	}
+	if m.version_number != nil {
+		fields = append(fields, strategy.FieldVersionNumber)
 	}
 	if m.created_at != nil {
 		fields = append(fields, strategy.FieldCreatedAt)
@@ -7220,6 +7500,12 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 		return m.Version()
 	case strategy.FieldConfig:
 		return m.Config()
+	case strategy.FieldParentID:
+		return m.ParentID()
+	case strategy.FieldIsLatest:
+		return m.IsLatest()
+	case strategy.FieldVersionNumber:
+		return m.VersionNumber()
 	case strategy.FieldCreatedAt:
 		return m.CreatedAt()
 	case strategy.FieldUpdatedAt:
@@ -7243,6 +7529,12 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldVersion(ctx)
 	case strategy.FieldConfig:
 		return m.OldConfig(ctx)
+	case strategy.FieldParentID:
+		return m.OldParentID(ctx)
+	case strategy.FieldIsLatest:
+		return m.OldIsLatest(ctx)
+	case strategy.FieldVersionNumber:
+		return m.OldVersionNumber(ctx)
 	case strategy.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case strategy.FieldUpdatedAt:
@@ -7291,6 +7583,27 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetConfig(v)
 		return nil
+	case strategy.FieldParentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParentID(v)
+		return nil
+	case strategy.FieldIsLatest:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsLatest(v)
+		return nil
+	case strategy.FieldVersionNumber:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersionNumber(v)
+		return nil
 	case strategy.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -7312,13 +7625,21 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *StrategyMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion_number != nil {
+		fields = append(fields, strategy.FieldVersionNumber)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *StrategyMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case strategy.FieldVersionNumber:
+		return m.AddedVersionNumber()
+	}
 	return nil, false
 }
 
@@ -7327,6 +7648,13 @@ func (m *StrategyMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *StrategyMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case strategy.FieldVersionNumber:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersionNumber(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Strategy numeric field %s", name)
 }
@@ -7340,6 +7668,9 @@ func (m *StrategyMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(strategy.FieldConfig) {
 		fields = append(fields, strategy.FieldConfig)
+	}
+	if m.FieldCleared(strategy.FieldParentID) {
+		fields = append(fields, strategy.FieldParentID)
 	}
 	return fields
 }
@@ -7360,6 +7691,9 @@ func (m *StrategyMutation) ClearField(name string) error {
 		return nil
 	case strategy.FieldConfig:
 		m.ClearConfig()
+		return nil
+	case strategy.FieldParentID:
+		m.ClearParentID()
 		return nil
 	}
 	return fmt.Errorf("unknown Strategy nullable field %s", name)
@@ -7384,6 +7718,15 @@ func (m *StrategyMutation) ResetField(name string) error {
 	case strategy.FieldConfig:
 		m.ResetConfig()
 		return nil
+	case strategy.FieldParentID:
+		m.ResetParentID()
+		return nil
+	case strategy.FieldIsLatest:
+		m.ResetIsLatest()
+		return nil
+	case strategy.FieldVersionNumber:
+		m.ResetVersionNumber()
+		return nil
 	case strategy.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -7396,12 +7739,21 @@ func (m *StrategyMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *StrategyMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 5)
 	if m.bots != nil {
 		edges = append(edges, strategy.EdgeBots)
 	}
+	if m.backtest != nil {
+		edges = append(edges, strategy.EdgeBacktest)
+	}
 	if m.backtests != nil {
 		edges = append(edges, strategy.EdgeBacktests)
+	}
+	if m.children != nil {
+		edges = append(edges, strategy.EdgeChildren)
+	}
+	if m.parent != nil {
+		edges = append(edges, strategy.EdgeParent)
 	}
 	return edges
 }
@@ -7416,24 +7768,41 @@ func (m *StrategyMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case strategy.EdgeBacktest:
+		if id := m.backtest; id != nil {
+			return []ent.Value{*id}
+		}
 	case strategy.EdgeBacktests:
 		ids := make([]ent.Value, 0, len(m.backtests))
 		for id := range m.backtests {
 			ids = append(ids, id)
 		}
 		return ids
+	case strategy.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.children))
+		for id := range m.children {
+			ids = append(ids, id)
+		}
+		return ids
+	case strategy.EdgeParent:
+		if id := m.parent; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *StrategyMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 5)
 	if m.removedbots != nil {
 		edges = append(edges, strategy.EdgeBots)
 	}
 	if m.removedbacktests != nil {
 		edges = append(edges, strategy.EdgeBacktests)
+	}
+	if m.removedchildren != nil {
+		edges = append(edges, strategy.EdgeChildren)
 	}
 	return edges
 }
@@ -7454,18 +7823,33 @@ func (m *StrategyMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case strategy.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.removedchildren))
+		for id := range m.removedchildren {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *StrategyMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 5)
 	if m.clearedbots {
 		edges = append(edges, strategy.EdgeBots)
 	}
+	if m.clearedbacktest {
+		edges = append(edges, strategy.EdgeBacktest)
+	}
 	if m.clearedbacktests {
 		edges = append(edges, strategy.EdgeBacktests)
+	}
+	if m.clearedchildren {
+		edges = append(edges, strategy.EdgeChildren)
+	}
+	if m.clearedparent {
+		edges = append(edges, strategy.EdgeParent)
 	}
 	return edges
 }
@@ -7476,8 +7860,14 @@ func (m *StrategyMutation) EdgeCleared(name string) bool {
 	switch name {
 	case strategy.EdgeBots:
 		return m.clearedbots
+	case strategy.EdgeBacktest:
+		return m.clearedbacktest
 	case strategy.EdgeBacktests:
 		return m.clearedbacktests
+	case strategy.EdgeChildren:
+		return m.clearedchildren
+	case strategy.EdgeParent:
+		return m.clearedparent
 	}
 	return false
 }
@@ -7486,6 +7876,12 @@ func (m *StrategyMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *StrategyMutation) ClearEdge(name string) error {
 	switch name {
+	case strategy.EdgeBacktest:
+		m.ClearBacktest()
+		return nil
+	case strategy.EdgeParent:
+		m.ClearParent()
+		return nil
 	}
 	return fmt.Errorf("unknown Strategy unique edge %s", name)
 }
@@ -7497,8 +7893,17 @@ func (m *StrategyMutation) ResetEdge(name string) error {
 	case strategy.EdgeBots:
 		m.ResetBots()
 		return nil
+	case strategy.EdgeBacktest:
+		m.ResetBacktest()
+		return nil
 	case strategy.EdgeBacktests:
 		m.ResetBacktests()
+		return nil
+	case strategy.EdgeChildren:
+		m.ResetChildren()
+		return nil
+	case strategy.EdgeParent:
+		m.ResetParent()
 		return nil
 	}
 	return fmt.Errorf("unknown Strategy edge %s", name)
