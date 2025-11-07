@@ -32,7 +32,7 @@ import {
   useStartBotMutation,
   useRestartBotMutation,
   useDeleteBotMutation,
-} from '../../generated/graphql';
+} from './bots.generated';
 import BotMetrics from './BotMetrics';
 
 const BotDetail = () => {
@@ -334,8 +334,8 @@ const BotDetail = () => {
             Recent Trades
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Pair</TableCell>

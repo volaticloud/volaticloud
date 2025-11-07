@@ -24,7 +24,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { DataDownloadConfigInput, DataDownloadExchangeConfigInput } from '../../generated/graphql';
+import { DataDownloadConfigInput, DataDownloadExchangeConfigInput } from './runners.generated';
 
 interface DataDownloadConfigEditorProps {
   value: DataDownloadConfigInput | null;

@@ -8,7 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useDeleteBotMutation } from '../../generated/graphql';
+import { useDeleteBotMutation } from './bots.generated';
 
 interface DeleteBotDialogProps {
   open: boolean;

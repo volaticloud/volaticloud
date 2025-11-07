@@ -9,7 +9,7 @@ import {
   Box,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { useUpdateStrategyMutation } from '../../generated/graphql';
+import { useUpdateStrategyMutation } from './strategies.generated';
 import { JSONEditor } from '../JSONEditor';
 
 interface EditStrategyDialogProps {

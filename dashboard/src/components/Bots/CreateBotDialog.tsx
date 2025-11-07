@@ -13,7 +13,7 @@ import {
   Box,
 } from '@mui/material';
 import { useState } from 'react';
-import { useCreateBotMutation } from '../../generated/graphql';
+import { useCreateBotMutation } from './bots.generated';
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';

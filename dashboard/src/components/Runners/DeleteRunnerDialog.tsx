@@ -8,7 +8,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useDeleteRunnerMutation } from '../../generated/graphql';
+import { useDeleteRunnerMutation } from './runners.generated';
 
 interface DeleteRunnerDialogProps {
   open: boolean;

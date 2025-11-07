@@ -12,7 +12,7 @@ import {
   Box,
 } from '@mui/material';
 import { useState } from 'react';
-import { useCreateBacktestMutation, useGetBacktestOptionsQuery } from '../../generated/graphql';
+import { useCreateBacktestMutation, useGetBacktestOptionsQuery } from './backtests.generated';
 import { JSONEditor } from '../JSONEditor';
 
 interface CreateBacktestDialogProps {

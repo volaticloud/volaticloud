@@ -14,7 +14,7 @@ import {
 // Placeholder component - will be enhanced after codegen
 export const Dashboard = () => {
   return (
-    <Box>
+    <Box sx={{ width: '100%', maxWidth: '100%' }}>
       <Typography variant="h4" gutterBottom fontWeight={600}>
         Dashboard
       </Typography>
