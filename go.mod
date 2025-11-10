@@ -18,7 +18,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
-	github.com/vektah/gqlparser/v2 v2.5.30
+	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.etcd.io/etcd/client/v3 v3.6.5
 	golang.org/x/oauth2 v0.30.0
