@@ -20,8 +20,6 @@ const (
 	FieldID = "id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldConfig holds the string denoting the config field in the database.
-	FieldConfig = "config"
 	// FieldResult holds the string denoting the result field in the database.
 	FieldResult = "result"
 	// FieldSummary holds the string denoting the summary field in the database.
@@ -66,7 +64,6 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldStatus,
-	FieldConfig,
 	FieldResult,
 	FieldSummary,
 	FieldContainerID,

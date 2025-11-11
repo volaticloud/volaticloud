@@ -23,11 +23,11 @@ func init() {
 	backtestFields := schema.Backtest{}.Fields()
 	_ = backtestFields
 	// backtestDescCreatedAt is the schema descriptor for created_at field.
-	backtestDescCreatedAt := backtestFields[9].Descriptor()
+	backtestDescCreatedAt := backtestFields[8].Descriptor()
 	// backtest.DefaultCreatedAt holds the default value on creation for the created_at field.
 	backtest.DefaultCreatedAt = backtestDescCreatedAt.Default.(func() time.Time)
 	// backtestDescUpdatedAt is the schema descriptor for updated_at field.
-	backtestDescUpdatedAt := backtestFields[10].Descriptor()
+	backtestDescUpdatedAt := backtestFields[9].Descriptor()
 	// backtest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	backtest.DefaultUpdatedAt = backtestDescUpdatedAt.Default.(func() time.Time)
 	// backtest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -125,30 +125,28 @@ func init() {
 	exchangeDescID := exchangeFields[0].Descriptor()
 	// exchange.DefaultID holds the default value on creation for the id field.
 	exchange.DefaultID = exchangeDescID.Default.(func() uuid.UUID)
+	strategyHooks := schema.Strategy{}.Hooks()
+	strategy.Hooks[0] = strategyHooks[0]
 	strategyFields := schema.Strategy{}.Fields()
 	_ = strategyFields
 	// strategyDescName is the schema descriptor for name field.
 	strategyDescName := strategyFields[1].Descriptor()
 	// strategy.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	strategy.NameValidator = strategyDescName.Validators[0].(func(string) error)
-	// strategyDescVersion is the schema descriptor for version field.
-	strategyDescVersion := strategyFields[4].Descriptor()
-	// strategy.DefaultVersion holds the default value on creation for the version field.
-	strategy.DefaultVersion = strategyDescVersion.Default.(string)
 	// strategyDescIsLatest is the schema descriptor for is_latest field.
-	strategyDescIsLatest := strategyFields[7].Descriptor()
+	strategyDescIsLatest := strategyFields[6].Descriptor()
 	// strategy.DefaultIsLatest holds the default value on creation for the is_latest field.
 	strategy.DefaultIsLatest = strategyDescIsLatest.Default.(bool)
 	// strategyDescVersionNumber is the schema descriptor for version_number field.
-	strategyDescVersionNumber := strategyFields[8].Descriptor()
+	strategyDescVersionNumber := strategyFields[7].Descriptor()
 	// strategy.DefaultVersionNumber holds the default value on creation for the version_number field.
 	strategy.DefaultVersionNumber = strategyDescVersionNumber.Default.(int)
 	// strategyDescCreatedAt is the schema descriptor for created_at field.
-	strategyDescCreatedAt := strategyFields[9].Descriptor()
+	strategyDescCreatedAt := strategyFields[8].Descriptor()
 	// strategy.DefaultCreatedAt holds the default value on creation for the created_at field.
 	strategy.DefaultCreatedAt = strategyDescCreatedAt.Default.(func() time.Time)
 	// strategyDescUpdatedAt is the schema descriptor for updated_at field.
-	strategyDescUpdatedAt := strategyFields[10].Descriptor()
+	strategyDescUpdatedAt := strategyFields[9].Descriptor()
 	// strategy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	strategy.DefaultUpdatedAt = strategyDescUpdatedAt.Default.(func() time.Time)
 	// strategy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -6,7 +6,7 @@ const defaultOptions = {} as const;
 export type GetDashboardDataQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type GetDashboardDataQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, freqtradeVersion: string, lastSeenAt?: string | null, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string } } | null } | null> | null }, trades: { __typename?: 'TradeConnection', totalCount: number, edges?: Array<{ __typename?: 'TradeEdge', node?: { __typename?: 'Trade', id: string, pair: string, isOpen: boolean, openDate: string, closeDate?: string | null, profitAbs: number, profitRatio: number, bot: { __typename?: 'Bot', id: string, name: string } } | null } | null> | null }, exchanges: Array<{ __typename?: 'Exchange', id: string, name: string }>, strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, version: string } | null } | null> | null } };
+export type GetDashboardDataQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, freqtradeVersion: string, lastSeenAt?: string | null, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string } } | null } | null> | null }, trades: { __typename?: 'TradeConnection', totalCount: number, edges?: Array<{ __typename?: 'TradeEdge', node?: { __typename?: 'Trade', id: string, pair: string, isOpen: boolean, openDate: string, closeDate?: string | null, profitAbs: number, profitRatio: number, bot: { __typename?: 'Bot', id: string, name: string } } | null } | null> | null }, exchanges: Array<{ __typename?: 'Exchange', id: string, name: string }>, strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string } | null } | null> | null } };
 
 
 export const GetDashboardDataDocument = gql`
@@ -59,7 +59,6 @@ export const GetDashboardDataDocument = gql`
       node {
         id
         name
-        version
       }
     }
     totalCount

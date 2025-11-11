@@ -46,18 +46,6 @@ func (_u *BacktestUpdate) SetNillableStatus(v *enum.TaskStatus) *BacktestUpdate 
 	return _u
 }
 
-// SetConfig sets the "config" field.
-func (_u *BacktestUpdate) SetConfig(v map[string]interface{}) *BacktestUpdate {
-	_u.mutation.SetConfig(v)
-	return _u
-}
-
-// ClearConfig clears the value of the "config" field.
-func (_u *BacktestUpdate) ClearConfig() *BacktestUpdate {
-	_u.mutation.ClearConfig()
-	return _u
-}
-
 // SetResult sets the "result" field.
 func (_u *BacktestUpdate) SetResult(v map[string]interface{}) *BacktestUpdate {
 	_u.mutation.SetResult(v)
@@ -270,12 +258,6 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.Config(); ok {
-		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
-	}
-	if _u.mutation.ConfigCleared() {
-		_spec.ClearField(backtest.FieldConfig, field.TypeJSON)
-	}
 	if value, ok := _u.mutation.Result(); ok {
 		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)
 	}
@@ -398,18 +380,6 @@ func (_u *BacktestUpdateOne) SetNillableStatus(v *enum.TaskStatus) *BacktestUpda
 	if v != nil {
 		_u.SetStatus(*v)
 	}
-	return _u
-}
-
-// SetConfig sets the "config" field.
-func (_u *BacktestUpdateOne) SetConfig(v map[string]interface{}) *BacktestUpdateOne {
-	_u.mutation.SetConfig(v)
-	return _u
-}
-
-// ClearConfig clears the value of the "config" field.
-func (_u *BacktestUpdateOne) ClearConfig() *BacktestUpdateOne {
-	_u.mutation.ClearConfig()
 	return _u
 }
 
@@ -654,12 +624,6 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.Config(); ok {
-		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
-	}
-	if _u.mutation.ConfigCleared() {
-		_spec.ClearField(backtest.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Result(); ok {
 		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)

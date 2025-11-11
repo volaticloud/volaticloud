@@ -5,6 +5,7 @@ package strategy
 import (
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -21,8 +22,6 @@ const (
 	FieldDescription = "description"
 	// FieldCode holds the string denoting the code field in the database.
 	FieldCode = "code"
-	// FieldVersion holds the string denoting the version field in the database.
-	FieldVersion = "version"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
 	// FieldParentID holds the string denoting the parent_id field in the database.
@@ -75,7 +74,6 @@ var Columns = []string{
 	FieldName,
 	FieldDescription,
 	FieldCode,
-	FieldVersion,
 	FieldConfig,
 	FieldParentID,
 	FieldIsLatest,
@@ -94,11 +92,15 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "anytrade/internal/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// DefaultVersion holds the default value on creation for the "version" field.
-	DefaultVersion string
 	// DefaultIsLatest holds the default value on creation for the "is_latest" field.
 	DefaultIsLatest bool
 	// DefaultVersionNumber holds the default value on creation for the "version_number" field.
@@ -134,11 +136,6 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByCode orders the results by the code field.
 func ByCode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCode, opts...).ToFunc()
-}
-
-// ByVersion orders the results by the version field.
-func ByVersion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
 // ByParentID orders the results by the parent_id field.

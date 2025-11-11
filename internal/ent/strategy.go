@@ -26,9 +26,7 @@ type Strategy struct {
 	Description string `json:"description,omitempty"`
 	// Python strategy code
 	Code string `json:"code,omitempty"`
-	// Strategy version (display string)
-	Version string `json:"version,omitempty"`
-	// Strategy-specific configuration (config.json)
+	// Strategy-specific configuration (config.json) - REQUIRED
 	Config map[string]interface{} `json:"config,omitempty"`
 	// Parent strategy ID for versioning (null for root v1)
 	ParentID *uuid.UUID `json:"parent_id,omitempty"`
@@ -119,7 +117,7 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case strategy.FieldVersionNumber:
 			values[i] = new(sql.NullInt64)
-		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode, strategy.FieldVersion:
+		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode:
 			values[i] = new(sql.NullString)
 		case strategy.FieldCreatedAt, strategy.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -163,12 +161,6 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field code", values[i])
 			} else if value.Valid {
 				_m.Code = value.String
-			}
-		case strategy.FieldVersion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field version", values[i])
-			} else if value.Valid {
-				_m.Version = value.String
 			}
 		case strategy.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -273,9 +265,6 @@ func (_m *Strategy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("code=")
 	builder.WriteString(_m.Code)
-	builder.WriteString(", ")
-	builder.WriteString("version=")
-	builder.WriteString(_m.Version)
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))

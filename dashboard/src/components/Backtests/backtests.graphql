@@ -4,7 +4,6 @@ query GetBacktests($first: Int, $after: Cursor) {
       node {
         id
         status
-        config
         result
         containerID
         errorMessage
@@ -14,6 +13,7 @@ query GetBacktests($first: Int, $after: Cursor) {
         strategy {
           id
           name
+          config
         }
         runner {
           id
@@ -38,7 +38,6 @@ query GetBacktest($id: ID!) {
       node {
         id
         status
-        config
         result
         containerID
         errorMessage
@@ -84,7 +83,6 @@ mutation CreateBacktest($input: CreateBacktestInput!) {
   createBacktest(input: $input) {
     id
     status
-    config
     createdAt
   }
 }

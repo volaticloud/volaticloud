@@ -28,7 +28,6 @@ func (r *mutationResolver) createStrategyVersion(ctx context.Context, old *ent.S
 		SetName(old.Name).
 		SetDescription(old.Description).
 		SetCode(old.Code).
-		SetVersion(old.Version).
 		SetVersionNumber(old.VersionNumber + 1).
 		SetParentID(old.ID).
 		SetIsLatest(true)

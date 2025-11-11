@@ -48,7 +48,6 @@ type BacktestMutation struct {
 	typ             string
 	id              *uuid.UUID
 	status          *enum.TaskStatus
-	_config         *map[string]interface{}
 	result          *map[string]interface{}
 	summary         *map[string]interface{}
 	container_id    *string
@@ -204,55 +203,6 @@ func (m *BacktestMutation) OldStatus(ctx context.Context) (v enum.TaskStatus, er
 // ResetStatus resets all changes to the "status" field.
 func (m *BacktestMutation) ResetStatus() {
 	m.status = nil
-}
-
-// SetConfig sets the "config" field.
-func (m *BacktestMutation) SetConfig(value map[string]interface{}) {
-	m._config = &value
-}
-
-// Config returns the value of the "config" field in the mutation.
-func (m *BacktestMutation) Config() (r map[string]interface{}, exists bool) {
-	v := m._config
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldConfig returns the old "config" field's value of the Backtest entity.
-// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BacktestMutation) OldConfig(ctx context.Context) (v map[string]interface{}, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldConfig is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldConfig requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldConfig: %w", err)
-	}
-	return oldValue.Config, nil
-}
-
-// ClearConfig clears the value of the "config" field.
-func (m *BacktestMutation) ClearConfig() {
-	m._config = nil
-	m.clearedFields[backtest.FieldConfig] = struct{}{}
-}
-
-// ConfigCleared returns if the "config" field was cleared in this mutation.
-func (m *BacktestMutation) ConfigCleared() bool {
-	_, ok := m.clearedFields[backtest.FieldConfig]
-	return ok
-}
-
-// ResetConfig resets all changes to the "config" field.
-func (m *BacktestMutation) ResetConfig() {
-	m._config = nil
-	delete(m.clearedFields, backtest.FieldConfig)
 }
 
 // SetResult sets the "result" field.
@@ -732,12 +682,9 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 10)
 	if m.status != nil {
 		fields = append(fields, backtest.FieldStatus)
-	}
-	if m._config != nil {
-		fields = append(fields, backtest.FieldConfig)
 	}
 	if m.result != nil {
 		fields = append(fields, backtest.FieldResult)
@@ -776,8 +723,6 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case backtest.FieldStatus:
 		return m.Status()
-	case backtest.FieldConfig:
-		return m.Config()
 	case backtest.FieldResult:
 		return m.Result()
 	case backtest.FieldSummary:
@@ -807,8 +752,6 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 	switch name {
 	case backtest.FieldStatus:
 		return m.OldStatus(ctx)
-	case backtest.FieldConfig:
-		return m.OldConfig(ctx)
 	case backtest.FieldResult:
 		return m.OldResult(ctx)
 	case backtest.FieldSummary:
@@ -842,13 +785,6 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
-		return nil
-	case backtest.FieldConfig:
-		v, ok := value.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetConfig(v)
 		return nil
 	case backtest.FieldResult:
 		v, ok := value.(map[string]interface{})
@@ -943,9 +879,6 @@ func (m *BacktestMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *BacktestMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(backtest.FieldConfig) {
-		fields = append(fields, backtest.FieldConfig)
-	}
 	if m.FieldCleared(backtest.FieldResult) {
 		fields = append(fields, backtest.FieldResult)
 	}
@@ -975,9 +908,6 @@ func (m *BacktestMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BacktestMutation) ClearField(name string) error {
 	switch name {
-	case backtest.FieldConfig:
-		m.ClearConfig()
-		return nil
 	case backtest.FieldResult:
 		m.ClearResult()
 		return nil
@@ -1003,9 +933,6 @@ func (m *BacktestMutation) ResetField(name string) error {
 	switch name {
 	case backtest.FieldStatus:
 		m.ResetStatus()
-		return nil
-	case backtest.FieldConfig:
-		m.ResetConfig()
 		return nil
 	case backtest.FieldResult:
 		m.ResetResult()
@@ -6640,7 +6567,6 @@ type StrategyMutation struct {
 	name              *string
 	description       *string
 	code              *string
-	version           *string
 	_config           *map[string]interface{}
 	is_latest         *bool
 	version_number    *int
@@ -6888,42 +6814,6 @@ func (m *StrategyMutation) ResetCode() {
 	m.code = nil
 }
 
-// SetVersion sets the "version" field.
-func (m *StrategyMutation) SetVersion(s string) {
-	m.version = &s
-}
-
-// Version returns the value of the "version" field in the mutation.
-func (m *StrategyMutation) Version() (r string, exists bool) {
-	v := m.version
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldVersion returns the old "version" field's value of the Strategy entity.
-// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *StrategyMutation) OldVersion(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldVersion requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
-	}
-	return oldValue.Version, nil
-}
-
-// ResetVersion resets all changes to the "version" field.
-func (m *StrategyMutation) ResetVersion() {
-	m.version = nil
-}
-
 // SetConfig sets the "config" field.
 func (m *StrategyMutation) SetConfig(value map[string]interface{}) {
 	m._config = &value
@@ -6955,22 +6845,9 @@ func (m *StrategyMutation) OldConfig(ctx context.Context) (v map[string]interfac
 	return oldValue.Config, nil
 }
 
-// ClearConfig clears the value of the "config" field.
-func (m *StrategyMutation) ClearConfig() {
-	m._config = nil
-	m.clearedFields[strategy.FieldConfig] = struct{}{}
-}
-
-// ConfigCleared returns if the "config" field was cleared in this mutation.
-func (m *StrategyMutation) ConfigCleared() bool {
-	_, ok := m.clearedFields[strategy.FieldConfig]
-	return ok
-}
-
 // ResetConfig resets all changes to the "config" field.
 func (m *StrategyMutation) ResetConfig() {
 	m._config = nil
-	delete(m.clearedFields, strategy.FieldConfig)
 }
 
 // SetParentID sets the "parent_id" field.
@@ -7394,7 +7271,7 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 9)
 	if m.name != nil {
 		fields = append(fields, strategy.FieldName)
 	}
@@ -7403,9 +7280,6 @@ func (m *StrategyMutation) Fields() []string {
 	}
 	if m.code != nil {
 		fields = append(fields, strategy.FieldCode)
-	}
-	if m.version != nil {
-		fields = append(fields, strategy.FieldVersion)
 	}
 	if m._config != nil {
 		fields = append(fields, strategy.FieldConfig)
@@ -7439,8 +7313,6 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case strategy.FieldCode:
 		return m.Code()
-	case strategy.FieldVersion:
-		return m.Version()
 	case strategy.FieldConfig:
 		return m.Config()
 	case strategy.FieldParentID:
@@ -7468,8 +7340,6 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldDescription(ctx)
 	case strategy.FieldCode:
 		return m.OldCode(ctx)
-	case strategy.FieldVersion:
-		return m.OldVersion(ctx)
 	case strategy.FieldConfig:
 		return m.OldConfig(ctx)
 	case strategy.FieldParentID:
@@ -7511,13 +7381,6 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCode(v)
-		return nil
-	case strategy.FieldVersion:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetVersion(v)
 		return nil
 	case strategy.FieldConfig:
 		v, ok := value.(map[string]interface{})
@@ -7609,9 +7472,6 @@ func (m *StrategyMutation) ClearedFields() []string {
 	if m.FieldCleared(strategy.FieldDescription) {
 		fields = append(fields, strategy.FieldDescription)
 	}
-	if m.FieldCleared(strategy.FieldConfig) {
-		fields = append(fields, strategy.FieldConfig)
-	}
 	if m.FieldCleared(strategy.FieldParentID) {
 		fields = append(fields, strategy.FieldParentID)
 	}
@@ -7632,9 +7492,6 @@ func (m *StrategyMutation) ClearField(name string) error {
 	case strategy.FieldDescription:
 		m.ClearDescription()
 		return nil
-	case strategy.FieldConfig:
-		m.ClearConfig()
-		return nil
 	case strategy.FieldParentID:
 		m.ClearParentID()
 		return nil
@@ -7654,9 +7511,6 @@ func (m *StrategyMutation) ResetField(name string) error {
 		return nil
 	case strategy.FieldCode:
 		m.ResetCode()
-		return nil
-	case strategy.FieldVersion:
-		m.ResetVersion()
 		return nil
 	case strategy.FieldConfig:
 		m.ResetConfig()

@@ -79,29 +79,9 @@ func (_u *StrategyUpdate) SetNillableCode(v *string) *StrategyUpdate {
 	return _u
 }
 
-// SetVersion sets the "version" field.
-func (_u *StrategyUpdate) SetVersion(v string) *StrategyUpdate {
-	_u.mutation.SetVersion(v)
-	return _u
-}
-
-// SetNillableVersion sets the "version" field if the given value is not nil.
-func (_u *StrategyUpdate) SetNillableVersion(v *string) *StrategyUpdate {
-	if v != nil {
-		_u.SetVersion(*v)
-	}
-	return _u
-}
-
 // SetConfig sets the "config" field.
 func (_u *StrategyUpdate) SetConfig(v map[string]interface{}) *StrategyUpdate {
 	_u.mutation.SetConfig(v)
-	return _u
-}
-
-// ClearConfig clears the value of the "config" field.
-func (_u *StrategyUpdate) ClearConfig() *StrategyUpdate {
-	_u.mutation.ClearConfig()
 	return _u
 }
 
@@ -281,7 +261,9 @@ func (_u *StrategyUpdate) ClearParent() *StrategyUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *StrategyUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -308,11 +290,15 @@ func (_u *StrategyUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *StrategyUpdate) defaults() {
+func (_u *StrategyUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if strategy.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized strategy.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := strategy.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -349,14 +335,8 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Code(); ok {
 		_spec.SetField(strategy.FieldCode, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Version(); ok {
-		_spec.SetField(strategy.FieldVersion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
-	}
-	if _u.mutation.ConfigCleared() {
-		_spec.ClearField(strategy.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.IsLatest(); ok {
 		_spec.SetField(strategy.FieldIsLatest, field.TypeBool, value)
@@ -586,29 +566,9 @@ func (_u *StrategyUpdateOne) SetNillableCode(v *string) *StrategyUpdateOne {
 	return _u
 }
 
-// SetVersion sets the "version" field.
-func (_u *StrategyUpdateOne) SetVersion(v string) *StrategyUpdateOne {
-	_u.mutation.SetVersion(v)
-	return _u
-}
-
-// SetNillableVersion sets the "version" field if the given value is not nil.
-func (_u *StrategyUpdateOne) SetNillableVersion(v *string) *StrategyUpdateOne {
-	if v != nil {
-		_u.SetVersion(*v)
-	}
-	return _u
-}
-
 // SetConfig sets the "config" field.
 func (_u *StrategyUpdateOne) SetConfig(v map[string]interface{}) *StrategyUpdateOne {
 	_u.mutation.SetConfig(v)
-	return _u
-}
-
-// ClearConfig clears the value of the "config" field.
-func (_u *StrategyUpdateOne) ClearConfig() *StrategyUpdateOne {
-	_u.mutation.ClearConfig()
 	return _u
 }
 
@@ -801,7 +761,9 @@ func (_u *StrategyUpdateOne) Select(field string, fields ...string) *StrategyUpd
 
 // Save executes the query and returns the updated Strategy entity.
 func (_u *StrategyUpdateOne) Save(ctx context.Context) (*Strategy, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -828,11 +790,15 @@ func (_u *StrategyUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *StrategyUpdateOne) defaults() {
+func (_u *StrategyUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if strategy.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized strategy.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := strategy.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -886,14 +852,8 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	if value, ok := _u.mutation.Code(); ok {
 		_spec.SetField(strategy.FieldCode, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Version(); ok {
-		_spec.SetField(strategy.FieldVersion, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
-	}
-	if _u.mutation.ConfigCleared() {
-		_spec.ClearField(strategy.FieldConfig, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.IsLatest(); ok {
 		_spec.SetField(strategy.FieldIsLatest, field.TypeBool, value)

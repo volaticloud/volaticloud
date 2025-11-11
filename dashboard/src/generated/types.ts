@@ -21,8 +21,6 @@ export type Backtest = Node & {
   __typename?: 'Backtest';
   /** Completion timestamp */
   completedAt?: Maybe<Scalars['Time']['output']>;
-  /** Backtest configuration (pairs, timeframe, dates, stake, etc.) */
-  config?: Maybe<Scalars['Map']['output']>;
   /** Docker container ID for running backtest */
   containerID?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Time']['output'];
@@ -935,8 +933,6 @@ export type BybitConfigInput = {
 export type CreateBacktestInput = {
   /** Completion timestamp */
   completedAt?: InputMaybe<Scalars['Time']['input']>;
-  /** Backtest configuration (pairs, timeframe, dates, stake, etc.) */
-  config?: InputMaybe<Scalars['Map']['input']>;
   /** Docker container ID for running backtest */
   containerID?: InputMaybe<Scalars['String']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
@@ -1081,8 +1077,8 @@ export type CreateStrategyInput = {
   childIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Python strategy code */
   code: Scalars['String']['input'];
-  /** Strategy-specific configuration (config.json) */
-  config?: InputMaybe<Scalars['Map']['input']>;
+  /** Strategy-specific configuration (config.json) - REQUIRED */
+  config: Scalars['Map']['input'];
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Strategy description */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -1092,8 +1088,6 @@ export type CreateStrategyInput = {
   name: Scalars['String']['input'];
   parentID?: InputMaybe<Scalars['ID']['input']>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
-  /** Strategy version (display string) */
-  version?: InputMaybe<Scalars['String']['input']>;
   /** Auto-incremented version number */
   versionNumber?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1455,8 +1449,6 @@ export type Query = {
   bots: BotConnection;
   exchanges: Array<Exchange>;
   getBotRunnerStatus?: Maybe<BotStatus>;
-  /** Get only the latest versions of strategies (default view for dashboard) */
-  latestStrategies: StrategyConnection;
   /** Fetches an object given its ID. */
   node?: Maybe<Node>;
   /** Lookup nodes by a list of IDs. */
@@ -1497,13 +1489,6 @@ export type QueryBotsArgs = {
 
 export type QueryGetBotRunnerStatusArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type QueryLatestStrategiesArgs = {
-  after?: InputMaybe<Scalars['Cursor']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<StrategyWhereInput>;
 };
 
 
@@ -1560,8 +1545,8 @@ export type Strategy = Node & {
   children?: Maybe<Array<Strategy>>;
   /** Python strategy code */
   code: Scalars['String']['output'];
-  /** Strategy-specific configuration (config.json) */
-  config?: Maybe<Scalars['Map']['output']>;
+  /** Strategy-specific configuration (config.json) - REQUIRED */
+  config: Scalars['Map']['output'];
   createdAt: Scalars['Time']['output'];
   /** Strategy description */
   description?: Maybe<Scalars['String']['output']>;
@@ -1574,8 +1559,6 @@ export type Strategy = Node & {
   /** Parent strategy ID for versioning (null for root v1) */
   parentID?: Maybe<Scalars['ID']['output']>;
   updatedAt: Scalars['Time']['output'];
-  /** Strategy version (display string) */
-  version: Scalars['String']['output'];
   /** Auto-incremented version number */
   versionNumber: Scalars['Int']['output'];
 };
@@ -1710,20 +1693,6 @@ export type StrategyWhereInput = {
   updatedAtLTE?: InputMaybe<Scalars['Time']['input']>;
   updatedAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   updatedAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
-  /** version field predicates */
-  version?: InputMaybe<Scalars['String']['input']>;
-  versionContains?: InputMaybe<Scalars['String']['input']>;
-  versionContainsFold?: InputMaybe<Scalars['String']['input']>;
-  versionEqualFold?: InputMaybe<Scalars['String']['input']>;
-  versionGT?: InputMaybe<Scalars['String']['input']>;
-  versionGTE?: InputMaybe<Scalars['String']['input']>;
-  versionHasPrefix?: InputMaybe<Scalars['String']['input']>;
-  versionHasSuffix?: InputMaybe<Scalars['String']['input']>;
-  versionIn?: InputMaybe<Array<Scalars['String']['input']>>;
-  versionLT?: InputMaybe<Scalars['String']['input']>;
-  versionLTE?: InputMaybe<Scalars['String']['input']>;
-  versionNEQ?: InputMaybe<Scalars['String']['input']>;
-  versionNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** version_number field predicates */
   versionNumber?: InputMaybe<Scalars['Int']['input']>;
   versionNumberGT?: InputMaybe<Scalars['Int']['input']>;
@@ -2153,12 +2122,11 @@ export type UpdateStrategyInput = {
   clearBacktest?: InputMaybe<Scalars['Boolean']['input']>;
   clearBots?: InputMaybe<Scalars['Boolean']['input']>;
   clearChildren?: InputMaybe<Scalars['Boolean']['input']>;
-  clearConfig?: InputMaybe<Scalars['Boolean']['input']>;
   clearDescription?: InputMaybe<Scalars['Boolean']['input']>;
   clearParent?: InputMaybe<Scalars['Boolean']['input']>;
   /** Python strategy code */
   code?: InputMaybe<Scalars['String']['input']>;
-  /** Strategy-specific configuration (config.json) */
+  /** Strategy-specific configuration (config.json) - REQUIRED */
   config?: InputMaybe<Scalars['Map']['input']>;
   /** Strategy description */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -2170,8 +2138,6 @@ export type UpdateStrategyInput = {
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeChildIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
-  /** Strategy version (display string) */
-  version?: InputMaybe<Scalars['String']['input']>;
   /** Auto-incremented version number */
   versionNumber?: InputMaybe<Scalars['Int']['input']>;
 };

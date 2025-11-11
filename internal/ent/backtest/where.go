@@ -122,16 +122,6 @@ func StatusNotIn(vs ...enum.TaskStatus) predicate.Backtest {
 	return predicate.Backtest(sql.FieldNotIn(FieldStatus, v...))
 }
 
-// ConfigIsNil applies the IsNil predicate on the "config" field.
-func ConfigIsNil() predicate.Backtest {
-	return predicate.Backtest(sql.FieldIsNull(FieldConfig))
-}
-
-// ConfigNotNil applies the NotNil predicate on the "config" field.
-func ConfigNotNil() predicate.Backtest {
-	return predicate.Backtest(sql.FieldNotNull(FieldConfig))
-}
-
 // ResultIsNil applies the IsNil predicate on the "result" field.
 func ResultIsNil() predicate.Backtest {
 	return predicate.Backtest(sql.FieldIsNull(FieldResult))

@@ -25,7 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetLatestStrategiesQuery } from './strategies.generated';
+import { useGetStrategiesQuery } from './strategies.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateStrategyDialog } from './CreateStrategyDialog';
@@ -45,7 +45,7 @@ export const StrategiesList = () => {
     name: string;
     description?: string | null;
     code: string;
-    version: string;
+    versionNumber: number;
   } | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -53,8 +53,11 @@ export const StrategiesList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  const { data, loading, error, refetch } = useGetLatestStrategiesQuery({
-    variables: { first: 50 }
+  const { data, loading, error, refetch } = useGetStrategiesQuery({
+    variables: {
+      first: 50,
+      where: { isLatest: true }
+    }
   });
 
   const handleCloseSnackbar = () => {
@@ -64,7 +67,7 @@ export const StrategiesList = () => {
   if (loading) return <LoadingSpinner message="Loading strategies..." />;
   if (error) return <ErrorAlert error={error} />;
 
-  const strategies = (data?.latestStrategies?.edges
+  const strategies = (data?.strategies?.edges
     ?.map(edge => edge?.node)
     .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
@@ -83,7 +86,7 @@ export const StrategiesList = () => {
             Strategies
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.latestStrategies?.totalCount || 0} latest strategies
+            {data?.strategies?.totalCount || 0} latest strategies
           </Typography>
         </Box>
         <Button
@@ -148,9 +151,12 @@ export const StrategiesList = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {strategy.version || '-'}
-                    </Typography>
+                    <Chip
+                      label={`v${strategy.versionNumber}`}
+                      size="small"
+                      color="default"
+                      variant="outlined"
+                    />
                   </TableCell>
                   <TableCell>{strategy.bots?.totalCount || 0}</TableCell>
                   <TableCell>

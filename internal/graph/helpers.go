@@ -8,6 +8,7 @@ import (
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/enum"
 	"anytrade/internal/exchange"
+	"anytrade/internal/freqtrade"
 	"anytrade/internal/runner"
 	"anytrade/internal/utils"
 )
@@ -216,20 +217,20 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 
 	strategy := bt.Edges.Strategy
 
-	// The backtest config should contain all required fields
-	if bt.Config == nil {
-		return nil, fmt.Errorf("backtest has no config")
+	// The strategy config should contain all required fields
+	if strategy.Config == nil {
+		return nil, fmt.Errorf("strategy has no config")
 	}
 
 	// Validate config contains all required fields (like bots do)
-	if err := validateBacktestConfig(bt.Config); err != nil {
-		return nil, fmt.Errorf("invalid backtest config: %w", err)
+	if err := freqtrade.ValidateConfig(strategy.Config); err != nil {
+		return nil, fmt.Errorf("invalid strategy config: %w", err)
 	}
 
 	// Extract required fields from config
-	pairs, ok := bt.Config["pairs"].([]interface{})
+	pairs, ok := strategy.Config["pairs"].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("pairs not found in backtest config")
+		return nil, fmt.Errorf("pairs not found in strategy config")
 	}
 	pairStrings := make([]string, len(pairs))
 	for i, p := range pairs {
@@ -240,54 +241,54 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		pairStrings[i] = str
 	}
 
-	timeframe, ok := bt.Config["timeframe"].(string)
+	timeframe, ok := strategy.Config["timeframe"].(string)
 	if !ok {
-		return nil, fmt.Errorf("timeframe not found in backtest config")
+		return nil, fmt.Errorf("timeframe not found in strategy config")
 	}
 
 	// Extract stake_amount and stake_currency
-	stakeAmount, ok := bt.Config["stake_amount"].(float64)
+	stakeAmount, ok := strategy.Config["stake_amount"].(float64)
 	if !ok {
 		// Try int
-		if stakeAmountInt, ok := bt.Config["stake_amount"].(int); ok {
+		if stakeAmountInt, ok := strategy.Config["stake_amount"].(int); ok {
 			stakeAmount = float64(stakeAmountInt)
 		} else {
-			return nil, fmt.Errorf("stake_amount not found or invalid in backtest config")
+			return nil, fmt.Errorf("stake_amount not found or invalid in strategy config")
 		}
 	}
 
-	stakeCurrency, ok := bt.Config["stake_currency"].(string)
+	stakeCurrency, ok := strategy.Config["stake_currency"].(string)
 	if !ok {
-		return nil, fmt.Errorf("stake_currency not found in backtest config")
+		return nil, fmt.Errorf("stake_currency not found in strategy config")
 	}
 
 	// Optional fields with defaults
 	maxOpenTrades := 3 // Default
-	if mot, ok := bt.Config["max_open_trades"].(float64); ok {
+	if mot, ok := strategy.Config["max_open_trades"].(float64); ok {
 		maxOpenTrades = int(mot)
-	} else if mot, ok := bt.Config["max_open_trades"].(int); ok {
+	} else if mot, ok := strategy.Config["max_open_trades"].(int); ok {
 		maxOpenTrades = mot
 	}
 
 	enablePositionStacking := false
-	if eps, ok := bt.Config["enable_position_stacking"].(bool); ok {
+	if eps, ok := strategy.Config["enable_position_stacking"].(bool); ok {
 		enablePositionStacking = eps
 	}
 
 	// Get Freqtrade version (default to stable if not specified)
 	freqtradeVersion := "stable"
-	if fv, ok := bt.Config["freqtrade_version"].(string); ok && fv != "" {
+	if fv, ok := strategy.Config["freqtrade_version"].(string); ok && fv != "" {
 		freqtradeVersion = fv
 	}
 
 	// Data source configuration
 	dataSource := "download" // Default to downloading data
-	if ds, ok := bt.Config["data_source"].(string); ok {
+	if ds, ok := strategy.Config["data_source"].(string); ok {
 		dataSource = ds
 	}
 
 	dataPath := ""
-	if dp, ok := bt.Config["data_path"].(string); ok {
+	if dp, ok := strategy.Config["data_path"].(string); ok {
 		dataPath = dp
 	}
 
@@ -295,7 +296,7 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		ID:                     bt.ID.String(),
 		StrategyName:           strategy.Name,
 		StrategyCode:           strategy.Code,
-		Config:                 bt.Config,
+		Config:                 strategy.Config,
 		Pairs:                  pairStrings,
 		Timeframe:              timeframe,
 		StakeAmount:            stakeAmount,

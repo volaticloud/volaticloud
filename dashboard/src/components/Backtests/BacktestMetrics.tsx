@@ -1,10 +1,8 @@
 import {
   Box,
   Typography,
-  Chip,
   CircularProgress,
   Alert,
-  Divider,
 } from '@mui/material';
 
 interface BacktestMetricsProps {

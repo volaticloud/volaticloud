@@ -10,10 +10,10 @@ import {
   MenuItem,
   FormHelperText,
   Box,
+  Alert,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useCreateBacktestMutation, useGetBacktestOptionsQuery } from './backtests.generated';
-import { JSONEditor } from '../JSONEditor';
 
 interface CreateBacktestDialogProps {
   open: boolean;
@@ -25,50 +25,6 @@ interface CreateBacktestDialogProps {
 export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStrategyId }: CreateBacktestDialogProps) => {
   const [strategyID, setStrategyID] = useState('');
   const [runnerID, setRunnerID] = useState('');
-  const [config, setConfig] = useState<object | null>({
-    pairs: ['BTC/USDT', 'ETH/USDT'],
-    timeframe: '5m',
-    stake_amount: 100,
-    stake_currency: 'USDT',
-    max_open_trades: 3,
-    freqtrade_version: 'stable',
-    exchange: {
-      name: 'binance',
-      pair_whitelist: ['BTC/USDT', 'ETH/USDT'],
-    },
-    pairlists: [{ method: 'StaticPairList' }],
-    exit_pricing: {
-      price_side: 'other',
-      use_order_book: true,
-      order_book_top: 1,
-      price_last_balance: 0.0,
-    },
-    entry_pricing: {
-      price_side: 'other',
-      use_order_book: true,
-      order_book_top: 1,
-      price_last_balance: 0.0,
-      check_depth_of_market: {
-        enabled: false,
-        bids_to_ask_delta: 1,
-      },
-    },
-    order_types: {
-      entry: 'limit',
-      exit: 'limit',
-      stoploss: 'market',
-      stoploss_on_exchange: false,
-      stoploss_on_exchange_interval: 60,
-    },
-    order_time_in_force: {
-      entry: 'GTC',
-      exit: 'GTC',
-    },
-    unfilledtimeout: {
-      entry: 10,
-      exit: 30,
-    },
-  });
 
   const { data: optionsData } = useGetBacktestOptionsQuery();
   const [createBacktest, { loading, error }] = useCreateBacktestMutation();
@@ -81,7 +37,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
   }, [open, preSelectedStrategyId]);
 
   const handleSubmit = async () => {
-    if (!strategyID || !runnerID || !config) {
+    if (!strategyID || !runnerID) {
       return;
     }
 
@@ -92,7 +48,6 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
             strategyID,
             runnerID,
             status: 'pending' as any,
-            config,
           },
         },
       });
@@ -102,50 +57,6 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
         // Reset form
         setStrategyID('');
         setRunnerID('');
-        setConfig({
-          pairs: ['BTC/USDT', 'ETH/USDT'],
-          timeframe: '5m',
-          stake_amount: 100,
-          stake_currency: 'USDT',
-          max_open_trades: 3,
-          freqtrade_version: 'stable',
-          exchange: {
-            name: 'binance',
-            pair_whitelist: ['BTC/USDT', 'ETH/USDT'],
-          },
-          pairlists: [{ method: 'StaticPairList' }],
-          exit_pricing: {
-            price_side: 'other',
-            use_order_book: true,
-            order_book_top: 1,
-            price_last_balance: 0.0,
-          },
-          entry_pricing: {
-            price_side: 'other',
-            use_order_book: true,
-            order_book_top: 1,
-            price_last_balance: 0.0,
-            check_depth_of_market: {
-              enabled: false,
-              bids_to_ask_delta: 1,
-            },
-          },
-          order_types: {
-            entry: 'limit',
-            exit: 'limit',
-            stoploss: 'market',
-            stoploss_on_exchange: false,
-            stoploss_on_exchange_interval: 60,
-          },
-          order_time_in_force: {
-            entry: 'GTC',
-            exit: 'GTC',
-          },
-          unfilledtimeout: {
-            entry: 10,
-            exit: 30,
-          },
-        });
 
         onSuccess();
         onClose();
@@ -205,22 +116,10 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
             )}
           </FormControl>
 
-          <JSONEditor
-            value={config}
-            onChange={setConfig}
-            label="Backtest Configuration (JSON)"
-            helperText="Required: Configure pairs, timeframe, stake amount, dates, etc."
-            height="300px"
-            placeholder={JSON.stringify({
-              pairs: ['BTC/USDT', 'ETH/USDT'],
-              timeframe: '5m',
-              stake_amount: 100,
-              stake_currency: 'USDT',
-              max_open_trades: 3,
-              freqtrade_version: 'stable',
-              data_source: 'download',
-            }, null, 2)}
-          />
+          <Alert severity="info">
+            The backtest will use the strategy's configuration (pairs, timeframe, stake amount, etc.).
+            No additional configuration is needed.
+          </Alert>
 
           {error && (
             <FormHelperText error>
@@ -234,7 +133,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || !strategyID || !runnerID || !config}
+          disabled={loading || !strategyID || !runnerID}
         >
           {loading ? 'Creating...' : 'Create Backtest'}
         </Button>

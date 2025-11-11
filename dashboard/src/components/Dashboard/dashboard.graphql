@@ -50,7 +50,6 @@ query GetDashboardData {
       node {
         id
         name
-        version
       }
     }
     totalCount

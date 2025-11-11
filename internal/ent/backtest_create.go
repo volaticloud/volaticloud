@@ -38,12 +38,6 @@ func (_c *BacktestCreate) SetNillableStatus(v *enum.TaskStatus) *BacktestCreate 
 	return _c
 }
 
-// SetConfig sets the "config" field.
-func (_c *BacktestCreate) SetConfig(v map[string]interface{}) *BacktestCreate {
-	_c.mutation.SetConfig(v)
-	return _c
-}
-
 // SetResult sets the "result" field.
 func (_c *BacktestCreate) SetResult(v map[string]interface{}) *BacktestCreate {
 	_c.mutation.SetResult(v)
@@ -281,10 +275,6 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
-	}
-	if value, ok := _c.mutation.Config(); ok {
-		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
-		_node.Config = value
 	}
 	if value, ok := _c.mutation.Result(); ok {
 		_spec.SetField(backtest.FieldResult, field.TypeJSON, value)

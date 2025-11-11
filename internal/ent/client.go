@@ -1272,7 +1272,8 @@ func (c *StrategyClient) QueryParent(_m *Strategy) *StrategyQuery {
 
 // Hooks returns the client hooks.
 func (c *StrategyClient) Hooks() []Hook {
-	return c.hooks.Strategy
+	hooks := c.hooks.Strategy
+	return append(hooks[:len(hooks):len(hooks)], strategy.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

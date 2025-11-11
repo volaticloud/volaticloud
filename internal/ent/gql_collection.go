@@ -76,11 +76,6 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldStatus)
 				fieldSeen[backtest.FieldStatus] = struct{}{}
 			}
-		case "config":
-			if _, ok := fieldSeen[backtest.FieldConfig]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldConfig)
-				fieldSeen[backtest.FieldConfig] = struct{}{}
-			}
 		case "result":
 			if _, ok := fieldSeen[backtest.FieldResult]; !ok {
 				selectedFields = append(selectedFields, backtest.FieldResult)
@@ -1245,11 +1240,6 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			if _, ok := fieldSeen[strategy.FieldCode]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldCode)
 				fieldSeen[strategy.FieldCode] = struct{}{}
-			}
-		case "version":
-			if _, ok := fieldSeen[strategy.FieldVersion]; !ok {
-				selectedFields = append(selectedFields, strategy.FieldVersion)
-				fieldSeen[strategy.FieldVersion] = struct{}{}
 			}
 		case "config":
 			if _, ok := fieldSeen[strategy.FieldConfig]; !ok {

@@ -7,10 +7,11 @@ import {
   TextField,
   FormHelperText,
   Box,
+  Typography,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useUpdateStrategyMutation } from './strategies.generated';
-import { JSONEditor } from '../JSONEditor';
+import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
 
 interface EditStrategyDialogProps {
   open: boolean;
@@ -21,7 +22,6 @@ interface EditStrategyDialogProps {
     name: string;
     description?: string | null;
     code: string;
-    version: string;
     config?: object;
   };
 }
@@ -30,7 +30,6 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [code, setCode] = useState('');
-  const [version, setVersion] = useState('');
   const [config, setConfig] = useState<object | null>(null);
 
   const [updateStrategy, { loading, error }] = useUpdateStrategyMutation();
@@ -41,7 +40,6 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
       setName(strategy.name);
       setDescription(strategy.description || '');
       setCode(strategy.code);
-      setVersion(strategy.version);
       setConfig(strategy.config || null);
     }
   }, [strategy]);
@@ -59,7 +57,6 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
             name,
             description: description || undefined,
             code,
-            version: version || undefined,
             config: config || undefined,
           },
         },
@@ -113,22 +110,19 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
             sx={{ fontFamily: 'monospace' }}
           />
 
-          <TextField
-            label="Version"
-            value={version}
-            onChange={(e) => setVersion(e.target.value)}
-            fullWidth
-            placeholder="e.g., 1.0.0"
-          />
-
-          <JSONEditor
-            value={config}
-            onChange={setConfig}
-            label="Strategy Configuration (JSON)"
-            helperText="Optional: Configure strategy-specific settings like max_open_trades, stake_amount, etc."
-            height="200px"
-            placeholder='{\n  "max_open_trades": 3,\n  "stake_amount": 100,\n  "stake_currency": "USDT"\n}'
-          />
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Freqtrade Configuration (Required)
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Configure trading parameters. The form is auto-generated from the official Freqtrade schema.
+            </Typography>
+            <FreqtradeConfigForm
+              value={config}
+              onChange={setConfig}
+              hideSubmitButton
+            />
+          </Box>
 
           {error && (
             <FormHelperText error>

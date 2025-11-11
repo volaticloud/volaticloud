@@ -104,6 +104,20 @@ Strategies use an immutable versioning system where updates create new versions 
    - `createBacktest`: Checks if strategy has existing backtests, auto-versions if needed
    - Bots stay pinned to their strategy version (no automatic upgrades)
 
+5. **Transaction Handling** (`internal/graph/tx.go`):
+   - **Fixed: 2025-11-11** - `updateStrategy` now uses database transactions to ensure atomicity
+   - All strategy update operations wrapped in `WithTx` helper following ENT best practices
+   - Transaction flow:
+     1. Load existing strategy
+     2. Mark old version as `is_latest=false`
+     3. Create new version with incremented `version_number`
+     4. Save new version (triggers validation hooks)
+   - **Rollback behavior**: If validation fails at step 4, entire transaction rolls back
+   - **Critical fix**: Prevents bug where validation errors left all strategies with `is_latest=0`
+   - Uses panic recovery and proper error wrapping per ENT documentation
+   - See `internal/graph/tx.go:23` for `WithTx` helper implementation
+   - See `internal/graph/schema.resolvers.go:67` for `UpdateStrategy` implementation
+
 **GraphQL Queries:**
 ```graphql
 # Get only latest versions (dashboard default)

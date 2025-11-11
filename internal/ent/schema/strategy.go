@@ -31,12 +31,8 @@ func (Strategy) Fields() []ent.Field {
 			Comment("Strategy description"),
 		field.Text("code").
 			Comment("Python strategy code"),
-		field.String("version").
-			Default("1.0").
-			Comment("Strategy version (display string)"),
 		field.JSON("config", map[string]interface{}{}).
-			Optional().
-			Comment("Strategy-specific configuration (config.json)").
+			Comment("Strategy-specific configuration (config.json) - REQUIRED").
 			Annotations(entgql.Type("Map")),
 		// Versioning fields
 		field.UUID("parent_id", uuid.UUID{}).
@@ -95,5 +91,12 @@ func (Strategy) Annotations() []schema.Annotation {
 		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+	}
+}
+
+// Hooks of the Strategy.
+func (Strategy) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateStrategyConfig,
 	}
 }

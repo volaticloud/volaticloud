@@ -2921,21 +2921,6 @@ type StrategyWhereInput struct {
 	CodeEqualFold    *string  `json:"codeEqualFold,omitempty"`
 	CodeContainsFold *string  `json:"codeContainsFold,omitempty"`
 
-	// "version" field predicates.
-	Version             *string  `json:"version,omitempty"`
-	VersionNEQ          *string  `json:"versionNEQ,omitempty"`
-	VersionIn           []string `json:"versionIn,omitempty"`
-	VersionNotIn        []string `json:"versionNotIn,omitempty"`
-	VersionGT           *string  `json:"versionGT,omitempty"`
-	VersionGTE          *string  `json:"versionGTE,omitempty"`
-	VersionLT           *string  `json:"versionLT,omitempty"`
-	VersionLTE          *string  `json:"versionLTE,omitempty"`
-	VersionContains     *string  `json:"versionContains,omitempty"`
-	VersionHasPrefix    *string  `json:"versionHasPrefix,omitempty"`
-	VersionHasSuffix    *string  `json:"versionHasSuffix,omitempty"`
-	VersionEqualFold    *string  `json:"versionEqualFold,omitempty"`
-	VersionContainsFold *string  `json:"versionContainsFold,omitempty"`
-
 	// "parent_id" field predicates.
 	ParentID       *uuid.UUID  `json:"parentID,omitempty"`
 	ParentIDNEQ    *uuid.UUID  `json:"parentIDNEQ,omitempty"`
@@ -3212,45 +3197,6 @@ func (i *StrategyWhereInput) P() (predicate.Strategy, error) {
 	}
 	if i.CodeContainsFold != nil {
 		predicates = append(predicates, strategy.CodeContainsFold(*i.CodeContainsFold))
-	}
-	if i.Version != nil {
-		predicates = append(predicates, strategy.VersionEQ(*i.Version))
-	}
-	if i.VersionNEQ != nil {
-		predicates = append(predicates, strategy.VersionNEQ(*i.VersionNEQ))
-	}
-	if len(i.VersionIn) > 0 {
-		predicates = append(predicates, strategy.VersionIn(i.VersionIn...))
-	}
-	if len(i.VersionNotIn) > 0 {
-		predicates = append(predicates, strategy.VersionNotIn(i.VersionNotIn...))
-	}
-	if i.VersionGT != nil {
-		predicates = append(predicates, strategy.VersionGT(*i.VersionGT))
-	}
-	if i.VersionGTE != nil {
-		predicates = append(predicates, strategy.VersionGTE(*i.VersionGTE))
-	}
-	if i.VersionLT != nil {
-		predicates = append(predicates, strategy.VersionLT(*i.VersionLT))
-	}
-	if i.VersionLTE != nil {
-		predicates = append(predicates, strategy.VersionLTE(*i.VersionLTE))
-	}
-	if i.VersionContains != nil {
-		predicates = append(predicates, strategy.VersionContains(*i.VersionContains))
-	}
-	if i.VersionHasPrefix != nil {
-		predicates = append(predicates, strategy.VersionHasPrefix(*i.VersionHasPrefix))
-	}
-	if i.VersionHasSuffix != nil {
-		predicates = append(predicates, strategy.VersionHasSuffix(*i.VersionHasSuffix))
-	}
-	if i.VersionEqualFold != nil {
-		predicates = append(predicates, strategy.VersionEqualFold(*i.VersionEqualFold))
-	}
-	if i.VersionContainsFold != nil {
-		predicates = append(predicates, strategy.VersionContainsFold(*i.VersionContainsFold))
 	}
 	if i.ParentID != nil {
 		predicates = append(predicates, strategy.ParentIDEQ(*i.ParentID))

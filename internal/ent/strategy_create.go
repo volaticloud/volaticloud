@@ -49,20 +49,6 @@ func (_c *StrategyCreate) SetCode(v string) *StrategyCreate {
 	return _c
 }
 
-// SetVersion sets the "version" field.
-func (_c *StrategyCreate) SetVersion(v string) *StrategyCreate {
-	_c.mutation.SetVersion(v)
-	return _c
-}
-
-// SetNillableVersion sets the "version" field if the given value is not nil.
-func (_c *StrategyCreate) SetNillableVersion(v *string) *StrategyCreate {
-	if v != nil {
-		_c.SetVersion(*v)
-	}
-	return _c
-}
-
 // SetConfig sets the "config" field.
 func (_c *StrategyCreate) SetConfig(v map[string]interface{}) *StrategyCreate {
 	_c.mutation.SetConfig(v)
@@ -214,7 +200,9 @@ func (_c *StrategyCreate) Mutation() *StrategyMutation {
 
 // Save creates the Strategy in the database.
 func (_c *StrategyCreate) Save(ctx context.Context) (*Strategy, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -241,11 +229,7 @@ func (_c *StrategyCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *StrategyCreate) defaults() {
-	if _, ok := _c.mutation.Version(); !ok {
-		v := strategy.DefaultVersion
-		_c.mutation.SetVersion(v)
-	}
+func (_c *StrategyCreate) defaults() error {
 	if _, ok := _c.mutation.IsLatest(); !ok {
 		v := strategy.DefaultIsLatest
 		_c.mutation.SetIsLatest(v)
@@ -255,17 +239,27 @@ func (_c *StrategyCreate) defaults() {
 		_c.mutation.SetVersionNumber(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if strategy.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized strategy.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := strategy.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if strategy.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized strategy.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := strategy.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if strategy.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized strategy.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := strategy.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -281,8 +275,8 @@ func (_c *StrategyCreate) check() error {
 	if _, ok := _c.mutation.Code(); !ok {
 		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "Strategy.code"`)}
 	}
-	if _, ok := _c.mutation.Version(); !ok {
-		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Strategy.version"`)}
+	if _, ok := _c.mutation.Config(); !ok {
+		return &ValidationError{Name: "config", err: errors.New(`ent: missing required field "Strategy.config"`)}
 	}
 	if _, ok := _c.mutation.IsLatest(); !ok {
 		return &ValidationError{Name: "is_latest", err: errors.New(`ent: missing required field "Strategy.is_latest"`)}
@@ -342,10 +336,6 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Code(); ok {
 		_spec.SetField(strategy.FieldCode, field.TypeString, value)
 		_node.Code = value
-	}
-	if value, ok := _c.mutation.Version(); ok {
-		_spec.SetField(strategy.FieldVersion, field.TypeString, value)
-		_node.Version = value
 	}
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)

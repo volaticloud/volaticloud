@@ -6,9 +6,9 @@ query GetStrategyDetail($id: ID!) {
         name
         description
         code
-        version
         versionNumber
         isLatest
+        config
         createdAt
         updatedAt
         bots {
@@ -48,7 +48,6 @@ query GetStrategyVersions($name: String!) {
     id
     name
     versionNumber
-    version
     isLatest
     createdAt
     bots {

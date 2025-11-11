@@ -7,14 +7,14 @@ import {
 } from '@mui/material';
 
 interface StrategyInfoProps {
-  version: string;
+  versionNumber: number;
   botsCount: number;
   hasBacktest: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export const StrategyInfo = ({ version, botsCount, hasBacktest, createdAt, updatedAt }: StrategyInfoProps) => {
+export const StrategyInfo = ({ versionNumber, botsCount, hasBacktest, createdAt, updatedAt }: StrategyInfoProps) => {
   return (
     <Card>
       <CardContent>
@@ -27,7 +27,7 @@ export const StrategyInfo = ({ version, botsCount, hasBacktest, createdAt, updat
             <Typography variant="caption" color="text.secondary">
               Version
             </Typography>
-            <Typography variant="body2">{version || 'N/A'}</Typography>
+            <Typography variant="body2">v{versionNumber}</Typography>
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">

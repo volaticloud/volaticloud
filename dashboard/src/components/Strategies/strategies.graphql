@@ -1,44 +1,11 @@
-query GetStrategies($first: Int, $after: Cursor) {
-  strategies(first: $first, after: $after) {
+query GetStrategies($first: Int, $after: Cursor, $where: StrategyWhereInput) {
+  strategies(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
         name
         description
         code
-        version
-        versionNumber
-        isLatest
-        config
-        createdAt
-        bots {
-          totalCount
-        }
-        backtest {
-          id
-          status
-        }
-      }
-    }
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-      startCursor
-      endCursor
-    }
-    totalCount
-  }
-}
-
-query GetLatestStrategies($first: Int, $after: Cursor) {
-  latestStrategies(first: $first, after: $after) {
-    edges {
-      node {
-        id
-        name
-        description
-        code
-        version
         versionNumber
         isLatest
         config
@@ -68,7 +35,6 @@ mutation CreateStrategy($input: CreateStrategyInput!) {
     name
     description
     code
-    version
     config
   }
 }
@@ -79,7 +45,6 @@ mutation UpdateStrategy($id: ID!, $input: UpdateStrategyInput!) {
     name
     description
     code
-    version
     config
   }
 }

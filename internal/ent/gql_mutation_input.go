@@ -12,7 +12,6 @@ import (
 // CreateBacktestInput represents a mutation input for creating backtests.
 type CreateBacktestInput struct {
 	Status       *enum.TaskStatus
-	Config       map[string]interface{}
 	Result       map[string]interface{}
 	ContainerID  *string
 	ErrorMessage *string
@@ -27,9 +26,6 @@ type CreateBacktestInput struct {
 func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
 	if v := i.Status; v != nil {
 		m.SetStatus(*v)
-	}
-	if v := i.Config; v != nil {
-		m.SetConfig(v)
 	}
 	if v := i.Result; v != nil {
 		m.SetResult(v)
@@ -754,7 +750,6 @@ type CreateStrategyInput struct {
 	Name          string
 	Description   *string
 	Code          string
-	Version       *string
 	Config        map[string]interface{}
 	IsLatest      *bool
 	VersionNumber *int
@@ -773,9 +768,6 @@ func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 		m.SetDescription(*v)
 	}
 	m.SetCode(i.Code)
-	if v := i.Version; v != nil {
-		m.SetVersion(*v)
-	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
 	}
@@ -817,8 +809,6 @@ type UpdateStrategyInput struct {
 	ClearDescription bool
 	Description      *string
 	Code             *string
-	Version          *string
-	ClearConfig      bool
 	Config           map[string]interface{}
 	IsLatest         *bool
 	VersionNumber    *int
@@ -848,12 +838,6 @@ func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	}
 	if v := i.Code; v != nil {
 		m.SetCode(*v)
-	}
-	if v := i.Version; v != nil {
-		m.SetVersion(*v)
-	}
-	if i.ClearConfig {
-		m.ClearConfig()
 	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)

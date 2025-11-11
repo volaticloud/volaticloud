@@ -60,7 +60,6 @@ query GetBot($id: ID!) {
         id
         name
         description
-        version
       }
       runner {
         id

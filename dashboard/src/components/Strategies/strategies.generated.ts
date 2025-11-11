@@ -6,25 +6,18 @@ const defaultOptions = {} as const;
 export type GetStrategiesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   after?: Types.InputMaybe<Types.Scalars['Cursor']['input']>;
+  where?: Types.InputMaybe<Types.StrategyWhereInput>;
 }>;
 
 
-export type GetStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, versionNumber: number, isLatest: boolean, config?: Record<string, any> | null, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
-export type GetLatestStrategiesQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  after?: Types.InputMaybe<Types.Scalars['Cursor']['input']>;
-}>;
-
-
-export type GetLatestStrategiesQuery = { __typename?: 'Query', latestStrategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, versionNumber: number, isLatest: boolean, config?: Record<string, any> | null, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, versionNumber: number, isLatest: boolean, config: Record<string, any>, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CreateStrategyMutationVariables = Types.Exact<{
   input: Types.CreateStrategyInput;
 }>;
 
 
-export type CreateStrategyMutation = { __typename?: 'Mutation', createStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, config?: Record<string, any> | null } };
+export type CreateStrategyMutation = { __typename?: 'Mutation', createStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, config: Record<string, any> } };
 
 export type UpdateStrategyMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -32,7 +25,7 @@ export type UpdateStrategyMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateStrategyMutation = { __typename?: 'Mutation', updateStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, config?: Record<string, any> | null } };
+export type UpdateStrategyMutation = { __typename?: 'Mutation', updateStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, config: Record<string, any> } };
 
 export type DeleteStrategyMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -43,15 +36,14 @@ export type DeleteStrategyMutation = { __typename?: 'Mutation', deleteStrategy: 
 
 
 export const GetStrategiesDocument = gql`
-    query GetStrategies($first: Int, $after: Cursor) {
-  strategies(first: $first, after: $after) {
+    query GetStrategies($first: Int, $after: Cursor, $where: StrategyWhereInput) {
+  strategies(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
         name
         description
         code
-        version
         versionNumber
         isLatest
         config
@@ -90,6 +82,7 @@ export const GetStrategiesDocument = gql`
  *   variables: {
  *      first: // value for 'first'
  *      after: // value for 'after'
+ *      where: // value for 'where'
  *   },
  * });
  */
@@ -109,73 +102,6 @@ export type GetStrategiesQueryHookResult = ReturnType<typeof useGetStrategiesQue
 export type GetStrategiesLazyQueryHookResult = ReturnType<typeof useGetStrategiesLazyQuery>;
 export type GetStrategiesSuspenseQueryHookResult = ReturnType<typeof useGetStrategiesSuspenseQuery>;
 export type GetStrategiesQueryResult = Apollo.QueryResult<GetStrategiesQuery, GetStrategiesQueryVariables>;
-export const GetLatestStrategiesDocument = gql`
-    query GetLatestStrategies($first: Int, $after: Cursor) {
-  latestStrategies(first: $first, after: $after) {
-    edges {
-      node {
-        id
-        name
-        description
-        code
-        version
-        versionNumber
-        isLatest
-        config
-        createdAt
-        bots {
-          totalCount
-        }
-        backtest {
-          id
-          status
-        }
-      }
-    }
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-      startCursor
-      endCursor
-    }
-    totalCount
-  }
-}
-    `;
-
-/**
- * __useGetLatestStrategiesQuery__
- *
- * To run a query within a React component, call `useGetLatestStrategiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetLatestStrategiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetLatestStrategiesQuery({
- *   variables: {
- *      first: // value for 'first'
- *      after: // value for 'after'
- *   },
- * });
- */
-export function useGetLatestStrategiesQuery(baseOptions?: Apollo.QueryHookOptions<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>(GetLatestStrategiesDocument, options);
-      }
-export function useGetLatestStrategiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>(GetLatestStrategiesDocument, options);
-        }
-export function useGetLatestStrategiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>(GetLatestStrategiesDocument, options);
-        }
-export type GetLatestStrategiesQueryHookResult = ReturnType<typeof useGetLatestStrategiesQuery>;
-export type GetLatestStrategiesLazyQueryHookResult = ReturnType<typeof useGetLatestStrategiesLazyQuery>;
-export type GetLatestStrategiesSuspenseQueryHookResult = ReturnType<typeof useGetLatestStrategiesSuspenseQuery>;
-export type GetLatestStrategiesQueryResult = Apollo.QueryResult<GetLatestStrategiesQuery, GetLatestStrategiesQueryVariables>;
 export const CreateStrategyDocument = gql`
     mutation CreateStrategy($input: CreateStrategyInput!) {
   createStrategy(input: $input) {
@@ -183,7 +109,6 @@ export const CreateStrategyDocument = gql`
     name
     description
     code
-    version
     config
   }
 }
@@ -221,7 +146,6 @@ export const UpdateStrategyDocument = gql`
     name
     description
     code
-    version
     config
   }
 }

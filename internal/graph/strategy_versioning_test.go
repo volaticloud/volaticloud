@@ -25,6 +25,16 @@ func setupTestResolver(t *testing.T) (*Resolver, *ent.Client) {
 	return resolver, client
 }
 
+// defaultTestConfig returns a minimal valid strategy config for testing
+func defaultTestConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"stake_currency": "USDT",
+		"exchange": map[string]interface{}{
+			"name": "binance",
+		},
+	}
+}
+
 func TestUpdateStrategy_CreatesNewVersion(t *testing.T) {
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
@@ -32,11 +42,17 @@ func TestUpdateStrategy_CreatesNewVersion(t *testing.T) {
 	ctx := context.Background()
 
 	// Create initial strategy (v1)
+	config := map[string]interface{}{
+		"stake_currency": "USDT",
+		"exchange": map[string]interface{}{
+			"name": "binance",
+		},
+	}
 	strategy, err := client.Strategy.Create().
 		SetName("TestStrategy").
 		SetDescription("Original description").
 		SetCode("original code").
-		SetVersion("1.0").
+		SetConfig(config).
 		SetVersionNumber(1).
 		SetIsLatest(true).
 		Save(ctx)
@@ -82,7 +98,7 @@ func TestUpdateStrategy_PreservesUnchangedFields(t *testing.T) {
 		SetName("TestStrategy").
 		SetDescription("Original description").
 		SetCode("original code").
-		SetVersion("1.0").
+		SetConfig(defaultTestConfig()).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -99,7 +115,6 @@ func TestUpdateStrategy_PreservesUnchangedFields(t *testing.T) {
 	assert.Equal(t, "TestStrategy", updatedStrategy.Name)
 	assert.Equal(t, "Original description", updatedStrategy.Description)
 	assert.Equal(t, newCode, updatedStrategy.Code)
-	assert.Equal(t, "1.0", updatedStrategy.Version)
 }
 
 func TestUpdateStrategy_MultipleVersions(t *testing.T) {
@@ -112,6 +127,7 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 	strategy, err := client.Strategy.Create().
 		SetName("TestStrategy").
 		SetCode("v1 code").
+		SetConfig(defaultTestConfig()).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -147,16 +163,43 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 	assert.True(t, v3Check.IsLatest)
 }
 
-func TestCreateBacktest_AutoVersionsWhenBacktestExists(t *testing.T) {
+func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
 
 	ctx := context.Background()
 
-	// Create a strategy (v1)
+	// Define backtest config that will be stored in the strategy
+	backtestConfig := map[string]interface{}{
+		"pairs":           []string{"BTC/USDT"},
+		"timeframe":       "1h",
+		"stake_currency":  "USDT",
+		"stake_amount":    100.0,
+		"max_open_trades": 3,
+		"exchange": map[string]interface{}{
+			"name":           "binance",
+			"pair_whitelist": []string{"BTC/USDT"},
+		},
+		"pairlists": []map[string]interface{}{
+			{"method": "StaticPairList"},
+		},
+		"exit_pricing": map[string]interface{}{
+			"price_side":     "same",
+			"use_order_book": false,
+			"order_book_top": 1,
+		},
+		"entry_pricing": map[string]interface{}{
+			"price_side":     "same",
+			"use_order_book": false,
+			"order_book_top": 1,
+		},
+	}
+
+	// Create a strategy (v1) with config
 	strategy, err := client.Strategy.Create().
 		SetName("TestStrategy").
 		SetCode("test code").
+		SetConfig(backtestConfig).
 		SetVersionNumber(1).
 		SetIsLatest(true).
 		Save(ctx)
@@ -175,53 +218,13 @@ func TestCreateBacktest_AutoVersionsWhenBacktestExists(t *testing.T) {
 		Save(ctx)
 	require.NoError(t, err)
 
-	// Create first backtest - should use v1
-	backtestConfig := map[string]interface{}{
-		"pairs":           []string{"BTC/USDT"},
-		"timeframe":       "1h",
-		"stake_currency":  "USDT",
-		"stake_amount":    100.0,
-		"max_open_trades": 3,
-		"exchange": map[string]interface{}{
-			"pair_whitelist": []string{"BTC/USDT"},
-		},
-		"pairlists": []map[string]interface{}{
-			{"method": "StaticPairList"},
-		},
-		"exit_pricing": map[string]interface{}{
-			"price_side":      "same",
-			"use_order_book":  false,
-			"order_book_top":  1,
-		},
-		"entry_pricing": map[string]interface{}{
-			"price_side":     "same",
-			"use_order_book": false,
-			"order_book_top": 1,
-		},
-	}
-	backtest1Input := ent.CreateBacktestInput{
-		StrategyID: strategy.ID,
-		RunnerID:   runner.ID,
-		Config:     backtestConfig,
-	}
-
-	// Note: CreateBacktest now auto-runs the backtest, which will fail in tests
-	// since there's no actual Docker environment. We'll just verify the error is expected.
-	backtest1, err := resolver.Mutation().CreateBacktest(ctx, backtest1Input)
-	// The backtest creation will fail when trying to run (no Docker in test), but that's expected
-	// We're only testing the versioning logic, not the actual backtest execution
-	if err != nil {
-		// Expected error in test environment - backtest was created but failed to run
-		// Let's just create a backtest directly in the database for testing purposes
-		backtest1, err = client.Backtest.Create().
-			SetStrategyID(strategy.ID).
-			SetRunnerID(runner.ID).
-			SetConfig(backtestConfig).
-			SetStatus(enum.TaskStatusPending).
-			Save(ctx)
-		require.NoError(t, err)
-	}
-	assert.Equal(t, strategy.ID, backtest1.StrategyID)
+	// Create first backtest directly in DB (bypass Docker execution)
+	_, err = client.Backtest.Create().
+		SetStrategyID(strategy.ID).
+		SetRunnerID(runner.ID).
+		SetStatus(enum.TaskStatusPending).
+		Save(ctx)
+	require.NoError(t, err)
 
 	// Verify v1 now has a backtest
 	strategyWithBacktest, err := client.Strategy.Query().
@@ -231,121 +234,16 @@ func TestCreateBacktest_AutoVersionsWhenBacktestExists(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, strategyWithBacktest.Edges.Backtest)
 
-	// Create second backtest - should auto-create v2 and use it
+	// Attempt to create second backtest - should fail with error
 	backtest2Input := ent.CreateBacktestInput{
-		StrategyID: strategy.ID, // Request on v1
+		StrategyID: strategy.ID,
 		RunnerID:   runner.ID,
-		Config:     backtestConfig, // Same config as first backtest
 	}
-	backtest2, err := resolver.Mutation().CreateBacktest(ctx, backtest2Input)
-	// Again, will fail in test environment
-	if err != nil {
-		// Load the auto-created v2 strategy (should exist even if backtest run failed)
-		strategies, _ := client.Strategy.Query().
-			Where(strategyent.NameEQ("TestStrategy")).
-			Order(ent.Desc("version_number")).
-			All(ctx)
+	_, err = resolver.Mutation().CreateBacktest(ctx, backtest2Input)
 
-		if len(strategies) > 1 {
-			// V2 was created, manually create the backtest
-			backtest2, err = client.Backtest.Create().
-				SetStrategyID(strategies[0].ID).
-				SetRunnerID(runner.ID).
-				SetConfig(backtestConfig).
-				SetStatus(enum.TaskStatusPending).
-				Save(ctx)
-			require.NoError(t, err)
-		} else {
-			// V2 wasn't created, test should fail
-			require.NoError(t, err, "Expected v2 strategy to be created")
-		}
-	}
-
-	// Verify backtest2 is NOT on v1 (should be on v2)
-	assert.NotEqual(t, strategy.ID, backtest2.StrategyID, "Second backtest should be on new strategy version")
-
-	// Load the new strategy version
-	newVersion, err := client.Strategy.Get(ctx, backtest2.StrategyID)
-	require.NoError(t, err)
-
-	// Verify new version properties
-	assert.Equal(t, 2, newVersion.VersionNumber)
-	assert.Equal(t, "TestStrategy", newVersion.Name)
-	assert.Equal(t, "test code", newVersion.Code)
-	assert.True(t, newVersion.IsLatest)
-	assert.NotNil(t, newVersion.ParentID)
-	assert.Equal(t, strategy.ID, *newVersion.ParentID)
-
-	// Verify old version is no longer latest
-	oldVersion, err := client.Strategy.Get(ctx, strategy.ID)
-	require.NoError(t, err)
-	assert.False(t, oldVersion.IsLatest)
-}
-
-func TestLatestStrategies_ReturnsOnlyLatest(t *testing.T) {
-	resolver, client := setupTestResolver(t)
-	defer client.Close()
-
-	ctx := context.Background()
-
-	// Create Strategy A with 2 versions
-	strategyA1, err := client.Strategy.Create().
-		SetName("StrategyA").
-		SetCode("A v1").
-		SetVersionNumber(1).
-		SetIsLatest(false).
-		Save(ctx)
-	require.NoError(t, err)
-
-	strategyA2, err := client.Strategy.Create().
-		SetName("StrategyA").
-		SetCode("A v2").
-		SetVersionNumber(2).
-		SetIsLatest(true).
-		SetParentID(strategyA1.ID).
-		Save(ctx)
-	require.NoError(t, err)
-
-	// Create Strategy B with 1 version
-	strategyB1, err := client.Strategy.Create().
-		SetName("StrategyB").
-		SetCode("B v1").
-		SetVersionNumber(1).
-		SetIsLatest(true).
-		Save(ctx)
-	require.NoError(t, err)
-
-	// Query latest strategies
-	first := 10
-	result, err := resolver.Query().LatestStrategies(ctx, &first, nil, nil)
-	require.NoError(t, err)
-
-	// Should return only StrategyA v2 and StrategyB v1
-	assert.Equal(t, 2, result.TotalCount)
-
-	strategies := make([]*ent.Strategy, 0)
-	for _, edge := range result.Edges {
-		strategies = append(strategies, edge.Node)
-	}
-
-	// Verify all returned strategies are latest
-	for _, s := range strategies {
-		assert.True(t, s.IsLatest, "Expected strategy %s v%d to be latest", s.Name, s.VersionNumber)
-	}
-
-	// Verify correct versions are returned
-	foundA2 := false
-	foundB1 := false
-	for _, s := range strategies {
-		if s.ID == strategyA2.ID {
-			foundA2 = true
-		}
-		if s.ID == strategyB1.ID {
-			foundB1 = true
-		}
-	}
-	assert.True(t, foundA2, "Expected to find StrategyA v2")
-	assert.True(t, foundB1, "Expected to find StrategyB v1")
+	// Should error with message about strategy already having backtest
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "strategy already has a backtest")
 }
 
 func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
@@ -358,6 +256,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 	strategyA1, err := client.Strategy.Create().
 		SetName("StrategyA").
 		SetCode("A v1").
+		SetConfig(defaultTestConfig()).
 		SetVersionNumber(1).
 		SetIsLatest(false).
 		Save(ctx)
@@ -366,6 +265,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 	strategyA2, err := client.Strategy.Create().
 		SetName("StrategyA").
 		SetCode("A v2").
+		SetConfig(defaultTestConfig()).
 		SetVersionNumber(2).
 		SetIsLatest(false).
 		SetParentID(strategyA1.ID).
@@ -375,6 +275,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 	strategyA3, err := client.Strategy.Create().
 		SetName("StrategyA").
 		SetCode("A v3").
+		SetConfig(defaultTestConfig()).
 		SetVersionNumber(3).
 		SetIsLatest(true).
 		SetParentID(strategyA2.ID).
@@ -385,6 +286,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 	_, err = client.Strategy.Create().
 		SetName("StrategyB").
 		SetCode("B v1").
+		SetConfig(defaultTestConfig()).
 		SetVersionNumber(1).
 		SetIsLatest(true).
 		Save(ctx)

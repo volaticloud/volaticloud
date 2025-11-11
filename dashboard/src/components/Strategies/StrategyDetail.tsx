@@ -13,6 +13,7 @@ import {
   Edit,
   Delete,
   ArrowBack,
+  Restore,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useGetStrategyDetailQuery, useGetStrategyVersionsQuery } from './strategy-detail.generated';
@@ -104,16 +105,26 @@ const StrategyDetail = () => {
             Run Backtest
           </Button>
         )}
-        <IconButton onClick={() => setEditDialogOpen(true)}>
-          <Edit />
-        </IconButton>
+        {strategy.isLatest ? (
+          <IconButton onClick={() => setEditDialogOpen(true)}>
+            <Edit />
+          </IconButton>
+        ) : (
+          <Button
+            variant="outlined"
+            startIcon={<Restore />}
+            onClick={() => setEditDialogOpen(true)}
+          >
+            Restore to this version
+          </Button>
+        )}
         <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
           <Delete />
         </IconButton>
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Top Section: Strategy Info and Code */}
+        {/* Top Section: Strategy Info and Version History */}
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
@@ -121,7 +132,7 @@ const StrategyDetail = () => {
         }}>
           <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 33%' } }}>
             <StrategyInfo
-              version={strategy.version || 'N/A'}
+              versionNumber={strategy.versionNumber}
               botsCount={strategy.bots?.totalCount || 0}
               hasBacktest={!!strategy.backtest}
               createdAt={strategy.createdAt}
@@ -130,7 +141,12 @@ const StrategyDetail = () => {
           </Box>
 
           <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 67%' } }}>
-            <StrategyCode code={strategy.code} />
+            <StrategyVersionHistory
+              currentStrategyId={strategy.id}
+              versions={versionsData?.strategyVersions || []}
+              loading={versionsLoading}
+              onVersionClick={(versionId) => navigate(`/strategies/${versionId}`)}
+            />
           </Box>
         </Box>
 
@@ -139,14 +155,8 @@ const StrategyDetail = () => {
           <BacktestResults backtest={strategy.backtest} />
         )}
 
-        {/* Version History */}
-        <StrategyVersionHistory
-          currentStrategyId={strategy.id}
-          strategyName={strategy.name}
-          versions={versionsData?.strategyVersions || []}
-          loading={versionsLoading}
-          onVersionClick={(versionId) => navigate(`/strategies/${versionId}`)}
-        />
+        {/* Strategy Code */}
+        <StrategyCode code={strategy.code} />
       </Box>
 
       {/* Dialogs */}

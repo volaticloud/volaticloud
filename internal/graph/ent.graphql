@@ -7,10 +7,6 @@ type Backtest implements Node {
   """
   status: BacktestTaskStatus!
   """
-  Backtest configuration (pairs, timeframe, dates, stake, etc.)
-  """
-  config: Map
-  """
   Backtest result data (metrics, logs, trades, etc.)
   """
   result: Map
@@ -1157,10 +1153,6 @@ input CreateBacktestInput {
   """
   status: BacktestTaskStatus
   """
-  Backtest configuration (pairs, timeframe, dates, stake, etc.)
-  """
-  config: Map
-  """
   Backtest result data (metrics, logs, trades, etc.)
   """
   result: Map
@@ -1391,13 +1383,9 @@ input CreateStrategyInput {
   """
   code: String!
   """
-  Strategy version (display string)
+  Strategy-specific configuration (config.json) - REQUIRED
   """
-  version: String
-  """
-  Strategy-specific configuration (config.json)
-  """
-  config: Map
+  config: Map!
   """
   Indicates if this is the latest version of the strategy
   """
@@ -1797,13 +1785,9 @@ type Strategy implements Node {
   """
   code: String!
   """
-  Strategy version (display string)
+  Strategy-specific configuration (config.json) - REQUIRED
   """
-  version: String!
-  """
-  Strategy-specific configuration (config.json)
-  """
-  config: Map
+  config: Map!
   """
   Parent strategy ID for versioning (null for root v1)
   """
@@ -1953,22 +1937,6 @@ input StrategyWhereInput {
   codeHasSuffix: String
   codeEqualFold: String
   codeContainsFold: String
-  """
-  version field predicates
-  """
-  version: String
-  versionNEQ: String
-  versionIn: [String!]
-  versionNotIn: [String!]
-  versionGT: String
-  versionGTE: String
-  versionLT: String
-  versionLTE: String
-  versionContains: String
-  versionHasPrefix: String
-  versionHasSuffix: String
-  versionEqualFold: String
-  versionContainsFold: String
   """
   parent_id field predicates
   """
@@ -2610,14 +2578,9 @@ input UpdateStrategyInput {
   """
   code: String
   """
-  Strategy version (display string)
-  """
-  version: String
-  """
-  Strategy-specific configuration (config.json)
+  Strategy-specific configuration (config.json) - REQUIRED
   """
   config: Map
-  clearConfig: Boolean
   """
   Indicates if this is the latest version of the strategy
   """

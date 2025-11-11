@@ -155,15 +155,6 @@ extend type Query {
 
   # Strategy versioning queries
   """
-  Get only the latest versions of strategies (default view for dashboard)
-  """
-  latestStrategies(
-    first: Int
-    after: Cursor
-    where: StrategyWhereInput
-  ): StrategyConnection!
-
-  """
   Get all versions of a strategy by name (for version history view)
   """
   strategyVersions(name: String!): [Strategy!]!

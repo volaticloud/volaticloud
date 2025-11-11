@@ -9,14 +9,14 @@ export type GetBacktestsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBacktestsQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetBacktestsQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, config: Record<string, any> }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetBacktestQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
+export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
 
 export type GetBacktestOptionsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -28,7 +28,7 @@ export type CreateBacktestMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, createdAt: string } };
+export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string } };
 
 export type DeleteBacktestMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -59,7 +59,6 @@ export const GetBacktestsDocument = gql`
       node {
         id
         status
-        config
         result
         containerID
         errorMessage
@@ -69,6 +68,7 @@ export const GetBacktestsDocument = gql`
         strategy {
           id
           name
+          config
         }
         runner {
           id
@@ -128,7 +128,6 @@ export const GetBacktestDocument = gql`
       node {
         id
         status
-        config
         result
         containerID
         errorMessage
@@ -241,7 +240,6 @@ export const CreateBacktestDocument = gql`
   createBacktest(input: $input) {
     id
     status
-    config
     createdAt
   }
 }

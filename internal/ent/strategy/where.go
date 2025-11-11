@@ -71,11 +71,6 @@ func Code(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldEQ(FieldCode, v))
 }
 
-// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
-func Version(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldEQ(FieldVersion, v))
-}
-
 // ParentID applies equality check predicate on the "parent_id" field. It's identical to ParentIDEQ.
 func ParentID(v uuid.UUID) predicate.Strategy {
 	return predicate.Strategy(sql.FieldEQ(FieldParentID, v))
@@ -304,81 +299,6 @@ func CodeEqualFold(v string) predicate.Strategy {
 // CodeContainsFold applies the ContainsFold predicate on the "code" field.
 func CodeContainsFold(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldContainsFold(FieldCode, v))
-}
-
-// VersionEQ applies the EQ predicate on the "version" field.
-func VersionEQ(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldEQ(FieldVersion, v))
-}
-
-// VersionNEQ applies the NEQ predicate on the "version" field.
-func VersionNEQ(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldNEQ(FieldVersion, v))
-}
-
-// VersionIn applies the In predicate on the "version" field.
-func VersionIn(vs ...string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldIn(FieldVersion, vs...))
-}
-
-// VersionNotIn applies the NotIn predicate on the "version" field.
-func VersionNotIn(vs ...string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldNotIn(FieldVersion, vs...))
-}
-
-// VersionGT applies the GT predicate on the "version" field.
-func VersionGT(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldGT(FieldVersion, v))
-}
-
-// VersionGTE applies the GTE predicate on the "version" field.
-func VersionGTE(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldGTE(FieldVersion, v))
-}
-
-// VersionLT applies the LT predicate on the "version" field.
-func VersionLT(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldLT(FieldVersion, v))
-}
-
-// VersionLTE applies the LTE predicate on the "version" field.
-func VersionLTE(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldLTE(FieldVersion, v))
-}
-
-// VersionContains applies the Contains predicate on the "version" field.
-func VersionContains(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldContains(FieldVersion, v))
-}
-
-// VersionHasPrefix applies the HasPrefix predicate on the "version" field.
-func VersionHasPrefix(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldHasPrefix(FieldVersion, v))
-}
-
-// VersionHasSuffix applies the HasSuffix predicate on the "version" field.
-func VersionHasSuffix(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldHasSuffix(FieldVersion, v))
-}
-
-// VersionEqualFold applies the EqualFold predicate on the "version" field.
-func VersionEqualFold(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldEqualFold(FieldVersion, v))
-}
-
-// VersionContainsFold applies the ContainsFold predicate on the "version" field.
-func VersionContainsFold(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldContainsFold(FieldVersion, v))
-}
-
-// ConfigIsNil applies the IsNil predicate on the "config" field.
-func ConfigIsNil() predicate.Strategy {
-	return predicate.Strategy(sql.FieldIsNull(FieldConfig))
-}
-
-// ConfigNotNil applies the NotNil predicate on the "config" field.
-func ConfigNotNil() predicate.Strategy {
-	return predicate.Strategy(sql.FieldNotNull(FieldConfig))
 }
 
 // ParentIDEQ applies the EQ predicate on the "parent_id" field.

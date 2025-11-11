@@ -41,7 +41,6 @@ interface Version {
 
 interface StrategyVersionHistoryProps {
   currentStrategyId: string;
-  strategyName: string;
   versions: Version[];
   loading: boolean;
   onVersionClick: (versionId: string) => void;
@@ -49,12 +48,11 @@ interface StrategyVersionHistoryProps {
 
 export const StrategyVersionHistory = ({
   currentStrategyId,
-  strategyName,
   versions,
   loading,
   onVersionClick,
 }: StrategyVersionHistoryProps) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
     <Card>

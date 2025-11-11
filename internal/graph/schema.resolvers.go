@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"entgo.io/contrib/entgql"
 	"github.com/google/uuid"
 )
 
@@ -66,41 +65,49 @@ func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateS
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
-	// Load existing strategy
-	oldStrategy, err := r.client.Strategy.Get(ctx, id)
+	var result *ent.Strategy
+
+	// Use transaction to ensure atomicity - both operations succeed or both fail
+	err := WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		// Load existing strategy (within transaction)
+		oldStrategy, err := tx.Strategy.Get(ctx, id)
+		if err != nil {
+			return fmt.Errorf("failed to load strategy: %w", err)
+		}
+
+		// Mark old strategy as not latest (within transaction)
+		err = tx.Strategy.UpdateOneID(id).SetIsLatest(false).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to mark old strategy as not latest: %w", err)
+		}
+
+		// Create new version with input values, falling back to old values (within transaction)
+		newVersion := tx.Strategy.Create().
+			SetName(coalesce(input.Name, &oldStrategy.Name)).
+			SetDescription(coalesce(input.Description, &oldStrategy.Description)).
+			SetCode(coalesce(input.Code, &oldStrategy.Code)).
+			SetVersionNumber(oldStrategy.VersionNumber + 1).
+			SetParentID(oldStrategy.ID).
+			SetIsLatest(true)
+
+		// Handle optional fields
+		if input.Config != nil {
+			newVersion.SetConfig(input.Config)
+		} else if oldStrategy.Config != nil {
+			newVersion.SetConfig(oldStrategy.Config)
+		}
+
+		// Save new version (this will trigger validation hook)
+		// If validation fails, the entire transaction rolls back
+		result, err = newVersion.Save(ctx)
+		return err
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to load strategy: %w", err)
+		return nil, err
 	}
 
-	// Mark old strategy as not latest
-	err = r.client.Strategy.UpdateOneID(id).SetIsLatest(false).Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to mark old strategy as not latest: %w", err)
-	}
-
-	// Create new version with input values, falling back to old values
-	newVersion := r.client.Strategy.Create().
-		SetName(coalesce(input.Name, &oldStrategy.Name)).
-		SetDescription(coalesce(input.Description, &oldStrategy.Description)).
-		SetCode(coalesce(input.Code, &oldStrategy.Code)).
-		SetVersionNumber(oldStrategy.VersionNumber + 1).
-		SetParentID(oldStrategy.ID).
-		SetIsLatest(true)
-
-	// Handle optional fields
-	if input.Config != nil {
-		newVersion.SetConfig(input.Config)
-	} else if oldStrategy.Config != nil {
-		newVersion.SetConfig(oldStrategy.Config)
-	}
-
-	if input.Version != nil {
-		newVersion.SetVersion(*input.Version)
-	} else {
-		newVersion.SetVersion(oldStrategy.Version)
-	}
-
-	return newVersion.Save(ctx)
+	return result, nil
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -504,57 +511,75 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 }
 
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
-	strategyID := input.StrategyID
+	var result *ent.Backtest
 
-	// Load strategy with backtest relationship to check if it already has one
-	existingStrategy, err := r.client.Strategy.Query().
-		Where(strategy.ID(strategyID)).
-		WithBacktest().
-		Only(ctx)
+	// Use transaction to ensure atomicity - entity creation and validation both succeed or both fail
+	err := WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		strategyID := input.StrategyID
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to load strategy: %w", err)
-	}
+		// Load strategy with backtest relationship to check if it already has one
+		existingStrategy, err := tx.Strategy.Query().
+			Where(strategy.ID(strategyID)).
+			WithBacktest().
+			Only(ctx)
 
-	// Check if strategy already has a backtest
-	if existingStrategy.Edges.Backtest != nil {
-		// Auto-create new strategy version for this backtest
-		newVersion, err := r.createStrategyVersion(ctx, existingStrategy)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create strategy version for backtest: %w", err)
+			return fmt.Errorf("failed to load strategy: %w", err)
 		}
-		// Use the new version's ID for the backtest
-		strategyID = newVersion.ID
-	}
 
-	// Create backtest with the resolved strategy ID and set status to pending
-	creator := r.client.Backtest.Create().
-		SetStrategyID(strategyID).
-		SetRunnerID(input.RunnerID).
-		SetStatus(enum.TaskStatusPending)
+		// Check if strategy already has a backtest - if so, throw an error
+		if existingStrategy.Edges.Backtest != nil {
+			return fmt.Errorf("strategy already has a backtest - please create a new strategy version first")
+		}
 
-	if input.Config != nil {
-		creator.SetConfig(input.Config)
-	}
+		// Create backtest entity (within transaction)
+		bt, err := tx.Backtest.Create().
+			SetStrategyID(strategyID).
+			SetRunnerID(input.RunnerID).
+			SetStatus(enum.TaskStatusPending).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create backtest: %w", err)
+		}
 
-	bt, err := creator.Save(ctx)
+		// Load backtest with edges for validation
+		bt, err = tx.Backtest.Query().
+			Where(backtest.ID(bt.ID)).
+			WithRunner().
+			WithStrategy().
+			Only(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to reload backtest with edges: %w", err)
+		}
+
+		// Validate by building the backtest spec
+		// This will fail with "pairs not found in strategy config" if validation fails
+		// If this fails, the entire transaction rolls back and no backtest entity is created
+		_, err = buildBacktestSpec(bt)
+		if err != nil {
+			return fmt.Errorf("failed to build backtest spec: %w", err)
+		}
+
+		result = bt
+		return nil
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to create backtest: %w", err)
+		return nil, err
 	}
 
-	// Automatically run the backtest after creation
-	// Load the backtest with runner and strategy edges for running
-	bt, err = r.client.Backtest.Query().
-		Where(backtest.ID(bt.ID)).
+	// After transaction commits successfully, run the backtest
+	// We need to reload with edges since the transaction result is detached
+	result, err = r.client.Backtest.Query().
+		Where(backtest.ID(result.ID)).
 		WithRunner().
 		WithStrategy().
 		Only(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to reload backtest with edges: %w", err)
+		return nil, fmt.Errorf("failed to reload backtest for execution: %w", err)
 	}
 
-	// Run the backtest using the helper
-	return r.runBacktestHelper(ctx, bt)
+	return r.runBacktestHelper(ctx, result)
 }
 
 func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -692,19 +717,6 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	return status, nil
 }
 
-func (r *queryResolver) LatestStrategies(ctx context.Context, first *int, after *entgql.Cursor[uuid.UUID], where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
-	// Query only strategies where is_latest = true
-	query := r.client.Strategy.Query().Where(strategy.IsLatest(true))
-
-	// Apply where filters if provided
-	if where != nil {
-		query, _ = where.Filter(query)
-	}
-
-	// Use ENT's Paginate helper for Relay-style pagination
-	return query.Paginate(ctx, after, first, nil, nil)
-}
-
 func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error) {
 	// Get all versions of a strategy by name, ordered by version number
 	return r.client.Strategy.Query().
@@ -716,15 +728,3 @@ func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*e
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 type mutationResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error) {
-	return r.client.Backtest.UpdateOneID(id).SetInput(input).Save(ctx)
-}
-*/
