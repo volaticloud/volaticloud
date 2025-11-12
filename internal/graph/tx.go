@@ -29,7 +29,8 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 	// Defer handles both panics and rollbacks
 	defer func() {
 		if v := recover(); v != nil {
-			_ = tx.Rollback() // Ignore rollback error on panic
+			//nolint:errcheck // Rollback on panic is best-effort
+			tx.Rollback()
 			panic(v)
 		}
 	}()

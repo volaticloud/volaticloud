@@ -318,7 +318,8 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
 	if err != nil {
 		// Update backtest status to error (best effort, ignore save errors)
-		_, _ = r.client.Backtest.UpdateOneID(bt.ID).
+		//nolint:errcheck // Best-effort status update before returning error
+		r.client.Backtest.UpdateOneID(bt.ID).
 			SetStatus(enum.TaskStatusFailed).
 			SetErrorMessage(fmt.Sprintf("Failed to run backtest: %v", err)).
 			Save(ctx)
