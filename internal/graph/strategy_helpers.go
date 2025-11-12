@@ -14,29 +14,3 @@ func coalesce[T any](newVal, oldVal *T) T {
 	}
 	return *oldVal
 }
-
-// createStrategyVersion creates a new version of a strategy (helper function)
-//
-//nolint:unused // Reserved for future versioning features
-func (r *mutationResolver) createStrategyVersion(ctx context.Context, old *ent.Strategy) (*ent.Strategy, error) {
-	// Mark old version as not latest
-	err := r.client.Strategy.UpdateOneID(old.ID).SetIsLatest(false).Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to mark old strategy as not latest: %w", err)
-	}
-
-	// Create new version (exact copy with incremented version number)
-	newVersion := r.client.Strategy.Create().
-		SetName(old.Name).
-		SetDescription(old.Description).
-		SetCode(old.Code).
-		SetVersionNumber(old.VersionNumber + 1).
-		SetParentID(old.ID).
-		SetIsLatest(true)
-
-	if old.Config != nil {
-		newVersion.SetConfig(old.Config)
-	}
-
-	return newVersion.Save(ctx)
-}

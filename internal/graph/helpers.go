@@ -142,75 +142,6 @@ func validateFreqtradeConfig(config map[string]interface{}) error {
 	return nil
 }
 
-// validateBacktestConfig validates that backtest config contains all required fields
-//
-//nolint:unused // Reserved for future use or testing
-func validateBacktestConfig(config map[string]interface{}) error {
-	if config == nil {
-		return fmt.Errorf("backtest config is required")
-	}
-
-	// Required fields for backtesting (these must exist in the JSON config)
-	requiredFields := []string{
-		"pairs",
-		"timeframe",
-		"stake_currency",
-		"stake_amount",
-		"max_open_trades",
-		"exchange",
-		"pairlists",
-		"exit_pricing",
-		"entry_pricing",
-	}
-
-	var missingFields []string
-	for _, field := range requiredFields {
-		if _, exists := config[field]; !exists {
-			missingFields = append(missingFields, field)
-		}
-	}
-
-	if len(missingFields) > 0 {
-		return fmt.Errorf("missing required backtest config fields: %v. Please provide complete configuration in JSON format", missingFields)
-	}
-
-	// Validate pairs is an array
-	if pairs, ok := config["pairs"].([]interface{}); !ok || len(pairs) == 0 {
-		return fmt.Errorf("pairs must be a non-empty array")
-	}
-
-	// Validate exchange has pair_whitelist
-	if exchange, ok := config["exchange"].(map[string]interface{}); ok {
-		if _, exists := exchange["pair_whitelist"]; !exists {
-			return fmt.Errorf("exchange.pair_whitelist is required")
-		}
-	} else {
-		return fmt.Errorf("exchange must be an object with pair_whitelist")
-	}
-
-	// Validate timeframe is a string
-	if timeframe, ok := config["timeframe"].(string); !ok || timeframe == "" {
-		return fmt.Errorf("timeframe must be a non-empty string")
-	}
-
-	// Validate stake_amount is a number
-	if stakeAmount, ok := config["stake_amount"]; ok {
-		switch stakeAmount.(type) {
-		case int, int64, float64, float32:
-			// Valid number types
-		default:
-			return fmt.Errorf("stake_amount must be a number")
-		}
-	}
-
-	// Validate stake_currency is a string
-	if stakeCurrency, ok := config["stake_currency"].(string); !ok || stakeCurrency == "" {
-		return fmt.Errorf("stake_currency must be a non-empty string")
-	}
-
-	return nil
-}
-
 // buildBacktestSpec builds a BacktestSpec from a Backtest entity
 func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	if bt.Edges.Strategy == nil {
@@ -373,7 +304,9 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 	if err != nil {
 		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
 	}
-	defer backtestRunner.Close()
+	defer func() {
+		_ = backtestRunner.Close() // Best effort close
+	}()
 
 	// Build BacktestSpec from backtest data
 	spec, err := buildBacktestSpec(bt)
