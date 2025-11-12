@@ -16,6 +16,8 @@ func coalesce[T any](newVal, oldVal *T) T {
 }
 
 // createStrategyVersion creates a new version of a strategy (helper function)
+//
+//nolint:unused // Reserved for future versioning features
 func (r *mutationResolver) createStrategyVersion(ctx context.Context, old *ent.Strategy) (*ent.Strategy, error) {
 	// Mark old version as not latest
 	err := r.client.Strategy.UpdateOneID(old.ID).SetIsLatest(false).Exec(ctx)

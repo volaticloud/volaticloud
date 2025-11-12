@@ -169,19 +169,3 @@ export function FreqtradeConfigForm({
     </Box>
   );
 }
-
-/**
- * Hook to generate default Freqtrade config from schema
- * Useful for providing initial values
- */
-export function useDefaultFreqtradeConfig() {
-  const { schema } = useFreqtradeSchema();
-
-  if (!schema) {
-    return null;
-  }
-
-  // Generate defaults from schema
-  // RJSF's validator will handle this automatically when formData is undefined
-  return null;
-}

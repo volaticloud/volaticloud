@@ -35,7 +35,7 @@ func getSchemaLoader() (gojsonschema.JSONLoader, error) {
 // ValidateConfig validates that a config is a complete, valid Freqtrade configuration.
 // This validates against the official Freqtrade JSON schema.
 func ValidateConfig(config map[string]interface{}) error {
-	if config == nil || len(config) == 0 {
+	if len(config) == 0 {
 		return fmt.Errorf("freqtrade config is required. Config must be a complete Freqtrade configuration")
 	}
 

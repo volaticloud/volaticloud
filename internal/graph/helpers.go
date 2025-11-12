@@ -143,6 +143,8 @@ func validateFreqtradeConfig(config map[string]interface{}) error {
 }
 
 // validateBacktestConfig validates that backtest config contains all required fields
+//
+//nolint:unused // Reserved for future use or testing
 func validateBacktestConfig(config map[string]interface{}) error {
 	if config == nil {
 		return fmt.Errorf("backtest config is required")
@@ -382,8 +384,8 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 	// Run the backtest
 	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
 	if err != nil {
-		// Update backtest status to error
-		r.client.Backtest.UpdateOneID(bt.ID).
+		// Update backtest status to error (best effort, ignore save errors)
+		_, _ = r.client.Backtest.UpdateOneID(bt.ID).
 			SetStatus(enum.TaskStatusFailed).
 			SetErrorMessage(fmt.Sprintf("Failed to run backtest: %v", err)).
 			Save(ctx)

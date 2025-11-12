@@ -28,8 +28,8 @@ func validateStrategyConfig(next ent.Mutator) ent.Mutator {
 			return nil, fmt.Errorf("strategy config must be a valid JSON object")
 		}
 
-		// Config cannot be nil or empty when being set
-		if config == nil || len(config) == 0 {
+		// Config cannot be empty when being set
+		if len(config) == 0 {
 			return nil, fmt.Errorf("strategy config cannot be empty - must be a complete Freqtrade configuration")
 		}
 
