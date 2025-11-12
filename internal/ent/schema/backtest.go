@@ -28,9 +28,6 @@ func (Backtest) Fields() []ent.Field {
 			GoType(enum.TaskStatus("")).
 			Default(string(enum.TaskStatusPending)).
 			Comment("Task status"),
-		field.JSON("config", map[string]interface{}{}).
-			Optional().
-			Comment("Backtest configuration (pairs, timeframe, dates, stake, etc.)"),
 		field.JSON("result", map[string]interface{}{}).
 			Optional().
 			Comment("Backtest result data (metrics, logs, trades, etc.)"),
@@ -66,7 +63,7 @@ func (Backtest) Fields() []ent.Field {
 func (Backtest) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("strategy", Strategy.Type).
-			Ref("backtests").
+			Ref("backtest").
 			Field("strategy_id").
 			Required().
 			Unique(),
@@ -83,6 +80,7 @@ func (Backtest) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.RelayConnection(),
 		entgql.QueryField(),
-		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+		// Backtests are immutable - only allow creation, no updates
+		entgql.Mutations(entgql.MutationCreate()),
 	}
 }

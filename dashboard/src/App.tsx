@@ -10,6 +10,7 @@ import { BotsPage } from './pages/Bots/BotsPage';
 import { BotDetailPage } from './pages/Bots/BotDetailPage';
 import { ExchangesPage } from './pages/Exchanges/ExchangesPage';
 import { StrategiesPage } from './pages/Strategies/StrategiesPage';
+import { StrategyDetailPage } from './pages/Strategies/StrategyDetailPage';
 import { RunnersPage } from './pages/Runners/RunnersPage';
 import { BacktestsPage } from './pages/BacktestsPage';
 import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
@@ -44,6 +45,7 @@ function App() {
               <Route path="bots/:id" element={<BotDetailPage />} />
               <Route path="exchanges" element={<ExchangesPage />} />
               <Route path="strategies" element={<StrategiesPage />} />
+              <Route path="strategies/:id" element={<StrategyDetailPage />} />
               <Route path="backtests" element={<BacktestsPage />} />
               <Route path="backtests/:id" element={<BacktestDetailPage />} />
               <Route path="trades" element={<div>Trades (Coming Soon)</div>} />

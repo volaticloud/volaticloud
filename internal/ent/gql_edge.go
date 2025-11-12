@@ -164,24 +164,32 @@ func (_m *Strategy) Bots(
 	return _m.QueryBots().Paginate(ctx, after, first, before, last, opts...)
 }
 
-func (_m *Strategy) Backtests(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BacktestWhereInput,
-) (*BacktestConnection, error) {
-	opts := []BacktestPaginateOption{
-		WithBacktestFilter(where.Filter),
+func (_m *Strategy) Backtest(ctx context.Context) (*Backtest, error) {
+	result, err := _m.Edges.BacktestOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryBacktest().Only(ctx)
 	}
-	alias := graphql.GetFieldContext(ctx).Field.Alias
-	totalCount, hasTotalCount := _m.Edges.totalCount[1][alias]
-	if nodes, err := _m.NamedBacktests(alias); err == nil || hasTotalCount {
-		pager, err := newBacktestPager(opts, last != nil)
-		if err != nil {
-			return nil, err
-		}
-		conn := &BacktestConnection{Edges: []*BacktestEdge{}, TotalCount: totalCount}
-		conn.build(nodes, pager, after, first, before, last)
-		return conn, nil
+	return result, MaskNotFound(err)
+}
+
+func (_m *Strategy) Children(ctx context.Context) (result []*Strategy, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = _m.NamedChildren(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = _m.Edges.ChildrenOrErr()
 	}
-	return _m.QueryBacktests().Paginate(ctx, after, first, before, last, opts...)
+	if IsNotLoaded(err) {
+		result, err = _m.QueryChildren().All(ctx)
+	}
+	return result, err
+}
+
+func (_m *Strategy) Parent(ctx context.Context) (*Strategy, error) {
+	result, err := _m.Edges.ParentOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryParent().Only(ctx)
+	}
+	return result, MaskNotFound(err)
 }
 
 func (_m *Trade) Bot(ctx context.Context) (*Bot, error) {

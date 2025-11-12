@@ -1,11 +1,14 @@
 package graph
 
 import (
+	"context"
 	"fmt"
 
 	"anytrade/internal/ent"
+	"anytrade/internal/ent/backtest"
 	"anytrade/internal/enum"
 	"anytrade/internal/exchange"
+	"anytrade/internal/freqtrade"
 	"anytrade/internal/runner"
 	"anytrade/internal/utils"
 )
@@ -139,73 +142,6 @@ func validateFreqtradeConfig(config map[string]interface{}) error {
 	return nil
 }
 
-// validateBacktestConfig validates that backtest config contains all required fields
-func validateBacktestConfig(config map[string]interface{}) error {
-	if config == nil {
-		return fmt.Errorf("backtest config is required")
-	}
-
-	// Required fields for backtesting (these must exist in the JSON config)
-	requiredFields := []string{
-		"pairs",
-		"timeframe",
-		"stake_currency",
-		"stake_amount",
-		"max_open_trades",
-		"exchange",
-		"pairlists",
-		"exit_pricing",
-		"entry_pricing",
-	}
-
-	var missingFields []string
-	for _, field := range requiredFields {
-		if _, exists := config[field]; !exists {
-			missingFields = append(missingFields, field)
-		}
-	}
-
-	if len(missingFields) > 0 {
-		return fmt.Errorf("missing required backtest config fields: %v. Please provide complete configuration in JSON format", missingFields)
-	}
-
-	// Validate pairs is an array
-	if pairs, ok := config["pairs"].([]interface{}); !ok || len(pairs) == 0 {
-		return fmt.Errorf("pairs must be a non-empty array")
-	}
-
-	// Validate exchange has pair_whitelist
-	if exchange, ok := config["exchange"].(map[string]interface{}); ok {
-		if _, exists := exchange["pair_whitelist"]; !exists {
-			return fmt.Errorf("exchange.pair_whitelist is required")
-		}
-	} else {
-		return fmt.Errorf("exchange must be an object with pair_whitelist")
-	}
-
-	// Validate timeframe is a string
-	if timeframe, ok := config["timeframe"].(string); !ok || timeframe == "" {
-		return fmt.Errorf("timeframe must be a non-empty string")
-	}
-
-	// Validate stake_amount is a number
-	if stakeAmount, ok := config["stake_amount"]; ok {
-		switch stakeAmount.(type) {
-		case int, int64, float64, float32:
-			// Valid number types
-		default:
-			return fmt.Errorf("stake_amount must be a number")
-		}
-	}
-
-	// Validate stake_currency is a string
-	if stakeCurrency, ok := config["stake_currency"].(string); !ok || stakeCurrency == "" {
-		return fmt.Errorf("stake_currency must be a non-empty string")
-	}
-
-	return nil
-}
-
 // buildBacktestSpec builds a BacktestSpec from a Backtest entity
 func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	if bt.Edges.Strategy == nil {
@@ -214,20 +150,20 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 
 	strategy := bt.Edges.Strategy
 
-	// The backtest config should contain all required fields
-	if bt.Config == nil {
-		return nil, fmt.Errorf("backtest has no config")
+	// The strategy config should contain all required fields
+	if strategy.Config == nil {
+		return nil, fmt.Errorf("strategy has no config")
 	}
 
 	// Validate config contains all required fields (like bots do)
-	if err := validateBacktestConfig(bt.Config); err != nil {
-		return nil, fmt.Errorf("invalid backtest config: %w", err)
+	if err := freqtrade.ValidateConfig(strategy.Config); err != nil {
+		return nil, fmt.Errorf("invalid strategy config: %w", err)
 	}
 
 	// Extract required fields from config
-	pairs, ok := bt.Config["pairs"].([]interface{})
+	pairs, ok := strategy.Config["pairs"].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("pairs not found in backtest config")
+		return nil, fmt.Errorf("pairs not found in strategy config")
 	}
 	pairStrings := make([]string, len(pairs))
 	for i, p := range pairs {
@@ -238,54 +174,54 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		pairStrings[i] = str
 	}
 
-	timeframe, ok := bt.Config["timeframe"].(string)
+	timeframe, ok := strategy.Config["timeframe"].(string)
 	if !ok {
-		return nil, fmt.Errorf("timeframe not found in backtest config")
+		return nil, fmt.Errorf("timeframe not found in strategy config")
 	}
 
 	// Extract stake_amount and stake_currency
-	stakeAmount, ok := bt.Config["stake_amount"].(float64)
+	stakeAmount, ok := strategy.Config["stake_amount"].(float64)
 	if !ok {
 		// Try int
-		if stakeAmountInt, ok := bt.Config["stake_amount"].(int); ok {
+		if stakeAmountInt, ok := strategy.Config["stake_amount"].(int); ok {
 			stakeAmount = float64(stakeAmountInt)
 		} else {
-			return nil, fmt.Errorf("stake_amount not found or invalid in backtest config")
+			return nil, fmt.Errorf("stake_amount not found or invalid in strategy config")
 		}
 	}
 
-	stakeCurrency, ok := bt.Config["stake_currency"].(string)
+	stakeCurrency, ok := strategy.Config["stake_currency"].(string)
 	if !ok {
-		return nil, fmt.Errorf("stake_currency not found in backtest config")
+		return nil, fmt.Errorf("stake_currency not found in strategy config")
 	}
 
 	// Optional fields with defaults
 	maxOpenTrades := 3 // Default
-	if mot, ok := bt.Config["max_open_trades"].(float64); ok {
+	if mot, ok := strategy.Config["max_open_trades"].(float64); ok {
 		maxOpenTrades = int(mot)
-	} else if mot, ok := bt.Config["max_open_trades"].(int); ok {
+	} else if mot, ok := strategy.Config["max_open_trades"].(int); ok {
 		maxOpenTrades = mot
 	}
 
 	enablePositionStacking := false
-	if eps, ok := bt.Config["enable_position_stacking"].(bool); ok {
+	if eps, ok := strategy.Config["enable_position_stacking"].(bool); ok {
 		enablePositionStacking = eps
 	}
 
 	// Get Freqtrade version (default to stable if not specified)
 	freqtradeVersion := "stable"
-	if fv, ok := bt.Config["freqtrade_version"].(string); ok && fv != "" {
+	if fv, ok := strategy.Config["freqtrade_version"].(string); ok && fv != "" {
 		freqtradeVersion = fv
 	}
 
 	// Data source configuration
 	dataSource := "download" // Default to downloading data
-	if ds, ok := bt.Config["data_source"].(string); ok {
+	if ds, ok := strategy.Config["data_source"].(string); ok {
 		dataSource = ds
 	}
 
 	dataPath := ""
-	if dp, ok := bt.Config["data_path"].(string); ok {
+	if dp, ok := strategy.Config["data_path"].(string); ok {
 		dataPath = dp
 	}
 
@@ -293,7 +229,7 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		ID:                     bt.ID.String(),
 		StrategyName:           strategy.Name,
 		StrategyCode:           strategy.Code,
-		Config:                 bt.Config,
+		Config:                 strategy.Config,
 		Pairs:                  pairStrings,
 		Timeframe:              timeframe,
 		StakeAmount:            stakeAmount,
@@ -337,4 +273,68 @@ func generateSecureConfig() (map[string]interface{}, error) {
 	}
 
 	return secureConfig, nil
+}
+
+// runBacktestHelper runs a backtest given its backtest entity
+// This is a helper function used by both CreateBacktest (auto-run) and RunBacktest (manual run)
+func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backtest) (*ent.Backtest, error) {
+	// Ensure backtest has runner and strategy loaded
+	if bt.Edges.Runner == nil || bt.Edges.Strategy == nil {
+		// Reload with edges if not loaded
+		var err error
+		bt, err = r.client.Backtest.Query().
+			Where(backtest.ID(bt.ID)).
+			WithRunner().
+			WithStrategy().
+			Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load backtest with edges: %w", err)
+		}
+	}
+
+	// Get the runner
+	btRunner := bt.Edges.Runner
+	if btRunner == nil {
+		return nil, fmt.Errorf("backtest has no runner configuration")
+	}
+
+	// Create runner client
+	factory := runner.NewFactory()
+	backtestRunner, err := factory.CreateBacktestRunner(ctx, btRunner.Type, btRunner.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
+	}
+	defer func() {
+		_ = backtestRunner.Close() // Best effort close
+	}()
+
+	// Build BacktestSpec from backtest data
+	spec, err := buildBacktestSpec(bt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build backtest spec: %w", err)
+	}
+
+	// Run the backtest
+	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
+	if err != nil {
+		// Update backtest status to error (best effort, ignore save errors)
+		//nolint:errcheck // Best-effort status update before returning error
+		r.client.Backtest.UpdateOneID(bt.ID).
+			SetStatus(enum.TaskStatusFailed).
+			SetErrorMessage(fmt.Sprintf("Failed to run backtest: %v", err)).
+			Save(ctx)
+		return nil, fmt.Errorf("failed to run backtest: %w", err)
+	}
+
+	// Update backtest with container_id and set status to running
+	bt, err = r.client.Backtest.UpdateOneID(bt.ID).
+		SetContainerID(containerID).
+		SetStatus(enum.TaskStatusRunning).
+		ClearErrorMessage().
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update backtest with container ID: %w", err)
+	}
+
+	return bt, nil
 }

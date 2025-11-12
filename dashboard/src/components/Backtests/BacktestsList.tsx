@@ -233,7 +233,7 @@ export const BacktestsList = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {getConfigSummary(backtest.config)}
+                      {getConfigSummary(backtest.strategy.config)}
                     </Typography>
                   </TableCell>
                   <TableCell>

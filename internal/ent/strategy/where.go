@@ -71,9 +71,19 @@ func Code(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldEQ(FieldCode, v))
 }
 
-// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
-func Version(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldEQ(FieldVersion, v))
+// ParentID applies equality check predicate on the "parent_id" field. It's identical to ParentIDEQ.
+func ParentID(v uuid.UUID) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldParentID, v))
+}
+
+// IsLatest applies equality check predicate on the "is_latest" field. It's identical to IsLatestEQ.
+func IsLatest(v bool) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldIsLatest, v))
+}
+
+// VersionNumber applies equality check predicate on the "version_number" field. It's identical to VersionNumberEQ.
+func VersionNumber(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldVersionNumber, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -291,79 +301,84 @@ func CodeContainsFold(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldContainsFold(FieldCode, v))
 }
 
-// VersionEQ applies the EQ predicate on the "version" field.
-func VersionEQ(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldEQ(FieldVersion, v))
+// ParentIDEQ applies the EQ predicate on the "parent_id" field.
+func ParentIDEQ(v uuid.UUID) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldParentID, v))
 }
 
-// VersionNEQ applies the NEQ predicate on the "version" field.
-func VersionNEQ(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldNEQ(FieldVersion, v))
+// ParentIDNEQ applies the NEQ predicate on the "parent_id" field.
+func ParentIDNEQ(v uuid.UUID) predicate.Strategy {
+	return predicate.Strategy(sql.FieldNEQ(FieldParentID, v))
 }
 
-// VersionIn applies the In predicate on the "version" field.
-func VersionIn(vs ...string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldIn(FieldVersion, vs...))
+// ParentIDIn applies the In predicate on the "parent_id" field.
+func ParentIDIn(vs ...uuid.UUID) predicate.Strategy {
+	return predicate.Strategy(sql.FieldIn(FieldParentID, vs...))
 }
 
-// VersionNotIn applies the NotIn predicate on the "version" field.
-func VersionNotIn(vs ...string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldNotIn(FieldVersion, vs...))
+// ParentIDNotIn applies the NotIn predicate on the "parent_id" field.
+func ParentIDNotIn(vs ...uuid.UUID) predicate.Strategy {
+	return predicate.Strategy(sql.FieldNotIn(FieldParentID, vs...))
 }
 
-// VersionGT applies the GT predicate on the "version" field.
-func VersionGT(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldGT(FieldVersion, v))
+// ParentIDIsNil applies the IsNil predicate on the "parent_id" field.
+func ParentIDIsNil() predicate.Strategy {
+	return predicate.Strategy(sql.FieldIsNull(FieldParentID))
 }
 
-// VersionGTE applies the GTE predicate on the "version" field.
-func VersionGTE(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldGTE(FieldVersion, v))
+// ParentIDNotNil applies the NotNil predicate on the "parent_id" field.
+func ParentIDNotNil() predicate.Strategy {
+	return predicate.Strategy(sql.FieldNotNull(FieldParentID))
 }
 
-// VersionLT applies the LT predicate on the "version" field.
-func VersionLT(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldLT(FieldVersion, v))
+// IsLatestEQ applies the EQ predicate on the "is_latest" field.
+func IsLatestEQ(v bool) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldIsLatest, v))
 }
 
-// VersionLTE applies the LTE predicate on the "version" field.
-func VersionLTE(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldLTE(FieldVersion, v))
+// IsLatestNEQ applies the NEQ predicate on the "is_latest" field.
+func IsLatestNEQ(v bool) predicate.Strategy {
+	return predicate.Strategy(sql.FieldNEQ(FieldIsLatest, v))
 }
 
-// VersionContains applies the Contains predicate on the "version" field.
-func VersionContains(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldContains(FieldVersion, v))
+// VersionNumberEQ applies the EQ predicate on the "version_number" field.
+func VersionNumberEQ(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldVersionNumber, v))
 }
 
-// VersionHasPrefix applies the HasPrefix predicate on the "version" field.
-func VersionHasPrefix(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldHasPrefix(FieldVersion, v))
+// VersionNumberNEQ applies the NEQ predicate on the "version_number" field.
+func VersionNumberNEQ(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldNEQ(FieldVersionNumber, v))
 }
 
-// VersionHasSuffix applies the HasSuffix predicate on the "version" field.
-func VersionHasSuffix(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldHasSuffix(FieldVersion, v))
+// VersionNumberIn applies the In predicate on the "version_number" field.
+func VersionNumberIn(vs ...int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldIn(FieldVersionNumber, vs...))
 }
 
-// VersionEqualFold applies the EqualFold predicate on the "version" field.
-func VersionEqualFold(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldEqualFold(FieldVersion, v))
+// VersionNumberNotIn applies the NotIn predicate on the "version_number" field.
+func VersionNumberNotIn(vs ...int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldNotIn(FieldVersionNumber, vs...))
 }
 
-// VersionContainsFold applies the ContainsFold predicate on the "version" field.
-func VersionContainsFold(v string) predicate.Strategy {
-	return predicate.Strategy(sql.FieldContainsFold(FieldVersion, v))
+// VersionNumberGT applies the GT predicate on the "version_number" field.
+func VersionNumberGT(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldGT(FieldVersionNumber, v))
 }
 
-// ConfigIsNil applies the IsNil predicate on the "config" field.
-func ConfigIsNil() predicate.Strategy {
-	return predicate.Strategy(sql.FieldIsNull(FieldConfig))
+// VersionNumberGTE applies the GTE predicate on the "version_number" field.
+func VersionNumberGTE(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldGTE(FieldVersionNumber, v))
 }
 
-// ConfigNotNil applies the NotNil predicate on the "config" field.
-func ConfigNotNil() predicate.Strategy {
-	return predicate.Strategy(sql.FieldNotNull(FieldConfig))
+// VersionNumberLT applies the LT predicate on the "version_number" field.
+func VersionNumberLT(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldLT(FieldVersionNumber, v))
+}
+
+// VersionNumberLTE applies the LTE predicate on the "version_number" field.
+func VersionNumberLTE(v int) predicate.Strategy {
+	return predicate.Strategy(sql.FieldLTE(FieldVersionNumber, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -469,21 +484,67 @@ func HasBotsWith(preds ...predicate.Bot) predicate.Strategy {
 	})
 }
 
-// HasBacktests applies the HasEdge predicate on the "backtests" edge.
-func HasBacktests() predicate.Strategy {
+// HasBacktest applies the HasEdge predicate on the "backtest" edge.
+func HasBacktest() predicate.Strategy {
 	return predicate.Strategy(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, BacktestsTable, BacktestsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, BacktestTable, BacktestColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasBacktestsWith applies the HasEdge predicate on the "backtests" edge with a given conditions (other predicates).
-func HasBacktestsWith(preds ...predicate.Backtest) predicate.Strategy {
+// HasBacktestWith applies the HasEdge predicate on the "backtest" edge with a given conditions (other predicates).
+func HasBacktestWith(preds ...predicate.Backtest) predicate.Strategy {
 	return predicate.Strategy(func(s *sql.Selector) {
-		step := newBacktestsStep()
+		step := newBacktestStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasChildren applies the HasEdge predicate on the "children" edge.
+func HasChildren() predicate.Strategy {
+	return predicate.Strategy(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ChildrenTable, ChildrenColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChildrenWith applies the HasEdge predicate on the "children" edge with a given conditions (other predicates).
+func HasChildrenWith(preds ...predicate.Strategy) predicate.Strategy {
+	return predicate.Strategy(func(s *sql.Selector) {
+		step := newChildrenStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParent applies the HasEdge predicate on the "parent" edge.
+func HasParent() predicate.Strategy {
+	return predicate.Strategy(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParentWith applies the HasEdge predicate on the "parent" edge with a given conditions (other predicates).
+func HasParentWith(preds ...predicate.Strategy) predicate.Strategy {
+	return predicate.Strategy(func(s *sql.Selector) {
+		step := newParentStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

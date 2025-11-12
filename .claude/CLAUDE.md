@@ -67,8 +67,127 @@ Exchange configs are stored directly in the Exchange entity using typed configs 
 
 **Strategy:**
 - `createStrategy(input: CreateStrategyInput!)` - Create trading strategy
-- `updateStrategy(id: ID!, input: UpdateStrategyInput!)` - Update strategy
+- `updateStrategy(id: ID!, input: UpdateStrategyInput!)` - Update strategy (creates new version)
 - `deleteStrategy(id: ID!)` - Delete strategy
+
+**Strategy Queries:**
+- `latestStrategies` - List only the latest versions of strategies (default dashboard view)
+- `strategyVersions(name: String!)` - Get all versions of a strategy by name
+
+### Strategy Versioning
+
+**Updated: 2025-11-07** - Implemented immutable strategy versioning with auto-versioning on updates and backtest creation.
+
+Strategies use an immutable versioning system where updates create new versions rather than modifying existing strategies. This ensures:
+- Immutable snapshots for reproducibility
+- Safe backtest history (strategies can't change after backtesting)
+- Explicit bot upgrades (bots stay on their strategy version)
+- Complete version lineage tracking
+
+**Architecture:**
+
+1. **Linear Parent-Child Versioning**: Each strategy version points to its parent via `parent_id`, creating a version chain (v1 → v2 → v3)
+
+2. **Version Fields**:
+   - `parent_id` (UUID, nullable) - Points to parent version (null for v1)
+   - `version_number` (int) - Auto-incremented version number
+   - `is_latest` (bool) - Only one version per strategy name can be latest
+   - Unique index on (name, version_number)
+
+3. **Auto-Versioning Triggers**:
+   - **On updateStrategy**: Always creates new version with incremented version_number
+   - **On createBacktest**: If strategy already has backtest(s), creates new version first
+
+4. **Behavior**:
+   - `createStrategy`: Creates v1 with `version_number=1`, `is_latest=true`
+   - `updateStrategy`: Marks old version as `is_latest=false`, creates new version with incremented number
+   - `createBacktest`: Checks if strategy has existing backtests, auto-versions if needed
+   - Bots stay pinned to their strategy version (no automatic upgrades)
+
+5. **Transaction Handling** (`internal/graph/tx.go`):
+   - **Fixed: 2025-11-11** - `updateStrategy` now uses database transactions to ensure atomicity
+   - All strategy update operations wrapped in `WithTx` helper following ENT best practices
+   - Transaction flow:
+     1. Load existing strategy
+     2. Mark old version as `is_latest=false`
+     3. Create new version with incremented `version_number`
+     4. Save new version (triggers validation hooks)
+   - **Rollback behavior**: If validation fails at step 4, entire transaction rolls back
+   - **Critical fix**: Prevents bug where validation errors left all strategies with `is_latest=0`
+   - Uses panic recovery and proper error wrapping per ENT documentation
+   - See `internal/graph/tx.go:23` for `WithTx` helper implementation
+   - See `internal/graph/schema.resolvers.go:67` for `UpdateStrategy` implementation
+
+**GraphQL Queries:**
+```graphql
+# Get only latest versions (dashboard default)
+query GetLatestStrategies {
+  latestStrategies(first: 50) {
+    edges {
+      node {
+        id
+        name
+        versionNumber
+        isLatest
+        code
+      }
+    }
+  }
+}
+
+# Get all versions of a strategy
+query GetStrategyVersions($name: String!) {
+  strategyVersions(name: $name) {
+    id
+    versionNumber
+    isLatest
+    createdAt
+    bots { totalCount }
+    backtests { totalCount }
+  }
+}
+```
+
+**Important Implementation Details:**
+
+**Schema Edge Configuration** (`internal/ent/schema/strategy.go`):
+- Strategy has TWO edges to Backtest:
+  1. `backtest` (singular, one-to-one) - line 67-69
+  2. `backtests` (plural, one-to-many) - line 71-72
+- Backtest schema only references the **plural** edge: `.Ref("backtests")`
+- **Always use the plural edge (`WithBacktests()`)** when checking for existing backtests
+- The singular edge is never populated and will always be nil
+
+**Mutation Behavior** (`internal/graph/schema.resolvers.go:514-548`):
+```go
+// CreateBacktest checks plural edge for auto-versioning
+existingStrategy, _ := r.client.Strategy.Query().
+    Where(strategy.ID(strategyID)).
+    WithBacktests().  // Uses plural edge
+    Only(ctx)
+
+if len(existingStrategy.Edges.Backtests) > 0 {
+    // Auto-create new version
+    newVersion, _ := r.createStrategyVersion(ctx, existingStrategy)
+    strategyID = newVersion.ID
+}
+```
+
+**Test Coverage** (`internal/graph/strategy_versioning_test.go`):
+- 8 tests covering all versioning scenarios
+- 100% test coverage on versioning logic
+- Key tests:
+  - `TestUpdateStrategy_CreatesNewVersion` - Verifies version creation
+  - `TestCreateBacktest_AutoVersionsWhenBacktestExists` - Tests auto-versioning
+  - `TestLatestStrategies_ReturnsOnlyLatest` - Validates latest-only queries
+  - `TestStrategyVersions_ReturnsAllVersionsByName` - Tests version history
+
+**Dashboard Integration:**
+- `StrategiesList.tsx` - Shows only latest versions with version badges
+- `StrategyDetail.tsx` - Displays version history with expandable section
+- Version badges show current version number (e.g., "v2")
+- "Latest" indicator for current version
+- Version history table with navigation to older versions
 
 **Bot:**
 - `createBot(input: CreateBotInput!)` - Create trading bot

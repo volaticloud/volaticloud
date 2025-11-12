@@ -12,7 +12,6 @@ var (
 	BacktestsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
-		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "result", Type: field.TypeJSON, Nullable: true},
 		{Name: "summary", Type: field.TypeJSON, Nullable: true},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
@@ -21,7 +20,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "runner_id", Type: field.TypeUUID},
-		{Name: "strategy_id", Type: field.TypeUUID},
+		{Name: "strategy_id", Type: field.TypeUUID, Unique: true},
 	}
 	// BacktestsTable holds the schema information for the "backtests" table.
 	BacktestsTable = &schema.Table{
@@ -31,13 +30,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_bot_runners_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[10]},
+				Columns:    []*schema.Column{BacktestsColumns[9]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "backtests_strategies_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[11]},
+				Symbol:     "backtests_strategies_backtest",
+				Columns:    []*schema.Column{BacktestsColumns[10]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -164,19 +163,46 @@ var (
 	// StrategiesColumns holds the columns for the "strategies" table.
 	StrategiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "code", Type: field.TypeString, Size: 2147483647},
-		{Name: "version", Type: field.TypeString, Default: "1.0"},
-		{Name: "config", Type: field.TypeJSON, Nullable: true},
+		{Name: "config", Type: field.TypeJSON},
+		{Name: "is_latest", Type: field.TypeBool, Default: true},
+		{Name: "version_number", Type: field.TypeInt, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// StrategiesTable holds the schema information for the "strategies" table.
 	StrategiesTable = &schema.Table{
 		Name:       "strategies",
 		Columns:    StrategiesColumns,
 		PrimaryKey: []*schema.Column{StrategiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "strategies_strategies_parent",
+				Columns:    []*schema.Column{StrategiesColumns[9]},
+				RefColumns: []*schema.Column{StrategiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "strategy_name_version_number",
+				Unique:  true,
+				Columns: []*schema.Column{StrategiesColumns[1], StrategiesColumns[6]},
+			},
+			{
+				Name:    "strategy_is_latest",
+				Unique:  false,
+				Columns: []*schema.Column{StrategiesColumns[5]},
+			},
+			{
+				Name:    "strategy_parent_id",
+				Unique:  false,
+				Columns: []*schema.Column{StrategiesColumns[9]},
+			},
+		},
 	}
 	// TradesColumns holds the columns for the "trades" table.
 	TradesColumns = []*schema.Column{
@@ -249,5 +275,6 @@ func init() {
 	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[2].RefTable = StrategiesTable
 	BotMetricsTable.ForeignKeys[0].RefTable = BotsTable
+	StrategiesTable.ForeignKeys[0].RefTable = StrategiesTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

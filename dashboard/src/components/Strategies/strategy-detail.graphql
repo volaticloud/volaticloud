@@ -1,0 +1,61 @@
+query GetStrategyDetail($id: ID!) {
+  strategies(where: { id: $id }, first: 1) {
+    edges {
+      node {
+        id
+        name
+        description
+        code
+        versionNumber
+        isLatest
+        config
+        createdAt
+        updatedAt
+        bots {
+          totalCount
+        }
+        backtest {
+          id
+          status
+          createdAt
+          updatedAt
+          result
+          runner {
+            id
+            name
+            type
+          }
+          summary {
+            strategyName
+            totalTrades
+            wins
+            losses
+            profitTotalAbs
+            profitTotal
+            winRate
+            expectancy
+            profitFactor
+            maxDrawdown
+          }
+        }
+      }
+    }
+  }
+}
+
+query GetStrategyVersions($name: String!) {
+  strategyVersions(name: $name) {
+    id
+    name
+    versionNumber
+    isLatest
+    createdAt
+    bots {
+      totalCount
+    }
+    backtest {
+      id
+      status
+    }
+  }
+}

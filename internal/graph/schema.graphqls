@@ -152,6 +152,12 @@ extend type Backtest {
 extend type Query {
   # Get runner status for a bot
   getBotRunnerStatus(id: ID!): BotStatus
+
+  # Strategy versioning queries
+  """
+  Get all versions of a strategy by name (for version history view)
+  """
+  strategyVersions(name: String!): [Strategy!]!
 }
 
 # Mutations for managing entities
@@ -185,8 +191,8 @@ type Mutation {
   refreshRunnerData(id: ID!): BotRunner!
 
   # Backtest mutations
+  # Backtests are immutable - only creation is allowed, no updates
   createBacktest(input: CreateBacktestInput!): Backtest!
-  updateBacktest(id: ID!, input: UpdateBacktestInput!): Backtest!
   deleteBacktest(id: ID!): Boolean!
 
   # Backtest lifecycle mutations

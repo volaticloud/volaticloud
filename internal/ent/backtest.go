@@ -24,8 +24,6 @@ type Backtest struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Task status
 	Status enum.TaskStatus `json:"status,omitempty"`
-	// Backtest configuration (pairs, timeframe, dates, stake, etc.)
-	Config map[string]interface{} `json:"config,omitempty"`
 	// Backtest result data (metrics, logs, trades, etc.)
 	Result map[string]interface{} `json:"result,omitempty"`
 	// Typed summary of key backtest metrics
@@ -90,7 +88,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case backtest.FieldConfig, backtest.FieldResult, backtest.FieldSummary:
+		case backtest.FieldResult, backtest.FieldSummary:
 			values[i] = new([]byte)
 		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage:
 			values[i] = new(sql.NullString)
@@ -124,14 +122,6 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = enum.TaskStatus(value.String)
-			}
-		case backtest.FieldConfig:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field config", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Config); err != nil {
-					return fmt.Errorf("unmarshal field config: %w", err)
-				}
 			}
 		case backtest.FieldResult:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -239,9 +229,6 @@ func (_m *Backtest) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
-	builder.WriteString(", ")
-	builder.WriteString("config=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Config))
 	builder.WriteString(", ")
 	builder.WriteString("result=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Result))

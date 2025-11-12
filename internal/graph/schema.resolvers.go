@@ -9,6 +9,7 @@ import (
 	"anytrade/internal/ent"
 	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/bot"
+	"anytrade/internal/ent/strategy"
 	"anytrade/internal/enum"
 	"anytrade/internal/monitor"
 	"anytrade/internal/runner"
@@ -64,7 +65,49 @@ func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateS
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
-	return r.client.Strategy.UpdateOneID(id).SetInput(input).Save(ctx)
+	var result *ent.Strategy
+
+	// Use transaction to ensure atomicity - both operations succeed or both fail
+	err := WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		// Load existing strategy (within transaction)
+		oldStrategy, err := tx.Strategy.Get(ctx, id)
+		if err != nil {
+			return fmt.Errorf("failed to load strategy: %w", err)
+		}
+
+		// Mark old strategy as not latest (within transaction)
+		err = tx.Strategy.UpdateOneID(id).SetIsLatest(false).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to mark old strategy as not latest: %w", err)
+		}
+
+		// Create new version with input values, falling back to old values (within transaction)
+		newVersion := tx.Strategy.Create().
+			SetName(coalesce(input.Name, &oldStrategy.Name)).
+			SetDescription(coalesce(input.Description, &oldStrategy.Description)).
+			SetCode(coalesce(input.Code, &oldStrategy.Code)).
+			SetVersionNumber(oldStrategy.VersionNumber + 1).
+			SetParentID(oldStrategy.ID).
+			SetIsLatest(true)
+
+		// Handle optional fields
+		if input.Config != nil {
+			newVersion.SetConfig(input.Config)
+		} else if oldStrategy.Config != nil {
+			newVersion.SetConfig(oldStrategy.Config)
+		}
+
+		// Save new version (this will trigger validation hook)
+		// If validation fails, the entire transaction rolls back
+		result, err = newVersion.Save(ctx)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -468,11 +511,75 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 }
 
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
-	return r.client.Backtest.Create().SetInput(input).Save(ctx)
-}
+	var result *ent.Backtest
 
-func (r *mutationResolver) UpdateBacktest(ctx context.Context, id uuid.UUID, input ent.UpdateBacktestInput) (*ent.Backtest, error) {
-	return r.client.Backtest.UpdateOneID(id).SetInput(input).Save(ctx)
+	// Use transaction to ensure atomicity - entity creation and validation both succeed or both fail
+	err := WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		strategyID := input.StrategyID
+
+		// Load strategy with backtest relationship to check if it already has one
+		existingStrategy, err := tx.Strategy.Query().
+			Where(strategy.ID(strategyID)).
+			WithBacktest().
+			Only(ctx)
+
+		if err != nil {
+			return fmt.Errorf("failed to load strategy: %w", err)
+		}
+
+		// Check if strategy already has a backtest - if so, throw an error
+		if existingStrategy.Edges.Backtest != nil {
+			return fmt.Errorf("strategy already has a backtest - please create a new strategy version first")
+		}
+
+		// Create backtest entity (within transaction)
+		bt, err := tx.Backtest.Create().
+			SetStrategyID(strategyID).
+			SetRunnerID(input.RunnerID).
+			SetStatus(enum.TaskStatusPending).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create backtest: %w", err)
+		}
+
+		// Load backtest with edges for validation
+		bt, err = tx.Backtest.Query().
+			Where(backtest.ID(bt.ID)).
+			WithRunner().
+			WithStrategy().
+			Only(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to reload backtest with edges: %w", err)
+		}
+
+		// Validate by building the backtest spec
+		// This will fail with "pairs not found in strategy config" if validation fails
+		// If this fails, the entire transaction rolls back and no backtest entity is created
+		_, err = buildBacktestSpec(bt)
+		if err != nil {
+			return fmt.Errorf("failed to build backtest spec: %w", err)
+		}
+
+		result = bt
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// After transaction commits successfully, run the backtest
+	// We need to reload with edges since the transaction result is detached
+	result, err = r.client.Backtest.Query().
+		Where(backtest.ID(result.ID)).
+		WithRunner().
+		WithStrategy().
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload backtest for execution: %w", err)
+	}
+
+	return r.runBacktestHelper(ctx, result)
 }
 
 func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -491,48 +598,8 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, id uuid.UUID) (*ent.
 		return nil, fmt.Errorf("failed to load backtest: %w", err)
 	}
 
-	// Get the runner
-	btRunner := bt.Edges.Runner
-	if btRunner == nil {
-		return nil, fmt.Errorf("backtest has no runner configuration")
-	}
-
-	// Create runner client
-	factory := runner.NewFactory()
-	backtestRunner, err := factory.CreateBacktestRunner(ctx, btRunner.Type, btRunner.Config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
-	}
-	defer backtestRunner.Close()
-
-	// Build BacktestSpec from backtest data
-	spec, err := buildBacktestSpec(bt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build backtest spec: %w", err)
-	}
-
-	// Run the backtest
-	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
-	if err != nil {
-		// Update backtest status to error
-		r.client.Backtest.UpdateOneID(bt.ID).
-			SetStatus(enum.TaskStatusFailed).
-			SetErrorMessage(fmt.Sprintf("Failed to run backtest: %v", err)).
-			Save(ctx)
-		return nil, fmt.Errorf("failed to run backtest: %w", err)
-	}
-
-	// Update backtest with container_id and set status to running
-	bt, err = r.client.Backtest.UpdateOneID(bt.ID).
-		SetContainerID(containerID).
-		SetStatus(enum.TaskStatusRunning).
-		ClearErrorMessage().
-		Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update backtest with container ID: %w", err)
-	}
-
-	return bt, nil
+	// Use the helper to run the backtest
+	return r.runBacktestHelper(ctx, bt)
 }
 
 func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error) {
@@ -648,6 +715,14 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	}
 
 	return status, nil
+}
+
+func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error) {
+	// Get all versions of a strategy by name, ordered by version number
+	return r.client.Strategy.Query().
+		Where(strategy.Name(name)).
+		Order(ent.Asc(strategy.FieldVersionNumber)).
+		All(ctx)
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

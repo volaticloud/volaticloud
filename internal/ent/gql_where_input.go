@@ -2921,20 +2921,27 @@ type StrategyWhereInput struct {
 	CodeEqualFold    *string  `json:"codeEqualFold,omitempty"`
 	CodeContainsFold *string  `json:"codeContainsFold,omitempty"`
 
-	// "version" field predicates.
-	Version             *string  `json:"version,omitempty"`
-	VersionNEQ          *string  `json:"versionNEQ,omitempty"`
-	VersionIn           []string `json:"versionIn,omitempty"`
-	VersionNotIn        []string `json:"versionNotIn,omitempty"`
-	VersionGT           *string  `json:"versionGT,omitempty"`
-	VersionGTE          *string  `json:"versionGTE,omitempty"`
-	VersionLT           *string  `json:"versionLT,omitempty"`
-	VersionLTE          *string  `json:"versionLTE,omitempty"`
-	VersionContains     *string  `json:"versionContains,omitempty"`
-	VersionHasPrefix    *string  `json:"versionHasPrefix,omitempty"`
-	VersionHasSuffix    *string  `json:"versionHasSuffix,omitempty"`
-	VersionEqualFold    *string  `json:"versionEqualFold,omitempty"`
-	VersionContainsFold *string  `json:"versionContainsFold,omitempty"`
+	// "parent_id" field predicates.
+	ParentID       *uuid.UUID  `json:"parentID,omitempty"`
+	ParentIDNEQ    *uuid.UUID  `json:"parentIDNEQ,omitempty"`
+	ParentIDIn     []uuid.UUID `json:"parentIDIn,omitempty"`
+	ParentIDNotIn  []uuid.UUID `json:"parentIDNotIn,omitempty"`
+	ParentIDIsNil  bool        `json:"parentIDIsNil,omitempty"`
+	ParentIDNotNil bool        `json:"parentIDNotNil,omitempty"`
+
+	// "is_latest" field predicates.
+	IsLatest    *bool `json:"isLatest,omitempty"`
+	IsLatestNEQ *bool `json:"isLatestNEQ,omitempty"`
+
+	// "version_number" field predicates.
+	VersionNumber      *int  `json:"versionNumber,omitempty"`
+	VersionNumberNEQ   *int  `json:"versionNumberNEQ,omitempty"`
+	VersionNumberIn    []int `json:"versionNumberIn,omitempty"`
+	VersionNumberNotIn []int `json:"versionNumberNotIn,omitempty"`
+	VersionNumberGT    *int  `json:"versionNumberGT,omitempty"`
+	VersionNumberGTE   *int  `json:"versionNumberGTE,omitempty"`
+	VersionNumberLT    *int  `json:"versionNumberLT,omitempty"`
+	VersionNumberLTE   *int  `json:"versionNumberLTE,omitempty"`
 
 	// "created_at" field predicates.
 	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
@@ -2960,9 +2967,17 @@ type StrategyWhereInput struct {
 	HasBots     *bool            `json:"hasBots,omitempty"`
 	HasBotsWith []*BotWhereInput `json:"hasBotsWith,omitempty"`
 
-	// "backtests" edge predicates.
-	HasBacktests     *bool                 `json:"hasBacktests,omitempty"`
-	HasBacktestsWith []*BacktestWhereInput `json:"hasBacktestsWith,omitempty"`
+	// "backtest" edge predicates.
+	HasBacktest     *bool                 `json:"hasBacktest,omitempty"`
+	HasBacktestWith []*BacktestWhereInput `json:"hasBacktestWith,omitempty"`
+
+	// "children" edge predicates.
+	HasChildren     *bool                 `json:"hasChildren,omitempty"`
+	HasChildrenWith []*StrategyWhereInput `json:"hasChildrenWith,omitempty"`
+
+	// "parent" edge predicates.
+	HasParent     *bool                 `json:"hasParent,omitempty"`
+	HasParentWith []*StrategyWhereInput `json:"hasParentWith,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -3183,44 +3198,53 @@ func (i *StrategyWhereInput) P() (predicate.Strategy, error) {
 	if i.CodeContainsFold != nil {
 		predicates = append(predicates, strategy.CodeContainsFold(*i.CodeContainsFold))
 	}
-	if i.Version != nil {
-		predicates = append(predicates, strategy.VersionEQ(*i.Version))
+	if i.ParentID != nil {
+		predicates = append(predicates, strategy.ParentIDEQ(*i.ParentID))
 	}
-	if i.VersionNEQ != nil {
-		predicates = append(predicates, strategy.VersionNEQ(*i.VersionNEQ))
+	if i.ParentIDNEQ != nil {
+		predicates = append(predicates, strategy.ParentIDNEQ(*i.ParentIDNEQ))
 	}
-	if len(i.VersionIn) > 0 {
-		predicates = append(predicates, strategy.VersionIn(i.VersionIn...))
+	if len(i.ParentIDIn) > 0 {
+		predicates = append(predicates, strategy.ParentIDIn(i.ParentIDIn...))
 	}
-	if len(i.VersionNotIn) > 0 {
-		predicates = append(predicates, strategy.VersionNotIn(i.VersionNotIn...))
+	if len(i.ParentIDNotIn) > 0 {
+		predicates = append(predicates, strategy.ParentIDNotIn(i.ParentIDNotIn...))
 	}
-	if i.VersionGT != nil {
-		predicates = append(predicates, strategy.VersionGT(*i.VersionGT))
+	if i.ParentIDIsNil {
+		predicates = append(predicates, strategy.ParentIDIsNil())
 	}
-	if i.VersionGTE != nil {
-		predicates = append(predicates, strategy.VersionGTE(*i.VersionGTE))
+	if i.ParentIDNotNil {
+		predicates = append(predicates, strategy.ParentIDNotNil())
 	}
-	if i.VersionLT != nil {
-		predicates = append(predicates, strategy.VersionLT(*i.VersionLT))
+	if i.IsLatest != nil {
+		predicates = append(predicates, strategy.IsLatestEQ(*i.IsLatest))
 	}
-	if i.VersionLTE != nil {
-		predicates = append(predicates, strategy.VersionLTE(*i.VersionLTE))
+	if i.IsLatestNEQ != nil {
+		predicates = append(predicates, strategy.IsLatestNEQ(*i.IsLatestNEQ))
 	}
-	if i.VersionContains != nil {
-		predicates = append(predicates, strategy.VersionContains(*i.VersionContains))
+	if i.VersionNumber != nil {
+		predicates = append(predicates, strategy.VersionNumberEQ(*i.VersionNumber))
 	}
-	if i.VersionHasPrefix != nil {
-		predicates = append(predicates, strategy.VersionHasPrefix(*i.VersionHasPrefix))
+	if i.VersionNumberNEQ != nil {
+		predicates = append(predicates, strategy.VersionNumberNEQ(*i.VersionNumberNEQ))
 	}
-	if i.VersionHasSuffix != nil {
-		predicates = append(predicates, strategy.VersionHasSuffix(*i.VersionHasSuffix))
+	if len(i.VersionNumberIn) > 0 {
+		predicates = append(predicates, strategy.VersionNumberIn(i.VersionNumberIn...))
 	}
-	if i.VersionEqualFold != nil {
-		predicates = append(predicates, strategy.VersionEqualFold(*i.VersionEqualFold))
+	if len(i.VersionNumberNotIn) > 0 {
+		predicates = append(predicates, strategy.VersionNumberNotIn(i.VersionNumberNotIn...))
 	}
-	if i.VersionContainsFold != nil {
-		predicates = append(predicates, strategy.VersionContainsFold(*i.VersionContainsFold))
+	if i.VersionNumberGT != nil {
+		predicates = append(predicates, strategy.VersionNumberGT(*i.VersionNumberGT))
+	}
+	if i.VersionNumberGTE != nil {
+		predicates = append(predicates, strategy.VersionNumberGTE(*i.VersionNumberGTE))
+	}
+	if i.VersionNumberLT != nil {
+		predicates = append(predicates, strategy.VersionNumberLT(*i.VersionNumberLT))
+	}
+	if i.VersionNumberLTE != nil {
+		predicates = append(predicates, strategy.VersionNumberLTE(*i.VersionNumberLTE))
 	}
 	if i.CreatedAt != nil {
 		predicates = append(predicates, strategy.CreatedAtEQ(*i.CreatedAt))
@@ -3289,23 +3313,59 @@ func (i *StrategyWhereInput) P() (predicate.Strategy, error) {
 		}
 		predicates = append(predicates, strategy.HasBotsWith(with...))
 	}
-	if i.HasBacktests != nil {
-		p := strategy.HasBacktests()
-		if !*i.HasBacktests {
+	if i.HasBacktest != nil {
+		p := strategy.HasBacktest()
+		if !*i.HasBacktest {
 			p = strategy.Not(p)
 		}
 		predicates = append(predicates, p)
 	}
-	if len(i.HasBacktestsWith) > 0 {
-		with := make([]predicate.Backtest, 0, len(i.HasBacktestsWith))
-		for _, w := range i.HasBacktestsWith {
+	if len(i.HasBacktestWith) > 0 {
+		with := make([]predicate.Backtest, 0, len(i.HasBacktestWith))
+		for _, w := range i.HasBacktestWith {
 			p, err := w.P()
 			if err != nil {
-				return nil, fmt.Errorf("%w: field 'HasBacktestsWith'", err)
+				return nil, fmt.Errorf("%w: field 'HasBacktestWith'", err)
 			}
 			with = append(with, p)
 		}
-		predicates = append(predicates, strategy.HasBacktestsWith(with...))
+		predicates = append(predicates, strategy.HasBacktestWith(with...))
+	}
+	if i.HasChildren != nil {
+		p := strategy.HasChildren()
+		if !*i.HasChildren {
+			p = strategy.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasChildrenWith) > 0 {
+		with := make([]predicate.Strategy, 0, len(i.HasChildrenWith))
+		for _, w := range i.HasChildrenWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasChildrenWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, strategy.HasChildrenWith(with...))
+	}
+	if i.HasParent != nil {
+		p := strategy.HasParent()
+		if !*i.HasParent {
+			p = strategy.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasParentWith) > 0 {
+		with := make([]predicate.Strategy, 0, len(i.HasParentWith))
+		for _, w := range i.HasParentWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasParentWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, strategy.HasParentWith(with...))
 	}
 	switch len(predicates) {
 	case 0:

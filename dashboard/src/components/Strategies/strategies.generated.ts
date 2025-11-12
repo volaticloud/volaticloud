@@ -6,17 +6,18 @@ const defaultOptions = {} as const;
 export type GetStrategiesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   after?: Types.InputMaybe<Types.Scalars['Cursor']['input']>;
+  where?: Types.InputMaybe<Types.StrategyWhereInput>;
 }>;
 
 
-export type GetStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, config?: Record<string, any> | null, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, versionNumber: number, isLatest: boolean, config: Record<string, any>, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CreateStrategyMutationVariables = Types.Exact<{
   input: Types.CreateStrategyInput;
 }>;
 
 
-export type CreateStrategyMutation = { __typename?: 'Mutation', createStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, config?: Record<string, any> | null } };
+export type CreateStrategyMutation = { __typename?: 'Mutation', createStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, config: Record<string, any> } };
 
 export type UpdateStrategyMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -24,7 +25,7 @@ export type UpdateStrategyMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateStrategyMutation = { __typename?: 'Mutation', updateStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, version: string, config?: Record<string, any> | null } };
+export type UpdateStrategyMutation = { __typename?: 'Mutation', updateStrategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, config: Record<string, any> } };
 
 export type DeleteStrategyMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -35,19 +36,24 @@ export type DeleteStrategyMutation = { __typename?: 'Mutation', deleteStrategy: 
 
 
 export const GetStrategiesDocument = gql`
-    query GetStrategies($first: Int, $after: Cursor) {
-  strategies(first: $first, after: $after) {
+    query GetStrategies($first: Int, $after: Cursor, $where: StrategyWhereInput) {
+  strategies(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
         name
         description
         code
-        version
+        versionNumber
+        isLatest
         config
         createdAt
         bots {
           totalCount
+        }
+        backtest {
+          id
+          status
         }
       }
     }
@@ -76,6 +82,7 @@ export const GetStrategiesDocument = gql`
  *   variables: {
  *      first: // value for 'first'
  *      after: // value for 'after'
+ *      where: // value for 'where'
  *   },
  * });
  */
@@ -102,7 +109,6 @@ export const CreateStrategyDocument = gql`
     name
     description
     code
-    version
     config
   }
 }
@@ -140,7 +146,6 @@ export const UpdateStrategyDocument = gql`
     name
     description
     code
-    version
     config
   }
 }

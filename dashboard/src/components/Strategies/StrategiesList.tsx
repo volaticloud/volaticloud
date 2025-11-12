@@ -15,6 +15,7 @@ import {
   Tooltip,
   Snackbar,
   Alert,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -23,6 +24,7 @@ import {
   PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGetStrategiesQuery } from './strategies.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
@@ -32,6 +34,7 @@ import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 
 export const StrategiesList = () => {
+  const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -42,7 +45,7 @@ export const StrategiesList = () => {
     name: string;
     description?: string | null;
     code: string;
-    version: string;
+    versionNumber: number;
   } | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -51,7 +54,10 @@ export const StrategiesList = () => {
   }>({ open: false, message: '', severity: 'error' });
 
   const { data, loading, error, refetch } = useGetStrategiesQuery({
-    variables: { first: 50 }
+    variables: {
+      first: 50,
+      where: { isLatest: true }
+    }
   });
 
   const handleCloseSnackbar = () => {
@@ -80,7 +86,7 @@ export const StrategiesList = () => {
             Strategies
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.strategies?.totalCount || 0} total strategies
+            {data?.strategies?.totalCount || 0} latest strategies
           </Typography>
         </Box>
         <Button
@@ -119,9 +125,25 @@ export const StrategiesList = () => {
               {strategies.map((strategy) => (
                 <TableRow key={strategy.id} hover>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {strategy.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={500}
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': { color: 'primary.main' }
+                        }}
+                        onClick={() => navigate(`/strategies/${strategy.id}`)}
+                      >
+                        {strategy.name}
+                      </Typography>
+                      <Chip
+                        label={`v${strategy.versionNumber}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">
@@ -129,9 +151,12 @@ export const StrategiesList = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {strategy.version || '-'}
-                    </Typography>
+                    <Chip
+                      label={`v${strategy.versionNumber}`}
+                      size="small"
+                      color="default"
+                      variant="outlined"
+                    />
                   </TableCell>
                   <TableCell>{strategy.bots?.totalCount || 0}</TableCell>
                   <TableCell>

@@ -1,16 +1,21 @@
-query GetStrategies($first: Int, $after: Cursor) {
-  strategies(first: $first, after: $after) {
+query GetStrategies($first: Int, $after: Cursor, $where: StrategyWhereInput) {
+  strategies(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
         name
         description
         code
-        version
+        versionNumber
+        isLatest
         config
         createdAt
         bots {
           totalCount
+        }
+        backtest {
+          id
+          status
         }
       }
     }
@@ -30,7 +35,6 @@ mutation CreateStrategy($input: CreateStrategyInput!) {
     name
     description
     code
-    version
     config
   }
 }
@@ -41,7 +45,6 @@ mutation UpdateStrategy($id: ID!, $input: UpdateStrategyInput!) {
     name
     description
     code
-    version
     config
   }
 }

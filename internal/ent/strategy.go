@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"anytrade/internal/ent/backtest"
 	"anytrade/internal/ent/strategy"
 	"encoding/json"
 	"fmt"
@@ -19,16 +20,20 @@ type Strategy struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Strategy name
+	// Strategy name (not unique, allows versions)
 	Name string `json:"name,omitempty"`
 	// Strategy description
 	Description string `json:"description,omitempty"`
 	// Python strategy code
 	Code string `json:"code,omitempty"`
-	// Strategy version
-	Version string `json:"version,omitempty"`
-	// Strategy-specific configuration (config.json)
+	// Strategy-specific configuration (config.json) - REQUIRED
 	Config map[string]interface{} `json:"config,omitempty"`
+	// Parent strategy ID for versioning (null for root v1)
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
+	// Indicates if this is the latest version of the strategy
+	IsLatest bool `json:"is_latest,omitempty"`
+	// Auto-incremented version number
+	VersionNumber int `json:"version_number,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -43,16 +48,20 @@ type Strategy struct {
 type StrategyEdges struct {
 	// Bots holds the value of the bots edge.
 	Bots []*Bot `json:"bots,omitempty"`
-	// Backtests holds the value of the backtests edge.
-	Backtests []*Backtest `json:"backtests,omitempty"`
+	// Strategy can have at most one backtest (one-to-one)
+	Backtest *Backtest `json:"backtest,omitempty"`
+	// Parent strategy for versioning (self-referential)
+	Children []*Strategy `json:"children,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *Strategy `json:"parent,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
+	totalCount [4]map[string]int
 
-	namedBots      map[string][]*Bot
-	namedBacktests map[string][]*Backtest
+	namedBots     map[string][]*Bot
+	namedChildren map[string][]*Strategy
 }
 
 // BotsOrErr returns the Bots value or an error if the edge
@@ -64,13 +73,35 @@ func (e StrategyEdges) BotsOrErr() ([]*Bot, error) {
 	return nil, &NotLoadedError{edge: "bots"}
 }
 
-// BacktestsOrErr returns the Backtests value or an error if the edge
-// was not loaded in eager-loading.
-func (e StrategyEdges) BacktestsOrErr() ([]*Backtest, error) {
-	if e.loadedTypes[1] {
-		return e.Backtests, nil
+// BacktestOrErr returns the Backtest value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e StrategyEdges) BacktestOrErr() (*Backtest, error) {
+	if e.Backtest != nil {
+		return e.Backtest, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: backtest.Label}
 	}
-	return nil, &NotLoadedError{edge: "backtests"}
+	return nil, &NotLoadedError{edge: "backtest"}
+}
+
+// ChildrenOrErr returns the Children value or an error if the edge
+// was not loaded in eager-loading.
+func (e StrategyEdges) ChildrenOrErr() ([]*Strategy, error) {
+	if e.loadedTypes[2] {
+		return e.Children, nil
+	}
+	return nil, &NotLoadedError{edge: "children"}
+}
+
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e StrategyEdges) ParentOrErr() (*Strategy, error) {
+	if e.Parent != nil {
+		return e.Parent, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: strategy.Label}
+	}
+	return nil, &NotLoadedError{edge: "parent"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -78,9 +109,15 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case strategy.FieldParentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case strategy.FieldConfig:
 			values[i] = new([]byte)
-		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode, strategy.FieldVersion:
+		case strategy.FieldIsLatest:
+			values[i] = new(sql.NullBool)
+		case strategy.FieldVersionNumber:
+			values[i] = new(sql.NullInt64)
+		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode:
 			values[i] = new(sql.NullString)
 		case strategy.FieldCreatedAt, strategy.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -125,12 +162,6 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Code = value.String
 			}
-		case strategy.FieldVersion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field version", values[i])
-			} else if value.Valid {
-				_m.Version = value.String
-			}
 		case strategy.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field config", values[i])
@@ -138,6 +169,25 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Config); err != nil {
 					return fmt.Errorf("unmarshal field config: %w", err)
 				}
+			}
+		case strategy.FieldParentID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
+			} else if value.Valid {
+				_m.ParentID = new(uuid.UUID)
+				*_m.ParentID = *value.S.(*uuid.UUID)
+			}
+		case strategy.FieldIsLatest:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_latest", values[i])
+			} else if value.Valid {
+				_m.IsLatest = value.Bool
+			}
+		case strategy.FieldVersionNumber:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version_number", values[i])
+			} else if value.Valid {
+				_m.VersionNumber = int(value.Int64)
 			}
 		case strategy.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -169,9 +219,19 @@ func (_m *Strategy) QueryBots() *BotQuery {
 	return NewStrategyClient(_m.config).QueryBots(_m)
 }
 
-// QueryBacktests queries the "backtests" edge of the Strategy entity.
-func (_m *Strategy) QueryBacktests() *BacktestQuery {
-	return NewStrategyClient(_m.config).QueryBacktests(_m)
+// QueryBacktest queries the "backtest" edge of the Strategy entity.
+func (_m *Strategy) QueryBacktest() *BacktestQuery {
+	return NewStrategyClient(_m.config).QueryBacktest(_m)
+}
+
+// QueryChildren queries the "children" edge of the Strategy entity.
+func (_m *Strategy) QueryChildren() *StrategyQuery {
+	return NewStrategyClient(_m.config).QueryChildren(_m)
+}
+
+// QueryParent queries the "parent" edge of the Strategy entity.
+func (_m *Strategy) QueryParent() *StrategyQuery {
+	return NewStrategyClient(_m.config).QueryParent(_m)
 }
 
 // Update returns a builder for updating this Strategy.
@@ -206,11 +266,19 @@ func (_m *Strategy) String() string {
 	builder.WriteString("code=")
 	builder.WriteString(_m.Code)
 	builder.WriteString(", ")
-	builder.WriteString("version=")
-	builder.WriteString(_m.Version)
-	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))
+	builder.WriteString(", ")
+	if v := _m.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("is_latest=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsLatest))
+	builder.WriteString(", ")
+	builder.WriteString("version_number=")
+	builder.WriteString(fmt.Sprintf("%v", _m.VersionNumber))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
@@ -245,27 +313,27 @@ func (_m *Strategy) appendNamedBots(name string, edges ...*Bot) {
 	}
 }
 
-// NamedBacktests returns the Backtests named value or an error if the edge was not
+// NamedChildren returns the Children named value or an error if the edge was not
 // loaded in eager-loading with this name.
-func (_m *Strategy) NamedBacktests(name string) ([]*Backtest, error) {
-	if _m.Edges.namedBacktests == nil {
+func (_m *Strategy) NamedChildren(name string) ([]*Strategy, error) {
+	if _m.Edges.namedChildren == nil {
 		return nil, &NotLoadedError{edge: name}
 	}
-	nodes, ok := _m.Edges.namedBacktests[name]
+	nodes, ok := _m.Edges.namedChildren[name]
 	if !ok {
 		return nil, &NotLoadedError{edge: name}
 	}
 	return nodes, nil
 }
 
-func (_m *Strategy) appendNamedBacktests(name string, edges ...*Backtest) {
-	if _m.Edges.namedBacktests == nil {
-		_m.Edges.namedBacktests = make(map[string][]*Backtest)
+func (_m *Strategy) appendNamedChildren(name string, edges ...*Strategy) {
+	if _m.Edges.namedChildren == nil {
+		_m.Edges.namedChildren = make(map[string][]*Strategy)
 	}
 	if len(edges) == 0 {
-		_m.Edges.namedBacktests[name] = []*Backtest{}
+		_m.Edges.namedChildren[name] = []*Strategy{}
 	} else {
-		_m.Edges.namedBacktests[name] = append(_m.Edges.namedBacktests[name], edges...)
+		_m.Edges.namedChildren[name] = append(_m.Edges.namedChildren[name], edges...)
 	}
 }
 

@@ -9,14 +9,14 @@ export type GetBacktestsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBacktestsQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetBacktestsQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, config: Record<string, any> }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetBacktestQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
+export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
 
 export type GetBacktestOptionsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -28,15 +28,7 @@ export type CreateBacktestMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null, createdAt: string } };
-
-export type UpdateBacktestMutationVariables = Types.Exact<{
-  id: Types.Scalars['ID']['input'];
-  input: Types.UpdateBacktestInput;
-}>;
-
-
-export type UpdateBacktestMutation = { __typename?: 'Mutation', updateBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, config?: Record<string, any> | null } };
+export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string } };
 
 export type DeleteBacktestMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -67,7 +59,6 @@ export const GetBacktestsDocument = gql`
       node {
         id
         status
-        config
         result
         containerID
         errorMessage
@@ -77,6 +68,7 @@ export const GetBacktestsDocument = gql`
         strategy {
           id
           name
+          config
         }
         runner {
           id
@@ -136,7 +128,6 @@ export const GetBacktestDocument = gql`
       node {
         id
         status
-        config
         result
         containerID
         errorMessage
@@ -249,7 +240,6 @@ export const CreateBacktestDocument = gql`
   createBacktest(input: $input) {
     id
     status
-    config
     createdAt
   }
 }
@@ -280,42 +270,6 @@ export function useCreateBacktestMutation(baseOptions?: Apollo.MutationHookOptio
 export type CreateBacktestMutationHookResult = ReturnType<typeof useCreateBacktestMutation>;
 export type CreateBacktestMutationResult = Apollo.MutationResult<CreateBacktestMutation>;
 export type CreateBacktestMutationOptions = Apollo.BaseMutationOptions<CreateBacktestMutation, CreateBacktestMutationVariables>;
-export const UpdateBacktestDocument = gql`
-    mutation UpdateBacktest($id: ID!, $input: UpdateBacktestInput!) {
-  updateBacktest(id: $id, input: $input) {
-    id
-    status
-    config
-  }
-}
-    `;
-export type UpdateBacktestMutationFn = Apollo.MutationFunction<UpdateBacktestMutation, UpdateBacktestMutationVariables>;
-
-/**
- * __useUpdateBacktestMutation__
- *
- * To run a mutation, you first call `useUpdateBacktestMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateBacktestMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateBacktestMutation, { data, loading, error }] = useUpdateBacktestMutation({
- *   variables: {
- *      id: // value for 'id'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateBacktestMutation(baseOptions?: Apollo.MutationHookOptions<UpdateBacktestMutation, UpdateBacktestMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateBacktestMutation, UpdateBacktestMutationVariables>(UpdateBacktestDocument, options);
-      }
-export type UpdateBacktestMutationHookResult = ReturnType<typeof useUpdateBacktestMutation>;
-export type UpdateBacktestMutationResult = Apollo.MutationResult<UpdateBacktestMutation>;
-export type UpdateBacktestMutationOptions = Apollo.BaseMutationOptions<UpdateBacktestMutation, UpdateBacktestMutationVariables>;
 export const DeleteBacktestDocument = gql`
     mutation DeleteBacktest($id: ID!) {
   deleteBacktest(id: $id)
