@@ -110,6 +110,26 @@ func (_u *BacktestUpdate) ClearErrorMessage() *BacktestUpdate {
 	return _u
 }
 
+// SetLogs sets the "logs" field.
+func (_u *BacktestUpdate) SetLogs(v string) *BacktestUpdate {
+	_u.mutation.SetLogs(v)
+	return _u
+}
+
+// SetNillableLogs sets the "logs" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableLogs(v *string) *BacktestUpdate {
+	if v != nil {
+		_u.SetLogs(*v)
+	}
+	return _u
+}
+
+// ClearLogs clears the value of the "logs" field.
+func (_u *BacktestUpdate) ClearLogs() *BacktestUpdate {
+	_u.mutation.ClearLogs()
+	return _u
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (_u *BacktestUpdate) SetStrategyID(v uuid.UUID) *BacktestUpdate {
 	_u.mutation.SetStrategyID(v)
@@ -282,6 +302,12 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ErrorMessageCleared() {
 		_spec.ClearField(backtest.FieldErrorMessage, field.TypeString)
 	}
+	if value, ok := _u.mutation.Logs(); ok {
+		_spec.SetField(backtest.FieldLogs, field.TypeString, value)
+	}
+	if _u.mutation.LogsCleared() {
+		_spec.ClearField(backtest.FieldLogs, field.TypeString)
+	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(backtest.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -444,6 +470,26 @@ func (_u *BacktestUpdateOne) SetNillableErrorMessage(v *string) *BacktestUpdateO
 // ClearErrorMessage clears the value of the "error_message" field.
 func (_u *BacktestUpdateOne) ClearErrorMessage() *BacktestUpdateOne {
 	_u.mutation.ClearErrorMessage()
+	return _u
+}
+
+// SetLogs sets the "logs" field.
+func (_u *BacktestUpdateOne) SetLogs(v string) *BacktestUpdateOne {
+	_u.mutation.SetLogs(v)
+	return _u
+}
+
+// SetNillableLogs sets the "logs" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableLogs(v *string) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetLogs(*v)
+	}
+	return _u
+}
+
+// ClearLogs clears the value of the "logs" field.
+func (_u *BacktestUpdateOne) ClearLogs() *BacktestUpdateOne {
+	_u.mutation.ClearLogs()
 	return _u
 }
 
@@ -648,6 +694,12 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	}
 	if _u.mutation.ErrorMessageCleared() {
 		_spec.ClearField(backtest.FieldErrorMessage, field.TypeString)
+	}
+	if value, ok := _u.mutation.Logs(); ok {
+		_spec.SetField(backtest.FieldLogs, field.TypeString, value)
+	}
+	if _u.mutation.LogsCleared() {
+		_spec.ClearField(backtest.FieldLogs, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(backtest.FieldUpdatedAt, field.TypeTime, value)

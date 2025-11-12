@@ -28,6 +28,8 @@ const (
 	FieldContainerID = "container_id"
 	// FieldErrorMessage holds the string denoting the error_message field in the database.
 	FieldErrorMessage = "error_message"
+	// FieldLogs holds the string denoting the logs field in the database.
+	FieldLogs = "logs"
 	// FieldStrategyID holds the string denoting the strategy_id field in the database.
 	FieldStrategyID = "strategy_id"
 	// FieldRunnerID holds the string denoting the runner_id field in the database.
@@ -68,6 +70,7 @@ var Columns = []string{
 	FieldSummary,
 	FieldContainerID,
 	FieldErrorMessage,
+	FieldLogs,
 	FieldStrategyID,
 	FieldRunnerID,
 	FieldCreatedAt,
@@ -129,6 +132,11 @@ func ByContainerID(opts ...sql.OrderTermOption) OrderOption {
 // ByErrorMessage orders the results by the error_message field.
 func ByErrorMessage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldErrorMessage, opts...).ToFunc()
+}
+
+// ByLogs orders the results by the logs field.
+func ByLogs(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLogs, opts...).ToFunc()
 }
 
 // ByStrategyID orders the results by the strategy_id field.

@@ -43,6 +43,9 @@ func (Backtest) Fields() []ent.Field {
 		field.String("error_message").
 			Optional().
 			Comment("Error message if backtest failed"),
+		field.Text("logs").
+			Optional().
+			Comment("Container logs from backtest execution"),
 		field.UUID("strategy_id", uuid.UUID{}).
 			Comment("Foreign key to strategy"),
 		field.UUID("runner_id", uuid.UUID{}).

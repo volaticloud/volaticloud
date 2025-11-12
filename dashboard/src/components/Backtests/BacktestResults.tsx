@@ -5,8 +5,12 @@ import {
   Divider,
   Card,
   CardContent,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Paper,
 } from '@mui/material';
-import { Assessment } from '@mui/icons-material';
+import { Assessment, ExpandMore, Code } from '@mui/icons-material';
 import { BacktestMetrics } from './BacktestMetrics';
 import { BacktestTrades } from './BacktestTrades';
 
@@ -16,6 +20,8 @@ interface BacktestResultsProps {
     status: string;
     createdAt: string;
     result?: any;
+    logs?: string | null;
+    errorMessage?: string | null;
     summary?: {
       totalTrades: number;
       wins: number;
@@ -57,6 +63,41 @@ export const BacktestResults = ({ backtest }: BacktestResultsProps) => {
         />
 
         {backtest.result && <BacktestTrades result={backtest.result} />}
+
+        {/* Backtest Logs */}
+        {backtest.logs && (
+          <Accordion sx={{ mt: 3 }}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Box display="flex" alignItems="center">
+                <Code sx={{ mr: 1 }} />
+                <Typography variant="h6">Backtest Logs</Typography>
+                <Chip
+                  label={`${backtest.logs.length} bytes`}
+                  size="small"
+                  sx={{ ml: 2 }}
+                />
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  bgcolor: 'grey.900',
+                  color: 'grey.100',
+                  fontFamily: 'monospace',
+                  fontSize: '0.85rem',
+                  maxHeight: '500px',
+                  overflow: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                }}
+              >
+                {backtest.logs}
+              </Paper>
+            </AccordionDetails>
+          </Accordion>
+        )}
       </CardContent>
     </Card>
   );

@@ -52,6 +52,7 @@ type BacktestMutation struct {
 	summary         *map[string]interface{}
 	container_id    *string
 	error_message   *string
+	logs            *string
 	created_at      *time.Time
 	updated_at      *time.Time
 	completed_at    *time.Time
@@ -401,6 +402,55 @@ func (m *BacktestMutation) ResetErrorMessage() {
 	delete(m.clearedFields, backtest.FieldErrorMessage)
 }
 
+// SetLogs sets the "logs" field.
+func (m *BacktestMutation) SetLogs(s string) {
+	m.logs = &s
+}
+
+// Logs returns the value of the "logs" field in the mutation.
+func (m *BacktestMutation) Logs() (r string, exists bool) {
+	v := m.logs
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLogs returns the old "logs" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldLogs(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLogs is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLogs requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLogs: %w", err)
+	}
+	return oldValue.Logs, nil
+}
+
+// ClearLogs clears the value of the "logs" field.
+func (m *BacktestMutation) ClearLogs() {
+	m.logs = nil
+	m.clearedFields[backtest.FieldLogs] = struct{}{}
+}
+
+// LogsCleared returns if the "logs" field was cleared in this mutation.
+func (m *BacktestMutation) LogsCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldLogs]
+	return ok
+}
+
+// ResetLogs resets all changes to the "logs" field.
+func (m *BacktestMutation) ResetLogs() {
+	m.logs = nil
+	delete(m.clearedFields, backtest.FieldLogs)
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (m *BacktestMutation) SetStrategyID(u uuid.UUID) {
 	m.strategy = &u
@@ -682,7 +732,7 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.status != nil {
 		fields = append(fields, backtest.FieldStatus)
 	}
@@ -697,6 +747,9 @@ func (m *BacktestMutation) Fields() []string {
 	}
 	if m.error_message != nil {
 		fields = append(fields, backtest.FieldErrorMessage)
+	}
+	if m.logs != nil {
+		fields = append(fields, backtest.FieldLogs)
 	}
 	if m.strategy != nil {
 		fields = append(fields, backtest.FieldStrategyID)
@@ -731,6 +784,8 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 		return m.ContainerID()
 	case backtest.FieldErrorMessage:
 		return m.ErrorMessage()
+	case backtest.FieldLogs:
+		return m.Logs()
 	case backtest.FieldStrategyID:
 		return m.StrategyID()
 	case backtest.FieldRunnerID:
@@ -760,6 +815,8 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldContainerID(ctx)
 	case backtest.FieldErrorMessage:
 		return m.OldErrorMessage(ctx)
+	case backtest.FieldLogs:
+		return m.OldLogs(ctx)
 	case backtest.FieldStrategyID:
 		return m.OldStrategyID(ctx)
 	case backtest.FieldRunnerID:
@@ -813,6 +870,13 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetErrorMessage(v)
+		return nil
+	case backtest.FieldLogs:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLogs(v)
 		return nil
 	case backtest.FieldStrategyID:
 		v, ok := value.(uuid.UUID)
@@ -891,6 +955,9 @@ func (m *BacktestMutation) ClearedFields() []string {
 	if m.FieldCleared(backtest.FieldErrorMessage) {
 		fields = append(fields, backtest.FieldErrorMessage)
 	}
+	if m.FieldCleared(backtest.FieldLogs) {
+		fields = append(fields, backtest.FieldLogs)
+	}
 	if m.FieldCleared(backtest.FieldCompletedAt) {
 		fields = append(fields, backtest.FieldCompletedAt)
 	}
@@ -920,6 +987,9 @@ func (m *BacktestMutation) ClearField(name string) error {
 	case backtest.FieldErrorMessage:
 		m.ClearErrorMessage()
 		return nil
+	case backtest.FieldLogs:
+		m.ClearLogs()
+		return nil
 	case backtest.FieldCompletedAt:
 		m.ClearCompletedAt()
 		return nil
@@ -945,6 +1015,9 @@ func (m *BacktestMutation) ResetField(name string) error {
 		return nil
 	case backtest.FieldErrorMessage:
 		m.ResetErrorMessage()
+		return nil
+	case backtest.FieldLogs:
+		m.ResetLogs()
 		return nil
 	case backtest.FieldStrategyID:
 		m.ResetStrategyID()

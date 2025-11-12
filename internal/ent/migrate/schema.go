@@ -16,6 +16,7 @@ var (
 		{Name: "summary", Type: field.TypeJSON, Nullable: true},
 		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true},
+		{Name: "logs", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
@@ -30,13 +31,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_bot_runners_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[9]},
+				Columns:    []*schema.Column{BacktestsColumns[10]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "backtests_strategies_backtest",
-				Columns:    []*schema.Column{BacktestsColumns[10]},
+				Columns:    []*schema.Column{BacktestsColumns[11]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

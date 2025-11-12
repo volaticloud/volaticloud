@@ -78,6 +78,20 @@ func (_c *BacktestCreate) SetNillableErrorMessage(v *string) *BacktestCreate {
 	return _c
 }
 
+// SetLogs sets the "logs" field.
+func (_c *BacktestCreate) SetLogs(v string) *BacktestCreate {
+	_c.mutation.SetLogs(v)
+	return _c
+}
+
+// SetNillableLogs sets the "logs" field if the given value is not nil.
+func (_c *BacktestCreate) SetNillableLogs(v *string) *BacktestCreate {
+	if v != nil {
+		_c.SetLogs(*v)
+	}
+	return _c
+}
+
 // SetStrategyID sets the "strategy_id" field.
 func (_c *BacktestCreate) SetStrategyID(v uuid.UUID) *BacktestCreate {
 	_c.mutation.SetStrategyID(v)
@@ -291,6 +305,10 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ErrorMessage(); ok {
 		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
 		_node.ErrorMessage = value
+	}
+	if value, ok := _c.mutation.Logs(); ok {
+		_spec.SetField(backtest.FieldLogs, field.TypeString, value)
+		_node.Logs = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(backtest.FieldCreatedAt, field.TypeTime, value)

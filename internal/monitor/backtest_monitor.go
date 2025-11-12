@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -132,7 +133,7 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 	case enum.TaskStatusCompleted:
 		m.handleCompletedBacktest(ctx, bt, backtestRunner)
 	case enum.TaskStatusFailed:
-		m.handleFailedBacktest(ctx, bt, status)
+		m.handleFailedBacktest(ctx, bt, backtestRunner)
 	}
 }
 
@@ -179,6 +180,12 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 		}
 	}
 
+	// Store logs from container execution
+	if result.Logs != "" {
+		update = update.SetLogs(result.Logs)
+		log.Printf("Backtest %s logs captured (%d bytes)", bt.ID, len(result.Logs))
+	}
+
 	if result.CompletedAt != nil {
 		update = update.SetCompletedAt(*result.CompletedAt)
 	} else {
@@ -198,29 +205,61 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 	}
 
 	log.Printf("Backtest %s completed successfully, results saved", bt.ID)
+
+	// Cleanup container after successfully saving results
+	if err := backtestRunner.DeleteBacktest(ctx, bt.ID.String()); err != nil {
+		log.Printf("Warning: Failed to cleanup backtest container %s: %v", bt.ID, err)
+		// Don't return error - results are already saved
+	} else {
+		log.Printf("Backtest %s container cleaned up", bt.ID)
+	}
 }
 
 // handleFailedBacktest handles a failed backtest
-func (m *BacktestMonitor) handleFailedBacktest(ctx context.Context, bt *ent.Backtest, status *runner.BacktestStatus) {
-	log.Printf("Backtest %s failed with exit code %d", bt.ID, status.ExitCode)
+func (m *BacktestMonitor) handleFailedBacktest(ctx context.Context, bt *ent.Backtest, backtestRunner runner.BacktestRunner) {
+	log.Printf("Backtest %s failed", bt.ID)
+
+	// Try to get result (which includes logs) even for failed backtests
+	result, err := backtestRunner.GetBacktestResult(ctx, bt.ID.String())
 
 	update := m.client.Backtest.UpdateOneID(bt.ID).
 		SetStatus(enum.TaskStatusFailed)
 
-	if status.CompletedAt != nil {
-		update = update.SetCompletedAt(*status.CompletedAt)
+	if err == nil {
+		// Store logs if available
+		if result.Logs != "" {
+			update = update.SetLogs(result.Logs)
+			log.Printf("Backtest %s logs captured (%d bytes)", bt.ID, len(result.Logs))
+		}
+
+		if result.CompletedAt != nil {
+			update = update.SetCompletedAt(*result.CompletedAt)
+		} else {
+			update = update.SetCompletedAt(time.Now())
+		}
+
+		errorMsg := result.ErrorMessage
+		if errorMsg == "" {
+			errorMsg = "Backtest failed with non-zero exit code"
+		}
+		update = update.SetErrorMessage(errorMsg)
 	} else {
+		// Fallback if we can't get result
 		update = update.SetCompletedAt(time.Now())
+		update = update.SetErrorMessage(fmt.Sprintf("Backtest failed: %v", err))
 	}
 
-	errorMsg := status.ErrorMessage
-	if errorMsg == "" {
-		errorMsg = "Backtest failed with non-zero exit code"
+	_, saveErr := update.Save(ctx)
+	if saveErr != nil {
+		log.Printf("Failed to update failed backtest %s: %v", bt.ID, saveErr)
+		return
 	}
-	update = update.SetErrorMessage(errorMsg)
 
-	_, err := update.Save(ctx)
-	if err != nil {
-		log.Printf("Failed to update failed backtest %s: %v", bt.ID, err)
+	// Cleanup container after successfully saving failed status
+	if err := backtestRunner.DeleteBacktest(ctx, bt.ID.String()); err != nil {
+		log.Printf("Warning: Failed to cleanup failed backtest container %s: %v", bt.ID, err)
+		// Don't return error - status is already saved
+	} else {
+		log.Printf("Failed backtest %s container cleaned up", bt.ID)
 	}
 }

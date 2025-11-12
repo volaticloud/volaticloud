@@ -15,6 +15,7 @@ type CreateBacktestInput struct {
 	Result       map[string]interface{}
 	ContainerID  *string
 	ErrorMessage *string
+	Logs         *string
 	CreatedAt    *time.Time
 	UpdatedAt    *time.Time
 	CompletedAt  *time.Time
@@ -35,6 +36,9 @@ func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
 	}
 	if v := i.ErrorMessage; v != nil {
 		m.SetErrorMessage(*v)
+	}
+	if v := i.Logs; v != nil {
+		m.SetLogs(*v)
 	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)

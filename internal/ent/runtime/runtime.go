@@ -23,11 +23,11 @@ func init() {
 	backtestFields := schema.Backtest{}.Fields()
 	_ = backtestFields
 	// backtestDescCreatedAt is the schema descriptor for created_at field.
-	backtestDescCreatedAt := backtestFields[8].Descriptor()
+	backtestDescCreatedAt := backtestFields[9].Descriptor()
 	// backtest.DefaultCreatedAt holds the default value on creation for the created_at field.
 	backtest.DefaultCreatedAt = backtestDescCreatedAt.Default.(func() time.Time)
 	// backtestDescUpdatedAt is the schema descriptor for updated_at field.
-	backtestDescUpdatedAt := backtestFields[9].Descriptor()
+	backtestDescUpdatedAt := backtestFields[10].Descriptor()
 	// backtest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	backtest.DefaultUpdatedAt = backtestDescUpdatedAt.Default.(func() time.Time)
 	// backtest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

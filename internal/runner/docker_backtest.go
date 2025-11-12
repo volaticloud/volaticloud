@@ -630,12 +630,25 @@ func (d *DockerBacktestRunner) getContainerLogs(ctx context.Context, containerID
 	}
 	defer reader.Close()
 
-	logs, err := io.ReadAll(reader)
+	// Docker logs are multiplexed - need to demultiplex them using stdcopy
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	_, err = stdcopy.StdCopy(&stdout, &stderr, reader)
 	if err != nil {
 		return "", err
 	}
 
-	return string(logs), nil
+	// Combine stdout and stderr
+	combinedLogs := stdout.String()
+	if stderr.Len() > 0 {
+		if stdout.Len() > 0 {
+			combinedLogs += "\n"
+		}
+		combinedLogs += stderr.String()
+	}
+
+	return combinedLogs, nil
 }
 
 func (d *DockerBacktestRunner) getLogsReader(ctx context.Context, containerID string, opts LogOptions) (*LogReader, error) {

@@ -19,6 +19,10 @@ type Backtest implements Node {
   """
   errorMessage: String
   """
+  Container logs from backtest execution
+  """
+  logs: String
+  """
   Foreign key to strategy
   """
   strategyID: ID!
@@ -136,6 +140,24 @@ input BacktestWhereInput {
   errorMessageNotNil: Boolean
   errorMessageEqualFold: String
   errorMessageContainsFold: String
+  """
+  logs field predicates
+  """
+  logs: String
+  logsNEQ: String
+  logsIn: [String!]
+  logsNotIn: [String!]
+  logsGT: String
+  logsGTE: String
+  logsLT: String
+  logsLTE: String
+  logsContains: String
+  logsHasPrefix: String
+  logsHasSuffix: String
+  logsIsNil: Boolean
+  logsNotNil: Boolean
+  logsEqualFold: String
+  logsContainsFold: String
   """
   strategy_id field predicates
   """
@@ -1164,6 +1186,10 @@ input CreateBacktestInput {
   Error message if backtest failed
   """
   errorMessage: String
+  """
+  Container logs from backtest execution
+  """
+  logs: String
   createdAt: Time
   updatedAt: Time
   """
