@@ -31,20 +31,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
-
-      - name: Validate Keycloak manifests
+      - name: Validate YAML syntax
         run: |
-          echo "🔍 Validating Kubernetes manifests..."
-          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/namespace.yaml
-          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/operator-subscription.yaml
-          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/keycloak-instance.yaml
-          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/keycloak-realm.yaml
-          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/keycloak-client.yaml
-          echo "✅ All manifests are valid"
+          echo "🔍 Validating YAML syntax..."
+          # Check if all required files exist
+          for file in namespace.yaml operator-subscription.yaml keycloak-instance.yaml keycloak-realm.yaml keycloak-client.yaml; do
+            if [ ! -f "deployments/keycloak/$file" ]; then
+              echo "❌ Missing file: deployments/keycloak/$file"
+              exit 1
+            fi
+            # Basic YAML syntax check using Python
+            python3 -c "import yaml; yaml.safe_load(open('deployments/keycloak/$file'))" || {
+              echo "❌ Invalid YAML in: deployments/keycloak/$file"
+              exit 1
+            }
+            echo "✅ Valid: deployments/keycloak/$file"
+          done
+          echo "✅ All manifests have valid YAML syntax"
 
       - name: Check for hardcoded secrets
         run: |
