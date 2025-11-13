@@ -6,6 +6,8 @@ metadata:
   labels:
     app: keycloak
     managed-by: github-actions
+  annotations:
+    deployment.timestamp: "2025-11-13T19:50:00Z"
 spec:
   keycloakCRName: anytrade-keycloak
   realm:
