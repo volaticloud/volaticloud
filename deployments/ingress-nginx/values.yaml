@@ -1,0 +1,51 @@
+# Nginx Ingress Controller Configuration for VKE
+# https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/values.yaml
+
+controller:
+  # Create a Vultr Load Balancer
+  service:
+    type: LoadBalancer
+    annotations:
+      # Vultr-specific annotations for load balancer
+      service.beta.kubernetes.io/vultr-loadbalancer-protocol: "tcp"
+      service.beta.kubernetes.io/vultr-loadbalancer-proxy-protocol: "v2"
+
+  # Resource limits for controller
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  # Ingress class configuration
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: true
+
+  # Metrics for monitoring (optional)
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false  # Enable if you have Prometheus Operator
+
+  # Security settings
+  config:
+    # Increase buffer sizes for large headers
+    proxy-buffer-size: "128k"
+    proxy-buffers: "4 256k"
+    proxy-busy-buffers-size: "256k"
+
+    # SSL settings
+    ssl-protocols: "TLSv1.2 TLSv1.3"
+    ssl-prefer-server-ciphers: "true"
+
+    # Security headers
+    enable-real-ip: "true"
+    use-forwarded-headers: "true"
+    compute-full-forwarded-for: "true"
+
+    # Hide nginx version
+    server-tokens: "false"

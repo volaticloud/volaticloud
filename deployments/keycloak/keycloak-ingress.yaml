@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: anytrade-keycloak-ingress
+  namespace: keycloak
+  annotations:
+    # cert-manager will use this issuer to provision TLS certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Nginx ingress specific annotations
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Increase timeouts for Keycloak admin operations
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+  # Use nginx ingress class
+  ingressClassName: nginx
+  # TLS configuration
+  tls:
+  - hosts:
+    - ${KEYCLOAK_HOSTNAME}
+    secretName: keycloak-tls-cert  # cert-manager will create this secret
+  # Routing rules
+  rules:
+  - host: ${KEYCLOAK_HOSTNAME}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: anytrade-keycloak-service
+            port:
+              number: 8080

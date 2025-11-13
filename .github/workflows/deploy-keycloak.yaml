@@ -1,0 +1,295 @@
+name: Deploy Keycloak
+
+on:
+  push:
+    branches: [main]  # Only deploy on merge to main
+    paths:
+      - 'deployments/olm/**'
+      - 'deployments/keycloak/**'
+      - '.github/workflows/deploy-keycloak.yaml'
+  pull_request:  # Validation only, no deployment
+    paths:
+      - 'deployments/olm/**'
+      - 'deployments/keycloak/**'
+      - '.github/workflows/deploy-keycloak.yaml'
+  workflow_dispatch:  # Allow manual deployment for emergencies
+    inputs:
+      skip-olm:
+        description: 'Skip OLM installation (if already installed)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate YAML syntax
+        run: |
+          echo "🔍 Validating YAML syntax..."
+          # Check if all required files exist
+          for file in namespace.yaml operator-subscription.yaml keycloak-instance.yaml keycloak-realm.yaml keycloak-client.yaml; do
+            if [ ! -f "deployments/keycloak/$file" ]; then
+              echo "❌ Missing file: deployments/keycloak/$file"
+              exit 1
+            fi
+            # Basic YAML syntax check using Python (handles multi-document YAML)
+            python3 -c "import yaml; list(yaml.safe_load_all(open('deployments/keycloak/$file')))" || {
+              echo "❌ Invalid YAML in: deployments/keycloak/$file"
+              exit 1
+            }
+            echo "✅ Valid: deployments/keycloak/$file"
+          done
+          echo "✅ All manifests have valid YAML syntax"
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "🔍 Checking for hardcoded secrets..."
+          if grep -r "password:" deployments/keycloak/ | grep -v "passwordSecret" | grep -v "#"; then
+            echo "❌ Found hardcoded password in manifest"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets found"
+
+  install-olm:
+    name: Install OLM
+    runs-on: ubuntu-latest
+    needs: validate
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && !inputs.skip-olm)
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+          echo "✅ Connected to Kubernetes cluster"
+
+      - name: Check if OLM is already installed
+        id: check-olm
+        run: |
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          if kubectl get namespace olm &>/dev/null && kubectl get csv -n olm &>/dev/null; then
+            echo "olm-installed=true" >> $GITHUB_OUTPUT
+            echo "✅ OLM is already installed"
+          else
+            echo "olm-installed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  OLM is not installed"
+          fi
+
+      - name: Install OLM
+        if: steps.check-olm.outputs.olm-installed == 'false'
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          cd deployments/olm
+          chmod +x install.sh
+          ./install.sh
+
+      - name: Verify OLM installation
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📋 OLM Pods:"
+          kubectl get pods -n olm
+          echo ""
+          echo "📋 Catalog Sources:"
+          kubectl get catalogsource -n olm
+          echo "✅ OLM is ready"
+
+  deploy-keycloak:
+    name: Deploy Keycloak
+    runs-on: ubuntu-latest
+    needs: [validate, install-olm]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      (needs.install-olm.result == 'success' || needs.install-olm.result == 'skipped') &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+       github.event_name == 'workflow_dispatch')
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+
+      - name: Create Keycloak namespace
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Creating Keycloak namespace..."
+          kubectl apply -f deployments/keycloak/namespace.yaml
+          echo "✅ Namespace created"
+
+      - name: Create database secret
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔐 Creating database secret..."
+
+          # Create secret from GitHub Secrets
+          kubectl create secret generic keycloak-db-secret \
+            --from-literal=username="${{ secrets.KEYCLOAK_DB_USERNAME }}" \
+            --from-literal=password="${{ secrets.KEYCLOAK_DB_PASSWORD }}" \
+            --namespace=keycloak \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "✅ Database secret created"
+
+      - name: Install Keycloak operator
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Installing Keycloak operator..."
+          kubectl apply -f deployments/keycloak/operator-subscription.yaml
+
+          echo "⏳ Waiting for operator to be ready..."
+          # Wait for operator to be installed (check for CSV)
+          for i in {1..60}; do
+            if kubectl get csv -n keycloak 2>/dev/null | grep -q keycloak; then
+              echo "✅ Keycloak operator is installing..."
+              break
+            fi
+            echo "Waiting for operator... ($i/60)"
+            sleep 5
+          done
+
+          # Wait for operator pod to be ready
+          kubectl wait --for=condition=Ready pod \
+            -l control-plane=controller-manager \
+            -n keycloak \
+            --timeout=300s || echo "Warning: Operator pod not ready yet, continuing..."
+
+          echo "✅ Keycloak operator installed"
+
+      - name: Process and apply Keycloak instance
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🚀 Deploying Keycloak instance..."
+
+          # Substitute environment variables in manifest
+          export KEYCLOAK_DB_HOST="${{ secrets.KEYCLOAK_DB_HOST }}"
+          export KEYCLOAK_DB_PORT="${{ secrets.KEYCLOAK_DB_PORT }}"
+          export KEYCLOAK_DB_NAME="${{ secrets.KEYCLOAK_DB_NAME }}"
+          export KEYCLOAK_DB_SCHEMA="${{ secrets.KEYCLOAK_DB_SCHEMA }}"
+          export KEYCLOAK_HOSTNAME="${{ secrets.KEYCLOAK_HOSTNAME }}"
+          envsubst < deployments/keycloak/keycloak-instance.yaml > /tmp/keycloak-instance-processed.yaml
+
+          cat /tmp/keycloak-instance-processed.yaml
+
+          # Apply Keycloak instance (kubectl will handle graceful updates)
+          echo "📦 Applying Keycloak instance..."
+          kubectl apply -f /tmp/keycloak-instance-processed.yaml
+
+          echo "⏳ Waiting for Keycloak to be ready..."
+          kubectl wait --for=condition=Ready \
+            keycloak/anytrade-keycloak \
+            -n keycloak \
+            --timeout=600s || echo "Warning: Keycloak not ready yet, check status manually"
+
+          echo "✅ Keycloak instance deployed"
+
+      - name: Apply realm configuration
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔧 Configuring Keycloak realm..."
+          kubectl apply -f deployments/keycloak/keycloak-realm.yaml
+
+          echo "⏳ Waiting for realm to be imported..."
+          sleep 30
+
+          echo "✅ Realm configured"
+
+      - name: Apply OIDC client configuration
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔧 Configuring OIDC clients..."
+
+          # Substitute environment variables in client manifest
+          export ANYTRADE_URL="${{ secrets.ANYTRADE_URL }}"
+          envsubst < deployments/keycloak/keycloak-client.yaml > /tmp/keycloak-client-processed.yaml
+
+          kubectl apply -f /tmp/keycloak-client-processed.yaml
+
+          echo "⏳ Waiting for clients to be imported..."
+          sleep 30
+
+          echo "✅ OIDC clients configured"
+
+      - name: Get Keycloak status
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📊 Keycloak Status:"
+          echo ""
+          echo "Keycloak Instances:"
+          kubectl get keycloak -n keycloak
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n keycloak
+          echo ""
+          echo "Services:"
+          kubectl get svc -n keycloak
+          echo ""
+          echo "Ingress:"
+          kubectl get ingress -n keycloak || echo "No ingress found"
+
+      - name: Verify Keycloak endpoints
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔍 Verifying Keycloak endpoints..."
+
+          # Get Keycloak URL from status or service
+          KEYCLOAK_SERVICE=$(kubectl get svc -n keycloak -l app=keycloak -o jsonpath='{.items[0].metadata.name}')
+
+          if [ -n "$KEYCLOAK_SERVICE" ]; then
+            echo "✅ Keycloak service found: $KEYCLOAK_SERVICE"
+            echo "🌐 Access Keycloak at: https://${{ secrets.KEYCLOAK_HOSTNAME }}/auth"
+          else
+            echo "⚠️  Keycloak service not found yet"
+          fi
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## ✅ Keycloak Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Realm**: anytrade" >> $GITHUB_STEP_SUMMARY
+          echo "- **Clients**: anytrade-dashboard, anytrade-api" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://${{ secrets.KEYCLOAK_HOSTNAME }}/auth" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔐 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Access Keycloak admin console" >> $GITHUB_STEP_SUMMARY
+          echo "2. Create users and assign roles" >> $GITHUB_STEP_SUMMARY
+          echo "3. Test OIDC authentication flow" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,94 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: anytrade-client
+  namespace: keycloak
+  labels:
+    app: keycloak
+    managed-by: github-actions
+spec:
+  keycloakCRName: anytrade-keycloak
+  realm:
+    realm: anytrade
+    clients:
+      - clientId: anytrade-dashboard
+        name: "AnyTrade Dashboard"
+        description: "OIDC client for AnyTrade React dashboard"
+        enabled: true
+
+        # Client type (public for SPA)
+        publicClient: true
+        protocol: openid-connect
+
+        # Authentication flow
+        standardFlowEnabled: true  # Authorization Code Flow
+        implicitFlowEnabled: false  # Deprecated, use Authorization Code Flow
+        directAccessGrantsEnabled: false  # No direct password grants
+        serviceAccountsEnabled: false
+
+        # URLs
+        rootUrl: "${ANYTRADE_URL}"
+        baseUrl: "${ANYTRADE_URL}"
+        adminUrl: "${ANYTRADE_URL}"
+
+        # Valid redirect URIs (where Keycloak can redirect after login)
+        redirectUris:
+          - "${ANYTRADE_URL}/*"
+          - "http://localhost:5173/*"  # Local development
+          - "http://localhost:3000/*"  # Alternative local port
+
+        # Web origins (for CORS)
+        webOrigins:
+          - "${ANYTRADE_URL}"
+          - "http://localhost:5173"
+          - "http://localhost:3000"
+
+        # Default client scopes
+        defaultClientScopes:
+          - profile
+          - email
+          - roles
+          - web-origins
+
+        # Optional client scopes
+        optionalClientScopes:
+          - address
+          - phone
+          - offline_access
+          - microprofile-jwt
+
+        # Attributes
+        attributes:
+          "pkce.code.challenge.method": "S256"  # PKCE for security
+          "post.logout.redirect.uris": "${ANYTRADE_URL}/*"
+          "backchannel.logout.session.required": "true"
+          "backchannel.logout.revoke.offline.tokens": "false"
+
+        # Frontend URL for token validation
+        frontchannelLogout: true
+
+      - clientId: anytrade-api
+        name: "AnyTrade API"
+        description: "OIDC client for AnyTrade GraphQL API (backend)"
+        enabled: true
+
+        # Client type (confidential for backend)
+        publicClient: false
+        protocol: openid-connect
+        bearerOnly: true  # Only validates bearer tokens, doesn't participate in login
+
+        # Authentication flow
+        standardFlowEnabled: false
+        implicitFlowEnabled: false
+        directAccessGrantsEnabled: false
+        serviceAccountsEnabled: false
+
+        # Default client scopes
+        defaultClientScopes:
+          - profile
+          - email
+          - roles
+
+        # Attributes
+        attributes:
+          "use.refresh.tokens": "false"
