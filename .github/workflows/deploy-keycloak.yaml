@@ -2,17 +2,17 @@ name: Deploy Keycloak
 
 on:
   push:
-    branches: [main, feature/keycloak-openid-integration]
+    branches: [main]  # Only deploy on merge to main
     paths:
       - 'deployments/olm/**'
       - 'deployments/keycloak/**'
       - '.github/workflows/deploy-keycloak.yaml'
-  pull_request:
+  pull_request:  # Validation only, no deployment
     paths:
       - 'deployments/olm/**'
       - 'deployments/keycloak/**'
       - '.github/workflows/deploy-keycloak.yaml'
-  workflow_dispatch:
+  workflow_dispatch:  # Allow manual deployment for emergencies
     inputs:
       skip-olm:
         description: 'Skip OLM installation (if already installed)'
@@ -61,8 +61,7 @@ jobs:
     needs: validate
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && !inputs.skip-olm) ||
-      github.ref == 'refs/heads/feature/keycloak-openid-integration'
+      (github.event_name == 'workflow_dispatch' && !inputs.skip-olm)
     environment: prod
 
     steps:
@@ -122,8 +121,7 @@ jobs:
       needs.validate.result == 'success' &&
       (needs.install-olm.result == 'success' || needs.install-olm.result == 'skipped') &&
       ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-       github.event_name == 'workflow_dispatch' ||
-       github.ref == 'refs/heads/feature/keycloak-openid-integration')
+       github.event_name == 'workflow_dispatch')
     environment: prod
 
     steps:

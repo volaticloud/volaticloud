@@ -2,19 +2,19 @@ name: Deploy Ingress & TLS
 
 on:
   push:
-    branches: [main, feature/keycloak-openid-integration]
+    branches: [main]  # Only deploy on merge to main
     paths:
       - 'deployments/ingress-nginx/**'
       - 'deployments/cert-manager/**'
       - 'deployments/keycloak/keycloak-ingress.yaml'
       - '.github/workflows/deploy-ingress.yaml'
-  pull_request:
+  pull_request:  # Validation only, no deployment
     paths:
       - 'deployments/ingress-nginx/**'
       - 'deployments/cert-manager/**'
       - 'deployments/keycloak/keycloak-ingress.yaml'
       - '.github/workflows/deploy-ingress.yaml'
-  workflow_dispatch:
+  workflow_dispatch:  # Allow manual deployment for emergencies
     inputs:
       skip-ingress:
         description: 'Skip nginx ingress installation (if already installed)'
@@ -77,8 +77,8 @@ jobs:
     if: |
       always() &&
       needs.validate.result == 'success' &&
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/keycloak-openid-integration')) ||
-      (github.event_name == 'workflow_dispatch' && !inputs.skip-ingress)
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+       (github.event_name == 'workflow_dispatch' && !inputs.skip-ingress))
     environment: prod
 
     steps:
@@ -199,7 +199,7 @@ jobs:
       always() &&
       needs.validate.result == 'success' &&
       (needs.deploy-ingress.result == 'success' || needs.deploy-ingress.result == 'skipped') &&
-      ((github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/keycloak-openid-integration')) ||
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
        (github.event_name == 'workflow_dispatch' && !inputs.skip-cert-manager))
     environment: prod
 
@@ -324,8 +324,8 @@ jobs:
       needs.validate.result == 'success' &&
       (needs.deploy-ingress.result == 'success' || needs.deploy-ingress.result == 'skipped') &&
       (needs.deploy-cert-manager.result == 'success' || needs.deploy-cert-manager.result == 'skipped') &&
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/keycloak-openid-integration')) ||
-      github.event_name == 'workflow_dispatch'
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+       github.event_name == 'workflow_dispatch')
     environment: prod
 
     steps:
