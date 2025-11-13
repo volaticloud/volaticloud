@@ -20,9 +20,6 @@ on:
         type: boolean
         default: true
 
-env:
-  KUBECONFIG_PATH: ./kubeconfig
-
 jobs:
   validate:
     name: Validate Manifests
@@ -79,15 +76,15 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $KUBECONFIG_PATH
-          export KUBECONFIG=$KUBECONFIG_PATH
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
           kubectl cluster-info
           echo "✅ Connected to Kubernetes cluster"
 
       - name: Check if OLM is already installed
         id: check-olm
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
           if kubectl get namespace olm &>/dev/null && kubectl get csv -n olm &>/dev/null; then
             echo "olm-installed=true" >> $GITHUB_OUTPUT
             echo "✅ OLM is already installed"
@@ -98,15 +95,17 @@ jobs:
 
       - name: Install OLM
         if: steps.check-olm.outputs.olm-installed == 'false'
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           cd deployments/olm
           chmod +x install.sh
           ./install.sh
 
       - name: Verify OLM installation
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "📋 OLM Pods:"
           kubectl get pods -n olm
           echo ""
@@ -138,20 +137,22 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $KUBECONFIG_PATH
-          export KUBECONFIG=$KUBECONFIG_PATH
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
           kubectl cluster-info
 
       - name: Create Keycloak namespace
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "📦 Creating Keycloak namespace..."
           kubectl apply -f deployments/keycloak/namespace.yaml
           echo "✅ Namespace created"
 
       - name: Create database secret
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "🔐 Creating database secret..."
 
           # Create secret from GitHub Secrets
@@ -164,8 +165,9 @@ jobs:
           echo "✅ Database secret created"
 
       - name: Install Keycloak operator
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "📦 Installing Keycloak operator..."
           kubectl apply -f deployments/keycloak/operator-subscription.yaml
 
@@ -189,8 +191,9 @@ jobs:
           echo "✅ Keycloak operator installed"
 
       - name: Process and apply Keycloak instance
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "🚀 Deploying Keycloak instance..."
 
           # Substitute environment variables in manifest
@@ -211,8 +214,9 @@ jobs:
           echo "✅ Keycloak instance deployed"
 
       - name: Apply realm configuration
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "🔧 Configuring Keycloak realm..."
           kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 
@@ -222,8 +226,9 @@ jobs:
           echo "✅ Realm configured"
 
       - name: Apply OIDC client configuration
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "🔧 Configuring OIDC clients..."
 
           # Substitute environment variables in client manifest
@@ -239,8 +244,9 @@ jobs:
           echo "✅ OIDC clients configured"
 
       - name: Get Keycloak status
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "📊 Keycloak Status:"
           echo ""
           echo "Keycloak Instances:"
@@ -256,8 +262,9 @@ jobs:
           kubectl get ingress -n keycloak || echo "No ingress found"
 
       - name: Verify Keycloak endpoints
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          export KUBECONFIG=$KUBECONFIG_PATH
           echo "🔍 Verifying Keycloak endpoints..."
 
           # Get Keycloak URL from status or service
