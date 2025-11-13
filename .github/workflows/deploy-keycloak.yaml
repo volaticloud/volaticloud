@@ -40,8 +40,8 @@ jobs:
               echo "❌ Missing file: deployments/keycloak/$file"
               exit 1
             fi
-            # Basic YAML syntax check using Python
-            python3 -c "import yaml; yaml.safe_load(open('deployments/keycloak/$file'))" || {
+            # Basic YAML syntax check using Python (handles multi-document YAML)
+            python3 -c "import yaml; list(yaml.safe_load_all(open('deployments/keycloak/$file')))" || {
               echo "❌ Invalid YAML in: deployments/keycloak/$file"
               exit 1
             }
