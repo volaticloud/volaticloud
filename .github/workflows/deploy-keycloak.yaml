@@ -197,10 +197,9 @@ jobs:
           echo "🚀 Deploying Keycloak instance..."
 
           # Substitute environment variables in manifest
-          envsubst < deployments/keycloak/keycloak-instance.yaml | \
-          KEYCLOAK_DB_HOST="${{ secrets.KEYCLOAK_DB_HOST }}" \
-          KEYCLOAK_HOSTNAME="${{ secrets.KEYCLOAK_HOSTNAME }}" \
-          envsubst > /tmp/keycloak-instance-processed.yaml
+          export KEYCLOAK_DB_HOST="${{ secrets.KEYCLOAK_DB_HOST }}"
+          export KEYCLOAK_HOSTNAME="${{ secrets.KEYCLOAK_HOSTNAME }}"
+          envsubst < deployments/keycloak/keycloak-instance.yaml > /tmp/keycloak-instance-processed.yaml
 
           cat /tmp/keycloak-instance-processed.yaml
           kubectl apply -f /tmp/keycloak-instance-processed.yaml
@@ -232,9 +231,8 @@ jobs:
           echo "🔧 Configuring OIDC clients..."
 
           # Substitute environment variables in client manifest
-          envsubst < deployments/keycloak/keycloak-client.yaml | \
-          ANYTRADE_URL="${{ secrets.ANYTRADE_URL }}" \
-          envsubst > /tmp/keycloak-client-processed.yaml
+          export ANYTRADE_URL="${{ secrets.ANYTRADE_URL }}"
+          envsubst < deployments/keycloak/keycloak-client.yaml > /tmp/keycloak-client-processed.yaml
 
           kubectl apply -f /tmp/keycloak-client-processed.yaml
 
