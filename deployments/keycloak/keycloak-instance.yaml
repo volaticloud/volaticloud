@@ -1,0 +1,62 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: anytrade-keycloak
+  namespace: keycloak
+  labels:
+    app: keycloak
+    managed-by: github-actions
+spec:
+  # Number of Keycloak instances (high availability)
+  instances: 2
+
+  # Database configuration (using managed PostgreSQL on VKE)
+  db:
+    vendor: postgres
+    # Host should be set via environment variable or secret
+    # Format: <hostname>:<port>
+    # Example: postgres.vultr.internal:5432
+    host: ${KEYCLOAK_DB_HOST}
+    database: keycloak
+    port: 5432
+    usernameSecret:
+      name: keycloak-db-secret
+      key: username
+    passwordSecret:
+      name: keycloak-db-secret
+      key: password
+
+  # HTTP/HTTPS configuration
+  http:
+    # TLS will be handled by ingress
+    httpEnabled: true
+    httpsEnabled: false
+
+  # Hostname configuration
+  hostname:
+    hostname: ${KEYCLOAK_HOSTNAME}
+    strict: false
+    strictBackchannel: false
+
+  # Ingress configuration
+  ingress:
+    enabled: true
+    annotations:
+      # Nginx ingress annotations
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    # TLS will be configured separately via cert-manager
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  # Additional options
+  additionalOptions:
+    - name: http-relative-path
+      value: "/auth"

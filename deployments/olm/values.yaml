@@ -1,0 +1,19 @@
+# OLM (Operator Lifecycle Manager) Configuration
+# This file defines the OLM version and configuration
+
+olm:
+  # OLM version to install
+  version: v0.28.0
+
+  # Namespace where OLM will be installed
+  namespace: olm
+
+  # Catalog sources to enable (OperatorHub catalogs)
+  catalogSources:
+    - operatorhubio  # Community operators from OperatorHub.io
+
+  # Optional: Custom catalog sources
+  customCatalogs: []
+  #  - name: my-custom-catalog
+  #    image: quay.io/myorg/my-catalog:latest
+  #    sourceType: grpc
