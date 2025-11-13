@@ -76,6 +76,23 @@ type BacktestWhereInput struct {
 	ErrorMessageEqualFold    *string  `json:"errorMessageEqualFold,omitempty"`
 	ErrorMessageContainsFold *string  `json:"errorMessageContainsFold,omitempty"`
 
+	// "logs" field predicates.
+	Logs             *string  `json:"logs,omitempty"`
+	LogsNEQ          *string  `json:"logsNEQ,omitempty"`
+	LogsIn           []string `json:"logsIn,omitempty"`
+	LogsNotIn        []string `json:"logsNotIn,omitempty"`
+	LogsGT           *string  `json:"logsGT,omitempty"`
+	LogsGTE          *string  `json:"logsGTE,omitempty"`
+	LogsLT           *string  `json:"logsLT,omitempty"`
+	LogsLTE          *string  `json:"logsLTE,omitempty"`
+	LogsContains     *string  `json:"logsContains,omitempty"`
+	LogsHasPrefix    *string  `json:"logsHasPrefix,omitempty"`
+	LogsHasSuffix    *string  `json:"logsHasSuffix,omitempty"`
+	LogsIsNil        bool     `json:"logsIsNil,omitempty"`
+	LogsNotNil       bool     `json:"logsNotNil,omitempty"`
+	LogsEqualFold    *string  `json:"logsEqualFold,omitempty"`
+	LogsContainsFold *string  `json:"logsContainsFold,omitempty"`
+
 	// "strategy_id" field predicates.
 	StrategyID      *uuid.UUID  `json:"strategyID,omitempty"`
 	StrategyIDNEQ   *uuid.UUID  `json:"strategyIDNEQ,omitempty"`
@@ -325,6 +342,51 @@ func (i *BacktestWhereInput) P() (predicate.Backtest, error) {
 	}
 	if i.ErrorMessageContainsFold != nil {
 		predicates = append(predicates, backtest.ErrorMessageContainsFold(*i.ErrorMessageContainsFold))
+	}
+	if i.Logs != nil {
+		predicates = append(predicates, backtest.LogsEQ(*i.Logs))
+	}
+	if i.LogsNEQ != nil {
+		predicates = append(predicates, backtest.LogsNEQ(*i.LogsNEQ))
+	}
+	if len(i.LogsIn) > 0 {
+		predicates = append(predicates, backtest.LogsIn(i.LogsIn...))
+	}
+	if len(i.LogsNotIn) > 0 {
+		predicates = append(predicates, backtest.LogsNotIn(i.LogsNotIn...))
+	}
+	if i.LogsGT != nil {
+		predicates = append(predicates, backtest.LogsGT(*i.LogsGT))
+	}
+	if i.LogsGTE != nil {
+		predicates = append(predicates, backtest.LogsGTE(*i.LogsGTE))
+	}
+	if i.LogsLT != nil {
+		predicates = append(predicates, backtest.LogsLT(*i.LogsLT))
+	}
+	if i.LogsLTE != nil {
+		predicates = append(predicates, backtest.LogsLTE(*i.LogsLTE))
+	}
+	if i.LogsContains != nil {
+		predicates = append(predicates, backtest.LogsContains(*i.LogsContains))
+	}
+	if i.LogsHasPrefix != nil {
+		predicates = append(predicates, backtest.LogsHasPrefix(*i.LogsHasPrefix))
+	}
+	if i.LogsHasSuffix != nil {
+		predicates = append(predicates, backtest.LogsHasSuffix(*i.LogsHasSuffix))
+	}
+	if i.LogsIsNil {
+		predicates = append(predicates, backtest.LogsIsNil())
+	}
+	if i.LogsNotNil {
+		predicates = append(predicates, backtest.LogsNotNil())
+	}
+	if i.LogsEqualFold != nil {
+		predicates = append(predicates, backtest.LogsEqualFold(*i.LogsEqualFold))
+	}
+	if i.LogsContainsFold != nil {
+		predicates = append(predicates, backtest.LogsContainsFold(*i.LogsContainsFold))
 	}
 	if i.StrategyID != nil {
 		predicates = append(predicates, backtest.StrategyIDEQ(*i.StrategyID))

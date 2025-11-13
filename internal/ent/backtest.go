@@ -32,6 +32,8 @@ type Backtest struct {
 	ContainerID string `json:"container_id,omitempty"`
 	// Error message if backtest failed
 	ErrorMessage string `json:"error_message,omitempty"`
+	// Container logs from backtest execution
+	Logs string `json:"logs,omitempty"`
 	// Foreign key to strategy
 	StrategyID uuid.UUID `json:"strategy_id,omitempty"`
 	// Foreign key to runner
@@ -90,7 +92,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case backtest.FieldResult, backtest.FieldSummary:
 			values[i] = new([]byte)
-		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage:
+		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage, backtest.FieldLogs:
 			values[i] = new(sql.NullString)
 		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
@@ -150,6 +152,12 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field error_message", values[i])
 			} else if value.Valid {
 				_m.ErrorMessage = value.String
+			}
+		case backtest.FieldLogs:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field logs", values[i])
+			} else if value.Valid {
+				_m.Logs = value.String
 			}
 		case backtest.FieldStrategyID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -241,6 +249,9 @@ func (_m *Backtest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("error_message=")
 	builder.WriteString(_m.ErrorMessage)
+	builder.WriteString(", ")
+	builder.WriteString("logs=")
+	builder.WriteString(_m.Logs)
 	builder.WriteString(", ")
 	builder.WriteString("strategy_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StrategyID))

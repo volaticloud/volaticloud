@@ -12,10 +12,13 @@ import {
   Divider,
   Paper,
   Grid,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
-import { ArrowBack, Timeline, TrendingUp, TrendingDown } from '@mui/icons-material';
+import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code } from '@mui/icons-material';
 import { useGetBacktestQuery } from './backtests.generated';
-import TradesTable from './TradesTable';
+import TradesTable from '../shared/TradesTable';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
 
 const BacktestDetail: React.FC = () => {
@@ -146,6 +149,41 @@ const BacktestDetail: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Backtest Logs */}
+      {backtest.logs && (
+        <Accordion sx={{ mb: 3 }}>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Box display="flex" alignItems="center">
+              <Code sx={{ mr: 1 }} />
+              <Typography variant="h6">Backtest Logs</Typography>
+              <Chip
+                label={`${backtest.logs.length} bytes`}
+                size="small"
+                sx={{ ml: 2 }}
+              />
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: 'grey.900',
+                color: 'grey.100',
+                fontFamily: 'monospace',
+                fontSize: '0.85rem',
+                maxHeight: '500px',
+                overflow: 'auto',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+              }}
+            >
+              {backtest.logs}
+            </Paper>
+          </AccordionDetails>
+        </Accordion>
+      )}
 
       {/* Summary Metrics */}
       {backtest.status === 'completed' && strategyData !== null && (

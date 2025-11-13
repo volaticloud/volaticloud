@@ -23,6 +23,125 @@ import (
 // FreqtradeAPIService FreqtradeAPI service
 type FreqtradeAPIService service
 
+type ApiAddLocksApiV1LocksPostRequest struct {
+	ctx          context.Context
+	ApiService   *FreqtradeAPIService
+	locksPayload *[]LocksPayload
+}
+
+func (r ApiAddLocksApiV1LocksPostRequest) LocksPayload(locksPayload []LocksPayload) ApiAddLocksApiV1LocksPostRequest {
+	r.locksPayload = &locksPayload
+	return r
+}
+
+func (r ApiAddLocksApiV1LocksPostRequest) Execute() (*Locks, *http.Response, error) {
+	return r.ApiService.AddLocksApiV1LocksPostExecute(r)
+}
+
+/*
+AddLocksApiV1LocksPost Add Locks
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAddLocksApiV1LocksPostRequest
+*/
+func (a *FreqtradeAPIService) AddLocksApiV1LocksPost(ctx context.Context) ApiAddLocksApiV1LocksPostRequest {
+	return ApiAddLocksApiV1LocksPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return Locks
+func (a *FreqtradeAPIService) AddLocksApiV1LocksPostExecute(r ApiAddLocksApiV1LocksPostRequest) (*Locks, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Locks
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.AddLocksApiV1LocksPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/locks"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.locksPayload == nil {
+		return localVarReturnValue, nil, reportError("locksPayload is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.locksPayload
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiApiBacktestAbortApiV1BacktestAbortGetRequest struct {
 	ctx        context.Context
 	ApiService *FreqtradeAPIService
@@ -660,6 +779,118 @@ func (a *FreqtradeAPIService) ApiGetBacktestApiV1BacktestGetExecute(r ApiApiGetB
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+	file       string
+}
+
+func (r ApiApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetRequest) Execute() (*BacktestMarketChange, *http.Response, error) {
+	return r.ApiService.ApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetExecute(r)
+}
+
+/*
+ApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGet Api Get Backtest Market Change
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param file
+	@return ApiApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetRequest
+*/
+func (a *FreqtradeAPIService) ApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGet(ctx context.Context, file string) ApiApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetRequest {
+	return ApiApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		file:       file,
+	}
+}
+
+// Execute executes the request
+//
+//	@return BacktestMarketChange
+func (a *FreqtradeAPIService) ApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetExecute(r ApiApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGetRequest) (*BacktestMarketChange, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BacktestMarketChange
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ApiGetBacktestMarketChangeApiV1BacktestHistoryFileMarketChangeGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/backtest/history/{file}/market_change"
+	localVarPath = strings.Replace(localVarPath, "{"+"file"+"}", url.PathEscape(parameterValueToString(r.file, "file")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiApiStartBacktestApiV1BacktestPostRequest struct {
 	ctx             context.Context
 	ApiService      *FreqtradeAPIService
@@ -998,6 +1229,104 @@ func (a *FreqtradeAPIService) BackgroundJobApiV1BackgroundJobidGetExecute(r ApiB
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiBackgroundJobListApiV1BackgroundGetRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+}
+
+func (r ApiBackgroundJobListApiV1BackgroundGetRequest) Execute() ([]BackgroundTaskStatus, *http.Response, error) {
+	return r.ApiService.BackgroundJobListApiV1BackgroundGetExecute(r)
+}
+
+/*
+BackgroundJobListApiV1BackgroundGet Background Job List
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiBackgroundJobListApiV1BackgroundGetRequest
+*/
+func (a *FreqtradeAPIService) BackgroundJobListApiV1BackgroundGet(ctx context.Context) ApiBackgroundJobListApiV1BackgroundGetRequest {
+	return ApiBackgroundJobListApiV1BackgroundGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []BackgroundTaskStatus
+func (a *FreqtradeAPIService) BackgroundJobListApiV1BackgroundGetExecute(r ApiBackgroundJobListApiV1BackgroundGetRequest) ([]BackgroundTaskStatus, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []BackgroundTaskStatus
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.BackgroundJobListApiV1BackgroundGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/background"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1566,6 +1895,7 @@ type ApiDailyApiV1DailyGetRequest struct {
 	timescale  *int64
 }
 
+// Number of days to fetch data for
 func (r ApiDailyApiV1DailyGetRequest) Timescale(timescale int64) ApiDailyApiV1DailyGetRequest {
 	r.timescale = &timescale
 	return r
@@ -1896,104 +2226,6 @@ func (a *FreqtradeAPIService) DeleteLockPairApiV1LocksDeletePostExecute(r ApiDel
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiEdgeApiV1EdgeGetRequest struct {
-	ctx        context.Context
-	ApiService *FreqtradeAPIService
-}
-
-func (r ApiEdgeApiV1EdgeGetRequest) Execute() (interface{}, *http.Response, error) {
-	return r.ApiService.EdgeApiV1EdgeGetExecute(r)
-}
-
-/*
-EdgeApiV1EdgeGet Edge
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiEdgeApiV1EdgeGetRequest
-*/
-func (a *FreqtradeAPIService) EdgeApiV1EdgeGet(ctx context.Context) ApiEdgeApiV1EdgeGetRequest {
-	return ApiEdgeApiV1EdgeGetRequest{
-		ApiService: a,
-		ctx:        ctx,
-	}
-}
-
-// Execute executes the request
-//
-//	@return interface{}
-func (a *FreqtradeAPIService) EdgeApiV1EdgeGetExecute(r ApiEdgeApiV1EdgeGetRequest) (interface{}, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue interface{}
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.EdgeApiV1EdgeGet")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/edge"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3065,6 +3297,130 @@ func (a *FreqtradeAPIService) ListAvailablePairsApiV1AvailablePairsGetExecute(r 
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+	tradeId    int64
+	key        *string
+}
+
+func (r ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest) Key(key string) ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest {
+	r.key = &key
+	return r
+}
+
+func (r ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest) Execute() ([]ListCustomData, *http.Response, error) {
+	return r.ApiService.ListCustomDataApiV1TradesTradeIdCustomDataGetExecute(r)
+}
+
+/*
+ListCustomDataApiV1TradesTradeIdCustomDataGet List Custom Data
+
+Fetch custom data for a specific trade.
+If a key is provided, it will be used to filter data accordingly.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tradeId
+	@return ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest
+*/
+func (a *FreqtradeAPIService) ListCustomDataApiV1TradesTradeIdCustomDataGet(ctx context.Context, tradeId int64) ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest {
+	return ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+		tradeId:    tradeId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []ListCustomData
+func (a *FreqtradeAPIService) ListCustomDataApiV1TradesTradeIdCustomDataGetExecute(r ApiListCustomDataApiV1TradesTradeIdCustomDataGetRequest) ([]ListCustomData, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []ListCustomData
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListCustomDataApiV1TradesTradeIdCustomDataGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/trades/{trade_id}/custom-data"
+	localVarPath = strings.Replace(localVarPath, "{"+"trade_id"+"}", url.PathEscape(parameterValueToString(r.tradeId, "tradeId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.key != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "key", r.key, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiListExchangesApiV1ExchangesGetRequest struct {
 	ctx        context.Context
 	ApiService *FreqtradeAPIService
@@ -3245,6 +3601,254 @@ func (a *FreqtradeAPIService) ListFreqaimodelsApiV1FreqaimodelsGetExecute(r ApiL
 		newErr := &GenericOpenAPIError{
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListHyperoptlossApiV1HyperoptlossGetRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+}
+
+func (r ApiListHyperoptlossApiV1HyperoptlossGetRequest) Execute() (*HyperoptLossListResponse, *http.Response, error) {
+	return r.ApiService.ListHyperoptlossApiV1HyperoptlossGetExecute(r)
+}
+
+/*
+ListHyperoptlossApiV1HyperoptlossGet List Hyperoptloss
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListHyperoptlossApiV1HyperoptlossGetRequest
+*/
+func (a *FreqtradeAPIService) ListHyperoptlossApiV1HyperoptlossGet(ctx context.Context) ApiListHyperoptlossApiV1HyperoptlossGetRequest {
+	return ApiListHyperoptlossApiV1HyperoptlossGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return HyperoptLossListResponse
+func (a *FreqtradeAPIService) ListHyperoptlossApiV1HyperoptlossGetExecute(r ApiListHyperoptlossApiV1HyperoptlossGetRequest) (*HyperoptLossListResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *HyperoptLossListResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListHyperoptlossApiV1HyperoptlossGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/hyperoptloss"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+	key        *string
+	limit      *int64
+	offset     *int64
+}
+
+// Optional key to filter data
+func (r ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest) Key(key string) ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest {
+	r.key = &key
+	return r
+}
+
+// Maximum number of different trades to return data
+func (r ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest) Limit(limit int64) ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest {
+	r.limit = &limit
+	return r
+}
+
+// Number of trades to skip for pagination
+func (r ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest) Offset(offset int64) ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest) Execute() ([]ListCustomData, *http.Response, error) {
+	return r.ApiService.ListOpenTradesCustomDataApiV1TradesOpenCustomDataGetExecute(r)
+}
+
+/*
+ListOpenTradesCustomDataApiV1TradesOpenCustomDataGet List Open Trades Custom Data
+
+Fetch custom data for all open trades.
+If a key is provided, it will be used to filter data accordingly.
+Pagination is implemented via the `limit` and `offset` parameters.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest
+*/
+func (a *FreqtradeAPIService) ListOpenTradesCustomDataApiV1TradesOpenCustomDataGet(ctx context.Context) ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest {
+	return ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []ListCustomData
+func (a *FreqtradeAPIService) ListOpenTradesCustomDataApiV1TradesOpenCustomDataGetExecute(r ApiListOpenTradesCustomDataApiV1TradesOpenCustomDataGetRequest) ([]ListCustomData, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []ListCustomData
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ListOpenTradesCustomDataApiV1TradesOpenCustomDataGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/trades/open/custom-data"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.key != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "key", r.key, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int64 = 100
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", defaultValue, "form", "")
+		r.limit = &defaultValue
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int64 = 0
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", defaultValue, "form", "")
+		r.offset = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3672,6 +4276,159 @@ func (a *FreqtradeAPIService) LogsApiV1LogsGetExecute(r ApiLogsApiV1LogsGetReque
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiMarketsApiV1MarketsGetRequest struct {
+	ctx         context.Context
+	ApiService  *FreqtradeAPIService
+	tradingMode *TradingMode
+	marginMode  *MarginMode
+	exchange    *string
+	base        *string
+	quote       *string
+}
+
+func (r ApiMarketsApiV1MarketsGetRequest) TradingMode(tradingMode TradingMode) ApiMarketsApiV1MarketsGetRequest {
+	r.tradingMode = &tradingMode
+	return r
+}
+
+func (r ApiMarketsApiV1MarketsGetRequest) MarginMode(marginMode MarginMode) ApiMarketsApiV1MarketsGetRequest {
+	r.marginMode = &marginMode
+	return r
+}
+
+func (r ApiMarketsApiV1MarketsGetRequest) Exchange(exchange string) ApiMarketsApiV1MarketsGetRequest {
+	r.exchange = &exchange
+	return r
+}
+
+func (r ApiMarketsApiV1MarketsGetRequest) Base(base string) ApiMarketsApiV1MarketsGetRequest {
+	r.base = &base
+	return r
+}
+
+func (r ApiMarketsApiV1MarketsGetRequest) Quote(quote string) ApiMarketsApiV1MarketsGetRequest {
+	r.quote = &quote
+	return r
+}
+
+func (r ApiMarketsApiV1MarketsGetRequest) Execute() (*MarketResponse, *http.Response, error) {
+	return r.ApiService.MarketsApiV1MarketsGetExecute(r)
+}
+
+/*
+MarketsApiV1MarketsGet Markets
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiMarketsApiV1MarketsGetRequest
+*/
+func (a *FreqtradeAPIService) MarketsApiV1MarketsGet(ctx context.Context) ApiMarketsApiV1MarketsGetRequest {
+	return ApiMarketsApiV1MarketsGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return MarketResponse
+func (a *FreqtradeAPIService) MarketsApiV1MarketsGetExecute(r ApiMarketsApiV1MarketsGetRequest) (*MarketResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MarketResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.MarketsApiV1MarketsGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/markets"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.tradingMode != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "trading_mode", r.tradingMode, "form", "")
+	}
+	if r.marginMode != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "margin_mode", r.marginMode, "form", "")
+	}
+	if r.exchange != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "exchange", r.exchange, "form", "")
+	}
+	if r.base != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "base", r.base, "form", "")
+	}
+	if r.quote != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "quote", r.quote, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiMixTagsApiV1MixTagsGetRequest struct {
 	ctx        context.Context
 	ApiService *FreqtradeAPIService
@@ -3795,6 +4552,7 @@ type ApiMonthlyApiV1MonthlyGetRequest struct {
 	timescale  *int64
 }
 
+// Number of months to fetch data for
 func (r ApiMonthlyApiV1MonthlyGetRequest) Timescale(timescale int64) ApiMonthlyApiV1MonthlyGetRequest {
 	r.timescale = &timescale
 	return r
@@ -4047,6 +4805,125 @@ func (a *FreqtradeAPIService) PairCandlesApiV1PairCandlesGetExecute(r ApiPairCan
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiPairCandlesFilteredApiV1PairCandlesPostRequest struct {
+	ctx                context.Context
+	ApiService         *FreqtradeAPIService
+	pairCandlesRequest *PairCandlesRequest
+}
+
+func (r ApiPairCandlesFilteredApiV1PairCandlesPostRequest) PairCandlesRequest(pairCandlesRequest PairCandlesRequest) ApiPairCandlesFilteredApiV1PairCandlesPostRequest {
+	r.pairCandlesRequest = &pairCandlesRequest
+	return r
+}
+
+func (r ApiPairCandlesFilteredApiV1PairCandlesPostRequest) Execute() (*PairHistory, *http.Response, error) {
+	return r.ApiService.PairCandlesFilteredApiV1PairCandlesPostExecute(r)
+}
+
+/*
+PairCandlesFilteredApiV1PairCandlesPost Pair Candles Filtered
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPairCandlesFilteredApiV1PairCandlesPostRequest
+*/
+func (a *FreqtradeAPIService) PairCandlesFilteredApiV1PairCandlesPost(ctx context.Context) ApiPairCandlesFilteredApiV1PairCandlesPostRequest {
+	return ApiPairCandlesFilteredApiV1PairCandlesPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return PairHistory
+func (a *FreqtradeAPIService) PairCandlesFilteredApiV1PairCandlesPostExecute(r ApiPairCandlesFilteredApiV1PairCandlesPostRequest) (*PairHistory, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PairHistory
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairCandlesFilteredApiV1PairCandlesPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/pair_candles"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.pairCandlesRequest == nil {
+		return localVarReturnValue, nil, reportError("pairCandlesRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.pairCandlesRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiPairHistoryApiV1PairHistoryGetRequest struct {
 	ctx         context.Context
 	ApiService  *FreqtradeAPIService
@@ -4157,6 +5034,244 @@ func (a *FreqtradeAPIService) PairHistoryApiV1PairHistoryGetExecute(r ApiPairHis
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiPairHistoryFilteredApiV1PairHistoryPostRequest struct {
+	ctx                context.Context
+	ApiService         *FreqtradeAPIService
+	pairHistoryRequest *PairHistoryRequest
+}
+
+func (r ApiPairHistoryFilteredApiV1PairHistoryPostRequest) PairHistoryRequest(pairHistoryRequest PairHistoryRequest) ApiPairHistoryFilteredApiV1PairHistoryPostRequest {
+	r.pairHistoryRequest = &pairHistoryRequest
+	return r
+}
+
+func (r ApiPairHistoryFilteredApiV1PairHistoryPostRequest) Execute() (*PairHistory, *http.Response, error) {
+	return r.ApiService.PairHistoryFilteredApiV1PairHistoryPostExecute(r)
+}
+
+/*
+PairHistoryFilteredApiV1PairHistoryPost Pair History Filtered
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPairHistoryFilteredApiV1PairHistoryPostRequest
+*/
+func (a *FreqtradeAPIService) PairHistoryFilteredApiV1PairHistoryPost(ctx context.Context) ApiPairHistoryFilteredApiV1PairHistoryPostRequest {
+	return ApiPairHistoryFilteredApiV1PairHistoryPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return PairHistory
+func (a *FreqtradeAPIService) PairHistoryFilteredApiV1PairHistoryPostExecute(r ApiPairHistoryFilteredApiV1PairHistoryPostRequest) (*PairHistory, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PairHistory
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairHistoryFilteredApiV1PairHistoryPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/pair_history"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.pairHistoryRequest == nil {
+		return localVarReturnValue, nil, reportError("pairHistoryRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.pairHistoryRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiPairlistsEvaluateApiV1DownloadDataPostRequest struct {
+	ctx                 context.Context
+	ApiService          *FreqtradeAPIService
+	downloadDataPayload *DownloadDataPayload
+}
+
+func (r ApiPairlistsEvaluateApiV1DownloadDataPostRequest) DownloadDataPayload(downloadDataPayload DownloadDataPayload) ApiPairlistsEvaluateApiV1DownloadDataPostRequest {
+	r.downloadDataPayload = &downloadDataPayload
+	return r
+}
+
+func (r ApiPairlistsEvaluateApiV1DownloadDataPostRequest) Execute() (*BgJobStarted, *http.Response, error) {
+	return r.ApiService.PairlistsEvaluateApiV1DownloadDataPostExecute(r)
+}
+
+/*
+PairlistsEvaluateApiV1DownloadDataPost Pairlists Evaluate
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPairlistsEvaluateApiV1DownloadDataPostRequest
+*/
+func (a *FreqtradeAPIService) PairlistsEvaluateApiV1DownloadDataPost(ctx context.Context) ApiPairlistsEvaluateApiV1DownloadDataPostRequest {
+	return ApiPairlistsEvaluateApiV1DownloadDataPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return BgJobStarted
+func (a *FreqtradeAPIService) PairlistsEvaluateApiV1DownloadDataPostExecute(r ApiPairlistsEvaluateApiV1DownloadDataPostRequest) (*BgJobStarted, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BgJobStarted
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PairlistsEvaluateApiV1DownloadDataPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/download_data"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.downloadDataPayload == nil {
+		return localVarReturnValue, nil, reportError("downloadDataPayload is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.downloadDataPayload
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -4419,6 +5534,300 @@ func (a *FreqtradeAPIService) PairlistsEvaluateGetApiV1PairlistsEvaluateJobidGet
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiPauseApiV1PausePostRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+}
+
+func (r ApiPauseApiV1PausePostRequest) Execute() (*StatusMsg, *http.Response, error) {
+	return r.ApiService.PauseApiV1PausePostExecute(r)
+}
+
+/*
+PauseApiV1PausePost Pause
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPauseApiV1PausePostRequest
+*/
+func (a *FreqtradeAPIService) PauseApiV1PausePost(ctx context.Context) ApiPauseApiV1PausePostRequest {
+	return ApiPauseApiV1PausePostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return StatusMsg
+func (a *FreqtradeAPIService) PauseApiV1PausePostExecute(r ApiPauseApiV1PausePostRequest) (*StatusMsg, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PauseApiV1PausePost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/pause"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiPauseApiV1StopbuyPostRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+}
+
+func (r ApiPauseApiV1StopbuyPostRequest) Execute() (*StatusMsg, *http.Response, error) {
+	return r.ApiService.PauseApiV1StopbuyPostExecute(r)
+}
+
+/*
+PauseApiV1StopbuyPost Pause
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPauseApiV1StopbuyPostRequest
+*/
+func (a *FreqtradeAPIService) PauseApiV1StopbuyPost(ctx context.Context) ApiPauseApiV1StopbuyPostRequest {
+	return ApiPauseApiV1StopbuyPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return StatusMsg
+func (a *FreqtradeAPIService) PauseApiV1StopbuyPostExecute(r ApiPauseApiV1StopbuyPostRequest) (*StatusMsg, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PauseApiV1StopbuyPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/stopbuy"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiPauseApiV1StopentryPostRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+}
+
+func (r ApiPauseApiV1StopentryPostRequest) Execute() (*StatusMsg, *http.Response, error) {
+	return r.ApiService.PauseApiV1StopentryPostExecute(r)
+}
+
+/*
+PauseApiV1StopentryPost Pause
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPauseApiV1StopentryPostRequest
+*/
+func (a *FreqtradeAPIService) PauseApiV1StopentryPost(ctx context.Context) ApiPauseApiV1StopentryPostRequest {
+	return ApiPauseApiV1StopentryPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return StatusMsg
+func (a *FreqtradeAPIService) PauseApiV1StopentryPostExecute(r ApiPauseApiV1StopentryPostRequest) (*StatusMsg, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *StatusMsg
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.PauseApiV1StopentryPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/stopentry"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -4734,6 +6143,104 @@ func (a *FreqtradeAPIService) PlotConfigApiV1PlotConfigGetExecute(r ApiPlotConfi
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiProfitAllApiV1ProfitAllGetRequest struct {
+	ctx        context.Context
+	ApiService *FreqtradeAPIService
+}
+
+func (r ApiProfitAllApiV1ProfitAllGetRequest) Execute() (*ProfitAll, *http.Response, error) {
+	return r.ApiService.ProfitAllApiV1ProfitAllGetExecute(r)
+}
+
+/*
+ProfitAllApiV1ProfitAllGet Profit All
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiProfitAllApiV1ProfitAllGetRequest
+*/
+func (a *FreqtradeAPIService) ProfitAllApiV1ProfitAllGet(ctx context.Context) ApiProfitAllApiV1ProfitAllGetRequest {
+	return ApiProfitAllApiV1ProfitAllGetRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return ProfitAll
+func (a *FreqtradeAPIService) ProfitAllApiV1ProfitAllGetExecute(r ApiProfitAllApiV1ProfitAllGetRequest) (*ProfitAll, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ProfitAll
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.ProfitAllApiV1ProfitAllGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/profit_all"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -5436,202 +6943,6 @@ func (a *FreqtradeAPIService) StopApiV1StopPostExecute(r ApiStopApiV1StopPostReq
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiStopBuyApiV1StopbuyPostRequest struct {
-	ctx        context.Context
-	ApiService *FreqtradeAPIService
-}
-
-func (r ApiStopBuyApiV1StopbuyPostRequest) Execute() (*StatusMsg, *http.Response, error) {
-	return r.ApiService.StopBuyApiV1StopbuyPostExecute(r)
-}
-
-/*
-StopBuyApiV1StopbuyPost Stop Buy
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiStopBuyApiV1StopbuyPostRequest
-*/
-func (a *FreqtradeAPIService) StopBuyApiV1StopbuyPost(ctx context.Context) ApiStopBuyApiV1StopbuyPostRequest {
-	return ApiStopBuyApiV1StopbuyPostRequest{
-		ApiService: a,
-		ctx:        ctx,
-	}
-}
-
-// Execute executes the request
-//
-//	@return StatusMsg
-func (a *FreqtradeAPIService) StopBuyApiV1StopbuyPostExecute(r ApiStopBuyApiV1StopbuyPostRequest) (*StatusMsg, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *StatusMsg
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StopBuyApiV1StopbuyPost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/stopbuy"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiStopBuyApiV1StopentryPostRequest struct {
-	ctx        context.Context
-	ApiService *FreqtradeAPIService
-}
-
-func (r ApiStopBuyApiV1StopentryPostRequest) Execute() (*StatusMsg, *http.Response, error) {
-	return r.ApiService.StopBuyApiV1StopentryPostExecute(r)
-}
-
-/*
-StopBuyApiV1StopentryPost Stop Buy
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiStopBuyApiV1StopentryPostRequest
-*/
-func (a *FreqtradeAPIService) StopBuyApiV1StopentryPost(ctx context.Context) ApiStopBuyApiV1StopentryPostRequest {
-	return ApiStopBuyApiV1StopentryPostRequest{
-		ApiService: a,
-		ctx:        ctx,
-	}
-}
-
-// Execute executes the request
-//
-//	@return StatusMsg
-func (a *FreqtradeAPIService) StopBuyApiV1StopentryPostExecute(r ApiStopBuyApiV1StopentryPostRequest) (*StatusMsg, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *StatusMsg
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.StopBuyApiV1StopentryPost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/stopentry"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
 type ApiSysinfoApiV1SysinfoGetRequest struct {
 	ctx        context.Context
 	ApiService *FreqtradeAPIService
@@ -6267,15 +7578,24 @@ type ApiTradesApiV1TradesGetRequest struct {
 	ApiService *FreqtradeAPIService
 	limit      *int64
 	offset     *int64
+	orderById  *bool
 }
 
+// Maximum number of different trades to return data
 func (r ApiTradesApiV1TradesGetRequest) Limit(limit int64) ApiTradesApiV1TradesGetRequest {
 	r.limit = &limit
 	return r
 }
 
+// Number of trades to skip for pagination
 func (r ApiTradesApiV1TradesGetRequest) Offset(offset int64) ApiTradesApiV1TradesGetRequest {
 	r.offset = &offset
+	return r
+}
+
+// Sort trades by id (default: True). If False, sorts by latest timestamp
+func (r ApiTradesApiV1TradesGetRequest) OrderById(orderById bool) ApiTradesApiV1TradesGetRequest {
+	r.orderById = &orderById
 	return r
 }
 
@@ -6331,6 +7651,13 @@ func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1Trades
 		var defaultValue int64 = 0
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", defaultValue, "form", "")
 		r.offset = &defaultValue
+	}
+	if r.orderById != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "order_by_id", r.orderById, "form", "")
+	} else {
+		var defaultValue bool = true
+		parameterAddToHeaderOrQuery(localVarQueryParams, "order_by_id", defaultValue, "form", "")
+		r.orderById = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -6614,6 +7941,7 @@ type ApiWeeklyApiV1WeeklyGetRequest struct {
 	timescale  *int64
 }
 
+// Number of weeks to fetch data for
 func (r ApiWeeklyApiV1WeeklyGetRequest) Timescale(timescale int64) ApiWeeklyApiV1WeeklyGetRequest {
 	r.timescale = &timescale
 	return r

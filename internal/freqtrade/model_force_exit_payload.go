@@ -21,7 +21,7 @@ var _ MappedNullable = &ForceExitPayload{}
 
 // ForceExitPayload struct for ForceExitPayload
 type ForceExitPayload struct {
-	Tradeid   string                  `json:"tradeid"`
+	Tradeid   Tradeid                 `json:"tradeid"`
 	Ordertype NullableOrderTypeValues `json:"ordertype,omitempty"`
 	Amount    NullableFloat32         `json:"amount,omitempty"`
 }
@@ -32,7 +32,7 @@ type _ForceExitPayload ForceExitPayload
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewForceExitPayload(tradeid string) *ForceExitPayload {
+func NewForceExitPayload(tradeid Tradeid) *ForceExitPayload {
 	this := ForceExitPayload{}
 	this.Tradeid = tradeid
 	return &this
@@ -47,9 +47,9 @@ func NewForceExitPayloadWithDefaults() *ForceExitPayload {
 }
 
 // GetTradeid returns the Tradeid field value
-func (o *ForceExitPayload) GetTradeid() string {
+func (o *ForceExitPayload) GetTradeid() Tradeid {
 	if o == nil {
-		var ret string
+		var ret Tradeid
 		return ret
 	}
 
@@ -58,7 +58,7 @@ func (o *ForceExitPayload) GetTradeid() string {
 
 // GetTradeidOk returns a tuple with the Tradeid field value
 // and a boolean to check if the value has been set.
-func (o *ForceExitPayload) GetTradeidOk() (*string, bool) {
+func (o *ForceExitPayload) GetTradeidOk() (*Tradeid, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -66,7 +66,7 @@ func (o *ForceExitPayload) GetTradeidOk() (*string, bool) {
 }
 
 // SetTradeid sets field value
-func (o *ForceExitPayload) SetTradeid(v string) {
+func (o *ForceExitPayload) SetTradeid(v Tradeid) {
 	o.Tradeid = v
 }
 

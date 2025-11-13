@@ -27,6 +27,8 @@ export type Backtest = Node & {
   /** Error message if backtest failed */
   errorMessage?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Container logs from backtest execution */
+  logs?: Maybe<Scalars['String']['output']>;
   /** Backtest result data (metrics, logs, trades, etc.) */
   result?: Maybe<Scalars['Map']['output']>;
   runner: BotRunner;
@@ -166,6 +168,22 @@ export type BacktestWhereInput = {
   idLTE?: InputMaybe<Scalars['ID']['input']>;
   idNEQ?: InputMaybe<Scalars['ID']['input']>;
   idNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** logs field predicates */
+  logs?: InputMaybe<Scalars['String']['input']>;
+  logsContains?: InputMaybe<Scalars['String']['input']>;
+  logsContainsFold?: InputMaybe<Scalars['String']['input']>;
+  logsEqualFold?: InputMaybe<Scalars['String']['input']>;
+  logsGT?: InputMaybe<Scalars['String']['input']>;
+  logsGTE?: InputMaybe<Scalars['String']['input']>;
+  logsHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  logsHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  logsIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  logsIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  logsLT?: InputMaybe<Scalars['String']['input']>;
+  logsLTE?: InputMaybe<Scalars['String']['input']>;
+  logsNEQ?: InputMaybe<Scalars['String']['input']>;
+  logsNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  logsNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   not?: InputMaybe<BacktestWhereInput>;
   or?: InputMaybe<Array<BacktestWhereInput>>;
   /** runner_id field predicates */
@@ -938,6 +956,8 @@ export type CreateBacktestInput = {
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Error message if backtest failed */
   errorMessage?: InputMaybe<Scalars['String']['input']>;
+  /** Container logs from backtest execution */
+  logs?: InputMaybe<Scalars['String']['input']>;
   /** Backtest result data (metrics, logs, trades, etc.) */
   result?: InputMaybe<Scalars['Map']['input']>;
   runnerID: Scalars['ID']['input'];

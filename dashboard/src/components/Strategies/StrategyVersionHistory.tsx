@@ -36,6 +36,16 @@ interface Version {
   backtest?: {
     id: string;
     status: string;
+    summary?: {
+      totalTrades: number;
+      wins: number;
+      losses: number;
+      winRate?: number | null;
+      profitTotal?: number | null;
+      profitTotalAbs?: number | null;
+      maxDrawdown?: number | null;
+      profitFactor?: number | null;
+    } | null;
   } | null;
 }
 
@@ -86,9 +96,12 @@ export const StrategyVersionHistory = ({
                 <TableHead>
                   <TableRow>
                     <TableCell>Version</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Bots</TableCell>
-                    <TableCell>Backtest</TableCell>
+                    <TableCell align="center">Bots</TableCell>
+                    <TableCell align="center">Backtest</TableCell>
+                    <TableCell align="right">Trades</TableCell>
+                    <TableCell align="right">Win Rate</TableCell>
+                    <TableCell align="right">Profit</TableCell>
+                    <TableCell align="right">Max DD</TableCell>
                     <TableCell>Created</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
@@ -122,19 +135,58 @@ export const StrategyVersionHistory = ({
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" color="text.secondary">
-                            {version.version || 'N/A'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>{version.bots?.totalCount || 0}</TableCell>
-                        <TableCell>
+                        <TableCell align="center">{version.bots?.totalCount || 0}</TableCell>
+                        <TableCell align="center">
                           <Chip
-                            label={version.backtest ? 'Yes' : 'No'}
+                            label={version.backtest?.status || 'N/A'}
                             size="small"
-                            color={version.backtest ? 'success' : 'default'}
+                            color={version.backtest?.status === 'completed' ? 'success' : version.backtest?.status === 'failed' ? 'error' : 'default'}
                             variant="outlined"
                           />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="caption" color="text.secondary">
+                            {version.backtest?.summary?.totalTrades ?? '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography
+                            variant="caption"
+                            color={
+                              version.backtest?.summary?.winRate
+                                ? version.backtest.summary.winRate >= 50
+                                  ? 'success.main'
+                                  : 'text.secondary'
+                                : 'text.secondary'
+                            }
+                          >
+                            {version.backtest?.summary?.winRate
+                              ? `${version.backtest.summary.winRate.toFixed(1)}%`
+                              : '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography
+                            variant="caption"
+                            color={
+                              version.backtest?.summary?.profitTotal
+                                ? version.backtest.summary.profitTotal >= 0
+                                  ? 'success.main'
+                                  : 'error.main'
+                                : 'text.secondary'
+                            }
+                          >
+                            {version.backtest?.summary?.profitTotal
+                              ? `${version.backtest.summary.profitTotal.toFixed(2)}%`
+                              : '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="caption" color="error.main">
+                            {version.backtest?.summary?.maxDrawdown
+                              ? `${(version.backtest.summary.maxDrawdown * 100).toFixed(1)}%`
+                              : '-'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="caption" color="text.secondary">

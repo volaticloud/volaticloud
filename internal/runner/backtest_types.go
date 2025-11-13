@@ -14,19 +14,10 @@ type BacktestSpec struct {
 	StrategyCode string
 
 	// Backtest Configuration
-	Config map[string]interface{} // Full freqtrade backtest config
-
-	// Time Range
-	StartDate time.Time
-	EndDate   time.Time
-
-	// Trading Parameters
-	Pairs                  []string // Trading pairs (e.g., ["BTC/USDT", "ETH/USDT"])
-	Timeframe              string   // Candlestick timeframe (e.g., "5m", "1h")
-	StakeAmount            float64  // Amount to stake per trade
-	StakeCurrency          string   // Currency to stake (e.g., "USDT")
-	MaxOpenTrades          int      // Maximum number of concurrent trades
-	EnablePositionStacking bool     // Allow multiple trades on same pair
+	// Contains ALL backtest settings: pairs, timeframe, timerange, stake_amount,
+	// stake_currency, max_open_trades, enable_position_stacking, trading_mode, etc.
+	// This is passed directly to Freqtrade as config.json
+	Config map[string]interface{}
 
 	// Runtime Configuration
 	FreqtradeVersion string            // Freqtrade Docker image version
@@ -122,26 +113,15 @@ type HyperOptSpec struct {
 	StrategyCode string
 
 	// HyperOpt Configuration
-	Config map[string]interface{} // Full freqtrade hyperopt config
+	// Contains ALL config settings: pairs, timeframe, stake_amount, stake_currency,
+	// max_open_trades, trading_mode, timerange, etc.
+	// This is passed directly to Freqtrade as config.json
+	Config map[string]interface{}
 
-	// Time Range
-	StartDate time.Time
-	EndDate   time.Time
-
-	// Optimization Parameters
-	Epochs            int      // Number of optimization epochs
-	Spaces            []string // Spaces to optimize (buy, sell, roi, stoploss, trailing, protection, etc.)
-	LossFunction      string   // Loss function (SharpeHyperOptLoss, SortinoHyperOptLoss, etc.)
-	RandomState       int      // Random seed for reproducibility
-	MinTrades         int      // Minimum trades required
-	EnableMaxDrawdown bool     // Whether to optimize for max drawdown
-
-	// Trading Parameters (same as backtest)
-	Pairs         []string
-	Timeframe     string
-	StakeAmount   float64
-	StakeCurrency string
-	MaxOpenTrades int
+	// Optimization Parameters (used in command line arguments)
+	Epochs       int      // Number of optimization epochs
+	Spaces       []string // Spaces to optimize (buy, sell, roi, stoploss, trailing, protection, etc.)
+	LossFunction string   // Loss function (SharpeHyperOptLoss, SortinoHyperOptLoss, etc.)
 
 	// Runtime Configuration
 	FreqtradeVersion string

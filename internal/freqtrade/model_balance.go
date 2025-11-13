@@ -30,7 +30,6 @@ type Balance struct {
 	EstStakeBot  NullableFloat32 `json:"est_stake_bot,omitempty"`
 	Stake        string          `json:"stake"`
 	Side         string          `json:"side"`
-	Leverage     float32         `json:"leverage"`
 	IsPosition   bool            `json:"is_position"`
 	Position     float32         `json:"position"`
 	IsBotManaged bool            `json:"is_bot_managed"`
@@ -42,7 +41,7 @@ type _Balance Balance
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewBalance(currency string, free float32, balance float32, used float32, estStake float32, stake string, side string, leverage float32, isPosition bool, position float32, isBotManaged bool) *Balance {
+func NewBalance(currency string, free float32, balance float32, used float32, estStake float32, stake string, side string, isPosition bool, position float32, isBotManaged bool) *Balance {
 	this := Balance{}
 	this.Currency = currency
 	this.Free = free
@@ -51,7 +50,6 @@ func NewBalance(currency string, free float32, balance float32, used float32, es
 	this.EstStake = estStake
 	this.Stake = stake
 	this.Side = side
-	this.Leverage = leverage
 	this.IsPosition = isPosition
 	this.Position = position
 	this.IsBotManaged = isBotManaged
@@ -320,30 +318,6 @@ func (o *Balance) SetSide(v string) {
 	o.Side = v
 }
 
-// GetLeverage returns the Leverage field value
-func (o *Balance) GetLeverage() float32 {
-	if o == nil {
-		var ret float32
-		return ret
-	}
-
-	return o.Leverage
-}
-
-// GetLeverageOk returns a tuple with the Leverage field value
-// and a boolean to check if the value has been set.
-func (o *Balance) GetLeverageOk() (*float32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Leverage, true
-}
-
-// SetLeverage sets field value
-func (o *Balance) SetLeverage(v float32) {
-	o.Leverage = v
-}
-
 // GetIsPosition returns the IsPosition field value
 func (o *Balance) GetIsPosition() bool {
 	if o == nil {
@@ -439,7 +413,6 @@ func (o Balance) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["stake"] = o.Stake
 	toSerialize["side"] = o.Side
-	toSerialize["leverage"] = o.Leverage
 	toSerialize["is_position"] = o.IsPosition
 	toSerialize["position"] = o.Position
 	toSerialize["is_bot_managed"] = o.IsBotManaged
@@ -458,7 +431,6 @@ func (o *Balance) UnmarshalJSON(data []byte) (err error) {
 		"est_stake",
 		"stake",
 		"side",
-		"leverage",
 		"is_position",
 		"position",
 		"is_bot_managed",

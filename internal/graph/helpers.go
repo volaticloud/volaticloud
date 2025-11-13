@@ -155,67 +155,18 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		return nil, fmt.Errorf("strategy has no config")
 	}
 
-	// Validate config contains all required fields (like bots do)
+	// Validate config contains all required fields
 	if err := freqtrade.ValidateConfig(strategy.Config); err != nil {
 		return nil, fmt.Errorf("invalid strategy config: %w", err)
 	}
 
-	// Extract required fields from config
-	pairs, ok := strategy.Config["pairs"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("pairs not found in strategy config")
-	}
-	pairStrings := make([]string, len(pairs))
-	for i, p := range pairs {
-		str, ok := p.(string)
-		if !ok {
-			return nil, fmt.Errorf("pair at index %d is not a string", i)
-		}
-		pairStrings[i] = str
-	}
-
-	timeframe, ok := strategy.Config["timeframe"].(string)
-	if !ok {
-		return nil, fmt.Errorf("timeframe not found in strategy config")
-	}
-
-	// Extract stake_amount and stake_currency
-	stakeAmount, ok := strategy.Config["stake_amount"].(float64)
-	if !ok {
-		// Try int
-		if stakeAmountInt, ok := strategy.Config["stake_amount"].(int); ok {
-			stakeAmount = float64(stakeAmountInt)
-		} else {
-			return nil, fmt.Errorf("stake_amount not found or invalid in strategy config")
-		}
-	}
-
-	stakeCurrency, ok := strategy.Config["stake_currency"].(string)
-	if !ok {
-		return nil, fmt.Errorf("stake_currency not found in strategy config")
-	}
-
-	// Optional fields with defaults
-	maxOpenTrades := 3 // Default
-	if mot, ok := strategy.Config["max_open_trades"].(float64); ok {
-		maxOpenTrades = int(mot)
-	} else if mot, ok := strategy.Config["max_open_trades"].(int); ok {
-		maxOpenTrades = mot
-	}
-
-	enablePositionStacking := false
-	if eps, ok := strategy.Config["enable_position_stacking"].(bool); ok {
-		enablePositionStacking = eps
-	}
-
-	// Get Freqtrade version (default to stable if not specified)
+	// Extract optional runtime configuration from config
 	freqtradeVersion := "stable"
 	if fv, ok := strategy.Config["freqtrade_version"].(string); ok && fv != "" {
 		freqtradeVersion = fv
 	}
 
-	// Data source configuration
-	dataSource := "download" // Default to downloading data
+	dataSource := "download"
 	if ds, ok := strategy.Config["data_source"].(string); ok {
 		dataSource = ds
 	}
@@ -225,21 +176,16 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		dataPath = dp
 	}
 
+	// Build BacktestSpec - config contains everything (pairs, timeframe, stake_amount, etc.)
 	spec := &runner.BacktestSpec{
-		ID:                     bt.ID.String(),
-		StrategyName:           strategy.Name,
-		StrategyCode:           strategy.Code,
-		Config:                 strategy.Config,
-		Pairs:                  pairStrings,
-		Timeframe:              timeframe,
-		StakeAmount:            stakeAmount,
-		StakeCurrency:          stakeCurrency,
-		MaxOpenTrades:          maxOpenTrades,
-		EnablePositionStacking: enablePositionStacking,
-		FreqtradeVersion:       freqtradeVersion,
-		Environment:            make(map[string]string),
-		DataSource:             dataSource,
-		DataPath:               dataPath,
+		ID:               bt.ID.String(),
+		StrategyName:     strategy.Name,
+		StrategyCode:     strategy.Code,
+		Config:           strategy.Config,
+		FreqtradeVersion: freqtradeVersion,
+		Environment:      make(map[string]string),
+		DataSource:       dataSource,
+		DataPath:         dataPath,
 	}
 
 	return spec, nil

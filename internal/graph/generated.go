@@ -62,6 +62,7 @@ type ComplexityRoot struct {
 		CreatedAt    func(childComplexity int) int
 		ErrorMessage func(childComplexity int) int
 		ID           func(childComplexity int) int
+		Logs         func(childComplexity int) int
 		Result       func(childComplexity int) int
 		Runner       func(childComplexity int) int
 		RunnerID     func(childComplexity int) int
@@ -417,6 +418,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.ID(childComplexity), true
+	case "Backtest.logs":
+		if e.complexity.Backtest.Logs == nil {
+			break
+		}
+
+		return e.complexity.Backtest.Logs(childComplexity), true
 	case "Backtest.result":
 		if e.complexity.Backtest.Result == nil {
 			break
@@ -2810,6 +2817,35 @@ func (ec *executionContext) fieldContext_Backtest_errorMessage(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Backtest_logs(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_logs,
+		func(ctx context.Context) (any, error) {
+			return obj.Logs, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_logs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Backtest_strategyID(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3279,6 +3315,8 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "logs":
+				return ec.fieldContext_Backtest_logs(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
 			case "runnerID":
@@ -7760,6 +7798,8 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "logs":
+				return ec.fieldContext_Backtest_logs(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
 			case "runnerID":
@@ -7870,6 +7910,8 @@ func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Contex
 				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "logs":
+				return ec.fieldContext_Backtest_logs(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
 			case "runnerID":
@@ -7939,6 +7981,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "logs":
+				return ec.fieldContext_Backtest_logs(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
 			case "runnerID":
@@ -9360,6 +9404,8 @@ func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, fi
 				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "logs":
+				return ec.fieldContext_Backtest_logs(ctx, field)
 			case "strategyID":
 				return ec.fieldContext_Backtest_strategyID(ctx, field)
 			case "runnerID":
@@ -11937,7 +11983,7 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "status", "statusNEQ", "statusIn", "statusNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "completedAt", "completedAtNEQ", "completedAtIn", "completedAtNotIn", "completedAtGT", "completedAtGTE", "completedAtLT", "completedAtLTE", "completedAtIsNil", "completedAtNotNil", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "status", "statusNEQ", "statusIn", "statusNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "logs", "logsNEQ", "logsIn", "logsNotIn", "logsGT", "logsGTE", "logsLT", "logsLTE", "logsContains", "logsHasPrefix", "logsHasSuffix", "logsIsNil", "logsNotNil", "logsEqualFold", "logsContainsFold", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "completedAt", "completedAtNEQ", "completedAtIn", "completedAtNotIn", "completedAtGT", "completedAtGTE", "completedAtLT", "completedAtLTE", "completedAtIsNil", "completedAtNotNil", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12259,6 +12305,111 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 				return it, err
 			}
 			it.ErrorMessageContainsFold = data
+		case "logs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logs"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Logs = data
+		case "logsNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsNEQ = data
+		case "logsIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsIn = data
+		case "logsNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsNotIn = data
+		case "logsGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsGT = data
+		case "logsGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsGTE = data
+		case "logsLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsLT = data
+		case "logsLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsLTE = data
+		case "logsContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsContains = data
+		case "logsHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsHasPrefix = data
+		case "logsHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsHasSuffix = data
+		case "logsIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsIsNil = data
+		case "logsNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsNotNil = data
+		case "logsEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsEqualFold = data
+		case "logsContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logsContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogsContainsFold = data
 		case "strategyID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -15640,7 +15791,7 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "result", "containerID", "errorMessage", "createdAt", "updatedAt", "completedAt", "strategyID", "runnerID"}
+	fieldsInOrder := [...]string{"status", "result", "containerID", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "strategyID", "runnerID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15675,6 +15826,13 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.ErrorMessage = data
+		case "logs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logs"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Logs = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -20152,6 +20310,8 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Backtest_containerID(ctx, field, obj)
 		case "errorMessage":
 			out.Values[i] = ec._Backtest_errorMessage(ctx, field, obj)
+		case "logs":
+			out.Values[i] = ec._Backtest_logs(ctx, field, obj)
 		case "strategyID":
 			out.Values[i] = ec._Backtest_strategyID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

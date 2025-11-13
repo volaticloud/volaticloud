@@ -67,6 +67,11 @@ func ErrorMessage(v string) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldErrorMessage, v))
 }
 
+// Logs applies equality check predicate on the "logs" field. It's identical to LogsEQ.
+func Logs(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldLogs, v))
+}
+
 // StrategyID applies equality check predicate on the "strategy_id" field. It's identical to StrategyIDEQ.
 func StrategyID(v uuid.UUID) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldStrategyID, v))
@@ -290,6 +295,81 @@ func ErrorMessageEqualFold(v string) predicate.Backtest {
 // ErrorMessageContainsFold applies the ContainsFold predicate on the "error_message" field.
 func ErrorMessageContainsFold(v string) predicate.Backtest {
 	return predicate.Backtest(sql.FieldContainsFold(FieldErrorMessage, v))
+}
+
+// LogsEQ applies the EQ predicate on the "logs" field.
+func LogsEQ(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldLogs, v))
+}
+
+// LogsNEQ applies the NEQ predicate on the "logs" field.
+func LogsNEQ(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNEQ(FieldLogs, v))
+}
+
+// LogsIn applies the In predicate on the "logs" field.
+func LogsIn(vs ...string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldIn(FieldLogs, vs...))
+}
+
+// LogsNotIn applies the NotIn predicate on the "logs" field.
+func LogsNotIn(vs ...string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotIn(FieldLogs, vs...))
+}
+
+// LogsGT applies the GT predicate on the "logs" field.
+func LogsGT(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGT(FieldLogs, v))
+}
+
+// LogsGTE applies the GTE predicate on the "logs" field.
+func LogsGTE(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGTE(FieldLogs, v))
+}
+
+// LogsLT applies the LT predicate on the "logs" field.
+func LogsLT(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLT(FieldLogs, v))
+}
+
+// LogsLTE applies the LTE predicate on the "logs" field.
+func LogsLTE(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLTE(FieldLogs, v))
+}
+
+// LogsContains applies the Contains predicate on the "logs" field.
+func LogsContains(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldContains(FieldLogs, v))
+}
+
+// LogsHasPrefix applies the HasPrefix predicate on the "logs" field.
+func LogsHasPrefix(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldHasPrefix(FieldLogs, v))
+}
+
+// LogsHasSuffix applies the HasSuffix predicate on the "logs" field.
+func LogsHasSuffix(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldHasSuffix(FieldLogs, v))
+}
+
+// LogsIsNil applies the IsNil predicate on the "logs" field.
+func LogsIsNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldIsNull(FieldLogs))
+}
+
+// LogsNotNil applies the NotNil predicate on the "logs" field.
+func LogsNotNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotNull(FieldLogs))
+}
+
+// LogsEqualFold applies the EqualFold predicate on the "logs" field.
+func LogsEqualFold(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEqualFold(FieldLogs, v))
+}
+
+// LogsContainsFold applies the ContainsFold predicate on the "logs" field.
+func LogsContainsFold(v string) predicate.Backtest {
+	return predicate.Backtest(sql.FieldContainsFold(FieldLogs, v))
 }
 
 // StrategyIDEQ applies the EQ predicate on the "strategy_id" field.

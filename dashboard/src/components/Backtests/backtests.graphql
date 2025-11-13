@@ -39,6 +39,7 @@ query GetBacktest($id: ID!) {
         id
         status
         result
+        logs
         containerID
         errorMessage
         createdAt

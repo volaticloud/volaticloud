@@ -20,6 +20,8 @@ query GetStrategyDetail($id: ID!) {
           createdAt
           updatedAt
           result
+          logs
+          errorMessage
           runner {
             id
             name
@@ -56,6 +58,16 @@ query GetStrategyVersions($name: String!) {
     backtest {
       id
       status
+      summary {
+        totalTrades
+        wins
+        losses
+        winRate
+        profitTotal
+        profitTotalAbs
+        maxDrawdown
+        profitFactor
+      }
     }
   }
 }

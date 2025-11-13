@@ -593,7 +593,14 @@ Backtests run in one-time Docker containers (non-persistent) that:
 **Key Implementation Files:**
 - `internal/runner/docker_backtest.go` - Backtest execution
 - `internal/graph/helpers.go:buildBacktestSpec()` - Config preparation
+- `internal/monitor/backtest_monitor.go` - Automatic container cleanup
 - Volume mount ensures data access without manual path configuration
+
+**Container Lifecycle:**
+- Backtest containers use `AutoRemove: false` to allow result retrieval after completion
+- The backtest monitor automatically cleans up containers after results are saved
+- Monitor runs every 30 seconds and calls `DeleteBacktest()` after status changes to completed/failed
+- Manual cleanup: `docker ps -a --filter "label=anytrade.task.type=backtest" --format "{{.ID}}" | xargs docker rm -f`
 
 **Data Format Compatibility:**
 - Feather format (default): Works out-of-the-box

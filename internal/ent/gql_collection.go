@@ -91,6 +91,11 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldErrorMessage)
 				fieldSeen[backtest.FieldErrorMessage] = struct{}{}
 			}
+		case "logs":
+			if _, ok := fieldSeen[backtest.FieldLogs]; !ok {
+				selectedFields = append(selectedFields, backtest.FieldLogs)
+				fieldSeen[backtest.FieldLogs] = struct{}{}
+			}
 		case "strategyID":
 			if _, ok := fieldSeen[backtest.FieldStrategyID]; !ok {
 				selectedFields = append(selectedFields, backtest.FieldStrategyID)

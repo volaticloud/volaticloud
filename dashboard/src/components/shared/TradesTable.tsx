@@ -11,8 +11,16 @@ import {
   Chip,
   Box,
   Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import {
+  TrendingUp,
+  TrendingDown,
+  ExpandMore as ExpandMoreIcon,
+  ShowChart as ShowChartIcon,
+} from '@mui/icons-material';
 
 interface Trade {
   pair?: string;
@@ -29,9 +37,28 @@ interface Trade {
 
 interface TradesTableProps {
   trades: Trade[];
+  /** If true, wrap the table in a collapsible section */
+  collapsible?: boolean;
+  /** Title for the collapsible header */
+  title?: string;
+  /** Initial collapsed state (only used if collapsible=true) */
+  initialCollapsed?: boolean;
 }
 
-const TradesTable: React.FC<TradesTableProps> = ({ trades }) => {
+/**
+ * Shared trades table component used across backtest and strategy pages.
+ * Features:
+ * - Comprehensive 10-column layout
+ * - Pagination support
+ * - Optional collapsible wrapper
+ * - Color-coded profit indicators
+ */
+const TradesTable: React.FC<TradesTableProps> = ({
+  trades,
+  collapsible = false,
+  title = 'Trades',
+  initialCollapsed = false,
+}) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -45,7 +72,7 @@ const TradesTable: React.FC<TradesTableProps> = ({ trades }) => {
   };
 
   if (!trades || trades.length === 0) {
-    return (
+    return collapsible ? null : (
       <Paper sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary">
           No trades found
@@ -56,7 +83,7 @@ const TradesTable: React.FC<TradesTableProps> = ({ trades }) => {
 
   const paginatedTrades = trades.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  return (
+  const tableContent = (
     <Paper>
       <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
         <Table sx={{ minWidth: 650 }}>
@@ -154,6 +181,29 @@ const TradesTable: React.FC<TradesTableProps> = ({ trades }) => {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </Paper>
+  );
+
+  if (!collapsible) {
+    return tableContent;
+  }
+
+  return (
+    <Accordion sx={{ mt: 3 }} defaultExpanded={!initialCollapsed}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box display="flex" alignItems="center">
+          <ShowChartIcon sx={{ mr: 1 }} />
+          <Typography variant="h6">{title}</Typography>
+          <Chip
+            label={`${trades.length} trades`}
+            size="small"
+            sx={{ ml: 2 }}
+          />
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails>
+        {tableContent}
+      </AccordionDetails>
+    </Accordion>
   );
 };
 
