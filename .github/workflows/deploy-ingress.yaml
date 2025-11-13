@@ -1,0 +1,428 @@
+name: Deploy Ingress & TLS
+
+on:
+  push:
+    branches: [main, feature/keycloak-openid-integration]
+    paths:
+      - 'deployments/ingress-nginx/**'
+      - 'deployments/cert-manager/**'
+      - 'deployments/keycloak/keycloak-ingress.yaml'
+      - '.github/workflows/deploy-ingress.yaml'
+  pull_request:
+    paths:
+      - 'deployments/ingress-nginx/**'
+      - 'deployments/cert-manager/**'
+      - 'deployments/keycloak/keycloak-ingress.yaml'
+      - '.github/workflows/deploy-ingress.yaml'
+  workflow_dispatch:
+    inputs:
+      skip-ingress:
+        description: 'Skip nginx ingress installation (if already installed)'
+        required: false
+        type: boolean
+        default: false
+      skip-cert-manager:
+        description: 'Skip cert-manager installation (if already installed)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate YAML syntax
+        run: |
+          echo "🔍 Validating YAML syntax..."
+
+          # Validate ingress-nginx values
+          if [ -f "deployments/ingress-nginx/values.yaml" ]; then
+            python3 -c "import yaml; yaml.safe_load(open('deployments/ingress-nginx/values.yaml'))" || {
+              echo "❌ Invalid YAML: deployments/ingress-nginx/values.yaml"
+              exit 1
+            }
+            echo "✅ Valid: deployments/ingress-nginx/values.yaml"
+          fi
+
+          # Validate cert-manager manifests
+          for file in values.yaml cluster-issuer.yaml; do
+            if [ -f "deployments/cert-manager/$file" ]; then
+              python3 -c "import yaml; list(yaml.safe_load_all(open('deployments/cert-manager/$file')))" || {
+                echo "❌ Invalid YAML: deployments/cert-manager/$file"
+                exit 1
+              }
+              echo "✅ Valid: deployments/cert-manager/$file"
+            fi
+          done
+
+          # Validate keycloak ingress
+          if [ -f "deployments/keycloak/keycloak-ingress.yaml" ]; then
+            python3 -c "import yaml; yaml.safe_load(open('deployments/keycloak/keycloak-ingress.yaml'))" || {
+              echo "❌ Invalid YAML: deployments/keycloak/keycloak-ingress.yaml"
+              exit 1
+            }
+            echo "✅ Valid: deployments/keycloak/keycloak-ingress.yaml"
+          fi
+
+          echo "✅ All manifests have valid YAML syntax"
+
+  deploy-ingress:
+    name: Deploy Nginx Ingress
+    runs-on: ubuntu-latest
+    needs: validate
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/keycloak-openid-integration')) ||
+      (github.event_name == 'workflow_dispatch' && !inputs.skip-ingress)
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+          echo "✅ Connected to Kubernetes cluster"
+
+      - name: Check if nginx-ingress is already installed
+        id: check-ingress
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          if kubectl get namespace ingress-nginx &>/dev/null && \
+             kubectl get deployment -n ingress-nginx ingress-nginx-controller &>/dev/null; then
+            echo "ingress-installed=true" >> $GITHUB_OUTPUT
+            echo "✅ Nginx ingress is already installed"
+          else
+            echo "ingress-installed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Nginx ingress is not installed"
+          fi
+
+      - name: Add nginx-ingress Helm repo
+        if: steps.check-ingress.outputs.ingress-installed == 'false'
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+
+      - name: Install nginx-ingress
+        if: steps.check-ingress.outputs.ingress-installed == 'false'
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Installing nginx ingress controller..."
+          helm install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx \
+            --create-namespace \
+            --values deployments/ingress-nginx/values.yaml \
+            --wait \
+            --timeout 5m
+          echo "✅ Nginx ingress controller installed"
+
+      - name: Upgrade nginx-ingress (if already installed)
+        if: steps.check-ingress.outputs.ingress-installed == 'true'
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Upgrading nginx ingress controller..."
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+          helm upgrade nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx \
+            --values deployments/ingress-nginx/values.yaml \
+            --wait \
+            --timeout 5m
+          echo "✅ Nginx ingress controller upgraded"
+
+      - name: Wait for Load Balancer
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "⏳ Waiting for load balancer to be provisioned (may take 2-3 minutes)..."
+
+          for i in {1..60}; do
+            LB_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
+              -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+
+            if [ -n "$LB_IP" ]; then
+              echo "✅ Load balancer provisioned with IP: $LB_IP"
+              echo "LOAD_BALANCER_IP=$LB_IP" >> $GITHUB_ENV
+              break
+            fi
+
+            echo "Waiting for load balancer... ($i/60)"
+            sleep 5
+          done
+
+          if [ -z "$LB_IP" ]; then
+            echo "⚠️  Load balancer not provisioned yet, but continuing..."
+          fi
+
+      - name: Verify nginx-ingress
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📋 Nginx Ingress Status:"
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n ingress-nginx
+          echo ""
+          echo "Service:"
+          kubectl get svc -n ingress-nginx
+          echo ""
+          echo "IngressClass:"
+          kubectl get ingressclass
+          echo "✅ Nginx ingress is ready"
+
+  deploy-cert-manager:
+    name: Deploy cert-manager
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-ingress]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      (needs.deploy-ingress.result == 'success' || needs.deploy-ingress.result == 'skipped') &&
+      ((github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/keycloak-openid-integration')) ||
+       (github.event_name == 'workflow_dispatch' && !inputs.skip-cert-manager))
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+
+      - name: Check if cert-manager is already installed
+        id: check-cert-manager
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          if kubectl get namespace cert-manager &>/dev/null && \
+             kubectl get deployment -n cert-manager cert-manager &>/dev/null; then
+            echo "cert-manager-installed=true" >> $GITHUB_OUTPUT
+            echo "✅ cert-manager is already installed"
+          else
+            echo "cert-manager-installed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  cert-manager is not installed"
+          fi
+
+      - name: Add cert-manager Helm repo
+        if: steps.check-cert-manager.outputs.cert-manager-installed == 'false'
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+
+      - name: Install cert-manager
+        if: steps.check-cert-manager.outputs.cert-manager-installed == 'false'
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Installing cert-manager..."
+          helm install cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --create-namespace \
+            --values deployments/cert-manager/values.yaml \
+            --wait \
+            --timeout 5m
+          echo "✅ cert-manager installed"
+
+      - name: Upgrade cert-manager (if already installed)
+        if: steps.check-cert-manager.outputs.cert-manager-installed == 'true'
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Upgrading cert-manager..."
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --values deployments/cert-manager/values.yaml \
+            --wait \
+            --timeout 5m
+          echo "✅ cert-manager upgraded"
+
+      - name: Wait for cert-manager to be ready
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "⏳ Waiting for cert-manager pods to be ready..."
+          kubectl wait --for=condition=Ready pod \
+            -l app.kubernetes.io/instance=cert-manager \
+            -n cert-manager \
+            --timeout=300s
+          echo "✅ cert-manager is ready"
+
+      - name: Apply ClusterIssuer
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Applying Let's Encrypt ClusterIssuer..."
+
+          # Substitute email in ClusterIssuer
+          export LETSENCRYPT_EMAIL="${{ secrets.LETSENCRYPT_EMAIL }}"
+          envsubst < deployments/cert-manager/cluster-issuer.yaml > /tmp/cluster-issuer-processed.yaml
+
+          cat /tmp/cluster-issuer-processed.yaml
+
+          kubectl apply -f /tmp/cluster-issuer-processed.yaml
+
+          echo "⏳ Waiting for ClusterIssuers to be ready..."
+          sleep 10
+
+          echo "✅ ClusterIssuers configured"
+
+      - name: Verify cert-manager
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📋 cert-manager Status:"
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n cert-manager
+          echo ""
+          echo "ClusterIssuers:"
+          kubectl get clusterissuer
+          echo "✅ cert-manager is ready"
+
+  update-keycloak-ingress:
+    name: Update Keycloak Ingress with TLS
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-ingress, deploy-cert-manager]
+    if: |
+      always() &&
+      needs.validate.result == 'success' &&
+      (needs.deploy-ingress.result == 'success' || needs.deploy-ingress.result == 'skipped') &&
+      (needs.deploy-cert-manager.result == 'success' || needs.deploy-cert-manager.result == 'skipped') &&
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/keycloak-openid-integration')) ||
+      github.event_name == 'workflow_dispatch'
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+
+      - name: Apply Keycloak Ingress with TLS
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔧 Updating Keycloak ingress with TLS..."
+
+          # Substitute hostname
+          export KEYCLOAK_HOSTNAME="${{ secrets.KEYCLOAK_HOSTNAME }}"
+          envsubst < deployments/keycloak/keycloak-ingress.yaml > /tmp/keycloak-ingress-processed.yaml
+
+          cat /tmp/keycloak-ingress-processed.yaml
+
+          kubectl apply -f /tmp/keycloak-ingress-processed.yaml
+
+          echo "✅ Keycloak ingress updated with TLS"
+
+      - name: Wait for certificate
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "⏳ Waiting for TLS certificate to be issued..."
+          echo "This may take 1-2 minutes for cert-manager to complete the HTTP-01 challenge"
+
+          for i in {1..60}; do
+            CERT_READY=$(kubectl get certificate keycloak-tls-cert -n keycloak \
+              -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
+
+            if [ "$CERT_READY" = "True" ]; then
+              echo "✅ Certificate is ready!"
+              break
+            fi
+
+            echo "Waiting for certificate... ($i/60)"
+            sleep 5
+          done
+
+          if [ "$CERT_READY" != "True" ]; then
+            echo "⚠️  Certificate not ready yet. Check status with:"
+            echo "  kubectl describe certificate keycloak-tls-cert -n keycloak"
+            echo "  kubectl get challenges -n keycloak"
+          fi
+
+      - name: Get ingress status
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📊 Ingress Status:"
+          echo ""
+          echo "Ingress:"
+          kubectl get ingress -n keycloak
+          echo ""
+          echo "Certificate:"
+          kubectl get certificate -n keycloak
+          echo ""
+
+          # Get load balancer IP
+          LB_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+
+          if [ -n "$LB_IP" ]; then
+            echo "🌐 Load Balancer IP: $LB_IP"
+            echo "📝 Configure DNS:"
+            echo "   Add A record: ${{ secrets.KEYCLOAK_HOSTNAME }} → $LB_IP"
+            echo ""
+            echo "🔗 Access Keycloak at: https://${{ secrets.KEYCLOAK_HOSTNAME }}/auth"
+          fi
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## ✅ Ingress & TLS Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Deployment Components" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Nginx Ingress Controller" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ cert-manager" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Let's Encrypt ClusterIssuer (prod & staging)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Keycloak Ingress with TLS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔐 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Configure DNS A record pointing to load balancer IP" >> $GITHUB_STEP_SUMMARY
+          echo "2. Wait 5-10 minutes for DNS propagation" >> $GITHUB_STEP_SUMMARY
+          echo "3. cert-manager will automatically request and install TLS certificate" >> $GITHUB_STEP_SUMMARY
+          echo "4. Access Keycloak at https://${{ secrets.KEYCLOAK_HOSTNAME }}/auth" >> $GITHUB_STEP_SUMMARY
