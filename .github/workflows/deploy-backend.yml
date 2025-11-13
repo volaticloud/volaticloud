@@ -106,13 +106,10 @@ jobs:
         run: |
           kubectl create namespace anytrade --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create database secret
+      - name: Create application secrets
         run: |
-          kubectl create secret generic anytrade-db-secret \
-            --from-literal=host="${{ secrets.POSTGRES_HOST }}" \
-            --from-literal=database="${{ secrets.POSTGRES_DB }}" \
-            --from-literal=username="${{ secrets.POSTGRES_USER }}" \
-            --from-literal=password="${{ secrets.POSTGRES_PASSWORD }}" \
+          kubectl create secret generic anytrade-secrets \
+            --from-literal=ANYTRADE_DATABASE="${{ secrets.ANYTRADE_DATABASE }}" \
             --namespace=anytrade \
             --dry-run=client -o yaml | kubectl apply -f -
 

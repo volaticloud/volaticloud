@@ -42,30 +42,13 @@ containers:
         value: "8080"
       - name: ANYTRADE_MONITOR_INTERVAL
         value: "30s"
-      - name: ANYTRADE_DATABASE
-        value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)?sslmode=require"
 
-      # Database credentials from secret
-      - name: POSTGRES_HOST
+      # Database connection string from secret
+      - name: ANYTRADE_DATABASE
         valueFrom:
           secretKeyRef:
-            name: anytrade-db-secret
-            key: host
-      - name: POSTGRES_DB
-        valueFrom:
-          secretKeyRef:
-            name: anytrade-db-secret
-            key: database
-      - name: POSTGRES_USER
-        valueFrom:
-          secretKeyRef:
-            name: anytrade-db-secret
-            key: username
-      - name: POSTGRES_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: anytrade-db-secret
-            key: password
+            name: anytrade-secrets
+            key: ANYTRADE_DATABASE
 
     # Health checks
     livenessProbe:

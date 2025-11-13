@@ -72,17 +72,15 @@ Configure these secrets in the `prod` environment:
 | Secret Name | Description | Example |
 |------------|-------------|---------|
 | `VKE_KUBECONFIG` | Base64-encoded kubeconfig | `cat kubeconfig.yaml \| base64` |
-| `POSTGRES_HOST` | PostgreSQL hostname:port | `postgres-abc.vultr.com:16751` |
-| `POSTGRES_DB` | Database name | `anytrade` |
-| `POSTGRES_USER` | Database username | `anytrade` |
-| `POSTGRES_PASSWORD` | Database password | `your-secure-password` |
+| `ANYTRADE_DATABASE` | Full PostgreSQL connection string | `postgresql://user:pass@host:port/db?sslmode=require` |
+
+**Note:** The secret name `ANYTRADE_DATABASE` matches the environment variable used in `cmd/server/main.go:52`.
 
 Set secrets:
 ```bash
-gh secret set POSTGRES_HOST --env prod
-gh secret set POSTGRES_DB --env prod
-gh secret set POSTGRES_USER --env prod
-gh secret set POSTGRES_PASSWORD --env prod
+gh secret set VKE_KUBECONFIG --env prod
+# When prompted, enter: postgresql://anytrade:your-password@postgres-abc.vultr.com:16751/anytrade?sslmode=require
+gh secret set ANYTRADE_DATABASE --env prod
 ```
 
 ## Configuration
@@ -334,7 +332,7 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 
 **Check secret:**
 ```bash
-kubectl get secret anytrade-db-secret -n anytrade -o yaml
+kubectl get secret anytrade-secrets -n anytrade -o yaml
 ```
 
 ### Ingress/TLS Issues
