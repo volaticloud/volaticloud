@@ -26,6 +26,7 @@ type ShowConfig struct {
 	ApiVersion                  float32                 `json:"api_version"`
 	DryRun                      bool                    `json:"dry_run"`
 	TradingMode                 string                  `json:"trading_mode"`
+	MarginMode                  string                  `json:"margin_mode"`
 	ShortAllowed                bool                    `json:"short_allowed"`
 	StakeCurrency               string                  `json:"stake_currency"`
 	StakeAmount                 string                  `json:"stake_amount"`
@@ -63,12 +64,13 @@ type _ShowConfig ShowConfig
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewShowConfig(version string, apiVersion float32, dryRun bool, tradingMode string, shortAllowed bool, stakeCurrency string, stakeAmount string, stakeCurrencyDecimals int64, maxOpenTrades float32, minimalRoi map[string]interface{}, stoplossOnExchange bool, timeframeMs int64, timeframeMin int64, exchange string, forceEntryEnable bool, exitPricing map[string]interface{}, entryPricing map[string]interface{}, botName string, state string, runmode string, positionAdjustmentEnable bool, maxEntryPositionAdjustment int64) *ShowConfig {
+func NewShowConfig(version string, apiVersion float32, dryRun bool, tradingMode string, marginMode string, shortAllowed bool, stakeCurrency string, stakeAmount string, stakeCurrencyDecimals int64, maxOpenTrades float32, minimalRoi map[string]interface{}, stoplossOnExchange bool, timeframeMs int64, timeframeMin int64, exchange string, forceEntryEnable bool, exitPricing map[string]interface{}, entryPricing map[string]interface{}, botName string, state string, runmode string, positionAdjustmentEnable bool, maxEntryPositionAdjustment int64) *ShowConfig {
 	this := ShowConfig{}
 	this.Version = version
 	this.ApiVersion = apiVersion
 	this.DryRun = dryRun
 	this.TradingMode = tradingMode
+	this.MarginMode = marginMode
 	this.ShortAllowed = shortAllowed
 	this.StakeCurrency = stakeCurrency
 	this.StakeAmount = stakeAmount
@@ -235,6 +237,30 @@ func (o *ShowConfig) GetTradingModeOk() (*string, bool) {
 // SetTradingMode sets field value
 func (o *ShowConfig) SetTradingMode(v string) {
 	o.TradingMode = v
+}
+
+// GetMarginMode returns the MarginMode field value
+func (o *ShowConfig) GetMarginMode() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.MarginMode
+}
+
+// GetMarginModeOk returns a tuple with the MarginMode field value
+// and a boolean to check if the value has been set.
+func (o *ShowConfig) GetMarginModeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.MarginMode, true
+}
+
+// SetMarginMode sets field value
+func (o *ShowConfig) SetMarginMode(v string) {
+	o.MarginMode = v
 }
 
 // GetShortAllowed returns the ShortAllowed field value
@@ -1159,6 +1185,7 @@ func (o ShowConfig) ToMap() (map[string]interface{}, error) {
 	toSerialize["api_version"] = o.ApiVersion
 	toSerialize["dry_run"] = o.DryRun
 	toSerialize["trading_mode"] = o.TradingMode
+	toSerialize["margin_mode"] = o.MarginMode
 	toSerialize["short_allowed"] = o.ShortAllowed
 	toSerialize["stake_currency"] = o.StakeCurrency
 	toSerialize["stake_amount"] = o.StakeAmount
@@ -1222,6 +1249,7 @@ func (o *ShowConfig) UnmarshalJSON(data []byte) (err error) {
 		"api_version",
 		"dry_run",
 		"trading_mode",
+		"margin_mode",
 		"short_allowed",
 		"stake_currency",
 		"stake_amount",

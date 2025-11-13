@@ -35,6 +35,7 @@ type OrderSchema struct {
 	OrderTimestamp       NullableInt64   `json:"order_timestamp,omitempty"`
 	OrderFilledTimestamp NullableInt64   `json:"order_filled_timestamp,omitempty"`
 	FtFeeBase            NullableFloat32 `json:"ft_fee_base,omitempty"`
+	FtOrderTag           NullableString  `json:"ft_order_tag,omitempty"`
 }
 
 type _OrderSchema OrderSchema
@@ -496,6 +497,49 @@ func (o *OrderSchema) UnsetFtFeeBase() {
 	o.FtFeeBase.Unset()
 }
 
+// GetFtOrderTag returns the FtOrderTag field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OrderSchema) GetFtOrderTag() string {
+	if o == nil || IsNil(o.FtOrderTag.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.FtOrderTag.Get()
+}
+
+// GetFtOrderTagOk returns a tuple with the FtOrderTag field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OrderSchema) GetFtOrderTagOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.FtOrderTag.Get(), o.FtOrderTag.IsSet()
+}
+
+// HasFtOrderTag returns a boolean if a field has been set.
+func (o *OrderSchema) HasFtOrderTag() bool {
+	if o != nil && o.FtOrderTag.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetFtOrderTag gets a reference to the given NullableString and assigns it to the FtOrderTag field.
+func (o *OrderSchema) SetFtOrderTag(v string) {
+	o.FtOrderTag.Set(&v)
+}
+
+// SetFtOrderTagNil sets the value for FtOrderTag to be an explicit nil
+func (o *OrderSchema) SetFtOrderTagNil() {
+	o.FtOrderTag.Set(nil)
+}
+
+// UnsetFtOrderTag ensures that no value is present for FtOrderTag, not even an explicit nil
+func (o *OrderSchema) UnsetFtOrderTag() {
+	o.FtOrderTag.Unset()
+}
+
 func (o OrderSchema) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -529,6 +573,9 @@ func (o OrderSchema) ToMap() (map[string]interface{}, error) {
 	}
 	if o.FtFeeBase.IsSet() {
 		toSerialize["ft_fee_base"] = o.FtFeeBase.Get()
+	}
+	if o.FtOrderTag.IsSet() {
+		toSerialize["ft_order_tag"] = o.FtOrderTag.Get()
 	}
 	return toSerialize, nil
 }

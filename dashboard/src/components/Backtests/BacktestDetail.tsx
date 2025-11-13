@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code } from '@mui/icons-material';
 import { useGetBacktestQuery } from './backtests.generated';
-import TradesTable from './TradesTable';
+import TradesTable from '../shared/TradesTable';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
 
 const BacktestDetail: React.FC = () => {

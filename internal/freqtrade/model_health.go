@@ -22,6 +22,10 @@ var _ MappedNullable = &Health{}
 type Health struct {
 	LastProcess   NullableTime  `json:"last_process,omitempty"`
 	LastProcessTs NullableInt64 `json:"last_process_ts,omitempty"`
+	BotStart      NullableTime  `json:"bot_start,omitempty"`
+	BotStartTs    NullableInt64 `json:"bot_start_ts,omitempty"`
+	BotStartup    NullableTime  `json:"bot_startup,omitempty"`
+	BotStartupTs  NullableInt64 `json:"bot_startup_ts,omitempty"`
 }
 
 // NewHealth instantiates a new Health object
@@ -127,6 +131,178 @@ func (o *Health) UnsetLastProcessTs() {
 	o.LastProcessTs.Unset()
 }
 
+// GetBotStart returns the BotStart field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *Health) GetBotStart() time.Time {
+	if o == nil || IsNil(o.BotStart.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.BotStart.Get()
+}
+
+// GetBotStartOk returns a tuple with the BotStart field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Health) GetBotStartOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BotStart.Get(), o.BotStart.IsSet()
+}
+
+// HasBotStart returns a boolean if a field has been set.
+func (o *Health) HasBotStart() bool {
+	if o != nil && o.BotStart.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBotStart gets a reference to the given NullableTime and assigns it to the BotStart field.
+func (o *Health) SetBotStart(v time.Time) {
+	o.BotStart.Set(&v)
+}
+
+// SetBotStartNil sets the value for BotStart to be an explicit nil
+func (o *Health) SetBotStartNil() {
+	o.BotStart.Set(nil)
+}
+
+// UnsetBotStart ensures that no value is present for BotStart, not even an explicit nil
+func (o *Health) UnsetBotStart() {
+	o.BotStart.Unset()
+}
+
+// GetBotStartTs returns the BotStartTs field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *Health) GetBotStartTs() int64 {
+	if o == nil || IsNil(o.BotStartTs.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.BotStartTs.Get()
+}
+
+// GetBotStartTsOk returns a tuple with the BotStartTs field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Health) GetBotStartTsOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BotStartTs.Get(), o.BotStartTs.IsSet()
+}
+
+// HasBotStartTs returns a boolean if a field has been set.
+func (o *Health) HasBotStartTs() bool {
+	if o != nil && o.BotStartTs.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBotStartTs gets a reference to the given NullableInt64 and assigns it to the BotStartTs field.
+func (o *Health) SetBotStartTs(v int64) {
+	o.BotStartTs.Set(&v)
+}
+
+// SetBotStartTsNil sets the value for BotStartTs to be an explicit nil
+func (o *Health) SetBotStartTsNil() {
+	o.BotStartTs.Set(nil)
+}
+
+// UnsetBotStartTs ensures that no value is present for BotStartTs, not even an explicit nil
+func (o *Health) UnsetBotStartTs() {
+	o.BotStartTs.Unset()
+}
+
+// GetBotStartup returns the BotStartup field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *Health) GetBotStartup() time.Time {
+	if o == nil || IsNil(o.BotStartup.Get()) {
+		var ret time.Time
+		return ret
+	}
+	return *o.BotStartup.Get()
+}
+
+// GetBotStartupOk returns a tuple with the BotStartup field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Health) GetBotStartupOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BotStartup.Get(), o.BotStartup.IsSet()
+}
+
+// HasBotStartup returns a boolean if a field has been set.
+func (o *Health) HasBotStartup() bool {
+	if o != nil && o.BotStartup.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBotStartup gets a reference to the given NullableTime and assigns it to the BotStartup field.
+func (o *Health) SetBotStartup(v time.Time) {
+	o.BotStartup.Set(&v)
+}
+
+// SetBotStartupNil sets the value for BotStartup to be an explicit nil
+func (o *Health) SetBotStartupNil() {
+	o.BotStartup.Set(nil)
+}
+
+// UnsetBotStartup ensures that no value is present for BotStartup, not even an explicit nil
+func (o *Health) UnsetBotStartup() {
+	o.BotStartup.Unset()
+}
+
+// GetBotStartupTs returns the BotStartupTs field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *Health) GetBotStartupTs() int64 {
+	if o == nil || IsNil(o.BotStartupTs.Get()) {
+		var ret int64
+		return ret
+	}
+	return *o.BotStartupTs.Get()
+}
+
+// GetBotStartupTsOk returns a tuple with the BotStartupTs field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Health) GetBotStartupTsOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BotStartupTs.Get(), o.BotStartupTs.IsSet()
+}
+
+// HasBotStartupTs returns a boolean if a field has been set.
+func (o *Health) HasBotStartupTs() bool {
+	if o != nil && o.BotStartupTs.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBotStartupTs gets a reference to the given NullableInt64 and assigns it to the BotStartupTs field.
+func (o *Health) SetBotStartupTs(v int64) {
+	o.BotStartupTs.Set(&v)
+}
+
+// SetBotStartupTsNil sets the value for BotStartupTs to be an explicit nil
+func (o *Health) SetBotStartupTsNil() {
+	o.BotStartupTs.Set(nil)
+}
+
+// UnsetBotStartupTs ensures that no value is present for BotStartupTs, not even an explicit nil
+func (o *Health) UnsetBotStartupTs() {
+	o.BotStartupTs.Unset()
+}
+
 func (o Health) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -142,6 +318,18 @@ func (o Health) ToMap() (map[string]interface{}, error) {
 	}
 	if o.LastProcessTs.IsSet() {
 		toSerialize["last_process_ts"] = o.LastProcessTs.Get()
+	}
+	if o.BotStart.IsSet() {
+		toSerialize["bot_start"] = o.BotStart.Get()
+	}
+	if o.BotStartTs.IsSet() {
+		toSerialize["bot_start_ts"] = o.BotStartTs.Get()
+	}
+	if o.BotStartup.IsSet() {
+		toSerialize["bot_startup"] = o.BotStartup.Get()
+	}
+	if o.BotStartupTs.IsSet() {
+		toSerialize["bot_startup_ts"] = o.BotStartupTs.Get()
 	}
 	return toSerialize, nil
 }

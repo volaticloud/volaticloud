@@ -43,6 +43,8 @@ type OpenTradeSchema struct {
 	FeeCloseCurrency            NullableString      `json:"fee_close_currency,omitempty"`
 	OpenDate                    string              `json:"open_date"`
 	OpenTimestamp               int64               `json:"open_timestamp"`
+	OpenFillDate                NullableString      `json:"open_fill_date"`
+	OpenFillTimestamp           NullableInt64       `json:"open_fill_timestamp"`
 	OpenRate                    float32             `json:"open_rate"`
 	OpenRateRequested           NullableFloat32     `json:"open_rate_requested,omitempty"`
 	OpenTradeValue              float32             `json:"open_trade_value"`
@@ -64,7 +66,6 @@ type OpenTradeSchema struct {
 	StopLossAbs                 NullableFloat32     `json:"stop_loss_abs,omitempty"`
 	StopLossRatio               NullableFloat32     `json:"stop_loss_ratio,omitempty"`
 	StopLossPct                 NullableFloat32     `json:"stop_loss_pct,omitempty"`
-	StoplossOrderId             NullableString      `json:"stoploss_order_id,omitempty"`
 	StoplossLastUpdate          NullableString      `json:"stoploss_last_update,omitempty"`
 	StoplossLastUpdateTimestamp NullableInt64       `json:"stoploss_last_update_timestamp,omitempty"`
 	InitialStopLossAbs          NullableFloat32     `json:"initial_stop_loss_abs,omitempty"`
@@ -99,7 +100,7 @@ type _OpenTradeSchema OpenTradeSchema
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOpenTradeSchema(tradeId int64, pair string, baseCurrency string, quoteCurrency string, isOpen bool, isShort bool, exchange string, amount float32, amountRequested float32, stakeAmount float32, strategy string, timeframe int64, openDate string, openTimestamp int64, openRate float32, openTradeValue float32, realizedProfit float32, hasOpenOrders bool, orders []OrderSchema, currentRate float32, totalProfitAbs float32) *OpenTradeSchema {
+func NewOpenTradeSchema(tradeId int64, pair string, baseCurrency string, quoteCurrency string, isOpen bool, isShort bool, exchange string, amount float32, amountRequested float32, stakeAmount float32, strategy string, timeframe int64, openDate string, openTimestamp int64, openFillDate NullableString, openFillTimestamp NullableInt64, openRate float32, openTradeValue float32, realizedProfit float32, hasOpenOrders bool, orders []OrderSchema, currentRate float32, totalProfitAbs float32) *OpenTradeSchema {
 	this := OpenTradeSchema{}
 	this.TradeId = tradeId
 	this.Pair = pair
@@ -115,6 +116,8 @@ func NewOpenTradeSchema(tradeId int64, pair string, baseCurrency string, quoteCu
 	this.Timeframe = timeframe
 	this.OpenDate = openDate
 	this.OpenTimestamp = openTimestamp
+	this.OpenFillDate = openFillDate
+	this.OpenFillTimestamp = openFillTimestamp
 	this.OpenRate = openRate
 	this.OpenTradeValue = openTradeValue
 	this.RealizedProfit = realizedProfit
@@ -811,6 +814,58 @@ func (o *OpenTradeSchema) GetOpenTimestampOk() (*int64, bool) {
 // SetOpenTimestamp sets field value
 func (o *OpenTradeSchema) SetOpenTimestamp(v int64) {
 	o.OpenTimestamp = v
+}
+
+// GetOpenFillDate returns the OpenFillDate field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *OpenTradeSchema) GetOpenFillDate() string {
+	if o == nil || o.OpenFillDate.Get() == nil {
+		var ret string
+		return ret
+	}
+
+	return *o.OpenFillDate.Get()
+}
+
+// GetOpenFillDateOk returns a tuple with the OpenFillDate field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OpenTradeSchema) GetOpenFillDateOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.OpenFillDate.Get(), o.OpenFillDate.IsSet()
+}
+
+// SetOpenFillDate sets field value
+func (o *OpenTradeSchema) SetOpenFillDate(v string) {
+	o.OpenFillDate.Set(&v)
+}
+
+// GetOpenFillTimestamp returns the OpenFillTimestamp field value
+// If the value is explicit nil, the zero value for int64 will be returned
+func (o *OpenTradeSchema) GetOpenFillTimestamp() int64 {
+	if o == nil || o.OpenFillTimestamp.Get() == nil {
+		var ret int64
+		return ret
+	}
+
+	return *o.OpenFillTimestamp.Get()
+}
+
+// GetOpenFillTimestampOk returns a tuple with the OpenFillTimestamp field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OpenTradeSchema) GetOpenFillTimestampOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.OpenFillTimestamp.Get(), o.OpenFillTimestamp.IsSet()
+}
+
+// SetOpenFillTimestamp sets field value
+func (o *OpenTradeSchema) SetOpenFillTimestamp(v int64) {
+	o.OpenFillTimestamp.Set(&v)
 }
 
 // GetOpenRate returns the OpenRate field value
@@ -1657,49 +1712,6 @@ func (o *OpenTradeSchema) SetStopLossPctNil() {
 // UnsetStopLossPct ensures that no value is present for StopLossPct, not even an explicit nil
 func (o *OpenTradeSchema) UnsetStopLossPct() {
 	o.StopLossPct.Unset()
-}
-
-// GetStoplossOrderId returns the StoplossOrderId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OpenTradeSchema) GetStoplossOrderId() string {
-	if o == nil || IsNil(o.StoplossOrderId.Get()) {
-		var ret string
-		return ret
-	}
-	return *o.StoplossOrderId.Get()
-}
-
-// GetStoplossOrderIdOk returns a tuple with the StoplossOrderId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OpenTradeSchema) GetStoplossOrderIdOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.StoplossOrderId.Get(), o.StoplossOrderId.IsSet()
-}
-
-// HasStoplossOrderId returns a boolean if a field has been set.
-func (o *OpenTradeSchema) HasStoplossOrderId() bool {
-	if o != nil && o.StoplossOrderId.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetStoplossOrderId gets a reference to the given NullableString and assigns it to the StoplossOrderId field.
-func (o *OpenTradeSchema) SetStoplossOrderId(v string) {
-	o.StoplossOrderId.Set(&v)
-}
-
-// SetStoplossOrderIdNil sets the value for StoplossOrderId to be an explicit nil
-func (o *OpenTradeSchema) SetStoplossOrderIdNil() {
-	o.StoplossOrderId.Set(nil)
-}
-
-// UnsetStoplossOrderId ensures that no value is present for StoplossOrderId, not even an explicit nil
-func (o *OpenTradeSchema) UnsetStoplossOrderId() {
-	o.StoplossOrderId.Unset()
 }
 
 // GetStoplossLastUpdate returns the StoplossLastUpdate field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -2792,6 +2804,8 @@ func (o OpenTradeSchema) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["open_date"] = o.OpenDate
 	toSerialize["open_timestamp"] = o.OpenTimestamp
+	toSerialize["open_fill_date"] = o.OpenFillDate.Get()
+	toSerialize["open_fill_timestamp"] = o.OpenFillTimestamp.Get()
 	toSerialize["open_rate"] = o.OpenRate
 	if o.OpenRateRequested.IsSet() {
 		toSerialize["open_rate_requested"] = o.OpenRateRequested.Get()
@@ -2848,9 +2862,6 @@ func (o OpenTradeSchema) ToMap() (map[string]interface{}, error) {
 	}
 	if o.StopLossPct.IsSet() {
 		toSerialize["stop_loss_pct"] = o.StopLossPct.Get()
-	}
-	if o.StoplossOrderId.IsSet() {
-		toSerialize["stoploss_order_id"] = o.StoplossOrderId.Get()
 	}
 	if o.StoplossLastUpdate.IsSet() {
 		toSerialize["stoploss_last_update"] = o.StoplossLastUpdate.Get()
@@ -2944,6 +2955,8 @@ func (o *OpenTradeSchema) UnmarshalJSON(data []byte) (err error) {
 		"timeframe",
 		"open_date",
 		"open_timestamp",
+		"open_fill_date",
+		"open_fill_timestamp",
 		"open_rate",
 		"open_trade_value",
 		"realized_profit",

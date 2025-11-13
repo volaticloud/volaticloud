@@ -30,6 +30,8 @@ const GET_BOT_OPTIONS = gql`
         node {
           id
           name
+          versionNumber
+          isLatest
         }
       }
     }
@@ -207,7 +209,8 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             >
               {strategies.map((strategy) => (
                 <MenuItem key={strategy.id} value={strategy.id}>
-                  {strategy.name}
+                  {strategy.name} (v{strategy.versionNumber})
+                  {strategy.isLatest && ' - Latest'}
                 </MenuItem>
               ))}
             </Select>

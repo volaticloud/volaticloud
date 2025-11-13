@@ -22,25 +22,27 @@ var _ MappedNullable = &PairHistory{}
 
 // PairHistory struct for PairHistory
 type PairHistory struct {
-	Strategy          string        `json:"strategy"`
-	Pair              string        `json:"pair"`
-	Timeframe         string        `json:"timeframe"`
-	TimeframeMs       int64         `json:"timeframe_ms"`
-	Columns           []string      `json:"columns"`
-	Data              []interface{} `json:"data"`
-	Length            int64         `json:"length"`
-	BuySignals        int64         `json:"buy_signals"`
-	SellSignals       int64         `json:"sell_signals"`
-	EnterLongSignals  int64         `json:"enter_long_signals"`
-	ExitLongSignals   int64         `json:"exit_long_signals"`
-	EnterShortSignals int64         `json:"enter_short_signals"`
-	ExitShortSignals  int64         `json:"exit_short_signals"`
-	LastAnalyzed      time.Time     `json:"last_analyzed"`
-	LastAnalyzedTs    int64         `json:"last_analyzed_ts"`
-	DataStartTs       int64         `json:"data_start_ts"`
-	DataStart         string        `json:"data_start"`
-	DataStop          string        `json:"data_stop"`
-	DataStopTs        int64         `json:"data_stop_ts"`
+	Strategy          string                        `json:"strategy"`
+	Pair              string                        `json:"pair"`
+	Timeframe         string                        `json:"timeframe"`
+	TimeframeMs       int64                         `json:"timeframe_ms"`
+	Columns           []string                      `json:"columns"`
+	AllColumns        []string                      `json:"all_columns,omitempty"`
+	Data              []interface{}                 `json:"data"`
+	Annotations       []PairHistoryAnnotationsInner `json:"annotations,omitempty"`
+	Length            int64                         `json:"length"`
+	BuySignals        int64                         `json:"buy_signals"`
+	SellSignals       int64                         `json:"sell_signals"`
+	EnterLongSignals  int64                         `json:"enter_long_signals"`
+	ExitLongSignals   int64                         `json:"exit_long_signals"`
+	EnterShortSignals int64                         `json:"enter_short_signals"`
+	ExitShortSignals  int64                         `json:"exit_short_signals"`
+	LastAnalyzed      time.Time                     `json:"last_analyzed"`
+	LastAnalyzedTs    int64                         `json:"last_analyzed_ts"`
+	DataStartTs       int64                         `json:"data_start_ts"`
+	DataStart         string                        `json:"data_start"`
+	DataStop          string                        `json:"data_stop"`
+	DataStopTs        int64                         `json:"data_stop_ts"`
 }
 
 type _PairHistory PairHistory
@@ -201,6 +203,38 @@ func (o *PairHistory) SetColumns(v []string) {
 	o.Columns = v
 }
 
+// GetAllColumns returns the AllColumns field value if set, zero value otherwise.
+func (o *PairHistory) GetAllColumns() []string {
+	if o == nil || IsNil(o.AllColumns) {
+		var ret []string
+		return ret
+	}
+	return o.AllColumns
+}
+
+// GetAllColumnsOk returns a tuple with the AllColumns field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *PairHistory) GetAllColumnsOk() ([]string, bool) {
+	if o == nil || IsNil(o.AllColumns) {
+		return nil, false
+	}
+	return o.AllColumns, true
+}
+
+// HasAllColumns returns a boolean if a field has been set.
+func (o *PairHistory) HasAllColumns() bool {
+	if o != nil && !IsNil(o.AllColumns) {
+		return true
+	}
+
+	return false
+}
+
+// SetAllColumns gets a reference to the given []string and assigns it to the AllColumns field.
+func (o *PairHistory) SetAllColumns(v []string) {
+	o.AllColumns = v
+}
+
 // GetData returns the Data field value
 func (o *PairHistory) GetData() []interface{} {
 	if o == nil {
@@ -223,6 +257,39 @@ func (o *PairHistory) GetDataOk() ([]interface{}, bool) {
 // SetData sets field value
 func (o *PairHistory) SetData(v []interface{}) {
 	o.Data = v
+}
+
+// GetAnnotations returns the Annotations field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *PairHistory) GetAnnotations() []PairHistoryAnnotationsInner {
+	if o == nil {
+		var ret []PairHistoryAnnotationsInner
+		return ret
+	}
+	return o.Annotations
+}
+
+// GetAnnotationsOk returns a tuple with the Annotations field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *PairHistory) GetAnnotationsOk() ([]PairHistoryAnnotationsInner, bool) {
+	if o == nil || IsNil(o.Annotations) {
+		return nil, false
+	}
+	return o.Annotations, true
+}
+
+// HasAnnotations returns a boolean if a field has been set.
+func (o *PairHistory) HasAnnotations() bool {
+	if o != nil && !IsNil(o.Annotations) {
+		return true
+	}
+
+	return false
+}
+
+// SetAnnotations gets a reference to the given []PairHistoryAnnotationsInner and assigns it to the Annotations field.
+func (o *PairHistory) SetAnnotations(v []PairHistoryAnnotationsInner) {
+	o.Annotations = v
 }
 
 // GetLength returns the Length field value
@@ -552,7 +619,13 @@ func (o PairHistory) ToMap() (map[string]interface{}, error) {
 	toSerialize["timeframe"] = o.Timeframe
 	toSerialize["timeframe_ms"] = o.TimeframeMs
 	toSerialize["columns"] = o.Columns
+	if !IsNil(o.AllColumns) {
+		toSerialize["all_columns"] = o.AllColumns
+	}
 	toSerialize["data"] = o.Data
+	if o.Annotations != nil {
+		toSerialize["annotations"] = o.Annotations
+	}
 	toSerialize["length"] = o.Length
 	toSerialize["buy_signals"] = o.BuySignals
 	toSerialize["sell_signals"] = o.SellSignals

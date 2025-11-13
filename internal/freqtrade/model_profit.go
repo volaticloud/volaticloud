@@ -21,49 +21,55 @@ var _ MappedNullable = &Profit{}
 
 // Profit struct for Profit
 type Profit struct {
-	ProfitClosedCoin          float32         `json:"profit_closed_coin"`
-	ProfitClosedPercentMean   float32         `json:"profit_closed_percent_mean"`
-	ProfitClosedRatioMean     float32         `json:"profit_closed_ratio_mean"`
-	ProfitClosedPercentSum    float32         `json:"profit_closed_percent_sum"`
-	ProfitClosedRatioSum      float32         `json:"profit_closed_ratio_sum"`
-	ProfitClosedPercent       float32         `json:"profit_closed_percent"`
-	ProfitClosedRatio         float32         `json:"profit_closed_ratio"`
-	ProfitClosedFiat          float32         `json:"profit_closed_fiat"`
-	ProfitAllCoin             float32         `json:"profit_all_coin"`
-	ProfitAllPercentMean      float32         `json:"profit_all_percent_mean"`
-	ProfitAllRatioMean        float32         `json:"profit_all_ratio_mean"`
-	ProfitAllPercentSum       float32         `json:"profit_all_percent_sum"`
-	ProfitAllRatioSum         float32         `json:"profit_all_ratio_sum"`
-	ProfitAllPercent          float32         `json:"profit_all_percent"`
-	ProfitAllRatio            float32         `json:"profit_all_ratio"`
-	ProfitAllFiat             float32         `json:"profit_all_fiat"`
-	TradeCount                int64           `json:"trade_count"`
-	ClosedTradeCount          int64           `json:"closed_trade_count"`
-	FirstTradeDate            string          `json:"first_trade_date"`
-	FirstTradeHumanized       string          `json:"first_trade_humanized"`
-	FirstTradeTimestamp       int64           `json:"first_trade_timestamp"`
-	LatestTradeDate           string          `json:"latest_trade_date"`
-	LatestTradeHumanized      string          `json:"latest_trade_humanized"`
-	LatestTradeTimestamp      int64           `json:"latest_trade_timestamp"`
-	AvgDuration               string          `json:"avg_duration"`
-	BestPair                  string          `json:"best_pair"`
-	BestRate                  float32         `json:"best_rate"`
-	BestPairProfitRatio       float32         `json:"best_pair_profit_ratio"`
-	WinningTrades             int64           `json:"winning_trades"`
-	LosingTrades              int64           `json:"losing_trades"`
-	ProfitFactor              float32         `json:"profit_factor"`
-	Winrate                   float32         `json:"winrate"`
-	Expectancy                float32         `json:"expectancy"`
-	ExpectancyRatio           float32         `json:"expectancy_ratio"`
-	MaxDrawdown               float32         `json:"max_drawdown"`
-	MaxDrawdownAbs            float32         `json:"max_drawdown_abs"`
-	MaxDrawdownStart          string          `json:"max_drawdown_start"`
-	MaxDrawdownStartTimestamp int64           `json:"max_drawdown_start_timestamp"`
-	MaxDrawdownEnd            string          `json:"max_drawdown_end"`
-	MaxDrawdownEndTimestamp   int64           `json:"max_drawdown_end_timestamp"`
-	TradingVolume             NullableFloat32 `json:"trading_volume,omitempty"`
-	BotStartTimestamp         int64           `json:"bot_start_timestamp"`
-	BotStartDate              string          `json:"bot_start_date"`
+	ProfitClosedCoin              float32         `json:"profit_closed_coin"`
+	ProfitClosedPercentMean       float32         `json:"profit_closed_percent_mean"`
+	ProfitClosedRatioMean         float32         `json:"profit_closed_ratio_mean"`
+	ProfitClosedPercentSum        float32         `json:"profit_closed_percent_sum"`
+	ProfitClosedRatioSum          float32         `json:"profit_closed_ratio_sum"`
+	ProfitClosedPercent           float32         `json:"profit_closed_percent"`
+	ProfitClosedRatio             float32         `json:"profit_closed_ratio"`
+	ProfitClosedFiat              float32         `json:"profit_closed_fiat"`
+	ProfitAllCoin                 float32         `json:"profit_all_coin"`
+	ProfitAllPercentMean          float32         `json:"profit_all_percent_mean"`
+	ProfitAllRatioMean            float32         `json:"profit_all_ratio_mean"`
+	ProfitAllPercentSum           float32         `json:"profit_all_percent_sum"`
+	ProfitAllRatioSum             float32         `json:"profit_all_ratio_sum"`
+	ProfitAllPercent              float32         `json:"profit_all_percent"`
+	ProfitAllRatio                float32         `json:"profit_all_ratio"`
+	ProfitAllFiat                 float32         `json:"profit_all_fiat"`
+	TradeCount                    int64           `json:"trade_count"`
+	ClosedTradeCount              int64           `json:"closed_trade_count"`
+	FirstTradeDate                string          `json:"first_trade_date"`
+	FirstTradeHumanized           string          `json:"first_trade_humanized"`
+	FirstTradeTimestamp           int64           `json:"first_trade_timestamp"`
+	LatestTradeDate               string          `json:"latest_trade_date"`
+	LatestTradeHumanized          string          `json:"latest_trade_humanized"`
+	LatestTradeTimestamp          int64           `json:"latest_trade_timestamp"`
+	AvgDuration                   string          `json:"avg_duration"`
+	BestPair                      string          `json:"best_pair"`
+	BestRate                      float32         `json:"best_rate"`
+	BestPairProfitRatio           float32         `json:"best_pair_profit_ratio"`
+	BestPairProfitAbs             float32         `json:"best_pair_profit_abs"`
+	WinningTrades                 int64           `json:"winning_trades"`
+	LosingTrades                  int64           `json:"losing_trades"`
+	ProfitFactor                  float32         `json:"profit_factor"`
+	Winrate                       float32         `json:"winrate"`
+	Expectancy                    float32         `json:"expectancy"`
+	ExpectancyRatio               float32         `json:"expectancy_ratio"`
+	MaxDrawdown                   float32         `json:"max_drawdown"`
+	MaxDrawdownAbs                float32         `json:"max_drawdown_abs"`
+	MaxDrawdownStart              string          `json:"max_drawdown_start"`
+	MaxDrawdownStartTimestamp     int64           `json:"max_drawdown_start_timestamp"`
+	MaxDrawdownEnd                string          `json:"max_drawdown_end"`
+	MaxDrawdownEndTimestamp       int64           `json:"max_drawdown_end_timestamp"`
+	CurrentDrawdown               float32         `json:"current_drawdown"`
+	CurrentDrawdownAbs            float32         `json:"current_drawdown_abs"`
+	CurrentDrawdownHigh           float32         `json:"current_drawdown_high"`
+	CurrentDrawdownStart          string          `json:"current_drawdown_start"`
+	CurrentDrawdownStartTimestamp int64           `json:"current_drawdown_start_timestamp"`
+	TradingVolume                 NullableFloat32 `json:"trading_volume,omitempty"`
+	BotStartTimestamp             int64           `json:"bot_start_timestamp"`
+	BotStartDate                  string          `json:"bot_start_date"`
 }
 
 type _Profit Profit
@@ -72,7 +78,7 @@ type _Profit Profit
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewProfit(profitClosedCoin float32, profitClosedPercentMean float32, profitClosedRatioMean float32, profitClosedPercentSum float32, profitClosedRatioSum float32, profitClosedPercent float32, profitClosedRatio float32, profitClosedFiat float32, profitAllCoin float32, profitAllPercentMean float32, profitAllRatioMean float32, profitAllPercentSum float32, profitAllRatioSum float32, profitAllPercent float32, profitAllRatio float32, profitAllFiat float32, tradeCount int64, closedTradeCount int64, firstTradeDate string, firstTradeHumanized string, firstTradeTimestamp int64, latestTradeDate string, latestTradeHumanized string, latestTradeTimestamp int64, avgDuration string, bestPair string, bestRate float32, bestPairProfitRatio float32, winningTrades int64, losingTrades int64, profitFactor float32, winrate float32, expectancy float32, expectancyRatio float32, maxDrawdown float32, maxDrawdownAbs float32, maxDrawdownStart string, maxDrawdownStartTimestamp int64, maxDrawdownEnd string, maxDrawdownEndTimestamp int64, botStartTimestamp int64, botStartDate string) *Profit {
+func NewProfit(profitClosedCoin float32, profitClosedPercentMean float32, profitClosedRatioMean float32, profitClosedPercentSum float32, profitClosedRatioSum float32, profitClosedPercent float32, profitClosedRatio float32, profitClosedFiat float32, profitAllCoin float32, profitAllPercentMean float32, profitAllRatioMean float32, profitAllPercentSum float32, profitAllRatioSum float32, profitAllPercent float32, profitAllRatio float32, profitAllFiat float32, tradeCount int64, closedTradeCount int64, firstTradeDate string, firstTradeHumanized string, firstTradeTimestamp int64, latestTradeDate string, latestTradeHumanized string, latestTradeTimestamp int64, avgDuration string, bestPair string, bestRate float32, bestPairProfitRatio float32, bestPairProfitAbs float32, winningTrades int64, losingTrades int64, profitFactor float32, winrate float32, expectancy float32, expectancyRatio float32, maxDrawdown float32, maxDrawdownAbs float32, maxDrawdownStart string, maxDrawdownStartTimestamp int64, maxDrawdownEnd string, maxDrawdownEndTimestamp int64, currentDrawdown float32, currentDrawdownAbs float32, currentDrawdownHigh float32, currentDrawdownStart string, currentDrawdownStartTimestamp int64, botStartTimestamp int64, botStartDate string) *Profit {
 	this := Profit{}
 	this.ProfitClosedCoin = profitClosedCoin
 	this.ProfitClosedPercentMean = profitClosedPercentMean
@@ -102,6 +108,7 @@ func NewProfit(profitClosedCoin float32, profitClosedPercentMean float32, profit
 	this.BestPair = bestPair
 	this.BestRate = bestRate
 	this.BestPairProfitRatio = bestPairProfitRatio
+	this.BestPairProfitAbs = bestPairProfitAbs
 	this.WinningTrades = winningTrades
 	this.LosingTrades = losingTrades
 	this.ProfitFactor = profitFactor
@@ -114,6 +121,11 @@ func NewProfit(profitClosedCoin float32, profitClosedPercentMean float32, profit
 	this.MaxDrawdownStartTimestamp = maxDrawdownStartTimestamp
 	this.MaxDrawdownEnd = maxDrawdownEnd
 	this.MaxDrawdownEndTimestamp = maxDrawdownEndTimestamp
+	this.CurrentDrawdown = currentDrawdown
+	this.CurrentDrawdownAbs = currentDrawdownAbs
+	this.CurrentDrawdownHigh = currentDrawdownHigh
+	this.CurrentDrawdownStart = currentDrawdownStart
+	this.CurrentDrawdownStartTimestamp = currentDrawdownStartTimestamp
 	this.BotStartTimestamp = botStartTimestamp
 	this.BotStartDate = botStartDate
 	return &this
@@ -799,6 +811,30 @@ func (o *Profit) SetBestPairProfitRatio(v float32) {
 	o.BestPairProfitRatio = v
 }
 
+// GetBestPairProfitAbs returns the BestPairProfitAbs field value
+func (o *Profit) GetBestPairProfitAbs() float32 {
+	if o == nil {
+		var ret float32
+		return ret
+	}
+
+	return o.BestPairProfitAbs
+}
+
+// GetBestPairProfitAbsOk returns a tuple with the BestPairProfitAbs field value
+// and a boolean to check if the value has been set.
+func (o *Profit) GetBestPairProfitAbsOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.BestPairProfitAbs, true
+}
+
+// SetBestPairProfitAbs sets field value
+func (o *Profit) SetBestPairProfitAbs(v float32) {
+	o.BestPairProfitAbs = v
+}
+
 // GetWinningTrades returns the WinningTrades field value
 func (o *Profit) GetWinningTrades() int64 {
 	if o == nil {
@@ -1087,6 +1123,126 @@ func (o *Profit) SetMaxDrawdownEndTimestamp(v int64) {
 	o.MaxDrawdownEndTimestamp = v
 }
 
+// GetCurrentDrawdown returns the CurrentDrawdown field value
+func (o *Profit) GetCurrentDrawdown() float32 {
+	if o == nil {
+		var ret float32
+		return ret
+	}
+
+	return o.CurrentDrawdown
+}
+
+// GetCurrentDrawdownOk returns a tuple with the CurrentDrawdown field value
+// and a boolean to check if the value has been set.
+func (o *Profit) GetCurrentDrawdownOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CurrentDrawdown, true
+}
+
+// SetCurrentDrawdown sets field value
+func (o *Profit) SetCurrentDrawdown(v float32) {
+	o.CurrentDrawdown = v
+}
+
+// GetCurrentDrawdownAbs returns the CurrentDrawdownAbs field value
+func (o *Profit) GetCurrentDrawdownAbs() float32 {
+	if o == nil {
+		var ret float32
+		return ret
+	}
+
+	return o.CurrentDrawdownAbs
+}
+
+// GetCurrentDrawdownAbsOk returns a tuple with the CurrentDrawdownAbs field value
+// and a boolean to check if the value has been set.
+func (o *Profit) GetCurrentDrawdownAbsOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CurrentDrawdownAbs, true
+}
+
+// SetCurrentDrawdownAbs sets field value
+func (o *Profit) SetCurrentDrawdownAbs(v float32) {
+	o.CurrentDrawdownAbs = v
+}
+
+// GetCurrentDrawdownHigh returns the CurrentDrawdownHigh field value
+func (o *Profit) GetCurrentDrawdownHigh() float32 {
+	if o == nil {
+		var ret float32
+		return ret
+	}
+
+	return o.CurrentDrawdownHigh
+}
+
+// GetCurrentDrawdownHighOk returns a tuple with the CurrentDrawdownHigh field value
+// and a boolean to check if the value has been set.
+func (o *Profit) GetCurrentDrawdownHighOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CurrentDrawdownHigh, true
+}
+
+// SetCurrentDrawdownHigh sets field value
+func (o *Profit) SetCurrentDrawdownHigh(v float32) {
+	o.CurrentDrawdownHigh = v
+}
+
+// GetCurrentDrawdownStart returns the CurrentDrawdownStart field value
+func (o *Profit) GetCurrentDrawdownStart() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.CurrentDrawdownStart
+}
+
+// GetCurrentDrawdownStartOk returns a tuple with the CurrentDrawdownStart field value
+// and a boolean to check if the value has been set.
+func (o *Profit) GetCurrentDrawdownStartOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CurrentDrawdownStart, true
+}
+
+// SetCurrentDrawdownStart sets field value
+func (o *Profit) SetCurrentDrawdownStart(v string) {
+	o.CurrentDrawdownStart = v
+}
+
+// GetCurrentDrawdownStartTimestamp returns the CurrentDrawdownStartTimestamp field value
+func (o *Profit) GetCurrentDrawdownStartTimestamp() int64 {
+	if o == nil {
+		var ret int64
+		return ret
+	}
+
+	return o.CurrentDrawdownStartTimestamp
+}
+
+// GetCurrentDrawdownStartTimestampOk returns a tuple with the CurrentDrawdownStartTimestamp field value
+// and a boolean to check if the value has been set.
+func (o *Profit) GetCurrentDrawdownStartTimestampOk() (*int64, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CurrentDrawdownStartTimestamp, true
+}
+
+// SetCurrentDrawdownStartTimestamp sets field value
+func (o *Profit) SetCurrentDrawdownStartTimestamp(v int64) {
+	o.CurrentDrawdownStartTimestamp = v
+}
+
 // GetTradingVolume returns the TradingVolume field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *Profit) GetTradingVolume() float32 {
 	if o == nil || IsNil(o.TradingVolume.Get()) {
@@ -1216,6 +1372,7 @@ func (o Profit) ToMap() (map[string]interface{}, error) {
 	toSerialize["best_pair"] = o.BestPair
 	toSerialize["best_rate"] = o.BestRate
 	toSerialize["best_pair_profit_ratio"] = o.BestPairProfitRatio
+	toSerialize["best_pair_profit_abs"] = o.BestPairProfitAbs
 	toSerialize["winning_trades"] = o.WinningTrades
 	toSerialize["losing_trades"] = o.LosingTrades
 	toSerialize["profit_factor"] = o.ProfitFactor
@@ -1228,6 +1385,11 @@ func (o Profit) ToMap() (map[string]interface{}, error) {
 	toSerialize["max_drawdown_start_timestamp"] = o.MaxDrawdownStartTimestamp
 	toSerialize["max_drawdown_end"] = o.MaxDrawdownEnd
 	toSerialize["max_drawdown_end_timestamp"] = o.MaxDrawdownEndTimestamp
+	toSerialize["current_drawdown"] = o.CurrentDrawdown
+	toSerialize["current_drawdown_abs"] = o.CurrentDrawdownAbs
+	toSerialize["current_drawdown_high"] = o.CurrentDrawdownHigh
+	toSerialize["current_drawdown_start"] = o.CurrentDrawdownStart
+	toSerialize["current_drawdown_start_timestamp"] = o.CurrentDrawdownStartTimestamp
 	if o.TradingVolume.IsSet() {
 		toSerialize["trading_volume"] = o.TradingVolume.Get()
 	}
@@ -1269,6 +1431,7 @@ func (o *Profit) UnmarshalJSON(data []byte) (err error) {
 		"best_pair",
 		"best_rate",
 		"best_pair_profit_ratio",
+		"best_pair_profit_abs",
 		"winning_trades",
 		"losing_trades",
 		"profit_factor",
@@ -1281,6 +1444,11 @@ func (o *Profit) UnmarshalJSON(data []byte) (err error) {
 		"max_drawdown_start_timestamp",
 		"max_drawdown_end",
 		"max_drawdown_end_timestamp",
+		"current_drawdown",
+		"current_drawdown_abs",
+		"current_drawdown_high",
+		"current_drawdown_start",
+		"current_drawdown_start_timestamp",
 		"bot_start_timestamp",
 		"bot_start_date",
 	}

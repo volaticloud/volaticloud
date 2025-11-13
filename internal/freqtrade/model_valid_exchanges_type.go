@@ -22,9 +22,13 @@ var _ MappedNullable = &ValidExchangesType{}
 // ValidExchangesType struct for ValidExchangesType
 type ValidExchangesType struct {
 	Name       string          `json:"name"`
+	Classname  string          `json:"classname"`
 	Valid      bool            `json:"valid"`
 	Supported  bool            `json:"supported"`
 	Comment    string          `json:"comment"`
+	Dex        bool            `json:"dex"`
+	IsAlias    bool            `json:"is_alias"`
+	AliasFor   NullableString  `json:"alias_for"`
 	TradeModes []TradeModeType `json:"trade_modes"`
 }
 
@@ -34,12 +38,16 @@ type _ValidExchangesType ValidExchangesType
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewValidExchangesType(name string, valid bool, supported bool, comment string, tradeModes []TradeModeType) *ValidExchangesType {
+func NewValidExchangesType(name string, classname string, valid bool, supported bool, comment string, dex bool, isAlias bool, aliasFor NullableString, tradeModes []TradeModeType) *ValidExchangesType {
 	this := ValidExchangesType{}
 	this.Name = name
+	this.Classname = classname
 	this.Valid = valid
 	this.Supported = supported
 	this.Comment = comment
+	this.Dex = dex
+	this.IsAlias = isAlias
+	this.AliasFor = aliasFor
 	this.TradeModes = tradeModes
 	return &this
 }
@@ -74,6 +82,30 @@ func (o *ValidExchangesType) GetNameOk() (*string, bool) {
 // SetName sets field value
 func (o *ValidExchangesType) SetName(v string) {
 	o.Name = v
+}
+
+// GetClassname returns the Classname field value
+func (o *ValidExchangesType) GetClassname() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Classname
+}
+
+// GetClassnameOk returns a tuple with the Classname field value
+// and a boolean to check if the value has been set.
+func (o *ValidExchangesType) GetClassnameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Classname, true
+}
+
+// SetClassname sets field value
+func (o *ValidExchangesType) SetClassname(v string) {
+	o.Classname = v
 }
 
 // GetValid returns the Valid field value
@@ -148,6 +180,80 @@ func (o *ValidExchangesType) SetComment(v string) {
 	o.Comment = v
 }
 
+// GetDex returns the Dex field value
+func (o *ValidExchangesType) GetDex() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.Dex
+}
+
+// GetDexOk returns a tuple with the Dex field value
+// and a boolean to check if the value has been set.
+func (o *ValidExchangesType) GetDexOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Dex, true
+}
+
+// SetDex sets field value
+func (o *ValidExchangesType) SetDex(v bool) {
+	o.Dex = v
+}
+
+// GetIsAlias returns the IsAlias field value
+func (o *ValidExchangesType) GetIsAlias() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsAlias
+}
+
+// GetIsAliasOk returns a tuple with the IsAlias field value
+// and a boolean to check if the value has been set.
+func (o *ValidExchangesType) GetIsAliasOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsAlias, true
+}
+
+// SetIsAlias sets field value
+func (o *ValidExchangesType) SetIsAlias(v bool) {
+	o.IsAlias = v
+}
+
+// GetAliasFor returns the AliasFor field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *ValidExchangesType) GetAliasFor() string {
+	if o == nil || o.AliasFor.Get() == nil {
+		var ret string
+		return ret
+	}
+
+	return *o.AliasFor.Get()
+}
+
+// GetAliasForOk returns a tuple with the AliasFor field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ValidExchangesType) GetAliasForOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.AliasFor.Get(), o.AliasFor.IsSet()
+}
+
+// SetAliasFor sets field value
+func (o *ValidExchangesType) SetAliasFor(v string) {
+	o.AliasFor.Set(&v)
+}
+
 // GetTradeModes returns the TradeModes field value
 func (o *ValidExchangesType) GetTradeModes() []TradeModeType {
 	if o == nil {
@@ -183,9 +289,13 @@ func (o ValidExchangesType) MarshalJSON() ([]byte, error) {
 func (o ValidExchangesType) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
+	toSerialize["classname"] = o.Classname
 	toSerialize["valid"] = o.Valid
 	toSerialize["supported"] = o.Supported
 	toSerialize["comment"] = o.Comment
+	toSerialize["dex"] = o.Dex
+	toSerialize["is_alias"] = o.IsAlias
+	toSerialize["alias_for"] = o.AliasFor.Get()
 	toSerialize["trade_modes"] = o.TradeModes
 	return toSerialize, nil
 }
@@ -196,9 +306,13 @@ func (o *ValidExchangesType) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"name",
+		"classname",
 		"valid",
 		"supported",
 		"comment",
+		"dex",
+		"is_alias",
+		"alias_for",
 		"trade_modes",
 	}
 

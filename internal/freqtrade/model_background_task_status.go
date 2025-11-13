@@ -21,11 +21,13 @@ var _ MappedNullable = &BackgroundTaskStatus{}
 
 // BackgroundTaskStatus struct for BackgroundTaskStatus
 type BackgroundTaskStatus struct {
-	JobId       string          `json:"job_id"`
-	JobCategory string          `json:"job_category"`
-	Status      string          `json:"status"`
-	Running     bool            `json:"running"`
-	Progress    NullableFloat32 `json:"progress,omitempty"`
+	JobId         string                  `json:"job_id"`
+	JobCategory   string                  `json:"job_category"`
+	Status        string                  `json:"status"`
+	Running       bool                    `json:"running"`
+	Progress      NullableFloat32         `json:"progress,omitempty"`
+	ProgressTasks map[string]ProgressTask `json:"progress_tasks,omitempty"`
+	Error         NullableString          `json:"error,omitempty"`
 }
 
 type _BackgroundTaskStatus BackgroundTaskStatus
@@ -190,6 +192,82 @@ func (o *BackgroundTaskStatus) UnsetProgress() {
 	o.Progress.Unset()
 }
 
+// GetProgressTasks returns the ProgressTasks field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *BackgroundTaskStatus) GetProgressTasks() map[string]ProgressTask {
+	if o == nil {
+		var ret map[string]ProgressTask
+		return ret
+	}
+	return o.ProgressTasks
+}
+
+// GetProgressTasksOk returns a tuple with the ProgressTasks field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *BackgroundTaskStatus) GetProgressTasksOk() (map[string]ProgressTask, bool) {
+	if o == nil || IsNil(o.ProgressTasks) {
+		return map[string]ProgressTask{}, false
+	}
+	return o.ProgressTasks, true
+}
+
+// HasProgressTasks returns a boolean if a field has been set.
+func (o *BackgroundTaskStatus) HasProgressTasks() bool {
+	if o != nil && !IsNil(o.ProgressTasks) {
+		return true
+	}
+
+	return false
+}
+
+// SetProgressTasks gets a reference to the given map[string]ProgressTask and assigns it to the ProgressTasks field.
+func (o *BackgroundTaskStatus) SetProgressTasks(v map[string]ProgressTask) {
+	o.ProgressTasks = v
+}
+
+// GetError returns the Error field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *BackgroundTaskStatus) GetError() string {
+	if o == nil || IsNil(o.Error.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Error.Get()
+}
+
+// GetErrorOk returns a tuple with the Error field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *BackgroundTaskStatus) GetErrorOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Error.Get(), o.Error.IsSet()
+}
+
+// HasError returns a boolean if a field has been set.
+func (o *BackgroundTaskStatus) HasError() bool {
+	if o != nil && o.Error.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetError gets a reference to the given NullableString and assigns it to the Error field.
+func (o *BackgroundTaskStatus) SetError(v string) {
+	o.Error.Set(&v)
+}
+
+// SetErrorNil sets the value for Error to be an explicit nil
+func (o *BackgroundTaskStatus) SetErrorNil() {
+	o.Error.Set(nil)
+}
+
+// UnsetError ensures that no value is present for Error, not even an explicit nil
+func (o *BackgroundTaskStatus) UnsetError() {
+	o.Error.Unset()
+}
+
 func (o BackgroundTaskStatus) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -206,6 +284,12 @@ func (o BackgroundTaskStatus) ToMap() (map[string]interface{}, error) {
 	toSerialize["running"] = o.Running
 	if o.Progress.IsSet() {
 		toSerialize["progress"] = o.Progress.Get()
+	}
+	if o.ProgressTasks != nil {
+		toSerialize["progress_tasks"] = o.ProgressTasks
+	}
+	if o.Error.IsSet() {
+		toSerialize["error"] = o.Error.Get()
 	}
 	return toSerialize, nil
 }
