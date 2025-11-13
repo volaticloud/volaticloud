@@ -102,54 +102,23 @@ jobs:
           kubectl cluster-info
           echo "✅ Connected to Kubernetes cluster"
 
-      - name: Check if nginx-ingress is already installed
-        id: check-ingress
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-        run: |
-          if kubectl get namespace ingress-nginx &>/dev/null && \
-             kubectl get deployment -n ingress-nginx ingress-nginx-controller &>/dev/null; then
-            echo "ingress-installed=true" >> $GITHUB_OUTPUT
-            echo "✅ Nginx ingress is already installed"
-          else
-            echo "ingress-installed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  Nginx ingress is not installed"
-          fi
-
       - name: Add nginx-ingress Helm repo
-        if: steps.check-ingress.outputs.ingress-installed == 'false'
         run: |
           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
           helm repo update
 
-      - name: Install nginx-ingress
-        if: steps.check-ingress.outputs.ingress-installed == 'false'
+      - name: Install or upgrade nginx-ingress
         env:
           KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          echo "📦 Installing nginx ingress controller..."
-          helm install nginx-ingress ingress-nginx/ingress-nginx \
+          echo "📦 Deploying nginx ingress controller..."
+          helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
             --namespace ingress-nginx \
             --create-namespace \
             --values deployments/ingress-nginx/values.yaml \
             --wait \
             --timeout 5m
-          echo "✅ Nginx ingress controller installed"
-
-      - name: Upgrade nginx-ingress (if already installed)
-        if: steps.check-ingress.outputs.ingress-installed == 'true'
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-        run: |
-          echo "📦 Upgrading nginx ingress controller..."
-          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-          helm repo update
-          helm upgrade nginx-ingress ingress-nginx/ingress-nginx \
-            --namespace ingress-nginx \
-            --values deployments/ingress-nginx/values.yaml \
-            --wait \
-            --timeout 5m
-          echo "✅ Nginx ingress controller upgraded"
+          echo "✅ Nginx ingress controller deployed"
 
       - name: Wait for Load Balancer
         env:
@@ -223,54 +192,23 @@ jobs:
           export KUBECONFIG=${{ github.workspace }}/kubeconfig
           kubectl cluster-info
 
-      - name: Check if cert-manager is already installed
-        id: check-cert-manager
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-        run: |
-          if kubectl get namespace cert-manager &>/dev/null && \
-             kubectl get deployment -n cert-manager cert-manager &>/dev/null; then
-            echo "cert-manager-installed=true" >> $GITHUB_OUTPUT
-            echo "✅ cert-manager is already installed"
-          else
-            echo "cert-manager-installed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  cert-manager is not installed"
-          fi
-
       - name: Add cert-manager Helm repo
-        if: steps.check-cert-manager.outputs.cert-manager-installed == 'false'
         run: |
           helm repo add jetstack https://charts.jetstack.io
           helm repo update
 
-      - name: Install cert-manager
-        if: steps.check-cert-manager.outputs.cert-manager-installed == 'false'
+      - name: Install or upgrade cert-manager
         env:
           KUBECONFIG: ${{ github.workspace }}/kubeconfig
         run: |
-          echo "📦 Installing cert-manager..."
-          helm install cert-manager jetstack/cert-manager \
+          echo "📦 Deploying cert-manager..."
+          helm upgrade --install cert-manager jetstack/cert-manager \
             --namespace cert-manager \
             --create-namespace \
             --values deployments/cert-manager/values.yaml \
             --wait \
             --timeout 5m
-          echo "✅ cert-manager installed"
-
-      - name: Upgrade cert-manager (if already installed)
-        if: steps.check-cert-manager.outputs.cert-manager-installed == 'true'
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-        run: |
-          echo "📦 Upgrading cert-manager..."
-          helm repo add jetstack https://charts.jetstack.io
-          helm repo update
-          helm upgrade cert-manager jetstack/cert-manager \
-            --namespace cert-manager \
-            --values deployments/cert-manager/values.yaml \
-            --wait \
-            --timeout 5m
-          echo "✅ cert-manager upgraded"
+          echo "✅ cert-manager deployed"
 
       - name: Wait for cert-manager to be ready
         env:
