@@ -13,12 +13,10 @@ spec:
   # Database configuration (using managed PostgreSQL on VKE)
   db:
     vendor: postgres
-    # Host should be set via environment variable or secret
-    # Format: <hostname>:<port>
-    # Example: postgres.vultr.internal:5432
+    # Host should be set via environment variable
     host: ${KEYCLOAK_DB_HOST}
-    database: keycloak
-    port: 5432
+    database: ${KEYCLOAK_DB_NAME}
+    port: ${KEYCLOAK_DB_PORT}
     usernameSecret:
       name: keycloak-db-secret
       key: username
