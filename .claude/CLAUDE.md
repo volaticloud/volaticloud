@@ -1090,3 +1090,346 @@ if profit.FirstTradeTimestamp != 0 {
 
 **In Database:** Stored as `time.Time` in ENT entities
 
+---
+
+## Backend Deployment
+
+**Updated: 2025-11-14** - Implemented production-ready Kubernetes deployment using Nixys Universal Chart.
+
+### Overview
+
+The backend is deployed to VKE (Vultr Kubernetes Engine) with:
+- **Container Registry**: GitHub Container Registry (GHCR)
+- **Helm Chart**: [Nixys Universal Chart](https://github.com/nixys/nxs-universal-chart)
+- **CI/CD**: GitHub Actions for build & deploy
+- **Database**: Managed PostgreSQL (Vultr)
+- **Ingress**: Nginx Ingress Controller with Let's Encrypt TLS
+- **Monitoring**: Health checks, HPA, PDB, Prometheus-ready
+
+### Infrastructure Components
+
+**Already Deployed:**
+- ✅ VKE Cluster (2+ nodes)
+- ✅ Ingress Nginx Controller
+- ✅ Cert-manager with Let's Encrypt
+- ✅ Keycloak (OIDC authentication)
+- ✅ OLM (Operator Lifecycle Manager)
+
+**Backend Stack:**
+- Docker multi-stage build (Go 1.24 + Alpine)
+- Kubernetes Deployment (2-10 replicas via HPA)
+- Database migrations (Helm pre-install hook)
+- TLS/HTTPS (cert-manager)
+- Rolling updates (zero-downtime)
+
+### Directory Structure
+
+```
+deployments/backend/
+├── values.yaml          # Helm values for Nixys Universal Chart
+└── README.md            # Deployment documentation
+
+.github/workflows/
+├── docker-build.yml     # Build & push Docker images
+└── deploy-backend.yml   # Deploy to Kubernetes
+```
+
+### Docker Build
+
+**Dockerfile:** Multi-stage build with Alpine
+- Build stage: Go 1.24 with CGO support (for SQLite in development)
+- Runtime stage: Alpine 3.x with non-root user
+- Health check: `wget http://localhost:8080/health`
+- Size: ~30MB compressed
+
+**GitHub Workflow:** `.github/workflows/docker-build.yml`
+- **Trigger**: Push to main (Go code changes)
+- **Registry**: `ghcr.io/diazoxide/anytrade`
+- **Tags**: `latest`, `main-<sha>`, semver
+- **Platforms**: linux/amd64, linux/arm64
+- **Cache**: GitHub Actions cache for faster builds
+
+**Build Command:**
+```bash
+docker build -t ghcr.io/diazoxide/anytrade:latest .
+```
+
+### Kubernetes Deployment
+
+**Helm Chart:** Nixys Universal Chart (generic, production-ready)
+- **Repo**: `https://registry.nixys.io/chartrepo/public`
+- **Why Nixys**: Comprehensive features, multiple ingress controllers, extraDeploy for custom resources
+
+**Key Features:**
+1. **Horizontal Pod Autoscaler**: 2-10 replicas based on CPU (70%) and memory (80%)
+2. **Health Probes**: Liveness (10s interval) and Readiness (5s interval) on `/health`
+3. **Pod Disruption Budget**: Ensures min 1 replica during disruptions
+4. **Security**: Non-root user (UID 1000), dropped capabilities
+5. **Affinity**: Pods spread across nodes for high availability
+6. **Resources**: 250m CPU / 256Mi RAM (requests), 1000m CPU / 512Mi RAM (limits)
+
+**GitHub Workflow:** `.github/workflows/deploy-backend.yml`
+- **Trigger**: Push to main (deployment config changes), manual dispatch
+- **Environment**: `prod` (requires approval)
+- **Steps**:
+  1. Validate Helm values
+  2. Create namespace & database secret
+  3. Run database migrations (pre-install hook)
+  4. Deploy with Helm (atomic rollback on failure)
+  5. Verify deployment health
+  6. Run post-deployment tests
+
+### Database Migrations
+
+**Strategy:** Automatic on server startup (100% GitOps)
+
+**Updated: 2025-11-14** - Migrations now run automatically when the server starts, eliminating the need for separate migration jobs or commands.
+
+Migrations run automatically before accepting connections:
+```go
+// cmd/server/main.go:132-135
+// Run auto migration
+if err := client.Schema.Create(ctx); err != nil {
+    return fmt.Errorf("failed creating schema resources: %w", err)
+}
+```
+
+**Behavior:**
+- Runs on every server startup
+- Executes before HTTP server starts
+- Uses ENT auto-migration (`client.Schema.Create`)
+- Idempotent (safe to run multiple times)
+- Pod fails if migration fails (automatic Kubernetes retry)
+- Zero-downtime: Readiness probe prevents traffic during migration
+
+**Timeline:**
+1. Container starts → Binary runs
+2. Database connection established
+3. Auto-migration executes
+4. HTTP server starts
+5. Readiness probe succeeds
+6. Traffic routes to pod
+
+**Benefits:**
+- ✅ No separate migration jobs needed
+- ✅ No manual migration commands
+- ✅ 100% GitOps (just deploy, migrations happen automatically)
+- ✅ Zero-downtime deployments (Kubernetes waits for readiness)
+- ✅ Automatic rollback if migration fails
+
+### Configuration
+
+**Environment Variables:**
+```bash
+ANYTRADE_HOST=0.0.0.0
+ANYTRADE_PORT=8080
+ANYTRADE_DATABASE=postgresql://user:pass@host:5432/db?sslmode=require
+ANYTRADE_MONITOR_INTERVAL=30s
+ANYTRADE_ETCD_ENDPOINTS=  # Optional for distributed mode
+```
+
+**Kubernetes Secrets:**
+Database credentials stored in `anytrade-db-secret`:
+- `host` - PostgreSQL hostname:port
+- `database` - Database name
+- `username` - Database user
+- `password` - Database password
+
+Created automatically by GitHub Actions during deployment.
+
+### Deployment Commands
+
+**Local Testing:**
+```bash
+# Add Nixys Helm repo
+helm repo add nixys https://registry.nixys.io/chartrepo/public
+helm repo update
+
+# Validate Helm values
+helm template anytrade-backend nixys/nxs-universal-chart \
+  -f deployments/backend/values.yaml \
+  --dry-run --debug
+
+# Lint chart
+helm lint nixys/nxs-universal-chart \
+  -f deployments/backend/values.yaml
+```
+
+**Deploy to Kubernetes:**
+```bash
+# Deploy via GitHub Actions (recommended)
+gh workflow run deploy-backend.yml
+
+# Manual deploy
+helm upgrade --install anytrade-backend nixys/nxs-universal-chart \
+  --namespace anytrade \
+  --create-namespace \
+  -f deployments/backend/values.yaml \
+  --set image.tag=main-abc1234 \
+  --wait --timeout 10m --atomic
+```
+
+**Verify Deployment:**
+```bash
+# Check pods
+kubectl get pods -n anytrade -l app=anytrade-backend
+
+# Check service
+kubectl get svc -n anytrade
+
+# Check ingress
+kubectl get ingress -n anytrade
+
+# View logs
+kubectl logs -n anytrade -l app=anytrade-backend --tail=100 -f
+
+# Test health endpoint
+curl https://api.anytrade.com/health
+```
+
+**Rollback:**
+```bash
+# Automatic rollback on failure (--atomic flag)
+# Or manual rollback
+helm rollback anytrade-backend -n anytrade
+```
+
+### CI/CD Pipeline
+
+**Build Pipeline:** `docker-build.yml`
+1. Checkout code
+2. Set up Docker Buildx
+3. Log in to GHCR
+4. Extract metadata (tags)
+5. Build & push multi-arch image
+6. Cache layers for faster builds
+
+**Deploy Pipeline:** `deploy-backend.yml`
+1. Validate Helm values
+2. Configure kubeconfig
+3. Create namespace & secrets
+4. Deploy with Helm
+5. Verify deployment
+6. Post-deployment tests
+7. Auto-rollback on failure
+
+**Deployment Flow:**
+```
+Push to main → GitHub Actions
+  ↓
+Build Docker image → GHCR
+  ↓
+Trigger deployment → Validate
+  ↓
+Run migrations (Job) → Deploy (Deployment)
+  ↓
+Health checks → Traffic routing
+  ↓
+Success ✓ / Rollback ✗
+```
+
+### Monitoring & Observability
+
+**Health Endpoints:**
+- `/health` - Health check (200 OK)
+- `/` - GraphQL Playground
+- `/query` - GraphQL API
+
+**Probes:**
+- Liveness: Initial 10s, period 10s, timeout 3s, threshold 3
+- Readiness: Initial 5s, period 5s, timeout 3s, threshold 3
+
+**Prometheus Integration:**
+Pods annotated for scraping:
+```yaml
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: /metrics
+```
+
+**Logging:**
+```bash
+# View logs
+kubectl logs -n anytrade -l app=anytrade-backend --tail=100
+
+# Follow logs
+kubectl logs -n anytrade -l app=anytrade-backend -f
+
+# View events
+kubectl get events -n anytrade --sort-by='.lastTimestamp'
+```
+
+### Scaling
+
+**Auto-scaling (HPA):**
+- Min replicas: 2
+- Max replicas: 10
+- CPU target: 70%
+- Memory target: 80%
+
+**Manual scaling:**
+```bash
+kubectl scale deployment anytrade-backend -n anytrade --replicas=5
+```
+
+### Security
+
+**Container Security:**
+- Non-root user (UID 1000)
+- Read-only root filesystem (where possible)
+- Dropped ALL capabilities
+- No privilege escalation
+
+**Network Security:**
+- TLS/HTTPS only (cert-manager + Let's Encrypt)
+- ClusterIP service (internal only)
+- Ingress for external access
+
+**Secrets Management:**
+- Database credentials in Kubernetes Secrets
+- Secrets created by CI/CD (not in git)
+- Environment variable injection
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **Pods CrashLoopBackOff**: Check logs and health endpoint
+2. **Migration fails**: Check database connectivity and credentials
+3. **Ingress not working**: Check cert-manager and DNS
+4. **HPA not scaling**: Check metrics-server installation
+
+**Debug Commands:**
+```bash
+# Pod status
+kubectl describe pod <pod-name> -n anytrade
+
+# View events
+kubectl get events -n anytrade --sort-by='.lastTimestamp'
+
+# Test database connection
+kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
+  psql -h <host> -U anytrade -d anytrade
+
+# Check HPA
+kubectl get hpa -n anytrade
+kubectl describe hpa anytrade-backend -n anytrade
+```
+
+### Documentation
+
+Comprehensive documentation available:
+- `deployments/backend/README.md` - Full deployment guide
+- `deployments/README.md` - Infrastructure overview
+- `deployments/PRE_DEPLOYMENT_CHECKLIST.md` - Pre-deployment checklist
+
+### Next Steps
+
+After backend deployment:
+1. Configure DNS (api.anytrade.com → VKE LoadBalancer)
+2. Deploy frontend dashboard
+3. Set up monitoring (Prometheus/Grafana)
+4. Configure alerting
+5. Enable continuous deployment
+

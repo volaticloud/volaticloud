@@ -32,57 +32,38 @@ func main() {
 		Name:    "anytrade",
 		Usage:   "AnyTrade Control Plane - Manage freqtrade trading bots",
 		Version: "0.1.0",
-		Commands: []*cli.Command{
-			{
-				Name:  "server",
-				Usage: "Start the control plane server",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:    "host",
-						Usage:   "Server host",
-						Value:   "0.0.0.0",
-						EnvVars: []string{"ANYTRADE_HOST"},
-					},
-					&cli.IntFlag{
-						Name:    "port",
-						Usage:   "Server port",
-						Value:   8080,
-						EnvVars: []string{"ANYTRADE_PORT"},
-					},
-					&cli.StringFlag{
-						Name:    "database",
-						Usage:   "Database connection string (sqlite://path/to/db.sqlite or postgresql://...)",
-						Value:   "sqlite://./data/anytrade.db",
-						EnvVars: []string{"ANYTRADE_DATABASE"},
-					},
-					&cli.StringSliceFlag{
-						Name:    "etcd-endpoints",
-						Usage:   "Etcd endpoints for distributed monitoring (comma-separated). If empty, runs in single-instance mode",
-						EnvVars: []string{"ANYTRADE_ETCD_ENDPOINTS"},
-					},
-					&cli.DurationFlag{
-						Name:    "monitor-interval",
-						Usage:   "How often to check bot status",
-						Value:   30 * time.Second,
-						EnvVars: []string{"ANYTRADE_MONITOR_INTERVAL"},
-					},
-				},
-				Action: runServer,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "host",
+				Usage:   "Server host",
+				Value:   "0.0.0.0",
+				EnvVars: []string{"ANYTRADE_HOST"},
 			},
-			{
-				Name:  "migrate",
-				Usage: "Run database migrations",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:    "database",
-						Usage:   "Database connection string (sqlite://path/to/db.sqlite or postgresql://...)",
-						Value:   "sqlite://./data/anytrade.db",
-						EnvVars: []string{"ANYTRADE_DATABASE"},
-					},
-				},
-				Action: runMigrate,
+			&cli.IntFlag{
+				Name:    "port",
+				Usage:   "Server port",
+				Value:   8080,
+				EnvVars: []string{"ANYTRADE_PORT"},
+			},
+			&cli.StringFlag{
+				Name:    "database",
+				Usage:   "Database connection string (sqlite://path/to/db.sqlite or postgresql://...)",
+				Value:   "sqlite://./data/anytrade.db",
+				EnvVars: []string{"ANYTRADE_DATABASE"},
+			},
+			&cli.StringSliceFlag{
+				Name:    "etcd-endpoints",
+				Usage:   "Etcd endpoints for distributed monitoring (comma-separated). If empty, runs in single-instance mode",
+				EnvVars: []string{"ANYTRADE_ETCD_ENDPOINTS"},
+			},
+			&cli.DurationFlag{
+				Name:    "monitor-interval",
+				Usage:   "How often to check bot status",
+				Value:   30 * time.Second,
+				EnvVars: []string{"ANYTRADE_MONITOR_INTERVAL"},
 			},
 		},
+		Action: runServer,
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -268,33 +249,5 @@ func runServer(c *cli.Context) error {
 	}
 
 	log.Println("Server stopped")
-	return nil
-}
-
-func runMigrate(c *cli.Context) error {
-	ctx := context.Background()
-
-	// Parse database connection
-	dbURL := c.String("database")
-	driver, dsn, err := parseDatabase(dbURL)
-	if err != nil {
-		return err
-	}
-
-	// Initialize database connection
-	client, err := ent.Open(driver, dsn)
-	if err != nil {
-		return fmt.Errorf("failed opening connection to %s: %w", driver, err)
-	}
-	defer client.Close()
-
-	// Run auto migration
-	log.Printf("Running database migrations on %s...\n", driver)
-	if err := client.Schema.Create(ctx); err != nil {
-		return fmt.Errorf("failed creating schema resources: %w", err)
-	}
-
-	log.Println("✓ Migrations completed successfully!")
-	log.Printf("✓ Database: %s\n", dsn)
 	return nil
 }
