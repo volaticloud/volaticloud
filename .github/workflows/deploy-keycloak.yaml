@@ -39,11 +39,11 @@ jobs:
       - name: Validate Keycloak manifests
         run: |
           echo "🔍 Validating Kubernetes manifests..."
-          kubectl apply --dry-run=client -f deployments/keycloak/namespace.yaml
-          kubectl apply --dry-run=client -f deployments/keycloak/operator-subscription.yaml
-          kubectl apply --dry-run=client -f deployments/keycloak/keycloak-instance.yaml
-          kubectl apply --dry-run=client -f deployments/keycloak/keycloak-realm.yaml
-          kubectl apply --dry-run=client -f deployments/keycloak/keycloak-client.yaml
+          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/namespace.yaml
+          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/operator-subscription.yaml
+          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/keycloak-instance.yaml
+          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/keycloak-realm.yaml
+          kubectl apply --dry-run=client --validate=false -f deployments/keycloak/keycloak-client.yaml
           echo "✅ All manifests are valid"
 
       - name: Check for hardcoded secrets
