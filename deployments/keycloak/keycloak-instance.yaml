@@ -30,6 +30,11 @@ spec:
     # TLS will be handled by ingress
     httpEnabled: true
 
+  # Proxy configuration (for HTTPS termination at ingress)
+  # This tells Keycloak it's behind a reverse proxy with TLS termination
+  proxy:
+    headers: xforwarded  # Trust X-Forwarded-* headers from nginx
+
   # Hostname configuration
   hostname:
     hostname: ${KEYCLOAK_HOSTNAME}
