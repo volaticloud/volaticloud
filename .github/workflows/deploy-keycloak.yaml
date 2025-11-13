@@ -200,6 +200,7 @@ jobs:
           export KEYCLOAK_DB_HOST="${{ secrets.KEYCLOAK_DB_HOST }}"
           export KEYCLOAK_DB_PORT="${{ secrets.KEYCLOAK_DB_PORT }}"
           export KEYCLOAK_DB_NAME="${{ secrets.KEYCLOAK_DB_NAME }}"
+          export KEYCLOAK_DB_SCHEMA="${{ secrets.KEYCLOAK_DB_SCHEMA }}"
           export KEYCLOAK_HOSTNAME="${{ secrets.KEYCLOAK_HOSTNAME }}"
           envsubst < deployments/keycloak/keycloak-instance.yaml > /tmp/keycloak-instance-processed.yaml
 

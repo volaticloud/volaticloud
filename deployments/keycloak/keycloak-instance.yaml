@@ -16,6 +16,7 @@ spec:
     # Host should be set via environment variable
     host: ${KEYCLOAK_DB_HOST}
     database: ${KEYCLOAK_DB_NAME}
+    schema: ${KEYCLOAK_DB_SCHEMA}
     port: ${KEYCLOAK_DB_PORT}
     usernameSecret:
       name: keycloak-db-secret
