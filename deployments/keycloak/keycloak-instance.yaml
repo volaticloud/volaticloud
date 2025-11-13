@@ -30,7 +30,6 @@ spec:
   http:
     # TLS will be handled by ingress
     httpEnabled: true
-    httpsEnabled: false
 
   # Hostname configuration
   hostname:
