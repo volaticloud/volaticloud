@@ -202,6 +202,11 @@ jobs:
           envsubst < deployments/keycloak/keycloak-instance.yaml > /tmp/keycloak-instance-processed.yaml
 
           cat /tmp/keycloak-instance-processed.yaml
+
+          # Delete existing Keycloak instance if it exists (for clean redeploy)
+          echo "🗑️  Deleting existing Keycloak instance (if any)..."
+          kubectl delete keycloak anytrade-keycloak -n keycloak --ignore-not-found=true --timeout=60s
+
           kubectl apply -f /tmp/keycloak-instance-processed.yaml
 
           echo "⏳ Waiting for Keycloak to be ready..."
