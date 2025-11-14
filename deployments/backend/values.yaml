@@ -38,14 +38,15 @@ deployments:
           anytrade-secrets:
             - ANYTRADE_DATABASE
 
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: http
-          initialDelaySeconds: 60
-          periodSeconds: 30
-          timeoutSeconds: 5
-          failureThreshold: 3
+        # Temporarily disabled to capture startup errors
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health
+        #     port: http
+        #   initialDelaySeconds: 60
+        #   periodSeconds: 30
+        #   timeoutSeconds: 5
+        #   failureThreshold: 3
 
         readinessProbe:
           httpGet:
