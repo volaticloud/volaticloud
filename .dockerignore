@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+docs/
+PLAN.md
+TODO.md
+ARCHITECTURE.md
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build artifacts
+bin/
+data/
+coverage*.out
+coverage.html
+
+# Dashboard
+dashboard/node_modules
+dashboard/dist
+dashboard/.env
+
+# Deployments
+deployments/
+
+# Scripts
+scripts/
+
+# Test files
+*_test.go
+
+# Local development
+docker-compose.yml
+*.sqlite
+*.db
