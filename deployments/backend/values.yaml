@@ -31,22 +31,20 @@ deployments:
             value: "8080"
           - name: ANYTRADE_MONITOR_INTERVAL
             value: "30s"
-          - name: ANYTRADE_ETCD_ENDPOINTS
-            value: ""
+          # ANYTRADE_ETCD_ENDPOINTS omitted - runs in single-instance mode
 
         envsFromSecret:
           anytrade-secrets:
             - ANYTRADE_DATABASE
 
-        # Temporarily disabled to capture startup errors
-        # livenessProbe:
-        #   httpGet:
-        #     path: /health
-        #     port: http
-        #   initialDelaySeconds: 60
-        #   periodSeconds: 30
-        #   timeoutSeconds: 5
-        #   failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
 
         readinessProbe:
           httpGet:
