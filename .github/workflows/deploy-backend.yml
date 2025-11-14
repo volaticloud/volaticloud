@@ -103,7 +103,7 @@ jobs:
 
       - name: Create application secrets
         run: |
-          kubectl create secret generic anytrade-secrets \
+          kubectl create secret generic anytrade-backend-anytrade-secrets \
             --from-literal=ANYTRADE_DATABASE="${{ secrets.ANYTRADE_DATABASE }}" \
             --namespace=anytrade \
             --dry-run=client -o yaml | kubectl apply -f -
