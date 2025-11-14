@@ -16,7 +16,7 @@ deployments:
 
     containers:
       - name: anytrade
-        image: ghcr.io/diazoxide/anytrade:latest
+        image: ghcr.io/diazoxide/anytrade
         imagePullPolicy: Always
 
         ports:
