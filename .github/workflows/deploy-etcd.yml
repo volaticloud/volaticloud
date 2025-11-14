@@ -1,0 +1,194 @@
+name: Deploy etcd to VKE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deployments/etcd/**'
+      - '.github/workflows/deploy-etcd.yml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - uninstall
+
+concurrency:
+  group: deploy-etcd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Add Bitnami Helm repository
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
+
+      - name: Validate Helm values
+        run: |
+          helm template etcd bitnami/etcd \
+            -f deployments/etcd/values.yaml \
+            --namespace anytrade \
+            --dry-run --debug
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: prod
+      url: https://api.anytrade.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Verify cluster access
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Add Bitnami Helm repository
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace anytrade --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy or uninstall etcd
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "uninstall" ]; then
+            echo "Uninstalling etcd..."
+            helm uninstall etcd -n anytrade || echo "etcd not installed"
+          else
+            echo "Deploying etcd cluster..."
+            helm upgrade --install etcd bitnami/etcd \
+              --namespace anytrade \
+              --create-namespace \
+              -f deployments/etcd/values.yaml \
+              --wait \
+              --timeout 10m
+          fi
+
+      - name: Verify deployment
+        if: github.event.inputs.action != 'uninstall'
+        run: |
+          echo "Waiting for etcd StatefulSet to be ready..."
+          kubectl wait --for=condition=ready --timeout=300s \
+            pod -l app.kubernetes.io/name=etcd -n anytrade
+
+          echo "Checking etcd pods..."
+          kubectl get pods -n anytrade -l app.kubernetes.io/name=etcd
+
+          echo "Getting etcd service info..."
+          kubectl get svc -n anytrade -l app.kubernetes.io/name=etcd
+
+          echo "Checking etcd cluster health..."
+          kubectl exec -n anytrade etcd-0 -- etcdctl \
+            --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
+            endpoint health
+
+      - name: Generate deployment summary
+        if: github.event.inputs.action != 'uninstall'
+        run: |
+          echo "### etcd Cluster Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Cluster Size:** 3 nodes" >> $GITHUB_STEP_SUMMARY
+          echo "**Namespace:** anytrade" >> $GITHUB_STEP_SUMMARY
+          echo "**Endpoint:** etcd.anytrade.svc.cluster.local:2379" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**etcd Resources:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n anytrade -l app.kubernetes.io/name=etcd >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Cluster Health:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl exec -n anytrade etcd-0 -- etcdctl \
+            --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
+            endpoint status --cluster -w table >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "### Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Check the logs above for details**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Recent Pod Events:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get events -n anytrade --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure() && github.ref == 'refs/heads/main'
+    environment: prod
+
+    steps:
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Rollback Helm release
+        run: |
+          echo "Rolling back to previous version..."
+          helm rollback etcd -n anytrade || echo "No previous version to rollback to"
+
+          echo "Checking etcd status..."
+          kubectl get pods -n anytrade -l app.kubernetes.io/name=etcd
+
+      - name: Verify rollback
+        run: |
+          echo "### Rollback Completed ⚠️" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The deployment has been rolled back to the previous version." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Status:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          helm history etcd -n anytrade >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
