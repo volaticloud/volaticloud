@@ -6,15 +6,20 @@ RUN apk add --no-cache git make gcc musl-dev
 
 WORKDIR /build
 
-# Copy go mod files
+# Copy go mod files first (better caching)
 COPY go.mod go.sum ./
-RUN go mod download
+
+# Download dependencies with cache mount
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 # Copy source code
 COPY . .
 
-# Build the binary
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o anytrade ./cmd/server
+# Build the binary with cache mounts
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=1 GOOS=linux go build -ldflags="-w -s" -o anytrade ./cmd/server
 
 # Runtime stage
 FROM alpine:latest
