@@ -1,229 +1,385 @@
 # etcd Cluster Deployment
 
-Production-ready etcd cluster for AnyTrade distributed monitoring.
+Production-ready etcd cluster for AnyTrade distributed monitoring coordination.
 
 ## Overview
 
-This deployment creates a 3-node etcd cluster using the Bitnami Helm chart with:
+This deployment creates a 3-node etcd cluster using the Bitnami Helm chart in a dedicated `etcd-system` namespace.
 
-- **High Availability**: 3 replicas with pod anti-affinity
-- **Persistence**: 8Gi persistent storage per node
-- **Metrics**: Prometheus-compatible metrics endpoint
-- **Pod Disruption Budget**: Ensures minimum 2 nodes available during updates
+**Key Features:**
+- 3-node cluster for high availability
+- Persistent storage (8Gi per node)
+- Pod anti-affinity (spread across nodes)
+- Pod Disruption Budget (minimum 2 available)
+- Automated health checks
+- Prometheus metrics integration
+- Automatic compaction and snapshots
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│         AnyTrade Backend (N replicas)        │
-│                                             │
-│  Each instance connects to etcd cluster     │
-│  for distributed coordination               │
-└─────────────────┬───────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────┐
-│           etcd Cluster (3 nodes)            │
-│                                             │
-│  etcd-0  ◄──────┬──────► etcd-1            │
-│    │            │            │              │
-│    └────────────┴────────────┴─► etcd-2    │
-│                                             │
-│  Service: etcd.anytrade.svc.cluster.local  │
-│  Port: 2379 (client), 2380 (peer)          │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│         etcd-system namespace           │
+├─────────────────────────────────────────┤
+│                                         │
+│  ┌────────┐  ┌────────┐  ┌────────┐   │
+│  │ etcd-0 │  │ etcd-1 │  │ etcd-2 │   │
+│  └───┬────┘  └───┬────┘  └───┬────┘   │
+│      │           │           │         │
+│  ┌───▼───────────▼───────────▼───┐    │
+│  │   etcd-headless Service       │    │
+│  │   (internal cluster comm)     │    │
+│  └───────────────────────────────┘    │
+│                                         │
+│  ┌───────────────────────────────┐    │
+│  │      etcd Service             │    │
+│  │   (client connections)        │    │
+│  │   ClusterIP: 2379             │    │
+│  └───────────────────────────────┘    │
+│                                         │
+│  ┌───────────────────────────────┐    │
+│  │   Persistent Volumes (3x 8Gi) │    │
+│  └───────────────────────────────┘    │
+└─────────────────────────────────────────┘
 ```
+
+## Connection Information
+
+### From Backend Pods (anytrade namespace)
+
+Configure backend to connect to etcd cluster:
+
+```yaml
+env:
+  - name: ANYTRADE_ETCD_ENDPOINTS
+    value: "etcd.etcd-system.svc.cluster.local:2379"
+```
+
+**Full DNS:**
+- Client endpoint: `etcd.etcd-system.svc.cluster.local:2379`
+- Headless service: `etcd-headless.etcd-system.svc.cluster.local:2379`
+- Individual pods:
+  - `etcd-0.etcd-headless.etcd-system.svc.cluster.local:2379`
+  - `etcd-1.etcd-headless.etcd-system.svc.cluster.local:2379`
+  - `etcd-2.etcd-headless.etcd-system.svc.cluster.local:2379`
 
 ## Deployment
 
-### Automatic via GitHub Actions
+### Automated (GitOps)
 
 Push changes to `main` branch:
 ```bash
 git add deployments/etcd/
-git commit -m "deploy: etcd cluster"
-git push
+git commit -m "feat: deploy etcd cluster"
+git push origin main
 ```
 
-### Manual via kubectl + Helm
+GitHub Actions will automatically deploy to VKE.
 
-1. **Add Bitnami repository:**
-   ```bash
-   helm repo add bitnami https://charts.bitnami.com/bitnami
-   helm repo update
-   ```
+### Manual Deployment
 
-2. **Deploy etcd cluster:**
-   ```bash
-   helm upgrade --install etcd bitnami/etcd \
-     --namespace anytrade \
-     --create-namespace \
-     -f deployments/etcd/values.yaml \
-     --wait
-   ```
+```bash
+# Add Bitnami repo
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
 
-3. **Verify deployment:**
-   ```bash
-   kubectl get pods -n anytrade -l app.kubernetes.io/name=etcd
-   kubectl exec -n anytrade etcd-0 -- etcdctl \
-     --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-     endpoint health
-   ```
-
-## Connecting Backend to etcd
-
-Once etcd is deployed, update the backend deployment to enable distributed mode:
-
-**Update `deployments/backend/values.yaml`:**
-```yaml
-env:
-  - name: ANYTRADE_HOST
-    value: "0.0.0.0"
-  - name: ANYTRADE_PORT
-    value: "8080"
-  - name: ANYTRADE_MONITOR_INTERVAL
-    value: "30s"
-  - name: ANYTRADE_ETCD_ENDPOINTS
-    value: "etcd-0.etcd-headless.anytrade.svc.cluster.local:2379,etcd-1.etcd-headless.anytrade.svc.cluster.local:2379,etcd-2.etcd-headless.anytrade.svc.cluster.local:2379"
+# Deploy
+helm upgrade --install etcd bitnami/etcd \
+  --namespace etcd-system \
+  --create-namespace \
+  -f deployments/etcd/values.yaml \
+  --wait \
+  --timeout 10m
 ```
 
-## Monitoring
+## Operations
 
 ### Check Cluster Health
 
 ```bash
-# Health check
-kubectl exec -n anytrade etcd-0 -- etcdctl \
-  --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-  endpoint health
+# Get etcd pod
+ETCD_POD=$(kubectl get pods -n etcd-system -l app.kubernetes.io/name=etcd -o jsonpath='{.items[0].metadata.name}')
 
-# Cluster status
-kubectl exec -n anytrade etcd-0 -- etcdctl \
-  --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-  endpoint status --cluster -w table
+# Check endpoint health
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl endpoint health \
+  --cluster=true \
+  --endpoints=etcd-0.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-1.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-2.etcd-headless.etcd-system.svc.cluster.local:2379
 
-# Member list
-kubectl exec -n anytrade etcd-0 -- etcdctl \
-  --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-  member list -w table
+# Check member list
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl member list -w table
+
+# Check cluster status
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl endpoint status \
+  --cluster=true \
+  --endpoints=etcd-0.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-1.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-2.etcd-headless.etcd-system.svc.cluster.local:2379 \
+  -w table
 ```
 
-### View Metrics
+### View Cluster Data
 
 ```bash
-# Port-forward to access metrics
-kubectl port-forward -n anytrade svc/etcd 2379:2379
+# List all keys
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl get "" --prefix --keys-only
 
-# Access metrics at http://localhost:2379/metrics
-curl http://localhost:2379/metrics
+# Get specific key
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl get /anytrade/monitor/leader
+
+# Watch for changes
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl watch /anytrade/monitor/ --prefix
 ```
 
-## Maintenance
+### Scaling
 
-### Scaling the Cluster
-
-⚠️ **Important**: etcd requires an odd number of nodes (3, 5, 7, etc.)
+etcd requires careful scaling due to quorum requirements:
 
 ```bash
-# Update replicaCount in values.yaml
-# Then apply:
-helm upgrade etcd bitnami/etcd \
-  --namespace anytrade \
-  -f deployments/etcd/values.yaml
+# Scale to 5 nodes (always use odd numbers)
+kubectl scale statefulset etcd -n etcd-system --replicas=5
+
+# Wait for new members to join
+kubectl exec -n etcd-system etcd-0 -- etcdctl member list -w table
 ```
+
+**Important:** Only scale to odd numbers (3, 5, 7) to maintain quorum.
 
 ### Backup and Restore
 
-**Create Snapshot:**
-```bash
-kubectl exec -n anytrade etcd-0 -- etcdctl \
-  --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-  snapshot save /tmp/etcd-backup.db
+#### Create Snapshot
 
-kubectl cp anytrade/etcd-0:/tmp/etcd-backup.db ./etcd-backup-$(date +%Y%m%d).db
+```bash
+# Create snapshot
+kubectl exec -n etcd-system etcd-0 -- etcdctl snapshot save /tmp/snapshot.db
+
+# Copy snapshot locally
+kubectl cp etcd-system/etcd-0:/tmp/snapshot.db ./etcd-snapshot-$(date +%Y%m%d-%H%M%S).db
+
+# Verify snapshot
+kubectl exec -n etcd-system etcd-0 -- etcdctl snapshot status /tmp/snapshot.db -w table
 ```
 
-**Restore from Snapshot:**
+#### Restore from Snapshot
+
 ```bash
-# Upload snapshot to pod
-kubectl cp ./etcd-backup.db anytrade/etcd-0:/tmp/etcd-restore.db
+# Scale down to prevent writes
+kubectl scale statefulset etcd -n etcd-system --replicas=0
+
+# Upload snapshot
+kubectl cp ./etcd-snapshot.db etcd-system/etcd-0:/tmp/snapshot.db
 
 # Restore
-kubectl exec -n anytrade etcd-0 -- etcdctl \
-  snapshot restore /tmp/etcd-restore.db \
-  --data-dir=/bitnami/etcd/data-new
+kubectl exec -n etcd-system etcd-0 -- etcdctl snapshot restore /tmp/snapshot.db \
+  --data-dir=/bitnami/etcd/data
 
-# Restart etcd StatefulSet
-kubectl rollout restart statefulset/etcd -n anytrade
+# Scale back up
+kubectl scale statefulset etcd -n etcd-system --replicas=3
 ```
 
-### Uninstall
+### Rolling Updates
 
-Via GitHub Actions:
 ```bash
-gh workflow run deploy-etcd.yml -f action=uninstall
+# Update values.yaml and apply
+helm upgrade etcd bitnami/etcd \
+  --namespace etcd-system \
+  -f deployments/etcd/values.yaml \
+  --wait
+
+# Watch rollout
+kubectl rollout status statefulset/etcd -n etcd-system
 ```
 
-Via Helm:
+### Rollback
+
 ```bash
-helm uninstall etcd -n anytrade
+# View history
+helm history etcd -n etcd-system
+
+# Rollback to previous version
+helm rollback etcd -n etcd-system
+
+# Rollback to specific revision
+helm rollback etcd 2 -n etcd-system
 ```
 
-## Configuration Reference
+## Monitoring
 
-Key values in `values.yaml`:
+### Metrics
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `replicaCount` | Number of etcd nodes | `3` |
-| `persistence.size` | Storage per node | `8Gi` |
-| `resources.limits.cpu` | CPU limit per pod | `500m` |
-| `resources.limits.memory` | Memory limit per pod | `512Mi` |
-| `autoCompactionRetention` | Auto-compaction interval | `1h` |
-| `metrics.enabled` | Enable Prometheus metrics | `true` |
+Prometheus annotations are enabled. Metrics available at:
+```
+http://etcd.etcd-system.svc.cluster.local:2379/metrics
+```
+
+**Key Metrics:**
+- `etcd_server_has_leader` - Leader election status
+- `etcd_server_leader_changes_seen_total` - Leader changes
+- `etcd_mvcc_db_total_size_in_bytes` - Database size
+- `etcd_disk_backend_commit_duration_seconds` - Commit latency
+- `etcd_network_peer_round_trip_time_seconds` - Network latency
+
+### Logs
+
+```bash
+# View logs for all etcd pods
+kubectl logs -n etcd-system -l app.kubernetes.io/name=etcd --tail=100 -f
+
+# View logs for specific pod
+kubectl logs -n etcd-system etcd-0 -f
+
+# Get logs from crashed pod
+kubectl logs -n etcd-system etcd-0 --previous
+```
+
+### Events
+
+```bash
+# Recent events
+kubectl get events -n etcd-system --sort-by='.lastTimestamp'
+
+# Watch events
+kubectl get events -n etcd-system --watch
+```
 
 ## Troubleshooting
 
-### Pods Not Starting
+### Pod Not Starting
 
 ```bash
 # Check pod status
-kubectl describe pod -n anytrade -l app.kubernetes.io/name=etcd
+kubectl describe pod etcd-0 -n etcd-system
 
-# Check persistent volume claims
-kubectl get pvc -n anytrade
+# Check PVC
+kubectl get pvc -n etcd-system
+kubectl describe pvc data-etcd-0 -n etcd-system
 
-# Check storage class
-kubectl get sc
+# Check for image pull issues
+kubectl get pods -n etcd-system -o jsonpath='{.items[*].status.containerStatuses[*].state}'
 ```
 
-### Cluster Health Issues
+### Split-Brain / No Leader
 
 ```bash
-# Check logs
-kubectl logs -n anytrade etcd-0 --tail=100
+# Check leader status
+kubectl exec -n etcd-system etcd-0 -- etcdctl endpoint status --cluster=true -w table
 
-# Check events
-kubectl get events -n anytrade --sort-by='.lastTimestamp' | grep etcd
-
-# Verify network connectivity between pods
-kubectl exec -n anytrade etcd-0 -- ping etcd-1.etcd-headless.anytrade.svc.cluster.local
+# If no leader, restart pods one by one
+kubectl delete pod etcd-0 -n etcd-system
+# Wait for pod to be ready before proceeding to next
+kubectl delete pod etcd-1 -n etcd-system
+kubectl delete pod etcd-2 -n etcd-system
 ```
 
-### Performance Issues
+### High Disk Usage
 
 ```bash
-# Check disk I/O
-kubectl exec -n anytrade etcd-0 -- df -h /bitnami/etcd/data
+# Check database size
+kubectl exec -n etcd-system etcd-0 -- etcdctl endpoint status -w table
 
-# Check compaction status
-kubectl exec -n anytrade etcd-0 -- etcdctl \
-  --endpoints=http://localhost:2379 \
-  endpoint status -w table
+# Compact old revisions
+REV=$(kubectl exec -n etcd-system etcd-0 -- etcdctl endpoint status -w json | jq -r '.[0].Status.header.revision')
+kubectl exec -n etcd-system etcd-0 -- etcdctl compact $REV
+
+# Defragment
+kubectl exec -n etcd-system etcd-0 -- etcdctl defrag
 ```
 
-## Resources
+### Connection Refused from Backend
 
-- [Bitnami etcd Helm Chart](https://github.com/bitnami/charts/tree/main/bitnami/etcd)
-- [etcd Official Documentation](https://etcd.io/docs/)
-- [etcd Operations Guide](https://etcd.io/docs/v3.5/op-guide/)
+```bash
+# Test connectivity from backend pod
+BACKEND_POD=$(kubectl get pods -n anytrade -l app=anytrade-backend -o jsonpath='{.items[0].metadata.name}')
+
+# Test DNS resolution
+kubectl exec -n anytrade $BACKEND_POD -- nslookup etcd.etcd-system.svc.cluster.local
+
+# Test port connectivity
+kubectl exec -n anytrade $BACKEND_POD -- nc -zv etcd.etcd-system.svc.cluster.local 2379
+
+# Check etcd service
+kubectl get svc -n etcd-system etcd
+```
+
+## Security
+
+### RBAC
+
+Bitnami chart creates necessary ServiceAccounts and RoleBindings automatically.
+
+### Network Policies
+
+To restrict access to etcd (optional):
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: etcd-network-policy
+  namespace: etcd-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: etcd
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from anytrade namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: anytrade
+      ports:
+        - protocol: TCP
+          port: 2379
+    # Allow peer communication
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: etcd
+      ports:
+        - protocol: TCP
+          port: 2380
+```
+
+## Configuration
+
+### values.yaml Structure
+
+See `values.yaml` for full configuration. Key sections:
+
+- **image**: Custom registry and tag
+- **replicaCount**: Number of etcd nodes (3)
+- **persistence**: Storage configuration (8Gi per node)
+- **resources**: CPU/memory limits
+- **affinity**: Pod anti-affinity rules
+- **pdb**: Disruption budget (min 2 available)
+- **metrics**: Prometheus integration
+- **disasterRecovery**: Automated snapshots
+
+### Update Configuration
+
+1. Edit `deployments/etcd/values.yaml`
+2. Commit and push to trigger GitOps deployment
+3. Or apply manually: `helm upgrade etcd bitnami/etcd -f deployments/etcd/values.yaml -n etcd-system`
+
+## Integration with Backend
+
+After etcd is deployed, update backend deployment to enable distributed monitoring:
+
+```yaml
+# deployments/backend/values.yaml
+deployments:
+  anytrade-backend:
+    containers:
+      - name: anytrade
+        env:
+          - name: ANYTRADE_ETCD_ENDPOINTS
+            value: "etcd.etcd-system.svc.cluster.local:2379"
+```
+
+This enables leader election for bot monitoring across multiple backend instances.
+
+## References
+
+- [Bitnami etcd Chart](https://github.com/bitnami/charts/tree/main/bitnami/etcd)
+- [etcd Documentation](https://etcd.io/docs/latest/)
+- [etcd Operations Guide](https://etcd.io/docs/latest/op-guide/)
+- [Kubernetes StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)

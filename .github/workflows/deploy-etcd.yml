@@ -1,4 +1,4 @@
-name: Deploy etcd to VKE
+name: Deploy etcd Cluster to VKE
 
 on:
   push:
@@ -15,15 +15,16 @@ on:
         type: choice
         options:
           - deploy
-          - uninstall
+          - upgrade
+          - rollback
 
 concurrency:
   group: deploy-etcd-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: false  # Don't cancel etcd deployments
 
 jobs:
   validate:
-    name: Validate Manifests
+    name: Validate etcd Manifests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,17 +44,17 @@ jobs:
         run: |
           helm template etcd bitnami/etcd \
             -f deployments/etcd/values.yaml \
-            --namespace anytrade \
+            --namespace etcd-system \
             --dry-run --debug
 
   deploy:
-    name: Deploy to Kubernetes
+    name: Deploy etcd Cluster
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref == 'refs/heads/main'
     environment:
-      name: prod
-      url: https://api.anytrade.com
+      name: prod-etcd
+      url: https://etcd.anytrade.internal
 
     steps:
       - name: Checkout code
@@ -85,74 +86,84 @@ jobs:
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo update
 
-      - name: Create namespace if not exists
+      - name: Create etcd-system namespace
         run: |
-          kubectl create namespace anytrade --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create namespace etcd-system --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy or uninstall etcd
+      - name: Deploy or upgrade etcd cluster
         run: |
-          if [ "${{ github.event.inputs.action }}" == "uninstall" ]; then
-            echo "Uninstalling etcd..."
-            helm uninstall etcd -n anytrade || echo "etcd not installed"
-          else
-            echo "Deploying etcd cluster..."
-            helm upgrade --install etcd bitnami/etcd \
-              --namespace anytrade \
-              --create-namespace \
-              -f deployments/etcd/values.yaml \
-              --wait \
-              --timeout 10m
-          fi
+          helm upgrade --install etcd bitnami/etcd \
+            --namespace etcd-system \
+            --create-namespace \
+            -f deployments/etcd/values.yaml \
+            --wait \
+            --timeout 10m \
+            --atomic
 
       - name: Verify deployment
-        if: github.event.inputs.action != 'uninstall'
         run: |
           echo "Waiting for etcd StatefulSet to be ready..."
-          kubectl wait --for=condition=ready --timeout=300s \
-            pod -l app.kubernetes.io/name=etcd -n anytrade
+          kubectl wait --for=condition=ready --timeout=600s \
+            pod -l app.kubernetes.io/name=etcd -n etcd-system
 
-          echo "Checking etcd pods..."
-          kubectl get pods -n anytrade -l app.kubernetes.io/name=etcd
+          echo "Checking StatefulSet status..."
+          kubectl get statefulset -n etcd-system -l app.kubernetes.io/name=etcd
 
-          echo "Getting etcd service info..."
-          kubectl get svc -n anytrade -l app.kubernetes.io/name=etcd
+          echo "Checking pod status..."
+          kubectl get pods -n etcd-system -l app.kubernetes.io/name=etcd
 
-          echo "Checking etcd cluster health..."
-          kubectl exec -n anytrade etcd-0 -- etcdctl \
-            --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-            endpoint health
+          echo "Getting service info..."
+          kubectl get svc -n etcd-system -l app.kubernetes.io/name=etcd
+
+          echo "Checking PVCs..."
+          kubectl get pvc -n etcd-system
+
+      - name: Test etcd cluster health
+        run: |
+          # Wait a bit for cluster to stabilize
+          sleep 10
+
+          # Get etcd pod name
+          ETCD_POD=$(kubectl get pods -n etcd-system -l app.kubernetes.io/name=etcd -o jsonpath='{.items[0].metadata.name}')
+
+          echo "Testing etcd cluster health via pod: $ETCD_POD"
+
+          # Check endpoint health
+          kubectl exec -n etcd-system $ETCD_POD -- etcdctl endpoint health \
+            --cluster=true \
+            --endpoints=etcd-0.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-1.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-2.etcd-headless.etcd-system.svc.cluster.local:2379
+
+          # Check member list
+          kubectl exec -n etcd-system $ETCD_POD -- etcdctl member list -w table
 
       - name: Generate deployment summary
-        if: github.event.inputs.action != 'uninstall'
         run: |
           echo "### etcd Cluster Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Cluster Size:** 3 nodes" >> $GITHUB_STEP_SUMMARY
-          echo "**Namespace:** anytrade" >> $GITHUB_STEP_SUMMARY
-          echo "**Endpoint:** etcd.anytrade.svc.cluster.local:2379" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** prod" >> $GITHUB_STEP_SUMMARY
+          echo "**Namespace:** etcd-system" >> $GITHUB_STEP_SUMMARY
+          echo "**Replicas:** 3" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**etcd Resources:**" >> $GITHUB_STEP_SUMMARY
+          echo "**Cluster Resources:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get all -n anytrade -l app.kubernetes.io/name=etcd >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n etcd-system -l app.kubernetes.io/name=etcd >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Cluster Health:**" >> $GITHUB_STEP_SUMMARY
+          echo "**Persistent Volumes:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl exec -n anytrade etcd-0 -- etcdctl \
-            --endpoints=http://etcd.anytrade.svc.cluster.local:2379 \
-            endpoint status --cluster -w table >> $GITHUB_STEP_SUMMARY || true
+          kubectl get pvc -n etcd-system >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Notify on failure
         if: failure()
         run: |
-          echo "### Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
+          echo "### etcd Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Check the logs above for details**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Recent Pod Events:**" >> $GITHUB_STEP_SUMMARY
+          echo "**Recent Events:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get events -n anytrade --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
+          kubectl get events -n etcd-system --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   rollback:
@@ -160,7 +171,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     if: failure() && github.ref == 'refs/heads/main'
-    environment: prod
+    environment: prod-etcd
 
     steps:
       - name: Configure kubeconfig
@@ -176,19 +187,20 @@ jobs:
 
       - name: Rollback Helm release
         run: |
-          echo "Rolling back to previous version..."
-          helm rollback etcd -n anytrade || echo "No previous version to rollback to"
+          echo "Rolling back etcd cluster to previous version..."
+          helm rollback etcd -n etcd-system
 
-          echo "Checking etcd status..."
-          kubectl get pods -n anytrade -l app.kubernetes.io/name=etcd
+          echo "Waiting for rollback to complete..."
+          kubectl wait --for=condition=ready --timeout=600s \
+            pod -l app.kubernetes.io/name=etcd -n etcd-system
 
       - name: Verify rollback
         run: |
           echo "### Rollback Completed ⚠️" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The deployment has been rolled back to the previous version." >> $GITHUB_STEP_SUMMARY
+          echo "The etcd cluster has been rolled back to the previous version." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Current Status:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          helm history etcd -n anytrade >> $GITHUB_STEP_SUMMARY || true
+          helm history etcd -n etcd-system >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
