@@ -108,27 +108,20 @@ services:
         protocol: TCP
 
 ingresses:
-  anytrade-backend:
+  api.anytrade.com:
     ingressClassName: nginx
     annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    rules:
-      - host: api.anytrade.com
-        http:
-          paths:
-            - path: /
-              pathType: Prefix
-              backend:
-                service:
-                  name: anytrade-backend
-                  port:
-                    name: http
-    tls:
-      - secretName: anytrade-api-tls
-        hosts:
-          - api.anytrade.com
+    certManager:
+      issuerName: letsencrypt-prod
+      issuerType: cluster-issuer
+    hosts:
+      - paths:
+          - path: /
+            pathType: Prefix
+            serviceName: anytrade-backend
+            servicePort: http
 
 hpa:
   anytrade-backend:
