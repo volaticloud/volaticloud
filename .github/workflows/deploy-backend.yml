@@ -108,6 +108,15 @@ jobs:
             --namespace=anytrade \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --namespace=anytrade \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy backend with Helm
         run: |
           helm upgrade --install anytrade-backend nixys/nxs-universal-chart \
@@ -116,6 +125,7 @@ jobs:
             -f deployments/backend/values.yaml \
             --set deployments.anytrade-backend.containers[0].image=ghcr.io/diazoxide/anytrade \
             --set deployments.anytrade-backend.containers[0].imageTag=${{ steps.image_tag.outputs.tag }} \
+            --set deployments.anytrade-backend.imagePullSecrets[0].name=ghcr-pull-secret \
             --wait \
             --timeout 10m \
             --atomic
