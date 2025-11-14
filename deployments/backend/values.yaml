@@ -31,6 +31,8 @@ deployments:
             value: "8080"
           - name: ANYTRADE_MONITOR_INTERVAL
             value: "30s"
+          - name: ANYTRADE_ETCD_ENDPOINTS
+            value: ""
 
         envsFromSecret:
           anytrade-secrets:
@@ -40,18 +42,18 @@ deployments:
           httpGet:
             path: /health
             port: http
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
           failureThreshold: 3
 
         readinessProbe:
           httpGet:
             path: /health
             port: http
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
           failureThreshold: 3
 
         resources:
