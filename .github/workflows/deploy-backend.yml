@@ -114,7 +114,8 @@ jobs:
             --namespace anytrade \
             --create-namespace \
             -f deployments/backend/values.yaml \
-            --set deployments.anytrade-backend.containers[0].image=ghcr.io/diazoxide/anytrade:${{ steps.image_tag.outputs.tag }} \
+            --set deployments.anytrade-backend.containers[0].image=ghcr.io/diazoxide/anytrade \
+            --set deployments.anytrade-backend.containers[0].tag=${{ steps.image_tag.outputs.tag }} \
             --wait \
             --timeout 10m \
             --atomic
