@@ -94,7 +94,9 @@ jobs:
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
             echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            # Use 'latest' tag by default instead of commit SHA
+            # This ensures we use the most recent Docker build
+            echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Create namespace if not exists
