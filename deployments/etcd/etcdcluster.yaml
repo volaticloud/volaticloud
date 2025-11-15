@@ -61,4 +61,4 @@ spec:
   options:
     autoCompactionMode: periodic
     autoCompactionRetention: "8h"
-    quotaBackendBytes: 8589934592  # 8GB
+    quotaBackendBytes: "8589934592"  # 8GB
