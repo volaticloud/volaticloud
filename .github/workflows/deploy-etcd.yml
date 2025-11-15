@@ -16,7 +16,7 @@ on:
         options:
           - deploy
           - upgrade
-          - rollback
+          - delete
 
 concurrency:
   group: deploy-etcd-${{ github.ref }}
@@ -30,22 +30,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
         with:
           version: 'latest'
 
-      - name: Add Bitnami Helm repository
+      - name: Validate EtcdCluster manifest
         run: |
-          helm repo add bitnami https://charts.bitnami.com/bitnami
-          helm repo update
-
-      - name: Validate Helm values
-        run: |
-          helm template etcd bitnami/etcd \
-            -f deployments/etcd/values.yaml \
-            --namespace etcd-system \
-            --dry-run --debug
+          kubectl apply --dry-run=client -f deployments/etcd/etcdcluster.yaml
 
   deploy:
     name: Deploy etcd Cluster
@@ -65,11 +57,6 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
-
       - name: Configure kubeconfig
         run: |
           mkdir -p $HOME/.kube
@@ -81,57 +68,85 @@ jobs:
           kubectl cluster-info
           kubectl get nodes
 
-      - name: Add Bitnami Helm repository
+      - name: Install cert-manager (prerequisite for etcd-operator)
         run: |
-          helm repo add bitnami https://charts.bitnami.com/bitnami
-          helm repo update
+          # Check if cert-manager is already installed
+          if ! kubectl get deployment -n cert-manager cert-manager-webhook 2>/dev/null; then
+            echo "Installing cert-manager..."
+            kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+
+            echo "Waiting for cert-manager to be ready..."
+            kubectl wait --for=condition=available --timeout=300s \
+              deployment/cert-manager-webhook -n cert-manager
+          else
+            echo "cert-manager already installed"
+          fi
+
+      - name: Install etcd-operator
+        run: |
+          echo "Installing etcd-operator..."
+          kubectl apply -f https://github.com/aenix-io/etcd-operator/releases/latest/download/etcd-operator.yaml
+
+          echo "Waiting for etcd-operator to be ready..."
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/etcd-operator-controller-manager -n etcd-operator-system
 
       - name: Create etcd-system namespace
         run: |
           kubectl create namespace etcd-system --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy or upgrade etcd cluster
+      - name: Deploy etcd cluster via operator
         run: |
-          helm upgrade --install etcd bitnami/etcd \
-            --namespace etcd-system \
-            --create-namespace \
-            -f deployments/etcd/values.yaml \
-            --wait \
-            --timeout 10m \
-            --atomic
+          echo "Applying EtcdCluster CRD..."
+          kubectl apply -f deployments/etcd/etcdcluster.yaml
+
+          echo "Waiting for etcd cluster to be ready..."
+          kubectl wait --for=condition=ready --timeout=600s \
+            pod -l app.kubernetes.io/name=anytrade-etcd -n etcd-system || true
 
       - name: Verify deployment
         run: |
-          echo "Waiting for etcd StatefulSet to be ready..."
-          kubectl wait --for=condition=ready --timeout=600s \
-            pod -l app.kubernetes.io/name=etcd -n etcd-system
+          echo "Checking EtcdCluster resource status..."
+          kubectl get etcdcluster -n etcd-system anytrade-etcd -o yaml
 
           echo "Checking StatefulSet status..."
-          kubectl get statefulset -n etcd-system -l app.kubernetes.io/name=etcd
+          kubectl get statefulset -n etcd-system
 
           echo "Checking pod status..."
-          kubectl get pods -n etcd-system -l app.kubernetes.io/name=etcd
+          kubectl get pods -n etcd-system
 
           echo "Getting service info..."
-          kubectl get svc -n etcd-system -l app.kubernetes.io/name=etcd
+          kubectl get svc -n etcd-system
 
           echo "Checking PVCs..."
           kubectl get pvc -n etcd-system
+
+          echo "Waiting for all etcd pods to be ready..."
+          kubectl wait --for=condition=ready --timeout=600s \
+            pod -l app.kubernetes.io/managed-by=etcd-operator -n etcd-system || \
+          kubectl wait --for=condition=ready --timeout=600s \
+            pod -l app.kubernetes.io/name=anytrade-etcd -n etcd-system
 
       - name: Test etcd cluster health
         run: |
           # Wait a bit for cluster to stabilize
           sleep 10
 
-          # Get etcd pod name
-          ETCD_POD=$(kubectl get pods -n etcd-system -l app.kubernetes.io/name=etcd -o jsonpath='{.items[0].metadata.name}')
+          # Get first etcd pod name (try different label selectors)
+          ETCD_POD=$(kubectl get pods -n etcd-system -o jsonpath='{.items[0].metadata.name}')
 
           echo "Testing etcd cluster health via pod: $ETCD_POD"
 
-          # Check endpoint health
+          # Get StatefulSet name to determine endpoint pattern
+          STATEFULSET=$(kubectl get statefulset -n etcd-system -o jsonpath='{.items[0].metadata.name}')
+
+          echo "StatefulSet name: $STATEFULSET"
+
+          # Check endpoint health (using StatefulSet-based endpoints)
           kubectl exec -n etcd-system $ETCD_POD -- etcdctl endpoint health \
             --cluster=true \
-            --endpoints=etcd-0.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-1.etcd-headless.etcd-system.svc.cluster.local:2379,etcd-2.etcd-headless.etcd-system.svc.cluster.local:2379
+            --endpoints=${STATEFULSET}-0.${STATEFULSET}-headless.etcd-system.svc.cluster.local:2379,${STATEFULSET}-1.${STATEFULSET}-headless.etcd-system.svc.cluster.local:2379,${STATEFULSET}-2.${STATEFULSET}-headless.etcd-system.svc.cluster.local:2379 || \
+          kubectl exec -n etcd-system $ETCD_POD -- etcdctl endpoint health --cluster=true
 
           # Check member list
           kubectl exec -n etcd-system $ETCD_POD -- etcdctl member list -w table
@@ -143,10 +158,16 @@ jobs:
           echo "**Environment:** prod" >> $GITHUB_STEP_SUMMARY
           echo "**Namespace:** etcd-system" >> $GITHUB_STEP_SUMMARY
           echo "**Replicas:** 3" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Method:** etcd-operator (aenix.io)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**EtcdCluster Resource:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get etcdcluster -n etcd-system >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Cluster Resources:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get all -n etcd-system -l app.kubernetes.io/name=etcd >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n etcd-system >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Persistent Volumes:**" >> $GITHUB_STEP_SUMMARY
@@ -166,8 +187,8 @@ jobs:
           kubectl get events -n etcd-system --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-  rollback:
-    name: Rollback on Failure
+  cleanup:
+    name: Cleanup on Failure
     runs-on: ubuntu-latest
     needs: deploy
     if: failure() && github.ref == 'refs/heads/main'
@@ -180,27 +201,28 @@ jobs:
           echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
         with:
           version: 'latest'
 
-      - name: Rollback Helm release
+      - name: Delete failed EtcdCluster resource
         run: |
-          echo "Rolling back etcd cluster to previous version..."
-          helm rollback etcd -n etcd-system
+          echo "Deleting failed EtcdCluster resource..."
+          kubectl delete etcdcluster anytrade-etcd -n etcd-system --ignore-not-found=true
 
-          echo "Waiting for rollback to complete..."
-          kubectl wait --for=condition=ready --timeout=600s \
-            pod -l app.kubernetes.io/name=etcd -n etcd-system
+          echo "Waiting for resources to be cleaned up by operator..."
+          kubectl wait --for=delete pod -l app.kubernetes.io/name=anytrade-etcd -n etcd-system --timeout=300s || true
 
-      - name: Verify rollback
+      - name: Cleanup summary
         run: |
-          echo "### Rollback Completed ⚠️" >> $GITHUB_STEP_SUMMARY
+          echo "### Cleanup Completed ⚠️" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The etcd cluster has been rolled back to the previous version." >> $GITHUB_STEP_SUMMARY
+          echo "The failed etcd cluster has been cleaned up." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Current Status:**" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** With GitOps, rollback is done by reverting the git commit and reapplying." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Remaining Resources:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          helm history etcd -n etcd-system >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n etcd-system >> $GITHUB_STEP_SUMMARY || echo "No resources remaining" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

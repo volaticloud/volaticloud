@@ -1,0 +1,64 @@
+apiVersion: etcd.aenix.io/v1alpha1
+kind: EtcdCluster
+metadata:
+  name: anytrade-etcd
+  namespace: etcd-system
+spec:
+  # 3-node cluster for high availability
+  replicas: 3
+
+  # Persistent storage configuration
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+        # storageClassName: ""  # Use default storage class
+
+  # Pod template for resource limits and security
+  podTemplate:
+    metadata:
+      labels:
+        app: etcd-cluster
+        component: distributed-kv
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2379"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: anytrade-etcd
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: etcd
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+  # Pod Disruption Budget
+  podDisruptionBudgetTemplate:
+    spec:
+      minAvailable: 2
+
+  # Extra etcd options
+  options:
+    autoCompactionMode: periodic
+    autoCompactionRetention: "8h"
+    quotaBackendBytes: 8589934592  # 8GB
