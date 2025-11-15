@@ -134,7 +134,7 @@ jobs:
         run: |
           echo "Waiting for deployment to be ready..."
           kubectl wait --for=condition=available --timeout=300s \
-            deployment/anytrade-backend -n anytrade
+            deployment/anytrade-backend-anytrade-backend -n anytrade
 
           echo "Checking pod status..."
           kubectl get pods -n anytrade -l app=anytrade-backend
@@ -208,7 +208,7 @@ jobs:
 
           echo "Waiting for rollback to complete..."
           kubectl wait --for=condition=available --timeout=300s \
-            deployment/anytrade-backend -n anytrade
+            deployment/anytrade-backend-anytrade-backend -n anytrade
 
       - name: Verify rollback
         run: |
