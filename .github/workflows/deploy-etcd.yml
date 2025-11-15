@@ -37,7 +37,8 @@ jobs:
 
       - name: Validate EtcdCluster manifest
         run: |
-          kubectl apply --dry-run=client -f deployments/etcd/etcdcluster.yaml
+          # Validate YAML syntax only (CRD doesn't exist yet, will be installed by operator)
+          kubectl apply --dry-run=client --validate=false -f deployments/etcd/etcdcluster.yaml
 
   deploy:
     name: Deploy etcd Cluster
