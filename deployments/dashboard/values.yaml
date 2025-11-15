@@ -56,9 +56,6 @@ deployments:
         securityContext:
           readOnlyRootFilesystem: false
           allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
 
     podSecurityContext:
       fsGroup: 1000
