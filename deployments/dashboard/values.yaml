@@ -23,9 +23,7 @@ deployments:
             containerPort: 8080
             protocol: TCP
 
-        env:
-          - name: ANYTRADE__GRAPHQL_URL
-            value: "https://api.volaticloud.com/query"
+        # No env override needed - uses default /api/query which proxies to backend
 
         livenessProbe:
           httpGet:
