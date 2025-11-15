@@ -31,6 +31,9 @@ COPY Caddyfile /etc/caddy/Caddyfile
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
+# Give ownership of /srv to user 1000 (for runtime config generation)
+RUN chown -R 1000:1000 /srv
+
 # Expose port
 EXPOSE 80
 
