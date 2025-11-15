@@ -1,11 +1,18 @@
 name: Deploy Dashboard to VKE
 
 on:
+  # Wait for build to complete before deploying
+  workflow_run:
+    workflows: ["Build and Push Dashboard Image"]
+    types:
+      - completed
+    branches: [main]
+  # Allow deploying when deployment manifests change
   push:
     branches: [main]
     paths:
       - 'deployments/dashboard/**'
-      - '.github/workflows/deploy-dashboard.yml'
+  # Allow manual deployments
   workflow_dispatch:
     inputs:
       environment:
