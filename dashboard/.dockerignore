@@ -1,0 +1,35 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Build output (will be created during build)
+dist
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Test coverage
+coverage
+coverage.out
+*.lcov
+
+# Misc
+.DS_Store
+*.log

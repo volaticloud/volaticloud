@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client/react';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import { createAppTheme } from './theme/theme';
-import { client } from './graphql/client';
+import { createApolloClient } from './graphql/client';
+import { useConfigValue } from './contexts/ConfigContext';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { BotsPage } from './pages/Bots/BotsPage';
@@ -17,15 +18,17 @@ import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
+  const graphqlUrl = useConfigValue('ANYTRADE__GRAPHQL_URL');
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
+  const apolloClient = useMemo(() => createApolloClient(graphqlUrl), [graphqlUrl]);
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => !prev);
   };
 
   return (
-    <ApolloProvider client={client}>
+    <ApolloProvider client={apolloClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <GlobalStyles

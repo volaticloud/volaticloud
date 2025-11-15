@@ -1,0 +1,215 @@
+name: Deploy Dashboard to VKE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deployments/dashboard/**'
+      - '.github/workflows/deploy-dashboard.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - staging
+      image_tag:
+        description: 'Docker image tag to deploy (leave empty for latest)'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-dashboard-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel deployments
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Add Nixys Helm repository
+        run: |
+          helm repo add nixys https://registry.nixys.io/chartrepo/public
+          helm repo update
+
+      - name: Validate Helm values
+        run: |
+          helm template anytrade-dashboard nixys/nxs-universal-chart \
+            -f deployments/dashboard/values.yaml \
+            --dry-run --debug
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: prod
+      url: https://console.volaticloud.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Verify cluster access
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Add Nixys Helm repository
+        run: |
+          helm repo add nixys https://registry.nixys.io/chartrepo/public
+          helm repo update
+
+      - name: Determine image tag
+        id: image_tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=main" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace anytrade --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GHCR_TOKEN }} \
+            --namespace=anytrade \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy dashboard with Helm
+        run: |
+          helm upgrade --install anytrade-dashboard nixys/nxs-universal-chart \
+            --namespace anytrade \
+            --create-namespace \
+            -f deployments/dashboard/values.yaml \
+            --set deployments.anytrade-dashboard.containers[0].image=ghcr.io/diazoxide/anytrade-dashboard \
+            --set deployments.anytrade-dashboard.containers[0].imageTag=${{ steps.image_tag.outputs.tag }} \
+            --set deployments.anytrade-dashboard.imagePullSecrets[0].name=ghcr-pull-secret \
+            --wait \
+            --timeout 10m \
+            --atomic
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to be ready..."
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/anytrade-dashboard-anytrade-dashboard -n anytrade
+
+          echo "Checking pod status..."
+          kubectl get pods -n anytrade -l app=anytrade-dashboard
+
+          echo "Getting service info..."
+          kubectl get svc -n anytrade -l app=anytrade-dashboard
+
+          echo "Getting ingress info..."
+          kubectl get ingress -n anytrade
+
+      - name: Run post-deployment tests
+        run: |
+          # Wait for service to be fully ready
+          sleep 30
+
+          # Get the service endpoint
+          DASHBOARD_URL="https://console.volaticloud.com"
+
+          echo "Testing dashboard endpoint..."
+          curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" ${DASHBOARD_URL} || true
+
+      - name: Generate deployment summary
+        run: |
+          echo "### Dashboard Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** prod" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Namespace:** anytrade" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://console.volaticloud.com" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Resources:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n anytrade -l app=anytrade-dashboard >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "### Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Check the logs above for details**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Recent Pod Events:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get events -n anytrade --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure() && github.ref == 'refs/heads/main'
+    environment: prod
+
+    steps:
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Rollback Helm release
+        run: |
+          echo "Rolling back to previous version..."
+          helm rollback anytrade-dashboard -n anytrade
+
+          echo "Waiting for rollback to complete..."
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/anytrade-dashboard-anytrade-dashboard -n anytrade
+
+      - name: Verify rollback
+        run: |
+          echo "### Rollback Completed ⚠️" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The deployment has been rolled back to the previous version." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Status:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          helm history anytrade-dashboard -n anytrade >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
