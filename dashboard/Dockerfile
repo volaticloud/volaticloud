@@ -35,7 +35,7 @@ RUN chmod +x /docker-entrypoint.sh
 RUN chown -R 1000:1000 /srv
 
 # Expose port
-EXPOSE 80
+EXPOSE 8080
 
 # Use custom entrypoint
 ENTRYPOINT ["/docker-entrypoint.sh"]
