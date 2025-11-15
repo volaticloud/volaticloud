@@ -5,6 +5,12 @@
 	# Set root directory
 	root * /srv
 
+	# Reverse proxy for API requests to backend
+	# Strip /api prefix: /api/query -> backend/query
+	handle_path /api/* {
+		reverse_proxy http://anytrade-backend-anytrade-backend:8080
+	}
+
 	# Enable file server
 	file_server
 
