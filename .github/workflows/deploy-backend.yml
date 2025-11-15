@@ -7,12 +7,7 @@ on:
     types:
       - completed
     branches: [main]
-  # Allow deploying when deployment manifests change
-  push:
-    branches: [main]
-    paths:
-      - 'deployments/backend/**'
-  # Allow manual deployments
+  # Allow manual deployments (for manifest-only changes or rollbacks)
   workflow_dispatch:
     inputs:
       environment:
