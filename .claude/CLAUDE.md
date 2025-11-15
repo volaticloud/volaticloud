@@ -1284,7 +1284,7 @@ kubectl get ingress -n anytrade
 kubectl logs -n anytrade -l app=anytrade-backend --tail=100 -f
 
 # Test health endpoint
-curl https://api.anytrade.com/health
+curl https://api.volaticloud.com/health
 ```
 
 **Rollback:**
@@ -1427,7 +1427,7 @@ Comprehensive documentation available:
 ### Next Steps
 
 After backend deployment:
-1. Configure DNS (api.anytrade.com → VKE LoadBalancer)
+1. Configure DNS (api.volaticloud.com → VKE LoadBalancer)
 2. Deploy frontend dashboard
 3. Set up monitoring (Prometheus/Grafana)
 4. Configure alerting

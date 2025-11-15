@@ -50,12 +50,12 @@ Verify each secret has the correct value:
 
 **KEYCLOAK_HOSTNAME**:
 - [ ] Just the hostname (no `https://` or `/auth`)
-- [ ] Example: `auth.anytrade.com`
-- [ ] NOT: `https://auth.anytrade.com/auth`
+- [ ] Example: `auth.volaticloud.com`
+- [ ] NOT: `https://auth.volaticloud.com/auth`
 
 **ANYTRADE_URL**:
 - [ ] Full URL with protocol
-- [ ] Example: `https://anytrade.com`
+- [ ] Example: `https://volaticloud.com`
 - [ ] Includes `https://`
 
 ---
@@ -128,13 +128,13 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 ## ✅ DNS Configuration (Optional for now, required for production)
 
 ### 1. DNS Records Configured
-- [ ] `auth.anytrade.com` (or your hostname) has an A record
+- [ ] `auth.volaticloud.com` (or your hostname) has an A record
 - [ ] Points to VKE load balancer IP
 
 Check:
 ```bash
-dig auth.anytrade.com
-nslookup auth.anytrade.com
+dig auth.volaticloud.com
+nslookup auth.volaticloud.com
 ```
 
 **Note**: This can be configured after deployment, but required for HTTPS access.
@@ -303,11 +303,11 @@ kubectl get secret anytrade-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.password}' | base64 -d
 ```
 
-Visit: `https://auth.anytrade.com/auth/admin` (or your configured hostname)
+Visit: `https://auth.volaticloud.com/auth/admin` (or your configured hostname)
 
 ### 6. Verify OIDC Configuration
 ```bash
-curl https://auth.anytrade.com/auth/realms/anytrade/.well-known/openid-configuration
+curl https://auth.volaticloud.com/auth/realms/anytrade/.well-known/openid-configuration
 ```
 
 Expected: JSON response with OIDC endpoints

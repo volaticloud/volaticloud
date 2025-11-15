@@ -113,10 +113,10 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 You need to decide on your public domain names:
 
 1. **Keycloak Hostname**: Where Keycloak will be accessible
-   - Example: `auth.anytrade.com` or `keycloak.yourdomain.com`
+   - Example: `auth.volaticloud.com` or `keycloak.yourdomain.com`
 
 2. **AnyTrade URL**: Where your application will be accessible
-   - Example: `https://anytrade.com` or `https://app.yourdomain.com`
+   - Example: `https://volaticloud.com` or `https://app.yourdomain.com`
 
 **Note**: You'll need to configure DNS later to point these domains to your VKE load balancer.
 
@@ -160,13 +160,13 @@ Add each secret one by one:
 #### Secret 5: KEYCLOAK_HOSTNAME
 
 - **Name**: `KEYCLOAK_HOSTNAME`
-- **Value**: `auth.anytrade.com` (your chosen domain)
+- **Value**: `auth.volaticloud.com` (your chosen domain)
 - Click **Add secret**
 
 #### Secret 6: ANYTRADE_URL
 
 - **Name**: `ANYTRADE_URL`
-- **Value**: `https://anytrade.com` (your application URL)
+- **Value**: `https://volaticloud.com` (your application URL)
 - Click **Add secret**
 
 ### Option B: Via GitHub CLI (Faster)
@@ -186,8 +186,8 @@ gh secret set KEYCLOAK_DB_USERNAME -b"keycloak"
 gh secret set KEYCLOAK_DB_PASSWORD  # Will prompt for password
 
 # Add hostnames
-gh secret set KEYCLOAK_HOSTNAME -b"auth.anytrade.com"
-gh secret set ANYTRADE_URL -b"https://anytrade.com"
+gh secret set KEYCLOAK_HOSTNAME -b"auth.volaticloud.com"
+gh secret set ANYTRADE_URL -b"https://volaticloud.com"
 
 # List all secrets to verify
 gh secret list

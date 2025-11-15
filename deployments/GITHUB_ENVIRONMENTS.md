@@ -106,8 +106,8 @@ gh secret set VKE_KUBECONFIG --env prod < kubeconfig-base64.txt
 gh secret set KEYCLOAK_DB_HOST --env prod -b"postgres.vultr.com:16751"
 gh secret set KEYCLOAK_DB_USERNAME --env prod -b"keycloak"
 gh secret set KEYCLOAK_DB_PASSWORD --env prod  # Prompts for password
-gh secret set KEYCLOAK_HOSTNAME --env prod -b"auth.anytrade.com"
-gh secret set ANYTRADE_URL --env prod -b"https://anytrade.com"
+gh secret set KEYCLOAK_HOSTNAME --env prod -b"auth.volaticloud.com"
+gh secret set ANYTRADE_URL --env prod -b"https://volaticloud.com"
 
 # Verify
 gh secret list --env prod
@@ -220,7 +220,7 @@ You can create additional environments for different stages:
 **Secrets**:
 - Different VKE cluster (dev cluster)
 - Different database (dev database)
-- Different hostnames (dev.anytrade.com)
+- Different hostnames (dev.volaticloud.com)
 
 **Protection**: None (auto-deploy on every push)
 
@@ -231,7 +231,7 @@ You can create additional environments for different stages:
 **Secrets**:
 - Staging VKE cluster
 - Staging database
-- Different hostnames (staging.anytrade.com)
+- Different hostnames (staging.volaticloud.com)
 
 **Protection**: Optional 1 reviewer
 
@@ -242,7 +242,7 @@ You can create additional environments for different stages:
 **Secrets**:
 - Production VKE cluster
 - Production database
-- Production hostnames (auth.anytrade.com)
+- Production hostnames (auth.volaticloud.com)
 
 **Protection**: Required reviewers, wait timer, main branch only
 

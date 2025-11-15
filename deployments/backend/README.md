@@ -16,7 +16,7 @@ The backend is deployed as a Kubernetes Deployment with:
 
 ```
 ┌─────────────────┐
-│   Ingress       │  https://api.anytrade.com
+│   Ingress       │  https://api.volaticloud.com
 │   (TLS)         │  (cert-manager + Let's Encrypt)
 └────────┬────────┘
          │
@@ -128,14 +128,14 @@ ingress:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
-      - host: api.anytrade.com
+      - host: api.volaticloud.com
         paths:
           - path: /
             pathType: Prefix
     tls:
       - secretName: anytrade-api-tls
         hosts:
-          - api.anytrade.com
+          - api.volaticloud.com
 ```
 
 **Database Migration (extraDeploy):**

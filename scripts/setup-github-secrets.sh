@@ -135,10 +135,10 @@ echo "---------------------------------"
 echo "Enter your public domain names:"
 echo ""
 
-echo -n "Keycloak Hostname (e.g., auth.anytrade.com): "
+echo -n "Keycloak Hostname (e.g., auth.volaticloud.com): "
 read KEYCLOAK_HOSTNAME
 
-echo -n "AnyTrade Application URL (e.g., https://anytrade.com): "
+echo -n "AnyTrade Application URL (e.g., https://volaticloud.com): "
 read ANYTRADE_URL
 
 # Set hostname secrets

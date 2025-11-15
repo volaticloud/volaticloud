@@ -110,7 +110,7 @@ services:
         protocol: TCP
 
 ingresses:
-  api.anytrade.com:
+  api.volaticloud.com:
     ingressClassName: nginx
     annotations:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"

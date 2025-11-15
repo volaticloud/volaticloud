@@ -251,7 +251,7 @@ Before first deployment:
 
 - [ ] PostgreSQL database created
 - [ ] GitHub secrets configured in `prod` environment
-- [ ] Domain DNS configured (api.anytrade.com → VKE LoadBalancer)
+- [ ] Domain DNS configured (api.volaticloud.com → VKE LoadBalancer)
 - [ ] VKE kubeconfig not expired
 - [ ] Ingress Nginx installed
 - [ ] Cert-manager installed with Let's Encrypt ClusterIssuer
@@ -261,8 +261,8 @@ After deployment:
 - [ ] Pods running: `kubectl get pods -n anytrade`
 - [ ] Ingress configured: `kubectl get ingress -n anytrade`
 - [ ] Certificate issued: `kubectl get certificate -n anytrade`
-- [ ] Health endpoint: `curl https://api.anytrade.com/health`
-- [ ] GraphQL playground: `https://api.anytrade.com/`
+- [ ] Health endpoint: `curl https://api.volaticloud.com/health`
+- [ ] GraphQL playground: `https://api.volaticloud.com/`
 
 ## Monitoring
 

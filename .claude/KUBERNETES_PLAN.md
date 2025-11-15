@@ -748,9 +748,9 @@ spec:
 - `viewer` - Read-only access
 
 **Default Users** (dev only):
-- admin@anytrade.com (admin role)
-- trader@anytrade.com (trader role)
-- viewer@anytrade.com (viewer role)
+- admin@volaticloud.com (admin role)
+- trader@volaticloud.com (trader role)
+- viewer@volaticloud.com (viewer role)
 
 ### GitHub Action: `.github/workflows/deploy-keycloak.yml`
 

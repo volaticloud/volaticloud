@@ -8,7 +8,7 @@
 
 - [ ] VKE cluster running on Vultr
 - [ ] Managed PostgreSQL database on Vultr
-- [ ] Domain name configured (e.g., `auth.anytrade.com`)
+- [ ] Domain name configured (e.g., `auth.volaticloud.com`)
 - [ ] Admin access to GitHub repository
 - [ ] `kubectl` installed locally
 - [ ] GitHub CLI (`gh`) installed (optional)
@@ -56,8 +56,8 @@ Follow the detailed guide: [`GITHUB_SECRETS_SETUP.md`](./GITHUB_SECRETS_SETUP.md
 - `KEYCLOAK_DB_HOST` - PostgreSQL host:port
 - `KEYCLOAK_DB_USERNAME` - Database username
 - `KEYCLOAK_DB_PASSWORD` - Database password
-- `KEYCLOAK_HOSTNAME` - Keycloak domain (e.g., `auth.anytrade.com`)
-- `ANYTRADE_URL` - Application URL (e.g., `https://anytrade.com`)
+- `KEYCLOAK_HOSTNAME` - Keycloak domain (e.g., `auth.volaticloud.com`)
+- `ANYTRADE_URL` - Application URL (e.g., `https://volaticloud.com`)
 
 **Verify secrets**:
 ```bash
@@ -154,13 +154,13 @@ echo ""
 ### Access admin console:
 
 ```
-https://auth.anytrade.com/auth/admin
+https://auth.volaticloud.com/auth/admin
 ```
 
 ### Verify OIDC configuration:
 
 ```
-https://auth.anytrade.com/auth/realms/anytrade/.well-known/openid-configuration
+https://auth.volaticloud.com/auth/realms/anytrade/.well-known/openid-configuration
 ```
 
 ---
@@ -216,7 +216,7 @@ After Keycloak is deployed:
 1. **Create users**: Access admin console → Users → Add user
 2. **Assign roles**: User details → Role mapping → Assign roles (admin/trader/viewer)
 3. **Test OIDC**: Try login flow from a test client
-4. **Configure DNS**: Point `auth.anytrade.com` to VKE load balancer
+4. **Configure DNS**: Point `auth.volaticloud.com` to VKE load balancer
 5. **Setup TLS**: Configure ingress with cert-manager (optional)
 6. **Deploy AnyTrade app**: Move to Phase 2 (application Helm chart)
 

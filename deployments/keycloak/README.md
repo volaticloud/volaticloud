@@ -24,8 +24,8 @@ Keycloak provides authentication and authorization for the AnyTrade platform usi
    - `KEYCLOAK_DB_HOST`: PostgreSQL hostname and port (e.g., `postgres.vultr.internal:5432`)
    - `KEYCLOAK_DB_USERNAME`: Database username (e.g., `keycloak`)
    - `KEYCLOAK_DB_PASSWORD`: Database password
-   - `KEYCLOAK_HOSTNAME`: Public hostname for Keycloak (e.g., `auth.anytrade.com`)
-   - `ANYTRADE_URL`: AnyTrade application URL (e.g., `https://anytrade.com`)
+   - `KEYCLOAK_HOSTNAME`: Public hostname for Keycloak (e.g., `auth.volaticloud.com`)
+   - `ANYTRADE_URL`: AnyTrade application URL (e.g., `https://volaticloud.com`)
 
 ## Files
 
@@ -93,7 +93,7 @@ kubectl wait --for=condition=Ready pod \
 
 # 5. Deploy Keycloak instance (substitute environment variables)
 export KEYCLOAK_DB_HOST="postgres.vultr.internal:5432"
-export KEYCLOAK_HOSTNAME="auth.anytrade.com"
+export KEYCLOAK_HOSTNAME="auth.volaticloud.com"
 envsubst < deployments/keycloak/keycloak-instance.yaml | kubectl apply -f -
 
 # Wait for Keycloak to be ready
@@ -104,7 +104,7 @@ kubectl wait --for=condition=Ready keycloak/anytrade-keycloak \
 kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 
 # 7. Configure OIDC clients (substitute environment variables)
-export ANYTRADE_URL="https://anytrade.com"
+export ANYTRADE_URL="https://volaticloud.com"
 envsubst < deployments/keycloak/keycloak-client.yaml | kubectl apply -f -
 ```
 
@@ -268,7 +268,7 @@ kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 2. Commit and push (triggers automatic deployment)
 3. Or apply manually:
    ```bash
-   export ANYTRADE_URL="https://anytrade.com"
+   export ANYTRADE_URL="https://volaticloud.com"
    envsubst < keycloak-client.yaml | kubectl apply -f -
    ```
 
