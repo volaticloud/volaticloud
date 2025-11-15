@@ -1,4 +1,5 @@
 # Stage 1: Build the React application
+# Trigger rebuild - 2025-11-15
 FROM node:20-alpine AS builder
 
 WORKDIR /app
