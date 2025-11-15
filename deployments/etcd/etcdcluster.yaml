@@ -59,6 +59,6 @@ spec:
 
   # Extra etcd options
   options:
-    autoCompactionMode: periodic
-    autoCompactionRetention: "8h"
-    quotaBackendBytes: "8589934592"  # 8GB
+    auto-compaction-mode: periodic
+    auto-compaction-retention: "8h"
+    quota-backend-bytes: "8589934592"  # 8GB
