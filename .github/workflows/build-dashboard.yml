@@ -45,7 +45,8 @@ jobs:
           if [ -n "${{ github.event.inputs.tag }}" ]; then
             echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            # Use short commit SHA for unique versioning
+            echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Docker image

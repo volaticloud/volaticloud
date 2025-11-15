@@ -94,7 +94,8 @@ jobs:
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
             echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
           else
-            echo "tag=main" >> $GITHUB_OUTPUT
+            # Use short commit SHA to match the build workflow
+            echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           fi
 
       - name: Create namespace if not exists
