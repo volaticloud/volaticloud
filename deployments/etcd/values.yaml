@@ -117,12 +117,9 @@ podLabels:
   app: etcd-cluster
   component: distributed-kv
 
-# Disaster recovery snapshots
+# Disaster recovery snapshots (disabled for initial deployment)
 disasterRecovery:
-  enabled: true
-  cronjob:
-    schedule: "0 */6 * * *"  # Every 6 hours
-    historyLimit: 5
+  enabled: false
 
 # Extra environment variables
 extraEnvVars:
