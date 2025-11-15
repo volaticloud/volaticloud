@@ -23,7 +23,7 @@ deployments:
             containerPort: 8080
             protocol: TCP
 
-        # No env override needed - uses default /api/query which proxies to backend
+        # No env override needed - uses default /query which proxies to backend
 
         livenessProbe:
           httpGet:

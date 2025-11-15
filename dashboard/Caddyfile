@@ -5,9 +5,8 @@
 	# Set root directory
 	root * /srv
 
-	# Reverse proxy for API requests to backend
-	# Strip /api prefix: /api/query -> backend/query
-	handle_path /api/* {
+	# Reverse proxy /query to backend GraphQL endpoint
+	handle /query {
 		reverse_proxy http://anytrade-backend-anytrade-backend:8080
 	}
 
