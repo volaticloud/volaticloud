@@ -2,20 +2,20 @@
 	# Enable gzip compression
 	encode gzip
 
-	# Set root directory
-	root * /srv
-
 	# Reverse proxy /query to backend GraphQL endpoint
 	handle /query {
 		reverse_proxy http://anytrade-backend-anytrade-backend:8080
 	}
 
-	# Enable file server
-	file_server
+	# Serve static files and SPA
+	handle {
+		root * /srv
 
-	# SPA fallback - serve index.html for all routes
-	# This allows React Router to handle routing
-	try_files {path} /index.html
+		# SPA fallback - serve index.html for all routes
+		try_files {path} /index.html
+
+		file_server
+	}
 
 	# Security headers
 	header {
