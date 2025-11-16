@@ -1,7 +1,7 @@
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: KeycloakRealmImport
 metadata:
-  name: anytrade-realm
+  name: volaticloud-realm
   namespace: keycloak
   labels:
     app: keycloak
@@ -9,12 +9,12 @@ metadata:
   annotations:
     deployment.timestamp: "2025-11-13T19:50:00Z"
 spec:
-  keycloakCRName: anytrade-keycloak
+  keycloakCRName: volaticloud-keycloak
   realm:
-    realm: anytrade
+    realm: volaticloud
     enabled: true
-    displayName: "AnyTrade"
-    displayNameHtml: "<b>AnyTrade</b> Trading Platform"
+    displayName: "Volaticloud"
+    displayNameHtml: "<b>Volaticloud</b>"
 
     # Login settings
     loginWithEmailAllowed: true
@@ -46,12 +46,6 @@ spec:
       realm:
         - name: admin
           description: "Administrator with full access"
-          composite: false
-        - name: trader
-          description: "Trader who can manage bots and strategies"
-          composite: false
-        - name: viewer
-          description: "Read-only access to view data"
           composite: false
         - name: user
           description: "Standard user role"

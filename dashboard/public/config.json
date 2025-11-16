@@ -1,3 +1,7 @@
 {
-  "ANYTRADE__GRAPHQL_URL": "/query"
+  "ANYTRADE__GRAPHQL_URL": "/query",
+  "ANYTRADE__KEYCLOAK_AUTHORITY": "https://auth.volaticloud.com/realms/dev",
+  "ANYTRADE__KEYCLOAK_CLIENT_ID": "dashboard",
+  "ANYTRADE__KEYCLOAK_REDIRECT_URI": "http://localhost:5173",
+  "ANYTRADE__KEYCLOAK_POST_LOGOUT_REDIRECT_URI": "http://localhost:5173"
 }

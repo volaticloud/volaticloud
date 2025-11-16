@@ -23,7 +23,17 @@ deployments:
             containerPort: 8080
             protocol: TCP
 
-        # No env override needed - uses default /query which proxies to backend
+        env:
+          - name: ANYTRADE__KEYCLOAK_AUTHORITY
+            value: "https://auth.volaticloud.com/realms/volaticloud"
+          - name: ANYTRADE__KEYCLOAK_CLIENT_ID
+            value: "dashboard"
+          - name: ANYTRADE__KEYCLOAK_REDIRECT_URI
+            value: "https://console.volaticloud.com"
+          - name: ANYTRADE__KEYCLOAK_POST_LOGOUT_REDIRECT_URI
+            value: "https://console.volaticloud.com"
+          - name: ANYTRADE__GRAPHQL_URL
+            value: "/query"
 
         livenessProbe:
           httpGet:
