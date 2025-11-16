@@ -1,4 +1,4 @@
-# AnyTrade Kubernetes Deployment Plan
+# VolatiCloud Kubernetes Deployment Plan
 
 **Target Platform**: Vultr Kubernetes Engine (VKE)
 **Container Registry**: GitHub Container Registry (ghcr.io)
@@ -12,7 +12,7 @@
 
 ## Executive Summary
 
-This plan outlines the complete implementation of **GitOps-based Kubernetes deployment** for AnyTrade, where:
+This plan outlines the complete implementation of **GitOps-based Kubernetes deployment** for VolatiCloud, where:
 - **Git is the single source of truth** - All infrastructure and application configuration lives in git
 - **Deployments are automatic** - Every commit triggers appropriate deployment workflows
 - **Everything is reproducible** - Complete cluster state can be recreated from git repository
@@ -66,13 +66,13 @@ This plan outlines the complete implementation of **GitOps-based Kubernetes depl
 ## Repository Structure (Git Layout)
 
 ```
-anytrade/
+volaticloud/
 ├── .github/
 │   └── workflows/
 │       ├── docker-build.yml           # Build & push containers on code changes
 │       ├── deploy-infrastructure.yml  # Deploy OLM, cert-manager, ingress
 │       ├── deploy-keycloak.yml       # Deploy Keycloak operator & instance
-│       ├── deploy-app.yml            # Deploy AnyTrade application
+│       ├── deploy-app.yml            # Deploy VolatiCloud application
 │       ├── validate-manifests.yml    # Lint & validate on PR
 │       └── bootstrap.yml             # One-time cluster bootstrap
 │
@@ -98,7 +98,7 @@ anytrade/
 │   │   └── README.md
 │   │
 │   ├── helm/                         # Application Helm charts
-│   │   └── anytrade/
+│   │   └── volaticloud/
 │   │       ├── Chart.yaml
 │   │       ├── values.yaml          # Default values
 │   │       ├── values-dev.yaml
@@ -240,7 +240,7 @@ set -euo pipefail
 
 ENVIRONMENT=${1:-dev}
 
-echo "🚀 Bootstrapping AnyTrade on VKE (Environment: $ENVIRONMENT)"
+echo "🚀 Bootstrapping VolatiCloud on VKE (Environment: $ENVIRONMENT)"
 
 # This script is for local testing only
 # In production, use GitHub Actions workflows
@@ -315,8 +315,8 @@ echo "   Trigger: gh workflow run bootstrap.yml"
 │  └────────────────────────────────────────────────────┘     │
 │                                                               │
 │  ┌────────────────────────────────────────────────────┐     │
-│  │ Application Layer (deployments/helm/anytrade/)     │     │
-│  │  ├─► AnyTrade Backend (Go GraphQL API)             │     │
+│  │ Application Layer (deployments/helm/volaticloud/)     │     │
+│  │  ├─► VolatiCloud Backend (Go GraphQL API)             │     │
 │  │  ├─► Service (ClusterIP)                           │     │
 │  │  ├─► Ingress (HTTPS with Let's Encrypt)            │     │
 │  │  ├─► ConfigMap (app configuration)                 │     │
@@ -326,7 +326,7 @@ echo "   Trigger: gh workflow run bootstrap.yml"
 │                                                               │
 │  ┌────────────────────────────────────────────────────┐     │
 │  │ Runtime Layer (dynamic)                             │     │
-│  │  └─► Freqtrade Bot Pods (created by AnyTrade)      │     │
+│  │  └─► Freqtrade Bot Pods (created by VolatiCloud)      │     │
 │  └────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────┘
                           │
@@ -376,7 +376,7 @@ This table shows which workflows run based on file changes:
 |--------------|----------------------|---------------|
 | `internal/**`, `cmd/**`, `*.go` | `docker-build.yml` → `deploy-app.yml` | 1. Run tests<br>2. Build container<br>3. Push to ghcr.io<br>4. Deploy to cluster |
 | `dashboard/**`, `*.tsx`, `*.ts` | `frontend-ci.yml` | 1. Lint & type check<br>2. Build static assets<br>3. Update container (future) |
-| `deployments/helm/anytrade/**` | `deploy-app.yml` | 1. Helm lint<br>2. Upgrade release<br>3. Wait for rollout |
+| `deployments/helm/volaticloud/**` | `deploy-app.yml` | 1. Helm lint<br>2. Upgrade release<br>3. Wait for rollout |
 | `deployments/keycloak/**` | `deploy-keycloak.yml` | 1. Validate manifests<br>2. Apply changes<br>3. Wait for ready |
 | `deployments/infrastructure/**` | `deploy-infrastructure.yml` | 1. Apply infrastructure<br>2. Verify health |
 | `Dockerfile`, `.dockerignore` | `docker-build.yml` → `deploy-app.yml` | 1. Rebuild image<br>2. Redeploy app |
@@ -398,7 +398,7 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'Dockerfile'
-      - 'deployments/helm/anytrade/**'
+      - 'deployments/helm/volaticloud/**'
 
 jobs:
   # Job 1: Determine what changed
@@ -419,7 +419,7 @@ jobs:
               - '*.go'
               - 'Dockerfile'
             helm:
-              - 'deployments/helm/anytrade/**'
+              - 'deployments/helm/volaticloud/**'
 
   # Job 2: Build container (only if code changed)
   build:
@@ -467,7 +467,7 @@ jobs:
 ## Phase 1: Containerization (Foundation)
 
 ### Objectives
-- Create production-ready Docker image for AnyTrade
+- Create production-ready Docker image for VolatiCloud
 - Set up automated container builds
 - Publish to GitHub Container Registry
 
@@ -496,10 +496,10 @@ Exclude development files, tests, documentation
 #### 1.3 Makefile Updates
 ```makefile
 docker-build:
-	docker build -t anytrade:latest .
+	docker build -t volaticloud:latest .
 
 docker-push:
-	docker push ghcr.io/diazoxide/anytrade:latest
+	docker push ghcr.io/diazoxide/volaticloud:latest
 ```
 
 #### 1.4 GitHub Action: `.github/workflows/docker-build.yml`
@@ -513,26 +513,26 @@ docker-push:
 1. Run tests (reuse backend-ci.yml)
 2. Build multi-arch image (amd64, arm64)
 3. Tag with git SHA + semantic version
-4. Push to ghcr.io/diazoxide/anytrade
+4. Push to ghcr.io/diazoxide/volaticloud
 5. Create GitHub release on tag push
 
 **Outputs**:
-- Image: `ghcr.io/diazoxide/anytrade:latest`
-- Image: `ghcr.io/diazoxide/anytrade:v1.0.0`
-- Image: `ghcr.io/diazoxide/anytrade:sha-abc123`
+- Image: `ghcr.io/diazoxide/volaticloud:latest`
+- Image: `ghcr.io/diazoxide/volaticloud:v1.0.0`
+- Image: `ghcr.io/diazoxide/volaticloud:sha-abc123`
 
 ---
 
 ## Phase 2: Helm Chart Foundation
 
 ### Objectives
-- Create reusable Helm chart for AnyTrade
+- Create reusable Helm chart for VolatiCloud
 - Support multiple environments (dev/staging/prod)
 - Configure VKE-specific optimizations
 
 ### Directory Structure
 ```
-deployments/helm/anytrade/
+deployments/helm/volaticloud/
 ├── Chart.yaml
 ├── values.yaml                 # Default values (VKE-optimized)
 ├── values-dev.yaml             # Development overrides
@@ -557,7 +557,7 @@ deployments/helm/anytrade/
 replicaCount: 2
 
 image:
-  repository: ghcr.io/diazoxide/anytrade
+  repository: ghcr.io/diazoxide/volaticloud
   pullPolicy: IfNotPresent
   tag: ""  # Defaults to Chart.appVersion
 
@@ -575,7 +575,7 @@ database:
   postgres:
     host: ""
     port: 5432
-    database: anytrade
+    database: volaticloud
     # Credentials from secret
 
 # etcd configuration (optional for distributed setups)
@@ -587,8 +587,8 @@ etcd:
 keycloak:
   enabled: true
   url: ""  # Keycloak server URL
-  realm: anytrade
-  clientId: anytrade-dashboard
+  realm: volaticloud
+  clientId: volaticloud-dashboard
 
 # Ingress configuration
 ingress:
@@ -597,14 +597,14 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: anytrade.example.com
+    - host: volaticloud.example.com
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: anytrade-tls
+    - secretName: volaticloud-tls
       hosts:
-        - anytrade.example.com
+        - volaticloud.example.com
 ```
 
 ### Helm Dependencies
@@ -675,7 +675,7 @@ olm:
 ### Objectives
 - Deploy Keycloak operator via OLM
 - Create Keycloak instance with PostgreSQL backend
-- Configure AnyTrade realm with OIDC client
+- Configure VolatiCloud realm with OIDC client
 
 ### Directory Structure
 ```
@@ -684,7 +684,7 @@ deployments/keycloak/
 ├── operator-subscription.yaml           # OLM subscription for Keycloak operator
 ├── keycloak-instance.yaml              # Keycloak CR (server instance)
 ├── keycloak-realm.yaml                 # Realm configuration
-├── keycloak-client.yaml                # OIDC client for AnyTrade
+├── keycloak-client.yaml                # OIDC client for VolatiCloud
 └── README.md
 ```
 
@@ -707,7 +707,7 @@ spec:
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
-  name: anytrade-keycloak
+  name: volaticloud-keycloak
   namespace: keycloak
 spec:
   instances: 2  # High availability
@@ -724,21 +724,21 @@ spec:
   http:
     tlsSecret: keycloak-tls
   hostname:
-    hostname: auth.anytrade.example.com
+    hostname: auth.volaticloud.example.com
   ingress:
     enabled: true
 ```
 
 ### Keycloak Realm Configuration (`keycloak-realm.yaml`)
 
-**Realm**: `anytrade`
+**Realm**: `volaticloud`
 
 **OIDC Client**:
-- Client ID: `anytrade-dashboard`
+- Client ID: `volaticloud-dashboard`
 - Client Protocol: `openid-connect`
 - Access Type: `public` (for React SPA)
 - Valid Redirect URIs:
-  - `https://anytrade.example.com/*`
+  - `https://volaticloud.example.com/*`
   - `http://localhost:5173/*` (development)
 - Web Origins: `+` (allow same origin)
 
@@ -841,7 +841,7 @@ import { AuthProvider } from "react-oidc-context";
 
 const oidcConfig = {
   authority: process.env.VITE_KEYCLOAK_URL,
-  client_id: "anytrade-dashboard",
+  client_id: "volaticloud-dashboard",
   redirect_uri: window.location.origin,
   scope: "openid profile email",
 };
@@ -899,11 +899,11 @@ Add Keycloak environment variables:
 # values.yaml
 env:
   - name: KEYCLOAK_URL
-    value: "https://auth.anytrade.example.com"
+    value: "https://auth.volaticloud.example.com"
   - name: KEYCLOAK_REALM
-    value: "anytrade"
+    value: "volaticloud"
   - name: KEYCLOAK_CLIENT_ID
-    value: "anytrade-dashboard"
+    value: "volaticloud-dashboard"
 ```
 
 ---
@@ -1100,7 +1100,7 @@ jobs:
         run: |
           kubectl apply -f deployments/keycloak/keycloak-instance.yaml
           # Wait for Keycloak to be ready
-          kubectl wait --for=condition=Ready -n keycloak keycloak/anytrade-keycloak --timeout=600s
+          kubectl wait --for=condition=Ready -n keycloak keycloak/volaticloud-keycloak --timeout=600s
 
       - name: Apply realm configuration
         run: |
@@ -1109,8 +1109,8 @@ jobs:
 
       - name: Verify OIDC endpoints
         run: |
-          KEYCLOAK_URL=$(kubectl get keycloak anytrade-keycloak -n keycloak -o jsonpath='{.status.url}')
-          curl -f "$KEYCLOAK_URL/realms/anytrade/.well-known/openid-configuration"
+          KEYCLOAK_URL=$(kubectl get keycloak volaticloud-keycloak -n keycloak -o jsonpath='{.status.url}')
+          curl -f "$KEYCLOAK_URL/realms/volaticloud/.well-known/openid-configuration"
 
       - name: Create deployment
         uses: actions/github-script@v7
@@ -1246,7 +1246,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'deployments/helm/anytrade/**'
+      - 'deployments/helm/volaticloud/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -1275,7 +1275,7 @@ jobs:
               - 'cmd/**'
               - 'Dockerfile'
             helm:
-              - 'deployments/helm/anytrade/**'
+              - 'deployments/helm/volaticloud/**'
 
   lint-helm:
     runs-on: ubuntu-latest
@@ -1283,8 +1283,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Lint Helm chart
         run: |
-          helm lint deployments/helm/anytrade
-          helm template anytrade deployments/helm/anytrade --debug --dry-run
+          helm lint deployments/helm/volaticloud
+          helm template volaticloud deployments/helm/volaticloud --debug --dry-run
 
   deploy-dev:
     needs: [detect-changes, lint-helm]
@@ -1309,16 +1309,16 @@ jobs:
         run: |
           IMAGE_TAG="${{ inputs.image-tag || format('sha-{0}', github.sha) }}"
 
-          helm upgrade --install anytrade deployments/helm/anytrade \
-            --namespace anytrade --create-namespace \
-            --values deployments/helm/anytrade/values-dev.yaml \
+          helm upgrade --install volaticloud deployments/helm/volaticloud \
+            --namespace volaticloud --create-namespace \
+            --values deployments/helm/volaticloud/values-dev.yaml \
             --set image.tag="$IMAGE_TAG" \
             --set image.pullPolicy=Always \
             --wait --timeout=5m
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/anytrade -n anytrade --timeout=5m
+          kubectl rollout status deployment/volaticloud -n volaticloud --timeout=5m
 
       - name: Run smoke tests
         run: |
@@ -1327,9 +1327,9 @@ jobs:
 
       - name: Get deployment info
         run: |
-          kubectl get pods -n anytrade
-          kubectl get svc -n anytrade
-          kubectl get ingress -n anytrade
+          kubectl get pods -n volaticloud
+          kubectl get svc -n volaticloud
+          kubectl get ingress -n volaticloud
 
       - name: Create deployment
         uses: actions/github-script@v7
@@ -1361,9 +1361,9 @@ jobs:
         run: |
           IMAGE_TAG="${{ inputs.image-tag || 'latest' }}"
 
-          helm upgrade --install anytrade deployments/helm/anytrade \
-            --namespace anytrade --create-namespace \
-            --values deployments/helm/anytrade/values-prod.yaml \
+          helm upgrade --install volaticloud deployments/helm/volaticloud \
+            --namespace volaticloud --create-namespace \
+            --values deployments/helm/volaticloud/values-prod.yaml \
             --set image.tag="$IMAGE_TAG" \
             --wait --timeout=10m
 
@@ -1398,8 +1398,8 @@ jobs:
 
       - name: Validate Helm charts
         run: |
-          helm lint deployments/helm/anytrade
-          helm template anytrade deployments/helm/anytrade --debug
+          helm lint deployments/helm/volaticloud
+          helm template volaticloud deployments/helm/volaticloud --debug
 
       - name: Validate Kubernetes manifests
         run: |
@@ -1525,14 +1525,14 @@ Common issues and solutions:
 # Add to .github/workflows/quality.yml
 - name: Lint Helm Chart
   run: |
-    helm lint deployments/helm/anytrade
-    helm template deployments/helm/anytrade --debug
+    helm lint deployments/helm/volaticloud
+    helm template deployments/helm/volaticloud --debug
 ```
 
 #### 7.2 Dry-Run Tests
 ```bash
 # Test deployment without applying
-helm install anytrade deployments/helm/anytrade --dry-run --debug
+helm install volaticloud deployments/helm/volaticloud --dry-run --debug
 kubectl apply -f deployments/keycloak/ --dry-run=client
 ```
 
@@ -1739,16 +1739,16 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ### Application Rollback
 ```bash
 # Rollback to previous Helm release
-helm rollback anytrade
+helm rollback volaticloud
 
 # Rollback to specific revision
-helm rollback anytrade 5
+helm rollback volaticloud 5
 ```
 
 ### Keycloak Rollback
 ```bash
 # Delete Keycloak instance
-kubectl delete keycloak anytrade-keycloak -n keycloak
+kubectl delete keycloak volaticloud-keycloak -n keycloak
 
 # Restore from backup
 kubectl apply -f keycloak-backup.yaml

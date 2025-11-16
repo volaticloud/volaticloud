@@ -1,4 +1,4 @@
-# 🚀 AnyTrade Backend Deployment - 100% GitOps
+# 🚀 VolatiCloud Backend Deployment - 100% GitOps
 
 ## Overview
 
@@ -23,7 +23,7 @@ All configuration is done via environment variables:
 
 ### Database Credentials (From Kubernetes Secrets)
 
-These are injected from the `anytrade-db-secret`:
+These are injected from the `volaticloud-db-secret`:
 - `POSTGRES_HOST` - PostgreSQL hostname:port
 - `POSTGRES_DB` - Database name
 - `POSTGRES_USER` - Database username
@@ -57,13 +57,13 @@ if err := client.Schema.Create(ctx); err != nil {
 
 **Before:**
 ```bash
-./anytrade server  # Start server
-./anytrade migrate # Run migrations (separate command)
+./volaticloud server  # Start server
+./volaticloud migrate # Run migrations (separate command)
 ```
 
 **After:**
 ```bash
-./anytrade  # Starts server with automatic migrations
+./volaticloud  # Starts server with automatic migrations
 ```
 
 **Changes:**
@@ -76,13 +76,13 @@ if err := client.Schema.Create(ctx); err != nil {
 
 **Before:**
 ```dockerfile
-ENTRYPOINT ["/app/anytrade"]
+ENTRYPOINT ["/app/volaticloud"]
 CMD ["server"]
 ```
 
 **After:**
 ```dockerfile
-ENTRYPOINT ["/app/anytrade"]  # No CMD needed
+ENTRYPOINT ["/app/volaticloud"]  # No CMD needed
 ```
 
 ### 3. Cleaned Helm Values (`deployments/backend/values.yaml`)
@@ -101,7 +101,7 @@ ENTRYPOINT ["/app/anytrade"]  # No CMD needed
    ↓
 2. GitHub Actions: Build Docker Image
    - Build multi-stage image
-   - Push to ghcr.io/diazoxide/anytrade:latest
+   - Push to ghcr.io/diazoxide/volaticloud:latest
    ↓
 3. GitHub Actions: Deploy to Kubernetes
    - Create namespace
@@ -125,10 +125,10 @@ ENTRYPOINT ["/app/anytrade"]  # No CMD needed
 
 ```bash
 # Set environment variables
-export ANYTRADE_DATABASE="sqlite://./data/anytrade.db"
+export ANYTRADE_DATABASE="sqlite://./data/volaticloud.db"
 
 # Run server (migrations happen automatically)
-./bin/anytrade
+./bin/volaticloud
 ```
 
 ### Production Deployment
@@ -146,7 +146,7 @@ git push origin main
 
 # 3. Monitor
 gh run watch
-kubectl get pods -n anytrade -w
+kubectl get pods -n volaticloud -w
 ```
 
 ## Zero-Downtime Deployment Details
@@ -207,7 +207,7 @@ kubectl get pods -n anytrade -w
 
 ```bash
 # View logs
-kubectl logs -n anytrade <pod-name>
+kubectl logs -n volaticloud <pod-name>
 
 # Common causes:
 # 1. Database connection failed
@@ -220,29 +220,29 @@ kubectl logs -n anytrade <pod-name>
 ```bash
 # Check if database is accessible
 kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
-  psql -h <host> -U anytrade -d anytrade
+  psql -h <host> -U volaticloud -d volaticloud
 
 # Check pod events
-kubectl describe pod <pod-name> -n anytrade
+kubectl describe pod <pod-name> -n volaticloud
 ```
 
 ### Database Credentials Wrong
 
 ```bash
 # Verify secret exists
-kubectl get secret anytrade-db-secret -n anytrade
+kubectl get secret volaticloud-db-secret -n volaticloud
 
 # Update secret
-kubectl create secret generic anytrade-db-secret \
+kubectl create secret generic volaticloud-db-secret \
   --from-literal=host="..." \
   --from-literal=database="..." \
   --from-literal=username="..." \
   --from-literal=password="..." \
-  --namespace=anytrade \
+  --namespace=volaticloud \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # Restart pods to pick up new secret
-kubectl rollout restart deployment/anytrade-backend -n anytrade
+kubectl rollout restart deployment/volaticloud-backend -n volaticloud
 ```
 
 ## Production Checklist
@@ -258,9 +258,9 @@ Before first deployment:
 
 After deployment:
 
-- [ ] Pods running: `kubectl get pods -n anytrade`
-- [ ] Ingress configured: `kubectl get ingress -n anytrade`
-- [ ] Certificate issued: `kubectl get certificate -n anytrade`
+- [ ] Pods running: `kubectl get pods -n volaticloud`
+- [ ] Ingress configured: `kubectl get ingress -n volaticloud`
+- [ ] Certificate issued: `kubectl get certificate -n volaticloud`
 - [ ] Health endpoint: `curl https://api.volaticloud.com/health`
 - [ ] GraphQL playground: `https://api.volaticloud.com/`
 
@@ -268,19 +268,19 @@ After deployment:
 
 ```bash
 # Watch deployment
-kubectl get pods -n anytrade -w
+kubectl get pods -n volaticloud -w
 
 # View logs
-kubectl logs -n anytrade -l app=anytrade-backend -f
+kubectl logs -n volaticloud -l app=volaticloud-backend -f
 
 # Check HPA
-kubectl get hpa -n anytrade
+kubectl get hpa -n volaticloud
 
 # View events
-kubectl get events -n anytrade --sort-by='.lastTimestamp'
+kubectl get events -n volaticloud --sort-by='.lastTimestamp'
 
 # Check resource usage
-kubectl top pods -n anytrade
+kubectl top pods -n volaticloud
 ```
 
 ## Rollback
@@ -290,11 +290,11 @@ kubectl top pods -n anytrade
 # Helm --atomic flag ensures automatic rollback
 
 # Manual rollback
-helm rollback anytrade-backend -n anytrade
+helm rollback volaticloud-backend -n volaticloud
 
 # Rollback to specific revision
-helm history anytrade-backend -n anytrade
-helm rollback anytrade-backend <revision> -n anytrade
+helm history volaticloud-backend -n volaticloud
+helm rollback volaticloud-backend <revision> -n volaticloud
 ```
 
 ## Summary

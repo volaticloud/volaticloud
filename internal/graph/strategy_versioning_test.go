@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/ent/enttest"
-	strategyent "anytrade/internal/ent/strategy"
-	"anytrade/internal/enum"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/enttest"
+	strategyent "volaticloud/internal/ent/strategy"
+	"volaticloud/internal/enum"
 
 	_ "github.com/mattn/go-sqlite3"
 )

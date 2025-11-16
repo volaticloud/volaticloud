@@ -1,8 +1,8 @@
 package graph
 
 import (
-	"anytrade/internal/ent"
-	"anytrade/internal/enum"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/enum"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

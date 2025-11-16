@@ -3,13 +3,13 @@
 package ent
 
 import (
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/predicate"
 	"context"
 	"errors"
 	"fmt"
 	"time"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

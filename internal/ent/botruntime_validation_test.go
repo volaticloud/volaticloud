@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"anytrade/internal/ent/enttest"
-	"anytrade/internal/enum"
+	"volaticloud/internal/ent/enttest"
+	"volaticloud/internal/enum"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"

@@ -19,7 +19,7 @@ export const Dashboard = () => {
         Dashboard
       </Typography>
       <Typography variant="body1" color="text.secondary" gutterBottom>
-        Welcome to AnyTrade Control Plane
+        Welcome to VolatiCloud Control Plane
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 3, mt: 3 }}>

@@ -14,7 +14,7 @@ echo ""
 
 # First, let's create a simple test container that will act as our bot
 echo "1. Creating a test Docker container (alpine with sleep)..."
-CONTAINER_ID=$(docker run -d --name anytrade-test-bot alpine sleep 3600)
+CONTAINER_ID=$(docker run -d --name volaticloud-test-bot alpine sleep 3600)
 echo "✓ Test container created: $CONTAINER_ID"
 echo ""
 
@@ -30,7 +30,7 @@ BOT_ID=$(echo "$BOT_RESULT" | python3 -c "import sys, json; print(json.load(sys.
 
 if [ -z "$BOT_ID" ]; then
   echo "❌ Failed to create bot"
-  docker rm -f anytrade-test-bot
+  docker rm -f volaticloud-test-bot
   exit 1
 fi
 
@@ -85,7 +85,7 @@ echo ""
 # Cleanup
 echo "=== Cleanup ==="
 echo "Removing test container..."
-docker rm -f anytrade-test-bot
+docker rm -f volaticloud-test-bot
 echo "✓ Test container removed"
 echo ""
 

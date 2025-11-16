@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 interface RuntimeConfig {
-  ANYTRADE__GRAPHQL_URL: string;
+  VOLATICLOUD__GRAPHQL_URL: string;
   [key: string]: string;
 }
 

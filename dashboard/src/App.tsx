@@ -19,7 +19,7 @@ import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
-  const graphqlUrl = useConfigValue('ANYTRADE__GRAPHQL_URL');
+  const graphqlUrl = useConfigValue('VOLATICLOUD__GRAPHQL_URL');
   const auth = useAuth();
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);

@@ -210,7 +210,7 @@ jobs:
 
           echo "⏳ Waiting for Keycloak to be ready..."
           kubectl wait --for=condition=Ready \
-            keycloak/anytrade-keycloak \
+            keycloak/volaticloud-keycloak \
             -n keycloak \
             --timeout=600s || echo "Warning: Keycloak not ready yet, check status manually"
 
@@ -285,8 +285,8 @@ jobs:
           echo "## ✅ Keycloak Deployment Successful" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📋 Deployment Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **Realm**: anytrade" >> $GITHUB_STEP_SUMMARY
-          echo "- **Clients**: anytrade-dashboard, anytrade-api" >> $GITHUB_STEP_SUMMARY
+          echo "- **Realm**: volaticloud" >> $GITHUB_STEP_SUMMARY
+          echo "- **Clients**: volaticloud-dashboard, volaticloud-api" >> $GITHUB_STEP_SUMMARY
           echo "- **URL**: https://${{ secrets.KEYCLOAK_HOSTNAME }}/auth" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔐 Next Steps" >> $GITHUB_STEP_SUMMARY

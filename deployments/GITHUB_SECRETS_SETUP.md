@@ -115,7 +115,7 @@ You need to decide on your public domain names:
 1. **Keycloak Hostname**: Where Keycloak will be accessible
    - Example: `auth.volaticloud.com` or `keycloak.yourdomain.com`
 
-2. **AnyTrade URL**: Where your application will be accessible
+2. **VolatiCloud URL**: Where your application will be accessible
    - Example: `https://volaticloud.com` or `https://app.yourdomain.com`
 
 **Note**: You'll need to configure DNS later to point these domains to your VKE load balancer.
@@ -126,7 +126,7 @@ You need to decide on your public domain names:
 
 ### Option A: Via GitHub Web UI (Easiest)
 
-1. Go to your repository on GitHub: https://github.com/diazoxide/anytrade
+1. Go to your repository on GitHub: https://github.com/diazoxide/volaticloud
 2. Click **Settings** (top navigation)
 3. In the left sidebar, click **Secrets and variables** → **Actions**
 4. Click **New repository secret**
@@ -175,7 +175,7 @@ If you have [GitHub CLI](https://cli.github.com/) installed:
 
 ```bash
 # Navigate to your repository
-cd /Users/macbookpro/IdeaProjects/anytrade
+cd /Users/macbookpro/IdeaProjects/volaticloud
 
 # Add VKE_KUBECONFIG
 gh secret set VKE_KUBECONFIG < vke-kubeconfig-base64.txt
@@ -257,7 +257,7 @@ jobs:
           echo "DB Host: ${{ secrets.KEYCLOAK_DB_HOST }}"
           echo "DB Username: ${{ secrets.KEYCLOAK_DB_USERNAME }}"
           echo "Keycloak Hostname: ${{ secrets.KEYCLOAK_HOSTNAME }}"
-          echo "AnyTrade URL: ${{ secrets.ANYTRADE_URL }}"
+          echo "VolatiCloud URL: ${{ secrets.ANYTRADE_URL }}"
 EOF
 
 # Commit and push

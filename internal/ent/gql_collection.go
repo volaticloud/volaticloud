@@ -3,16 +3,16 @@
 package ent
 
 import (
-	"anytrade/internal/ent/backtest"
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botmetrics"
-	"anytrade/internal/ent/botrunner"
-	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/strategy"
-	"anytrade/internal/ent/trade"
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"volaticloud/internal/ent/backtest"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/botmetrics"
+	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/trade"
 
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent/dialect/sql"

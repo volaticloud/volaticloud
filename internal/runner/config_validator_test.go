@@ -3,7 +3,7 @@ package runner
 import (
 	"testing"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 
 	"github.com/stretchr/testify/assert"
 )

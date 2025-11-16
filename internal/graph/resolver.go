@@ -1,6 +1,6 @@
 package graph
 
-import "anytrade/internal/ent"
+import "volaticloud/internal/ent"
 
 // This file will not be regenerated automatically.
 //

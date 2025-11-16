@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"anytrade/internal/enum"
-	"anytrade/internal/runner"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

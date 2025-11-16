@@ -3,18 +3,18 @@
 package ent
 
 import (
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botmetrics"
-	"anytrade/internal/ent/botrunner"
-	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/predicate"
-	"anytrade/internal/ent/strategy"
-	"anytrade/internal/ent/trade"
-	"anytrade/internal/enum"
 	"context"
 	"errors"
 	"fmt"
 	"time"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/botmetrics"
+	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/trade"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

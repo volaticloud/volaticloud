@@ -3,7 +3,7 @@ package runner
 import (
 	"time"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 )
 
 // BacktestSpec defines the specification for running a backtest

@@ -36,7 +36,7 @@ kubectl --kubeconfig=vke-kubeconfig.yaml get nodes
 ### Option A: Automated Script (Recommended)
 
 ```bash
-cd /Users/macbookpro/IdeaProjects/anytrade
+cd /Users/macbookpro/IdeaProjects/volaticloud
 chmod +x scripts/setup-github-secrets.sh
 ./scripts/setup-github-secrets.sh
 ```
@@ -45,7 +45,7 @@ The script will prompt you for:
 - Path to kubeconfig file
 - PostgreSQL host, port, username, password
 - Keycloak hostname
-- AnyTrade URL
+- VolatiCloud URL
 
 ### Option B: Manual Setup
 
@@ -114,7 +114,7 @@ git push origin feature/keycloak-openid-integration
 gh run watch
 
 # Or view in browser
-open https://github.com/diazoxide/anytrade/actions
+open https://github.com/diazoxide/volaticloud/actions
 ```
 
 ### Check Kubernetes:
@@ -142,11 +142,11 @@ kubectl logs -n keycloak -l app=keycloak -f
 ### Get admin credentials:
 
 ```bash
-kubectl get secret anytrade-keycloak-initial-admin \
+kubectl get secret volaticloud-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.username}' | base64 -d
 echo ""
 
-kubectl get secret anytrade-keycloak-initial-admin \
+kubectl get secret volaticloud-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.password}' | base64 -d
 echo ""
 ```
@@ -160,7 +160,7 @@ https://auth.volaticloud.com/auth/admin
 ### Verify OIDC configuration:
 
 ```
-https://auth.volaticloud.com/auth/realms/anytrade/.well-known/openid-configuration
+https://auth.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configuration
 ```
 
 ---
@@ -218,7 +218,7 @@ After Keycloak is deployed:
 3. **Test OIDC**: Try login flow from a test client
 4. **Configure DNS**: Point `auth.volaticloud.com` to VKE load balancer
 5. **Setup TLS**: Configure ingress with cert-manager (optional)
-6. **Deploy AnyTrade app**: Move to Phase 2 (application Helm chart)
+6. **Deploy VolatiCloud app**: Move to Phase 2 (application Helm chart)
 
 ---
 
@@ -226,7 +226,7 @@ After Keycloak is deployed:
 
 ```bash
 # Restart Keycloak
-kubectl rollout restart statefulset/anytrade-keycloak -n keycloak
+kubectl rollout restart statefulset/volaticloud-keycloak -n keycloak
 
 # View logs
 kubectl logs -n keycloak -l app=keycloak --tail=100 -f
@@ -252,8 +252,8 @@ git push
 - [ ] Keycloak pods (2 replicas) running
 - [ ] Can access admin console
 - [ ] OIDC configuration endpoint returns valid JSON
-- [ ] Realm `anytrade` exists with roles
-- [ ] OIDC clients `anytrade-dashboard` and `anytrade-api` configured
+- [ ] Realm `volaticloud` exists with roles
+- [ ] OIDC clients `volaticloud-dashboard` and `volaticloud-api` configured
 
 ---
 

@@ -20,7 +20,7 @@ COPY . .
 # Build the binary with cache mounts
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=1 GOOS=linux go build -ldflags="-w -s" -o anytrade ./cmd/server
+    CGO_ENABLED=1 GOOS=linux go build -ldflags="-w -s" -o volaticloud ./cmd/server
 
 # Runtime stage
 FROM alpine:latest
@@ -29,19 +29,19 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates tzdata
 
 # Create non-root user
-RUN addgroup -g 1000 anytrade && \
-    adduser -D -u 1000 -G anytrade anytrade
+RUN addgroup -g 1000 volaticloud && \
+    adduser -D -u 1000 -G volaticloud volaticloud
 
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /build/anytrade .
+COPY --from=builder /build/volaticloud .
 
 # Create data directory
-RUN mkdir -p /app/data && chown -R anytrade:anytrade /app
+RUN mkdir -p /app/data && chown -R volaticloud:volaticloud /app
 
 # Switch to non-root user
-USER anytrade
+USER volaticloud
 
 # Expose port
 EXPOSE 8080
@@ -51,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Default command (runs server automatically with migrations)
-ENTRYPOINT ["/app/anytrade"]
+ENTRYPOINT ["/app/volaticloud"]

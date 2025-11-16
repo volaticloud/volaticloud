@@ -6,7 +6,7 @@ import (
 
 	"entgo.io/ent"
 
-	"anytrade/internal/exchange"
+	"volaticloud/internal/exchange"
 )
 
 // validateExchangeConfig validates the exchange configuration using Freqtrade JSON schema.

@@ -7,7 +7,7 @@ set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-echo "🔐 GitHub Secrets Setup for AnyTrade"
+echo "🔐 GitHub Secrets Setup for VolatiCloud"
 echo "===================================="
 echo ""
 
@@ -138,7 +138,7 @@ echo ""
 echo -n "Keycloak Hostname (e.g., auth.volaticloud.com): "
 read KEYCLOAK_HOSTNAME
 
-echo -n "AnyTrade Application URL (e.g., https://volaticloud.com): "
+echo -n "VolatiCloud Application URL (e.g., https://volaticloud.com): "
 read ANYTRADE_URL
 
 # Set hostname secrets

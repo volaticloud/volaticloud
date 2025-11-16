@@ -106,7 +106,7 @@ git push origin feature/keycloak-openid-integration
 gh run watch
 
 # Or view in browser
-# https://github.com/diazoxide/anytrade/actions
+# https://github.com/diazoxide/volaticloud/actions
 ```
 
 **Expected duration:** 5-8 minutes
@@ -312,13 +312,13 @@ dig @1.1.1.1 auth.volaticloud.com +short  # Cloudflare DNS
 
 ```bash
 # Check ingress status
-kubectl get ingress -n keycloak anytrade-keycloak-ingress
+kubectl get ingress -n keycloak volaticloud-keycloak-ingress
 
 # Check ingress class
 kubectl get ingressclass
 
 # Verify ingress has correct class
-kubectl get ingress -n keycloak anytrade-keycloak-ingress -o yaml | grep ingressClassName
+kubectl get ingress -n keycloak volaticloud-keycloak-ingress -o yaml | grep ingressClassName
 # Should show: ingressClassName: nginx
 ```
 

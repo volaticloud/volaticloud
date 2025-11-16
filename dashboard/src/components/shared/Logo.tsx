@@ -61,7 +61,7 @@ export const Logo = ({ variant = 'full', size = 'medium', onClick }: LogoProps) 
           backgroundClip: 'text',
         }}
       >
-        AnyTrade
+        VolatiCloud
       </Typography>
     </Box>
   );

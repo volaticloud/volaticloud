@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"anytrade/internal/ent"
+	"volaticloud/internal/ent"
 )
 
 // WithTx wraps a function in a database transaction following ENT best practices.

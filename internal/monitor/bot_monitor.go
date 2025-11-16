@@ -7,12 +7,12 @@ import (
 	"log"
 	"time"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botmetrics"
-	"anytrade/internal/enum"
-	"anytrade/internal/freqtrade"
-	"anytrade/internal/runner"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/botmetrics"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/freqtrade"
+	"volaticloud/internal/runner"
 
 	"github.com/google/uuid"
 )

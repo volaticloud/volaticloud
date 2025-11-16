@@ -1,19 +1,19 @@
-# Keycloak Deployment for AnyTrade
+# Keycloak Deployment for VolatiCloud
 
 This directory contains all Kubernetes manifests for deploying Keycloak via the Keycloak Operator on VKE (Vultr Kubernetes Engine).
 
 ## Overview
 
-Keycloak provides authentication and authorization for the AnyTrade platform using OpenID Connect (OIDC) and OAuth 2.0.
+Keycloak provides authentication and authorization for the VolatiCloud platform using OpenID Connect (OIDC) and OAuth 2.0.
 
 **Components**:
 - **Keycloak Operator**: Manages Keycloak instances via OLM
 - **Keycloak Instance**: 2-replica high-availability setup
 - **Managed PostgreSQL**: Uses VKE managed database (not deployed here)
-- **Realm**: `anytrade` realm with roles and client configurations
+- **Realm**: `volaticloud` realm with roles and client configurations
 - **OIDC Clients**:
-  - `anytrade-dashboard`: Public client for React SPA
-  - `anytrade-api`: Bearer-only client for GraphQL API
+  - `volaticloud-dashboard`: Public client for React SPA
+  - `volaticloud-api`: Bearer-only client for GraphQL API
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Keycloak provides authentication and authorization for the AnyTrade platform usi
    - `KEYCLOAK_DB_USERNAME`: Database username (e.g., `keycloak`)
    - `KEYCLOAK_DB_PASSWORD`: Database password
    - `KEYCLOAK_HOSTNAME`: Public hostname for Keycloak (e.g., `auth.volaticloud.com`)
-   - `ANYTRADE_URL`: AnyTrade application URL (e.g., `https://volaticloud.com`)
+   - `ANYTRADE_URL`: VolatiCloud application URL (e.g., `https://volaticloud.com`)
 
 ## Files
 
@@ -34,7 +34,7 @@ deployments/keycloak/
 ├── namespace.yaml                    # Keycloak namespace
 ├── operator-subscription.yaml        # OLM subscription for Keycloak operator
 ├── keycloak-instance.yaml           # Keycloak CR (2 replicas, managed DB)
-├── keycloak-realm.yaml              # AnyTrade realm configuration
+├── keycloak-realm.yaml              # VolatiCloud realm configuration
 ├── keycloak-client.yaml             # OIDC clients (dashboard + API)
 └── README.md                        # This file
 ```
@@ -97,7 +97,7 @@ export KEYCLOAK_HOSTNAME="auth.volaticloud.com"
 envsubst < deployments/keycloak/keycloak-instance.yaml | kubectl apply -f -
 
 # Wait for Keycloak to be ready
-kubectl wait --for=condition=Ready keycloak/anytrade-keycloak \
+kubectl wait --for=condition=Ready keycloak/volaticloud-keycloak \
   -n keycloak --timeout=600s
 
 # 6. Configure realm
@@ -137,7 +137,7 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 
 ### Realm Configuration
 
-The `anytrade` realm includes:
+The `volaticloud` realm includes:
 
 **Roles**:
 - `admin`: Full access to all operations
@@ -153,14 +153,14 @@ The `anytrade` realm includes:
 
 ### OIDC Clients
 
-#### anytrade-dashboard (Public Client)
+#### volaticloud-dashboard (Public Client)
 - **Type**: Public (for React SPA)
 - **Protocol**: OpenID Connect
 - **Flow**: Authorization Code with PKCE
 - **Redirect URIs**: `${ANYTRADE_URL}/*`, `http://localhost:5173/*`
 - **Scopes**: profile, email, roles
 
-#### anytrade-api (Bearer-Only Client)
+#### volaticloud-api (Bearer-Only Client)
 - **Type**: Bearer-only (for GraphQL API)
 - **Protocol**: OpenID Connect
 - **Purpose**: Token validation only
@@ -194,14 +194,14 @@ kubectl logs -n keycloak -l app=keycloak
 
 2. **Realm OIDC Configuration**:
    ```
-   https://${KEYCLOAK_HOSTNAME}/auth/realms/anytrade/.well-known/openid-configuration
+   https://${KEYCLOAK_HOSTNAME}/auth/realms/volaticloud/.well-known/openid-configuration
    ```
 
 3. **Get admin credentials**:
    ```bash
-   kubectl get secret anytrade-keycloak-initial-admin \
+   kubectl get secret volaticloud-keycloak-initial-admin \
      -n keycloak -o jsonpath='{.data.username}' | base64 -d
-   kubectl get secret anytrade-keycloak-initial-admin \
+   kubectl get secret volaticloud-keycloak-initial-admin \
      -n keycloak -o jsonpath='{.data.password}' | base64 -d
    ```
 
@@ -224,7 +224,7 @@ kubectl get catalogsource -n olm
 
 ```bash
 # Check Keycloak CR status
-kubectl describe keycloak anytrade-keycloak -n keycloak
+kubectl describe keycloak volaticloud-keycloak -n keycloak
 
 # Check pod logs
 kubectl logs -n keycloak -l app=keycloak --tail=100
@@ -247,10 +247,10 @@ Common issues:
 ```bash
 # Check KeycloakRealmImport status
 kubectl get keycloakrealmimport -n keycloak
-kubectl describe keycloakrealmimport anytrade-realm -n keycloak
+kubectl describe keycloakrealmimport volaticloud-realm -n keycloak
 
 # Force re-import
-kubectl delete keycloakrealmimport anytrade-realm -n keycloak
+kubectl delete keycloakrealmimport volaticloud-realm -n keycloak
 kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 ```
 
@@ -290,15 +290,15 @@ kubectl apply -f deployments/keycloak/keycloak-instance.yaml
 ```bash
 # Export realm via Keycloak admin CLI
 kubectl exec -it -n keycloak <keycloak-pod> -- bash
-/opt/keycloak/bin/kc.sh export --realm anytrade --file /tmp/anytrade-realm.json
-kubectl cp keycloak/<pod-name>:/tmp/anytrade-realm.json ./anytrade-realm-backup.json
+/opt/keycloak/bin/kc.sh export --realm volaticloud --file /tmp/volaticloud-realm.json
+kubectl cp keycloak/<pod-name>:/tmp/volaticloud-realm.json ./volaticloud-realm-backup.json
 ```
 
 ### Restore from Backup
 
 ```bash
 # Import realm
-kubectl cp ./anytrade-realm-backup.json keycloak/<pod-name>:/tmp/realm.json
+kubectl cp ./volaticloud-realm-backup.json keycloak/<pod-name>:/tmp/realm.json
 kubectl exec -it -n keycloak <pod-name> -- \
   /opt/keycloak/bin/kc.sh import --file /tmp/realm.json
 ```
@@ -351,6 +351,6 @@ Keycloak exposes Prometheus metrics:
 
 For issues:
 1. Check logs: `kubectl logs -n keycloak -l app=keycloak`
-2. Check status: `kubectl describe keycloak anytrade-keycloak -n keycloak`
+2. Check status: `kubectl describe keycloak volaticloud-keycloak -n keycloak`
 3. Review troubleshooting section above
 4. Open GitHub issue with logs and error details

@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 )
 
 // BotSpec defines the specification for deploying a bot

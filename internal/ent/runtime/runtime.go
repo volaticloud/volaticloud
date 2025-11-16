@@ -3,15 +3,15 @@
 package runtime
 
 import (
-	"anytrade/internal/ent/backtest"
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botmetrics"
-	"anytrade/internal/ent/botrunner"
-	"anytrade/internal/ent/exchange"
-	"anytrade/internal/ent/schema"
-	"anytrade/internal/ent/strategy"
-	"anytrade/internal/ent/trade"
 	"time"
+	"volaticloud/internal/ent/backtest"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/botmetrics"
+	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/schema"
+	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/trade"
 
 	"github.com/google/uuid"
 )

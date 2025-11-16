@@ -3,9 +3,9 @@
 package ent
 
 import (
-	"anytrade/internal/ent/botmetrics"
-	"anytrade/internal/ent/predicate"
 	"context"
+	"volaticloud/internal/ent/botmetrics"
+	"volaticloud/internal/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

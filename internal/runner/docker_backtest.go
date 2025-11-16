@@ -18,13 +18,13 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 )
 
 const (
 	// Docker labels for backtest containers
-	labelBacktestID  = "anytrade.backtest.id"
-	labelTaskType    = "anytrade.task.type"
+	labelBacktestID  = "volaticloud.backtest.id"
+	labelTaskType    = "volaticloud.task.type"
 	taskTypeBacktest = "backtest"
 	taskTypeHyperOpt = "hyperopt"
 
@@ -124,12 +124,12 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 			},
 			{
 				Type:   mount.TypeVolume,
-				Source: "anytrade-freqtrade-data",
+				Source: "volaticloud-freqtrade-data",
 				Target: "/freqtrade/user_data/data",
 			},
 			{
 				Type:   mount.TypeVolume,
-				Source: "anytrade-backtest-results",
+				Source: "volaticloud-backtest-results",
 				Target: "/freqtrade/user_data/backtest_results",
 			},
 		},
@@ -734,7 +734,7 @@ func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
 	ctx := context.Background()
 
 	// Step 1: Read .last_result.json from the volume to get the actual results filename
-	lastResultJSON, err := d.readFileFromVolume(ctx, "anytrade-backtest-results", ".last_result.json")
+	lastResultJSON, err := d.readFileFromVolume(ctx, "volaticloud-backtest-results", ".last_result.json")
 	if err != nil {
 		// If we can't read the results file, store logs as fallback
 		result.RawResult = map[string]interface{}{
@@ -769,7 +769,7 @@ func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
 	zipFilename := latestBacktest
 	jsonFilename := strings.Replace(latestBacktest, ".zip", ".json", 1)
 
-	resultsJSON, err := d.readFileFromZipInVolume(ctx, "anytrade-backtest-results", zipFilename, jsonFilename)
+	resultsJSON, err := d.readFileFromZipInVolume(ctx, "volaticloud-backtest-results", zipFilename, jsonFilename)
 	if err != nil {
 		result.RawResult = map[string]interface{}{
 			"error": fmt.Sprintf("Failed to read results from zip %s: %v", zipFilename, err),
@@ -801,11 +801,11 @@ func (d *DockerBacktestRunner) parseHyperOptResults(result *HyperOptResult) {
 }
 
 func getBacktestContainerName(backtestID string) string {
-	return fmt.Sprintf("anytrade-backtest-%s", backtestID)
+	return fmt.Sprintf("volaticloud-backtest-%s", backtestID)
 }
 
 func getHyperOptContainerName(hyperOptID string) string {
-	return fmt.Sprintf("anytrade-hyperopt-%s", hyperOptID)
+	return fmt.Sprintf("volaticloud-hyperopt-%s", hyperOptID)
 }
 
 // backtestConfigPaths holds the paths to config files for a backtest
@@ -819,7 +819,7 @@ type backtestConfigPaths struct {
 // createBacktestConfigFiles creates temporary config files for the backtest
 func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*backtestConfigPaths, error) {
 	// Create config directory for this backtest
-	configDir := filepath.Join("/tmp", "anytrade-backtest-configs", spec.ID)
+	configDir := filepath.Join("/tmp", "volaticloud-backtest-configs", spec.ID)
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create config directory: %w", err)
 	}
@@ -872,7 +872,7 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 
 // cleanupBacktestConfigFiles removes temporary config files for a backtest
 func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
-	configDir := filepath.Join("/tmp", "anytrade-backtest-configs", backtestID)
+	configDir := filepath.Join("/tmp", "volaticloud-backtest-configs", backtestID)
 	os.RemoveAll(configDir) // Best effort cleanup
 }
 

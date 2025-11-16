@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/ent/backtest"
-	"anytrade/internal/enum"
-	"anytrade/internal/exchange"
-	"anytrade/internal/freqtrade"
-	"anytrade/internal/runner"
-	"anytrade/internal/utils"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/backtest"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/exchange"
+	"volaticloud/internal/freqtrade"
+	"volaticloud/internal/runner"
+	"volaticloud/internal/utils"
 )
 
 // buildBotSpec builds a BotSpec from a Bot entity

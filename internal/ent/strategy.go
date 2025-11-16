@@ -3,12 +3,12 @@
 package ent
 
 import (
-	"anytrade/internal/ent/backtest"
-	"anytrade/internal/ent/strategy"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
+	"volaticloud/internal/ent/backtest"
+	"volaticloud/internal/ent/strategy"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

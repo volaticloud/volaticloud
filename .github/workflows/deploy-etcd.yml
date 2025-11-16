@@ -29,7 +29,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: prod
-      url: https://etcd.anytrade.internal
+      url: https://etcd.volaticloud.internal
 
     steps:
       - name: Checkout code
@@ -85,12 +85,12 @@ jobs:
 
           echo "Waiting for etcd cluster to be ready..."
           kubectl wait --for=condition=ready --timeout=600s \
-            pod -l app.kubernetes.io/name=anytrade-etcd -n etcd-system || true
+            pod -l app.kubernetes.io/name=volaticloud-etcd -n etcd-system || true
 
       - name: Verify deployment
         run: |
           echo "Checking EtcdCluster resource status..."
-          kubectl get etcdcluster -n etcd-system anytrade-etcd -o yaml
+          kubectl get etcdcluster -n etcd-system volaticloud-etcd -o yaml
 
           echo "Checking StatefulSet status..."
           kubectl get statefulset -n etcd-system
@@ -108,7 +108,7 @@ jobs:
           kubectl wait --for=condition=ready --timeout=600s \
             pod -l app.kubernetes.io/managed-by=etcd-operator -n etcd-system || \
           kubectl wait --for=condition=ready --timeout=600s \
-            pod -l app.kubernetes.io/name=anytrade-etcd -n etcd-system
+            pod -l app.kubernetes.io/name=volaticloud-etcd -n etcd-system
 
       - name: Test etcd cluster health
         run: |
@@ -192,10 +192,10 @@ jobs:
       - name: Delete failed EtcdCluster resource
         run: |
           echo "Deleting failed EtcdCluster resource..."
-          kubectl delete etcdcluster anytrade-etcd -n etcd-system --ignore-not-found=true
+          kubectl delete etcdcluster volaticloud-etcd -n etcd-system --ignore-not-found=true
 
           echo "Waiting for resources to be cleaned up by operator..."
-          kubectl wait --for=delete pod -l app.kubernetes.io/name=anytrade-etcd -n etcd-system --timeout=300s || true
+          kubectl wait --for=delete pod -l app.kubernetes.io/name=volaticloud-etcd -n etcd-system --timeout=300s || true
 
       - name: Cleanup summary
         run: |

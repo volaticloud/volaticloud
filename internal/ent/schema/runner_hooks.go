@@ -8,8 +8,8 @@ import (
 
 	"entgo.io/ent"
 
-	"anytrade/internal/enum"
-	"anytrade/internal/runner"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 // validateRunnerConfig validates the runner configuration based on runner type.

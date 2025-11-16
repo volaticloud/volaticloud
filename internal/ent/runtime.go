@@ -2,4 +2,4 @@
 
 package ent
 
-// The schema-stitching logic is generated in anytrade/internal/ent/runtime/runtime.go
+// The schema-stitching logic is generated in volaticloud/internal/ent/runtime/runtime.go

@@ -72,7 +72,7 @@ type BacktestEdge {
 """
 BacktestTaskStatus is enum for the field status
 """
-enum BacktestTaskStatus @goModel(model: "anytrade/internal/enum.TaskStatus") {
+enum BacktestTaskStatus @goModel(model: "volaticloud/internal/enum.TaskStatus") {
   pending
   running
   completed
@@ -300,14 +300,14 @@ type Bot implements Node {
 """
 BotBotMode is enum for the field mode
 """
-enum BotBotMode @goModel(model: "anytrade/internal/enum.BotMode") {
+enum BotBotMode @goModel(model: "volaticloud/internal/enum.BotMode") {
   dry_run
   live
 }
 """
 BotBotStatus is enum for the field status
 """
-enum BotBotStatus @goModel(model: "anytrade/internal/enum.BotStatus") {
+enum BotBotStatus @goModel(model: "volaticloud/internal/enum.BotStatus") {
   creating
   running
   unhealthy
@@ -837,7 +837,7 @@ type BotRunnerConnection {
 """
 BotRunnerDataDownloadStatus is enum for the field data_download_status
 """
-enum BotRunnerDataDownloadStatus @goModel(model: "anytrade/internal/enum.DataDownloadStatus") {
+enum BotRunnerDataDownloadStatus @goModel(model: "volaticloud/internal/enum.DataDownloadStatus") {
   idle
   downloading
   completed
@@ -859,7 +859,7 @@ type BotRunnerEdge {
 """
 BotRunnerRunnerType is enum for the field type
 """
-enum BotRunnerRunnerType @goModel(model: "anytrade/internal/enum.RunnerType") {
+enum BotRunnerRunnerType @goModel(model: "volaticloud/internal/enum.RunnerType") {
   docker
   kubernetes
   local
@@ -1603,7 +1603,7 @@ input ExchangeWhereInput {
 An object with an ID.
 Follows the [Relay Global Object Identification Specification](https://relay.dev/graphql/objectidentification.htm)
 """
-interface Node @goModel(model: "anytrade/internal/ent.Noder") {
+interface Node @goModel(model: "volaticloud/internal/ent.Noder") {
   """
   The id of the object.
   """

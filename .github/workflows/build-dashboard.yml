@@ -56,8 +56,8 @@ jobs:
           file: ./dashboard/Dockerfile
           push: true
           tags: |
-            ghcr.io/diazoxide/anytrade-dashboard:${{ steps.image_tag.outputs.tag }}
-            ghcr.io/diazoxide/anytrade-dashboard:latest
+            ghcr.io/diazoxide/volaticloud-dashboard:${{ steps.image_tag.outputs.tag }}
+            ghcr.io/diazoxide/volaticloud-dashboard:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -66,6 +66,6 @@ jobs:
         run: |
           echo "### Dashboard Image Built! 🎨" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ghcr.io/diazoxide/anytrade-dashboard:${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ghcr.io/diazoxide/volaticloud-dashboard:${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
