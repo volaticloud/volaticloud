@@ -158,7 +158,7 @@ func TestDataFormatIsFeather(t *testing.T) {
 
 func TestVolumeConstants(t *testing.T) {
 	// Verify the Docker volume configuration
-	assert.Equal(t, "anytrade-freqtrade-data", FreqtradeDataVolume,
+	assert.Equal(t, "volaticloud-freqtrade-data", FreqtradeDataVolume,
 		"Docker volume name must match the volume used in backtesting")
 
 	assert.Equal(t, "freqtradeorg/freqtrade:stable", FreqtradeImage,

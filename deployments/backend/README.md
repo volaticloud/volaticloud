@@ -1,6 +1,6 @@
-# AnyTrade Backend Deployment
+# VolatiCloud Backend Deployment
 
-This directory contains Kubernetes deployment configuration for the AnyTrade backend using the [Nixys Universal Chart](https://github.com/nixys/nxs-universal-chart).
+This directory contains Kubernetes deployment configuration for the VolatiCloud backend using the [Nixys Universal Chart](https://github.com/nixys/nxs-universal-chart).
 
 ## Overview
 
@@ -39,14 +39,14 @@ The backend is deployed as a Kubernetes Deployment with:
 ### 1. GitHub Container Registry (GHCR)
 
 Docker images are automatically built and pushed to GHCR:
-- **Registry**: `ghcr.io/diazoxide/anytrade`
+- **Registry**: `ghcr.io/diazoxide/volaticloud`
 - **Tags**: `latest`, `main-<sha>`, version tags
 - **Auth**: GitHub Actions uses `GITHUB_TOKEN` (automatic)
 
 To pull images manually:
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
-docker pull ghcr.io/diazoxide/anytrade:latest
+docker pull ghcr.io/diazoxide/volaticloud:latest
 ```
 
 ### 2. VKE Cluster
@@ -60,8 +60,8 @@ Ensure your VKE cluster has:
 ### 3. PostgreSQL Database
 
 Create a managed PostgreSQL database on Vultr:
-- **Database**: `anytrade`
-- **User**: `anytrade`
+- **Database**: `volaticloud`
+- **User**: `volaticloud`
 - **Version**: PostgreSQL 14+
 - **SSL Mode**: Required
 
@@ -79,7 +79,7 @@ Configure these secrets in the `prod` environment:
 Set secrets:
 ```bash
 gh secret set VKE_KUBECONFIG --env prod
-# When prompted, enter: postgresql://anytrade:your-password@postgres-abc.vultr.com:16751/anytrade?sslmode=require
+# When prompted, enter: postgresql://volaticloud:your-password@postgres-abc.vultr.com:16751/volaticloud?sslmode=require
 gh secret set ANYTRADE_DATABASE --env prod
 ```
 
@@ -92,7 +92,7 @@ Key configuration sections:
 **Image:**
 ```yaml
 image:
-  repository: ghcr.io/diazoxide/anytrade
+  repository: ghcr.io/diazoxide/volaticloud
   tag: latest  # Override via --set image.tag=<sha>
   pullPolicy: Always
 ```
@@ -133,7 +133,7 @@ ingress:
           - path: /
             pathType: Prefix
     tls:
-      - secretName: anytrade-api-tls
+      - secretName: volaticloud-api-tls
         hosts:
           - api.volaticloud.com
 ```
@@ -145,11 +145,11 @@ extraDeploy:
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: anytrade-backend-migrate
+      name: volaticloud-backend-migrate
       annotations:
         "helm.sh/hook": pre-upgrade,pre-install
         "helm.sh/hook-weight": "-5"
-    # ... runs `anytrade migrate` before deployment
+    # ... runs `volaticloud migrate` before deployment
 ```
 
 ## Deployment Workflow
@@ -185,7 +185,7 @@ helm repo add nixys https://registry.nixys.io/chartrepo/public
 helm repo update
 
 # Validate values
-helm template anytrade-backend nixys/nxs-universal-chart \
+helm template volaticloud-backend nixys/nxs-universal-chart \
   -f deployments/backend/values.yaml \
   --dry-run --debug
 
@@ -200,7 +200,7 @@ Migrations run automatically as a Kubernetes Job before each deployment:
 
 **Migration Job Behavior:**
 - **Hook**: `pre-upgrade`, `pre-install`
-- **Command**: `/app/anytrade migrate`
+- **Command**: `/app/volaticloud migrate`
 - **Backoff**: 3 retries
 - **Cleanup**: Job deleted after 5 minutes (TTL)
 - **Failure**: Deployment fails if migration fails
@@ -208,10 +208,10 @@ Migrations run automatically as a Kubernetes Job before each deployment:
 **Manual Migration:**
 ```bash
 # Run migration manually
-kubectl run -it --rm migrate --image=ghcr.io/diazoxide/anytrade:latest \
+kubectl run -it --rm migrate --image=ghcr.io/diazoxide/volaticloud:latest \
   --restart=Never \
   --env="ANYTRADE_DATABASE=postgresql://..." \
-  -- /app/anytrade migrate
+  -- /app/volaticloud migrate
 ```
 
 ## Deployment Commands
@@ -220,8 +220,8 @@ kubectl run -it --rm migrate --image=ghcr.io/diazoxide/anytrade:latest \
 
 ```bash
 # Deploy to production
-helm upgrade --install anytrade-backend nixys/nxs-universal-chart \
-  --namespace anytrade \
+helm upgrade --install volaticloud-backend nixys/nxs-universal-chart \
+  --namespace volaticloud \
   --create-namespace \
   -f deployments/backend/values.yaml \
   --set image.tag=latest \
@@ -234,30 +234,30 @@ helm upgrade --install anytrade-backend nixys/nxs-universal-chart \
 
 ```bash
 # Rollback to previous version
-helm rollback anytrade-backend -n anytrade
+helm rollback volaticloud-backend -n volaticloud
 
 # Rollback to specific revision
-helm rollback anytrade-backend 3 -n anytrade
+helm rollback volaticloud-backend 3 -n volaticloud
 ```
 
 ### Verify
 
 ```bash
 # Check deployment status
-kubectl get deployments -n anytrade
-kubectl get pods -n anytrade -l app=anytrade-backend
+kubectl get deployments -n volaticloud
+kubectl get pods -n volaticloud -l app=volaticloud-backend
 
 # Check service
-kubectl get svc -n anytrade
+kubectl get svc -n volaticloud
 
 # Check ingress
-kubectl get ingress -n anytrade
+kubectl get ingress -n volaticloud
 
 # View logs
-kubectl logs -n anytrade -l app=anytrade-backend --tail=100 -f
+kubectl logs -n volaticloud -l app=volaticloud-backend --tail=100 -f
 
 # Check HPA
-kubectl get hpa -n anytrade
+kubectl get hpa -n volaticloud
 ```
 
 ## Monitoring
@@ -282,10 +282,10 @@ podAnnotations:
 
 ```bash
 # Recent events
-kubectl get events -n anytrade --sort-by='.lastTimestamp'
+kubectl get events -n volaticloud --sort-by='.lastTimestamp'
 
 # Watch events
-kubectl get events -n anytrade --watch
+kubectl get events -n volaticloud --watch
 ```
 
 ## Troubleshooting
@@ -294,32 +294,32 @@ kubectl get events -n anytrade --watch
 
 **Check pod status:**
 ```bash
-kubectl get pods -n anytrade
-kubectl describe pod <pod-name> -n anytrade
+kubectl get pods -n volaticloud
+kubectl describe pod <pod-name> -n volaticloud
 ```
 
 **Check logs:**
 ```bash
-kubectl logs <pod-name> -n anytrade
-kubectl logs <pod-name> -n anytrade --previous  # Previous container
+kubectl logs <pod-name> -n volaticloud
+kubectl logs <pod-name> -n volaticloud --previous  # Previous container
 ```
 
 **Check events:**
 ```bash
-kubectl get events -n anytrade --sort-by='.lastTimestamp'
+kubectl get events -n volaticloud --sort-by='.lastTimestamp'
 ```
 
 ### Migration Job Fails
 
 **View migration logs:**
 ```bash
-kubectl get jobs -n anytrade
-kubectl logs job/anytrade-backend-migrate -n anytrade
+kubectl get jobs -n volaticloud
+kubectl logs job/volaticloud-backend-migrate -n volaticloud
 ```
 
 **Debug migration:**
 ```bash
-kubectl describe job anytrade-backend-migrate -n anytrade
+kubectl describe job volaticloud-backend-migrate -n volaticloud
 ```
 
 ### Database Connection Issues
@@ -327,25 +327,25 @@ kubectl describe job anytrade-backend-migrate -n anytrade
 **Test database connectivity:**
 ```bash
 kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
-  psql -h <POSTGRES_HOST> -U anytrade -d anytrade
+  psql -h <POSTGRES_HOST> -U volaticloud -d volaticloud
 ```
 
 **Check secret:**
 ```bash
-kubectl get secret anytrade-secrets -n anytrade -o yaml
+kubectl get secret volaticloud-secrets -n volaticloud -o yaml
 ```
 
 ### Ingress/TLS Issues
 
 **Check ingress:**
 ```bash
-kubectl describe ingress -n anytrade
+kubectl describe ingress -n volaticloud
 ```
 
 **Check certificate:**
 ```bash
-kubectl get certificate -n anytrade
-kubectl describe certificate anytrade-api-tls -n anytrade
+kubectl get certificate -n volaticloud
+kubectl describe certificate volaticloud-api-tls -n volaticloud
 ```
 
 **Check cert-manager logs:**
@@ -359,7 +359,7 @@ kubectl logs -n cert-manager -l app=cert-manager
 
 ```bash
 # Scale to 5 replicas
-kubectl scale deployment anytrade-backend -n anytrade --replicas=5
+kubectl scale deployment volaticloud-backend -n volaticloud --replicas=5
 ```
 
 ### Update HPA

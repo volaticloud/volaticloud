@@ -1,7 +1,7 @@
 apiVersion: etcd.aenix.io/v1alpha1
 kind: EtcdCluster
 metadata:
-  name: anytrade-etcd
+  name: volaticloud-etcd
   namespace: etcd-system
 spec:
   # 3-node cluster for high availability
@@ -40,7 +40,7 @@ spec:
               podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app.kubernetes.io/name: anytrade-etcd
+                    app.kubernetes.io/name: volaticloud-etcd
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: etcd

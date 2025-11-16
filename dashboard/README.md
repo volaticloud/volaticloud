@@ -1,6 +1,6 @@
-# AnyTrade Dashboard
+# VolatiCloud Dashboard
 
-Modern React dashboard for AnyTrade trading bot platform.
+Modern React dashboard for VolatiCloud trading bot platform.
 
 ## Features
 
@@ -24,7 +24,7 @@ Modern React dashboard for AnyTrade trading bot platform.
 ### Prerequisites
 
 - Node.js 18+ and npm
-- AnyTrade Go server running on `http://localhost:8080`
+- VolatiCloud Go server running on `http://localhost:8080`
 
 ### Installation
 
@@ -38,7 +38,7 @@ npm install
 1. **Start the Go server** (from project root):
    ```bash
    cd ..
-   ./bin/anytrade server
+   ./bin/volaticloud server
    ```
 
 2. **Generate GraphQL types** (run this whenever schema changes):

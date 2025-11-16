@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/runner"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/runner"
 )
 
 type contextKey string

@@ -1,6 +1,6 @@
 # etcd Cluster Deployment
 
-Production-ready etcd cluster for AnyTrade distributed monitoring coordination.
+Production-ready etcd cluster for VolatiCloud distributed monitoring coordination.
 
 ## Overview
 
@@ -45,7 +45,7 @@ This deployment creates a 3-node etcd cluster using the Bitnami Helm chart in a 
 
 ## Connection Information
 
-### From Backend Pods (anytrade namespace)
+### From Backend Pods (volaticloud namespace)
 
 Configure backend to connect to etcd cluster:
 
@@ -122,10 +122,10 @@ kubectl exec -n etcd-system $ETCD_POD -- etcdctl endpoint status \
 kubectl exec -n etcd-system $ETCD_POD -- etcdctl get "" --prefix --keys-only
 
 # Get specific key
-kubectl exec -n etcd-system $ETCD_POD -- etcdctl get /anytrade/monitor/leader
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl get /volaticloud/monitor/leader
 
 # Watch for changes
-kubectl exec -n etcd-system $ETCD_POD -- etcdctl watch /anytrade/monitor/ --prefix
+kubectl exec -n etcd-system $ETCD_POD -- etcdctl watch /volaticloud/monitor/ --prefix
 ```
 
 ### Scaling
@@ -286,13 +286,13 @@ kubectl exec -n etcd-system etcd-0 -- etcdctl defrag
 
 ```bash
 # Test connectivity from backend pod
-BACKEND_POD=$(kubectl get pods -n anytrade -l app=anytrade-backend -o jsonpath='{.items[0].metadata.name}')
+BACKEND_POD=$(kubectl get pods -n volaticloud -l app=volaticloud-backend -o jsonpath='{.items[0].metadata.name}')
 
 # Test DNS resolution
-kubectl exec -n anytrade $BACKEND_POD -- nslookup etcd.etcd-system.svc.cluster.local
+kubectl exec -n volaticloud $BACKEND_POD -- nslookup etcd.etcd-system.svc.cluster.local
 
 # Test port connectivity
-kubectl exec -n anytrade $BACKEND_POD -- nc -zv etcd.etcd-system.svc.cluster.local 2379
+kubectl exec -n volaticloud $BACKEND_POD -- nc -zv etcd.etcd-system.svc.cluster.local 2379
 
 # Check etcd service
 kubectl get svc -n etcd-system etcd
@@ -321,11 +321,11 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # Allow from anytrade namespace
+    # Allow from volaticloud namespace
     - from:
         - namespaceSelector:
             matchLabels:
-              name: anytrade
+              name: volaticloud
       ports:
         - protocol: TCP
           port: 2379
@@ -367,9 +367,9 @@ After etcd is deployed, update backend deployment to enable distributed monitori
 ```yaml
 # deployments/backend/values.yaml
 deployments:
-  anytrade-backend:
+  volaticloud-backend:
     containers:
-      - name: anytrade
+      - name: volaticloud
         env:
           - name: ANYTRADE_ETCD_ENDPOINTS
             value: "etcd.etcd-system.svc.cluster.local:2379"

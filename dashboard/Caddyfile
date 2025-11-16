@@ -4,7 +4,7 @@
 
 	# Reverse proxy /query to backend GraphQL endpoint
 	handle /query {
-		reverse_proxy http://anytrade-backend-anytrade-backend:8080
+		reverse_proxy http://volaticloud-backend-volaticloud-backend:8080
 	}
 
 	# Serve static files and SPA

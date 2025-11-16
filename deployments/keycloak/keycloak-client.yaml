@@ -1,19 +1,19 @@
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: KeycloakRealmImport
 metadata:
-  name: anytrade-client
+  name: volaticloud-client
   namespace: keycloak
   labels:
     app: keycloak
     managed-by: github-actions
 spec:
-  keycloakCRName: anytrade-keycloak
+  keycloakCRName: volaticloud-keycloak
   realm:
-    realm: anytrade
+    realm: volaticloud
     clients:
-      - clientId: anytrade-dashboard
-        name: "AnyTrade Dashboard"
-        description: "OIDC client for AnyTrade React dashboard"
+      - clientId: volaticloud-dashboard
+        name: "VolatiCloud Dashboard"
+        description: "OIDC client for VolatiCloud React dashboard"
         enabled: true
 
         # Client type (public for SPA)
@@ -67,9 +67,9 @@ spec:
         # Frontend URL for token validation
         frontchannelLogout: true
 
-      - clientId: anytrade-api
-        name: "AnyTrade API"
-        description: "OIDC client for AnyTrade GraphQL API (backend)"
+      - clientId: volaticloud-api
+        name: "VolatiCloud API"
+        description: "OIDC client for VolatiCloud GraphQL API (backend)"
         enabled: true
 
         # Client type (confidential for backend)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

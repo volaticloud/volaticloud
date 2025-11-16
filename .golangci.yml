@@ -34,7 +34,7 @@ linters-settings:
     line-length: 140
 
   goimports:
-    local-prefixes: anytrade
+    local-prefixes: volaticloud
 
   gocritic:
     enabled-tags:

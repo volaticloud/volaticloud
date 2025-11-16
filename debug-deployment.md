@@ -7,22 +7,22 @@ Deployment timed out after 10 minutes. Pods never became ready.
 
 ### 1. Check if pods exist
 ```bash
-kubectl get pods -n anytrade
+kubectl get pods -n volaticloud
 ```
 
 ### 2. Describe the pod to see events
 ```bash
-kubectl describe pod -n anytrade -l app=anytrade-backend
+kubectl describe pod -n volaticloud -l app=volaticloud-backend
 ```
 
 ### 3. Check pod logs
 ```bash
-kubectl logs -n anytrade -l app=anytrade-backend --tail=100
+kubectl logs -n volaticloud -l app=volaticloud-backend --tail=100
 ```
 
 ### 4. Check if image was pulled successfully
 ```bash
-kubectl get pods -n anytrade -o jsonpath='{.items[*].status.containerStatuses[*].state}'
+kubectl get pods -n volaticloud -o jsonpath='{.items[*].status.containerStatuses[*].state}'
 ```
 
 ### 5. Test deployment without health checks
@@ -30,26 +30,26 @@ Temporarily remove health checks to see if app starts:
 
 ```bash
 # Delete the failed release first
-helm delete anytrade-backend -n anytrade || true
+helm delete volaticloud-backend -n volaticloud || true
 
 # Deploy without --wait to see what happens
-helm upgrade --install anytrade-backend nixys/nxs-universal-chart \
-  --namespace anytrade \
+helm upgrade --install volaticloud-backend nixys/nxs-universal-chart \
+  --namespace volaticloud \
   --create-namespace \
   -f deployments/backend/values.yaml \
-  --set deployments.anytrade-backend.containers[0].image=ghcr.io/diazoxide/anytrade:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 \
+  --set deployments.volaticloud-backend.containers[0].image=ghcr.io/diazoxide/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 \
   --timeout 1m
 ```
 
 ### 6. Check secrets
 ```bash
-kubectl get secret anytrade-secrets -n anytrade -o yaml
+kubectl get secret volaticloud-secrets -n volaticloud -o yaml
 ```
 
 ### 7. Test Docker image locally
 ```bash
-docker pull ghcr.io/diazoxide/anytrade:fd747f98470e5c32e6a36aeeaa4844cb117a4f89
-docker run --rm ghcr.io/diazoxide/anytrade:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 --help
+docker pull ghcr.io/diazoxide/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89
+docker run --rm ghcr.io/diazoxide/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 --help
 ```
 
 ## Likely Issues

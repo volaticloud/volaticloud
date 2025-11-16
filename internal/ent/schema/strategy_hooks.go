@@ -6,7 +6,7 @@ import (
 
 	"entgo.io/ent"
 
-	"anytrade/internal/freqtrade"
+	"volaticloud/internal/freqtrade"
 )
 
 // validateStrategyConfig validates the strategy configuration.

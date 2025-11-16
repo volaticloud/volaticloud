@@ -1,6 +1,6 @@
-# AnyTrade Kubernetes Deployments
+# VolatiCloud Kubernetes Deployments
 
-This directory contains all Kubernetes manifests and configurations for deploying AnyTrade infrastructure on VKE (Vultr Kubernetes Engine).
+This directory contains all Kubernetes manifests and configurations for deploying VolatiCloud infrastructure on VKE (Vultr Kubernetes Engine).
 
 ## Directory Structure
 
@@ -28,7 +28,7 @@ The deployment is structured in layers:
 
 1. **OLM Layer**: Operator Lifecycle Manager for managing Kubernetes operators
 2. **Authentication Layer**: Keycloak for OIDC/OAuth2 authentication
-3. **Application Layer**: AnyTrade application (Helm chart - coming soon)
+3. **Application Layer**: VolatiCloud application (Helm chart - coming soon)
 
 ## GitOps Workflow
 
@@ -70,7 +70,7 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 
 Set up DNS records:
 - `auth.yourdomain.com` → Keycloak (A record pointing to VKE load balancer)
-- `yourdomain.com` → AnyTrade application
+- `yourdomain.com` → VolatiCloud application
 
 ### 4. GitHub Secrets
 
@@ -85,7 +85,7 @@ Configure the following secrets in your GitHub repository settings (**Settings �
 | `KEYCLOAK_DB_USERNAME` | PostgreSQL username | `keycloak` |
 | `KEYCLOAK_DB_PASSWORD` | PostgreSQL password | `your-secure-password` |
 | `KEYCLOAK_HOSTNAME` | Keycloak public hostname | `auth.yourdomain.com` |
-| `ANYTRADE_URL` | AnyTrade application URL | `https://yourdomain.com` |
+| `ANYTRADE_URL` | VolatiCloud application URL | `https://yourdomain.com` |
 
 #### How to Get VKE_KUBECONFIG
 
@@ -188,9 +188,9 @@ kubectl get ingress -n keycloak
 
 1. Get admin credentials:
    ```bash
-   kubectl get secret anytrade-keycloak-initial-admin \
+   kubectl get secret volaticloud-keycloak-initial-admin \
      -n keycloak -o jsonpath='{.data.username}' | base64 -d
-   kubectl get secret anytrade-keycloak-initial-admin \
+   kubectl get secret volaticloud-keycloak-initial-admin \
      -n keycloak -o jsonpath='{.data.password}' | base64 -d
    ```
 
@@ -201,7 +201,7 @@ kubectl get ingress -n keycloak
 
 3. Test OIDC configuration:
    ```
-   https://auth.yourdomain.com/auth/realms/anytrade/.well-known/openid-configuration
+   https://auth.yourdomain.com/auth/realms/volaticloud/.well-known/openid-configuration
    ```
 
 ## Common Operations
@@ -246,10 +246,10 @@ kubectl logs -n keycloak -l app=keycloak -f
 
 ```bash
 # Restart all Keycloak pods
-kubectl rollout restart statefulset/anytrade-keycloak -n keycloak
+kubectl rollout restart statefulset/volaticloud-keycloak -n keycloak
 
 # Watch rollout status
-kubectl rollout status statefulset/anytrade-keycloak -n keycloak
+kubectl rollout status statefulset/volaticloud-keycloak -n keycloak
 ```
 
 ## Troubleshooting
@@ -325,7 +325,7 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 
 ### GitHub Actions
 
-- View workflow runs: https://github.com/diazoxide/anytrade/actions
+- View workflow runs: https://github.com/diazoxide/volaticloud/actions
 - Deployment history visible in Actions tab
 - Failed deployments send notifications
 
@@ -350,7 +350,7 @@ After Keycloak is deployed:
 1. **Create Users**: Access Keycloak admin console and create users
 2. **Assign Roles**: Assign appropriate roles (admin, trader, viewer)
 3. **Test Authentication**: Test OIDC login flow
-4. **Deploy Application**: Deploy AnyTrade application (coming soon)
+4. **Deploy Application**: Deploy VolatiCloud application (coming soon)
 5. **Configure Monitoring**: Set up Prometheus/Grafana (optional)
 
 ## References

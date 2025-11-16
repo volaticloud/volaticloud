@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"anytrade/internal/etcd"
+	"volaticloud/internal/etcd"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
 	// InstancePrefix is the etcd key prefix for all instances
-	InstancePrefix = "/anytrade/instances/"
+	InstancePrefix = "/volaticloud/instances/"
 
 	// DefaultLeaseTTL is the default TTL for instance leases in seconds
 	DefaultLeaseTTL = 15
@@ -25,7 +25,7 @@ const (
 	DefaultHeartbeatInterval = 10 * time.Second
 )
 
-// InstanceInfo holds metadata about an anytrade instance
+// InstanceInfo holds metadata about an volaticloud instance
 type InstanceInfo struct {
 	// InstanceID is a unique identifier for this instance
 	InstanceID string `json:"instance_id"`

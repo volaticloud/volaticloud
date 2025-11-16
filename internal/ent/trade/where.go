@@ -3,8 +3,8 @@
 package trade
 
 import (
-	"anytrade/internal/ent/predicate"
 	"time"
+	"volaticloud/internal/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

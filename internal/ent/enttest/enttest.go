@@ -5,11 +5,11 @@ package enttest
 import (
 	"context"
 
-	"anytrade/internal/ent"
+	"volaticloud/internal/ent"
 	// required by schema hooks.
-	_ "anytrade/internal/ent/runtime"
+	_ "volaticloud/internal/ent/runtime"
 
-	"anytrade/internal/ent/migrate"
+	"volaticloud/internal/ent/migrate"
 
 	"entgo.io/ent/dialect/sql/schema"
 )

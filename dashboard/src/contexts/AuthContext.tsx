@@ -101,10 +101,10 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
  */
 export const AuthProvider: React.FC<AuthProviderWrapperProps> = ({ children }) => {
   // Get config values from ConfigContext
-  const authority = useConfigValue('ANYTRADE__KEYCLOAK_AUTHORITY');
-  const clientId = useConfigValue('ANYTRADE__KEYCLOAK_CLIENT_ID');
-  const redirectUri = useConfigValue('ANYTRADE__KEYCLOAK_REDIRECT_URI');
-  const postLogoutRedirectUri = useConfigValue('ANYTRADE__KEYCLOAK_POST_LOGOUT_REDIRECT_URI');
+  const authority = useConfigValue('VOLATICLOUD__KEYCLOAK_AUTHORITY');
+  const clientId = useConfigValue('VOLATICLOUD__KEYCLOAK_CLIENT_ID');
+  const redirectUri = useConfigValue('VOLATICLOUD__KEYCLOAK_REDIRECT_URI');
+  const postLogoutRedirectUri = useConfigValue('VOLATICLOUD__KEYCLOAK_POST_LOGOUT_REDIRECT_URI');
 
   // Create OIDC config with memoization
   const oidcConfig = useMemo(

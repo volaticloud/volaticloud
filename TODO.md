@@ -1,4 +1,4 @@
-# AnyTrade Development TODO List
+# VolatiCloud Development TODO List
 
 **Last Updated:** 2025-10-23
 **Status Tracking:** ⏳ Pending | 🔧 In Progress | ✅ Done
@@ -366,7 +366,7 @@ type ValidationResult {
 **Estimated Time:** 15 minutes
 ```bash
 # TODO: Create cleanup script
-pkill -f "anytrade server"
+pkill -f "volaticloud server"
 pkill -f "npm.*dev"
 ```
 

@@ -23,20 +23,20 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 )
 
 const (
 	// Container naming
-	containerNamePrefix = "anytrade-bot-"
+	containerNamePrefix = "volaticloud-bot-"
 
 	// Labels
-	labelBotID   = "anytrade.bot.id"
-	labelBotName = "anytrade.bot.name"
-	labelManaged = "anytrade.managed"
+	labelBotID   = "volaticloud.bot.id"
+	labelBotName = "volaticloud.bot.name"
+	labelManaged = "volaticloud.managed"
 
 	// Default network
-	defaultNetwork = "anytrade-network"
+	defaultNetwork = "volaticloud-network"
 
 	// Default timeouts
 	defaultStopTimeout = 30 * time.Second
@@ -912,5 +912,5 @@ func (d *DockerRuntime) cleanupConfigFiles(botID string) {
 
 // getConfigDir returns the config directory path for a bot
 func getConfigDir(botID string) string {
-	return filepath.Join(os.TempDir(), "anytrade-configs", botID)
+	return filepath.Join(os.TempDir(), "volaticloud-configs", botID)
 }

@@ -1,6 +1,6 @@
 # Test Scripts
 
-This directory contains manual test scripts for testing various AnyTrade features.
+This directory contains manual test scripts for testing various VolatiCloud features.
 
 ## Shell Scripts
 

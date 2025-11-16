@@ -1,13 +1,13 @@
-# AnyTrade
+# VolatiCloud
 
-AnyTrade is a control-plane platform for managing freqtrade trading bots. It provides centralized management of bot lifecycles, strategies, exchanges, backtesting, and hyperparameter optimization.
+VolatiCloud is a control-plane platform for managing freqtrade trading bots. It provides centralized management of bot lifecycles, strategies, exchanges, backtesting, and hyperparameter optimization.
 
 ## CI/CD Status
 
-[![Backend CI](https://github.com/diazoxide/anytrade/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/diazoxide/anytrade/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/frontend-ci.yml)
-[![Security Scanning](https://github.com/diazoxide/anytrade/actions/workflows/security.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/security.yml)
-[![Code Quality](https://github.com/diazoxide/anytrade/actions/workflows/quality.yml/badge.svg)](https://github.com/diazoxide/anytrade/actions/workflows/quality.yml)
+[![Backend CI](https://github.com/diazoxide/volaticloud/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/diazoxide/volaticloud/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/frontend-ci.yml)
+[![Security Scanning](https://github.com/diazoxide/volaticloud/actions/workflows/security.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/security.yml)
+[![Code Quality](https://github.com/diazoxide/volaticloud/actions/workflows/quality.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/quality.yml)
 
 ## Features
 
@@ -21,7 +21,7 @@ AnyTrade is a control-plane platform for managing freqtrade trading bots. It pro
 
 ## Architecture
 
-AnyTrade uses a pluggable runtime abstraction layer that allows running bots on different backends:
+VolatiCloud uses a pluggable runtime abstraction layer that allows running bots on different backends:
 
 - **Docker** - Run bots in isolated Docker containers (default)
 - **Kubernetes** - Deploy bots to Kubernetes clusters (coming soon)
@@ -40,7 +40,7 @@ AnyTrade uses a pluggable runtime abstraction layer that allows running bots on 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd anytrade
+cd volaticloud
 ```
 
 2. Install dependencies:
@@ -57,10 +57,10 @@ make migrate
 ```bash
 make dev
 # or
-./bin/anytrade server
+./bin/volaticloud server
 ```
 
-The server will start on `http://localhost:8080` by default with a SQLite database at `./data/anytrade.db`.
+The server will start on `http://localhost:8080` by default with a SQLite database at `./data/volaticloud.db`.
 
 ## Development
 
@@ -79,7 +79,7 @@ make lint                 # Run linters
 
 # Database
 make migrate              # Run database migrations
-make db-reset             # Reset database (removes data/anytrade.db)
+make db-reset             # Reset database (removes data/volaticloud.db)
 
 # Other
 make clean                # Clean generated files and build artifacts
@@ -89,53 +89,53 @@ make clean                # Clean generated files and build artifacts
 
 ```bash
 # Start the server with SQLite (default)
-./bin/anytrade server
+./bin/volaticloud server
 
 # Start with custom database location
-./bin/anytrade server --database sqlite://./my-custom.db
+./bin/volaticloud server --database sqlite://./my-custom.db
 
 # Start with PostgreSQL
-./bin/anytrade server --database postgresql://user:pass@localhost:5432/anytrade
+./bin/volaticloud server --database postgresql://user:pass@localhost:5432/volaticloud
 
 # Run migrations
-./bin/anytrade migrate
+./bin/volaticloud migrate
 
 # Get help
-./bin/anytrade --help
-./bin/anytrade server --help
+./bin/volaticloud --help
+./bin/volaticloud server --help
 ```
 
 ### Database Options
 
-AnyTrade supports both SQLite and PostgreSQL:
+VolatiCloud supports both SQLite and PostgreSQL:
 
 **SQLite (Default)**
 - Zero configuration
-- File-based: `./data/anytrade.db`
+- File-based: `./data/volaticloud.db`
 - Perfect for single-server deployments
 ```bash
-./bin/anytrade server --database sqlite://./data/anytrade.db
+./bin/volaticloud server --database sqlite://./data/volaticloud.db
 ```
 
 **PostgreSQL (Optional)**
 - Better for multi-server deployments
 - Requires PostgreSQL 14+
 ```bash
-./bin/anytrade server --database postgresql://user:pass@localhost:5432/anytrade
+./bin/volaticloud server --database postgresql://user:pass@localhost:5432/volaticloud
 ```
 
 ### Environment Variables
 
 - `ANYTRADE_HOST` - Server host (default: 0.0.0.0)
 - `ANYTRADE_PORT` - Server port (default: 8080)
-- `ANYTRADE_DATABASE` - Database connection string (default: sqlite://./data/anytrade.db)
+- `ANYTRADE_DATABASE` - Database connection string (default: sqlite://./data/volaticloud.db)
 - `ANYTRADE_ENCRYPTION_KEY` - 32-byte encryption key for secrets
 - `ANYTRADE_RUNTIME` - Default runtime type (docker, kubernetes, local)
 
 ## Project Structure
 
 ```
-anytrade/
+volaticloud/
 ├── cmd/
 │   └── server/           # Main server application
 ├── internal/             # Internal packages
@@ -161,7 +161,7 @@ anytrade/
 
 ## Database Schema
 
-AnyTrade uses the following main entities:
+VolatiCloud uses the following main entities:
 
 - **Exchange** - Cryptocurrency exchange configuration
 - **ExchangeSecret** - Encrypted API credentials

@@ -1,9 +1,9 @@
-# Helm values for AnyTrade Dashboard using Nixys Universal Chart
+# Helm values for VolatiCloud Dashboard using Nixys Universal Chart
 # Chart: nixys/nxs-universal-chart
 # Repo: https://registry.nixys.io/chartrepo/public
 
 deployments:
-  anytrade-dashboard:
+  volaticloud-dashboard:
     replicaCount: 2
     revisionHistoryLimit: 3
 
@@ -15,7 +15,7 @@ deployments:
 
     containers:
       - name: caddy
-        image: ghcr.io/diazoxide/anytrade-dashboard
+        image: ghcr.io/diazoxide/volaticloud-dashboard
         imagePullPolicy: Always
 
         ports:
@@ -72,7 +72,7 @@ deployments:
       prometheus.io/scrape: "false"
 
     podLabels:
-      app: anytrade-dashboard
+      app: volaticloud-dashboard
       component: ui
 
     affinity:
@@ -85,11 +85,11 @@ deployments:
                   - key: app
                     operator: In
                     values:
-                      - anytrade-dashboard
+                      - volaticloud-dashboard
               topologyKey: kubernetes.io/hostname
 
 services:
-  anytrade-dashboard:
+  volaticloud-dashboard:
     type: ClusterIP
     ports:
       - name: http
@@ -110,11 +110,11 @@ ingresses:
       - paths:
           - path: /
             pathType: Prefix
-            serviceName: anytrade-dashboard
+            serviceName: volaticloud-dashboard
             servicePort: http
 
 hpa:
-  anytrade-dashboard:
+  volaticloud-dashboard:
     minReplicas: 2
     maxReplicas: 10
     metrics:
@@ -132,5 +132,5 @@ hpa:
             averageUtilization: 80
 
 pdb:
-  anytrade-dashboard:
+  volaticloud-dashboard:
     minAvailable: 1

@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/ent/botrunner"
-	"anytrade/internal/enum"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/enum"
 )
 
 const (

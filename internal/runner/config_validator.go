@@ -3,7 +3,7 @@ package runner
 import (
 	"fmt"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 )
 
 // ExtractRunnerConfig extracts runner-type-specific config from the full runner config.

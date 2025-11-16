@@ -3,9 +3,9 @@
 package botrunner
 
 import (
-	"anytrade/internal/enum"
 	"fmt"
 	"time"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -93,7 +93,7 @@ func ValidColumn(column string) bool {
 // package on the initialization of the application. Therefore,
 // it should be imported in the main as follows:
 //
-//	import _ "anytrade/internal/ent/runtime"
+//	import _ "volaticloud/internal/ent/runtime"
 var (
 	Hooks [2]ent.Hook
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.

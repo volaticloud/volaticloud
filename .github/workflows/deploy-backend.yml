@@ -47,7 +47,7 @@ jobs:
 
       - name: Validate Helm values
         run: |
-          helm template anytrade-backend nixys/nxs-universal-chart \
+          helm template volaticloud-backend nixys/nxs-universal-chart \
             -f deployments/backend/values.yaml \
             --dry-run --debug
 
@@ -102,13 +102,13 @@ jobs:
 
       - name: Create namespace if not exists
         run: |
-          kubectl create namespace anytrade --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create namespace volaticloud --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create application secrets
         run: |
-          kubectl create secret generic anytrade-backend-anytrade-secrets \
+          kubectl create secret generic volaticloud-backend-volaticloud-secrets \
             --from-literal=ANYTRADE_DATABASE="${{ secrets.ANYTRADE_DATABASE }}" \
-            --namespace=anytrade \
+            --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create image pull secret
@@ -117,18 +117,18 @@ jobs:
             --docker-server=ghcr.io \
             --docker-username=${{ github.actor }} \
             --docker-password=${{ secrets.GHCR_TOKEN }} \
-            --namespace=anytrade \
+            --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy backend with Helm
         run: |
-          helm upgrade --install anytrade-backend nixys/nxs-universal-chart \
-            --namespace anytrade \
+          helm upgrade --install volaticloud-backend nixys/nxs-universal-chart \
+            --namespace volaticloud \
             --create-namespace \
             -f deployments/backend/values.yaml \
-            --set deployments.anytrade-backend.containers[0].image=ghcr.io/diazoxide/anytrade \
-            --set deployments.anytrade-backend.containers[0].imageTag=${{ steps.image_tag.outputs.tag }} \
-            --set deployments.anytrade-backend.imagePullSecrets[0].name=ghcr-pull-secret \
+            --set deployments.volaticloud-backend.containers[0].image=ghcr.io/diazoxide/volaticloud \
+            --set deployments.volaticloud-backend.containers[0].imageTag=${{ steps.image_tag.outputs.tag }} \
+            --set deployments.volaticloud-backend.imagePullSecrets[0].name=ghcr-pull-secret \
             --wait \
             --timeout 10m \
             --atomic
@@ -137,16 +137,16 @@ jobs:
         run: |
           echo "Waiting for deployment to be ready..."
           kubectl wait --for=condition=available --timeout=300s \
-            deployment/anytrade-backend-anytrade-backend -n anytrade
+            deployment/volaticloud-backend-volaticloud-backend -n volaticloud
 
           echo "Checking pod status..."
-          kubectl get pods -n anytrade -l app=anytrade-backend
+          kubectl get pods -n volaticloud -l app=volaticloud-backend
 
           echo "Getting service info..."
-          kubectl get svc -n anytrade -l app=anytrade-backend
+          kubectl get svc -n volaticloud -l app=volaticloud-backend
 
           echo "Getting ingress info..."
-          kubectl get ingress -n anytrade
+          kubectl get ingress -n volaticloud
 
       - name: Run post-deployment tests
         run: |
@@ -165,12 +165,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** prod" >> $GITHUB_STEP_SUMMARY
           echo "**Image Tag:** ${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Namespace:** anytrade" >> $GITHUB_STEP_SUMMARY
+          echo "**Namespace:** volaticloud" >> $GITHUB_STEP_SUMMARY
           echo "**URL:** https://api.volaticloud.com" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployment Resources:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get all -n anytrade -l app=anytrade-backend >> $GITHUB_STEP_SUMMARY
+          kubectl get all -n volaticloud -l app=volaticloud-backend >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Notify on failure
@@ -182,7 +182,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Recent Pod Events:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get events -n anytrade --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
+          kubectl get events -n volaticloud --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   rollback:
@@ -207,11 +207,11 @@ jobs:
       - name: Rollback Helm release
         run: |
           echo "Rolling back to previous version..."
-          helm rollback anytrade-backend -n anytrade
+          helm rollback volaticloud-backend -n volaticloud
 
           echo "Waiting for rollback to complete..."
           kubectl wait --for=condition=available --timeout=300s \
-            deployment/anytrade-backend-anytrade-backend -n anytrade
+            deployment/volaticloud-backend-volaticloud-backend -n volaticloud
 
       - name: Verify rollback
         run: |
@@ -221,5 +221,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Current Status:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          helm history anytrade-backend -n anytrade >> $GITHUB_STEP_SUMMARY
+          helm history volaticloud-backend -n volaticloud >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

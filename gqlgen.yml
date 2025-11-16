@@ -22,16 +22,16 @@ resolver:
 
 # Autobind ENT types, runner types, Freqtrade types, and backtest types
 autobind:
-  - anytrade/internal/ent
-  - anytrade/internal/runner
-  - anytrade/internal/freqtrade
-  - anytrade/internal/backtest
+  - volaticloud/internal/ent
+  - volaticloud/internal/runner
+  - volaticloud/internal/freqtrade
+  - volaticloud/internal/backtest
 
 # Type mappings
 models:
   ID:
     model:
-      - anytrade/internal/ent/schema/uuidgql.UUID
+      - volaticloud/internal/ent/schema/uuidgql.UUID
 
   UUID:
     model:
@@ -48,34 +48,34 @@ models:
   # Node interface from ENT
   Node:
     model:
-      - anytrade/internal/ent.Noder
+      - volaticloud/internal/ent.Noder
 
   # Map ENT types to GraphQL
   Exchange:
     model:
-      - anytrade/internal/ent.Exchange
+      - volaticloud/internal/ent.Exchange
 
   Strategy:
     model:
-      - anytrade/internal/ent.Strategy
+      - volaticloud/internal/ent.Strategy
 
   Bot:
     model:
-      - anytrade/internal/ent.Bot
+      - volaticloud/internal/ent.Bot
 
   Backtest:
     model:
-      - anytrade/internal/ent.Backtest
+      - volaticloud/internal/ent.Backtest
 
   HyperOpt:
     model:
-      - anytrade/internal/ent.HyperOpt
+      - volaticloud/internal/ent.HyperOpt
 
   Trade:
     model:
-      - anytrade/internal/ent.Trade
+      - volaticloud/internal/ent.Trade
 
   # Map runner types to GraphQL
   BotStatus:
     model:
-      - anytrade/internal/runner.BotStatus
+      - volaticloud/internal/runner.BotStatus

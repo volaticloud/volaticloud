@@ -3,11 +3,11 @@
 package ent
 
 import (
-	"anytrade/internal/ent/exchange"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
+	"volaticloud/internal/ent/exchange"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

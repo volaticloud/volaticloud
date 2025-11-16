@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"anytrade/internal/enum"
 	"time"
+	"volaticloud/internal/enum"
 
 	"github.com/google/uuid"
 )

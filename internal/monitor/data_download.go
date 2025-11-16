@@ -12,14 +12,14 @@ import (
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/enum"
-	"anytrade/internal/runner"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 const (
 	// FreqtradeDataVolume is the Docker volume name for historical data
-	FreqtradeDataVolume = "anytrade-freqtrade-data"
+	FreqtradeDataVolume = "volaticloud-freqtrade-data"
 
 	// FreqtradeImage is the Docker image to use for data download
 	FreqtradeImage = "freqtradeorg/freqtrade:stable"
@@ -183,7 +183,7 @@ func downloadExchangeData(ctx context.Context, cli *client.Client, exchange stri
 		exchange, pairsPattern, timeframes, days, tradingMode)
 
 	// Run the download container
-	containerName := fmt.Sprintf("anytrade-data-download-%s", exchange)
+	containerName := fmt.Sprintf("volaticloud-data-download-%s", exchange)
 
 	if err := runFreqtradeCommand(ctx, cli, containerName, args); err != nil {
 		return fmt.Errorf("failed to run freqtrade download command: %w", err)
@@ -323,8 +323,8 @@ func ensureDataVolume(ctx context.Context, cli *client.Client) error {
 	_, err = cli.VolumeCreate(ctx, volume.CreateOptions{
 		Name: FreqtradeDataVolume,
 		Labels: map[string]string{
-			"anytrade.managed": "true",
-			"anytrade.purpose": "freqtrade-data",
+			"volaticloud.managed": "true",
+			"volaticloud.purpose": "freqtrade-data",
 		},
 	})
 	if err != nil {

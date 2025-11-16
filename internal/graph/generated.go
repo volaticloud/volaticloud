@@ -3,12 +3,6 @@
 package graph
 
 import (
-	"anytrade/internal/backtest"
-	"anytrade/internal/ent"
-	"anytrade/internal/ent/schema/uuidgql"
-	"anytrade/internal/enum"
-	"anytrade/internal/graph/model"
-	"anytrade/internal/runner"
 	"bytes"
 	"context"
 	"embed"
@@ -18,6 +12,12 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"volaticloud/internal/backtest"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/schema/uuidgql"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/graph/model"
+	"volaticloud/internal/runner"
 
 	"entgo.io/contrib/entgql"
 	"github.com/99designs/gqlgen/graphql"
@@ -2000,7 +2000,7 @@ func (ec *executionContext) field_BotRunner_backtests_args(ctx context.Context, 
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBacktestWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2031,7 +2031,7 @@ func (ec *executionContext) field_BotRunner_bots_args(ctx context.Context, rawAr
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2062,7 +2062,7 @@ func (ec *executionContext) field_Bot_trades_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2093,7 +2093,7 @@ func (ec *executionContext) field_Exchange_bots_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2104,7 +2104,7 @@ func (ec *executionContext) field_Exchange_bots_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Mutation_createBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBacktestInput2anytradeᚋinternalᚋentᚐCreateBacktestInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBacktestInput2volaticloudᚋinternalᚋentᚐCreateBacktestInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2115,7 +2115,7 @@ func (ec *executionContext) field_Mutation_createBacktest_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_createBotRunner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotRunnerInput2anytradeᚋinternalᚋentᚐCreateBotRunnerInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotRunnerInput2volaticloudᚋinternalᚋentᚐCreateBotRunnerInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2126,7 +2126,7 @@ func (ec *executionContext) field_Mutation_createBotRunner_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_createBot_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotInput2anytradeᚋinternalᚋentᚐCreateBotInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBotInput2volaticloudᚋinternalᚋentᚐCreateBotInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2137,7 +2137,7 @@ func (ec *executionContext) field_Mutation_createBot_args(ctx context.Context, r
 func (ec *executionContext) field_Mutation_createExchange_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateExchangeInput2anytradeᚋinternalᚋentᚐCreateExchangeInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateExchangeInput2volaticloudᚋinternalᚋentᚐCreateExchangeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2148,7 +2148,7 @@ func (ec *executionContext) field_Mutation_createExchange_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_createStrategy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateStrategyInput2anytradeᚋinternalᚋentᚐCreateStrategyInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateStrategyInput2volaticloudᚋinternalᚋentᚐCreateStrategyInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2159,7 +2159,7 @@ func (ec *executionContext) field_Mutation_createStrategy_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_createTrade_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateTradeInput2anytradeᚋinternalᚋentᚐCreateTradeInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateTradeInput2volaticloudᚋinternalᚋentᚐCreateTradeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2307,7 +2307,7 @@ func (ec *executionContext) field_Mutation_updateBotRunner_args(ctx context.Cont
 		return nil, err
 	}
 	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotRunnerInput2anytradeᚋinternalᚋentᚐUpdateBotRunnerInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotRunnerInput2volaticloudᚋinternalᚋentᚐUpdateBotRunnerInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2323,7 +2323,7 @@ func (ec *executionContext) field_Mutation_updateBot_args(ctx context.Context, r
 		return nil, err
 	}
 	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotInput2anytradeᚋinternalᚋentᚐUpdateBotInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateBotInput2volaticloudᚋinternalᚋentᚐUpdateBotInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2339,7 +2339,7 @@ func (ec *executionContext) field_Mutation_updateExchange_args(ctx context.Conte
 		return nil, err
 	}
 	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateExchangeInput2anytradeᚋinternalᚋentᚐUpdateExchangeInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateExchangeInput2volaticloudᚋinternalᚋentᚐUpdateExchangeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2355,7 +2355,7 @@ func (ec *executionContext) field_Mutation_updateStrategy_args(ctx context.Conte
 		return nil, err
 	}
 	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateStrategyInput2anytradeᚋinternalᚋentᚐUpdateStrategyInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateStrategyInput2volaticloudᚋinternalᚋentᚐUpdateStrategyInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2371,7 +2371,7 @@ func (ec *executionContext) field_Mutation_updateTrade_args(ctx context.Context,
 		return nil, err
 	}
 	args["id"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateTradeInput2anytradeᚋinternalᚋentᚐUpdateTradeInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateTradeInput2volaticloudᚋinternalᚋentᚐUpdateTradeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2413,7 +2413,7 @@ func (ec *executionContext) field_Query_backtests_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBacktestWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2444,7 +2444,7 @@ func (ec *executionContext) field_Query_botRunners_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotRunnerWhereInput2ᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotRunnerWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2475,7 +2475,7 @@ func (ec *executionContext) field_Query_bots_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2539,7 +2539,7 @@ func (ec *executionContext) field_Query_strategies_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOStrategyWhereInput2ᚖanytradeᚋinternalᚋentᚐStrategyWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOStrategyWhereInput2ᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2581,7 +2581,7 @@ func (ec *executionContext) field_Query_trades_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2612,7 +2612,7 @@ func (ec *executionContext) field_Strategy_bots_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2711,7 +2711,7 @@ func (ec *executionContext) _Backtest_status(ctx context.Context, field graphql.
 			return obj.Status, nil
 		},
 		nil,
-		ec.marshalNBacktestTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus,
+		ec.marshalNBacktestTaskStatus2volaticloudᚋinternalᚋenumᚐTaskStatus,
 		true,
 		true,
 	)
@@ -3001,7 +3001,7 @@ func (ec *executionContext) _Backtest_strategy(ctx context.Context, field graphq
 			return obj.Strategy(ctx)
 		},
 		nil,
-		ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
 	)
@@ -3060,7 +3060,7 @@ func (ec *executionContext) _Backtest_runner(ctx context.Context, field graphql.
 			return obj.Runner(ctx)
 		},
 		nil,
-		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
@@ -3119,7 +3119,7 @@ func (ec *executionContext) _Backtest_summary(ctx context.Context, field graphql
 			return ec.resolvers.Backtest().Summary(ctx, obj)
 		},
 		nil,
-		ec.marshalOBacktestSummary2ᚖanytradeᚋinternalᚋbacktestᚐBacktestSummary,
+		ec.marshalOBacktestSummary2ᚖvolaticloudᚋinternalᚋbacktestᚐBacktestSummary,
 		true,
 		false,
 	)
@@ -3188,7 +3188,7 @@ func (ec *executionContext) _BacktestConnection_edges(ctx context.Context, field
 			return obj.Edges, nil
 		},
 		nil,
-		ec.marshalOBacktestEdge2ᚕᚖanytradeᚋinternalᚋentᚐBacktestEdge,
+		ec.marshalOBacktestEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestEdge,
 		true,
 		false,
 	)
@@ -3291,7 +3291,7 @@ func (ec *executionContext) _BacktestEdge_node(ctx context.Context, field graphq
 			return obj.Node, nil
 		},
 		nil,
-		ec.marshalOBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		ec.marshalOBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		false,
 	)
@@ -3988,7 +3988,7 @@ func (ec *executionContext) _Bot_status(ctx context.Context, field graphql.Colle
 			return obj.Status, nil
 		},
 		nil,
-		ec.marshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus,
+		ec.marshalNBotBotStatus2volaticloudᚋinternalᚋenumᚐBotStatus,
 		true,
 		true,
 	)
@@ -4017,7 +4017,7 @@ func (ec *executionContext) _Bot_mode(ctx context.Context, field graphql.Collect
 			return obj.Mode, nil
 		},
 		nil,
-		ec.marshalNBotBotMode2anytradeᚋinternalᚋenumᚐBotMode,
+		ec.marshalNBotBotMode2volaticloudᚋinternalᚋenumᚐBotMode,
 		true,
 		true,
 	)
@@ -4336,7 +4336,7 @@ func (ec *executionContext) _Bot_exchange(ctx context.Context, field graphql.Col
 			return obj.Exchange(ctx)
 		},
 		nil,
-		ec.marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExchange,
+		ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange,
 		true,
 		true,
 	)
@@ -4379,7 +4379,7 @@ func (ec *executionContext) _Bot_strategy(ctx context.Context, field graphql.Col
 			return obj.Strategy(ctx)
 		},
 		nil,
-		ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
 	)
@@ -4438,7 +4438,7 @@ func (ec *executionContext) _Bot_runner(ctx context.Context, field graphql.Colle
 			return obj.Runner(ctx)
 		},
 		nil,
-		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
@@ -4498,7 +4498,7 @@ func (ec *executionContext) _Bot_trades(ctx context.Context, field graphql.Colle
 			return obj.Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.TradeWhereInput))
 		},
 		nil,
-		ec.marshalNTradeConnection2ᚖanytradeᚋinternalᚋentᚐTradeConnection,
+		ec.marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection,
 		true,
 		true,
 	)
@@ -4546,7 +4546,7 @@ func (ec *executionContext) _Bot_metrics(ctx context.Context, field graphql.Coll
 			return obj.Metrics(ctx)
 		},
 		nil,
-		ec.marshalOBotMetrics2ᚖanytradeᚋinternalᚋentᚐBotMetrics,
+		ec.marshalOBotMetrics2ᚖvolaticloudᚋinternalᚋentᚐBotMetrics,
 		true,
 		false,
 	)
@@ -4623,7 +4623,7 @@ func (ec *executionContext) _BotConnection_edges(ctx context.Context, field grap
 			return obj.Edges, nil
 		},
 		nil,
-		ec.marshalOBotEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotEdge,
+		ec.marshalOBotEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐBotEdge,
 		true,
 		false,
 	)
@@ -4726,7 +4726,7 @@ func (ec *executionContext) _BotEdge_node(ctx context.Context, field graphql.Col
 			return obj.Node, nil
 		},
 		nil,
-		ec.marshalOBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalOBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		false,
 	)
@@ -5462,7 +5462,7 @@ func (ec *executionContext) _BotMetrics_bot(ctx context.Context, field graphql.C
 			return obj.Bot(ctx)
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -5589,7 +5589,7 @@ func (ec *executionContext) _BotRunner_type(ctx context.Context, field graphql.C
 			return obj.Type, nil
 		},
 		nil,
-		ec.marshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType,
+		ec.marshalNBotRunnerRunnerType2volaticloudᚋinternalᚋenumᚐRunnerType,
 		true,
 		true,
 	)
@@ -5705,7 +5705,7 @@ func (ec *executionContext) _BotRunner_dataDownloadStatus(ctx context.Context, f
 			return obj.DataDownloadStatus, nil
 		},
 		nil,
-		ec.marshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus,
+		ec.marshalNBotRunnerDataDownloadStatus2volaticloudᚋinternalᚋenumᚐDataDownloadStatus,
 		true,
 		true,
 	)
@@ -5880,7 +5880,7 @@ func (ec *executionContext) _BotRunner_bots(ctx context.Context, field graphql.C
 			return obj.Bots(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BotWhereInput))
 		},
 		nil,
-		ec.marshalNBotConnection2ᚖanytradeᚋinternalᚋentᚐBotConnection,
+		ec.marshalNBotConnection2ᚖvolaticloudᚋinternalᚋentᚐBotConnection,
 		true,
 		true,
 	)
@@ -5929,7 +5929,7 @@ func (ec *executionContext) _BotRunner_backtests(ctx context.Context, field grap
 			return obj.Backtests(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BacktestWhereInput))
 		},
 		nil,
-		ec.marshalNBacktestConnection2ᚖanytradeᚋinternalᚋentᚐBacktestConnection,
+		ec.marshalNBacktestConnection2ᚖvolaticloudᚋinternalᚋentᚐBacktestConnection,
 		true,
 		true,
 	)
@@ -5977,7 +5977,7 @@ func (ec *executionContext) _BotRunnerConnection_edges(ctx context.Context, fiel
 			return obj.Edges, nil
 		},
 		nil,
-		ec.marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerEdge,
+		ec.marshalOBotRunnerEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerEdge,
 		true,
 		false,
 	)
@@ -6080,7 +6080,7 @@ func (ec *executionContext) _BotRunnerEdge_node(ctx context.Context, field graph
 			return obj.Node, nil
 		},
 		nil,
-		ec.marshalOBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		ec.marshalOBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		false,
 	)
@@ -6197,7 +6197,7 @@ func (ec *executionContext) _BotStatus_status(ctx context.Context, field graphql
 			return obj.Status, nil
 		},
 		nil,
-		ec.marshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus,
+		ec.marshalNBotBotStatus2volaticloudᚋinternalᚋenumᚐBotStatus,
 		true,
 		true,
 	)
@@ -6691,7 +6691,7 @@ func (ec *executionContext) _Exchange_bots(ctx context.Context, field graphql.Co
 			return obj.Bots(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BotWhereInput))
 		},
 		nil,
-		ec.marshalNBotConnection2ᚖanytradeᚋinternalᚋentᚐBotConnection,
+		ec.marshalNBotConnection2ᚖvolaticloudᚋinternalᚋentᚐBotConnection,
 		true,
 		true,
 	)
@@ -6740,7 +6740,7 @@ func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field 
 			return ec.resolvers.Mutation().CreateExchange(ctx, fc.Args["input"].(ent.CreateExchangeInput))
 		},
 		nil,
-		ec.marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExchange,
+		ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange,
 		true,
 		true,
 	)
@@ -6795,7 +6795,7 @@ func (ec *executionContext) _Mutation_updateExchange(ctx context.Context, field 
 			return ec.resolvers.Mutation().UpdateExchange(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateExchangeInput))
 		},
 		nil,
-		ec.marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExchange,
+		ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange,
 		true,
 		true,
 	)
@@ -6891,7 +6891,7 @@ func (ec *executionContext) _Mutation_createStrategy(ctx context.Context, field 
 			return ec.resolvers.Mutation().CreateStrategy(ctx, fc.Args["input"].(ent.CreateStrategyInput))
 		},
 		nil,
-		ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
 	)
@@ -6962,7 +6962,7 @@ func (ec *executionContext) _Mutation_updateStrategy(ctx context.Context, field 
 			return ec.resolvers.Mutation().UpdateStrategy(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateStrategyInput))
 		},
 		nil,
-		ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
 	)
@@ -7074,7 +7074,7 @@ func (ec *executionContext) _Mutation_createBot(ctx context.Context, field graph
 			return ec.resolvers.Mutation().CreateBot(ctx, fc.Args["input"].(ent.CreateBotInput))
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -7155,7 +7155,7 @@ func (ec *executionContext) _Mutation_updateBot(ctx context.Context, field graph
 			return ec.resolvers.Mutation().UpdateBot(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBotInput))
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -7277,7 +7277,7 @@ func (ec *executionContext) _Mutation_startBot(ctx context.Context, field graphq
 			return ec.resolvers.Mutation().StartBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -7358,7 +7358,7 @@ func (ec *executionContext) _Mutation_stopBot(ctx context.Context, field graphql
 			return ec.resolvers.Mutation().StopBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -7439,7 +7439,7 @@ func (ec *executionContext) _Mutation_restartBot(ctx context.Context, field grap
 			return ec.resolvers.Mutation().RestartBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -7520,7 +7520,7 @@ func (ec *executionContext) _Mutation_createBotRunner(ctx context.Context, field
 			return ec.resolvers.Mutation().CreateBotRunner(ctx, fc.Args["input"].(ent.CreateBotRunnerInput))
 		},
 		nil,
-		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
@@ -7591,7 +7591,7 @@ func (ec *executionContext) _Mutation_updateBotRunner(ctx context.Context, field
 			return ec.resolvers.Mutation().UpdateBotRunner(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBotRunnerInput))
 		},
 		nil,
-		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
@@ -7703,7 +7703,7 @@ func (ec *executionContext) _Mutation_refreshRunnerData(ctx context.Context, fie
 			return ec.resolvers.Mutation().RefreshRunnerData(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
 	)
@@ -7774,7 +7774,7 @@ func (ec *executionContext) _Mutation_createBacktest(ctx context.Context, field 
 			return ec.resolvers.Mutation().CreateBacktest(ctx, fc.Args["input"].(ent.CreateBacktestInput))
 		},
 		nil,
-		ec.marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		true,
 	)
@@ -7886,7 +7886,7 @@ func (ec *executionContext) _Mutation_runBacktest(ctx context.Context, field gra
 			return ec.resolvers.Mutation().RunBacktest(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		true,
 	)
@@ -7957,7 +7957,7 @@ func (ec *executionContext) _Mutation_stopBacktest(ctx context.Context, field gr
 			return ec.resolvers.Mutation().StopBacktest(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		true,
 	)
@@ -8028,7 +8028,7 @@ func (ec *executionContext) _Mutation_createTrade(ctx context.Context, field gra
 			return ec.resolvers.Mutation().CreateTrade(ctx, fc.Args["input"].(ent.CreateTradeInput))
 		},
 		nil,
-		ec.marshalNTrade2ᚖanytradeᚋinternalᚋentᚐTrade,
+		ec.marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
 		true,
 		true,
 	)
@@ -8109,7 +8109,7 @@ func (ec *executionContext) _Mutation_updateTrade(ctx context.Context, field gra
 			return ec.resolvers.Mutation().UpdateTrade(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateTradeInput))
 		},
 		nil,
-		ec.marshalNTrade2ᚖanytradeᚋinternalᚋentᚐTrade,
+		ec.marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
 		true,
 		true,
 	)
@@ -8347,7 +8347,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 			return ec.resolvers.Query().Node(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalONode2anytradeᚋinternalᚋentᚐNoder,
+		ec.marshalONode2volaticloudᚋinternalᚋentᚐNoder,
 		true,
 		false,
 	)
@@ -8388,7 +8388,7 @@ func (ec *executionContext) _Query_nodes(ctx context.Context, field graphql.Coll
 			return ec.resolvers.Query().Nodes(ctx, fc.Args["ids"].([]uuid.UUID))
 		},
 		nil,
-		ec.marshalNNode2ᚕanytradeᚋinternalᚋentᚐNoder,
+		ec.marshalNNode2ᚕvolaticloudᚋinternalᚋentᚐNoder,
 		true,
 		true,
 	)
@@ -8429,7 +8429,7 @@ func (ec *executionContext) _Query_backtests(ctx context.Context, field graphql.
 			return ec.resolvers.Query().Backtests(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BacktestWhereInput))
 		},
 		nil,
-		ec.marshalNBacktestConnection2ᚖanytradeᚋinternalᚋentᚐBacktestConnection,
+		ec.marshalNBacktestConnection2ᚖvolaticloudᚋinternalᚋentᚐBacktestConnection,
 		true,
 		true,
 	)
@@ -8478,7 +8478,7 @@ func (ec *executionContext) _Query_bots(ctx context.Context, field graphql.Colle
 			return ec.resolvers.Query().Bots(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BotWhereInput))
 		},
 		nil,
-		ec.marshalNBotConnection2ᚖanytradeᚋinternalᚋentᚐBotConnection,
+		ec.marshalNBotConnection2ᚖvolaticloudᚋinternalᚋentᚐBotConnection,
 		true,
 		true,
 	)
@@ -8526,7 +8526,7 @@ func (ec *executionContext) _Query_botMetricsSlice(ctx context.Context, field gr
 			return ec.resolvers.Query().BotMetricsSlice(ctx)
 		},
 		nil,
-		ec.marshalNBotMetrics2ᚕᚖanytradeᚋinternalᚋentᚐBotMetricsᚄ,
+		ec.marshalNBotMetrics2ᚕᚖvolaticloudᚋinternalᚋentᚐBotMetricsᚄ,
 		true,
 		true,
 	)
@@ -8604,7 +8604,7 @@ func (ec *executionContext) _Query_botRunners(ctx context.Context, field graphql
 			return ec.resolvers.Query().BotRunners(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BotRunnerWhereInput))
 		},
 		nil,
-		ec.marshalNBotRunnerConnection2ᚖanytradeᚋinternalᚋentᚐBotRunnerConnection,
+		ec.marshalNBotRunnerConnection2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerConnection,
 		true,
 		true,
 	)
@@ -8652,7 +8652,7 @@ func (ec *executionContext) _Query_exchanges(ctx context.Context, field graphql.
 			return ec.resolvers.Query().Exchanges(ctx)
 		},
 		nil,
-		ec.marshalNExchange2ᚕᚖanytradeᚋinternalᚋentᚐExchangeᚄ,
+		ec.marshalNExchange2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeᚄ,
 		true,
 		true,
 	)
@@ -8696,7 +8696,7 @@ func (ec *executionContext) _Query_strategies(ctx context.Context, field graphql
 			return ec.resolvers.Query().Strategies(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.StrategyWhereInput))
 		},
 		nil,
-		ec.marshalNStrategyConnection2ᚖanytradeᚋinternalᚋentᚐStrategyConnection,
+		ec.marshalNStrategyConnection2ᚖvolaticloudᚋinternalᚋentᚐStrategyConnection,
 		true,
 		true,
 	)
@@ -8745,7 +8745,7 @@ func (ec *executionContext) _Query_trades(ctx context.Context, field graphql.Col
 			return ec.resolvers.Query().Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.TradeWhereInput))
 		},
 		nil,
-		ec.marshalNTradeConnection2ᚖanytradeᚋinternalᚋentᚐTradeConnection,
+		ec.marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection,
 		true,
 		true,
 	)
@@ -8794,7 +8794,7 @@ func (ec *executionContext) _Query_getBotRunnerStatus(ctx context.Context, field
 			return ec.resolvers.Query().GetBotRunnerStatus(ctx, fc.Args["id"].(uuid.UUID))
 		},
 		nil,
-		ec.marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐBotStatus,
+		ec.marshalOBotStatus2ᚖvolaticloudᚋinternalᚋrunnerᚐBotStatus,
 		true,
 		false,
 	)
@@ -8863,7 +8863,7 @@ func (ec *executionContext) _Query_strategyVersions(ctx context.Context, field g
 			return ec.resolvers.Query().StrategyVersions(ctx, fc.Args["name"].(string))
 		},
 		nil,
-		ec.marshalNStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ,
+		ec.marshalNStrategy2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyᚄ,
 		true,
 		true,
 	)
@@ -9332,7 +9332,7 @@ func (ec *executionContext) _Strategy_bots(ctx context.Context, field graphql.Co
 			return obj.Bots(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.BotWhereInput))
 		},
 		nil,
-		ec.marshalNBotConnection2ᚖanytradeᚋinternalᚋentᚐBotConnection,
+		ec.marshalNBotConnection2ᚖvolaticloudᚋinternalᚋentᚐBotConnection,
 		true,
 		true,
 	)
@@ -9380,7 +9380,7 @@ func (ec *executionContext) _Strategy_backtest(ctx context.Context, field graphq
 			return obj.Backtest(ctx)
 		},
 		nil,
-		ec.marshalOBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest,
+		ec.marshalOBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		false,
 	)
@@ -9439,7 +9439,7 @@ func (ec *executionContext) _Strategy_children(ctx context.Context, field graphq
 			return obj.Children(ctx)
 		},
 		nil,
-		ec.marshalOStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ,
+		ec.marshalOStrategy2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyᚄ,
 		true,
 		false,
 	)
@@ -9498,7 +9498,7 @@ func (ec *executionContext) _Strategy_parent(ctx context.Context, field graphql.
 			return obj.Parent(ctx)
 		},
 		nil,
-		ec.marshalOStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		ec.marshalOStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		false,
 	)
@@ -9557,7 +9557,7 @@ func (ec *executionContext) _StrategyConnection_edges(ctx context.Context, field
 			return obj.Edges, nil
 		},
 		nil,
-		ec.marshalOStrategyEdge2ᚕᚖanytradeᚋinternalᚋentᚐStrategyEdge,
+		ec.marshalOStrategyEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyEdge,
 		true,
 		false,
 	)
@@ -9660,7 +9660,7 @@ func (ec *executionContext) _StrategyEdge_node(ctx context.Context, field graphq
 			return obj.Node, nil
 		},
 		nil,
-		ec.marshalOStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy,
+		ec.marshalOStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		false,
 	)
@@ -10270,7 +10270,7 @@ func (ec *executionContext) _Trade_bot(ctx context.Context, field graphql.Collec
 			return obj.Bot(ctx)
 		},
 		nil,
-		ec.marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot,
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
 	)
@@ -10339,7 +10339,7 @@ func (ec *executionContext) _TradeConnection_edges(ctx context.Context, field gr
 			return obj.Edges, nil
 		},
 		nil,
-		ec.marshalOTradeEdge2ᚕᚖanytradeᚋinternalᚋentᚐTradeEdge,
+		ec.marshalOTradeEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeEdge,
 		true,
 		false,
 	)
@@ -10442,7 +10442,7 @@ func (ec *executionContext) _TradeEdge_node(ctx context.Context, field graphql.C
 			return obj.Node, nil
 		},
 		nil,
-		ec.marshalOTrade2ᚖanytradeᚋinternalᚋentᚐTrade,
+		ec.marshalOTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
 		true,
 		false,
 	)
@@ -11992,21 +11992,21 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput(ctx, v)
+			data, err := ec.unmarshalOBacktestWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12069,28 +12069,28 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 			it.IDLTE = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx, v)
+			data, err := ec.unmarshalOBacktestTaskStatus2ᚖvolaticloudᚋinternalᚋenumᚐTaskStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "statusNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusNEQ"))
-			data, err := ec.unmarshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx, v)
+			data, err := ec.unmarshalOBacktestTaskStatus2ᚖvolaticloudᚋinternalᚋenumᚐTaskStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.StatusNEQ = data
 		case "statusIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusIn"))
-			data, err := ec.unmarshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋenumᚐTaskStatusᚄ(ctx, v)
+			data, err := ec.unmarshalOBacktestTaskStatus2ᚕvolaticloudᚋinternalᚋenumᚐTaskStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.StatusIn = data
 		case "statusNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusNotIn"))
-			data, err := ec.unmarshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋenumᚐTaskStatusᚄ(ctx, v)
+			data, err := ec.unmarshalOBacktestTaskStatus2ᚕvolaticloudᚋinternalᚋenumᚐTaskStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12657,7 +12657,7 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 			it.HasStrategy = data
 		case "hasStrategyWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasStrategyWith"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12671,7 +12671,7 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 			it.HasRunner = data
 		case "hasRunnerWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRunnerWith"))
-			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12766,21 +12766,21 @@ func (ec *executionContext) unmarshalInputBotMetricsWhereInput(ctx context.Conte
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOBotMetricsWhereInput2ᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInput(ctx, v)
+			data, err := ec.unmarshalOBotMetricsWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOBotMetricsWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotMetricsWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOBotMetricsWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotMetricsWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14285,7 +14285,7 @@ func (ec *executionContext) unmarshalInputBotMetricsWhereInput(ctx context.Conte
 			it.HasBot = data
 		case "hasBotWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBotWith"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14312,21 +14312,21 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOBotRunnerWhereInput2ᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInput(ctx, v)
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14480,28 +14480,28 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 			it.NameContainsFold = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖvolaticloudᚋinternalᚋenumᚐRunnerType(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Type = data
 		case "typeNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("typeNEQ"))
-			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖvolaticloudᚋinternalᚋenumᚐRunnerType(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.TypeNEQ = data
 		case "typeIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("typeIn"))
-			data, err := ec.unmarshalOBotRunnerRunnerType2ᚕanytradeᚋinternalᚋenumᚐRunnerTypeᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚕvolaticloudᚋinternalᚋenumᚐRunnerTypeᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.TypeIn = data
 		case "typeNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("typeNotIn"))
-			data, err := ec.unmarshalOBotRunnerRunnerType2ᚕanytradeᚋinternalᚋenumᚐRunnerTypeᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚕvolaticloudᚋinternalᚋenumᚐRunnerTypeᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14592,28 +14592,28 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 			it.DataLastUpdatedNotNil = data
 		case "dataDownloadStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatus"))
-			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖvolaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.DataDownloadStatus = data
 		case "dataDownloadStatusNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatusNEQ"))
-			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖvolaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.DataDownloadStatusNEQ = data
 		case "dataDownloadStatusIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatusIn"))
-			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚕvolaticloudᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.DataDownloadStatusIn = data
 		case "dataDownloadStatusNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatusNotIn"))
-			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚕvolaticloudᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14844,7 +14844,7 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 			it.HasBots = data
 		case "hasBotsWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBotsWith"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14858,7 +14858,7 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 			it.HasBacktests = data
 		case "hasBacktestsWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktestsWith"))
-			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14885,21 +14885,21 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15053,56 +15053,56 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 			it.NameContainsFold = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOBotBotStatus2ᚖanytradeᚋinternalᚋenumᚐBotStatus(ctx, v)
+			data, err := ec.unmarshalOBotBotStatus2ᚖvolaticloudᚋinternalᚋenumᚐBotStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "statusNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusNEQ"))
-			data, err := ec.unmarshalOBotBotStatus2ᚖanytradeᚋinternalᚋenumᚐBotStatus(ctx, v)
+			data, err := ec.unmarshalOBotBotStatus2ᚖvolaticloudᚋinternalᚋenumᚐBotStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.StatusNEQ = data
 		case "statusIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusIn"))
-			data, err := ec.unmarshalOBotBotStatus2ᚕanytradeᚋinternalᚋenumᚐBotStatusᚄ(ctx, v)
+			data, err := ec.unmarshalOBotBotStatus2ᚕvolaticloudᚋinternalᚋenumᚐBotStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.StatusIn = data
 		case "statusNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusNotIn"))
-			data, err := ec.unmarshalOBotBotStatus2ᚕanytradeᚋinternalᚋenumᚐBotStatusᚄ(ctx, v)
+			data, err := ec.unmarshalOBotBotStatus2ᚕvolaticloudᚋinternalᚋenumᚐBotStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.StatusNotIn = data
 		case "mode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalOBotBotMode2ᚖanytradeᚋinternalᚋenumᚐBotMode(ctx, v)
+			data, err := ec.unmarshalOBotBotMode2ᚖvolaticloudᚋinternalᚋenumᚐBotMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Mode = data
 		case "modeNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modeNEQ"))
-			data, err := ec.unmarshalOBotBotMode2ᚖanytradeᚋinternalᚋenumᚐBotMode(ctx, v)
+			data, err := ec.unmarshalOBotBotMode2ᚖvolaticloudᚋinternalᚋenumᚐBotMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ModeNEQ = data
 		case "modeIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modeIn"))
-			data, err := ec.unmarshalOBotBotMode2ᚕanytradeᚋinternalᚋenumᚐBotModeᚄ(ctx, v)
+			data, err := ec.unmarshalOBotBotMode2ᚕvolaticloudᚋinternalᚋenumᚐBotModeᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ModeIn = data
 		case "modeNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modeNotIn"))
-			data, err := ec.unmarshalOBotBotMode2ᚕanytradeᚋinternalᚋenumᚐBotModeᚄ(ctx, v)
+			data, err := ec.unmarshalOBotBotMode2ᚕvolaticloudᚋinternalᚋenumᚐBotModeᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15683,7 +15683,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 			it.HasExchange = data
 		case "hasExchangeWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasExchangeWith"))
-			data, err := ec.unmarshalOExchangeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOExchangeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15697,7 +15697,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 			it.HasStrategy = data
 		case "hasStrategyWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasStrategyWith"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15711,7 +15711,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 			it.HasRunner = data
 		case "hasRunnerWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRunnerWith"))
-			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15725,7 +15725,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 			it.HasTrades = data
 		case "hasTradesWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasTradesWith"))
-			data, err := ec.unmarshalOTradeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐTradeWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOTradeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15739,7 +15739,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 			it.HasMetrics = data
 		case "hasMetricsWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasMetricsWith"))
-			data, err := ec.unmarshalOBotMetricsWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotMetricsWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15800,7 +15800,7 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 		switch k {
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx, v)
+			data, err := ec.unmarshalOBacktestTaskStatus2ᚖvolaticloudᚋinternalᚋenumᚐTaskStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15897,14 +15897,14 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 			it.Name = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOBotBotStatus2ᚖanytradeᚋinternalᚋenumᚐBotStatus(ctx, v)
+			data, err := ec.unmarshalOBotBotStatus2ᚖvolaticloudᚋinternalᚋenumᚐBotStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "mode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalOBotBotMode2ᚖanytradeᚋinternalᚋenumᚐBotMode(ctx, v)
+			data, err := ec.unmarshalOBotBotMode2ᚖvolaticloudᚋinternalᚋenumᚐBotMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16189,7 +16189,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 			it.Name = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖvolaticloudᚋinternalᚋenumᚐRunnerType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16217,7 +16217,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 			it.DataLastUpdated = data
 		case "dataDownloadStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatus"))
-			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖvolaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16591,7 +16591,7 @@ func (ec *executionContext) unmarshalInputDataDownloadConfigInput(ctx context.Co
 		switch k {
 		case "exchanges":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exchanges"))
-			data, err := ec.unmarshalNDataDownloadExchangeConfigInput2ᚕᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInputᚄ(ctx, v)
+			data, err := ec.unmarshalNDataDownloadExchangeConfigInput2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16729,7 +16729,7 @@ func (ec *executionContext) unmarshalInputDockerConfigInput(ctx context.Context,
 			it.Network = data
 		case "registryAuth":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registryAuth"))
-			data, err := ec.unmarshalORegistryAuthInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRegistryAuthInput(ctx, v)
+			data, err := ec.unmarshalORegistryAuthInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐRegistryAuthInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16756,56 +16756,56 @@ func (ec *executionContext) unmarshalInputExchangeConfigInput(ctx context.Contex
 		switch k {
 		case "binance":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binance"))
-			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx, v)
+			data, err := ec.unmarshalOBinanceConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Binance = data
 		case "binanceus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binanceus"))
-			data, err := ec.unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx, v)
+			data, err := ec.unmarshalOBinanceConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Binanceus = data
 		case "coinbase":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coinbase"))
-			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Coinbase = data
 		case "kraken":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kraken"))
-			data, err := ec.unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKrakenConfigInput(ctx, v)
+			data, err := ec.unmarshalOKrakenConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐKrakenConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kraken = data
 		case "kucoin":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kucoin"))
-			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kucoin = data
 		case "bybit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bybit"))
-			data, err := ec.unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBybitConfigInput(ctx, v)
+			data, err := ec.unmarshalOBybitConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBybitConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Bybit = data
 		case "okx":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("okx"))
-			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
+			data, err := ec.unmarshalOPassphraseExchangeConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Okx = data
 		case "bitfinex":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bitfinex"))
-			data, err := ec.unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBitfinexConfigInput(ctx, v)
+			data, err := ec.unmarshalOBitfinexConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBitfinexConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16832,21 +16832,21 @@ func (ec *executionContext) unmarshalInputExchangeWhereInput(ctx context.Context
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOExchangeWhereInput2ᚖanytradeᚋinternalᚋentᚐExchangeWhereInput(ctx, v)
+			data, err := ec.unmarshalOExchangeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOExchangeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOExchangeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOExchangeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOExchangeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17119,7 +17119,7 @@ func (ec *executionContext) unmarshalInputExchangeWhereInput(ctx context.Context
 			it.HasBots = data
 		case "hasBotsWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBotsWith"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17330,21 +17330,21 @@ func (ec *executionContext) unmarshalInputRunnerConfigInput(ctx context.Context,
 		switch k {
 		case "docker":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("docker"))
-			data, err := ec.unmarshalODockerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDockerConfigInput(ctx, v)
+			data, err := ec.unmarshalODockerConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐDockerConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Docker = data
 		case "kubernetes":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubernetes"))
-			data, err := ec.unmarshalOKubernetesConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKubernetesConfigInput(ctx, v)
+			data, err := ec.unmarshalOKubernetesConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐKubernetesConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kubernetes = data
 		case "local":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("local"))
-			data, err := ec.unmarshalOLocalConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐLocalConfigInput(ctx, v)
+			data, err := ec.unmarshalOLocalConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐLocalConfigInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17371,21 +17371,21 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚖanytradeᚋinternalᚋentᚐStrategyWhereInput(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17966,7 +17966,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 			it.HasBots = data
 		case "hasBotsWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBotsWith"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17980,7 +17980,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 			it.HasBacktest = data
 		case "hasBacktestWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBacktestWith"))
-			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBacktestWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17994,7 +17994,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 			it.HasChildren = data
 		case "hasChildrenWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasChildrenWith"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18008,7 +18008,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 			it.HasParent = data
 		case "hasParentWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasParentWith"))
-			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18035,21 +18035,21 @@ func (ec *executionContext) unmarshalInputTradeWhereInput(ctx context.Context, o
 		switch k {
 		case "not":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
-			data, err := ec.unmarshalOTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput(ctx, v)
+			data, err := ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Not = data
 		case "and":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOTradeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐTradeWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOTradeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
 		case "or":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
-			data, err := ec.unmarshalOTradeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐTradeWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOTradeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19211,7 +19211,7 @@ func (ec *executionContext) unmarshalInputTradeWhereInput(ctx context.Context, o
 			it.HasBot = data
 		case "hasBotWith":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBotWith"))
-			data, err := ec.unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
+			data, err := ec.unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19245,14 +19245,14 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 			it.Name = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOBotBotStatus2ᚖanytradeᚋinternalᚋenumᚐBotStatus(ctx, v)
+			data, err := ec.unmarshalOBotBotStatus2ᚖvolaticloudᚋinternalᚋenumᚐBotStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "mode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalOBotBotMode2ᚖanytradeᚋinternalᚋenumᚐBotMode(ctx, v)
+			data, err := ec.unmarshalOBotBotMode2ᚖvolaticloudᚋinternalᚋenumᚐBotMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19705,7 +19705,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 			it.Name = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx, v)
+			data, err := ec.unmarshalOBotRunnerRunnerType2ᚖvolaticloudᚋinternalᚋenumᚐRunnerType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19747,7 +19747,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 			it.ClearDataLastUpdated = data
 		case "dataDownloadStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataDownloadStatus"))
-			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
+			data, err := ec.unmarshalOBotRunnerDataDownloadStatus2ᚖvolaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22948,11 +22948,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBacktest2anytradeᚋinternalᚋentᚐBacktest(ctx context.Context, sel ast.SelectionSet, v ent.Backtest) graphql.Marshaler {
+func (ec *executionContext) marshalNBacktest2volaticloudᚋinternalᚋentᚐBacktest(ctx context.Context, sel ast.SelectionSet, v ent.Backtest) graphql.Marshaler {
 	return ec._Backtest(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest(ctx context.Context, sel ast.SelectionSet, v *ent.Backtest) graphql.Marshaler {
+func (ec *executionContext) marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest(ctx context.Context, sel ast.SelectionSet, v *ent.Backtest) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -22962,11 +22962,11 @@ func (ec *executionContext) marshalNBacktest2ᚖanytradeᚋinternalᚋentᚐBack
 	return ec._Backtest(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBacktestConnection2anytradeᚋinternalᚋentᚐBacktestConnection(ctx context.Context, sel ast.SelectionSet, v ent.BacktestConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBacktestConnection2volaticloudᚋinternalᚋentᚐBacktestConnection(ctx context.Context, sel ast.SelectionSet, v ent.BacktestConnection) graphql.Marshaler {
 	return ec._BacktestConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBacktestConnection2ᚖanytradeᚋinternalᚋentᚐBacktestConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BacktestConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBacktestConnection2ᚖvolaticloudᚋinternalᚋentᚐBacktestConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BacktestConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -22976,17 +22976,17 @@ func (ec *executionContext) marshalNBacktestConnection2ᚖanytradeᚋinternalᚋ
 	return ec._BacktestConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBacktestTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, v any) (enum.TaskStatus, error) {
+func (ec *executionContext) unmarshalNBacktestTaskStatus2volaticloudᚋinternalᚋenumᚐTaskStatus(ctx context.Context, v any) (enum.TaskStatus, error) {
 	var res enum.TaskStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBacktestTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v enum.TaskStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNBacktestTaskStatus2volaticloudᚋinternalᚋenumᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v enum.TaskStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput(ctx context.Context, v any) (*ent.BacktestWhereInput, error) {
+func (ec *executionContext) unmarshalNBacktestWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInput(ctx context.Context, v any) (*ent.BacktestWhereInput, error) {
 	res, err := ec.unmarshalInputBacktestWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -23007,11 +23007,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNBot2anytradeᚋinternalᚋentᚐBot(ctx context.Context, sel ast.SelectionSet, v ent.Bot) graphql.Marshaler {
+func (ec *executionContext) marshalNBot2volaticloudᚋinternalᚋentᚐBot(ctx context.Context, sel ast.SelectionSet, v ent.Bot) graphql.Marshaler {
 	return ec._Bot(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot(ctx context.Context, sel ast.SelectionSet, v *ent.Bot) graphql.Marshaler {
+func (ec *executionContext) marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot(ctx context.Context, sel ast.SelectionSet, v *ent.Bot) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23021,31 +23021,31 @@ func (ec *executionContext) marshalNBot2ᚖanytradeᚋinternalᚋentᚐBot(ctx c
 	return ec._Bot(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBotBotMode2anytradeᚋinternalᚋenumᚐBotMode(ctx context.Context, v any) (enum.BotMode, error) {
+func (ec *executionContext) unmarshalNBotBotMode2volaticloudᚋinternalᚋenumᚐBotMode(ctx context.Context, v any) (enum.BotMode, error) {
 	var res enum.BotMode
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBotBotMode2anytradeᚋinternalᚋenumᚐBotMode(ctx context.Context, sel ast.SelectionSet, v enum.BotMode) graphql.Marshaler {
+func (ec *executionContext) marshalNBotBotMode2volaticloudᚋinternalᚋenumᚐBotMode(ctx context.Context, sel ast.SelectionSet, v enum.BotMode) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus(ctx context.Context, v any) (enum.BotStatus, error) {
+func (ec *executionContext) unmarshalNBotBotStatus2volaticloudᚋinternalᚋenumᚐBotStatus(ctx context.Context, v any) (enum.BotStatus, error) {
 	var res enum.BotStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v enum.BotStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNBotBotStatus2volaticloudᚋinternalᚋenumᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v enum.BotStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNBotConnection2anytradeᚋinternalᚋentᚐBotConnection(ctx context.Context, sel ast.SelectionSet, v ent.BotConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBotConnection2volaticloudᚋinternalᚋentᚐBotConnection(ctx context.Context, sel ast.SelectionSet, v ent.BotConnection) graphql.Marshaler {
 	return ec._BotConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBotConnection2ᚖanytradeᚋinternalᚋentᚐBotConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BotConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBotConnection2ᚖvolaticloudᚋinternalᚋentᚐBotConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BotConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23055,7 +23055,7 @@ func (ec *executionContext) marshalNBotConnection2ᚖanytradeᚋinternalᚋent�
 	return ec._BotConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBotMetrics2ᚕᚖanytradeᚋinternalᚋentᚐBotMetricsᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.BotMetrics) graphql.Marshaler {
+func (ec *executionContext) marshalNBotMetrics2ᚕᚖvolaticloudᚋinternalᚋentᚐBotMetricsᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.BotMetrics) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23079,7 +23079,7 @@ func (ec *executionContext) marshalNBotMetrics2ᚕᚖanytradeᚋinternalᚋent�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBotMetrics2ᚖanytradeᚋinternalᚋentᚐBotMetrics(ctx, sel, v[i])
+			ret[i] = ec.marshalNBotMetrics2ᚖvolaticloudᚋinternalᚋentᚐBotMetrics(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23099,7 +23099,7 @@ func (ec *executionContext) marshalNBotMetrics2ᚕᚖanytradeᚋinternalᚋent�
 	return ret
 }
 
-func (ec *executionContext) marshalNBotMetrics2ᚖanytradeᚋinternalᚋentᚐBotMetrics(ctx context.Context, sel ast.SelectionSet, v *ent.BotMetrics) graphql.Marshaler {
+func (ec *executionContext) marshalNBotMetrics2ᚖvolaticloudᚋinternalᚋentᚐBotMetrics(ctx context.Context, sel ast.SelectionSet, v *ent.BotMetrics) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23109,16 +23109,16 @@ func (ec *executionContext) marshalNBotMetrics2ᚖanytradeᚋinternalᚋentᚐBo
 	return ec._BotMetrics(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBotMetricsWhereInput2ᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInput(ctx context.Context, v any) (*ent.BotMetricsWhereInput, error) {
+func (ec *executionContext) unmarshalNBotMetricsWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInput(ctx context.Context, v any) (*ent.BotMetricsWhereInput, error) {
 	res, err := ec.unmarshalInputBotMetricsWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBotRunner2anytradeᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v ent.BotRunner) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunner2volaticloudᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v ent.BotRunner) graphql.Marshaler {
 	return ec._BotRunner(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunner) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunner) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23128,11 +23128,11 @@ func (ec *executionContext) marshalNBotRunner2ᚖanytradeᚋinternalᚋentᚐBot
 	return ec._BotRunner(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBotRunnerConnection2anytradeᚋinternalᚋentᚐBotRunnerConnection(ctx context.Context, sel ast.SelectionSet, v ent.BotRunnerConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunnerConnection2volaticloudᚋinternalᚋentᚐBotRunnerConnection(ctx context.Context, sel ast.SelectionSet, v ent.BotRunnerConnection) graphql.Marshaler {
 	return ec._BotRunnerConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBotRunnerConnection2ᚖanytradeᚋinternalᚋentᚐBotRunnerConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunnerConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunnerConnection2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerConnection(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunnerConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23142,62 +23142,62 @@ func (ec *executionContext) marshalNBotRunnerConnection2ᚖanytradeᚋinternal�
 	return ec._BotRunnerConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, v any) (enum.DataDownloadStatus, error) {
+func (ec *executionContext) unmarshalNBotRunnerDataDownloadStatus2volaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, v any) (enum.DataDownloadStatus, error) {
 	var res enum.DataDownloadStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, sel ast.SelectionSet, v enum.DataDownloadStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunnerDataDownloadStatus2volaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, sel ast.SelectionSet, v enum.DataDownloadStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (enum.RunnerType, error) {
+func (ec *executionContext) unmarshalNBotRunnerRunnerType2volaticloudᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (enum.RunnerType, error) {
 	var res enum.RunnerType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, sel ast.SelectionSet, v enum.RunnerType) graphql.Marshaler {
+func (ec *executionContext) marshalNBotRunnerRunnerType2volaticloudᚋinternalᚋenumᚐRunnerType(ctx context.Context, sel ast.SelectionSet, v enum.RunnerType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNBotRunnerWhereInput2ᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInput(ctx context.Context, v any) (*ent.BotRunnerWhereInput, error) {
+func (ec *executionContext) unmarshalNBotRunnerWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInput(ctx context.Context, v any) (*ent.BotRunnerWhereInput, error) {
 	res, err := ec.unmarshalInputBotRunnerWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput(ctx context.Context, v any) (*ent.BotWhereInput, error) {
+func (ec *executionContext) unmarshalNBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput(ctx context.Context, v any) (*ent.BotWhereInput, error) {
 	res, err := ec.unmarshalInputBotWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateBacktestInput2anytradeᚋinternalᚋentᚐCreateBacktestInput(ctx context.Context, v any) (ent.CreateBacktestInput, error) {
+func (ec *executionContext) unmarshalNCreateBacktestInput2volaticloudᚋinternalᚋentᚐCreateBacktestInput(ctx context.Context, v any) (ent.CreateBacktestInput, error) {
 	res, err := ec.unmarshalInputCreateBacktestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateBotInput2anytradeᚋinternalᚋentᚐCreateBotInput(ctx context.Context, v any) (ent.CreateBotInput, error) {
+func (ec *executionContext) unmarshalNCreateBotInput2volaticloudᚋinternalᚋentᚐCreateBotInput(ctx context.Context, v any) (ent.CreateBotInput, error) {
 	res, err := ec.unmarshalInputCreateBotInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateBotRunnerInput2anytradeᚋinternalᚋentᚐCreateBotRunnerInput(ctx context.Context, v any) (ent.CreateBotRunnerInput, error) {
+func (ec *executionContext) unmarshalNCreateBotRunnerInput2volaticloudᚋinternalᚋentᚐCreateBotRunnerInput(ctx context.Context, v any) (ent.CreateBotRunnerInput, error) {
 	res, err := ec.unmarshalInputCreateBotRunnerInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateExchangeInput2anytradeᚋinternalᚋentᚐCreateExchangeInput(ctx context.Context, v any) (ent.CreateExchangeInput, error) {
+func (ec *executionContext) unmarshalNCreateExchangeInput2volaticloudᚋinternalᚋentᚐCreateExchangeInput(ctx context.Context, v any) (ent.CreateExchangeInput, error) {
 	res, err := ec.unmarshalInputCreateExchangeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateStrategyInput2anytradeᚋinternalᚋentᚐCreateStrategyInput(ctx context.Context, v any) (ent.CreateStrategyInput, error) {
+func (ec *executionContext) unmarshalNCreateStrategyInput2volaticloudᚋinternalᚋentᚐCreateStrategyInput(ctx context.Context, v any) (ent.CreateStrategyInput, error) {
 	res, err := ec.unmarshalInputCreateStrategyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateTradeInput2anytradeᚋinternalᚋentᚐCreateTradeInput(ctx context.Context, v any) (ent.CreateTradeInput, error) {
+func (ec *executionContext) unmarshalNCreateTradeInput2volaticloudᚋinternalᚋentᚐCreateTradeInput(ctx context.Context, v any) (ent.CreateTradeInput, error) {
 	res, err := ec.unmarshalInputCreateTradeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -23212,14 +23212,14 @@ func (ec *executionContext) marshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCurso
 	return v
 }
 
-func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚕᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInputᚄ(ctx context.Context, v any) ([]*model.DataDownloadExchangeConfigInput, error) {
+func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInputᚄ(ctx context.Context, v any) ([]*model.DataDownloadExchangeConfigInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.DataDownloadExchangeConfigInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDataDownloadExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDataDownloadExchangeConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -23227,16 +23227,16 @@ func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚕᚖanyt
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInput(ctx context.Context, v any) (*model.DataDownloadExchangeConfigInput, error) {
+func (ec *executionContext) unmarshalNDataDownloadExchangeConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐDataDownloadExchangeConfigInput(ctx context.Context, v any) (*model.DataDownloadExchangeConfigInput, error) {
 	res, err := ec.unmarshalInputDataDownloadExchangeConfigInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNExchange2anytradeᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v ent.Exchange) graphql.Marshaler {
+func (ec *executionContext) marshalNExchange2volaticloudᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v ent.Exchange) graphql.Marshaler {
 	return ec._Exchange(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExchange2ᚕᚖanytradeᚋinternalᚋentᚐExchangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Exchange) graphql.Marshaler {
+func (ec *executionContext) marshalNExchange2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Exchange) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23260,7 +23260,7 @@ func (ec *executionContext) marshalNExchange2ᚕᚖanytradeᚋinternalᚋentᚐE
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExchange(ctx, sel, v[i])
+			ret[i] = ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23280,7 +23280,7 @@ func (ec *executionContext) marshalNExchange2ᚕᚖanytradeᚋinternalᚋentᚐE
 	return ret
 }
 
-func (ec *executionContext) marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v *ent.Exchange) graphql.Marshaler {
+func (ec *executionContext) marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v *ent.Exchange) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23290,7 +23290,7 @@ func (ec *executionContext) marshalNExchange2ᚖanytradeᚋinternalᚋentᚐExch
 	return ec._Exchange(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNExchangeWhereInput2ᚖanytradeᚋinternalᚋentᚐExchangeWhereInput(ctx context.Context, v any) (*ent.ExchangeWhereInput, error) {
+func (ec *executionContext) unmarshalNExchangeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInput(ctx context.Context, v any) (*ent.ExchangeWhereInput, error) {
 	res, err := ec.unmarshalInputExchangeWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -23411,7 +23411,7 @@ func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNNode2ᚕanytradeᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v []ent.Noder) graphql.Marshaler {
+func (ec *executionContext) marshalNNode2ᚕvolaticloudᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v []ent.Noder) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23435,7 +23435,7 @@ func (ec *executionContext) marshalNNode2ᚕanytradeᚋinternalᚋentᚐNoder(ct
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONode2anytradeᚋinternalᚋentᚐNoder(ctx, sel, v[i])
+			ret[i] = ec.marshalONode2volaticloudᚋinternalᚋentᚐNoder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23453,11 +23453,11 @@ func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPag
 	return ec._PageInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStrategy2anytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v ent.Strategy) graphql.Marshaler {
+func (ec *executionContext) marshalNStrategy2volaticloudᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v ent.Strategy) graphql.Marshaler {
 	return ec._Strategy(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Strategy) graphql.Marshaler {
+func (ec *executionContext) marshalNStrategy2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Strategy) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23481,7 +23481,7 @@ func (ec *executionContext) marshalNStrategy2ᚕᚖanytradeᚋinternalᚋentᚐS
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx, sel, v[i])
+			ret[i] = ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23501,7 +23501,7 @@ func (ec *executionContext) marshalNStrategy2ᚕᚖanytradeᚋinternalᚋentᚐS
 	return ret
 }
 
-func (ec *executionContext) marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {
+func (ec *executionContext) marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23511,11 +23511,11 @@ func (ec *executionContext) marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStra
 	return ec._Strategy(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStrategyConnection2anytradeᚋinternalᚋentᚐStrategyConnection(ctx context.Context, sel ast.SelectionSet, v ent.StrategyConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNStrategyConnection2volaticloudᚋinternalᚋentᚐStrategyConnection(ctx context.Context, sel ast.SelectionSet, v ent.StrategyConnection) graphql.Marshaler {
 	return ec._StrategyConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStrategyConnection2ᚖanytradeᚋinternalᚋentᚐStrategyConnection(ctx context.Context, sel ast.SelectionSet, v *ent.StrategyConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNStrategyConnection2ᚖvolaticloudᚋinternalᚋentᚐStrategyConnection(ctx context.Context, sel ast.SelectionSet, v *ent.StrategyConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23525,7 +23525,7 @@ func (ec *executionContext) marshalNStrategyConnection2ᚖanytradeᚋinternalᚋ
 	return ec._StrategyConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNStrategyWhereInput2ᚖanytradeᚋinternalᚋentᚐStrategyWhereInput(ctx context.Context, v any) (*ent.StrategyWhereInput, error) {
+func (ec *executionContext) unmarshalNStrategyWhereInput2ᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInput(ctx context.Context, v any) (*ent.StrategyWhereInput, error) {
 	res, err := ec.unmarshalInputStrategyWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -23562,11 +23562,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTrade2anytradeᚋinternalᚋentᚐTrade(ctx context.Context, sel ast.SelectionSet, v ent.Trade) graphql.Marshaler {
+func (ec *executionContext) marshalNTrade2volaticloudᚋinternalᚋentᚐTrade(ctx context.Context, sel ast.SelectionSet, v ent.Trade) graphql.Marshaler {
 	return ec._Trade(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTrade2ᚖanytradeᚋinternalᚋentᚐTrade(ctx context.Context, sel ast.SelectionSet, v *ent.Trade) graphql.Marshaler {
+func (ec *executionContext) marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade(ctx context.Context, sel ast.SelectionSet, v *ent.Trade) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23576,11 +23576,11 @@ func (ec *executionContext) marshalNTrade2ᚖanytradeᚋinternalᚋentᚐTrade(c
 	return ec._Trade(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTradeConnection2anytradeᚋinternalᚋentᚐTradeConnection(ctx context.Context, sel ast.SelectionSet, v ent.TradeConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTradeConnection2volaticloudᚋinternalᚋentᚐTradeConnection(ctx context.Context, sel ast.SelectionSet, v ent.TradeConnection) graphql.Marshaler {
 	return ec._TradeConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTradeConnection2ᚖanytradeᚋinternalᚋentᚐTradeConnection(ctx context.Context, sel ast.SelectionSet, v *ent.TradeConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection(ctx context.Context, sel ast.SelectionSet, v *ent.TradeConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23590,32 +23590,32 @@ func (ec *executionContext) marshalNTradeConnection2ᚖanytradeᚋinternalᚋent
 	return ec._TradeConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
+func (ec *executionContext) unmarshalNTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
 	res, err := ec.unmarshalInputTradeWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateBotInput2anytradeᚋinternalᚋentᚐUpdateBotInput(ctx context.Context, v any) (ent.UpdateBotInput, error) {
+func (ec *executionContext) unmarshalNUpdateBotInput2volaticloudᚋinternalᚋentᚐUpdateBotInput(ctx context.Context, v any) (ent.UpdateBotInput, error) {
 	res, err := ec.unmarshalInputUpdateBotInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateBotRunnerInput2anytradeᚋinternalᚋentᚐUpdateBotRunnerInput(ctx context.Context, v any) (ent.UpdateBotRunnerInput, error) {
+func (ec *executionContext) unmarshalNUpdateBotRunnerInput2volaticloudᚋinternalᚋentᚐUpdateBotRunnerInput(ctx context.Context, v any) (ent.UpdateBotRunnerInput, error) {
 	res, err := ec.unmarshalInputUpdateBotRunnerInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateExchangeInput2anytradeᚋinternalᚋentᚐUpdateExchangeInput(ctx context.Context, v any) (ent.UpdateExchangeInput, error) {
+func (ec *executionContext) unmarshalNUpdateExchangeInput2volaticloudᚋinternalᚋentᚐUpdateExchangeInput(ctx context.Context, v any) (ent.UpdateExchangeInput, error) {
 	res, err := ec.unmarshalInputUpdateExchangeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateStrategyInput2anytradeᚋinternalᚋentᚐUpdateStrategyInput(ctx context.Context, v any) (ent.UpdateStrategyInput, error) {
+func (ec *executionContext) unmarshalNUpdateStrategyInput2volaticloudᚋinternalᚋentᚐUpdateStrategyInput(ctx context.Context, v any) (ent.UpdateStrategyInput, error) {
 	res, err := ec.unmarshalInputUpdateStrategyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateTradeInput2anytradeᚋinternalᚋentᚐUpdateTradeInput(ctx context.Context, v any) (ent.UpdateTradeInput, error) {
+func (ec *executionContext) unmarshalNUpdateTradeInput2volaticloudᚋinternalᚋentᚐUpdateTradeInput(ctx context.Context, v any) (ent.UpdateTradeInput, error) {
 	res, err := ec.unmarshalInputUpdateTradeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -23873,14 +23873,14 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBacktest2ᚖanytradeᚋinternalᚋentᚐBacktest(ctx context.Context, sel ast.SelectionSet, v *ent.Backtest) graphql.Marshaler {
+func (ec *executionContext) marshalOBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest(ctx context.Context, sel ast.SelectionSet, v *ent.Backtest) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Backtest(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBacktestEdge2ᚕᚖanytradeᚋinternalᚋentᚐBacktestEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BacktestEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBacktestEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BacktestEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23907,7 +23907,7 @@ func (ec *executionContext) marshalOBacktestEdge2ᚕᚖanytradeᚋinternalᚋent
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOBacktestEdge2ᚖanytradeᚋinternalᚋentᚐBacktestEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOBacktestEdge2ᚖvolaticloudᚋinternalᚋentᚐBacktestEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23921,21 +23921,21 @@ func (ec *executionContext) marshalOBacktestEdge2ᚕᚖanytradeᚋinternalᚋent
 	return ret
 }
 
-func (ec *executionContext) marshalOBacktestEdge2ᚖanytradeᚋinternalᚋentᚐBacktestEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BacktestEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBacktestEdge2ᚖvolaticloudᚋinternalᚋentᚐBacktestEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BacktestEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BacktestEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBacktestSummary2ᚖanytradeᚋinternalᚋbacktestᚐBacktestSummary(ctx context.Context, sel ast.SelectionSet, v *backtest.BacktestSummary) graphql.Marshaler {
+func (ec *executionContext) marshalOBacktestSummary2ᚖvolaticloudᚋinternalᚋbacktestᚐBacktestSummary(ctx context.Context, sel ast.SelectionSet, v *backtest.BacktestSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BacktestSummary(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋenumᚐTaskStatusᚄ(ctx context.Context, v any) ([]enum.TaskStatus, error) {
+func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚕvolaticloudᚋinternalᚋenumᚐTaskStatusᚄ(ctx context.Context, v any) ([]enum.TaskStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -23945,7 +23945,7 @@ func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚕanytradeᚋinternal�
 	res := make([]enum.TaskStatus, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBacktestTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBacktestTaskStatus2volaticloudᚋinternalᚋenumᚐTaskStatus(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -23953,7 +23953,7 @@ func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚕanytradeᚋinternal�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋenumᚐTaskStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.TaskStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBacktestTaskStatus2ᚕvolaticloudᚋinternalᚋenumᚐTaskStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.TaskStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23980,7 +23980,7 @@ func (ec *executionContext) marshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBacktestTaskStatus2anytradeᚋinternalᚋenumᚐTaskStatus(ctx, sel, v[i])
+			ret[i] = ec.marshalNBacktestTaskStatus2volaticloudᚋinternalᚋenumᚐTaskStatus(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24000,7 +24000,7 @@ func (ec *executionContext) marshalOBacktestTaskStatus2ᚕanytradeᚋinternalᚋ
 	return ret
 }
 
-func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, v any) (*enum.TaskStatus, error) {
+func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚖvolaticloudᚋinternalᚋenumᚐTaskStatus(ctx context.Context, v any) (*enum.TaskStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24009,14 +24009,14 @@ func (ec *executionContext) unmarshalOBacktestTaskStatus2ᚖanytradeᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBacktestTaskStatus2ᚖanytradeᚋinternalᚋenumᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v *enum.TaskStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBacktestTaskStatus2ᚖvolaticloudᚋinternalᚋenumᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v *enum.TaskStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx context.Context, v any) ([]*ent.BacktestWhereInput, error) {
+func (ec *executionContext) unmarshalOBacktestWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInputᚄ(ctx context.Context, v any) ([]*ent.BacktestWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24026,7 +24026,7 @@ func (ec *executionContext) unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋintern
 	res := make([]*ent.BacktestWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBacktestWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24034,7 +24034,7 @@ func (ec *executionContext) unmarshalOBacktestWhereInput2ᚕᚖanytradeᚋintern
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOBacktestWhereInput2ᚖanytradeᚋinternalᚋentᚐBacktestWhereInput(ctx context.Context, v any) (*ent.BacktestWhereInput, error) {
+func (ec *executionContext) unmarshalOBacktestWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBacktestWhereInput(ctx context.Context, v any) (*ent.BacktestWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24042,7 +24042,7 @@ func (ec *executionContext) unmarshalOBacktestWhereInput2ᚖanytradeᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx context.Context, v any) (*model.BinanceConfigInput, error) {
+func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBinanceConfigInput(ctx context.Context, v any) (*model.BinanceConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24050,7 +24050,7 @@ func (ec *executionContext) unmarshalOBinanceConfigInput2ᚖanytradeᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOBitfinexConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBitfinexConfigInput(ctx context.Context, v any) (*model.BitfinexConfigInput, error) {
+func (ec *executionContext) unmarshalOBitfinexConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBitfinexConfigInput(ctx context.Context, v any) (*model.BitfinexConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24088,14 +24088,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOBot2ᚖanytradeᚋinternalᚋentᚐBot(ctx context.Context, sel ast.SelectionSet, v *ent.Bot) graphql.Marshaler {
+func (ec *executionContext) marshalOBot2ᚖvolaticloudᚋinternalᚋentᚐBot(ctx context.Context, sel ast.SelectionSet, v *ent.Bot) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Bot(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBotBotMode2ᚕanytradeᚋinternalᚋenumᚐBotModeᚄ(ctx context.Context, v any) ([]enum.BotMode, error) {
+func (ec *executionContext) unmarshalOBotBotMode2ᚕvolaticloudᚋinternalᚋenumᚐBotModeᚄ(ctx context.Context, v any) ([]enum.BotMode, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24105,7 +24105,7 @@ func (ec *executionContext) unmarshalOBotBotMode2ᚕanytradeᚋinternalᚋenum�
 	res := make([]enum.BotMode, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotBotMode2anytradeᚋinternalᚋenumᚐBotMode(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotBotMode2volaticloudᚋinternalᚋenumᚐBotMode(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24113,7 +24113,7 @@ func (ec *executionContext) unmarshalOBotBotMode2ᚕanytradeᚋinternalᚋenum�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOBotBotMode2ᚕanytradeᚋinternalᚋenumᚐBotModeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.BotMode) graphql.Marshaler {
+func (ec *executionContext) marshalOBotBotMode2ᚕvolaticloudᚋinternalᚋenumᚐBotModeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.BotMode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24140,7 +24140,7 @@ func (ec *executionContext) marshalOBotBotMode2ᚕanytradeᚋinternalᚋenumᚐB
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBotBotMode2anytradeᚋinternalᚋenumᚐBotMode(ctx, sel, v[i])
+			ret[i] = ec.marshalNBotBotMode2volaticloudᚋinternalᚋenumᚐBotMode(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24160,7 +24160,7 @@ func (ec *executionContext) marshalOBotBotMode2ᚕanytradeᚋinternalᚋenumᚐB
 	return ret
 }
 
-func (ec *executionContext) unmarshalOBotBotMode2ᚖanytradeᚋinternalᚋenumᚐBotMode(ctx context.Context, v any) (*enum.BotMode, error) {
+func (ec *executionContext) unmarshalOBotBotMode2ᚖvolaticloudᚋinternalᚋenumᚐBotMode(ctx context.Context, v any) (*enum.BotMode, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24169,14 +24169,14 @@ func (ec *executionContext) unmarshalOBotBotMode2ᚖanytradeᚋinternalᚋenum�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotBotMode2ᚖanytradeᚋinternalᚋenumᚐBotMode(ctx context.Context, sel ast.SelectionSet, v *enum.BotMode) graphql.Marshaler {
+func (ec *executionContext) marshalOBotBotMode2ᚖvolaticloudᚋinternalᚋenumᚐBotMode(ctx context.Context, sel ast.SelectionSet, v *enum.BotMode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOBotBotStatus2ᚕanytradeᚋinternalᚋenumᚐBotStatusᚄ(ctx context.Context, v any) ([]enum.BotStatus, error) {
+func (ec *executionContext) unmarshalOBotBotStatus2ᚕvolaticloudᚋinternalᚋenumᚐBotStatusᚄ(ctx context.Context, v any) ([]enum.BotStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24186,7 +24186,7 @@ func (ec *executionContext) unmarshalOBotBotStatus2ᚕanytradeᚋinternalᚋenum
 	res := make([]enum.BotStatus, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotBotStatus2volaticloudᚋinternalᚋenumᚐBotStatus(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24194,7 +24194,7 @@ func (ec *executionContext) unmarshalOBotBotStatus2ᚕanytradeᚋinternalᚋenum
 	return res, nil
 }
 
-func (ec *executionContext) marshalOBotBotStatus2ᚕanytradeᚋinternalᚋenumᚐBotStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.BotStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBotBotStatus2ᚕvolaticloudᚋinternalᚋenumᚐBotStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.BotStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24221,7 +24221,7 @@ func (ec *executionContext) marshalOBotBotStatus2ᚕanytradeᚋinternalᚋenum�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBotBotStatus2anytradeᚋinternalᚋenumᚐBotStatus(ctx, sel, v[i])
+			ret[i] = ec.marshalNBotBotStatus2volaticloudᚋinternalᚋenumᚐBotStatus(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24241,7 +24241,7 @@ func (ec *executionContext) marshalOBotBotStatus2ᚕanytradeᚋinternalᚋenum�
 	return ret
 }
 
-func (ec *executionContext) unmarshalOBotBotStatus2ᚖanytradeᚋinternalᚋenumᚐBotStatus(ctx context.Context, v any) (*enum.BotStatus, error) {
+func (ec *executionContext) unmarshalOBotBotStatus2ᚖvolaticloudᚋinternalᚋenumᚐBotStatus(ctx context.Context, v any) (*enum.BotStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24250,14 +24250,14 @@ func (ec *executionContext) unmarshalOBotBotStatus2ᚖanytradeᚋinternalᚋenum
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotBotStatus2ᚖanytradeᚋinternalᚋenumᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v *enum.BotStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBotBotStatus2ᚖvolaticloudᚋinternalᚋenumᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v *enum.BotStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOBotEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBotEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐBotEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24284,7 +24284,7 @@ func (ec *executionContext) marshalOBotEdge2ᚕᚖanytradeᚋinternalᚋentᚐBo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOBotEdge2ᚖanytradeᚋinternalᚋentᚐBotEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOBotEdge2ᚖvolaticloudᚋinternalᚋentᚐBotEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24298,21 +24298,21 @@ func (ec *executionContext) marshalOBotEdge2ᚕᚖanytradeᚋinternalᚋentᚐBo
 	return ret
 }
 
-func (ec *executionContext) marshalOBotEdge2ᚖanytradeᚋinternalᚋentᚐBotEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BotEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBotEdge2ᚖvolaticloudᚋinternalᚋentᚐBotEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BotEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BotEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBotMetrics2ᚖanytradeᚋinternalᚋentᚐBotMetrics(ctx context.Context, sel ast.SelectionSet, v *ent.BotMetrics) graphql.Marshaler {
+func (ec *executionContext) marshalOBotMetrics2ᚖvolaticloudᚋinternalᚋentᚐBotMetrics(ctx context.Context, sel ast.SelectionSet, v *ent.BotMetrics) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BotMetrics(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx context.Context, v any) ([]*ent.BotMetricsWhereInput, error) {
+func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInputᚄ(ctx context.Context, v any) ([]*ent.BotMetricsWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24322,7 +24322,7 @@ func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚕᚖanytradeᚋinte
 	res := make([]*ent.BotMetricsWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotMetricsWhereInput2ᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotMetricsWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24330,7 +24330,7 @@ func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚕᚖanytradeᚋinte
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚖanytradeᚋinternalᚋentᚐBotMetricsWhereInput(ctx context.Context, v any) (*ent.BotMetricsWhereInput, error) {
+func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotMetricsWhereInput(ctx context.Context, v any) (*ent.BotMetricsWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24338,14 +24338,14 @@ func (ec *executionContext) unmarshalOBotMetricsWhereInput2ᚖanytradeᚋinterna
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotRunner2ᚖanytradeᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunner) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunner) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BotRunner(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx context.Context, v any) ([]enum.DataDownloadStatus, error) {
+func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚕvolaticloudᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx context.Context, v any) ([]enum.DataDownloadStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24355,7 +24355,7 @@ func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋ
 	res := make([]enum.DataDownloadStatus, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotRunnerDataDownloadStatus2volaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24363,7 +24363,7 @@ func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋ
 	return res, nil
 }
 
-func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.DataDownloadStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚕvolaticloudᚋinternalᚋenumᚐDataDownloadStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.DataDownloadStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24390,7 +24390,7 @@ func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋin
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBotRunnerDataDownloadStatus2anytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx, sel, v[i])
+			ret[i] = ec.marshalNBotRunnerDataDownloadStatus2volaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24410,7 +24410,7 @@ func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚕanytradeᚋin
 	return ret
 }
 
-func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, v any) (*enum.DataDownloadStatus, error) {
+func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚖvolaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, v any) (*enum.DataDownloadStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24419,14 +24419,14 @@ func (ec *executionContext) unmarshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚖanytradeᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, sel ast.SelectionSet, v *enum.DataDownloadStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerDataDownloadStatus2ᚖvolaticloudᚋinternalᚋenumᚐDataDownloadStatus(ctx context.Context, sel ast.SelectionSet, v *enum.DataDownloadStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotRunnerEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.BotRunnerEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24453,7 +24453,7 @@ func (ec *executionContext) marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋen
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOBotRunnerEdge2ᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOBotRunnerEdge2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24467,14 +24467,14 @@ func (ec *executionContext) marshalOBotRunnerEdge2ᚕᚖanytradeᚋinternalᚋen
 	return ret
 }
 
-func (ec *executionContext) marshalOBotRunnerEdge2ᚖanytradeᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunnerEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerEdge2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerEdge(ctx context.Context, sel ast.SelectionSet, v *ent.BotRunnerEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BotRunnerEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚕanytradeᚋinternalᚋenumᚐRunnerTypeᚄ(ctx context.Context, v any) ([]enum.RunnerType, error) {
+func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚕvolaticloudᚋinternalᚋenumᚐRunnerTypeᚄ(ctx context.Context, v any) ([]enum.RunnerType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24484,7 +24484,7 @@ func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚕanytradeᚋinternal
 	res := make([]enum.RunnerType, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotRunnerRunnerType2volaticloudᚋinternalᚋenumᚐRunnerType(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24492,7 +24492,7 @@ func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚕanytradeᚋinternal
 	return res, nil
 }
 
-func (ec *executionContext) marshalOBotRunnerRunnerType2ᚕanytradeᚋinternalᚋenumᚐRunnerTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.RunnerType) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerRunnerType2ᚕvolaticloudᚋinternalᚋenumᚐRunnerTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.RunnerType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24519,7 +24519,7 @@ func (ec *executionContext) marshalOBotRunnerRunnerType2ᚕanytradeᚋinternal�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBotRunnerRunnerType2anytradeᚋinternalᚋenumᚐRunnerType(ctx, sel, v[i])
+			ret[i] = ec.marshalNBotRunnerRunnerType2volaticloudᚋinternalᚋenumᚐRunnerType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24539,7 +24539,7 @@ func (ec *executionContext) marshalOBotRunnerRunnerType2ᚕanytradeᚋinternal�
 	return ret
 }
 
-func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (*enum.RunnerType, error) {
+func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚖvolaticloudᚋinternalᚋenumᚐRunnerType(ctx context.Context, v any) (*enum.RunnerType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24548,14 +24548,14 @@ func (ec *executionContext) unmarshalOBotRunnerRunnerType2ᚖanytradeᚋinternal
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotRunnerRunnerType2ᚖanytradeᚋinternalᚋenumᚐRunnerType(ctx context.Context, sel ast.SelectionSet, v *enum.RunnerType) graphql.Marshaler {
+func (ec *executionContext) marshalOBotRunnerRunnerType2ᚖvolaticloudᚋinternalᚋenumᚐRunnerType(ctx context.Context, sel ast.SelectionSet, v *enum.RunnerType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx context.Context, v any) ([]*ent.BotRunnerWhereInput, error) {
+func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx context.Context, v any) ([]*ent.BotRunnerWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24565,7 +24565,7 @@ func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinter
 	res := make([]*ent.BotRunnerWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotRunnerWhereInput2ᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotRunnerWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24573,7 +24573,7 @@ func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚕᚖanytradeᚋinter
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚖanytradeᚋinternalᚋentᚐBotRunnerWhereInput(ctx context.Context, v any) (*ent.BotRunnerWhereInput, error) {
+func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInput(ctx context.Context, v any) (*ent.BotRunnerWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24581,14 +24581,14 @@ func (ec *executionContext) unmarshalOBotRunnerWhereInput2ᚖanytradeᚋinternal
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOBotStatus2ᚖanytradeᚋinternalᚋrunnerᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v *runner.BotStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOBotStatus2ᚖvolaticloudᚋinternalᚋrunnerᚐBotStatus(ctx context.Context, sel ast.SelectionSet, v *runner.BotStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._BotStatus(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐBotWhereInputᚄ(ctx context.Context, v any) ([]*ent.BotWhereInput, error) {
+func (ec *executionContext) unmarshalOBotWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotWhereInputᚄ(ctx context.Context, v any) ([]*ent.BotWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24598,7 +24598,7 @@ func (ec *executionContext) unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋ
 	res := make([]*ent.BotWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24606,7 +24606,7 @@ func (ec *executionContext) unmarshalOBotWhereInput2ᚕᚖanytradeᚋinternalᚋ
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋentᚐBotWhereInput(ctx context.Context, v any) (*ent.BotWhereInput, error) {
+func (ec *executionContext) unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput(ctx context.Context, v any) (*ent.BotWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24614,7 +24614,7 @@ func (ec *executionContext) unmarshalOBotWhereInput2ᚖanytradeᚋinternalᚋent
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOBybitConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐBybitConfigInput(ctx context.Context, v any) (*model.BybitConfigInput, error) {
+func (ec *executionContext) unmarshalOBybitConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐBybitConfigInput(ctx context.Context, v any) (*model.BybitConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24638,7 +24638,7 @@ func (ec *executionContext) marshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCu
 	return v
 }
 
-func (ec *executionContext) unmarshalODockerConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐDockerConfigInput(ctx context.Context, v any) (*model.DockerConfigInput, error) {
+func (ec *executionContext) unmarshalODockerConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐDockerConfigInput(ctx context.Context, v any) (*model.DockerConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24646,7 +24646,7 @@ func (ec *executionContext) unmarshalODockerConfigInput2ᚖanytradeᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOExchangeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx context.Context, v any) ([]*ent.ExchangeWhereInput, error) {
+func (ec *executionContext) unmarshalOExchangeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx context.Context, v any) ([]*ent.ExchangeWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24656,7 +24656,7 @@ func (ec *executionContext) unmarshalOExchangeWhereInput2ᚕᚖanytradeᚋintern
 	res := make([]*ent.ExchangeWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNExchangeWhereInput2ᚖanytradeᚋinternalᚋentᚐExchangeWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNExchangeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24664,7 +24664,7 @@ func (ec *executionContext) unmarshalOExchangeWhereInput2ᚕᚖanytradeᚋintern
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOExchangeWhereInput2ᚖanytradeᚋinternalᚋentᚐExchangeWhereInput(ctx context.Context, v any) (*ent.ExchangeWhereInput, error) {
+func (ec *executionContext) unmarshalOExchangeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInput(ctx context.Context, v any) (*ent.ExchangeWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24856,7 +24856,7 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOKrakenConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKrakenConfigInput(ctx context.Context, v any) (*model.KrakenConfigInput, error) {
+func (ec *executionContext) unmarshalOKrakenConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐKrakenConfigInput(ctx context.Context, v any) (*model.KrakenConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24864,7 +24864,7 @@ func (ec *executionContext) unmarshalOKrakenConfigInput2ᚖanytradeᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOKubernetesConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐKubernetesConfigInput(ctx context.Context, v any) (*model.KubernetesConfigInput, error) {
+func (ec *executionContext) unmarshalOKubernetesConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐKubernetesConfigInput(ctx context.Context, v any) (*model.KubernetesConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24872,7 +24872,7 @@ func (ec *executionContext) unmarshalOKubernetesConfigInput2ᚖanytradeᚋintern
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOLocalConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐLocalConfigInput(ctx context.Context, v any) (*model.LocalConfigInput, error) {
+func (ec *executionContext) unmarshalOLocalConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐLocalConfigInput(ctx context.Context, v any) (*model.LocalConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24898,14 +24898,14 @@ func (ec *executionContext) marshalOMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalONode2anytradeᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v ent.Noder) graphql.Marshaler {
+func (ec *executionContext) marshalONode2volaticloudᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v ent.Noder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPassphraseExchangeConfigInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx context.Context, v any) (*model.PassphraseExchangeConfigInput, error) {
+func (ec *executionContext) unmarshalOPassphraseExchangeConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPassphraseExchangeConfigInput(ctx context.Context, v any) (*model.PassphraseExchangeConfigInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24913,7 +24913,7 @@ func (ec *executionContext) unmarshalOPassphraseExchangeConfigInput2ᚖanytrade�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalORegistryAuthInput2ᚖanytradeᚋinternalᚋgraphᚋmodelᚐRegistryAuthInput(ctx context.Context, v any) (*model.RegistryAuthInput, error) {
+func (ec *executionContext) unmarshalORegistryAuthInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐRegistryAuthInput(ctx context.Context, v any) (*model.RegistryAuthInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -24921,7 +24921,7 @@ func (ec *executionContext) unmarshalORegistryAuthInput2ᚖanytradeᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOStrategy2ᚕᚖanytradeᚋinternalᚋentᚐStrategyᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Strategy) graphql.Marshaler {
+func (ec *executionContext) marshalOStrategy2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Strategy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24948,7 +24948,7 @@ func (ec *executionContext) marshalOStrategy2ᚕᚖanytradeᚋinternalᚋentᚐS
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx, sel, v[i])
+			ret[i] = ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24968,14 +24968,14 @@ func (ec *executionContext) marshalOStrategy2ᚕᚖanytradeᚋinternalᚋentᚐS
 	return ret
 }
 
-func (ec *executionContext) marshalOStrategy2ᚖanytradeᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {
+func (ec *executionContext) marshalOStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v *ent.Strategy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Strategy(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOStrategyEdge2ᚕᚖanytradeᚋinternalᚋentᚐStrategyEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.StrategyEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOStrategyEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.StrategyEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25002,7 +25002,7 @@ func (ec *executionContext) marshalOStrategyEdge2ᚕᚖanytradeᚋinternalᚋent
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOStrategyEdge2ᚖanytradeᚋinternalᚋentᚐStrategyEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOStrategyEdge2ᚖvolaticloudᚋinternalᚋentᚐStrategyEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25016,14 +25016,14 @@ func (ec *executionContext) marshalOStrategyEdge2ᚕᚖanytradeᚋinternalᚋent
 	return ret
 }
 
-func (ec *executionContext) marshalOStrategyEdge2ᚖanytradeᚋinternalᚋentᚐStrategyEdge(ctx context.Context, sel ast.SelectionSet, v *ent.StrategyEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOStrategyEdge2ᚖvolaticloudᚋinternalᚋentᚐStrategyEdge(ctx context.Context, sel ast.SelectionSet, v *ent.StrategyEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._StrategyEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx context.Context, v any) ([]*ent.StrategyWhereInput, error) {
+func (ec *executionContext) unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx context.Context, v any) ([]*ent.StrategyWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25033,7 +25033,7 @@ func (ec *executionContext) unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋintern
 	res := make([]*ent.StrategyWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNStrategyWhereInput2ᚖanytradeᚋinternalᚋentᚐStrategyWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNStrategyWhereInput2ᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -25041,7 +25041,7 @@ func (ec *executionContext) unmarshalOStrategyWhereInput2ᚕᚖanytradeᚋintern
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOStrategyWhereInput2ᚖanytradeᚋinternalᚋentᚐStrategyWhereInput(ctx context.Context, v any) (*ent.StrategyWhereInput, error) {
+func (ec *executionContext) unmarshalOStrategyWhereInput2ᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInput(ctx context.Context, v any) (*ent.StrategyWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25181,14 +25181,14 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOTrade2ᚖanytradeᚋinternalᚋentᚐTrade(ctx context.Context, sel ast.SelectionSet, v *ent.Trade) graphql.Marshaler {
+func (ec *executionContext) marshalOTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade(ctx context.Context, sel ast.SelectionSet, v *ent.Trade) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Trade(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTradeEdge2ᚕᚖanytradeᚋinternalᚋentᚐTradeEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.TradeEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOTradeEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.TradeEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25215,7 +25215,7 @@ func (ec *executionContext) marshalOTradeEdge2ᚕᚖanytradeᚋinternalᚋentᚐ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTradeEdge2ᚖanytradeᚋinternalᚋentᚐTradeEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOTradeEdge2ᚖvolaticloudᚋinternalᚋentᚐTradeEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25229,14 +25229,14 @@ func (ec *executionContext) marshalOTradeEdge2ᚕᚖanytradeᚋinternalᚋentᚐ
 	return ret
 }
 
-func (ec *executionContext) marshalOTradeEdge2ᚖanytradeᚋinternalᚋentᚐTradeEdge(ctx context.Context, sel ast.SelectionSet, v *ent.TradeEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOTradeEdge2ᚖvolaticloudᚋinternalᚋentᚐTradeEdge(ctx context.Context, sel ast.SelectionSet, v *ent.TradeEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TradeEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOTradeWhereInput2ᚕᚖanytradeᚋinternalᚋentᚐTradeWhereInputᚄ(ctx context.Context, v any) ([]*ent.TradeWhereInput, error) {
+func (ec *executionContext) unmarshalOTradeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeWhereInputᚄ(ctx context.Context, v any) ([]*ent.TradeWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25246,7 +25246,7 @@ func (ec *executionContext) unmarshalOTradeWhereInput2ᚕᚖanytradeᚋinternal�
 	res := make([]*ent.TradeWhereInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -25254,7 +25254,7 @@ func (ec *executionContext) unmarshalOTradeWhereInput2ᚕᚖanytradeᚋinternal�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOTradeWhereInput2ᚖanytradeᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
+func (ec *executionContext) unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
 	if v == nil {
 		return nil, nil
 	}

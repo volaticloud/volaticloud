@@ -8,7 +8,7 @@ Use this checklist before pushing to trigger the deployment workflow.
 
 ### 1. Environment Exists
 - [ ] `prod` environment exists in GitHub
-  - Verify: https://github.com/diazoxide/anytrade/settings/environments
+  - Verify: https://github.com/diazoxide/volaticloud/settings/environments
   - Should see: **prod** in the list
 
 ### 2. Environment Secrets Set
@@ -191,7 +191,7 @@ Should see:
 - [ ] Select: Read and write permissions ✅
 
 ### 3. Environment Protection Rules (Optional)
-Review: https://github.com/diazoxide/anytrade/settings/environments/prod
+Review: https://github.com/diazoxide/volaticloud/settings/environments/prod
 
 Optional settings:
 - [ ] Required reviewers: Add team members (recommended for production)
@@ -224,9 +224,9 @@ Expected:
 namespace/keycloak created (dry run)
 operatorgroup.operators.coreos.com/keycloak-operator-group created (dry run)
 subscription.operators.coreos.com/keycloak-operator created (dry run)
-keycloak.k8s.keycloak.org/anytrade-keycloak created (dry run)
-keycloakrealmimport.k8s.keycloak.org/anytrade-realm created (dry run)
-keycloakrealmimport.k8s.keycloak.org/anytrade-client created (dry run)
+keycloak.k8s.keycloak.org/volaticloud-keycloak created (dry run)
+keycloakrealmimport.k8s.keycloak.org/volaticloud-realm created (dry run)
+keycloakrealmimport.k8s.keycloak.org/volaticloud-client created (dry run)
 ```
 
 ---
@@ -296,10 +296,10 @@ Expected: Keycloak service with ClusterIP or LoadBalancer
 ### 5. Access Admin Console
 ```bash
 # Get admin credentials
-kubectl get secret anytrade-keycloak-initial-admin \
+kubectl get secret volaticloud-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.username}' | base64 -d
 
-kubectl get secret anytrade-keycloak-initial-admin \
+kubectl get secret volaticloud-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.password}' | base64 -d
 ```
 
@@ -307,7 +307,7 @@ Visit: `https://auth.volaticloud.com/auth/admin` (or your configured hostname)
 
 ### 6. Verify OIDC Configuration
 ```bash
-curl https://auth.volaticloud.com/auth/realms/anytrade/.well-known/openid-configuration
+curl https://auth.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configuration
 ```
 
 Expected: JSON response with OIDC endpoints
@@ -347,7 +347,7 @@ kubectl get events -n olm --sort-by='.lastTimestamp'
 ## 📞 Support
 
 If deployment fails:
-1. Check GitHub Actions logs: https://github.com/diazoxide/anytrade/actions
+1. Check GitHub Actions logs: https://github.com/diazoxide/volaticloud/actions
 2. Review this checklist
 3. Check Kubernetes events: `kubectl get events -A --sort-by='.lastTimestamp'`
 4. Review documentation: `deployments/README.md`
@@ -363,8 +363,8 @@ Deployment is successful when:
 - ✅ Keycloak pods running (2 pods in `keycloak` namespace)
 - ✅ Keycloak admin console accessible
 - ✅ OIDC configuration endpoint returns valid JSON
-- ✅ Realm `anytrade` exists with 4 roles (admin, trader, viewer, user)
-- ✅ OIDC clients configured (anytrade-dashboard, anytrade-api)
+- ✅ Realm `volaticloud` exists with 4 roles (admin, trader, viewer, user)
+- ✅ OIDC clients configured (volaticloud-dashboard, volaticloud-api)
 
 **Estimated Time**: 10-15 minutes from push to fully deployed
 

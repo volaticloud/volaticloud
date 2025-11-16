@@ -1,7 +1,7 @@
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
-  name: anytrade-keycloak
+  name: volaticloud-keycloak
   namespace: keycloak
   labels:
     app: keycloak

@@ -3,11 +3,11 @@
 package ent
 
 import (
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botmetrics"
 	"fmt"
 	"strings"
 	"time"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/botmetrics"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

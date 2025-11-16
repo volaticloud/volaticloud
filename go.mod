@@ -1,4 +1,4 @@
-module anytrade
+module volaticloud
 
 go 1.24.6
 

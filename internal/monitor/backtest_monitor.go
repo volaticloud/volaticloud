@@ -7,11 +7,11 @@ import (
 	"log"
 	"time"
 
-	"anytrade/internal/backtest"
-	"anytrade/internal/ent"
-	entbacktest "anytrade/internal/ent/backtest"
-	"anytrade/internal/enum"
-	"anytrade/internal/runner"
+	"volaticloud/internal/backtest"
+	"volaticloud/internal/ent"
+	entbacktest "volaticloud/internal/ent/backtest"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 // BacktestMonitor monitors running backtests and updates their status

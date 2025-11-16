@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/etcd"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/etcd"
 )
 
 // Manager manages all monitoring workers and coordinates distributed monitoring

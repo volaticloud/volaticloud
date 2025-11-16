@@ -3,12 +3,12 @@ package graph
 import (
 	"testing"
 
-	"anytrade/internal/ent"
-	"anytrade/internal/enum"
-	"anytrade/internal/runner"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"volaticloud/internal/ent"
+	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 // TestValidateFreqtradeConfig tests the validation function with various scenarios

@@ -127,15 +127,15 @@ The Keycloak operator created an ingress without specifying the ingress class. L
 
 ```bash
 # Check current ingress
-kubectl get ingress -n keycloak anytrade-keycloak-ingress -o yaml
+kubectl get ingress -n keycloak volaticloud-keycloak-ingress -o yaml
 
 # Patch the ingress to use nginx class
-kubectl patch ingress anytrade-keycloak-ingress -n keycloak \
+kubectl patch ingress volaticloud-keycloak-ingress -n keycloak \
   --type=json \
   -p='[{"op": "add", "path": "/spec/ingressClassName", "value": "nginx"}]'
 
 # Verify the change
-kubectl get ingress -n keycloak anytrade-keycloak-ingress
+kubectl get ingress -n keycloak volaticloud-keycloak-ingress
 # Should now show ADDRESS with the load balancer IP
 ```
 
@@ -239,7 +239,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: anytrade-keycloak-ingress
+  name: volaticloud-keycloak-ingress
   namespace: keycloak
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -259,7 +259,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: anytrade-keycloak-service
+            name: volaticloud-keycloak-service
             port:
               number: 8080
 EOF
@@ -305,11 +305,11 @@ Visit in browser: `https://auth.volaticloud.com/auth`
 
 ```bash
 # Get admin username
-kubectl get secret anytrade-keycloak-initial-admin \
+kubectl get secret volaticloud-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.username}' | base64 -d && echo
 
 # Get admin password
-kubectl get secret anytrade-keycloak-initial-admin \
+kubectl get secret volaticloud-keycloak-initial-admin \
   -n keycloak -o jsonpath='{.data.password}' | base64 -d && echo
 ```
 
@@ -317,8 +317,8 @@ kubectl get secret anytrade-keycloak-initial-admin \
 
 1. Visit: `https://auth.volaticloud.com/auth/admin`
 2. Login with admin credentials from above
-3. Verify realm `anytrade` exists
-4. Check clients: `anytrade-dashboard` and `anytrade-api`
+3. Verify realm `volaticloud` exists
+4. Check clients: `volaticloud-dashboard` and `volaticloud-api`
 
 ---
 
@@ -334,7 +334,7 @@ kubectl get pods -n ingress-nginx
 kubectl get svc -n ingress-nginx
 
 # Check ingress has ingressClassName
-kubectl get ingress -n keycloak anytrade-keycloak-ingress -o yaml | grep ingressClassName
+kubectl get ingress -n keycloak volaticloud-keycloak-ingress -o yaml | grep ingressClassName
 ```
 
 **Fix**: Ensure nginx ingress controller is installed and ingress has `ingressClassName: nginx`
@@ -381,7 +381,7 @@ Update Keycloak instance hostname configuration:
 
 ```bash
 # Check current hostname
-kubectl get keycloak anytrade-keycloak -n keycloak -o yaml | grep hostname
+kubectl get keycloak volaticloud-keycloak -n keycloak -o yaml | grep hostname
 
 # Should match your domain (auth.volaticloud.com)
 # If not, update KEYCLOAK_HOSTNAME secret and redeploy
@@ -422,9 +422,9 @@ kubectl get ingress -n keycloak
 kubectl get certificate -n keycloak
 
 # Get admin credentials
-kubectl get secret anytrade-keycloak-initial-admin -n keycloak \
+kubectl get secret volaticloud-keycloak-initial-admin -n keycloak \
   -o jsonpath='{.data.username}' | base64 -d && echo
-kubectl get secret anytrade-keycloak-initial-admin -n keycloak \
+kubectl get secret volaticloud-keycloak-initial-admin -n keycloak \
   -o jsonpath='{.data.password}' | base64 -d && echo
 
 # Test access

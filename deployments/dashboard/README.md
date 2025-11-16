@@ -1,6 +1,6 @@
 # Dashboard Deployment
 
-Kubernetes deployment configuration for the AnyTrade dashboard using Caddy.
+Kubernetes deployment configuration for the VolatiCloud dashboard using Caddy.
 
 ## Features
 

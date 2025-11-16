@@ -1,7 +1,7 @@
-# AnyTrade Platform - Implementation Plan
+# VolatiCloud Platform - Implementation Plan
 
 ## Overview
-AnyTrade is a control-plane platform for managing freqtrade trading bots. It provides centralized management of bot lifecycles, strategies, exchanges, backtesting, and hyperparameter optimization.
+VolatiCloud is a control-plane platform for managing freqtrade trading bots. It provides centralized management of bot lifecycles, strategies, exchanges, backtesting, and hyperparameter optimization.
 
 ## Architecture
 
@@ -372,12 +372,12 @@ Environment:
   - FREQTRADE_API_USERNAME={generated}
   - FREQTRADE_API_PASSWORD={generated}
 Labels:
-  - anytrade.bot.id={bot_id}
-  - anytrade.bot.name={bot_name}
-  - anytrade.runtime=docker
-  - anytrade.type=bot
+  - volaticloud.bot.id={bot_id}
+  - volaticloud.bot.name={bot_name}
+  - volaticloud.runtime=docker
+  - volaticloud.type=bot
 Networks:
-  - anytrade-network
+  - volaticloud-network
 Resources:
   Memory: 512MB (configurable)
   CPU: 0.5 cores (configurable)
@@ -391,9 +391,9 @@ Volumes:
 Command: backtesting --strategy {strategy_name} --config {config}
 AutoRemove: true (cleanup after completion)
 Labels:
-  - anytrade.backtest.id={backtest_id}
-  - anytrade.runtime=docker
-  - anytrade.type=backtest
+  - volaticloud.backtest.id={backtest_id}
+  - volaticloud.runtime=docker
+  - volaticloud.type=backtest
 Resources:
   Memory: 2GB
   CPU: 2 cores
@@ -407,22 +407,22 @@ Volumes:
 Command: hyperopt --strategy {strategy_name} --epochs {epochs} --spaces {spaces}
 AutoRemove: false (keep logs)
 Labels:
-  - anytrade.hyperopt.id={hyperopt_id}
-  - anytrade.runtime=docker
-  - anytrade.type=hyperopt
+  - volaticloud.hyperopt.id={hyperopt_id}
+  - volaticloud.runtime=docker
+  - volaticloud.type=hyperopt
 Resources:
   Memory: 4GB
   CPU: 4 cores (hyperopt is CPU intensive)
 ```
 
 #### Naming Convention
-- Bots: `anytrade-bot-{bot_name}-{short_id}`
-- Backtests: `anytrade-backtest-{backtest_id}`
-- HyperOpts: `anytrade-hyperopt-{hyperopt_id}`
+- Bots: `volaticloud-bot-{bot_name}-{short_id}`
+- Backtests: `volaticloud-backtest-{backtest_id}`
+- HyperOpts: `volaticloud-hyperopt-{hyperopt_id}`
 
 #### Volume Management
-- Persistent volumes per bot: `/var/lib/anytrade/data/bots/{bot_id}`
-- Temporary volumes for backtests: `/var/lib/anytrade/data/backtests/{backtest_id}`
+- Persistent volumes per bot: `/var/lib/volaticloud/data/bots/{bot_id}`
+- Temporary volumes for backtests: `/var/lib/volaticloud/data/backtests/{backtest_id}`
 - Strategy files mounted read-only
 
 #### Implementation Notes
@@ -442,9 +442,9 @@ Resources:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: anytrade-bot-{bot_id}
+  name: volaticloud-bot-{bot_id}
   labels:
-    app: anytrade-bot
+    app: volaticloud-bot
     bot-id: {bot_id}
 spec:
   replicas: 1
@@ -510,7 +510,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: anytrade-backtest-{backtest_id}
+  name: volaticloud-backtest-{backtest_id}
 spec:
   template:
     spec:
@@ -594,11 +594,11 @@ runtime:
 
   docker:
     socket: unix:///var/run/docker.sock
-    network: anytrade-network
-    data_path: /var/lib/anytrade/data
+    network: volaticloud-network
+    data_path: /var/lib/volaticloud/data
 
   kubernetes:
-    namespace: anytrade
+    namespace: volaticloud
     kubeconfig: ~/.kube/config
     storage_class: standard
 
@@ -1041,7 +1041,7 @@ github.com/stretchr/testify
 ## Project Structure
 
 ```
-anytrade/
+volaticloud/
 ├── cmd/
 │   └── server/
 │       └── main.go              # Main server entry point (handles everything)
@@ -1348,7 +1348,7 @@ anytrade/
 **Question:** Where to store bot data volumes?
 
 **Options:**
-- `/var/lib/anytrade/data` (Linux standard)
+- `/var/lib/volaticloud/data` (Linux standard)
 - `./data` (relative to binary)
 - Configurable path
 

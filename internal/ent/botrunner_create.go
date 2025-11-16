@@ -3,14 +3,14 @@
 package ent
 
 import (
-	"anytrade/internal/ent/backtest"
-	"anytrade/internal/ent/bot"
-	"anytrade/internal/ent/botrunner"
-	"anytrade/internal/enum"
 	"context"
 	"errors"
 	"fmt"
 	"time"
+	"volaticloud/internal/ent/backtest"
+	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"

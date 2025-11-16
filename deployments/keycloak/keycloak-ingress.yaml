@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: anytrade-keycloak-ingress
+  name: volaticloud-keycloak-ingress
   namespace: keycloak
   annotations:
     # cert-manager will use this issuer to provision TLS certificate
@@ -32,6 +32,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: anytrade-keycloak-service
+            name: volaticloud-keycloak-service
             port:
               number: 8080

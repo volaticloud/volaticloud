@@ -1,10 +1,10 @@
-# Helm values for AnyTrade Backend using Nixys Universal Chart
+# Helm values for VolatiCloud Backend using Nixys Universal Chart
 # Chart: nixys/nxs-universal-chart
 # Repo: https://registry.nixys.io/chartrepo/public
 # Docs: https://github.com/nixys/nxs-universal-chart
 
 deployments:
-  anytrade-backend:
+  volaticloud-backend:
     replicaCount: 2
     revisionHistoryLimit: 3
 
@@ -15,8 +15,8 @@ deployments:
         maxUnavailable: 0
 
     containers:
-      - name: anytrade
-        image: ghcr.io/diazoxide/anytrade
+      - name: volaticloud
+        image: ghcr.io/diazoxide/volaticloud
         imagePullPolicy: Always
 
         ports:
@@ -32,10 +32,10 @@ deployments:
           - name: ANYTRADE_MONITOR_INTERVAL
             value: "30s"
           - name: ANYTRADE_ETCD_ENDPOINTS
-            value: "anytrade-etcd.etcd-system.svc.cluster.local:2379"
+            value: "volaticloud-etcd.etcd-system.svc.cluster.local:2379"
 
         envsFromSecret:
-          anytrade-secrets:
+          volaticloud-secrets:
             - ANYTRADE_DATABASE
 
         livenessProbe:
@@ -84,7 +84,7 @@ deployments:
       prometheus.io/path: /metrics
 
     podLabels:
-      app: anytrade-backend
+      app: volaticloud-backend
       component: api
 
     affinity:
@@ -97,11 +97,11 @@ deployments:
                   - key: app
                     operator: In
                     values:
-                      - anytrade-backend
+                      - volaticloud-backend
               topologyKey: kubernetes.io/hostname
 
 services:
-  anytrade-backend:
+  volaticloud-backend:
     type: ClusterIP
     ports:
       - name: http
@@ -122,11 +122,11 @@ ingresses:
       - paths:
           - path: /
             pathType: Prefix
-            serviceName: anytrade-backend
+            serviceName: volaticloud-backend
             servicePort: http
 
 hpa:
-  anytrade-backend:
+  volaticloud-backend:
     minReplicas: 2
     maxReplicas: 10
     metrics:
@@ -144,5 +144,5 @@ hpa:
             averageUtilization: 80
 
 pdb:
-  anytrade-backend:
+  volaticloud-backend:
     minAvailable: 1

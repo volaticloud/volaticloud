@@ -4,17 +4,17 @@ services:
   # PostgreSQL - Optional, only if you prefer PostgreSQL over SQLite
   postgres:
     image: postgres:16-alpine
-    container_name: anytrade-postgres
+    container_name: volaticloud-postgres
     environment:
-      POSTGRES_USER: anytrade
-      POSTGRES_PASSWORD: anytrade
-      POSTGRES_DB: anytrade
+      POSTGRES_USER: volaticloud
+      POSTGRES_PASSWORD: volaticloud
+      POSTGRES_DB: volaticloud
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U anytrade"]
+      test: ["CMD-SHELL", "pg_isready -U volaticloud"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,10 +24,10 @@ services:
   # etcd - Required for distributed monitoring across multiple instances
   etcd:
     image: quay.io/coreos/etcd:v3.5.12
-    container_name: anytrade-etcd
+    container_name: volaticloud-etcd
     command:
       - /usr/local/bin/etcd
-      - --name=anytrade-etcd
+      - --name=volaticloud-etcd
       - --data-dir=/etcd-data
       - --listen-client-urls=http://0.0.0.0:2379
       - --advertise-client-urls=http://0.0.0.0:2379
@@ -46,7 +46,7 @@ services:
   # Keycloak - Identity and Access Management
   keycloak:
     image: quay.io/keycloak/keycloak:latest
-    container_name: anytrade-keycloak
+    container_name: volaticloud-keycloak
     command: start-dev
     environment:
       # Admin credentials
@@ -54,9 +54,9 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
       # Database configuration
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/anytrade
-      KC_DB_USERNAME: anytrade
-      KC_DB_PASSWORD: anytrade
+      KC_DB_URL: jdbc:postgresql://postgres:5432/volaticloud
+      KC_DB_USERNAME: volaticloud
+      KC_DB_PASSWORD: volaticloud
       # Hostname configuration
       KC_HOSTNAME: localhost
       KC_HOSTNAME_STRICT: false

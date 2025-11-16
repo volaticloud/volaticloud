@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 
-	"anytrade/internal/enum"
+	"volaticloud/internal/enum"
 )
 
 // Backtest holds the schema definition for the Backtest entity.

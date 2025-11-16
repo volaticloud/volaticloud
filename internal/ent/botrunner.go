@@ -3,12 +3,12 @@
 package ent
 
 import (
-	"anytrade/internal/ent/botrunner"
-	"anytrade/internal/enum"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
+	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"

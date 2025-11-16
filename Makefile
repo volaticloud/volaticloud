@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "AnyTrade - Makefile Commands"
+	@echo "VolatiCloud - Makefile Commands"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make setup        - Install dependencies and initialize project"
@@ -17,7 +17,7 @@ help:
 	@echo ""
 	@echo "Database:"
 	@echo "  make migrate      - Run database migrations"
-	@echo "  make db-reset     - Reset database (removes data/anytrade.db)"
+	@echo "  make db-reset     - Reset database (removes data/volaticloud.db)"
 	@echo ""
 	@echo "Other:"
 	@echo "  make clean        - Clean generated files and build artifacts"
@@ -69,8 +69,8 @@ dev:
 # Build binary
 build:
 	@echo "Building binary..."
-	go build -o bin/anytrade ./cmd/server/main.go
-	@echo "Binary built: bin/anytrade"
+	go build -o bin/volaticloud ./cmd/server/main.go
+	@echo "Binary built: bin/volaticloud"
 
 # Run tests
 test:
@@ -118,7 +118,7 @@ migrate:
 # Reset database
 db-reset:
 	@echo "Resetting database..."
-	rm -f ./data/anytrade.db
+	rm -f ./data/volaticloud.db
 	@echo "Database reset complete! Run 'make migrate' to recreate."
 
 # Clean generated files

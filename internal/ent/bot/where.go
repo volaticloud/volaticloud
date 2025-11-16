@@ -3,9 +3,9 @@
 package bot
 
 import (
-	"anytrade/internal/ent/predicate"
-	"anytrade/internal/enum"
 	"time"
+	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"

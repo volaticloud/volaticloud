@@ -21,16 +21,16 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
 
-	"anytrade/internal/ent"
-	_ "anytrade/internal/ent/runtime"
-	"anytrade/internal/graph"
-	"anytrade/internal/monitor"
+	"volaticloud/internal/ent"
+	_ "volaticloud/internal/ent/runtime"
+	"volaticloud/internal/graph"
+	"volaticloud/internal/monitor"
 )
 
 func main() {
 	app := &cli.App{
-		Name:    "anytrade",
-		Usage:   "AnyTrade Control Plane - Manage freqtrade trading bots",
+		Name:    "volaticloud",
+		Usage:   "VolatiCloud Control Plane - Manage freqtrade trading bots",
 		Version: "0.1.0",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -48,7 +48,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "database",
 				Usage:   "Database connection string (sqlite://path/to/db.sqlite or postgresql://...)",
-				Value:   "sqlite://./data/anytrade.db",
+				Value:   "sqlite://./data/volaticloud.db",
 				EnvVars: []string{"ANYTRADE_DATABASE"},
 			},
 			&cli.StringSliceFlag{
@@ -207,7 +207,7 @@ func runServer(c *cli.Context) error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Println("AnyTrade Control Plane")
+	log.Println("VolatiCloud Control Plane")
 	log.Println("======================")
 	log.Printf("✓ Database: %s (%s)\n", driver, dsn)
 	log.Println("✓ Schema migrated")
