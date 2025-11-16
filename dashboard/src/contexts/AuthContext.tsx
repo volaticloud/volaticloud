@@ -122,4 +122,5 @@ export const AuthProvider: React.FC<AuthProviderWrapperProps> = ({ children }) =
 /**
  * Export useAuth hook for use in components
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export { useAuth };
