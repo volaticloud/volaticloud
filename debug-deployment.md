@@ -37,7 +37,7 @@ helm upgrade --install volaticloud-backend nixys/nxs-universal-chart \
   --namespace volaticloud \
   --create-namespace \
   -f deployments/backend/values.yaml \
-  --set deployments.volaticloud-backend.containers[0].image=ghcr.io/diazoxide/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 \
+  --set deployments.volaticloud-backend.containers[0].image=ghcr.io/volaticloud/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 \
   --timeout 1m
 ```
 
@@ -48,8 +48,8 @@ kubectl get secret volaticloud-secrets -n volaticloud -o yaml
 
 ### 7. Test Docker image locally
 ```bash
-docker pull ghcr.io/diazoxide/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89
-docker run --rm ghcr.io/diazoxide/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 --help
+docker pull ghcr.io/volaticloud/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89
+docker run --rm ghcr.io/volaticloud/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb117a4f89 --help
 ```
 
 ## Likely Issues

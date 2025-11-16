@@ -39,14 +39,14 @@ The backend is deployed as a Kubernetes Deployment with:
 ### 1. GitHub Container Registry (GHCR)
 
 Docker images are automatically built and pushed to GHCR:
-- **Registry**: `ghcr.io/diazoxide/volaticloud`
+- **Registry**: `ghcr.io/volaticloud/volaticloud`
 - **Tags**: `latest`, `main-<sha>`, version tags
 - **Auth**: GitHub Actions uses `GITHUB_TOKEN` (automatic)
 
 To pull images manually:
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
-docker pull ghcr.io/diazoxide/volaticloud:latest
+docker pull ghcr.io/volaticloud/volaticloud:latest
 ```
 
 ### 2. VKE Cluster
@@ -92,7 +92,7 @@ Key configuration sections:
 **Image:**
 ```yaml
 image:
-  repository: ghcr.io/diazoxide/volaticloud
+  repository: ghcr.io/volaticloud/volaticloud
   tag: latest  # Override via --set image.tag=<sha>
   pullPolicy: Always
 ```
@@ -208,7 +208,7 @@ Migrations run automatically as a Kubernetes Job before each deployment:
 **Manual Migration:**
 ```bash
 # Run migration manually
-kubectl run -it --rm migrate --image=ghcr.io/diazoxide/volaticloud:latest \
+kubectl run -it --rm migrate --image=ghcr.io/volaticloud/volaticloud:latest \
   --restart=Never \
   --env="ANYTRADE_DATABASE=postgresql://..." \
   -- /app/volaticloud migrate

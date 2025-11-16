@@ -15,7 +15,7 @@ deployments:
 
     containers:
       - name: caddy
-        image: ghcr.io/diazoxide/volaticloud-dashboard
+        image: ghcr.io/volaticloud/volaticloud-dashboard
         imagePullPolicy: Always
 
         ports:

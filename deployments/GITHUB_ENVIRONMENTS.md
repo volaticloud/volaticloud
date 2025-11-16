@@ -86,7 +86,7 @@ jobs:
 
 ### Option 1: Via GitHub UI
 
-1. Go to: https://github.com/diazoxide/volaticloud/settings/environments
+1. Go to: https://github.com/volaticloud/volaticloud/settings/environments
 2. Click on **prod** environment
 3. Scroll to **Environment secrets**
 4. Click **Add secret**
@@ -315,7 +315,7 @@ git commit -m "update"
 Regularly check deployment status:
 ```bash
 # List recent deployments
-gh api repos/diazoxide/volaticloud/deployments --jq '.[] | {environment: .environment, ref: .ref, created_at: .created_at}'
+gh api repos/volaticloud/volaticloud/deployments --jq '.[] | {environment: .environment, ref: .ref, created_at: .created_at}'
 ```
 
 ## Troubleshooting
@@ -360,13 +360,13 @@ Check that environment is working:
 
 ```bash
 # List environments
-gh api repos/diazoxide/volaticloud/environments --jq '.environments[].name'
+gh api repos/volaticloud/volaticloud/environments --jq '.environments[].name'
 
 # List secrets in prod environment
 gh secret list --env prod
 
 # View protection rules
-gh api repos/diazoxide/volaticloud/environments/prod --jq '.protection_rules'
+gh api repos/volaticloud/volaticloud/environments/prod --jq '.protection_rules'
 ```
 
 ## Current Configuration Summary

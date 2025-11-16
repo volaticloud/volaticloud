@@ -325,7 +325,7 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 
 ### GitHub Actions
 
-- View workflow runs: https://github.com/diazoxide/volaticloud/actions
+- View workflow runs: https://github.com/volaticloud/volaticloud/actions
 - Deployment history visible in Actions tab
 - Failed deployments send notifications
 

@@ -4,10 +4,10 @@ VolatiCloud is a control-plane platform for managing freqtrade trading bots. It 
 
 ## CI/CD Status
 
-[![Backend CI](https://github.com/diazoxide/volaticloud/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/diazoxide/volaticloud/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/frontend-ci.yml)
-[![Security Scanning](https://github.com/diazoxide/volaticloud/actions/workflows/security.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/security.yml)
-[![Code Quality](https://github.com/diazoxide/volaticloud/actions/workflows/quality.yml/badge.svg)](https://github.com/diazoxide/volaticloud/actions/workflows/quality.yml)
+[![Backend CI](https://github.com/volaticloud/volaticloud/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/volaticloud/volaticloud/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/volaticloud/volaticloud/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/volaticloud/volaticloud/actions/workflows/frontend-ci.yml)
+[![Security Scanning](https://github.com/volaticloud/volaticloud/actions/workflows/security.yml/badge.svg)](https://github.com/volaticloud/volaticloud/actions/workflows/security.yml)
+[![Code Quality](https://github.com/volaticloud/volaticloud/actions/workflows/quality.yml/badge.svg)](https://github.com/volaticloud/volaticloud/actions/workflows/quality.yml)
 
 ## Features
 

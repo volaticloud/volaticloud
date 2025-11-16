@@ -114,7 +114,7 @@ git push origin feature/keycloak-openid-integration
 gh run watch
 
 # Or view in browser
-open https://github.com/diazoxide/volaticloud/actions
+open https://github.com/volaticloud/volaticloud/actions
 ```
 
 ### Check Kubernetes:

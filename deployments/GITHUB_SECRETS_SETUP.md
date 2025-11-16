@@ -126,7 +126,7 @@ You need to decide on your public domain names:
 
 ### Option A: Via GitHub Web UI (Easiest)
 
-1. Go to your repository on GitHub: https://github.com/diazoxide/volaticloud
+1. Go to your repository on GitHub: https://github.com/volaticloud/volaticloud
 2. Click **Settings** (top navigation)
 3. In the left sidebar, click **Secrets and variables** → **Actions**
 4. Click **New repository secret**

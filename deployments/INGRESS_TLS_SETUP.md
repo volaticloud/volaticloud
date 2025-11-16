@@ -106,7 +106,7 @@ git push origin feature/keycloak-openid-integration
 gh run watch
 
 # Or view in browser
-# https://github.com/diazoxide/volaticloud/actions
+# https://github.com/volaticloud/volaticloud/actions
 ```
 
 **Expected duration:** 5-8 minutes

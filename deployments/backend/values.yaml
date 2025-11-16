@@ -16,7 +16,7 @@ deployments:
 
     containers:
       - name: volaticloud
-        image: ghcr.io/diazoxide/volaticloud
+        image: ghcr.io/volaticloud/volaticloud
         imagePullPolicy: Always
 
         ports:

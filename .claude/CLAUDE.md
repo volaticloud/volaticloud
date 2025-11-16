@@ -1148,14 +1148,14 @@ deployments/backend/
 
 **GitHub Workflow:** `.github/workflows/docker-build.yml`
 - **Trigger**: Push to main (Go code changes)
-- **Registry**: `ghcr.io/diazoxide/volaticloud`
+- **Registry**: `ghcr.io/volaticloud/volaticloud`
 - **Tags**: `latest`, `main-<sha>`, semver
 - **Platforms**: linux/amd64, linux/arm64
 - **Cache**: GitHub Actions cache for faster builds
 
 **Build Command:**
 ```bash
-docker build -t ghcr.io/diazoxide/volaticloud:latest .
+docker build -t ghcr.io/volaticloud/volaticloud:latest .
 ```
 
 ### Kubernetes Deployment

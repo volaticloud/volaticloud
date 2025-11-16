@@ -499,7 +499,7 @@ docker-build:
 	docker build -t volaticloud:latest .
 
 docker-push:
-	docker push ghcr.io/diazoxide/volaticloud:latest
+	docker push ghcr.io/volaticloud/volaticloud:latest
 ```
 
 #### 1.4 GitHub Action: `.github/workflows/docker-build.yml`
@@ -513,13 +513,13 @@ docker-push:
 1. Run tests (reuse backend-ci.yml)
 2. Build multi-arch image (amd64, arm64)
 3. Tag with git SHA + semantic version
-4. Push to ghcr.io/diazoxide/volaticloud
+4. Push to ghcr.io/volaticloud/volaticloud
 5. Create GitHub release on tag push
 
 **Outputs**:
-- Image: `ghcr.io/diazoxide/volaticloud:latest`
-- Image: `ghcr.io/diazoxide/volaticloud:v1.0.0`
-- Image: `ghcr.io/diazoxide/volaticloud:sha-abc123`
+- Image: `ghcr.io/volaticloud/volaticloud:latest`
+- Image: `ghcr.io/volaticloud/volaticloud:v1.0.0`
+- Image: `ghcr.io/volaticloud/volaticloud:sha-abc123`
 
 ---
 
@@ -557,7 +557,7 @@ deployments/helm/volaticloud/
 replicaCount: 2
 
 image:
-  repository: ghcr.io/diazoxide/volaticloud
+  repository: ghcr.io/volaticloud/volaticloud
   pullPolicy: IfNotPresent
   tag: ""  # Defaults to Chart.appVersion
 

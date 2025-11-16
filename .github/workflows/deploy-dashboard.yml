@@ -119,7 +119,7 @@ jobs:
             --namespace volaticloud \
             --create-namespace \
             -f deployments/dashboard/values.yaml \
-            --set deployments.volaticloud-dashboard.containers[0].image=ghcr.io/diazoxide/volaticloud-dashboard \
+            --set deployments.volaticloud-dashboard.containers[0].image=ghcr.io/volaticloud/volaticloud-dashboard \
             --set deployments.volaticloud-dashboard.containers[0].imageTag=${{ steps.image_tag.outputs.tag }} \
             --set deployments.volaticloud-dashboard.imagePullSecrets[0].name=ghcr-pull-secret \
             --wait \

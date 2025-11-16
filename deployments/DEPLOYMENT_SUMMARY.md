@@ -101,7 +101,7 @@ ENTRYPOINT ["/app/volaticloud"]  # No CMD needed
    ↓
 2. GitHub Actions: Build Docker Image
    - Build multi-stage image
-   - Push to ghcr.io/diazoxide/volaticloud:latest
+   - Push to ghcr.io/volaticloud/volaticloud:latest
    ↓
 3. GitHub Actions: Deploy to Kubernetes
    - Create namespace

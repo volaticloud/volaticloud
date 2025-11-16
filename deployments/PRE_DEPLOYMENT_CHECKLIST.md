@@ -8,7 +8,7 @@ Use this checklist before pushing to trigger the deployment workflow.
 
 ### 1. Environment Exists
 - [ ] `prod` environment exists in GitHub
-  - Verify: https://github.com/diazoxide/volaticloud/settings/environments
+  - Verify: https://github.com/volaticloud/volaticloud/settings/environments
   - Should see: **prod** in the list
 
 ### 2. Environment Secrets Set
@@ -191,7 +191,7 @@ Should see:
 - [ ] Select: Read and write permissions ✅
 
 ### 3. Environment Protection Rules (Optional)
-Review: https://github.com/diazoxide/volaticloud/settings/environments/prod
+Review: https://github.com/volaticloud/volaticloud/settings/environments/prod
 
 Optional settings:
 - [ ] Required reviewers: Add team members (recommended for production)
@@ -347,7 +347,7 @@ kubectl get events -n olm --sort-by='.lastTimestamp'
 ## 📞 Support
 
 If deployment fails:
-1. Check GitHub Actions logs: https://github.com/diazoxide/volaticloud/actions
+1. Check GitHub Actions logs: https://github.com/volaticloud/volaticloud/actions
 2. Review this checklist
 3. Check Kubernetes events: `kubectl get events -A --sort-by='.lastTimestamp'`
 4. Review documentation: `deployments/README.md`
