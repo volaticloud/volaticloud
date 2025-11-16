@@ -5,6 +5,7 @@ import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import { createAppTheme } from './theme/theme';
 import { createApolloClient } from './graphql/client';
 import { useConfigValue } from './contexts/ConfigContext';
+import { useAuth } from './contexts/AuthContext';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { BotsPage } from './pages/Bots/BotsPage';
@@ -19,9 +20,15 @@ import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
 function App() {
   const [darkMode, setDarkMode] = useState(true);
   const graphqlUrl = useConfigValue('ANYTRADE__GRAPHQL_URL');
+  const auth = useAuth();
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
-  const apolloClient = useMemo(() => createApolloClient(graphqlUrl), [graphqlUrl]);
+
+  // Create Apollo client with auth token
+  const apolloClient = useMemo(() => {
+    const getAccessToken = () => auth.user?.access_token;
+    return createApolloClient(graphqlUrl, getAccessToken);
+  }, [graphqlUrl, auth.user?.access_token]);
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => !prev);

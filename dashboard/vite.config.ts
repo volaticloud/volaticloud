@@ -5,6 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
     plugins: [react()],
     server: {
-        allowedHosts: true
+        allowedHosts: true,
+        proxy: {
+            '/query': {
+                target: 'http://localhost:8080',
+                changeOrigin: true,
+            }
+        }
     }
 })
