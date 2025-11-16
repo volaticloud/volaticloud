@@ -139,14 +139,14 @@ echo -n "Keycloak Hostname (e.g., auth.volaticloud.com): "
 read KEYCLOAK_HOSTNAME
 
 echo -n "VolatiCloud Application URL (e.g., https://volaticloud.com): "
-read ANYTRADE_URL
+read VOLATICLOUD_URL
 
 # Set hostname secrets
 echo "$KEYCLOAK_HOSTNAME" | gh secret set KEYCLOAK_HOSTNAME
 echo "✅ KEYCLOAK_HOSTNAME set"
 
-echo "$ANYTRADE_URL" | gh secret set ANYTRADE_URL
-echo "✅ ANYTRADE_URL set"
+echo "$VOLATICLOUD_URL" | gh secret set VOLATICLOUD_URL
+echo "✅ VOLATICLOUD_URL set"
 echo ""
 
 # Summary
@@ -222,7 +222,7 @@ jobs:
           echo "  - KEYCLOAK_DB_HOST: ${{ secrets.KEYCLOAK_DB_HOST }}"
           echo "  - KEYCLOAK_DB_USERNAME: ${{ secrets.KEYCLOAK_DB_USERNAME }}"
           echo "  - KEYCLOAK_HOSTNAME: ${{ secrets.KEYCLOAK_HOSTNAME }}"
-          echo "  - ANYTRADE_URL: ${{ secrets.ANYTRADE_URL }}"
+          echo "  - VOLATICLOUD_URL: ${{ secrets.VOLATICLOUD_URL }}"
           echo "  - DB password: [MASKED]"
 EOF
 

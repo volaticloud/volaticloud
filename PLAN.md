@@ -582,7 +582,7 @@ runtimeID := strconv.Itoa(cmd.Process.Pid)
 **Default:** Docker runtime
 
 **Selection logic:**
-1. Check environment variable `ANYTRADE_RUNTIME` (docker, kubernetes, local)
+1. Check environment variable `VOLATICLOUD_RUNTIME` (docker, kubernetes, local)
 2. Auto-detect: If running in k8s cluster → use Kubernetes runtime
 3. Fall back to Docker runtime
 4. Allow per-bot runtime override in config
@@ -949,7 +949,7 @@ func (e *Exchange) AfterFind(ctx context.Context) error {
 ```
 
 **Key Management:**
-- Store master encryption key in environment variable: `ANYTRADE_ENCRYPTION_KEY`
+- Store master encryption key in environment variable: `VOLATICLOUD_ENCRYPTION_KEY`
 - Generate per-installation during setup
 - Never log decrypted credentials
 

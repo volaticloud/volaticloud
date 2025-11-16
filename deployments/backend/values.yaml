@@ -25,18 +25,18 @@ deployments:
             protocol: TCP
 
         env:
-          - name: ANYTRADE_HOST
+          - name: VOLATICLOUD_HOST
             value: "0.0.0.0"
-          - name: ANYTRADE_PORT
+          - name: VOLATICLOUD_PORT
             value: "8080"
-          - name: ANYTRADE_MONITOR_INTERVAL
+          - name: VOLATICLOUD_MONITOR_INTERVAL
             value: "30s"
-          - name: ANYTRADE_ETCD_ENDPOINTS
+          - name: VOLATICLOUD_ETCD_ENDPOINTS
             value: "volaticloud-etcd.etcd-system.svc.cluster.local:2379"
 
         envsFromSecret:
           volaticloud-secrets:
-            - ANYTRADE_DATABASE
+            - VOLATICLOUD_DATABASE
 
         livenessProbe:
           httpGet:

@@ -72,15 +72,15 @@ Configure these secrets in the `prod` environment:
 | Secret Name | Description | Example |
 |------------|-------------|---------|
 | `VKE_KUBECONFIG` | Base64-encoded kubeconfig | `cat kubeconfig.yaml \| base64` |
-| `ANYTRADE_DATABASE` | Full PostgreSQL connection string | `postgresql://user:pass@host:port/db?sslmode=require` |
+| `VOLATICLOUD_DATABASE` | Full PostgreSQL connection string | `postgresql://user:pass@host:port/db?sslmode=require` |
 
-**Note:** The secret name `ANYTRADE_DATABASE` matches the environment variable used in `cmd/server/main.go:52`.
+**Note:** The secret name `VOLATICLOUD_DATABASE` matches the environment variable used in `cmd/server/main.go:52`.
 
 Set secrets:
 ```bash
 gh secret set VKE_KUBECONFIG --env prod
 # When prompted, enter: postgresql://volaticloud:your-password@postgres-abc.vultr.com:16751/volaticloud?sslmode=require
-gh secret set ANYTRADE_DATABASE --env prod
+gh secret set VOLATICLOUD_DATABASE --env prod
 ```
 
 ## Configuration
@@ -210,7 +210,7 @@ Migrations run automatically as a Kubernetes Job before each deployment:
 # Run migration manually
 kubectl run -it --rm migrate --image=ghcr.io/volaticloud/volaticloud:latest \
   --restart=Never \
-  --env="ANYTRADE_DATABASE=postgresql://..." \
+  --env="VOLATICLOUD_DATABASE=postgresql://..." \
   -- /app/volaticloud migrate
 ```
 

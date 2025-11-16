@@ -51,7 +51,7 @@ Configure backend to connect to etcd cluster:
 
 ```yaml
 env:
-  - name: ANYTRADE_ETCD_ENDPOINTS
+  - name: VOLATICLOUD_ETCD_ENDPOINTS
     value: "etcd.etcd-system.svc.cluster.local:2379"
 ```
 
@@ -371,7 +371,7 @@ deployments:
     containers:
       - name: volaticloud
         env:
-          - name: ANYTRADE_ETCD_ENDPOINTS
+          - name: VOLATICLOUD_ETCD_ENDPOINTS
             value: "etcd.etcd-system.svc.cluster.local:2379"
 ```
 

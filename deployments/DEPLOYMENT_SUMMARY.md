@@ -15,11 +15,11 @@ All configuration is done via environment variables:
 
 | Variable | Description | Production Value |
 |----------|-------------|------------------|
-| `ANYTRADE_HOST` | Server bind address | `0.0.0.0` |
-| `ANYTRADE_PORT` | Server port | `8080` |
-| `ANYTRADE_DATABASE` | PostgreSQL connection string | `postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)?sslmode=require` |
-| `ANYTRADE_MONITOR_INTERVAL` | Bot monitoring frequency | `30s` |
-| `ANYTRADE_ETCD_ENDPOINTS` | Etcd endpoints (optional for distributed mode) | _(empty = single instance)_ |
+| `VOLATICLOUD_HOST` | Server bind address | `0.0.0.0` |
+| `VOLATICLOUD_PORT` | Server port | `8080` |
+| `VOLATICLOUD_DATABASE` | PostgreSQL connection string | `postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)?sslmode=require` |
+| `VOLATICLOUD_MONITOR_INTERVAL` | Bot monitoring frequency | `30s` |
+| `VOLATICLOUD_ETCD_ENDPOINTS` | Etcd endpoints (optional for distributed mode) | _(empty = single instance)_ |
 
 ### Database Credentials (From Kubernetes Secrets)
 
@@ -125,7 +125,7 @@ ENTRYPOINT ["/app/volaticloud"]  # No CMD needed
 
 ```bash
 # Set environment variables
-export ANYTRADE_DATABASE="sqlite://./data/volaticloud.db"
+export VOLATICLOUD_DATABASE="sqlite://./data/volaticloud.db"
 
 # Run server (migrations happen automatically)
 ./bin/volaticloud

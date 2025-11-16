@@ -57,7 +57,7 @@ Follow the detailed guide: [`GITHUB_SECRETS_SETUP.md`](./GITHUB_SECRETS_SETUP.md
 - `KEYCLOAK_DB_USERNAME` - Database username
 - `KEYCLOAK_DB_PASSWORD` - Database password
 - `KEYCLOAK_HOSTNAME` - Keycloak domain (e.g., `auth.volaticloud.com`)
-- `ANYTRADE_URL` - Application URL (e.g., `https://volaticloud.com`)
+- `VOLATICLOUD_URL` - Application URL (e.g., `https://volaticloud.com`)
 
 **Verify secrets**:
 ```bash

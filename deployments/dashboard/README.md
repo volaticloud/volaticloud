@@ -4,7 +4,7 @@ Kubernetes deployment configuration for the VolatiCloud dashboard using Caddy.
 
 ## Features
 
-- **Runtime Configuration**: Environment variables with `ANYTRADE__` prefix automatically map to `/config.json`
+- **Runtime Configuration**: Environment variables with `VOLATICLOUD__` prefix automatically map to `/config.json`
 - **Multi-stage Build**: Node.js for building + Caddy for serving
 - **SPA Routing**: Proper handling for React Router
 - **Security Headers**: X-Frame-Options, X-Content-Type-Options, etc.
@@ -19,7 +19,7 @@ Kubernetes deployment configuration for the VolatiCloud dashboard using Caddy.
 
 Set in `deployments/dashboard/values.yaml`:
 
-- `ANYTRADE__GRAPHQL_URL`: GraphQL API endpoint (default: https://api.volaticloud.com/query)
+- `VOLATICLOUD__GRAPHQL_URL`: GraphQL API endpoint (default: https://api.volaticloud.com/query)
 
 ## Local Development
 

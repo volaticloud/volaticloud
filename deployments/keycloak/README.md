@@ -25,7 +25,7 @@ Keycloak provides authentication and authorization for the VolatiCloud platform 
    - `KEYCLOAK_DB_USERNAME`: Database username (e.g., `keycloak`)
    - `KEYCLOAK_DB_PASSWORD`: Database password
    - `KEYCLOAK_HOSTNAME`: Public hostname for Keycloak (e.g., `auth.volaticloud.com`)
-   - `ANYTRADE_URL`: VolatiCloud application URL (e.g., `https://volaticloud.com`)
+   - `VOLATICLOUD_URL`: VolatiCloud application URL (e.g., `https://volaticloud.com`)
 
 ## Files
 
@@ -104,7 +104,7 @@ kubectl wait --for=condition=Ready keycloak/volaticloud-keycloak \
 kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 
 # 7. Configure OIDC clients (substitute environment variables)
-export ANYTRADE_URL="https://volaticloud.com"
+export VOLATICLOUD_URL="https://volaticloud.com"
 envsubst < deployments/keycloak/keycloak-client.yaml | kubectl apply -f -
 ```
 
@@ -157,7 +157,7 @@ The `volaticloud` realm includes:
 - **Type**: Public (for React SPA)
 - **Protocol**: OpenID Connect
 - **Flow**: Authorization Code with PKCE
-- **Redirect URIs**: `${ANYTRADE_URL}/*`, `http://localhost:5173/*`
+- **Redirect URIs**: `${VOLATICLOUD_URL}/*`, `http://localhost:5173/*`
 - **Scopes**: profile, email, roles
 
 #### volaticloud-api (Bearer-Only Client)
@@ -268,7 +268,7 @@ kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 2. Commit and push (triggers automatic deployment)
 3. Or apply manually:
    ```bash
-   export ANYTRADE_URL="https://volaticloud.com"
+   export VOLATICLOUD_URL="https://volaticloud.com"
    envsubst < keycloak-client.yaml | kubectl apply -f -
    ```
 

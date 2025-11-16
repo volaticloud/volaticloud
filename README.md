@@ -126,11 +126,11 @@ VolatiCloud supports both SQLite and PostgreSQL:
 
 ### Environment Variables
 
-- `ANYTRADE_HOST` - Server host (default: 0.0.0.0)
-- `ANYTRADE_PORT` - Server port (default: 8080)
-- `ANYTRADE_DATABASE` - Database connection string (default: sqlite://./data/volaticloud.db)
-- `ANYTRADE_ENCRYPTION_KEY` - 32-byte encryption key for secrets
-- `ANYTRADE_RUNTIME` - Default runtime type (docker, kubernetes, local)
+- `VOLATICLOUD_HOST` - Server host (default: 0.0.0.0)
+- `VOLATICLOUD_PORT` - Server port (default: 8080)
+- `VOLATICLOUD_DATABASE` - Database connection string (default: sqlite://./data/volaticloud.db)
+- `VOLATICLOUD_ENCRYPTION_KEY` - 32-byte encryption key for secrets
+- `VOLATICLOUD_RUNTIME` - Default runtime type (docker, kubernetes, local)
 
 ## Project Structure
 

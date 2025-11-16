@@ -235,7 +235,7 @@ jobs:
           echo "🔧 Configuring OIDC clients..."
 
           # Substitute environment variables in client manifest
-          export ANYTRADE_URL="${{ secrets.ANYTRADE_URL }}"
+          export VOLATICLOUD_URL="${{ secrets.VOLATICLOUD_URL }}"
           envsubst < deployments/keycloak/keycloak-client.yaml > /tmp/keycloak-client-processed.yaml
 
           kubectl apply -f /tmp/keycloak-client-processed.yaml

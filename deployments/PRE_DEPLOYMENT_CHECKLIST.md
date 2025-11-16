@@ -26,7 +26,7 @@ KEYCLOAK_DB_HOST        Updated YYYY-MM-DD
 KEYCLOAK_DB_USERNAME    Updated YYYY-MM-DD
 KEYCLOAK_DB_PASSWORD    Updated YYYY-MM-DD
 KEYCLOAK_HOSTNAME       Updated YYYY-MM-DD
-ANYTRADE_URL            Updated YYYY-MM-DD
+VOLATICLOUD_URL            Updated YYYY-MM-DD
 ```
 
 ### 3. Secret Values Are Correct
@@ -53,7 +53,7 @@ Verify each secret has the correct value:
 - [ ] Example: `auth.volaticloud.com`
 - [ ] NOT: `https://auth.volaticloud.com/auth`
 
-**ANYTRADE_URL**:
+**VOLATICLOUD_URL**:
 - [ ] Full URL with protocol
 - [ ] Example: `https://volaticloud.com`
 - [ ] Includes `https://`

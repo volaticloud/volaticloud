@@ -163,9 +163,9 @@ Add each secret one by one:
 - **Value**: `auth.volaticloud.com` (your chosen domain)
 - Click **Add secret**
 
-#### Secret 6: ANYTRADE_URL
+#### Secret 6: VOLATICLOUD_URL
 
-- **Name**: `ANYTRADE_URL`
+- **Name**: `VOLATICLOUD_URL`
 - **Value**: `https://volaticloud.com` (your application URL)
 - Click **Add secret**
 
@@ -187,7 +187,7 @@ gh secret set KEYCLOAK_DB_PASSWORD  # Will prompt for password
 
 # Add hostnames
 gh secret set KEYCLOAK_HOSTNAME -b"auth.volaticloud.com"
-gh secret set ANYTRADE_URL -b"https://volaticloud.com"
+gh secret set VOLATICLOUD_URL -b"https://volaticloud.com"
 
 # List all secrets to verify
 gh secret list
@@ -206,7 +206,7 @@ gh secret list
    - ✅ KEYCLOAK_DB_USERNAME
    - ✅ KEYCLOAK_DB_PASSWORD
    - ✅ KEYCLOAK_HOSTNAME
-   - ✅ ANYTRADE_URL
+   - ✅ VOLATICLOUD_URL
 
 ### Via GitHub CLI:
 
@@ -221,7 +221,7 @@ KEYCLOAK_DB_HOST        Updated YYYY-MM-DD
 KEYCLOAK_DB_USERNAME    Updated YYYY-MM-DD
 KEYCLOAK_DB_PASSWORD    Updated YYYY-MM-DD
 KEYCLOAK_HOSTNAME       Updated YYYY-MM-DD
-ANYTRADE_URL            Updated YYYY-MM-DD
+VOLATICLOUD_URL            Updated YYYY-MM-DD
 ```
 
 ---
@@ -257,7 +257,7 @@ jobs:
           echo "DB Host: ${{ secrets.KEYCLOAK_DB_HOST }}"
           echo "DB Username: ${{ secrets.KEYCLOAK_DB_USERNAME }}"
           echo "Keycloak Hostname: ${{ secrets.KEYCLOAK_HOSTNAME }}"
-          echo "VolatiCloud URL: ${{ secrets.ANYTRADE_URL }}"
+          echo "VolatiCloud URL: ${{ secrets.VOLATICLOUD_URL }}"
 EOF
 
 # Commit and push

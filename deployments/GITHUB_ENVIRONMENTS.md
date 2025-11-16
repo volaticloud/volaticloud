@@ -39,7 +39,7 @@ prod environment secrets:
 ├── KEYCLOAK_DB_USERNAME
 ├── KEYCLOAK_DB_PASSWORD
 ├── KEYCLOAK_HOSTNAME
-└── ANYTRADE_URL
+└── VOLATICLOUD_URL
 ```
 
 **Benefits**:
@@ -96,7 +96,7 @@ jobs:
    - `KEYCLOAK_DB_USERNAME`
    - `KEYCLOAK_DB_PASSWORD`
    - `KEYCLOAK_HOSTNAME`
-   - `ANYTRADE_URL`
+   - `VOLATICLOUD_URL`
 
 ### Option 2: Via GitHub CLI
 
@@ -107,7 +107,7 @@ gh secret set KEYCLOAK_DB_HOST --env prod -b"postgres.vultr.com:16751"
 gh secret set KEYCLOAK_DB_USERNAME --env prod -b"keycloak"
 gh secret set KEYCLOAK_DB_PASSWORD --env prod  # Prompts for password
 gh secret set KEYCLOAK_HOSTNAME --env prod -b"auth.volaticloud.com"
-gh secret set ANYTRADE_URL --env prod -b"https://volaticloud.com"
+gh secret set VOLATICLOUD_URL --env prod -b"https://volaticloud.com"
 
 # Verify
 gh secret list --env prod

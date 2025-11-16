@@ -85,7 +85,7 @@ Configure the following secrets in your GitHub repository settings (**Settings â
 | `KEYCLOAK_DB_USERNAME` | PostgreSQL username | `keycloak` |
 | `KEYCLOAK_DB_PASSWORD` | PostgreSQL password | `your-secure-password` |
 | `KEYCLOAK_HOSTNAME` | Keycloak public hostname | `auth.yourdomain.com` |
-| `ANYTRADE_URL` | VolatiCloud application URL | `https://yourdomain.com` |
+| `VOLATICLOUD_URL` | VolatiCloud application URL | `https://yourdomain.com` |
 
 #### How to Get VKE_KUBECONFIG
 

@@ -27,19 +27,19 @@ spec:
         serviceAccountsEnabled: false
 
         # URLs
-        rootUrl: "${ANYTRADE_URL}"
-        baseUrl: "${ANYTRADE_URL}"
-        adminUrl: "${ANYTRADE_URL}"
+        rootUrl: "${VOLATICLOUD_URL}"
+        baseUrl: "${VOLATICLOUD_URL}"
+        adminUrl: "${VOLATICLOUD_URL}"
 
         # Valid redirect URIs (where Keycloak can redirect after login)
         redirectUris:
-          - "${ANYTRADE_URL}/*"
+          - "${VOLATICLOUD_URL}/*"
           - "http://localhost:5173/*"  # Local development
           - "http://localhost:3000/*"  # Alternative local port
 
         # Web origins (for CORS)
         webOrigins:
-          - "${ANYTRADE_URL}"
+          - "${VOLATICLOUD_URL}"
           - "http://localhost:5173"
           - "http://localhost:3000"
 
@@ -60,7 +60,7 @@ spec:
         # Attributes
         attributes:
           "pkce.code.challenge.method": "S256"  # PKCE for security
-          "post.logout.redirect.uris": "${ANYTRADE_URL}/*"
+          "post.logout.redirect.uris": "${VOLATICLOUD_URL}/*"
           "backchannel.logout.session.required": "true"
           "backchannel.logout.revoke.offline.tokens": "false"
 

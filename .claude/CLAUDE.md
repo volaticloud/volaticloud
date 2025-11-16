@@ -1225,11 +1225,11 @@ if err := client.Schema.Create(ctx); err != nil {
 
 **Environment Variables:**
 ```bash
-ANYTRADE_HOST=0.0.0.0
-ANYTRADE_PORT=8080
-ANYTRADE_DATABASE=postgresql://user:pass@host:5432/db?sslmode=require
-ANYTRADE_MONITOR_INTERVAL=30s
-ANYTRADE_ETCD_ENDPOINTS=  # Optional for distributed mode
+VOLATICLOUD_HOST=0.0.0.0
+VOLATICLOUD_PORT=8080
+VOLATICLOUD_DATABASE=postgresql://user:pass@host:5432/db?sslmode=require
+VOLATICLOUD_MONITOR_INTERVAL=30s
+VOLATICLOUD_ETCD_ENDPOINTS=  # Optional for distributed mode
 ```
 
 **Kubernetes Secrets:**

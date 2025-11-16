@@ -54,13 +54,13 @@ docker run --rm ghcr.io/volaticloud/volaticloud:fd747f98470e5c32e6a36aeeaa4844cb
 
 ## Likely Issues
 
-### Issue 1: Missing ANYTRADE_ETCD_ENDPOINTS
-The application expects `ANYTRADE_ETCD_ENDPOINTS` but it's not in values.yaml.
+### Issue 1: Missing VOLATICLOUD_ETCD_ENDPOINTS
+The application expects `VOLATICLOUD_ETCD_ENDPOINTS` but it's not in values.yaml.
 
 **Fix:** Add to values.yaml:
 ```yaml
 env:
-  - name: ANYTRADE_ETCD_ENDPOINTS
+  - name: VOLATICLOUD_ETCD_ENDPOINTS
     value: ""  # Empty for single instance deployment
 ```
 
@@ -80,6 +80,6 @@ readinessProbe:
 ## Recommended Fix
 
 Update values.yaml with:
-1. Add ANYTRADE_ETCD_ENDPOINTS env var (empty string)
+1. Add VOLATICLOUD_ETCD_ENDPOINTS env var (empty string)
 2. Increase readiness probe initial delay to 30s
 3. Remove livenessProbe temporarily for debugging

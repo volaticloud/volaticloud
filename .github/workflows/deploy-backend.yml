@@ -107,7 +107,7 @@ jobs:
       - name: Create application secrets
         run: |
           kubectl create secret generic volaticloud-backend-volaticloud-secrets \
-            --from-literal=ANYTRADE_DATABASE="${{ secrets.ANYTRADE_DATABASE }}" \
+            --from-literal=VOLATICLOUD_DATABASE="${{ secrets.VOLATICLOUD_DATABASE }}" \
             --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 
