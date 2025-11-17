@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,17 +43,30 @@ type DockerBacktestRunner struct {
 // NewDockerBacktestRunner creates a new Docker backtest runner
 func NewDockerBacktestRunner(ctx context.Context, config DockerConfig) (*DockerBacktestRunner, error) {
 	opts := []client.Opt{
-		client.FromEnv,
 		client.WithHost(config.Host),
 	}
 
+	// Add API version if specified
 	if config.APIVersion != "" {
+		opts = append(opts, client.WithAPIVersionNegotiation())
 		opts = append(opts, client.WithVersion(config.APIVersion))
+	} else {
+		opts = append(opts, client.WithAPIVersionNegotiation())
 	}
 
+	// Configure TLS if enabled
 	if config.TLSVerify {
-		// TODO: Implement TLS configuration
-		return nil, fmt.Errorf("TLS is not yet implemented")
+		tlsConfig, err := loadTLSConfig(&config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS config: %w", err)
+		}
+
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: tlsConfig,
+			},
+		}
+		opts = append(opts, client.WithHTTPClient(httpClient))
 	}
 
 	cli, err := client.NewClientWithOpts(opts...)
