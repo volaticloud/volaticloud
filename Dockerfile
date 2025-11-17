@@ -1,5 +1,5 @@
 # Build stage
-# Trigger rebuild - 2025-11-17
+# Trigger rebuild and redeploy - 2025-11-17 12:52 UTC
 FROM golang:1.24-alpine AS builder
 
 # Install build dependencies

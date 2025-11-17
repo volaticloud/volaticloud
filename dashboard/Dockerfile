@@ -1,5 +1,5 @@
 # Stage 1: Build the React application
-# Deploy with /query reverse proxy - 2025-11-17
+# Trigger rebuild and redeploy - 2025-11-17 12:52 UTC
 FROM node:20-alpine AS builder
 
 WORKDIR /app
