@@ -57,11 +57,11 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 	t.Run("CreateWithValidTLSDockerConfig", func(t *testing.T) {
 		// Valid Docker config with TLS
 		validTLSConfig := map[string]interface{}{
-			"host":       "tcp://docker.example.com:2376",
-			"tls_verify": true,
-			"cert_path":  "/certs/cert.pem",
-			"key_path":   "/certs/key.pem",
-			"ca_path":    "/certs/ca.pem",
+			"host":      "tcp://docker.example.com:2376",
+			"tlsVerify": true,
+			"certPEM":   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+			"keyPEM":    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+			"caPEM":     "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 		}
 
 		runtime, err := client.BotRunner.Create().
@@ -78,8 +78,8 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 	t.Run("CreateWithInvalidTLSDockerConfig", func(t *testing.T) {
 		// Invalid Docker config - TLS enabled but missing cert paths
 		invalidTLSConfig := map[string]interface{}{
-			"host":       "tcp://docker.example.com:2376",
-			"tls_verify": true,
+			"host":      "tcp://docker.example.com:2376",
+			"tlsVerify": true,
 		}
 
 		_, err := client.BotRunner.Create().
@@ -90,7 +90,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid runner config")
-		assert.Contains(t, err.Error(), "cert_path is required")
+		assert.Contains(t, err.Error(), "cert_pem is required")
 	})
 
 	t.Run("CreateWithUnsupportedKubernetesConfig", func(t *testing.T) {
@@ -197,10 +197,10 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		// Valid Docker config with registry auth
 		configWithAuth := map[string]interface{}{
 			"host": "unix:///var/run/docker.sock",
-			"registry_auth": map[string]interface{}{
-				"username":       "myuser",
-				"password":       "mypass",
-				"server_address": "https://registry.example.com",
+			"registryAuth": map[string]interface{}{
+				"username":      "myuser",
+				"password":      "mypass",
+				"serverAddress": "https://registry.example.com",
 			},
 		}
 
@@ -219,7 +219,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		// Invalid Docker config - registry auth missing password
 		invalidAuthConfig := map[string]interface{}{
 			"host": "unix:///var/run/docker.sock",
-			"registry_auth": map[string]interface{}{
+			"registryAuth": map[string]interface{}{
 				"username": "myuser",
 				// Missing password
 			},

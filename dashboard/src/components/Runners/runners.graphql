@@ -5,6 +5,7 @@ query GetRunners($first: Int, $after: Cursor) {
         id
         name
         type
+        config
         createdAt
         dataIsReady
         dataLastUpdated
@@ -33,6 +34,7 @@ query GetRunner($id: ID!) {
       id
       name
       type
+      config
       createdAt
       dataIsReady
       dataLastUpdated
@@ -52,6 +54,7 @@ mutation CreateRunner($input: CreateBotRunnerInput!) {
     id
     name
     type
+    config
     dataDownloadConfig
   }
 }
@@ -61,6 +64,7 @@ mutation UpdateRunner($id: ID!, $input: UpdateBotRunnerInput!) {
     id
     name
     type
+    config
     dataDownloadConfig
   }
 }
@@ -79,5 +83,13 @@ mutation RefreshRunnerData($id: ID!) {
     dataDownloadStatus
     dataDownloadProgress
     dataErrorMessage
+  }
+}
+
+mutation TestRunnerConnection($type: BotRunnerRunnerType!, $config: RunnerConfigInput!) {
+  testRunnerConnection(type: $type, config: $config) {
+    success
+    message
+    version
   }
 }

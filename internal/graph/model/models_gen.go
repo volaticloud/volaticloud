@@ -17,6 +17,12 @@ type BybitConfigInput struct {
 	APISecret string `json:"apiSecret"`
 }
 
+type ConnectionTestResult struct {
+	Success bool    `json:"success"`
+	Message string  `json:"message"`
+	Version *string `json:"version,omitempty"`
+}
+
 type DataDownloadConfigInput struct {
 	Exchanges []*DataDownloadExchangeConfigInput `json:"exchanges"`
 }
@@ -33,9 +39,9 @@ type DataDownloadExchangeConfigInput struct {
 type DockerConfigInput struct {
 	Host         string             `json:"host"`
 	TLSVerify    *bool              `json:"tlsVerify,omitempty"`
-	CertPath     *string            `json:"certPath,omitempty"`
-	KeyPath      *string            `json:"keyPath,omitempty"`
-	CaPath       *string            `json:"caPath,omitempty"`
+	CertPem      *string            `json:"certPEM,omitempty"`
+	KeyPem       *string            `json:"keyPEM,omitempty"`
+	CaPem        *string            `json:"caPEM,omitempty"`
 	APIVersion   *string            `json:"apiVersion,omitempty"`
 	Network      *string            `json:"network,omitempty"`
 	RegistryAuth *RegistryAuthInput `json:"registryAuth,omitempty"`

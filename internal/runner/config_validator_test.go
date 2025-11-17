@@ -104,6 +104,9 @@ func TestValidateConfig(t *testing.T) {
 			"docker": map[string]interface{}{
 				"host":       "tcp://localhost:2375",
 				"tlsVerify":  true,
+				"certPEM":    "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+				"keyPEM":     "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+				"caPEM":      "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 				"network":    "bridge",
 				"apiVersion": "1.41",
 			},

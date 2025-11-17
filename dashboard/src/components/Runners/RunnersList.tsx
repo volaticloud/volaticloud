@@ -26,7 +26,7 @@ import {
   CloudDownload as CloudDownloadIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useGetRunnersQuery, useRefreshRunnerDataMutation } from '../../generated/graphql';
+import { useGetRunnersQuery, useRefreshRunnerDataMutation } from './runners.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateRunnerDialog } from './CreateRunnerDialog';
@@ -42,6 +42,7 @@ export const RunnersList = () => {
   const { data, loading, error, refetch } = useGetRunnersQuery({
     variables: { first: 50 },
     pollInterval: 10000, // Poll every 10 seconds to update download status
+    fetchPolicy: 'network-only', // Force fetch from network to get updated schema
   });
 
   const [refreshRunnerData] = useRefreshRunnerDataMutation();
@@ -230,9 +231,16 @@ export const RunnersList = () => {
                     <Tooltip title="Edit Runner">
                       <IconButton
                         size="small"
-                        onClick={() => {
-                          setSelectedRunner(runner);
-                          setEditDialogOpen(true);
+                        onClick={async () => {
+                          // Refetch to ensure we have the latest data including config
+                          const result = await refetch();
+                          // Find the updated runner from the fresh data
+                          const updatedRunner = result.data?.botRunners?.edges
+                            ?.find(edge => edge?.node?.id === runner.id)?.node;
+                          if (updatedRunner) {
+                            setSelectedRunner(updatedRunner);
+                            setEditDialogOpen(true);
+                          }
                         }}
                       >
                         <EditIcon fontSize="small" />

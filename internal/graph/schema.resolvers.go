@@ -17,6 +17,7 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/graph/model"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
 
@@ -508,6 +509,48 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 	}()
 
 	return runner, nil
+}
+
+func (r *mutationResolver) TestRunnerConnection(ctx context.Context, typeArg enum.RunnerType, config model.RunnerConfigInput) (*model.ConnectionTestResult, error) {
+	// Convert config input to map format
+	configMap, err := convertRunnerConfigInput(config)
+	if err != nil {
+		return &model.ConnectionTestResult{
+			Success: false,
+			Message: fmt.Sprintf("Invalid configuration: %v", err),
+		}, nil
+	}
+
+	// Create runner using factory
+	factory := runner.NewFactory()
+	rt, err := factory.Create(ctx, typeArg, configMap)
+	if err != nil {
+		return &model.ConnectionTestResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to create runner client: %v", err),
+		}, nil
+	}
+	defer rt.Close()
+
+	// For Docker runners, try to ping and get version
+	// Ping with timeout
+	pingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	// Use GetBotStatus as a connection test
+	// This should return an error if connection fails
+	_, err = rt.ListBots(pingCtx)
+	if err != nil {
+		return &model.ConnectionTestResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to connect to runner: %v", err),
+		}, nil
+	}
+
+	return &model.ConnectionTestResult{
+		Success: true,
+		Message: fmt.Sprintf("Successfully connected to %s runner", typeArg),
+	}, nil
 }
 
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {

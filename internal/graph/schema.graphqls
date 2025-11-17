@@ -17,9 +17,9 @@ input RegistryAuthInput {
 input DockerConfigInput {
   host: String!
   tlsVerify: Boolean
-  certPath: String
-  keyPath: String
-  caPath: String
+  certPEM: String
+  keyPEM: String
+  caPEM: String
   apiVersion: String
   network: String
   registryAuth: RegistryAuthInput
@@ -148,6 +148,13 @@ extend type Backtest {
   summary: BacktestSummary
 }
 
+# Connection test result
+type ConnectionTestResult {
+  success: Boolean!
+  message: String!
+  version: String
+}
+
 # Query extensions
 extend type Query {
   # Get runner status for a bot
@@ -189,6 +196,9 @@ type Mutation {
 
   # Runner data management
   refreshRunnerData(id: ID!): BotRunner!
+
+  # Runner connection testing
+  testRunnerConnection(type: BotRunnerRunnerType!, config: RunnerConfigInput!): ConnectionTestResult!
 
   # Backtest mutations
   # Backtests are immutable - only creation is allowed, no updates

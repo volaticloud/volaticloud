@@ -11,25 +11,25 @@ type DockerConfig struct {
 	Host string `json:"host" validate:"required"`
 
 	// TLSVerify enables TLS verification
-	TLSVerify bool `json:"tls_verify,omitempty"`
+	TLSVerify bool `json:"tlsVerify,omitempty"`
 
-	// CertPath is the path to TLS certificates (if TLSVerify is true)
-	CertPath string `json:"cert_path,omitempty"`
+	// CertPEM is the PEM-encoded TLS client certificate (if TLSVerify is true)
+	CertPEM string `json:"certPEM,omitempty"`
 
-	// KeyPath is the path to TLS key file
-	KeyPath string `json:"key_path,omitempty"`
+	// KeyPEM is the PEM-encoded TLS client key
+	KeyPEM string `json:"keyPEM,omitempty"`
 
-	// CAPath is the path to TLS CA file
-	CAPath string `json:"ca_path,omitempty"`
+	// CAPEM is the PEM-encoded TLS CA certificate
+	CAPEM string `json:"caPEM,omitempty"`
 
 	// APIVersion is the Docker API version to use (e.g., "1.41")
-	APIVersion string `json:"api_version,omitempty"`
+	APIVersion string `json:"apiVersion,omitempty"`
 
 	// Network is the Docker network to use for containers
 	Network string `json:"network,omitempty"`
 
 	// RegistryAuth holds registry authentication if needed for private images
-	RegistryAuth *RegistryAuth `json:"registry_auth,omitempty"`
+	RegistryAuth *RegistryAuth `json:"registryAuth,omitempty"`
 }
 
 // RegistryAuth holds Docker registry authentication
@@ -41,7 +41,7 @@ type RegistryAuth struct {
 	Password string `json:"password"`
 
 	// ServerAddress is the registry server address (e.g., "https://index.docker.io/v1/")
-	ServerAddress string `json:"server_address,omitempty"`
+	ServerAddress string `json:"serverAddress,omitempty"`
 }
 
 // ValidateDockerConfig validates Docker-specific configuration
@@ -54,16 +54,16 @@ func ValidateDockerConfig(config *DockerConfig) error {
 		return fmt.Errorf("host is required")
 	}
 
-	// If TLS is enabled, require certificate paths
+	// If TLS is enabled, require certificate contents
 	if config.TLSVerify {
-		if config.CertPath == "" {
-			return fmt.Errorf("cert_path is required when tls_verify is enabled")
+		if config.CertPEM == "" {
+			return fmt.Errorf("cert_pem is required when tls_verify is enabled")
 		}
-		if config.KeyPath == "" {
-			return fmt.Errorf("key_path is required when tls_verify is enabled")
+		if config.KeyPEM == "" {
+			return fmt.Errorf("key_pem is required when tls_verify is enabled")
 		}
-		if config.CAPath == "" {
-			return fmt.Errorf("ca_path is required when tls_verify is enabled")
+		if config.CAPEM == "" {
+			return fmt.Errorf("ca_pem is required when tls_verify is enabled")
 		}
 	}
 

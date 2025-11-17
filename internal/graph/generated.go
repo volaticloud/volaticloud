@@ -209,6 +209,12 @@ type ComplexityRoot struct {
 		StoppedAt    func(childComplexity int) int
 	}
 
+	ConnectionTestResult struct {
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
+		Version func(childComplexity int) int
+	}
+
 	Exchange struct {
 		Bots      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
 		Config    func(childComplexity int) int
@@ -219,29 +225,30 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateBacktest    func(childComplexity int, input ent.CreateBacktestInput) int
-		CreateBot         func(childComplexity int, input ent.CreateBotInput) int
-		CreateBotRunner   func(childComplexity int, input ent.CreateBotRunnerInput) int
-		CreateExchange    func(childComplexity int, input ent.CreateExchangeInput) int
-		CreateStrategy    func(childComplexity int, input ent.CreateStrategyInput) int
-		CreateTrade       func(childComplexity int, input ent.CreateTradeInput) int
-		DeleteBacktest    func(childComplexity int, id uuid.UUID) int
-		DeleteBot         func(childComplexity int, id uuid.UUID) int
-		DeleteBotRunner   func(childComplexity int, id uuid.UUID) int
-		DeleteExchange    func(childComplexity int, id uuid.UUID) int
-		DeleteStrategy    func(childComplexity int, id uuid.UUID) int
-		DeleteTrade       func(childComplexity int, id uuid.UUID) int
-		RefreshRunnerData func(childComplexity int, id uuid.UUID) int
-		RestartBot        func(childComplexity int, id uuid.UUID) int
-		RunBacktest       func(childComplexity int, id uuid.UUID) int
-		StartBot          func(childComplexity int, id uuid.UUID) int
-		StopBacktest      func(childComplexity int, id uuid.UUID) int
-		StopBot           func(childComplexity int, id uuid.UUID) int
-		UpdateBot         func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
-		UpdateBotRunner   func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
-		UpdateExchange    func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
-		UpdateStrategy    func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
-		UpdateTrade       func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
+		CreateBacktest       func(childComplexity int, input ent.CreateBacktestInput) int
+		CreateBot            func(childComplexity int, input ent.CreateBotInput) int
+		CreateBotRunner      func(childComplexity int, input ent.CreateBotRunnerInput) int
+		CreateExchange       func(childComplexity int, input ent.CreateExchangeInput) int
+		CreateStrategy       func(childComplexity int, input ent.CreateStrategyInput) int
+		CreateTrade          func(childComplexity int, input ent.CreateTradeInput) int
+		DeleteBacktest       func(childComplexity int, id uuid.UUID) int
+		DeleteBot            func(childComplexity int, id uuid.UUID) int
+		DeleteBotRunner      func(childComplexity int, id uuid.UUID) int
+		DeleteExchange       func(childComplexity int, id uuid.UUID) int
+		DeleteStrategy       func(childComplexity int, id uuid.UUID) int
+		DeleteTrade          func(childComplexity int, id uuid.UUID) int
+		RefreshRunnerData    func(childComplexity int, id uuid.UUID) int
+		RestartBot           func(childComplexity int, id uuid.UUID) int
+		RunBacktest          func(childComplexity int, id uuid.UUID) int
+		StartBot             func(childComplexity int, id uuid.UUID) int
+		StopBacktest         func(childComplexity int, id uuid.UUID) int
+		StopBot              func(childComplexity int, id uuid.UUID) int
+		TestRunnerConnection func(childComplexity int, typeArg enum.RunnerType, config model.RunnerConfigInput) int
+		UpdateBot            func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
+		UpdateBotRunner      func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
+		UpdateExchange       func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
+		UpdateStrategy       func(childComplexity int, id uuid.UUID, input ent.UpdateStrategyInput) int
+		UpdateTrade          func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
 	}
 
 	PageInfo struct {
@@ -347,6 +354,7 @@ type MutationResolver interface {
 	UpdateBotRunner(ctx context.Context, id uuid.UUID, input ent.UpdateBotRunnerInput) (*ent.BotRunner, error)
 	DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error)
 	RefreshRunnerData(ctx context.Context, id uuid.UUID) (*ent.BotRunner, error)
+	TestRunnerConnection(ctx context.Context, typeArg enum.RunnerType, config model.RunnerConfigInput) (*model.ConnectionTestResult, error)
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
 	RunBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
@@ -1117,6 +1125,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BotStatus.StoppedAt(childComplexity), true
 
+	case "ConnectionTestResult.message":
+		if e.complexity.ConnectionTestResult.Message == nil {
+			break
+		}
+
+		return e.complexity.ConnectionTestResult.Message(childComplexity), true
+	case "ConnectionTestResult.success":
+		if e.complexity.ConnectionTestResult.Success == nil {
+			break
+		}
+
+		return e.complexity.ConnectionTestResult.Success(childComplexity), true
+	case "ConnectionTestResult.version":
+		if e.complexity.ConnectionTestResult.Version == nil {
+			break
+		}
+
+		return e.complexity.ConnectionTestResult.Version(childComplexity), true
+
 	case "Exchange.bots":
 		if e.complexity.Exchange.Bots == nil {
 			break
@@ -1357,6 +1384,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.StopBot(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.testRunnerConnection":
+		if e.complexity.Mutation.TestRunnerConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_testRunnerConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TestRunnerConnection(childComplexity, args["type"].(enum.RunnerType), args["config"].(model.RunnerConfigInput)), true
 	case "Mutation.updateBot":
 		if e.complexity.Mutation.UpdateBot == nil {
 			break
@@ -2296,6 +2334,22 @@ func (ec *executionContext) field_Mutation_stopBot_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_testRunnerConnection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "type", ec.unmarshalNBotRunnerRunnerType2volaticloudᚋinternalᚋenumᚐRunnerType)
+	if err != nil {
+		return nil, err
+	}
+	args["type"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "config", ec.unmarshalNRunnerConfigInput2volaticloudᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput)
+	if err != nil {
+		return nil, err
+	}
+	args["config"] = arg1
 	return args, nil
 }
 
@@ -6535,6 +6589,93 @@ func (ec *executionContext) fieldContext_BotStatus_stoppedAt(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _ConnectionTestResult_success(ctx context.Context, field graphql.CollectedField, obj *model.ConnectionTestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ConnectionTestResult_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ConnectionTestResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConnectionTestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ConnectionTestResult_message(ctx context.Context, field graphql.CollectedField, obj *model.ConnectionTestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ConnectionTestResult_message,
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ConnectionTestResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConnectionTestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ConnectionTestResult_version(ctx context.Context, field graphql.CollectedField, obj *model.ConnectionTestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ConnectionTestResult_version,
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ConnectionTestResult_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConnectionTestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Exchange_id(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7757,6 +7898,55 @@ func (ec *executionContext) fieldContext_Mutation_refreshRunnerData(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_refreshRunnerData_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_testRunnerConnection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_testRunnerConnection,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().TestRunnerConnection(ctx, fc.Args["type"].(enum.RunnerType), fc.Args["config"].(model.RunnerConfigInput))
+		},
+		nil,
+		ec.marshalNConnectionTestResult2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐConnectionTestResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_testRunnerConnection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ConnectionTestResult_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ConnectionTestResult_message(ctx, field)
+			case "version":
+				return ec.fieldContext_ConnectionTestResult_version(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ConnectionTestResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_testRunnerConnection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16671,7 +16861,7 @@ func (ec *executionContext) unmarshalInputDockerConfigInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"host", "tlsVerify", "certPath", "keyPath", "caPath", "apiVersion", "network", "registryAuth"}
+	fieldsInOrder := [...]string{"host", "tlsVerify", "certPEM", "keyPEM", "caPEM", "apiVersion", "network", "registryAuth"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16692,27 +16882,27 @@ func (ec *executionContext) unmarshalInputDockerConfigInput(ctx context.Context,
 				return it, err
 			}
 			it.TLSVerify = data
-		case "certPath":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("certPath"))
+		case "certPEM":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("certPEM"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.CertPath = data
-		case "keyPath":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyPath"))
+			it.CertPem = data
+		case "keyPEM":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyPEM"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.KeyPath = data
-		case "caPath":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("caPath"))
+			it.KeyPem = data
+		case "caPEM":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("caPEM"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.CaPath = data
+			it.CaPem = data
 		case "apiVersion":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -21452,6 +21642,52 @@ func (ec *executionContext) _BotStatus(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var connectionTestResultImplementors = []string{"ConnectionTestResult"}
+
+func (ec *executionContext) _ConnectionTestResult(ctx context.Context, sel ast.SelectionSet, obj *model.ConnectionTestResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, connectionTestResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ConnectionTestResult")
+		case "success":
+			out.Values[i] = ec._ConnectionTestResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._ConnectionTestResult_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._ConnectionTestResult_version(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exchangeImplementors = []string{"Exchange", "Node"}
 
 func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet, obj *ent.Exchange) graphql.Marshaler {
@@ -21671,6 +21907,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "refreshRunnerData":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_refreshRunnerData(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "testRunnerConnection":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_testRunnerConnection(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -23172,6 +23415,20 @@ func (ec *executionContext) unmarshalNBotWhereInput2ᚖvolaticloudᚋinternalᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNConnectionTestResult2volaticloudᚋinternalᚋgraphᚋmodelᚐConnectionTestResult(ctx context.Context, sel ast.SelectionSet, v model.ConnectionTestResult) graphql.Marshaler {
+	return ec._ConnectionTestResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNConnectionTestResult2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐConnectionTestResult(ctx context.Context, sel ast.SelectionSet, v *model.ConnectionTestResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ConnectionTestResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateBacktestInput2volaticloudᚋinternalᚋentᚐCreateBacktestInput(ctx context.Context, v any) (ent.CreateBacktestInput, error) {
 	res, err := ec.unmarshalInputCreateBacktestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23451,6 +23708,11 @@ func (ec *executionContext) marshalNNode2ᚕvolaticloudᚋinternalᚋentᚐNoder
 
 func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v entgql.PageInfo[uuid.UUID]) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNRunnerConfigInput2volaticloudᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx context.Context, v any) (model.RunnerConfigInput, error) {
+	res, err := ec.unmarshalInputRunnerConfigInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNStrategy2volaticloudᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v ent.Strategy) graphql.Marshaler {

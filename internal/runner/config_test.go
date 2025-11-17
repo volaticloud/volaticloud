@@ -30,9 +30,9 @@ func TestValidateDockerConfig(t *testing.T) {
 		config := &DockerConfig{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
-			CertPath:  "/path/to/cert.pem",
-			KeyPath:   "/path/to/key.pem",
-			CAPath:    "/path/to/ca.pem",
+			CertPEM:   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+			KeyPEM:    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+			CAPEM:     "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 		}
 		err := ValidateDockerConfig(config)
 		assert.NoError(t, err)
@@ -71,30 +71,30 @@ func TestValidateDockerConfig(t *testing.T) {
 		}
 		err := ValidateDockerConfig(config)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cert_path is required")
+		assert.Contains(t, err.Error(), "cert_pem is required")
 	})
 
 	t.Run("ErrorTLSWithoutKey", func(t *testing.T) {
 		config := &DockerConfig{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
-			CertPath:  "/path/to/cert.pem",
+			CertPEM:   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 		}
 		err := ValidateDockerConfig(config)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "key_path is required")
+		assert.Contains(t, err.Error(), "key_pem is required")
 	})
 
 	t.Run("ErrorTLSWithoutCA", func(t *testing.T) {
 		config := &DockerConfig{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
-			CertPath:  "/path/to/cert.pem",
-			KeyPath:   "/path/to/key.pem",
+			CertPEM:   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+			KeyPEM:    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
 		}
 		err := ValidateDockerConfig(config)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "ca_path is required")
+		assert.Contains(t, err.Error(), "ca_pem is required")
 	})
 
 	t.Run("ErrorRegistryAuthWithoutUsername", func(t *testing.T) {
@@ -125,9 +125,9 @@ func TestValidateDockerConfig(t *testing.T) {
 func TestParseDockerConfig(t *testing.T) {
 	t.Run("ValidConfig", func(t *testing.T) {
 		configData := map[string]interface{}{
-			"host":        "unix:///var/run/docker.sock",
-			"api_version": "1.41",
-			"network":     "bridge",
+			"host":       "unix:///var/run/docker.sock",
+			"apiVersion": "1.41",
+			"network":    "bridge",
 		}
 
 		config, err := ParseDockerConfig(configData)
@@ -139,30 +139,34 @@ func TestParseDockerConfig(t *testing.T) {
 	})
 
 	t.Run("ValidTLSConfig", func(t *testing.T) {
+		certPEM := "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
+		keyPEM := "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
+		caPEM := "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
+
 		configData := map[string]interface{}{
-			"host":       "tcp://docker.example.com:2376",
-			"tls_verify": true,
-			"cert_path":  "/certs/cert.pem",
-			"key_path":   "/certs/key.pem",
-			"ca_path":    "/certs/ca.pem",
+			"host":      "tcp://docker.example.com:2376",
+			"tlsVerify": true,
+			"certPEM":   certPEM,
+			"keyPEM":    keyPEM,
+			"caPEM":     caPEM,
 		}
 
 		config, err := ParseDockerConfig(configData)
 		require.NoError(t, err)
 		assert.NotNil(t, config)
 		assert.True(t, config.TLSVerify)
-		assert.Equal(t, "/certs/cert.pem", config.CertPath)
-		assert.Equal(t, "/certs/key.pem", config.KeyPath)
-		assert.Equal(t, "/certs/ca.pem", config.CAPath)
+		assert.Equal(t, certPEM, config.CertPEM)
+		assert.Equal(t, keyPEM, config.KeyPEM)
+		assert.Equal(t, caPEM, config.CAPEM)
 	})
 
 	t.Run("ValidRegistryAuth", func(t *testing.T) {
 		configData := map[string]interface{}{
 			"host": "unix:///var/run/docker.sock",
-			"registry_auth": map[string]interface{}{
-				"username":       "myuser",
-				"password":       "mypass",
-				"server_address": "https://registry.example.com",
+			"registryAuth": map[string]interface{}{
+				"username":      "myuser",
+				"password":      "mypass",
+				"serverAddress": "https://registry.example.com",
 			},
 		}
 
@@ -213,26 +217,30 @@ func TestDockerConfigToMap(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, configMap)
 		assert.Equal(t, "unix:///var/run/docker.sock", configMap["host"])
-		assert.Equal(t, "1.41", configMap["api_version"])
+		assert.Equal(t, "1.41", configMap["apiVersion"])
 		assert.Equal(t, "bridge", configMap["network"])
 	})
 
 	t.Run("TLSConfig", func(t *testing.T) {
+		certPEM := "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
+		keyPEM := "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
+		caPEM := "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
+
 		config := &DockerConfig{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
-			CertPath:  "/certs/cert.pem",
-			KeyPath:   "/certs/key.pem",
-			CAPath:    "/certs/ca.pem",
+			CertPEM:   certPEM,
+			KeyPEM:    keyPEM,
+			CAPEM:     caPEM,
 		}
 
 		configMap, err := config.ToMap()
 		require.NoError(t, err)
 		assert.NotNil(t, configMap)
-		assert.Equal(t, true, configMap["tls_verify"])
-		assert.Equal(t, "/certs/cert.pem", configMap["cert_path"])
-		assert.Equal(t, "/certs/key.pem", configMap["key_path"])
-		assert.Equal(t, "/certs/ca.pem", configMap["ca_path"])
+		assert.Equal(t, true, configMap["tlsVerify"])
+		assert.Equal(t, certPEM, configMap["certPEM"])
+		assert.Equal(t, keyPEM, configMap["keyPEM"])
+		assert.Equal(t, caPEM, configMap["caPEM"])
 	})
 
 	t.Run("WithRegistryAuth", func(t *testing.T) {
@@ -249,11 +257,11 @@ func TestDockerConfigToMap(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, configMap)
 
-		registryAuth, ok := configMap["registry_auth"].(map[string]interface{})
+		registryAuth, ok := configMap["registryAuth"].(map[string]interface{})
 		require.True(t, ok)
 		assert.Equal(t, "user", registryAuth["username"])
 		assert.Equal(t, "pass", registryAuth["password"])
-		assert.Equal(t, "https://registry.example.com", registryAuth["server_address"])
+		assert.Equal(t, "https://registry.example.com", registryAuth["serverAddress"])
 	})
 
 	t.Run("RoundTrip", func(t *testing.T) {

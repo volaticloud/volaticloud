@@ -763,22 +763,17 @@ func getContainerName(botID string) string {
 func loadTLSConfig(config *DockerConfig) (*tls.Config, error) {
 	tlsConfig := &tls.Config{}
 
-	// Load client certificate
-	cert, err := tls.LoadX509KeyPair(config.CertPath, config.KeyPath)
+	// Load client certificate from PEM-encoded strings
+	cert, err := tls.X509KeyPair([]byte(config.CertPEM), []byte(config.KeyPEM))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load client certificate: %w", err)
+		return nil, fmt.Errorf("failed to load client certificate from PEM: %w", err)
 	}
 	tlsConfig.Certificates = []tls.Certificate{cert}
 
-	// Load CA certificate
-	caCert, err := os.ReadFile(config.CAPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CA certificate: %w", err)
-	}
-
+	// Load CA certificate from PEM-encoded string
 	caCertPool := x509.NewCertPool()
-	if !caCertPool.AppendCertsFromPEM(caCert) {
-		return nil, fmt.Errorf("failed to append CA certificate")
+	if !caCertPool.AppendCertsFromPEM([]byte(config.CAPEM)) {
+		return nil, fmt.Errorf("failed to append CA certificate from PEM")
 	}
 	tlsConfig.RootCAs = caCertPool
 

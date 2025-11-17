@@ -15,10 +15,12 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { useUpdateRunnerMutation } from '../../generated/graphql';
-import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput } from '../../generated/types';
+import { useUpdateRunnerMutation, useTestRunnerConnectionMutation } from './runners.generated';
+import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput, BotRunnerRunnerType } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 
 interface EditRunnerDialogProps {
@@ -46,13 +48,64 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
   // Data download config state
   const [dataDownloadConfig, setDataDownloadConfig] = useState<DataDownloadConfigInput | null>(null);
 
-  const [updateRunner, { loading, error }] = useUpdateRunnerMutation();
+  // Test connection state
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const [updateRunner, { loading, error }] = useUpdateRunnerMutation({
+    refetchQueries: ['GetRunners'],
+  });
+
+  const [testConnection, { loading: testLoading }] = useTestRunnerConnectionMutation();
+
+  const handleTestConnection = async () => {
+    // Clear previous test result
+    setTestResult(null);
+
+    // Build config based on type
+    const config = type === 'docker'
+      ? { docker: dockerConfig }
+      : type === 'kubernetes'
+      ? { kubernetes: kubernetesConfig }
+      : { local: localConfig };
+
+    try {
+      const result = await testConnection({
+        variables: {
+          type: type as any, // GraphQL will handle the enum conversion
+          config,
+        },
+      });
+
+      if (result.data?.testRunnerConnection) {
+        setTestResult({
+          success: result.data.testRunnerConnection.success,
+          message: result.data.testRunnerConnection.message,
+        });
+      }
+    } catch (err: any) {
+      setTestResult({
+        success: false,
+        message: err.message || 'Failed to test connection',
+      });
+    }
+  };
 
   // Reset form when runner changes or dialog opens
   useEffect(() => {
     if (open) {
       setName(runner.name);
       setType(runner.type);
+
+      // Load existing config based on type
+      if (runner.config) {
+        if (runner.type === 'docker' && runner.config.docker) {
+          setDockerConfig(runner.config.docker);
+        } else if (runner.type === 'kubernetes' && runner.config.kubernetes) {
+          setKubernetesConfig(runner.config.kubernetes);
+        } else if (runner.type === 'local' && runner.config.local) {
+          setLocalConfig(runner.config.local);
+        }
+      }
 
       // Load data download config if available
       setDataDownloadConfig(runner.dataDownloadConfig || null);
@@ -155,27 +208,36 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
               {dockerConfig.tlsVerify && (
                 <>
                   <TextField
-                    label="Certificate Path"
-                    value={dockerConfig.certPath ?? ''}
-                    onChange={(e) => setDockerConfig({ ...dockerConfig, certPath: e.target.value || undefined })}
+                    label="Client Certificate (PEM)"
+                    value={dockerConfig.certPEM ?? ''}
+                    onChange={(e) => setDockerConfig({ ...dockerConfig, certPEM: e.target.value || undefined })}
                     fullWidth
-                    helperText="Path to TLS certificate file"
+                    multiline
+                    rows={4}
+                    helperText="Paste PEM-encoded client certificate (-----BEGIN CERTIFICATE-----)"
+                    placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
                   />
 
                   <TextField
-                    label="Key Path"
-                    value={dockerConfig.keyPath ?? ''}
-                    onChange={(e) => setDockerConfig({ ...dockerConfig, keyPath: e.target.value || undefined })}
+                    label="Client Key (PEM)"
+                    value={dockerConfig.keyPEM ?? ''}
+                    onChange={(e) => setDockerConfig({ ...dockerConfig, keyPEM: e.target.value || undefined })}
                     fullWidth
-                    helperText="Path to TLS key file"
+                    multiline
+                    rows={4}
+                    helperText="Paste PEM-encoded client key (-----BEGIN PRIVATE KEY-----)"
+                    placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
                   />
 
                   <TextField
-                    label="CA Path"
-                    value={dockerConfig.caPath ?? ''}
-                    onChange={(e) => setDockerConfig({ ...dockerConfig, caPath: e.target.value || undefined })}
+                    label="CA Certificate (PEM)"
+                    value={dockerConfig.caPEM ?? ''}
+                    onChange={(e) => setDockerConfig({ ...dockerConfig, caPEM: e.target.value || undefined })}
                     fullWidth
-                    helperText="Path to CA certificate file"
+                    multiline
+                    rows={4}
+                    helperText="Paste PEM-encoded CA certificate (-----BEGIN CERTIFICATE-----)"
+                    placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
                   />
                 </>
               )}
@@ -255,6 +317,13 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
             onChange={setDataDownloadConfig}
           />
 
+          {/* Test Connection Result */}
+          {testResult && (
+            <Alert severity={testResult.success ? 'success' : 'error'}>
+              {testResult.message}
+            </Alert>
+          )}
+
           {error && (
             <FormHelperText error>
               Error updating runner: {error.message}
@@ -264,6 +333,13 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={handleTestConnection}
+          disabled={testLoading || loading}
+          startIcon={testLoading && <CircularProgress size={16} />}
+        >
+          {testLoading ? 'Testing...' : 'Test Connection'}
+        </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"

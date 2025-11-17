@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"volaticloud/internal/ent"
@@ -9,6 +10,7 @@ import (
 	"volaticloud/internal/enum"
 	"volaticloud/internal/exchange"
 	"volaticloud/internal/freqtrade"
+	"volaticloud/internal/graph/model"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/utils"
 )
@@ -219,6 +221,42 @@ func generateSecureConfig() (map[string]interface{}, error) {
 	}
 
 	return secureConfig, nil
+}
+
+// convertRunnerConfigInput converts GraphQL RunnerConfigInput to map format for runner factory
+func convertRunnerConfigInput(input model.RunnerConfigInput) (map[string]interface{}, error) {
+	// Marshal to JSON and unmarshal to map for type conversion
+	jsonBytes, err := json.Marshal(input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	var configMap map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &configMap); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// The configMap will have keys like "docker", "kubernetes", "local"
+	// Extract the non-nil one based on which type is set
+	if dockerCfg, ok := configMap["docker"]; ok && dockerCfg != nil {
+		if dockerMap, ok := dockerCfg.(map[string]interface{}); ok {
+			return dockerMap, nil
+		}
+	}
+
+	if k8sCfg, ok := configMap["kubernetes"]; ok && k8sCfg != nil {
+		if k8sMap, ok := k8sCfg.(map[string]interface{}); ok {
+			return k8sMap, nil
+		}
+	}
+
+	if localCfg, ok := configMap["local"]; ok && localCfg != nil {
+		if localMap, ok := localCfg.(map[string]interface{}); ok {
+			return localMap, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no valid runner config provided")
 }
 
 // runBacktestHelper runs a backtest given its backtest entity

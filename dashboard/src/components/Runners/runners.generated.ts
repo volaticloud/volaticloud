@@ -9,7 +9,7 @@ export type GetRunnersQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetRunnerQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -20,7 +20,7 @@ export type GetRunnerQuery = { __typename?: 'Query', node?:
     | { __typename?: 'Backtest' }
     | { __typename?: 'Bot' }
     | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } }
+    | { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } }
     | { __typename?: 'Exchange' }
     | { __typename?: 'Strategy' }
     | { __typename?: 'Trade' }
@@ -31,7 +31,7 @@ export type CreateRunnerMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateRunnerMutation = { __typename?: 'Mutation', createBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, dataDownloadConfig?: Record<string, any> | null } };
+export type CreateRunnerMutation = { __typename?: 'Mutation', createBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null } };
 
 export type UpdateRunnerMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -39,7 +39,7 @@ export type UpdateRunnerMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRunnerMutation = { __typename?: 'Mutation', updateBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, dataDownloadConfig?: Record<string, any> | null } };
+export type UpdateRunnerMutation = { __typename?: 'Mutation', updateBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null } };
 
 export type DeleteRunnerMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -55,6 +55,14 @@ export type RefreshRunnerDataMutationVariables = Types.Exact<{
 
 export type RefreshRunnerDataMutation = { __typename?: 'Mutation', refreshRunnerData: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataErrorMessage?: string | null } };
 
+export type TestRunnerConnectionMutationVariables = Types.Exact<{
+  type: Types.BotRunnerRunnerType;
+  config: Types.RunnerConfigInput;
+}>;
+
+
+export type TestRunnerConnectionMutation = { __typename?: 'Mutation', testRunnerConnection: { __typename?: 'ConnectionTestResult', success: boolean, message: string, version?: string | null } };
+
 
 export const GetRunnersDocument = gql`
     query GetRunners($first: Int, $after: Cursor) {
@@ -64,6 +72,7 @@ export const GetRunnersDocument = gql`
         id
         name
         type
+        config
         createdAt
         dataIsReady
         dataLastUpdated
@@ -127,6 +136,7 @@ export const GetRunnerDocument = gql`
       id
       name
       type
+      config
       createdAt
       dataIsReady
       dataLastUpdated
@@ -180,6 +190,7 @@ export const CreateRunnerDocument = gql`
     id
     name
     type
+    config
     dataDownloadConfig
   }
 }
@@ -216,6 +227,7 @@ export const UpdateRunnerDocument = gql`
     id
     name
     type
+    config
     dataDownloadConfig
   }
 }
@@ -318,3 +330,39 @@ export function useRefreshRunnerDataMutation(baseOptions?: Apollo.MutationHookOp
 export type RefreshRunnerDataMutationHookResult = ReturnType<typeof useRefreshRunnerDataMutation>;
 export type RefreshRunnerDataMutationResult = Apollo.MutationResult<RefreshRunnerDataMutation>;
 export type RefreshRunnerDataMutationOptions = Apollo.BaseMutationOptions<RefreshRunnerDataMutation, RefreshRunnerDataMutationVariables>;
+export const TestRunnerConnectionDocument = gql`
+    mutation TestRunnerConnection($type: BotRunnerRunnerType!, $config: RunnerConfigInput!) {
+  testRunnerConnection(type: $type, config: $config) {
+    success
+    message
+    version
+  }
+}
+    `;
+export type TestRunnerConnectionMutationFn = Apollo.MutationFunction<TestRunnerConnectionMutation, TestRunnerConnectionMutationVariables>;
+
+/**
+ * __useTestRunnerConnectionMutation__
+ *
+ * To run a mutation, you first call `useTestRunnerConnectionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useTestRunnerConnectionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [testRunnerConnectionMutation, { data, loading, error }] = useTestRunnerConnectionMutation({
+ *   variables: {
+ *      type: // value for 'type'
+ *      config: // value for 'config'
+ *   },
+ * });
+ */
+export function useTestRunnerConnectionMutation(baseOptions?: Apollo.MutationHookOptions<TestRunnerConnectionMutation, TestRunnerConnectionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<TestRunnerConnectionMutation, TestRunnerConnectionMutationVariables>(TestRunnerConnectionDocument, options);
+      }
+export type TestRunnerConnectionMutationHookResult = ReturnType<typeof useTestRunnerConnectionMutation>;
+export type TestRunnerConnectionMutationResult = Apollo.MutationResult<TestRunnerConnectionMutation>;
+export type TestRunnerConnectionMutationOptions = Apollo.BaseMutationOptions<TestRunnerConnectionMutation, TestRunnerConnectionMutationVariables>;
