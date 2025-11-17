@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useUpdateRunnerMutation, useTestRunnerConnectionMutation } from './runners.generated';
-import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput, BotRunnerRunnerType } from '../../generated/types';
+import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 
 interface EditRunnerDialogProps {
