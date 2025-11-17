@@ -120,33 +120,40 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 		},
 	}
 
+	// Prepare mounts - always include config and data volumes
+	mounts := []mount.Mount{
+		{
+			Type:     mount.TypeBind,
+			Source:   configPaths.configFileHost,
+			Target:   configPaths.configFileContainer,
+			ReadOnly: true,
+		},
+		{
+			Type:   mount.TypeVolume,
+			Source: "volaticloud-freqtrade-data",
+			Target: "/freqtrade/user_data/data",
+		},
+		{
+			Type:   mount.TypeVolume,
+			Source: "volaticloud-backtest-results",
+			Target: "/freqtrade/user_data/backtest_results",
+		},
+	}
+
+	// Only mount strategy file if it exists
+	if configPaths.strategyFileHost != "" {
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   configPaths.strategyFileHost,
+			Target:   configPaths.strategyFileContainer,
+			ReadOnly: true,
+		})
+	}
+
 	hostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode(d.network),
 		AutoRemove:  false, // Keep container for result retrieval
-		Mounts: []mount.Mount{
-			{
-				Type:     mount.TypeBind,
-				Source:   configPaths.configFileHost,
-				Target:   configPaths.configFileContainer,
-				ReadOnly: true,
-			},
-			{
-				Type:     mount.TypeBind,
-				Source:   configPaths.strategyFileHost,
-				Target:   configPaths.strategyFileContainer,
-				ReadOnly: true,
-			},
-			{
-				Type:   mount.TypeVolume,
-				Source: "volaticloud-freqtrade-data",
-				Target: "/freqtrade/user_data/data",
-			},
-			{
-				Type:   mount.TypeVolume,
-				Source: "volaticloud-backtest-results",
-				Target: "/freqtrade/user_data/backtest_results",
-			},
-		},
+		Mounts:      mounts,
 	}
 
 	// Apply resource limits
