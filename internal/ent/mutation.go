@@ -56,6 +56,8 @@ type BacktestMutation struct {
 	created_at      *time.Time
 	updated_at      *time.Time
 	completed_at    *time.Time
+	start_date      *time.Time
+	end_date        *time.Time
 	clearedFields   map[string]struct{}
 	strategy        *uuid.UUID
 	clearedstrategy bool
@@ -644,6 +646,104 @@ func (m *BacktestMutation) ResetCompletedAt() {
 	delete(m.clearedFields, backtest.FieldCompletedAt)
 }
 
+// SetStartDate sets the "start_date" field.
+func (m *BacktestMutation) SetStartDate(t time.Time) {
+	m.start_date = &t
+}
+
+// StartDate returns the value of the "start_date" field in the mutation.
+func (m *BacktestMutation) StartDate() (r time.Time, exists bool) {
+	v := m.start_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartDate returns the old "start_date" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldStartDate(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartDate: %w", err)
+	}
+	return oldValue.StartDate, nil
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (m *BacktestMutation) ClearStartDate() {
+	m.start_date = nil
+	m.clearedFields[backtest.FieldStartDate] = struct{}{}
+}
+
+// StartDateCleared returns if the "start_date" field was cleared in this mutation.
+func (m *BacktestMutation) StartDateCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldStartDate]
+	return ok
+}
+
+// ResetStartDate resets all changes to the "start_date" field.
+func (m *BacktestMutation) ResetStartDate() {
+	m.start_date = nil
+	delete(m.clearedFields, backtest.FieldStartDate)
+}
+
+// SetEndDate sets the "end_date" field.
+func (m *BacktestMutation) SetEndDate(t time.Time) {
+	m.end_date = &t
+}
+
+// EndDate returns the value of the "end_date" field in the mutation.
+func (m *BacktestMutation) EndDate() (r time.Time, exists bool) {
+	v := m.end_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEndDate returns the old "end_date" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldEndDate(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEndDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEndDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEndDate: %w", err)
+	}
+	return oldValue.EndDate, nil
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (m *BacktestMutation) ClearEndDate() {
+	m.end_date = nil
+	m.clearedFields[backtest.FieldEndDate] = struct{}{}
+}
+
+// EndDateCleared returns if the "end_date" field was cleared in this mutation.
+func (m *BacktestMutation) EndDateCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldEndDate]
+	return ok
+}
+
+// ResetEndDate resets all changes to the "end_date" field.
+func (m *BacktestMutation) ResetEndDate() {
+	m.end_date = nil
+	delete(m.clearedFields, backtest.FieldEndDate)
+}
+
 // ClearStrategy clears the "strategy" edge to the Strategy entity.
 func (m *BacktestMutation) ClearStrategy() {
 	m.clearedstrategy = true
@@ -732,7 +832,7 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 13)
 	if m.status != nil {
 		fields = append(fields, backtest.FieldStatus)
 	}
@@ -766,6 +866,12 @@ func (m *BacktestMutation) Fields() []string {
 	if m.completed_at != nil {
 		fields = append(fields, backtest.FieldCompletedAt)
 	}
+	if m.start_date != nil {
+		fields = append(fields, backtest.FieldStartDate)
+	}
+	if m.end_date != nil {
+		fields = append(fields, backtest.FieldEndDate)
+	}
 	return fields
 }
 
@@ -796,6 +902,10 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case backtest.FieldCompletedAt:
 		return m.CompletedAt()
+	case backtest.FieldStartDate:
+		return m.StartDate()
+	case backtest.FieldEndDate:
+		return m.EndDate()
 	}
 	return nil, false
 }
@@ -827,6 +937,10 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldUpdatedAt(ctx)
 	case backtest.FieldCompletedAt:
 		return m.OldCompletedAt(ctx)
+	case backtest.FieldStartDate:
+		return m.OldStartDate(ctx)
+	case backtest.FieldEndDate:
+		return m.OldEndDate(ctx)
 	}
 	return nil, fmt.Errorf("unknown Backtest field %s", name)
 }
@@ -913,6 +1027,20 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCompletedAt(v)
 		return nil
+	case backtest.FieldStartDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartDate(v)
+		return nil
+	case backtest.FieldEndDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEndDate(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Backtest field %s", name)
 }
@@ -961,6 +1089,12 @@ func (m *BacktestMutation) ClearedFields() []string {
 	if m.FieldCleared(backtest.FieldCompletedAt) {
 		fields = append(fields, backtest.FieldCompletedAt)
 	}
+	if m.FieldCleared(backtest.FieldStartDate) {
+		fields = append(fields, backtest.FieldStartDate)
+	}
+	if m.FieldCleared(backtest.FieldEndDate) {
+		fields = append(fields, backtest.FieldEndDate)
+	}
 	return fields
 }
 
@@ -992,6 +1126,12 @@ func (m *BacktestMutation) ClearField(name string) error {
 		return nil
 	case backtest.FieldCompletedAt:
 		m.ClearCompletedAt()
+		return nil
+	case backtest.FieldStartDate:
+		m.ClearStartDate()
+		return nil
+	case backtest.FieldEndDate:
+		m.ClearEndDate()
 		return nil
 	}
 	return fmt.Errorf("unknown Backtest nullable field %s", name)
@@ -1033,6 +1173,12 @@ func (m *BacktestMutation) ResetField(name string) error {
 		return nil
 	case backtest.FieldCompletedAt:
 		m.ResetCompletedAt()
+		return nil
+	case backtest.FieldStartDate:
+		m.ResetStartDate()
+		return nil
+	case backtest.FieldEndDate:
+		m.ResetEndDate()
 		return nil
 	}
 	return fmt.Errorf("unknown Backtest field %s", name)

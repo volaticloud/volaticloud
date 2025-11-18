@@ -121,6 +121,16 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldCompletedAt)
 				fieldSeen[backtest.FieldCompletedAt] = struct{}{}
 			}
+		case "startDate":
+			if _, ok := fieldSeen[backtest.FieldStartDate]; !ok {
+				selectedFields = append(selectedFields, backtest.FieldStartDate)
+				fieldSeen[backtest.FieldStartDate] = struct{}{}
+			}
+		case "endDate":
+			if _, ok := fieldSeen[backtest.FieldEndDate]; !ok {
+				selectedFields = append(selectedFields, backtest.FieldEndDate)
+				fieldSeen[backtest.FieldEndDate] = struct{}{}
+			}
 		case "id":
 		case "__typename":
 		default:

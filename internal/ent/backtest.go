@@ -44,6 +44,10 @@ type Backtest struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Completion timestamp
 	CompletedAt time.Time `json:"completed_at,omitempty"`
+	// Backtest start date (beginning of time range)
+	StartDate time.Time `json:"start_date,omitempty"`
+	// Backtest end date (end of time range)
+	EndDate time.Time `json:"end_date,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BacktestQuery when eager-loading is set.
 	Edges        BacktestEdges `json:"edges"`
@@ -94,7 +98,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage, backtest.FieldLogs:
 			values[i] = new(sql.NullString)
-		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt:
+		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt, backtest.FieldStartDate, backtest.FieldEndDate:
 			values[i] = new(sql.NullTime)
 		case backtest.FieldID, backtest.FieldStrategyID, backtest.FieldRunnerID:
 			values[i] = new(uuid.UUID)
@@ -189,6 +193,18 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CompletedAt = value.Time
 			}
+		case backtest.FieldStartDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field start_date", values[i])
+			} else if value.Valid {
+				_m.StartDate = value.Time
+			}
+		case backtest.FieldEndDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field end_date", values[i])
+			} else if value.Valid {
+				_m.EndDate = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -267,6 +283,12 @@ func (_m *Backtest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("completed_at=")
 	builder.WriteString(_m.CompletedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("start_date=")
+	builder.WriteString(_m.StartDate.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("end_date=")
+	builder.WriteString(_m.EndDate.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -19,6 +19,8 @@ type CreateBacktestInput struct {
 	CreatedAt    *time.Time
 	UpdatedAt    *time.Time
 	CompletedAt  *time.Time
+	StartDate    *time.Time
+	EndDate      *time.Time
 	StrategyID   uuid.UUID
 	RunnerID     uuid.UUID
 }
@@ -48,6 +50,12 @@ func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
 	}
 	if v := i.CompletedAt; v != nil {
 		m.SetCompletedAt(*v)
+	}
+	if v := i.StartDate; v != nil {
+		m.SetStartDate(*v)
+	}
+	if v := i.EndDate; v != nil {
+		m.SetEndDate(*v)
 	}
 	m.SetStrategyID(i.StrategyID)
 	m.SetRunnerID(i.RunnerID)

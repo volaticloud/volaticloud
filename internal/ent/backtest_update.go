@@ -184,6 +184,46 @@ func (_u *BacktestUpdate) ClearCompletedAt() *BacktestUpdate {
 	return _u
 }
 
+// SetStartDate sets the "start_date" field.
+func (_u *BacktestUpdate) SetStartDate(v time.Time) *BacktestUpdate {
+	_u.mutation.SetStartDate(v)
+	return _u
+}
+
+// SetNillableStartDate sets the "start_date" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableStartDate(v *time.Time) *BacktestUpdate {
+	if v != nil {
+		_u.SetStartDate(*v)
+	}
+	return _u
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (_u *BacktestUpdate) ClearStartDate() *BacktestUpdate {
+	_u.mutation.ClearStartDate()
+	return _u
+}
+
+// SetEndDate sets the "end_date" field.
+func (_u *BacktestUpdate) SetEndDate(v time.Time) *BacktestUpdate {
+	_u.mutation.SetEndDate(v)
+	return _u
+}
+
+// SetNillableEndDate sets the "end_date" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableEndDate(v *time.Time) *BacktestUpdate {
+	if v != nil {
+		_u.SetEndDate(*v)
+	}
+	return _u
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (_u *BacktestUpdate) ClearEndDate() *BacktestUpdate {
+	_u.mutation.ClearEndDate()
+	return _u
+}
+
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_u *BacktestUpdate) SetStrategy(v *Strategy) *BacktestUpdate {
 	return _u.SetStrategyID(v.ID)
@@ -316,6 +356,18 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CompletedAtCleared() {
 		_spec.ClearField(backtest.FieldCompletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.StartDate(); ok {
+		_spec.SetField(backtest.FieldStartDate, field.TypeTime, value)
+	}
+	if _u.mutation.StartDateCleared() {
+		_spec.ClearField(backtest.FieldStartDate, field.TypeTime)
+	}
+	if value, ok := _u.mutation.EndDate(); ok {
+		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
+	}
+	if _u.mutation.EndDateCleared() {
+		_spec.ClearField(backtest.FieldEndDate, field.TypeTime)
 	}
 	if _u.mutation.StrategyCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -547,6 +599,46 @@ func (_u *BacktestUpdateOne) ClearCompletedAt() *BacktestUpdateOne {
 	return _u
 }
 
+// SetStartDate sets the "start_date" field.
+func (_u *BacktestUpdateOne) SetStartDate(v time.Time) *BacktestUpdateOne {
+	_u.mutation.SetStartDate(v)
+	return _u
+}
+
+// SetNillableStartDate sets the "start_date" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableStartDate(v *time.Time) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetStartDate(*v)
+	}
+	return _u
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (_u *BacktestUpdateOne) ClearStartDate() *BacktestUpdateOne {
+	_u.mutation.ClearStartDate()
+	return _u
+}
+
+// SetEndDate sets the "end_date" field.
+func (_u *BacktestUpdateOne) SetEndDate(v time.Time) *BacktestUpdateOne {
+	_u.mutation.SetEndDate(v)
+	return _u
+}
+
+// SetNillableEndDate sets the "end_date" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableEndDate(v *time.Time) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetEndDate(*v)
+	}
+	return _u
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (_u *BacktestUpdateOne) ClearEndDate() *BacktestUpdateOne {
+	_u.mutation.ClearEndDate()
+	return _u
+}
+
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_u *BacktestUpdateOne) SetStrategy(v *Strategy) *BacktestUpdateOne {
 	return _u.SetStrategyID(v.ID)
@@ -709,6 +801,18 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	}
 	if _u.mutation.CompletedAtCleared() {
 		_spec.ClearField(backtest.FieldCompletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.StartDate(); ok {
+		_spec.SetField(backtest.FieldStartDate, field.TypeTime, value)
+	}
+	if _u.mutation.StartDateCleared() {
+		_spec.ClearField(backtest.FieldStartDate, field.TypeTime)
+	}
+	if value, ok := _u.mutation.EndDate(); ok {
+		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
+	}
+	if _u.mutation.EndDateCleared() {
+		_spec.ClearField(backtest.FieldEndDate, field.TypeTime)
 	}
 	if _u.mutation.StrategyCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -24,7 +24,7 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 				"days":         float64(365),
 				"tradingMode":  "spot",
 			},
-			expectedFormat: "feather",
+			expectedFormat: "json",
 			expectedMode:   "spot",
 		},
 		{
@@ -36,7 +36,7 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 				"days":         float64(30),
 				"tradingMode":  "futures",
 			},
-			expectedFormat: "feather",
+			expectedFormat: "json",
 			expectedMode:   "futures",
 		},
 		{
@@ -47,7 +47,7 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 				"timeframes":   []interface{}{"1h"},
 				"days":         float64(180),
 			},
-			expectedFormat: "feather",
+			expectedFormat: "json",
 			expectedMode:   "spot",
 		},
 		{
@@ -59,7 +59,7 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 				"days":         90,
 				"tradingMode":  "spot",
 			},
-			expectedFormat: "feather",
+			expectedFormat: "json",
 			expectedMode:   "spot",
 		},
 	}
@@ -97,7 +97,7 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 				"--exchange", tt.exchange,
 				"--pairs", pairsPattern,
 				"--days", days,
-				"--data-format-ohlcv", "feather",
+				"--data-format-ohlcv", "json",
 				"--trading-mode", tradingMode,
 			}
 			args = append(args, "--timeframes")
@@ -105,7 +105,7 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 
 			// Verify critical assertions
 			assert.Contains(t, args, "--data-format-ohlcv", "Command must specify data format")
-			assert.Contains(t, args, tt.expectedFormat, "Data format must be feather for backtesting compatibility")
+			assert.Contains(t, args, tt.expectedFormat, "Data format must be json for transparency and debugging")
 			assert.Contains(t, args, "--trading-mode", "Command must specify trading mode")
 			assert.Contains(t, args, tt.expectedMode, "Trading mode must match config")
 			assert.Contains(t, args, "--exchange", "Command must specify exchange")
@@ -120,9 +120,9 @@ func TestDownloadExchangeDataCommandBuilder(t *testing.T) {
 	}
 }
 
-func TestDataFormatIsFeather(t *testing.T) {
-	// Critical regression test: data format must be feather, not json
-	// This ensures backtesting works without requiring explicit dataformat_ohlcv config
+func TestDataFormatIsJSON(t *testing.T) {
+	// Critical regression test: data format must be json for transparency and debugging
+	// Backtesting must specify dataformat_ohlcv="json" in config to match
 
 	config := map[string]interface{}{
 		"pairsPattern": "BTC/USDT",
@@ -137,7 +137,7 @@ func TestDataFormatIsFeather(t *testing.T) {
 		"--exchange", "binance",
 		"--pairs", config["pairsPattern"].(string),
 		"--days", "365",
-		"--data-format-ohlcv", "feather", // THIS IS THE CRITICAL FIX
+		"--data-format-ohlcv", "json", // JSON for transparency
 		"--trading-mode", "spot",
 	}
 
@@ -150,10 +150,10 @@ func TestDataFormatIsFeather(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, "feather", dataFormat,
-		"Data format MUST be 'feather' for backtesting compatibility. "+
-			"Freqtrade backtesting defaults to feather format. "+
-			"Using 'json' will cause 'No data found' errors during backtesting.")
+	assert.Equal(t, "json", dataFormat,
+		"Data format MUST be 'json' for transparency and debugging. "+
+			"Backtesting config must include dataformat_ohlcv='json' to match. "+
+			"JSON format allows easy inspection of downloaded historical data.")
 }
 
 func TestVolumeConstants(t *testing.T) {

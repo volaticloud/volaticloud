@@ -137,6 +137,30 @@ type BacktestWhereInput struct {
 	CompletedAtIsNil  bool        `json:"completedAtIsNil,omitempty"`
 	CompletedAtNotNil bool        `json:"completedAtNotNil,omitempty"`
 
+	// "start_date" field predicates.
+	StartDate       *time.Time  `json:"startDate,omitempty"`
+	StartDateNEQ    *time.Time  `json:"startDateNEQ,omitempty"`
+	StartDateIn     []time.Time `json:"startDateIn,omitempty"`
+	StartDateNotIn  []time.Time `json:"startDateNotIn,omitempty"`
+	StartDateGT     *time.Time  `json:"startDateGT,omitempty"`
+	StartDateGTE    *time.Time  `json:"startDateGTE,omitempty"`
+	StartDateLT     *time.Time  `json:"startDateLT,omitempty"`
+	StartDateLTE    *time.Time  `json:"startDateLTE,omitempty"`
+	StartDateIsNil  bool        `json:"startDateIsNil,omitempty"`
+	StartDateNotNil bool        `json:"startDateNotNil,omitempty"`
+
+	// "end_date" field predicates.
+	EndDate       *time.Time  `json:"endDate,omitempty"`
+	EndDateNEQ    *time.Time  `json:"endDateNEQ,omitempty"`
+	EndDateIn     []time.Time `json:"endDateIn,omitempty"`
+	EndDateNotIn  []time.Time `json:"endDateNotIn,omitempty"`
+	EndDateGT     *time.Time  `json:"endDateGT,omitempty"`
+	EndDateGTE    *time.Time  `json:"endDateGTE,omitempty"`
+	EndDateLT     *time.Time  `json:"endDateLT,omitempty"`
+	EndDateLTE    *time.Time  `json:"endDateLTE,omitempty"`
+	EndDateIsNil  bool        `json:"endDateIsNil,omitempty"`
+	EndDateNotNil bool        `json:"endDateNotNil,omitempty"`
+
 	// "strategy" edge predicates.
 	HasStrategy     *bool                 `json:"hasStrategy,omitempty"`
 	HasStrategyWith []*StrategyWhereInput `json:"hasStrategyWith,omitempty"`
@@ -489,6 +513,66 @@ func (i *BacktestWhereInput) P() (predicate.Backtest, error) {
 	}
 	if i.CompletedAtNotNil {
 		predicates = append(predicates, backtest.CompletedAtNotNil())
+	}
+	if i.StartDate != nil {
+		predicates = append(predicates, backtest.StartDateEQ(*i.StartDate))
+	}
+	if i.StartDateNEQ != nil {
+		predicates = append(predicates, backtest.StartDateNEQ(*i.StartDateNEQ))
+	}
+	if len(i.StartDateIn) > 0 {
+		predicates = append(predicates, backtest.StartDateIn(i.StartDateIn...))
+	}
+	if len(i.StartDateNotIn) > 0 {
+		predicates = append(predicates, backtest.StartDateNotIn(i.StartDateNotIn...))
+	}
+	if i.StartDateGT != nil {
+		predicates = append(predicates, backtest.StartDateGT(*i.StartDateGT))
+	}
+	if i.StartDateGTE != nil {
+		predicates = append(predicates, backtest.StartDateGTE(*i.StartDateGTE))
+	}
+	if i.StartDateLT != nil {
+		predicates = append(predicates, backtest.StartDateLT(*i.StartDateLT))
+	}
+	if i.StartDateLTE != nil {
+		predicates = append(predicates, backtest.StartDateLTE(*i.StartDateLTE))
+	}
+	if i.StartDateIsNil {
+		predicates = append(predicates, backtest.StartDateIsNil())
+	}
+	if i.StartDateNotNil {
+		predicates = append(predicates, backtest.StartDateNotNil())
+	}
+	if i.EndDate != nil {
+		predicates = append(predicates, backtest.EndDateEQ(*i.EndDate))
+	}
+	if i.EndDateNEQ != nil {
+		predicates = append(predicates, backtest.EndDateNEQ(*i.EndDateNEQ))
+	}
+	if len(i.EndDateIn) > 0 {
+		predicates = append(predicates, backtest.EndDateIn(i.EndDateIn...))
+	}
+	if len(i.EndDateNotIn) > 0 {
+		predicates = append(predicates, backtest.EndDateNotIn(i.EndDateNotIn...))
+	}
+	if i.EndDateGT != nil {
+		predicates = append(predicates, backtest.EndDateGT(*i.EndDateGT))
+	}
+	if i.EndDateGTE != nil {
+		predicates = append(predicates, backtest.EndDateGTE(*i.EndDateGTE))
+	}
+	if i.EndDateLT != nil {
+		predicates = append(predicates, backtest.EndDateLT(*i.EndDateLT))
+	}
+	if i.EndDateLTE != nil {
+		predicates = append(predicates, backtest.EndDateLTE(*i.EndDateLTE))
+	}
+	if i.EndDateIsNil {
+		predicates = append(predicates, backtest.EndDateIsNil())
+	}
+	if i.EndDateNotNil {
+		predicates = append(predicates, backtest.EndDateNotNil())
 	}
 
 	if i.HasStrategy != nil {
