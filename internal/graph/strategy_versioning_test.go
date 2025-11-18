@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"volaticloud/internal/ent"
+	backtestent "volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/enttest"
 	strategyent "volaticloud/internal/ent/strategy"
 	"volaticloud/internal/enum"
@@ -234,16 +235,46 @@ func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, strategyWithBacktest.Edges.Backtest)
 
-	// Attempt to create second backtest - should fail with error
+	// Attempt to create second backtest - should auto-create new version
 	backtest2Input := ent.CreateBacktestInput{
 		StrategyID: strategy.ID,
 		RunnerID:   runner.ID,
 	}
-	_, err = resolver.Mutation().CreateBacktest(ctx, backtest2Input)
+	backtest2, err := resolver.Mutation().CreateBacktest(ctx, backtest2Input)
 
-	// Should error with message about strategy already having backtest
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "strategy already has a backtest")
+	// Should succeed by auto-creating new version
+	require.NoError(t, err)
+	assert.NotNil(t, backtest2)
+
+	// Verify a new version was created
+	versions, err := client.Strategy.Query().
+		Where(strategyent.NameEQ(strategy.Name)).
+		Order(ent.Asc(strategyent.FieldVersionNumber)).
+		All(ctx)
+	require.NoError(t, err)
+	assert.Len(t, versions, 2, "should have created v2")
+
+	// Verify v2 was created with correct attributes
+	v2 := versions[1]
+	assert.Equal(t, 2, v2.VersionNumber)
+	assert.True(t, v2.IsLatest)
+	assert.NotNil(t, v2.ParentID)
+	assert.Equal(t, strategy.ID, *v2.ParentID)
+	assert.Equal(t, strategy.Name, v2.Name)
+	assert.Equal(t, strategy.Code, v2.Code)
+
+	// Verify v1 is no longer latest
+	v1Updated, err := client.Strategy.Get(ctx, strategy.ID)
+	require.NoError(t, err)
+	assert.False(t, v1Updated.IsLatest)
+
+	// Verify the new backtest is associated with v2, not v1
+	backtest2WithStrategy, err := client.Backtest.Query().
+		Where(backtestent.IDEQ(backtest2.ID)).
+		WithStrategy().
+		Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, v2.ID, backtest2WithStrategy.Edges.Strategy.ID, "backtest should be for v2")
 }
 
 func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
