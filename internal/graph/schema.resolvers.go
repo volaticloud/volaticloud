@@ -576,9 +576,9 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 		}
 
 		// Create backtest entity (within transaction)
+		// Use SetInput to set all fields from the input struct (includes start_date and end_date)
 		bt, err := tx.Backtest.Create().
-			SetStrategyID(strategyID).
-			SetRunnerID(input.RunnerID).
+			SetInput(input).
 			SetStatus(enum.TaskStatusPending).
 			Save(ctx)
 		if err != nil {

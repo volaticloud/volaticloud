@@ -40,6 +40,10 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldCompletedAt holds the string denoting the completed_at field in the database.
 	FieldCompletedAt = "completed_at"
+	// FieldStartDate holds the string denoting the start_date field in the database.
+	FieldStartDate = "start_date"
+	// FieldEndDate holds the string denoting the end_date field in the database.
+	FieldEndDate = "end_date"
 	// EdgeStrategy holds the string denoting the strategy edge name in mutations.
 	EdgeStrategy = "strategy"
 	// EdgeRunner holds the string denoting the runner edge name in mutations.
@@ -76,6 +80,8 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldCompletedAt,
+	FieldStartDate,
+	FieldEndDate,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -162,6 +168,16 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByCompletedAt orders the results by the completed_at field.
 func ByCompletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCompletedAt, opts...).ToFunc()
+}
+
+// ByStartDate orders the results by the start_date field.
+func ByStartDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStartDate, opts...).ToFunc()
+}
+
+// ByEndDate orders the results by the end_date field.
+func ByEndDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEndDate, opts...).ToFunc()
 }
 
 // ByStrategyField orders the results by strategy field.

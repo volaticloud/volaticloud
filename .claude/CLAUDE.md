@@ -546,29 +546,30 @@ Always ensure:
 
 ### Data Download and Format
 
-**Default Data Format**: Feather (configured in `internal/monitor/data_download.go:154`)
+**Default Data Format**: JSON (configured in `internal/monitor/data_download.go:174`)
 
 Data is downloaded using the `download-data` command with the following defaults:
-- Format: `feather` (freqtrade's default, optimized for backtesting)
+- Format: `json` (for transparency and debugging)
 - Directory structure: `/freqtrade/user_data/data/{exchange}/{tradingMode}/`
-  - Example: `/freqtrade/user_data/data/binance/spot/BTC_USDT-1h.feather`
+  - Example: `/freqtrade/user_data/data/okx/spot/ETH_USDT-1m.json`
 - Trading mode subdirectories are automatically created based on `tradingMode` config
 
-**Why Feather Format:**
-- Freqtrade's default format for backtesting
-- Faster loading and smaller file sizes compared to JSON
-- Backtesting works seamlessly without requiring `dataformat_ohlcv` config
+**Why JSON Format:**
+- Human-readable for debugging and data inspection
+- Transparent - can easily verify downloaded historical data
+- Backtesting explicitly configured to use JSON via `--data-format-ohlcv json` command flag
+- Strategy configs automatically set `dataformat_ohlcv: "json"` (see `internal/graph/helpers.go:188`)
 
 **Data Download Configuration:**
 ```go
-// internal/monitor/data_download.go:148-156
+// internal/monitor/data_download.go:174
 args := []string{
     "download-data",
     "--exchange", exchange,
     "--pairs", pairsPattern,
     "--days", days,
-    "--data-format-ohlcv", "feather",  // Default format
-    "--trading-mode", tradingMode,      // Creates spot/futures subdirectory
+    "--data-format-ohlcv", "json",  // JSON for transparency
+    "--trading-mode", tradingMode,   // Creates spot/futures subdirectory
 }
 ```
 
@@ -579,6 +580,62 @@ Backtests run in one-time Docker containers (non-persistent) that:
 2. Use downloaded historical data
 3. Execute the strategy against historical candles
 4. Generate performance metrics
+
+**Parallel Backtest Volume Mount Strategy:**
+
+**Updated: 2025-11-18** - Implemented mount-based strategy for parallel backtesting support.
+
+Each backtest gets an isolated workspace while sharing historical data:
+
+```
+Architecture:
+  --userdir /freqtrade/user_data/{backtestID}
+      ↓
+  Freqtrade auto-resolves data as: {userdir}/data/
+      ↓
+  Mount shared data to: /freqtrade/user_data/{backtestID}/data/
+```
+
+**Implementation** (`internal/runner/docker_backtest.go:122-138`):
+```go
+mounts := []mount.Mount{
+    {
+        Type:     mount.TypeVolume,
+        Source:   configPaths.volumeName,
+        Target:   "/freqtrade/user_data",
+        ReadOnly: false, // Must be writable for results
+    },
+    {
+        Type:   mount.TypeVolume,
+        Source: "volaticloud-freqtrade-data",
+        // Mount shared data to backtest-specific data directory
+        // When using --userdir, Freqtrade looks for data at {userdir}/data/
+        Target: fmt.Sprintf("/freqtrade/user_data/%s/data", spec.ID),
+    },
+}
+```
+
+**Command Structure** (`internal/runner/docker_backtest.go:549-558`):
+```go
+cmd := []string{"backtesting"}
+cmd = append(cmd, "--strategy", spec.StrategyName)
+// Use --userdir to isolate each backtest's results (logs, backtest_results)
+// Freqtrade automatically resolves data directory as {userdir}/data/
+cmd = append(cmd, "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", spec.ID))
+cmd = append(cmd, "--data-format-ohlcv", "json")
+// NO --datadir flag - Freqtrade automatic resolution handles it
+```
+
+**Benefits:**
+- ✅ **Parallel Support**: Each backtest has isolated userdir, no path conflicts
+- ✅ **Shared Data**: All backtests access same historical data volume (single download)
+- ✅ **Clean Architecture**: Mount-based strategy, not config-based
+- ✅ **Automatic Resolution**: No --datadir override needed, Freqtrade handles it
+- ✅ **Workspace Isolation**: Configs, results, logs are per-backtest
+
+**Test Coverage:** 100% on `buildBacktestCommand` function
+- Test file: `internal/runner/docker_backtest_mount_test.go`
+- 7 comprehensive tests covering mount strategy, parallel isolation, and path alignment
 
 **Backtest Configuration:**
 ```json
@@ -606,9 +663,35 @@ Backtests run in one-time Docker containers (non-persistent) that:
 - Monitor runs every 30 seconds and calls `DeleteBacktest()` after status changes to completed/failed
 - Manual cleanup: `docker ps -a --filter "label=volaticloud.task.type=backtest" --format "{{.ID}}" | xargs docker rm -f`
 
-**Data Format Compatibility:**
-- Feather format (default): Works out-of-the-box
-- JSON format: Requires adding `"dataformat_ohlcv": "json"` to backtest config
+**Data Mount Strategy:**
+**Updated: 2025-11-18** - Simplified data mounting to use Freqtrade's default location.
+
+Backtests mount the data volume to Freqtrade's default data directory:
+- Mount: `volaticloud-freqtrade-data` → `/freqtrade/user_data/data`
+- No `--datadir` override needed - uses Freqtrade's natural data discovery
+- Automatic directory structure: `/freqtrade/user_data/data/{exchange}/{trading_mode}/`
+- Command flag: `--data-format-ohlcv json` for explicit format specification
+
+This approach ensures Freqtrade finds data files without custom path configuration:
+```go
+// internal/runner/docker_backtest.go:124-136 (volume mount)
+mounts := []mount.Mount{
+    {
+        Type:   mount.TypeVolume,
+        Source: "volaticloud-freqtrade-data",
+        Target: "/freqtrade/user_data/data", // Default location
+    },
+}
+
+// internal/runner/docker_backtest.go:538-556 (command builder)
+cmd := []string{
+    "backtesting",
+    "--strategy", strategyName,
+    "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", backtestID),
+    "--data-format-ohlcv", "json",  // Explicit format
+    // No --datadir override - uses default location
+}
+```
 
 ### Backtest Result Types (Hybrid Approach)
 

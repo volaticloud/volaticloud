@@ -178,12 +178,30 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		dataPath = dp
 	}
 
+	// Create a copy of the config to avoid mutating the original
+	config := make(map[string]interface{})
+	for k, v := range strategy.Config {
+		config[k] = v
+	}
+
+	// Set data format to JSON (matching data download format)
+	config["dataformat_ohlcv"] = "json"
+
+	// Build timerange from start_date and end_date if provided
+	// Freqtrade expects format: "YYYYMMDD-YYYYMMDD" (e.g., "20240101-20241231")
+	if !bt.StartDate.IsZero() && !bt.EndDate.IsZero() {
+		startStr := bt.StartDate.Format("20060102") // Go time format for YYYYMMDD
+		endStr := bt.EndDate.Format("20060102")
+		timerange := fmt.Sprintf("%s-%s", startStr, endStr)
+		config["timerange"] = timerange
+	}
+
 	// Build BacktestSpec - config contains everything (pairs, timeframe, stake_amount, etc.)
 	spec := &runner.BacktestSpec{
 		ID:               bt.ID.String(),
 		StrategyName:     strategy.Name,
 		StrategyCode:     strategy.Code,
-		Config:           strategy.Config,
+		Config:           config,
 		FreqtradeVersion: freqtradeVersion,
 		Environment:      make(map[string]string),
 		DataSource:       dataSource,

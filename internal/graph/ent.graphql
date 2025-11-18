@@ -36,6 +36,14 @@ type Backtest implements Node {
   Completion timestamp
   """
   completedAt: Time
+  """
+  Backtest start date (beginning of time range)
+  """
+  startDate: Time
+  """
+  Backtest end date (end of time range)
+  """
+  endDate: Time
   strategy: Strategy!
   runner: BotRunner!
 }
@@ -207,6 +215,32 @@ input BacktestWhereInput {
   completedAtLTE: Time
   completedAtIsNil: Boolean
   completedAtNotNil: Boolean
+  """
+  start_date field predicates
+  """
+  startDate: Time
+  startDateNEQ: Time
+  startDateIn: [Time!]
+  startDateNotIn: [Time!]
+  startDateGT: Time
+  startDateGTE: Time
+  startDateLT: Time
+  startDateLTE: Time
+  startDateIsNil: Boolean
+  startDateNotNil: Boolean
+  """
+  end_date field predicates
+  """
+  endDate: Time
+  endDateNEQ: Time
+  endDateIn: [Time!]
+  endDateNotIn: [Time!]
+  endDateGT: Time
+  endDateGTE: Time
+  endDateLT: Time
+  endDateLTE: Time
+  endDateIsNil: Boolean
+  endDateNotNil: Boolean
   """
   strategy edge predicates
   """
@@ -1196,6 +1230,14 @@ input CreateBacktestInput {
   Completion timestamp
   """
   completedAt: Time
+  """
+  Backtest start date (beginning of time range)
+  """
+  startDate: Time
+  """
+  Backtest end date (end of time range)
+  """
+  endDate: Time
   strategyID: ID!
   runnerID: ID!
 }

@@ -171,7 +171,7 @@ func downloadExchangeData(ctx context.Context, cli *client.Client, exchange stri
 		"--exchange", exchange,
 		"--pairs", pairsPattern,
 		"--days", days,
-		"--data-format-ohlcv", "feather",
+		"--data-format-ohlcv", "json",
 		"--trading-mode", tradingMode,
 	}
 

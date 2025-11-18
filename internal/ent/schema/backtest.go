@@ -59,6 +59,12 @@ func (Backtest) Fields() []ent.Field {
 		field.Time("completed_at").
 			Optional().
 			Comment("Completion timestamp"),
+		field.Time("start_date").
+			Optional().
+			Comment("Backtest start date (beginning of time range)"),
+		field.Time("end_date").
+			Optional().
+			Comment("Backtest end date (end of time range)"),
 	}
 }
 

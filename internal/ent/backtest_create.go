@@ -146,6 +146,34 @@ func (_c *BacktestCreate) SetNillableCompletedAt(v *time.Time) *BacktestCreate {
 	return _c
 }
 
+// SetStartDate sets the "start_date" field.
+func (_c *BacktestCreate) SetStartDate(v time.Time) *BacktestCreate {
+	_c.mutation.SetStartDate(v)
+	return _c
+}
+
+// SetNillableStartDate sets the "start_date" field if the given value is not nil.
+func (_c *BacktestCreate) SetNillableStartDate(v *time.Time) *BacktestCreate {
+	if v != nil {
+		_c.SetStartDate(*v)
+	}
+	return _c
+}
+
+// SetEndDate sets the "end_date" field.
+func (_c *BacktestCreate) SetEndDate(v time.Time) *BacktestCreate {
+	_c.mutation.SetEndDate(v)
+	return _c
+}
+
+// SetNillableEndDate sets the "end_date" field if the given value is not nil.
+func (_c *BacktestCreate) SetNillableEndDate(v *time.Time) *BacktestCreate {
+	if v != nil {
+		_c.SetEndDate(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *BacktestCreate) SetID(v uuid.UUID) *BacktestCreate {
 	_c.mutation.SetID(v)
@@ -321,6 +349,14 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CompletedAt(); ok {
 		_spec.SetField(backtest.FieldCompletedAt, field.TypeTime, value)
 		_node.CompletedAt = value
+	}
+	if value, ok := _c.mutation.StartDate(); ok {
+		_spec.SetField(backtest.FieldStartDate, field.TypeTime, value)
+		_node.StartDate = value
+	}
+	if value, ok := _c.mutation.EndDate(); ok {
+		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
+		_node.EndDate = value
 	}
 	if nodes := _c.mutation.StrategyIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

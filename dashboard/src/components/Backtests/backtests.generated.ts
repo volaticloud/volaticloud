@@ -21,7 +21,7 @@ export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?:
 export type GetBacktestOptionsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type GetBacktestOptionsQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string } | null } | null> | null }, botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } | null } | null> | null } };
+export type GetBacktestOptionsQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null }, botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } | null } | null> | null } };
 
 export type CreateBacktestMutationVariables = Types.Exact<{
   input: Types.CreateBacktestInput;
@@ -190,6 +190,8 @@ export const GetBacktestOptionsDocument = gql`
       node {
         id
         name
+        versionNumber
+        isLatest
       }
     }
   }

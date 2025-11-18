@@ -66,6 +66,8 @@ query GetBacktestOptions {
       node {
         id
         name
+        versionNumber
+        isLatest
       }
     }
   }

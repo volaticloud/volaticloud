@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -120,35 +119,28 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 		},
 	}
 
-	// Prepare mounts - always include config and data volumes
+	// Prepare mounts - use Docker volumes for configs (works with remote daemons)
+	// Each backtest gets isolated workspace in userdir, but shares historical data
 	mounts := []mount.Mount{
 		{
-			Type:     mount.TypeBind,
-			Source:   configPaths.configFileHost,
-			Target:   configPaths.configFileContainer,
-			ReadOnly: true,
+			Type:     mount.TypeVolume,
+			Source:   configPaths.volumeName,
+			Target:   "/freqtrade/user_data",
+			ReadOnly: false, // Must be writable for results
 		},
 		{
 			Type:   mount.TypeVolume,
 			Source: "volaticloud-freqtrade-data",
-			Target: "/freqtrade/user_data/data",
-		},
-		{
-			Type:   mount.TypeVolume,
-			Source: "volaticloud-backtest-results",
-			Target: "/freqtrade/user_data/backtest_results",
+			// Mount shared data to backtest-specific data directory
+			// When using --userdir, Freqtrade looks for data at {userdir}/data/
+			Target: fmt.Sprintf("/freqtrade/user_data/%s/data", spec.ID),
 		},
 	}
 
-	// Only mount strategy file if it exists
-	if configPaths.strategyFileHost != "" {
-		mounts = append(mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   configPaths.strategyFileHost,
-			Target:   configPaths.strategyFileContainer,
-			ReadOnly: true,
-		})
-	}
+	// Use --config flag to specify backtest-specific config
+	// Config will set user_data_dir and datadir to avoid conflicts
+	cmd = append(cmd, "--config", fmt.Sprintf("/freqtrade/user_data/%s/config.json", spec.ID))
+	containerConfig.Cmd = cmd
 
 	hostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode(d.network),
@@ -554,8 +546,16 @@ func (d *DockerBacktestRunner) buildBacktestCommand(spec BacktestSpec) []string 
 		cmd = append(cmd, "--strategy", spec.StrategyName)
 	}
 
+	// Use --userdir to isolate each backtest's results (logs, backtest_results)
+	// Freqtrade automatically resolves data directory as {userdir}/data/
+	cmd = append(cmd, "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", spec.ID))
+
+	// Explicitly set data format to JSON (matches data download format)
+	// Command-line args have higher precedence than config
+	cmd = append(cmd, "--data-format-ohlcv", "json")
+
 	// All other configuration (timeframe, pairs, timerange, trading_mode, etc.) is in config.json
-	// Freqtrade will automatically use the trading_mode from config to look in the correct subdirectory
+	// Shared historical data is mounted to {userdir}/data/ to align with Freqtrade's automatic resolution
 	return cmd
 }
 
@@ -751,11 +751,14 @@ func (d *DockerBacktestRunner) listHyperOptTasks(ctx context.Context, taskType s
 
 func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
 	// Read backtest results from the Docker volume
-	// With the volume mount, results persist even after container stops
+	// Results are now in backtest-specific subdirectory: {backtestID}/backtest_results/
 	ctx := context.Background()
 
+	// Construct path to .last_result.json in backtest-specific directory
+	lastResultPath := filepath.Join(result.BacktestID, "backtest_results", ".last_result.json")
+
 	// Step 1: Read .last_result.json from the volume to get the actual results filename
-	lastResultJSON, err := d.readFileFromVolume(ctx, "volaticloud-backtest-results", ".last_result.json")
+	lastResultJSON, err := d.readFileFromVolume(ctx, "volaticloud-freqtrade-userdir", lastResultPath)
 	if err != nil {
 		// If we can't read the results file, store logs as fallback
 		result.RawResult = map[string]interface{}{
@@ -787,13 +790,13 @@ func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
 	}
 
 	// Step 3: Extract and read the JSON file from the zip archive
-	zipFilename := latestBacktest
+	zipPath := filepath.Join(result.BacktestID, "backtest_results", latestBacktest)
 	jsonFilename := strings.Replace(latestBacktest, ".zip", ".json", 1)
 
-	resultsJSON, err := d.readFileFromZipInVolume(ctx, "volaticloud-backtest-results", zipFilename, jsonFilename)
+	resultsJSON, err := d.readFileFromZipInVolume(ctx, "volaticloud-freqtrade-userdir", zipPath, jsonFilename)
 	if err != nil {
 		result.RawResult = map[string]interface{}{
-			"error": fmt.Sprintf("Failed to read results from zip %s: %v", zipFilename, err),
+			"error": fmt.Sprintf("Failed to read results from zip %s: %v", zipPath, err),
 			"logs":  result.Logs,
 		}
 		return
@@ -831,23 +834,23 @@ func getHyperOptContainerName(hyperOptID string) string {
 
 // backtestConfigPaths holds the paths to config files for a backtest
 type backtestConfigPaths struct {
-	configFileHost        string // Host path to main config file
 	configFileContainer   string // Container path to main config file
-	strategyFileHost      string // Host path to strategy Python file
 	strategyFileContainer string // Container path to strategy Python file
+	volumeName            string // Docker volume name
+	volumeBasePath        string // Base path within the volume (backtest ID)
+	hasStrategyFile       bool   // Whether strategy file was written
 }
 
-// createBacktestConfigFiles creates temporary config files for the backtest
+// createBacktestConfigFiles creates config files in Docker volume for the backtest
 func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*backtestConfigPaths, error) {
-	// Create config directory for this backtest
-	configDir := filepath.Join("/tmp", "volaticloud-backtest-configs", spec.ID)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create config directory: %w", err)
-	}
+	ctx := context.Background()
 
 	paths := &backtestConfigPaths{
 		configFileContainer:   "/freqtrade/user_data/config.json",
 		strategyFileContainer: fmt.Sprintf("/freqtrade/user_data/strategies/%s.py", spec.StrategyName),
+		// Store volume name and paths for volume-based configs
+		volumeName:     "volaticloud-freqtrade-userdir",
+		volumeBasePath: spec.ID,
 	}
 
 	// Use spec.Config directly (like bots do) - just write it as-is
@@ -862,43 +865,114 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 		config[k] = v
 	}
 
-	// Only inject dry_run field for backtests (always true)
+	// Inject required fields for backtest isolation
 	config["dry_run"] = true
+	// DON'T set user_data_dir or datadir - we mount data to default location /freqtrade/user_data/data
+	// We use --userdir command-line flag to isolate each backtest's results
 
-	// Write config file
-	configPath := filepath.Join(configDir, "config.json")
+	// Marshal config to JSON
 	configJSON, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
-		d.cleanupBacktestConfigFiles(spec.ID)
 		return nil, fmt.Errorf("failed to marshal config: %w", err)
 	}
-	if err := os.WriteFile(configPath, configJSON, 0644); err != nil {
-		d.cleanupBacktestConfigFiles(spec.ID)
-		return nil, fmt.Errorf("failed to write config file: %w", err)
-	}
-	paths.configFileHost = configPath
 
-	// Write strategy Python file
+	// Write config file to Docker volume
+	configPath := filepath.Join(spec.ID, "config.json")
+	if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", configPath, configJSON); err != nil {
+		d.cleanupBacktestConfigFiles(spec.ID)
+		return nil, fmt.Errorf("failed to write config file to volume: %w", err)
+	}
+
+	// Write strategy Python file to Docker volume (in strategies/ subdirectory)
 	if spec.StrategyCode != "" && spec.StrategyName != "" {
-		strategyPath := filepath.Join(configDir, spec.StrategyName+".py")
-		if err := os.WriteFile(strategyPath, []byte(spec.StrategyCode), 0644); err != nil {
+		strategyPath := filepath.Join(spec.ID, "strategies", spec.StrategyName+".py")
+		if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", strategyPath, []byte(spec.StrategyCode)); err != nil {
 			d.cleanupBacktestConfigFiles(spec.ID)
-			return nil, fmt.Errorf("failed to write strategy file: %w", err)
+			return nil, fmt.Errorf("failed to write strategy file to volume: %w", err)
 		}
-		paths.strategyFileHost = strategyPath
+		paths.hasStrategyFile = true
 	}
 
 	return paths, nil
 }
 
-// cleanupBacktestConfigFiles removes temporary config files for a backtest
+// cleanupBacktestConfigFiles removes backtest directory from Docker volume
+// This cleans up config, strategy, and result files but preserves shared data
 func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
-	configDir := filepath.Join("/tmp", "volaticloud-backtest-configs", backtestID)
-	os.RemoveAll(configDir) // Best effort cleanup
+	ctx := context.Background()
+
+	// Use a temporary alpine container to remove the backtest directory
+	// Only removes /data/{backtestID}/ - the /data/data/ directory is preserved
+	_ = d.removeDirectoryFromVolume(ctx, "volaticloud-freqtrade-userdir", backtestID)
+	// Ignore cleanup errors - this is best effort to avoid leaving orphaned files
+}
+
+// writeFileToVolume writes a file to a Docker volume using a temporary container
+func (d *DockerBacktestRunner) writeFileToVolume(ctx context.Context, volumeName string, filePath string, content []byte) error {
+	// Ensure alpine image exists
+	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
+		return fmt.Errorf("failed to ensure alpine image: %w", err)
+	}
+
+	// Escape content for shell
+	escaped := strings.ReplaceAll(string(content), "'", "'\\''")
+
+	// Create a temporary alpine container to write to the volume
+	containerConfig := &container.Config{
+		Image: "alpine:latest",
+		Cmd: []string{"sh", "-c", fmt.Sprintf("mkdir -p \"$(dirname '/data/%s')\" && printf '%%s' '%s' > '/data/%s'",
+			filePath, escaped, filePath)},
+	}
+
+	hostConfig := &container.HostConfig{
+		AutoRemove: false,
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeVolume,
+				Source: volumeName,
+				Target: "/data",
+			},
+		},
+	}
+
+	// Create container
+	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
+	if err != nil {
+		return fmt.Errorf("failed to create temp container: %w", err)
+	}
+
+	// Ensure cleanup
+	defer d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+
+	// Start container
+	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("failed to start temp container: %w", err)
+	}
+
+	// Wait for container to finish
+	statusCh, errCh := d.client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("error waiting for container: %w", err)
+		}
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			logs := d.getRawContainerOutput(ctx, resp.ID)
+			return fmt.Errorf("container exited with code %d: %s", status.StatusCode, logs)
+		}
+	}
+
+	return nil
 }
 
 // readFileFromVolume reads a file from a Docker volume using a temporary container
 func (d *DockerBacktestRunner) readFileFromVolume(ctx context.Context, volumeName string, filePath string) ([]byte, error) {
+	// Ensure alpine image exists
+	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
+		return nil, fmt.Errorf("failed to ensure alpine image: %w", err)
+	}
+
 	// Create a temporary alpine container to read from the volume
 	containerConfig := &container.Config{
 		Image: "alpine:latest",
@@ -977,8 +1051,70 @@ func (d *DockerBacktestRunner) getRawContainerOutput(ctx context.Context, contai
 	return stdout.String()
 }
 
+// removeDirectoryFromVolume removes a directory from a Docker volume using a temporary container
+// This preserves the shared data directory (/data/data/) while removing backtest-specific files
+func (d *DockerBacktestRunner) removeDirectoryFromVolume(ctx context.Context, volumeName string, dirPath string) error {
+	// Ensure alpine image exists
+	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
+		return fmt.Errorf("failed to ensure alpine image: %w", err)
+	}
+
+	// Create a temporary alpine container to remove the directory
+	// Only remove the specified directory, not the data/ subdirectory
+	containerConfig := &container.Config{
+		Image: "alpine:latest",
+		Cmd:   []string{"sh", "-c", fmt.Sprintf("rm -rf /data/%s", dirPath)},
+	}
+
+	hostConfig := &container.HostConfig{
+		AutoRemove: false,
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeVolume,
+				Source: volumeName,
+				Target: "/data",
+			},
+		},
+	}
+
+	// Create container
+	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
+	if err != nil {
+		return fmt.Errorf("failed to create temp container: %w", err)
+	}
+
+	// Ensure cleanup
+	defer d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+
+	// Start container
+	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("failed to start temp container: %w", err)
+	}
+
+	// Wait for container to finish
+	statusCh, errCh := d.client.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("error waiting for container: %w", err)
+		}
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			logs := d.getRawContainerOutput(ctx, resp.ID)
+			return fmt.Errorf("container exited with code %d: %s", status.StatusCode, logs)
+		}
+	}
+
+	return nil
+}
+
 // readFileFromZipInVolume reads a specific file from a zip archive in a Docker volume
 func (d *DockerBacktestRunner) readFileFromZipInVolume(ctx context.Context, volumeName string, zipPath string, fileInZip string) ([]byte, error) {
+	// Ensure alpine image exists
+	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
+		return nil, fmt.Errorf("failed to ensure alpine image: %w", err)
+	}
+
 	// Create a temporary alpine container with unzip to extract the file
 	containerConfig := &container.Config{
 		Image: "alpine:latest",

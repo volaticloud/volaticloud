@@ -60,12 +60,14 @@ type ComplexityRoot struct {
 		CompletedAt  func(childComplexity int) int
 		ContainerID  func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
+		EndDate      func(childComplexity int) int
 		ErrorMessage func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Logs         func(childComplexity int) int
 		Result       func(childComplexity int) int
 		Runner       func(childComplexity int) int
 		RunnerID     func(childComplexity int) int
+		StartDate    func(childComplexity int) int
 		Status       func(childComplexity int) int
 		Strategy     func(childComplexity int) int
 		StrategyID   func(childComplexity int) int
@@ -414,6 +416,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.CreatedAt(childComplexity), true
+	case "Backtest.endDate":
+		if e.complexity.Backtest.EndDate == nil {
+			break
+		}
+
+		return e.complexity.Backtest.EndDate(childComplexity), true
 	case "Backtest.errorMessage":
 		if e.complexity.Backtest.ErrorMessage == nil {
 			break
@@ -450,6 +458,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.RunnerID(childComplexity), true
+	case "Backtest.startDate":
+		if e.complexity.Backtest.StartDate == nil {
+			break
+		}
+
+		return e.complexity.Backtest.StartDate(childComplexity), true
 	case "Backtest.status":
 		if e.complexity.Backtest.Status == nil {
 			break
@@ -3045,6 +3059,64 @@ func (ec *executionContext) fieldContext_Backtest_completedAt(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Backtest_startDate(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_startDate,
+		func(ctx context.Context) (any, error) {
+			return obj.StartDate, nil
+		},
+		nil,
+		ec.marshalOTime2timeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_startDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Backtest_endDate(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_endDate,
+		func(ctx context.Context) (any, error) {
+			return obj.EndDate, nil
+		},
+		nil,
+		ec.marshalOTime2timeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_endDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Backtest_strategy(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3381,6 +3453,10 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_updatedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Backtest_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Backtest_endDate(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -8000,6 +8076,10 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_updatedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Backtest_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Backtest_endDate(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -8112,6 +8192,10 @@ func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Contex
 				return ec.fieldContext_Backtest_updatedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Backtest_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Backtest_endDate(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -8183,6 +8267,10 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 				return ec.fieldContext_Backtest_updatedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Backtest_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Backtest_endDate(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -9606,6 +9694,10 @@ func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, fi
 				return ec.fieldContext_Backtest_updatedAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Backtest_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Backtest_endDate(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -12173,7 +12265,7 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "status", "statusNEQ", "statusIn", "statusNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "logs", "logsNEQ", "logsIn", "logsNotIn", "logsGT", "logsGTE", "logsLT", "logsLTE", "logsContains", "logsHasPrefix", "logsHasSuffix", "logsIsNil", "logsNotNil", "logsEqualFold", "logsContainsFold", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "completedAt", "completedAtNEQ", "completedAtIn", "completedAtNotIn", "completedAtGT", "completedAtGTE", "completedAtLT", "completedAtLTE", "completedAtIsNil", "completedAtNotNil", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "status", "statusNEQ", "statusIn", "statusNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "logs", "logsNEQ", "logsIn", "logsNotIn", "logsGT", "logsGTE", "logsLT", "logsLTE", "logsContains", "logsHasPrefix", "logsHasSuffix", "logsIsNil", "logsNotNil", "logsEqualFold", "logsContainsFold", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "completedAt", "completedAtNEQ", "completedAtIn", "completedAtNotIn", "completedAtGT", "completedAtGTE", "completedAtLT", "completedAtLTE", "completedAtIsNil", "completedAtNotNil", "startDate", "startDateNEQ", "startDateIn", "startDateNotIn", "startDateGT", "startDateGTE", "startDateLT", "startDateLTE", "startDateIsNil", "startDateNotNil", "endDate", "endDateNEQ", "endDateIn", "endDateNotIn", "endDateGT", "endDateGTE", "endDateLT", "endDateLTE", "endDateIsNil", "endDateNotNil", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12838,6 +12930,146 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 				return it, err
 			}
 			it.CompletedAtNotNil = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "startDateNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateNEQ = data
+		case "startDateIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateIn = data
+		case "startDateNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateNotIn = data
+		case "startDateGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateGT = data
+		case "startDateGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateGTE = data
+		case "startDateLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateLT = data
+		case "startDateLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateLTE = data
+		case "startDateIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateIsNil = data
+		case "startDateNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDateNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDateNotNil = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "endDateNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateNEQ = data
+		case "endDateIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateIn = data
+		case "endDateNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateNotIn = data
+		case "endDateGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateGT = data
+		case "endDateGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateGTE = data
+		case "endDateLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateLT = data
+		case "endDateLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateLTE = data
+		case "endDateIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateIsNil = data
+		case "endDateNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDateNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDateNotNil = data
 		case "hasStrategy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasStrategy"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -15981,7 +16213,7 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "result", "containerID", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "strategyID", "runnerID"}
+	fieldsInOrder := [...]string{"status", "result", "containerID", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "startDate", "endDate", "strategyID", "runnerID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16044,6 +16276,20 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.CompletedAt = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
 		case "strategyID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyID"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -20524,6 +20770,10 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "completedAt":
 			out.Values[i] = ec._Backtest_completedAt(ctx, field, obj)
+		case "startDate":
+			out.Values[i] = ec._Backtest_startDate(ctx, field, obj)
+		case "endDate":
+			out.Values[i] = ec._Backtest_endDate(ctx, field, obj)
 		case "strategy":
 			field := field
 

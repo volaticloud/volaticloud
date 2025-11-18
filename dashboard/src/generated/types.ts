@@ -24,6 +24,8 @@ export type Backtest = Node & {
   /** Docker container ID for running backtest */
   containerID?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Time']['output'];
+  /** Backtest end date (end of time range) */
+  endDate?: Maybe<Scalars['Time']['output']>;
   /** Error message if backtest failed */
   errorMessage?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -34,6 +36,8 @@ export type Backtest = Node & {
   runner: BotRunner;
   /** Foreign key to runner */
   runnerID: Scalars['ID']['output'];
+  /** Backtest start date (beginning of time range) */
+  startDate?: Maybe<Scalars['Time']['output']>;
   /** Task status */
   status: BacktestTaskStatus;
   strategy: Strategy;
@@ -137,6 +141,17 @@ export type BacktestWhereInput = {
   createdAtLTE?: InputMaybe<Scalars['Time']['input']>;
   createdAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   createdAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** end_date field predicates */
+  endDate?: InputMaybe<Scalars['Time']['input']>;
+  endDateGT?: InputMaybe<Scalars['Time']['input']>;
+  endDateGTE?: InputMaybe<Scalars['Time']['input']>;
+  endDateIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  endDateIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  endDateLT?: InputMaybe<Scalars['Time']['input']>;
+  endDateLTE?: InputMaybe<Scalars['Time']['input']>;
+  endDateNEQ?: InputMaybe<Scalars['Time']['input']>;
+  endDateNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  endDateNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** error_message field predicates */
   errorMessage?: InputMaybe<Scalars['String']['input']>;
   errorMessageContains?: InputMaybe<Scalars['String']['input']>;
@@ -191,6 +206,17 @@ export type BacktestWhereInput = {
   runnerIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
   runnerIDNEQ?: InputMaybe<Scalars['ID']['input']>;
   runnerIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** start_date field predicates */
+  startDate?: InputMaybe<Scalars['Time']['input']>;
+  startDateGT?: InputMaybe<Scalars['Time']['input']>;
+  startDateGTE?: InputMaybe<Scalars['Time']['input']>;
+  startDateIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  startDateIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  startDateLT?: InputMaybe<Scalars['Time']['input']>;
+  startDateLTE?: InputMaybe<Scalars['Time']['input']>;
+  startDateNEQ?: InputMaybe<Scalars['Time']['input']>;
+  startDateNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  startDateNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** status field predicates */
   status?: InputMaybe<BacktestTaskStatus>;
   statusIn?: InputMaybe<Array<BacktestTaskStatus>>;
@@ -961,6 +987,8 @@ export type CreateBacktestInput = {
   /** Docker container ID for running backtest */
   containerID?: InputMaybe<Scalars['String']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
+  /** Backtest end date (end of time range) */
+  endDate?: InputMaybe<Scalars['Time']['input']>;
   /** Error message if backtest failed */
   errorMessage?: InputMaybe<Scalars['String']['input']>;
   /** Container logs from backtest execution */
@@ -968,6 +996,8 @@ export type CreateBacktestInput = {
   /** Backtest result data (metrics, logs, trades, etc.) */
   result?: InputMaybe<Scalars['Map']['input']>;
   runnerID: Scalars['ID']['input'];
+  /** Backtest start date (beginning of time range) */
+  startDate?: InputMaybe<Scalars['Time']['input']>;
   /** Task status */
   status?: InputMaybe<BacktestTaskStatus>;
   strategyID: Scalars['ID']['input'];
