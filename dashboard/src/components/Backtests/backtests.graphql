@@ -87,6 +87,11 @@ mutation CreateBacktest($input: CreateBacktestInput!) {
     id
     status
     createdAt
+    strategy {
+      id
+      name
+      versionNumber
+    }
   }
 }
 

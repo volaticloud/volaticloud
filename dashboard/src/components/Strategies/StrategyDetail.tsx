@@ -96,15 +96,13 @@ const StrategyDetail = () => {
             </Typography>
           )}
         </Box>
-        {!strategy.backtest && (
-          <Button
-            variant="contained"
-            startIcon={<PlayArrow />}
-            onClick={() => setBacktestDialogOpen(true)}
-          >
-            Run Backtest
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          startIcon={<PlayArrow />}
+          onClick={() => setBacktestDialogOpen(true)}
+        >
+          Run Backtest
+        </Button>
         {strategy.isLatest ? (
           <IconButton onClick={() => setEditDialogOpen(true)}>
             <Edit />
@@ -163,9 +161,14 @@ const StrategyDetail = () => {
       <CreateBacktestDialog
         open={backtestDialogOpen}
         onClose={() => setBacktestDialogOpen(false)}
-        onSuccess={() => {
+        onSuccess={(newStrategyId) => {
           setBacktestDialogOpen(false);
-          refetch();
+          // Navigate to the new strategy version if it's different from current
+          if (newStrategyId && newStrategyId !== strategy.id) {
+            navigate(`/strategies/${newStrategyId}`);
+          } else {
+            refetch();
+          }
         }}
         preSelectedStrategyId={strategy.id}
       />

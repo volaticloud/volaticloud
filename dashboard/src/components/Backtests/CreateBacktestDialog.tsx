@@ -28,7 +28,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 interface CreateBacktestDialogProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (newStrategyId?: string) => void;
   preSelectedStrategyId?: string;
 }
 
@@ -108,6 +108,8 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
 
       // Only close and reset if mutation was successful
       if (result.data?.createBacktest) {
+        const newStrategyId = result.data.createBacktest.strategy?.id;
+
         // Reset form
         setStrategyID('');
         setRunnerID('');
@@ -115,7 +117,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
         setStartDate(dayjs().subtract(1, 'month'));
         setEndDate(dayjs());
 
-        onSuccess();
+        onSuccess(newStrategyId);
         onClose();
       }
       // If there are errors, they will be displayed via the error state

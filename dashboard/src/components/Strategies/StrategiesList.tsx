@@ -268,7 +268,7 @@ export const StrategiesList = () => {
           setBacktestDialogOpen(false);
           setSelectedStrategyForBacktest(null);
         }}
-        onSuccess={() => {
+        onSuccess={(newStrategyId) => {
           setBacktestDialogOpen(false);
           setSelectedStrategyForBacktest(null);
           setSnackbar({
@@ -276,6 +276,10 @@ export const StrategiesList = () => {
             message: 'Backtest created successfully',
             severity: 'success',
           });
+          // Navigate to the new strategy version if provided
+          if (newStrategyId) {
+            navigate(`/strategies/${newStrategyId}`);
+          }
         }}
         preSelectedStrategyId={selectedStrategyForBacktest || undefined}
       />

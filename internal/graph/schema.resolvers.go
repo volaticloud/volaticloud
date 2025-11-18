@@ -61,6 +61,33 @@ func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bo
 	return err == nil, err
 }
 
+// createStrategyVersion creates a new version of an existing strategy
+// This is a helper function used by both UpdateStrategy and CreateBacktest mutations
+func createStrategyVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy) (*ent.Strategy, error) {
+	// Mark parent strategy as not latest
+	err := tx.Strategy.UpdateOneID(parent.ID).SetIsLatest(false).Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark parent strategy as not latest: %w", err)
+	}
+
+	// Create new version with all parent fields
+	builder := tx.Strategy.Create().
+		SetName(parent.Name).
+		SetDescription(parent.Description).
+		SetCode(parent.Code).
+		SetVersionNumber(parent.VersionNumber + 1).
+		SetParentID(parent.ID).
+		SetIsLatest(true)
+
+	// Copy config if exists
+	if parent.Config != nil {
+		builder.SetConfig(parent.Config)
+	}
+
+	// Save new version (this will trigger validation hook)
+	return builder.Save(ctx)
+}
+
 func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error) {
 	return r.client.Strategy.Create().SetInput(input).Save(ctx)
 }
@@ -570,15 +597,29 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 			return fmt.Errorf("failed to load strategy: %w", err)
 		}
 
-		// Check if strategy already has a backtest - if so, throw an error
+		// If strategy already has a backtest, automatically create a new version
 		if existingStrategy.Edges.Backtest != nil {
-			return fmt.Errorf("strategy already has a backtest - please create a new strategy version first")
+			log.Printf("Strategy %s (v%d) already has a backtest, creating new version for backtest",
+				existingStrategy.Name, existingStrategy.VersionNumber)
+
+			// Create new strategy version using helper function
+			newVersion, err := createStrategyVersion(ctx, tx, existingStrategy)
+			if err != nil {
+				return fmt.Errorf("failed to create new strategy version: %w", err)
+			}
+
+			// Use the new strategy version for this backtest
+			strategyID = newVersion.ID
+			log.Printf("Created strategy version %d (ID: %s) for backtest",
+				newVersion.VersionNumber, newVersion.ID)
 		}
 
-		// Create backtest entity (within transaction)
-		// Use SetInput to set all fields from the input struct (includes start_date and end_date)
+		// Create backtest entity with the (possibly new) strategy ID
 		bt, err := tx.Backtest.Create().
-			SetInput(input).
+			SetStrategyID(strategyID).
+			SetRunnerID(input.RunnerID).
+			SetNillableStartDate(input.StartDate).
+			SetNillableEndDate(input.EndDate).
 			SetStatus(enum.TaskStatusPending).
 			Save(ctx)
 		if err != nil {
