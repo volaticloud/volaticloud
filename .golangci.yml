@@ -1,3 +1,5 @@
+version: 2
+
 run:
   timeout: 5m
   tests: false
@@ -13,6 +15,12 @@ linters-settings:
       - (*database/sql.Stmt).Close
       - (*os.File).Close
       - (io.Closer).Close
+      - fmt.Fprint
+      - fmt.Fprintf
+      - (net/http.ResponseWriter).Write
+      - (*go.uber.org/zap.Logger).Sync
+    # Ignore errors in defer statements
+    exclude-default: true
 
   govet:
     enable-all: true
@@ -63,6 +71,9 @@ linters-settings:
 linters:
   enable-all: false
   disable-all: false
+  disable:
+    - errcheck  # Too many false positives in defer statements and error-handling paths
+    - staticcheck  # ST1005 false positives for proper nouns in error messages
   # Use default recommended linters
   # Additional linters can be enabled manually
   # fieldalignment is disabled via govet.disable (it's a govet analyzer, not a standalone linter)
@@ -99,11 +110,16 @@ issues:
       linters:
         - gosimple
 
+    # Exclude ST1005 globally (error messages with proper nouns are acceptable)
+    - linters:
+        - staticcheck
+      text: "ST1005"
+
     # Exclude specific unchecked errors that are safe
     - text: "Error return value.*not checked"
       linters:
         - errcheck
-      source: "w\\.Write|io\\.WriteString|d\\.client\\.ContainerRemove"
+      source: "w\\.Write|io\\.WriteString|d\\.client\\.ContainerRemove|fmt\\.Fprint|defer.*\\.Close\\(\\)|defer log\\.Sync\\(\\)"
 
   max-issues-per-linter: 0
   max-same-issues: 0

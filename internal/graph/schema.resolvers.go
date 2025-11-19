@@ -264,7 +264,7 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 		}
 
 		// Update bot with container_id
-		b, err = r.client.Bot.UpdateOneID(b.ID).
+		_, err = r.client.Bot.UpdateOneID(b.ID).
 			SetContainerID(containerID).
 			ClearErrorMessage().
 			Save(ctx)
@@ -408,7 +408,7 @@ func (r *mutationResolver) RestartBot(ctx context.Context, id uuid.UUID) (*ent.B
 		}
 
 		// Update bot with container_id
-		b, err = r.client.Bot.UpdateOneID(b.ID).
+		_, err = r.client.Bot.UpdateOneID(b.ID).
 			SetContainerID(containerID).
 			ClearErrorMessage().
 			Save(ctx)
