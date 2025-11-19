@@ -10,6 +10,13 @@ spec:
   # Number of Keycloak instances (high availability)
   instances: 2
 
+  # Custom Keycloak image with extensions and custom configuration
+  image: ghcr.io/volaticloud/volaticloud/keycloak:latest
+
+  # Image pull secret for GHCR
+  imagePullSecrets:
+    - name: ghcr-pull-secret
+
   # Database configuration (using managed PostgreSQL on VKE)
   db:
     vendor: postgres
