@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,14 +19,21 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"volaticloud/internal/ent"
 	_ "volaticloud/internal/ent/runtime"
 	"volaticloud/internal/graph"
+	"volaticloud/internal/logger"
 	"volaticloud/internal/monitor"
 )
 
 func main() {
+	// Initialize logger
+	ctx := context.Background()
+	ctx, log := logger.PrepareLogger(ctx)
+	defer logger.Sync(ctx)
+
 	app := &cli.App{
 		Name:    "volaticloud",
 		Usage:   "VolatiCloud Control Plane - Manage freqtrade trading bots",
@@ -63,11 +69,13 @@ func main() {
 				EnvVars: []string{"VOLATICLOUD_MONITOR_INTERVAL"},
 			},
 		},
-		Action: runServer,
+		Action: func(c *cli.Context) error {
+			return runServer(ctx, c)
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+		log.Fatal("Application error", zap.Error(err))
 	}
 }
 
@@ -100,9 +108,12 @@ func parseDatabase(dbURL string) (driver, dsn string, err error) {
 	return "", "", fmt.Errorf("unsupported database URL format: %s (use sqlite:// or postgresql://)", dbURL)
 }
 
-func runServer(c *cli.Context) error {
+func runServer(parentCtx context.Context, c *cli.Context) error {
+	// Get logger from parent context
+	log := logger.GetLogger(parentCtx)
+
 	// Setup context with cancellation
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
 	// Handle shutdown signals
@@ -111,7 +122,7 @@ func runServer(c *cli.Context) error {
 
 	go func() {
 		<-sigChan
-		log.Println("Shutdown signal received, cleaning up...")
+		log.Info("Shutdown signal received, cleaning up...")
 		cancel()
 	}()
 
@@ -122,8 +133,12 @@ func runServer(c *cli.Context) error {
 		return err
 	}
 
-	// Initialize database connection
-	client, err := ent.Open(driver, dsn)
+	// Initialize database connection with ZAP logger
+	client, err := ent.Open(
+		driver,
+		dsn,
+		ent.Log(logger.EntAdapterFromContext(ctx)),
+	)
 	if err != nil {
 		return fmt.Errorf("failed opening connection to %s: %w", driver, err)
 	}
@@ -158,7 +173,7 @@ func runServer(c *cli.Context) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := monitorManager.Stop(shutdownCtx); err != nil {
-			log.Printf("Error stopping monitor manager: %v", err)
+			log.Error("Error stopping monitor manager", zap.Error(err))
 		}
 	}()
 
@@ -207,32 +222,34 @@ func runServer(c *cli.Context) error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Println("VolatiCloud Control Plane")
-	log.Println("======================")
-	log.Printf("✓ Database: %s (%s)\n", driver, dsn)
-	log.Println("✓ Schema migrated")
-	log.Printf("✓ GraphQL endpoint: http://%s/query\n", addr)
-	log.Printf("✓ GraphQL playground: http://%s/\n", addr)
-	log.Printf("✓ Health check: http://%s/health\n", addr)
-	log.Println("")
+	log.Info("VolatiCloud Control Plane")
+	log.Info("======================")
+	log.Info("✓ Database", zap.String("driver", driver), zap.String("dsn", dsn))
+	log.Info("✓ Schema migrated")
+	log.Info("✓ GraphQL endpoint", zap.String("url", fmt.Sprintf("http://%s/query", addr)))
+	log.Info("✓ GraphQL playground", zap.String("url", fmt.Sprintf("http://%s/", addr)))
+	log.Info("✓ Health check", zap.String("url", fmt.Sprintf("http://%s/health", addr)))
+	log.Info("")
 
 	// Display monitor status
 	if monitorManager.IsDistributed() {
-		log.Printf("✓ Bot monitoring: DISTRIBUTED mode (instance: %s)\n", monitorManager.GetInstanceID())
-		log.Printf("  - Active instances: %d\n", monitorManager.GetInstanceCount())
-		log.Printf("  - Monitor interval: %v\n", monitorInterval)
+		log.Info("✓ Bot monitoring: DISTRIBUTED mode",
+			zap.String("instance", monitorManager.GetInstanceID()),
+			zap.Int("active_instances", monitorManager.GetInstanceCount()),
+			zap.Duration("interval", monitorInterval))
 	} else {
-		log.Printf("✓ Bot monitoring: SINGLE-INSTANCE mode (instance: %s)\n", monitorManager.GetInstanceID())
-		log.Printf("  - Monitor interval: %v\n", monitorInterval)
+		log.Info("✓ Bot monitoring: SINGLE-INSTANCE mode",
+			zap.String("instance", monitorManager.GetInstanceID()),
+			zap.Duration("interval", monitorInterval))
 	}
 
-	log.Println("")
-	log.Printf("🚀 Server ready at http://%s\n", addr)
+	log.Info("")
+	log.Info("🚀 Server ready", zap.String("address", fmt.Sprintf("http://%s", addr)))
 
 	// Start server in goroutinex
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			log.Fatal("Server error", zap.Error(err))
 		}
 	}()
 
@@ -240,14 +257,14 @@ func runServer(c *cli.Context) error {
 	<-ctx.Done()
 
 	// Graceful shutdown
-	log.Println("Shutting down server...")
+	log.Info("Shutting down server...")
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Server shutdown error: %v", err)
+		log.Error("Server shutdown error", zap.Error(err))
 	}
 
-	log.Println("Server stopped")
+	log.Info("Server stopped")
 	return nil
 }

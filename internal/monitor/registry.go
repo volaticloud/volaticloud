@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
 	"volaticloud/internal/etcd"
+	"volaticloud/internal/logger"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -76,6 +77,9 @@ func NewRegistry(etcdClient *etcd.Client, instanceID string) (*Registry, error) 
 
 // Start registers the instance and begins heartbeat loop
 func (r *Registry) Start(ctx context.Context) error {
+	ctx = logger.WithComponent(ctx, "monitor.registry")
+	log := logger.GetLogger(ctx)
+
 	// Grant lease
 	leaseID, err := r.etcdClient.GrantLease(ctx, r.leaseTTL)
 	if err != nil {
@@ -88,7 +92,9 @@ func (r *Registry) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register instance: %w", err)
 	}
 
-	log.Printf("Instance registered: %s (hostname: %s)", r.info.InstanceID, r.info.Hostname)
+	log.Info("Instance registered",
+		zap.String("instance_id", r.info.InstanceID),
+		zap.String("hostname", r.info.Hostname))
 
 	// Start heartbeat loop
 	go r.heartbeatLoop(ctx)
@@ -98,17 +104,20 @@ func (r *Registry) Start(ctx context.Context) error {
 
 // Stop deregisters the instance and stops heartbeats
 func (r *Registry) Stop(ctx context.Context) error {
+	ctx = logger.WithComponent(ctx, "monitor.registry")
+	log := logger.GetLogger(ctx)
+
 	close(r.stopChan)
 	<-r.doneChan
 
 	// Revoke lease (automatically removes instance key)
 	if r.leaseID != 0 {
 		if err := r.etcdClient.RevokeLease(ctx, r.leaseID); err != nil {
-			log.Printf("Failed to revoke lease: %v", err)
+			log.Error("Failed to revoke lease", zap.Error(err))
 		}
 	}
 
-	log.Printf("Instance deregistered: %s", r.info.InstanceID)
+	log.Info("Instance deregistered", zap.String("instance_id", r.info.InstanceID))
 	return nil
 }
 
@@ -128,7 +137,8 @@ func (r *Registry) ListInstances(ctx context.Context) ([]InstanceInfo, error) {
 	for _, value := range kvs {
 		var info InstanceInfo
 		if err := json.Unmarshal([]byte(value), &info); err != nil {
-			log.Printf("Failed to unmarshal instance info: %v", err)
+			log := logger.GetLogger(ctx)
+			log.Error("Failed to unmarshal instance info", zap.Error(err))
 			continue
 		}
 		instances = append(instances, info)
@@ -178,14 +188,16 @@ func (r *Registry) WatchInstances(ctx context.Context) (<-chan []string, error) 
 				}
 
 				if watchResp.Err() != nil {
-					log.Printf("Watch error: %v", watchResp.Err())
+					log := logger.GetLogger(ctx)
+					log.Error("Watch error", zap.Error(watchResp.Err()))
 					continue
 				}
 
 				// Get updated list
 				instances, err := r.ListInstances(ctx)
 				if err != nil {
-					log.Printf("Failed to list instances after watch event: %v", err)
+					log := logger.GetLogger(ctx)
+					log.Error("Failed to list instances after watch event", zap.Error(err))
 					continue
 				}
 
@@ -221,12 +233,14 @@ func (r *Registry) register(ctx context.Context) error {
 
 // heartbeatLoop maintains the instance registration via lease keep-alive
 func (r *Registry) heartbeatLoop(ctx context.Context) {
+	ctx = logger.WithComponent(ctx, "monitor.registry.heartbeat")
+	log := logger.GetLogger(ctx)
 	defer close(r.doneChan)
 
 	// Start keep-alive
 	keepAliveChan, err := r.etcdClient.KeepAlive(ctx, r.leaseID)
 	if err != nil {
-		log.Printf("Failed to start keep-alive: %v", err)
+		log.Error("Failed to start keep-alive", zap.Error(err))
 		return
 	}
 
@@ -243,20 +257,20 @@ func (r *Registry) heartbeatLoop(ctx context.Context) {
 			// Update instance info with latest heartbeat time
 			r.info.LastHeartbeat = time.Now()
 			if err := r.register(ctx); err != nil {
-				log.Printf("Failed to update heartbeat: %v", err)
+				log.Error("Failed to update heartbeat", zap.Error(err))
 			}
 		case _, ok := <-keepAliveChan:
 			if !ok {
-				log.Println("Keep-alive channel closed, re-establishing lease")
+				log.Warn("Keep-alive channel closed, re-establishing lease")
 				// Lease expired or lost connection, try to re-register
 				if err := r.reestablishLease(ctx); err != nil {
-					log.Printf("Failed to re-establish lease: %v", err)
+					log.Error("Failed to re-establish lease", zap.Error(err))
 					return
 				}
 				// Restart keep-alive
 				keepAliveChan, err = r.etcdClient.KeepAlive(ctx, r.leaseID)
 				if err != nil {
-					log.Printf("Failed to restart keep-alive: %v", err)
+					log.Error("Failed to restart keep-alive", zap.Error(err))
 					return
 				}
 			}

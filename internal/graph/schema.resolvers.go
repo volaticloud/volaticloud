@@ -8,9 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+
 	backtest1 "volaticloud/internal/backtest"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
@@ -18,10 +21,9 @@ import (
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/graph/model"
+	"volaticloud/internal/logger"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
-
-	"github.com/google/uuid"
 )
 
 func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*backtest1.BacktestSummary, error) {
@@ -484,8 +486,14 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 		downloadCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 		defer cancel()
 
+		// Create logger for background goroutine
+		downloadCtx, _ = logger.PrepareLogger(downloadCtx)
+		log := logger.GetLogger(downloadCtx)
+
 		if err := monitor.DownloadRunnerData(downloadCtx, r.client, runner); err != nil {
-			log.Printf("Runner %s: data download failed: %v", runner.Name, err)
+			log.Error("Runner data download failed",
+				zap.String("runner_name", runner.Name),
+				zap.Error(err))
 
 			// Update status to failed
 			r.client.BotRunner.UpdateOne(runner).
@@ -494,7 +502,8 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 				SetDataErrorMessage(err.Error()).
 				Save(context.Background())
 		} else {
-			log.Printf("Runner %s: data download completed successfully", runner.Name)
+			log.Info("Runner data download completed successfully",
+				zap.String("runner_name", runner.Name))
 
 			// Update status to completed
 			now := time.Now()
@@ -572,8 +581,10 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 
 		// If strategy already has a backtest, automatically create a new version
 		if existingStrategy.Edges.Backtest != nil {
-			log.Printf("Strategy %s (v%d) already has a backtest, creating new version for backtest",
-				existingStrategy.Name, existingStrategy.VersionNumber)
+			log := logger.GetLogger(ctx)
+			log.Info("Strategy already has a backtest, creating new version",
+				zap.String("strategy_name", existingStrategy.Name),
+				zap.Int("version", existingStrategy.VersionNumber))
 
 			// Create new strategy version using helper function
 			newVersion, err := createStrategyVersion(ctx, tx, existingStrategy)
@@ -583,8 +594,9 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 
 			// Use the new strategy version for this backtest
 			strategyID = newVersion.ID
-			log.Printf("Created strategy version %d (ID: %s) for backtest",
-				newVersion.VersionNumber, newVersion.ID)
+			log.Info("Created strategy version for backtest",
+				zap.Int("version", newVersion.VersionNumber),
+				zap.String("strategy_id", newVersion.ID.String()))
 		}
 
 		// Create backtest entity with the (possibly new) strategy ID

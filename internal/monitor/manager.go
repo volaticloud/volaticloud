@@ -3,11 +3,12 @@ package monitor
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"go.uber.org/zap"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/etcd"
+	"volaticloud/internal/logger"
 )
 
 // Manager manages all monitoring workers and coordinates distributed monitoring
@@ -87,7 +88,9 @@ func NewManager(cfg Config) (*Manager, error) {
 		registry, err := NewRegistry(etcdClient, cfg.InstanceID)
 		if err != nil {
 			if closeErr := etcdClient.Close(); closeErr != nil {
-				log.Printf("Warning: failed to close etcd client after registry error: %v", closeErr)
+				// Use background context for cleanup logging
+				log := logger.GetLogger(context.Background())
+				log.Warn("Failed to close etcd client after registry error", zap.Error(closeErr))
 			}
 			return nil, fmt.Errorf("failed to create registry: %w", err)
 		}
@@ -106,7 +109,9 @@ func NewManager(cfg Config) (*Manager, error) {
 		m.coordinator = NewCoordinator(registry)
 	} else {
 		// Single instance mode - create a simple coordinator that monitors all bots
-		log.Println("etcd not configured - running in single-instance mode")
+		// Use background context for initialization logging
+		log := logger.GetLogger(context.Background())
+		log.Info("etcd not configured - running in single-instance mode")
 		m.coordinator = &Coordinator{
 			instanceID: cfg.InstanceID,
 			instances:  []string{cfg.InstanceID},
@@ -133,7 +138,13 @@ func NewManager(cfg Config) (*Manager, error) {
 
 // Start starts all monitoring workers
 func (m *Manager) Start(ctx context.Context) error {
-	log.Printf("Starting monitor manager (instance: %s, distributed: %v)", m.instanceID, m.enabled)
+	// Add component name to context
+	ctx = logger.WithComponent(ctx, "monitor.manager")
+	log := logger.GetLogger(ctx)
+
+	log.Info("Starting monitor manager",
+		zap.String("instance_id", m.instanceID),
+		zap.Bool("distributed", m.enabled))
 
 	// Start registry and coordinator if using etcd
 	if m.enabled {
@@ -145,7 +156,7 @@ func (m *Manager) Start(ctx context.Context) error {
 		// Start coordinator (watches for instance changes)
 		if err := m.coordinator.Start(ctx); err != nil {
 			if stopErr := m.registry.Stop(ctx); stopErr != nil {
-				log.Printf("Warning: failed to stop registry after coordinator error: %v", stopErr)
+				log.Warn("Failed to stop registry after coordinator error", zap.Error(stopErr))
 			}
 			return fmt.Errorf("failed to start coordinator: %w", err)
 		}
@@ -158,7 +169,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	if err := m.botMonitor.Start(ctx); err != nil {
 		if m.enabled {
 			if stopErr := m.registry.Stop(ctx); stopErr != nil {
-				log.Printf("Warning: failed to stop registry after bot monitor error: %v", stopErr)
+				log.Warn("Failed to stop registry after bot monitor error", zap.Error(stopErr))
 			}
 		}
 		return fmt.Errorf("failed to start bot monitor: %w", err)
@@ -169,7 +180,7 @@ func (m *Manager) Start(ctx context.Context) error {
 		m.botMonitor.Stop()
 		if m.enabled {
 			if stopErr := m.registry.Stop(ctx); stopErr != nil {
-				log.Printf("Warning: failed to stop registry after runner monitor error: %v", stopErr)
+				log.Warn("Failed to stop registry after runner monitor error", zap.Error(stopErr))
 			}
 		}
 		return fmt.Errorf("failed to start runner monitor: %w", err)
@@ -178,13 +189,16 @@ func (m *Manager) Start(ctx context.Context) error {
 	// Start backtest monitor
 	go m.backtestMonitor.Start(ctx)
 
-	log.Println("Monitor manager started successfully")
+	log.Info("Monitor manager started successfully")
 	return nil
 }
 
 // Stop stops all monitoring workers
 func (m *Manager) Stop(ctx context.Context) error {
-	log.Println("Stopping monitor manager...")
+	ctx = logger.WithComponent(ctx, "monitor.manager")
+	log := logger.GetLogger(ctx)
+
+	log.Info("Stopping monitor manager...")
 
 	// Stop bot monitor
 	m.botMonitor.Stop()
@@ -198,15 +212,15 @@ func (m *Manager) Stop(ctx context.Context) error {
 	// Stop registry if using etcd
 	if m.enabled {
 		if err := m.registry.Stop(ctx); err != nil {
-			log.Printf("Error stopping registry: %v", err)
+			log.Error("Error stopping registry", zap.Error(err))
 		}
 
 		if err := m.etcdClient.Close(); err != nil {
-			log.Printf("Error closing etcd client: %v", err)
+			log.Error("Error closing etcd client", zap.Error(err))
 		}
 	}
 
-	log.Println("Monitor manager stopped")
+	log.Info("Monitor manager stopped")
 	return nil
 }
 

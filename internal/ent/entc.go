@@ -3,14 +3,21 @@
 package main
 
 import (
-	"log"
+	"context"
 
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
+	"go.uber.org/zap"
+
+	"volaticloud/internal/logger"
 )
 
 func main() {
+	// Initialize logger for code generation
+	ctx, log := logger.PrepareLogger(context.Background())
+	defer logger.Sync(ctx)
+
 	ex, err := entgql.NewExtension(
 		// Generate GraphQL schema
 		entgql.WithSchemaGenerator(),
@@ -21,7 +28,7 @@ func main() {
 		entgql.WithWhereInputs(true),
 	)
 	if err != nil {
-		log.Fatalf("creating entgql extension: %v", err)
+		log.Fatal("Failed to create entgql extension", zap.Error(err))
 	}
 
 	opts := []entc.Option{
@@ -29,6 +36,6 @@ func main() {
 	}
 
 	if err := entc.Generate("./schema", &gen.Config{}, opts...); err != nil {
-		log.Fatalf("running ent codegen: %v", err)
+		log.Fatal("Failed to generate ENT code", zap.Error(err))
 	}
 }

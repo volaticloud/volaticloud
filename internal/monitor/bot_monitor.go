@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/freqtrade"
+	"volaticloud/internal/logger"
 	"volaticloud/internal/runner"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -53,7 +53,10 @@ func (m *BotMonitor) SetInterval(interval time.Duration) {
 
 // Start begins the monitoring loop
 func (m *BotMonitor) Start(ctx context.Context) error {
-	log.Printf("Starting bot monitor (interval: %v)", m.interval)
+	ctx = logger.WithComponent(ctx, "monitor.bot")
+	log := logger.GetLogger(ctx)
+
+	log.Info("Starting bot monitor", zap.Duration("interval", m.interval))
 
 	go m.monitorLoop(ctx)
 
@@ -64,7 +67,10 @@ func (m *BotMonitor) Start(ctx context.Context) error {
 func (m *BotMonitor) Stop() {
 	close(m.stopChan)
 	<-m.doneChan
-	log.Println("Bot monitor stopped")
+
+	// Use background context for cleanup logging
+	log := logger.GetLogger(context.Background())
+	log.Info("Bot monitor stopped")
 }
 
 // monitorLoop is the main monitoring loop
@@ -87,7 +93,8 @@ func (m *BotMonitor) monitorLoop(ctx context.Context) {
 			m.checkAllBots(ctx)
 		case <-m.coordinator.AssignmentChanges():
 			// Assignments changed (instance joined/left), recheck immediately
-			log.Println("Bot assignments changed, rechecking bots")
+			log := logger.GetLogger(ctx)
+			log.Info("Bot assignments changed, rechecking bots")
 			m.checkAllBots(ctx)
 		}
 	}
@@ -95,6 +102,8 @@ func (m *BotMonitor) monitorLoop(ctx context.Context) {
 
 // checkAllBots checks status of all bots assigned to this instance
 func (m *BotMonitor) checkAllBots(ctx context.Context) {
+	log := logger.GetLogger(ctx)
+
 	// Query all bots from database
 	bots, err := m.dbClient.Bot.Query().
 		WithRunner().
@@ -106,7 +115,7 @@ func (m *BotMonitor) checkAllBots(ctx context.Context) {
 		)).
 		All(ctx)
 	if err != nil {
-		log.Printf("Failed to query bots: %v", err)
+		log.Error("Failed to query bots", zap.Error(err))
 		return
 	}
 
@@ -131,11 +140,13 @@ func (m *BotMonitor) checkAllBots(ctx context.Context) {
 	}
 
 	if len(assignedBots) == 0 {
-		// log.Printf("No bots assigned to this instance (%d total bots)", len(bots))
+		// No logging for normal case
 		return
 	}
 
-	log.Printf("Checking %d bots (assigned out of %d total)", len(assignedBots), len(bots))
+	log.Info("Checking assigned bots",
+		zap.Int("assigned_count", len(assignedBots)),
+		zap.Int("total_count", len(bots)))
 
 	// Check bots in batches
 	for i := 0; i < len(assignedBots); i += MonitorBatchSize {
@@ -156,10 +167,15 @@ func (m *BotMonitor) checkAllBots(ctx context.Context) {
 
 // checkBotBatch checks a batch of bots concurrently
 func (m *BotMonitor) checkBotBatch(ctx context.Context, bots []*ent.Bot) {
+	log := logger.GetLogger(ctx)
+
 	for _, b := range bots {
 		// Check each bot - errors are already logged inside checkBot
 		if err := m.checkBot(ctx, b); err != nil {
-			log.Printf("Bot %s (%s) check failed: %v", b.Name, b.ID, err)
+			log.Error("Bot check failed",
+				zap.String("bot_name", b.Name),
+				zap.String("bot_id", b.ID.String()),
+				zap.Error(err))
 		}
 	}
 }
@@ -185,23 +201,31 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 	}
 	defer func() {
 		if err := rt.Close(); err != nil {
-			log.Printf("Warning: failed to close runtime: %v", err)
+			log := logger.GetLogger(ctx)
+			log.Warn("Failed to close runtime", zap.Error(err))
 		}
 	}()
 
 	// Get bot status from runner
 	status, err := rt.GetBotStatus(ctx, b.ContainerID)
 	if err != nil {
+		log := logger.GetLogger(ctx)
+
 		// Container might not exist anymore - use errors.Is to handle wrapped errors
 		if errors.Is(err, runner.ErrBotNotFound) {
 			// Only log status change, not every check
 			if b.Status != enum.BotStatusStopped {
-				log.Printf("Bot %s (%s) container not found, marking as stopped", b.Name, b.ID)
+				log.Info("Bot container not found, marking as stopped",
+					zap.String("bot_name", b.Name),
+					zap.String("bot_id", b.ID.String()))
 			}
 			return m.updateBotStatus(ctx, b.ID, enum.BotStatusStopped, false, nil, "Container not found")
 		}
 		// For other errors, mark as error status
-		log.Printf("Bot %s (%s) error checking status: %v", b.Name, b.ID, err)
+		log.Error("Error checking bot status",
+			zap.String("bot_name", b.Name),
+			zap.String("bot_id", b.ID.String()),
+			zap.Error(err))
 		return m.updateBotStatus(ctx, b.ID, enum.BotStatusError, false, nil, err.Error())
 	}
 
@@ -221,7 +245,11 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 	if botStatus == enum.BotStatusRunning && healthy {
 		if err := m.fetchAndUpdateBotMetrics(ctx, b, status); err != nil {
 			// Log error but don't fail the status check
-			log.Printf("Bot %s (%s) failed to fetch metrics: %v", b.Name, b.ID, err)
+			log := logger.GetLogger(ctx)
+			log.Error("Failed to fetch bot metrics",
+				zap.String("bot_name", b.Name),
+				zap.String("bot_id", b.ID.String()),
+				zap.Error(err))
 		}
 	}
 
@@ -285,6 +313,7 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 	// 2. Fallback to localhost:hostPort (works when server is on host machine)
 	var profit *freqtrade.Profit
 	var err error
+	log := logger.GetLogger(ctx)
 
 	// Try container IP first with short timeout
 	if status.IPAddress != "" {
@@ -299,7 +328,10 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 			goto processMetrics
 		}
 		// Log the container IP failure but continue to fallback
-		log.Printf("Bot %s: container IP (%s) failed, trying localhost fallback: %v", b.Name, status.IPAddress, err)
+		log.Warn("Container IP connection failed, trying localhost fallback",
+			zap.String("bot_name", b.Name),
+			zap.String("container_ip", status.IPAddress),
+			zap.Error(err))
 	}
 
 	// Fallback to localhost:hostPort
@@ -310,7 +342,9 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 
 		if err == nil {
 			// Success with localhost
-			log.Printf("Bot %s: successfully connected via localhost:%d", b.Name, status.HostPort)
+			log.Info("Successfully connected via localhost",
+				zap.String("bot_name", b.Name),
+				zap.Int("host_port", status.HostPort))
 			goto processMetrics
 		}
 		return fmt.Errorf("failed to fetch profit from both container IP and localhost: %w", err)

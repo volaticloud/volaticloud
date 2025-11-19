@@ -3,12 +3,13 @@ package monitor
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"go.uber.org/zap"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/logger"
 )
 
 const (
@@ -50,7 +51,10 @@ func (m *RunnerMonitor) SetInterval(interval time.Duration) {
 
 // Start begins the monitoring loop
 func (m *RunnerMonitor) Start(ctx context.Context) error {
-	log.Printf("Starting runner monitor (interval: %v)", m.interval)
+	ctx = logger.WithComponent(ctx, "monitor.runner")
+	log := logger.GetLogger(ctx)
+
+	log.Info("Starting runner monitor", zap.Duration("interval", m.interval))
 
 	go m.monitorLoop(ctx)
 
@@ -66,6 +70,7 @@ func (m *RunnerMonitor) Stop() {
 // monitorLoop runs the periodic check loop
 func (m *RunnerMonitor) monitorLoop(ctx context.Context) {
 	defer close(m.doneChan)
+	log := logger.GetLogger(ctx)
 
 	ticker := time.NewTicker(m.interval)
 	defer ticker.Stop()
@@ -76,10 +81,10 @@ func (m *RunnerMonitor) monitorLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Runner monitor stopped (context cancelled)")
+			log.Info("Runner monitor stopped (context cancelled)")
 			return
 		case <-m.stopChan:
-			log.Println("Runner monitor stopped")
+			log.Info("Runner monitor stopped")
 			return
 		case <-ticker.C:
 			m.checkAllRunners(ctx)
@@ -89,12 +94,14 @@ func (m *RunnerMonitor) monitorLoop(ctx context.Context) {
 
 // checkAllRunners checks all runners and triggers data downloads if needed
 func (m *RunnerMonitor) checkAllRunners(ctx context.Context) {
+	log := logger.GetLogger(ctx)
+
 	// Query all runners
 	runners, err := m.dbClient.BotRunner.Query().
 		Order(ent.Asc(botrunner.FieldCreatedAt)).
 		All(ctx)
 	if err != nil {
-		log.Printf("Runner monitor: failed to query runners: %v", err)
+		log.Error("Failed to query runners", zap.Error(err))
 		return
 	}
 
@@ -102,7 +109,7 @@ func (m *RunnerMonitor) checkAllRunners(ctx context.Context) {
 		return
 	}
 
-	log.Printf("Runner monitor: checking %d runners", len(runners))
+	log.Info("Checking runners", zap.Int("runner_count", len(runners)))
 
 	// Check runners in batches
 	for i := 0; i < len(runners); i += RunnerMonitorBatchSize {
@@ -130,9 +137,11 @@ func (m *RunnerMonitor) checkRunnerBatch(ctx context.Context, runners []*ent.Bot
 
 // checkRunner checks a single runner and triggers data download if needed
 func (m *RunnerMonitor) checkRunner(ctx context.Context, runner *ent.BotRunner) {
+	log := logger.GetLogger(ctx)
+
 	// Skip if currently downloading
 	if runner.DataDownloadStatus == enum.DataDownloadStatusDownloading {
-		log.Printf("Runner %s: data download already in progress", runner.Name)
+		log.Info("Data download already in progress", zap.String("runner_name", runner.Name))
 		return
 	}
 
@@ -157,9 +166,13 @@ func (m *RunnerMonitor) checkRunner(ctx context.Context, runner *ent.BotRunner) 
 	}
 
 	if needsDownload {
-		log.Printf("Runner %s: triggering data download (%s)", runner.Name, reason)
+		log.Info("Triggering data download",
+			zap.String("runner_name", runner.Name),
+			zap.String("reason", reason))
 		if err := m.triggerDataDownload(ctx, runner); err != nil {
-			log.Printf("Runner %s: failed to trigger data download: %v", runner.Name, err)
+			log.Error("Failed to trigger data download",
+				zap.String("runner_name", runner.Name),
+				zap.Error(err))
 		}
 	}
 }
@@ -184,10 +197,14 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.Bot
 	// Launch data download in a goroutine
 	go func() {
 		downloadCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		downloadCtx = logger.WithComponent(downloadCtx, "monitor.runner.download")
 		defer cancel()
+		log := logger.GetLogger(downloadCtx)
 
 		if err := DownloadRunnerData(downloadCtx, m.dbClient, runner); err != nil {
-			log.Printf("Runner %s: data download failed: %v", runner.Name, err)
+			log.Error("Data download failed",
+				zap.String("runner_name", runner.Name),
+				zap.Error(err))
 
 			// Update status to failed
 			if _, saveErr := m.dbClient.BotRunner.UpdateOne(runner).
@@ -195,10 +212,13 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.Bot
 				SetDataIsReady(false).
 				SetDataErrorMessage(err.Error()).
 				Save(context.Background()); saveErr != nil {
-				log.Printf("Runner %s: failed to update runner status after download error: %v", runner.Name, saveErr)
+				log.Error("Failed to update runner status after download error",
+					zap.String("runner_name", runner.Name),
+					zap.Error(saveErr))
 			}
 		} else {
-			log.Printf("Runner %s: data download completed successfully", runner.Name)
+			log.Info("Data download completed successfully",
+				zap.String("runner_name", runner.Name))
 
 			// Update status to completed
 			now := time.Now()
@@ -209,7 +229,9 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.Bot
 				ClearDataErrorMessage().
 				ClearDataDownloadProgress().
 				Save(context.Background()); saveErr != nil {
-				log.Printf("Runner %s: failed to update runner status after successful download: %v", runner.Name, saveErr)
+				log.Error("Failed to update runner status after successful download",
+					zap.String("runner_name", runner.Name),
+					zap.Error(saveErr))
 			}
 		}
 	}()

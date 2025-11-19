@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -18,8 +17,10 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"go.uber.org/zap"
 
 	"volaticloud/internal/enum"
+	"volaticloud/internal/logger"
 )
 
 const (
@@ -159,14 +160,14 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 	// Create container
 	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)
 	if err != nil {
-		d.cleanupBacktestConfigFiles(spec.ID)
+		d.cleanupBacktestConfigFiles(ctx, spec.ID)
 		return "", fmt.Errorf("failed to create backtest container: %w", err)
 	}
 
 	// Start container
 	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
-		d.cleanupBacktestConfigFiles(spec.ID)
+		d.cleanupBacktestConfigFiles(ctx, spec.ID)
 		return "", fmt.Errorf("failed to start backtest container: %w", err)
 	}
 
@@ -305,7 +306,7 @@ func (d *DockerBacktestRunner) DeleteBacktest(ctx context.Context, backtestID st
 	if err != nil {
 		if err == ErrBacktestNotFound {
 			// Still cleanup config files if they exist
-			d.cleanupBacktestConfigFiles(backtestID)
+			d.cleanupBacktestConfigFiles(ctx, backtestID)
 			return nil // Already deleted
 		}
 		return err
@@ -317,7 +318,7 @@ func (d *DockerBacktestRunner) DeleteBacktest(ctx context.Context, backtestID st
 	})
 
 	// Cleanup config files regardless of container removal result
-	d.cleanupBacktestConfigFiles(backtestID)
+	d.cleanupBacktestConfigFiles(ctx, backtestID)
 
 	return err
 }
@@ -880,7 +881,7 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 	// Write config file to Docker volume
 	configPath := filepath.Join(spec.ID, "config.json")
 	if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", configPath, configJSON); err != nil {
-		d.cleanupBacktestConfigFiles(spec.ID)
+		d.cleanupBacktestConfigFiles(ctx, spec.ID)
 		return nil, fmt.Errorf("failed to write config file to volume: %w", err)
 	}
 
@@ -888,7 +889,7 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 	if spec.StrategyCode != "" && spec.StrategyName != "" {
 		strategyPath := filepath.Join(spec.ID, "strategies", spec.StrategyName+".py")
 		if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", strategyPath, []byte(spec.StrategyCode)); err != nil {
-			d.cleanupBacktestConfigFiles(spec.ID)
+			d.cleanupBacktestConfigFiles(ctx, spec.ID)
 			return nil, fmt.Errorf("failed to write strategy file to volume: %w", err)
 		}
 		paths.hasStrategyFile = true
@@ -899,14 +900,16 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 
 // cleanupBacktestConfigFiles removes backtest directory from Docker volume
 // This cleans up config, strategy, and result files but preserves shared data
-func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
-	ctx := context.Background()
+func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(ctx context.Context, backtestID string) {
+	log := logger.GetLogger(ctx)
 
 	// Use a temporary alpine container to remove the backtest directory
 	// Only removes /data/{backtestID}/ - the /data/data/ directory is preserved
 	if err := d.removeDirectoryFromVolume(ctx, "volaticloud-freqtrade-userdir", backtestID); err != nil {
 		// Log but don't fail - cleanup is best effort to avoid leaving orphaned files
-		log.Printf("Warning: failed to cleanup backtest files for %s: %v", backtestID, err)
+		log.Warn("Failed to cleanup backtest files",
+			zap.String("backtest_id", backtestID),
+			zap.Error(err))
 	}
 }
 

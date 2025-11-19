@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
-	"log"
 	"sort"
 	"sync"
+
+	"go.uber.org/zap"
+	"volaticloud/internal/logger"
 )
 
 // Coordinator manages bot assignment across multiple instances using consistent hashing
@@ -133,8 +135,12 @@ func (c *Coordinator) updateInstances(instanceIDs []string) {
 		oldCount := len(c.instances)
 		c.instances = sortedInstances
 
-		log.Printf("Instance list updated: %d instances (was %d) - %v",
-			len(c.instances), oldCount, c.instances)
+		log := logger.NewProductionLogger()
+		defer log.Sync()
+		log.Info("Instance list updated",
+			zap.Int("instance_count", len(c.instances)),
+			zap.Int("previous_count", oldCount),
+			zap.Strings("instances", c.instances))
 
 		// Signal assignment change (non-blocking)
 		select {

@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"go.uber.org/zap"
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/logger"
 	"volaticloud/internal/runner"
 )
 
@@ -27,7 +28,8 @@ const (
 
 // DownloadRunnerData downloads historical data for a runner
 func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRunner) error {
-	log.Printf("Runner %s: starting data download", r.Name)
+	log := logger.GetLogger(ctx)
+	log.Info("Starting data download", zap.String("runner_name", r.Name))
 
 	// Only Docker runners supported for now
 	if r.Type != enum.RunnerDocker {
@@ -76,7 +78,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	}
 	defer func() {
 		if err := rt.Close(); err != nil {
-			log.Printf("Warning: failed to close runtime: %v", err)
+			log.Warn("Failed to close runtime", zap.Error(err))
 		}
 	}()
 
@@ -98,10 +100,14 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	for idx, exchConfig := range enabledExchanges {
 		exchangeName, ok := exchConfig["name"].(string)
 		if !ok {
-			log.Printf("Warning: exchange name is not a string, skipping")
+			log.Warn("Exchange name is not a string, skipping")
 			continue
 		}
-		log.Printf("Runner %s: downloading %s data (%d/%d)", r.Name, exchangeName, idx+1, len(enabledExchanges))
+		log.Info("Downloading exchange data",
+			zap.String("runner_name", r.Name),
+			zap.String("exchange", exchangeName),
+			zap.Int("progress", idx+1),
+			zap.Int("total", len(enabledExchanges)))
 
 		// Update progress
 		progress := map[string]interface{}{
@@ -113,7 +119,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 		if _, err := dbClient.BotRunner.UpdateOne(r).
 			SetDataDownloadProgress(progress).
 			Save(context.Background()); err != nil {
-			log.Printf("Warning: failed to update runner progress: %v", err)
+			log.Warn("Failed to update runner progress", zap.Error(err))
 		}
 
 		if err := downloadExchangeData(ctx, cli, exchangeName, exchConfig); err != nil {
@@ -121,12 +127,13 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 		}
 	}
 
-	log.Printf("Runner %s: data download completed", r.Name)
+	log.Info("Data download completed", zap.String("runner_name", r.Name))
 	return nil
 }
 
 // downloadExchangeData downloads data for a specific exchange using its configuration
 func downloadExchangeData(ctx context.Context, cli *client.Client, exchange string, config map[string]interface{}) error {
+	log := logger.GetLogger(ctx)
 
 	// Extract configuration (using camelCase field names from GraphQL)
 	pairsPattern, ok := config["pairsPattern"].(string)
@@ -144,7 +151,7 @@ func downloadExchangeData(ctx context.Context, cli *client.Client, exchange stri
 		if tfStr, ok := tf.(string); ok {
 			timeframes = append(timeframes, tfStr)
 		} else {
-			log.Printf("Warning: skipping non-string timeframe: %v", tf)
+			log.Warn("Skipping non-string timeframe", zap.Any("timeframe", tf))
 		}
 	}
 
@@ -179,8 +186,12 @@ func downloadExchangeData(ctx context.Context, cli *client.Client, exchange stri
 	args = append(args, "--timeframes")
 	args = append(args, timeframes...)
 
-	log.Printf("Downloading %s: pairs=%s, timeframes=%v, days=%s, mode=%s",
-		exchange, pairsPattern, timeframes, days, tradingMode)
+	log.Info("Starting download command",
+		zap.String("exchange", exchange),
+		zap.String("pairs", pairsPattern),
+		zap.Strings("timeframes", timeframes),
+		zap.String("days", days),
+		zap.String("trading_mode", tradingMode))
 
 	// Run the download container
 	containerName := fmt.Sprintf("volaticloud-data-download-%s", exchange)
@@ -194,9 +205,10 @@ func downloadExchangeData(ctx context.Context, cli *client.Client, exchange stri
 
 // runFreqtradeCommand runs a freqtrade command in a Docker container
 func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName string, args []string) error {
+	log := logger.GetLogger(ctx)
 
 	// Pull image if needed
-	log.Printf("Pulling Freqtrade image: %s", FreqtradeImage)
+	log.Info("Pulling Freqtrade image", zap.String("image", FreqtradeImage))
 	if err := pullImage(ctx, cli, FreqtradeImage); err != nil {
 		return fmt.Errorf("failed to pull image: %w", err)
 	}
@@ -229,7 +241,7 @@ func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName 
 		return fmt.Errorf("failed to start container: %w", err)
 	}
 
-	log.Printf("Started data download container: %s", resp.ID[:12])
+	log.Info("Started data download container", zap.String("container_id", resp.ID[:12]))
 
 	// Wait for container to finish
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
@@ -243,12 +255,12 @@ func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName 
 			// Get container logs for error details
 			logs, logErr := getContainerLogs(ctx, cli, resp.ID)
 			if logErr != nil {
-				log.Printf("Warning: failed to get container logs: %v", logErr)
+				log.Warn("Failed to get container logs", zap.Error(logErr))
 				return fmt.Errorf("container exited with status %d", status.StatusCode)
 			}
 			return fmt.Errorf("container exited with status %d: %s", status.StatusCode, logs)
 		}
-		log.Printf("Data download container completed successfully")
+		log.Info("Data download container completed successfully")
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -258,10 +270,12 @@ func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName 
 
 // pullImage pulls a Docker image if not already present
 func pullImage(ctx context.Context, cli *client.Client, imageName string) error {
+	log := logger.GetLogger(ctx)
+
 	// Check if image exists
 	_, err := cli.ImageInspect(ctx, imageName)
 	if err == nil {
-		log.Printf("Image %s already exists", imageName)
+		log.Info("Image already exists", zap.String("image", imageName))
 		return nil
 	}
 
@@ -272,7 +286,7 @@ func pullImage(ctx context.Context, cli *client.Client, imageName string) error 
 	}
 	defer func() {
 		if err := reader.Close(); err != nil {
-			log.Printf("Warning: failed to close image pull reader: %v", err)
+			log.Warn("Failed to close image pull reader", zap.Error(err))
 		}
 	}()
 
@@ -284,6 +298,8 @@ func pullImage(ctx context.Context, cli *client.Client, imageName string) error 
 
 // getContainerLogs retrieves logs from a container
 func getContainerLogs(ctx context.Context, cli *client.Client, containerID string) (string, error) {
+	log := logger.GetLogger(ctx)
+
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -296,7 +312,7 @@ func getContainerLogs(ctx context.Context, cli *client.Client, containerID strin
 	}
 	defer func() {
 		if err := reader.Close(); err != nil {
-			log.Printf("Warning: failed to close container logs reader: %v", err)
+			log.Warn("Failed to close container logs reader", zap.Error(err))
 		}
 	}()
 
@@ -310,12 +326,14 @@ func getContainerLogs(ctx context.Context, cli *client.Client, containerID strin
 
 // ensureDataVolume ensures the Docker volume for data storage exists
 func ensureDataVolume(ctx context.Context, cli *client.Client) error {
-	log.Printf("Ensuring Docker volume exists: %s", FreqtradeDataVolume)
+	log := logger.GetLogger(ctx)
+
+	log.Info("Ensuring Docker volume exists", zap.String("volume", FreqtradeDataVolume))
 
 	// Check if volume exists
 	_, err := cli.VolumeInspect(ctx, FreqtradeDataVolume)
 	if err == nil {
-		log.Printf("Volume %s already exists", FreqtradeDataVolume)
+		log.Info("Volume already exists", zap.String("volume", FreqtradeDataVolume))
 		return nil
 	}
 
@@ -331,6 +349,6 @@ func ensureDataVolume(ctx context.Context, cli *client.Client) error {
 		return fmt.Errorf("failed to create volume: %w", err)
 	}
 
-	log.Printf("Created Docker volume: %s", FreqtradeDataVolume)
+	log.Info("Created Docker volume", zap.String("volume", FreqtradeDataVolume))
 	return nil
 }

@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
+
+	"go.uber.org/zap"
 
 	"volaticloud/internal/backtest"
 	"volaticloud/internal/ent"
 	entbacktest "volaticloud/internal/ent/backtest"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/logger"
 	"volaticloud/internal/runner"
 )
 
@@ -36,7 +38,11 @@ func NewBacktestMonitor(client *ent.Client, interval time.Duration) *BacktestMon
 
 // Start begins monitoring backtests
 func (m *BacktestMonitor) Start(ctx context.Context) {
-	log.Printf("Starting backtest monitor (interval: %v)", m.interval)
+	// Create sub-logger for backtest monitor
+	ctx = logger.WithComponent(ctx, "backtest-monitor")
+	log := logger.GetLogger(ctx)
+
+	log.Info("Starting backtest monitor", zap.Duration("interval", m.interval))
 
 	ticker := time.NewTicker(m.interval)
 	defer ticker.Stop()
@@ -47,10 +53,10 @@ func (m *BacktestMonitor) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Backtest monitor stopped (context cancelled)")
+			log.Info("Backtest monitor stopped (context cancelled)")
 			return
 		case <-m.stopChan:
-			log.Println("Backtest monitor stopped")
+			log.Info("Backtest monitor stopped")
 			return
 		case <-ticker.C:
 			m.checkBacktests(ctx)
@@ -65,6 +71,8 @@ func (m *BacktestMonitor) Stop() {
 
 // checkBacktests checks all running backtests and updates their status
 func (m *BacktestMonitor) checkBacktests(ctx context.Context) {
+	log := logger.GetLogger(ctx)
+
 	// Query all running backtests
 	backtests, err := m.client.Backtest.Query().
 		Where(entbacktest.StatusEQ(enum.TaskStatusRunning)).
@@ -72,7 +80,7 @@ func (m *BacktestMonitor) checkBacktests(ctx context.Context) {
 		WithStrategy().
 		All(ctx)
 	if err != nil {
-		log.Printf("Error querying running backtests: %v", err)
+		log.Error("Error querying running backtests", zap.Error(err))
 		return
 	}
 
@@ -80,7 +88,7 @@ func (m *BacktestMonitor) checkBacktests(ctx context.Context) {
 		return
 	}
 
-	log.Printf("Checking %d running backtest(s)", len(backtests))
+	log.Info("Checking running backtests", zap.Int("count", len(backtests)))
 
 	for _, bt := range backtests {
 		m.checkBacktest(ctx, bt)
@@ -89,15 +97,19 @@ func (m *BacktestMonitor) checkBacktests(ctx context.Context) {
 
 // checkBacktest checks a single backtest and updates its status
 func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
+	// Create sub-logger with backtest context
+	ctx = logger.WithFields(ctx, zap.String("backtest_id", bt.ID.String()))
+	log := logger.GetLogger(ctx)
+
 	// Skip if no container ID
 	if bt.ContainerID == "" {
-		log.Printf("Backtest %s has no container ID, skipping", bt.ID)
+		log.Warn("Backtest has no container ID, skipping")
 		return
 	}
 
 	// Get runner
 	if bt.Edges.Runner == nil {
-		log.Printf("Backtest %s has no runner, skipping", bt.ID)
+		log.Warn("Backtest has no runner, skipping")
 		return
 	}
 
@@ -105,19 +117,19 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 	factory := runner.NewFactory()
 	backtestRunner, err := factory.CreateBacktestRunner(ctx, bt.Edges.Runner.Type, bt.Edges.Runner.Config)
 	if err != nil {
-		log.Printf("Failed to create backtest runner for %s: %v", bt.ID, err)
+		log.Error("Failed to create backtest runner", zap.Error(err))
 		return
 	}
 	defer func() {
 		if err := backtestRunner.Close(); err != nil {
-			log.Printf("Warning: failed to close backtest runner: %v", err)
+			log.Warn("Failed to close backtest runner", zap.Error(err))
 		}
 	}()
 
 	// Get backtest status
 	status, err := backtestRunner.GetBacktestStatus(ctx, bt.ID.String())
 	if err != nil {
-		log.Printf("Failed to get backtest status for %s: %v", bt.ID, err)
+		log.Error("Failed to get backtest status", zap.Error(err))
 		return
 	}
 
@@ -126,7 +138,9 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 		return // Still running
 	}
 
-	log.Printf("Backtest %s status changed: %s -> %s", bt.ID, bt.Status, status.Status)
+	log.Info("Backtest status changed",
+		zap.String("old_status", string(bt.Status)),
+		zap.String("new_status", string(status.Status)))
 
 	// Update backtest based on new status
 	switch status.Status {
@@ -139,19 +153,20 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 
 // handleCompletedBacktest handles a completed backtest
 func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.Backtest, backtestRunner runner.BacktestRunner) {
-	log.Printf("Backtest %s completed, fetching results...", bt.ID)
+	log := logger.GetLogger(ctx)
+	log.Info("Backtest completed, fetching results...")
 
 	// Get backtest results (includes parsing)
 	result, err := backtestRunner.GetBacktestResult(ctx, bt.ID.String())
 	if err != nil {
-		log.Printf("Failed to get backtest results for %s: %v", bt.ID, err)
+		log.Error("Failed to get backtest results", zap.Error(err))
 		// Mark as completed but without results
 		if _, saveErr := m.client.Backtest.UpdateOneID(bt.ID).
 			SetStatus(enum.TaskStatusCompleted).
 			SetCompletedAt(time.Now()).
 			SetErrorMessage("Failed to retrieve results").
 			Save(ctx); saveErr != nil {
-			log.Printf("Failed to update backtest %s after result error: %v", bt.ID, saveErr)
+			log.Error("Failed to update backtest after result error", zap.Error(saveErr))
 		}
 		return
 	}
@@ -159,7 +174,7 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 	// Extract typed summary from result
 	summary, err := backtest.ExtractSummaryFromResult(result.RawResult)
 	if err != nil {
-		log.Printf("Failed to extract summary from backtest result: %v", err)
+		log.Warn("Failed to extract summary from backtest result", zap.Error(err))
 		// Continue without summary - it's optional
 	}
 
@@ -175,7 +190,9 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 			var summaryMap map[string]interface{}
 			if err := json.Unmarshal(summaryJSON, &summaryMap); err == nil {
 				update = update.SetSummary(summaryMap)
-				log.Printf("Backtest %s summary extracted: %d trades, profit: %.2f", bt.ID, summary.TotalTrades, summary.ProfitTotalAbs)
+				log.Info("Backtest summary extracted",
+					zap.Int("total_trades", summary.TotalTrades),
+					zap.Float64("profit", summary.ProfitTotalAbs))
 			}
 		}
 	}
@@ -183,7 +200,7 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 	// Store logs from container execution
 	if result.Logs != "" {
 		update = update.SetLogs(result.Logs)
-		log.Printf("Backtest %s logs captured (%d bytes)", bt.ID, len(result.Logs))
+		log.Info("Backtest logs captured", zap.Int("bytes", len(result.Logs)))
 	}
 
 	if result.CompletedAt != nil {
@@ -200,24 +217,25 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 
 	_, err = update.Save(ctx)
 	if err != nil {
-		log.Printf("Failed to update backtest %s: %v", bt.ID, err)
+		log.Error("Failed to update backtest", zap.Error(err))
 		return
 	}
 
-	log.Printf("Backtest %s completed successfully, results saved", bt.ID)
+	log.Info("Backtest completed successfully, results saved")
 
 	// Cleanup container after successfully saving results
 	if err := backtestRunner.DeleteBacktest(ctx, bt.ID.String()); err != nil {
-		log.Printf("Warning: Failed to cleanup backtest container %s: %v", bt.ID, err)
+		log.Warn("Failed to cleanup backtest container", zap.Error(err))
 		// Don't return error - results are already saved
 	} else {
-		log.Printf("Backtest %s container cleaned up", bt.ID)
+		log.Info("Backtest container cleaned up")
 	}
 }
 
 // handleFailedBacktest handles a failed backtest
 func (m *BacktestMonitor) handleFailedBacktest(ctx context.Context, bt *ent.Backtest, backtestRunner runner.BacktestRunner) {
-	log.Printf("Backtest %s failed", bt.ID)
+	log := logger.GetLogger(ctx)
+	log.Info("Backtest failed")
 
 	// Try to get result (which includes logs) even for failed backtests
 	result, err := backtestRunner.GetBacktestResult(ctx, bt.ID.String())
@@ -229,7 +247,7 @@ func (m *BacktestMonitor) handleFailedBacktest(ctx context.Context, bt *ent.Back
 		// Store logs if available
 		if result.Logs != "" {
 			update = update.SetLogs(result.Logs)
-			log.Printf("Backtest %s logs captured (%d bytes)", bt.ID, len(result.Logs))
+			log.Info("Backtest logs captured", zap.Int("bytes", len(result.Logs)))
 		}
 
 		if result.CompletedAt != nil {
@@ -251,15 +269,15 @@ func (m *BacktestMonitor) handleFailedBacktest(ctx context.Context, bt *ent.Back
 
 	_, saveErr := update.Save(ctx)
 	if saveErr != nil {
-		log.Printf("Failed to update failed backtest %s: %v", bt.ID, saveErr)
+		log.Error("Failed to update failed backtest", zap.Error(saveErr))
 		return
 	}
 
 	// Cleanup container after successfully saving failed status
 	if err := backtestRunner.DeleteBacktest(ctx, bt.ID.String()); err != nil {
-		log.Printf("Warning: Failed to cleanup failed backtest container %s: %v", bt.ID, err)
+		log.Warn("Failed to cleanup failed backtest container", zap.Error(err))
 		// Don't return error - status is already saved
 	} else {
-		log.Printf("Failed backtest %s container cleaned up", bt.ID)
+		log.Info("Failed backtest container cleaned up")
 	}
 }
