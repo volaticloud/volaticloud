@@ -10,10 +10,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-
 	backtest1 "volaticloud/internal/backtest"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
@@ -24,6 +20,9 @@ import (
 	"volaticloud/internal/logger"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
+
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*backtest1.BacktestSummary, error) {
