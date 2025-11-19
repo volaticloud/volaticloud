@@ -168,7 +168,7 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 	if err != nil {
 		return nil, fmt.Errorf("failed to create runner client: %w", err)
 	}
-	defer rt.Close()
+	defer func() { _ = rt.Close() }()
 
 	// Step 4: Build BotSpec from bot data
 	spec, err := buildBotSpec(createdBot)
@@ -240,7 +240,7 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 	if err != nil {
 		return nil, fmt.Errorf("failed to create runner client: %w", err)
 	}
-	defer rt.Close()
+	defer func() { _ = rt.Close() }()
 
 	// Check if container exists, if not create it
 	containerID := b.ContainerID
@@ -318,7 +318,7 @@ func (r *mutationResolver) StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create runner client: %w", err)
 	}
-	defer rt.Close()
+	defer func() { _ = rt.Close() }()
 
 	// Stop the bot in the runtime
 	containerID := b.ContainerID
@@ -384,7 +384,7 @@ func (r *mutationResolver) RestartBot(ctx context.Context, id uuid.UUID) (*ent.B
 	if err != nil {
 		return nil, fmt.Errorf("failed to create runner client: %w", err)
 	}
-	defer rt.Close()
+	defer func() { _ = rt.Close() }()
 
 	// Check if container exists, if not create it
 	containerID := b.ContainerID
@@ -538,7 +538,7 @@ func (r *mutationResolver) TestRunnerConnection(ctx context.Context, typeArg enu
 			Message: fmt.Sprintf("Failed to create runner client: %v", err),
 		}, nil
 	}
-	defer rt.Close()
+	defer func() { _ = rt.Close() }()
 
 	// For Docker runners, try to ping and get version
 	// Ping with timeout
@@ -692,7 +692,7 @@ func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent
 	if err != nil {
 		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
 	}
-	defer backtestRunner.Close()
+	defer func() { _ = backtestRunner.Close() }()
 
 	// Stop the backtest in the runtime
 	containerID := bt.ContainerID
@@ -769,7 +769,7 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	if err != nil {
 		return nil, fmt.Errorf("failed to create runner client: %w", err)
 	}
-	defer rt.Close()
+	defer func() { _ = rt.Close() }()
 
 	// Get bot status from runner
 	containerID := b.ContainerID

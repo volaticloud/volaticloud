@@ -672,7 +672,7 @@ func (d *DockerRuntime) pullImage(ctx context.Context, imageName string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	// Consume output (required for pull to complete)
 	_, err = io.Copy(io.Discard, out)
@@ -717,7 +717,7 @@ func (d *DockerRuntime) getContainerStats(ctx context.Context, containerID strin
 	if err != nil {
 		return nil, err
 	}
-	defer stats.Body.Close()
+	defer func() { _ = stats.Body.Close() }()
 
 	var v container.StatsResponse
 	if err := json.NewDecoder(stats.Body).Decode(&v); err != nil {

@@ -221,7 +221,7 @@ func (d *DockerBacktestRunner) GetBacktestStatus(ctx context.Context, backtestID
 	if inspect.State.Running {
 		stats, err := d.client.ContainerStats(ctx, containerID, false)
 		if err == nil {
-			defer stats.Body.Close()
+			defer func() { _ = stats.Body.Close() }()
 			var statsData container.StatsResponse
 			if err := json.NewDecoder(stats.Body).Decode(&statsData); err == nil {
 				// Calculate CPU percentage
@@ -532,7 +532,7 @@ func (d *DockerBacktestRunner) ensureImage(ctx context.Context, imageName string
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %w", err)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// Wait for pull to complete
 	_, err = io.Copy(io.Discard, reader)
@@ -651,7 +651,7 @@ func (d *DockerBacktestRunner) getContainerLogs(ctx context.Context, containerID
 	if err != nil {
 		return "", err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// Docker logs are multiplexed - need to demultiplex them using stdcopy
 	var stdout bytes.Buffer
@@ -1044,7 +1044,7 @@ func (d *DockerBacktestRunner) getRawContainerOutput(ctx context.Context, contai
 	if err != nil {
 		return ""
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// Use stdcopy to demultiplex Docker log streams and remove framing bytes
 	var stdout, stderr bytes.Buffer
