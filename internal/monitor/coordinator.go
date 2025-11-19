@@ -136,7 +136,7 @@ func (c *Coordinator) updateInstances(instanceIDs []string) {
 		c.instances = sortedInstances
 
 		log := logger.NewProductionLogger()
-		defer log.Sync()
+		defer func() { _ = log.Sync() }()
 		log.Info("Instance list updated",
 			zap.Int("instance_count", len(c.instances)),
 			zap.Int("previous_count", oldCount),

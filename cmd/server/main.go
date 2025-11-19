@@ -32,7 +32,7 @@ func main() {
 	// Initialize logger
 	ctx := context.Background()
 	ctx, log := logger.PrepareLogger(ctx)
-	defer logger.Sync(ctx)
+	defer func() { _ = logger.Sync(ctx) }()
 
 	app := &cli.App{
 		Name:    "volaticloud",
@@ -142,7 +142,7 @@ func runServer(parentCtx context.Context, c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed opening connection to %s: %w", driver, err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Run auto migration
 	if err := client.Schema.Create(ctx); err != nil {

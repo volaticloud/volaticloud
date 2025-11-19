@@ -16,7 +16,7 @@ import (
 func main() {
 	// Initialize logger for code generation
 	ctx, log := logger.PrepareLogger(context.Background())
-	defer logger.Sync(ctx)
+	defer func() { _ = logger.Sync(ctx) }()
 
 	ex, err := entgql.NewExtension(
 		// Generate GraphQL schema

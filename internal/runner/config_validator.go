@@ -43,10 +43,10 @@ func ValidateConfig(runnerType enum.RunnerType, configData map[string]interface{
 		return err
 
 	case enum.RunnerKubernetes:
-		return fmt.Errorf("Kubernetes runner is not yet supported")
+		return fmt.Errorf("kubernetes runner is not yet supported")
 
 	case enum.RunnerLocal:
-		return fmt.Errorf("Local runner is not yet supported")
+		return fmt.Errorf("local runner is not yet supported")
 
 	default:
 		return fmt.Errorf("unsupported runner type: %s", runnerType)

@@ -51,7 +51,7 @@ type DockerRuntime struct {
 // NewDockerRuntime creates a new Docker runtime instance
 func NewDockerRuntime(ctx context.Context, config *DockerConfig) (*DockerRuntime, error) {
 	if config == nil {
-		return nil, fmt.Errorf("Docker config cannot be nil")
+		return nil, fmt.Errorf("docker config cannot be nil")
 	}
 
 	// Build client options

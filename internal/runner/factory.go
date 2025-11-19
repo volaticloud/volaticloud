@@ -69,7 +69,7 @@ func (f *Factory) createDockerRuntime(ctx context.Context, configData map[string
 	// Verify connection
 	if err := runtime.HealthCheck(ctx); err != nil {
 		runtime.Close()
-		return nil, fmt.Errorf("Docker runtime health check failed: %w", err)
+		return nil, fmt.Errorf("docker runtime health check failed: %w", err)
 	}
 
 	return runtime, nil
@@ -109,7 +109,7 @@ func (f *Factory) createDockerBacktestRunner(ctx context.Context, configData map
 	// Verify connection
 	if err := runner.HealthCheck(ctx); err != nil {
 		runner.Close()
-		return nil, fmt.Errorf("Docker backtest runner health check failed: %w", err)
+		return nil, fmt.Errorf("docker backtest runner health check failed: %w", err)
 	}
 
 	return runner, nil
