@@ -18,8 +18,9 @@ const loggerKey contextKey = "logger"
 // It returns a new context with the logger and the logger itself.
 //
 // Usage:
-//   ctx, logger := logger.PrepareLogger(ctx)
-//   logger.Info("Application started")
+//
+//	ctx, logger := logger.PrepareLogger(ctx)
+//	logger.Info("Application started")
 func PrepareLogger(ctx context.Context) (context.Context, *zap.Logger) {
 	logger := NewProductionLogger()
 	return context.WithValue(ctx, loggerKey, logger), logger
@@ -42,8 +43,9 @@ func PrepareLoggerWithConfig(ctx context.Context, config zap.Config) (context.Co
 // This ensures GetLogger never returns nil.
 //
 // Usage:
-//   logger := logger.GetLogger(ctx)
-//   logger.Info("Processing request")
+//
+//	logger := logger.GetLogger(ctx)
+//	logger.Info("Processing request")
 func GetLogger(ctx context.Context) *zap.Logger {
 	if ctx == nil {
 		return NewProductionLogger()
@@ -61,9 +63,10 @@ func GetLogger(ctx context.Context) *zap.Logger {
 // The sub-logger is stored back in the context.
 //
 // Usage:
-//   ctx = logger.WithFields(ctx, zap.String("bot_id", botID), zap.String("bot_name", botName))
-//   logger := logger.GetLogger(ctx)
-//   logger.Info("Bot started") // Will include bot_id and bot_name fields
+//
+//	ctx = logger.WithFields(ctx, zap.String("bot_id", botID), zap.String("bot_name", botName))
+//	logger := logger.GetLogger(ctx)
+//	logger.Info("Bot started") // Will include bot_id and bot_name fields
 func WithFields(ctx context.Context, fields ...zap.Field) context.Context {
 	logger := GetLogger(ctx)
 	subLogger := logger.With(fields...)
@@ -74,9 +77,10 @@ func WithFields(ctx context.Context, fields ...zap.Field) context.Context {
 // Useful for organizing logs by component/module.
 //
 // Usage:
-//   ctx = logger.WithComponent(ctx, "bot-monitor")
-//   logger := logger.GetLogger(ctx)
-//   logger.Info("Monitor started") // Will include component=bot-monitor
+//
+//	ctx = logger.WithComponent(ctx, "bot-monitor")
+//	logger := logger.GetLogger(ctx)
+//	logger.Info("Monitor started") // Will include component=bot-monitor
 func WithComponent(ctx context.Context, component string) context.Context {
 	return WithFields(ctx, zap.String("component", component))
 }
@@ -127,7 +131,8 @@ func NewLoggerFromEnv() *zap.Logger {
 // This should be called before application shutdown.
 //
 // Usage:
-//   defer logger.Sync(ctx)
+//
+//	defer logger.Sync(ctx)
 func Sync(ctx context.Context) error {
 	logger := GetLogger(ctx)
 	return logger.Sync()

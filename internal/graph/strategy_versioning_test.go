@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"volaticloud/internal/ent"
@@ -14,6 +15,20 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+// isDockerAvailable checks if Docker daemon is accessible
+func isDockerAvailable() bool {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return false
+	}
+	defer cli.Close()
+
+	// Try to ping the Docker daemon
+	ctx := context.Background()
+	_, err = cli.Ping(ctx)
+	return err == nil
+}
 
 // setupTestResolver creates a test resolver with an in-memory database
 func setupTestResolver(t *testing.T) (*Resolver, *ent.Client) {
@@ -165,6 +180,11 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 }
 
 func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
+	// Skip if Docker is not available (CI environments may not have Docker)
+	if !isDockerAvailable() {
+		t.Skip("Docker not available, skipping test that requires Docker daemon")
+	}
+
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
 
