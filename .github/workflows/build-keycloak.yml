@@ -47,16 +47,14 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Keycloak version: $VERSION"
 
-      - name: Determine image tags
-        id: image_tags
+      - name: Determine image tag
+        id: image_tag
         run: |
-          VERSION="${{ steps.keycloak_version.outputs.version }}"
-          SHORT_SHA="${GITHUB_SHA::7}"
-
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "tag=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           else
-            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}-${SHORT_SHA},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
+            # Use short commit SHA for unique versioning (matches backend/dashboard)
+            echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Keycloak image
@@ -65,7 +63,9 @@ jobs:
           context: ./keycloak
           file: ./keycloak/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.image_tags.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image_tag.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -78,10 +78,7 @@ jobs:
           echo "### Keycloak Image Built Successfully! 🔐" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Keycloak Version:** ${{ steps.keycloak_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.image_tags.outputs.tags }}" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

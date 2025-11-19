@@ -11,7 +11,7 @@ spec:
   instances: 2
 
   # Custom Keycloak image with extensions and custom configuration
-  image: ghcr.io/volaticloud/volaticloud-keycloak:latest
+  image: ghcr.io/volaticloud/volaticloud-keycloak:${KEYCLOAK_IMAGE_TAG}
 
   # Image pull secret for GHCR
   imagePullSecrets:
