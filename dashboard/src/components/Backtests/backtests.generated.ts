@@ -28,7 +28,7 @@ export type CreateBacktestMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string } };
+export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string, strategy: { __typename?: 'Strategy', id: string, name: string, versionNumber: number } } };
 
 export type DeleteBacktestMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -244,6 +244,11 @@ export const CreateBacktestDocument = gql`
     id
     status
     createdAt
+    strategy {
+      id
+      name
+      versionNumber
+    }
   }
 }
     `;
