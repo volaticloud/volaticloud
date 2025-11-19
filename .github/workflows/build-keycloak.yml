@@ -15,7 +15,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: volaticloud-keycloak
+  IMAGE_NAME: volaticloud/volaticloud-keycloak
 
 jobs:
   build-and-push:
