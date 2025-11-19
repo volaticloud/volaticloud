@@ -1,4 +1,5 @@
 # region Global args
+# Custom Keycloak image with Group Resource Policy Provider extension
 ARG KEYCLOAK_VERSION="26.4.5"
 ARG KEYCLOAK_EXTRA_ARGS="-Dkeycloak.client.searchableAttributes=organization-id,is-deleted,user-id,partner-id -Dkeycloak.user.searchableAttributes=owner-user,is-deleted,invitation-code -Dkeycloak.organization.searchableAttributes=easydmarcOrganizationId"
 # endregion
