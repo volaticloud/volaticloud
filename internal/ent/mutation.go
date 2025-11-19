@@ -6790,6 +6790,7 @@ type StrategyMutation struct {
 	is_latest         *bool
 	version_number    *int
 	addversion_number *int
+	owner_id          *string
 	created_at        *time.Time
 	updated_at        *time.Time
 	clearedFields     map[string]struct{}
@@ -7210,6 +7211,42 @@ func (m *StrategyMutation) ResetVersionNumber() {
 	m.addversion_number = nil
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (m *StrategyMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *StrategyMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *StrategyMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *StrategyMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -7490,7 +7527,7 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.name != nil {
 		fields = append(fields, strategy.FieldName)
 	}
@@ -7511,6 +7548,9 @@ func (m *StrategyMutation) Fields() []string {
 	}
 	if m.version_number != nil {
 		fields = append(fields, strategy.FieldVersionNumber)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, strategy.FieldOwnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, strategy.FieldCreatedAt)
@@ -7540,6 +7580,8 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 		return m.IsLatest()
 	case strategy.FieldVersionNumber:
 		return m.VersionNumber()
+	case strategy.FieldOwnerID:
+		return m.OwnerID()
 	case strategy.FieldCreatedAt:
 		return m.CreatedAt()
 	case strategy.FieldUpdatedAt:
@@ -7567,6 +7609,8 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldIsLatest(ctx)
 	case strategy.FieldVersionNumber:
 		return m.OldVersionNumber(ctx)
+	case strategy.FieldOwnerID:
+		return m.OldOwnerID(ctx)
 	case strategy.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case strategy.FieldUpdatedAt:
@@ -7628,6 +7672,13 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVersionNumber(v)
+		return nil
+	case strategy.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
 		return nil
 	case strategy.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -7742,6 +7793,9 @@ func (m *StrategyMutation) ResetField(name string) error {
 		return nil
 	case strategy.FieldVersionNumber:
 		m.ResetVersionNumber()
+		return nil
+	case strategy.FieldOwnerID:
+		m.ResetOwnerID()
 		return nil
 	case strategy.FieldCreatedAt:
 		m.ResetCreatedAt()

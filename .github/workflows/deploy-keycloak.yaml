@@ -162,6 +162,21 @@ jobs:
 
           echo "✅ Database secret created"
 
+      - name: Create image pull secret for GHCR
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔐 Creating image pull secret for custom Keycloak image..."
+
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GHCR_TOKEN }} \
+            --namespace=keycloak \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "✅ Image pull secret created"
+
       - name: Install Keycloak operator
         env:
           KUBECONFIG: ${{ github.workspace }}/kubeconfig

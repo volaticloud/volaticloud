@@ -42,9 +42,10 @@ export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: Heade
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    auth.removeUser();
+    // Proper OIDC logout - redirects to Keycloak logout endpoint
+    await auth.signoutRedirect();
   };
 
   // Get user info from auth

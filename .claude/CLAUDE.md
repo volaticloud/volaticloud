@@ -366,23 +366,21 @@ GraphQL operations are generated next to their component files:
 - GraphQL files: `src/components/*/[feature].graphql` (e.g., `bots.graphql`, `backtests.graphql`)
 - Generated hooks: `src/components/*/[feature].generated.ts` (co-located with components)
 - Shared types: `src/generated/types.ts` (centralized base types)
-- Codegen config: `codegen.ts` uses **near-operation-file preset** with schema introspection from `http://localhost:8080/query`
+- Codegen config: `codegen.ts` uses **near-operation-file preset** with local schema files
 
-**Important**: The codegen fetches the schema from the running GraphQL server via introspection, NOT from the `internal/graph/ent.graphql` file. This means:
-1. The backend server MUST be running on port 8080 before running `npm run codegen`
-2. After regenerating backend schema with `make generate`, you MUST rebuild and restart the server
-3. Then run `npm run codegen` to fetch the updated schema via introspection
+**Important**: The codegen uses local schema files (`internal/graph/ent.graphql` and `internal/graph/schema.graphqls`) instead of HTTP introspection. This approach:
+1. Avoids authentication issues (backend requires auth for all requests including introspection)
+2. Works offline without requiring the server to be running
+3. Guarantees schema consistency with the backend
 
 **Workflow after schema changes:**
 ```bash
 # Backend changes
-make generate  # Regenerate ENT schema
-make build     # Rebuild binary
-./bin/volaticloud server &  # Restart server
+make generate  # Regenerate ENT and GraphQL schemas
 
-# Frontend codegen (requires server running)
+# Frontend codegen (no server required)
 cd dashboard
-npm run codegen  # Fetches schema from http://localhost:8080/query
+npm run codegen  # Uses local schema files from ../internal/graph/
 ```
 
 **Usage Example:**
@@ -1519,4 +1517,496 @@ After backend deployment:
 3. Set up monitoring (Prometheus/Grafana)
 4. Configure alerting
 5. Enable continuous deployment
+
+---
+
+## Authentication and Authorization
+
+**Updated: 2025-11-19** - Implemented mandatory Keycloak authentication with UMA 2.0 resource-level authorization.
+
+### Overview
+
+The system uses a multi-layered security model:
+1. **JWT Authentication** (via Keycloak OIDC) - Validates user identity
+2. **GraphQL Directives** (`@isAuthenticated`, `@hasScope`) - Declarative authorization
+3. **UMA 2.0 Resource Management** - Fine-grained permissions for strategies
+4. **Database Ownership** - Fast local checks before hitting Keycloak
+
+**Keycloak is MANDATORY** in all environments (development, staging, production). The server will not start without proper Keycloak configuration.
+
+### Architecture Components
+
+**Authentication Layer:**
+- `internal/auth/keycloak.go` - OIDC provider, JWT verifier, token validation
+- `internal/auth/middleware.go` - HTTP middleware for JWT validation
+- `internal/auth/context.go` - User context helpers (extract UserID, RawToken from JWT claims)
+
+**Authorization Layer:**
+- `internal/keycloak/uma_client.go` - UMA 2.0 resource management (create/delete resources, check permissions)
+- `internal/graph/keycloak_hooks.go` - Transaction-safe hooks for syncing ENT entities with Keycloak resources
+- `internal/graph/directives.go` - GraphQL directive handlers for authorization checks
+
+**GraphQL Integration:**
+- `internal/graph/schema.graphqls` - Directive definitions (`@isAuthenticated`, `@hasScope`)
+- `gqlgen.yml` - Directive configuration (`skip_runtime: false`)
+- `internal/graph/resolver.go` - Resolver with injected auth and UMA clients
+
+### Configuration
+
+**Required Environment Variables:**
+```bash
+VOLATICLOUD_KEYCLOAK_URL=https://keycloak.volaticloud.com
+VOLATICLOUD_KEYCLOAK_REALM=volaticloud
+VOLATICLOUD_KEYCLOAK_CLIENT_ID=volaticloud-api
+VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=<secret>
+```
+
+**Validation:** Server validates all Keycloak config at startup and fails if any are missing:
+```go
+// cmd/server/main.go:203-205
+if keycloakConfig.URL == "" || keycloakConfig.ClientID == "" || keycloakConfig.ClientSecret == "" {
+	return fmt.Errorf("Keycloak configuration is required (URL, ClientID, ClientSecret must be set)")
+}
+```
+
+**Example .env:**
+```bash
+VOLATICLOUD_KEYCLOAK_URL=https://keycloak.volaticloud.com
+VOLATICLOUD_KEYCLOAK_REALM=volaticloud
+VOLATICLOUD_KEYCLOAK_CLIENT_ID=volaticloud-api
+VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=your-client-secret-here
+```
+
+### JWT Authentication Flow
+
+**1. User Login (Frontend):**
+```typescript
+// Dashboard uses Keycloak.js for login
+const keycloak = new Keycloak({
+  url: 'https://keycloak.volaticloud.com',
+  realm: 'volaticloud',
+  clientId: 'volaticloud-frontend'
+});
+
+await keycloak.init({ onLoad: 'login-required' });
+```
+
+**2. GraphQL Request with JWT:**
+```typescript
+// Apollo Client includes JWT in Authorization header
+const authLink = setContext((_, { headers }) => ({
+  headers: {
+    ...headers,
+    authorization: keycloak.token ? `Bearer ${keycloak.token}` : "",
+  }
+}));
+```
+
+**3. Backend Validates JWT:**
+```go
+// internal/auth/middleware.go:44-65
+func RequireAuth(client *KeycloakClient) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Extract Bearer token from Authorization header
+			token := extractToken(r.Header.Get("Authorization"))
+
+			// Verify JWT signature and claims
+			userCtx, err := client.VerifyToken(r.Context(), token)
+			if err != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Inject user context into request
+			ctx := SetUserContext(r.Context(), userCtx)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+```
+
+**4. User Context Available:**
+```go
+// internal/auth/context.go:17-20
+type UserContext struct {
+	UserID   string // sub claim from JWT
+	Email    string // email claim
+	RawToken string // Original JWT for UMA requests
+}
+```
+
+### GraphQL Directives
+
+**Directive Definitions** (`internal/graph/schema.graphqls`):
+```graphql
+directive @isAuthenticated on FIELD_DEFINITION
+directive @hasScope(resourceArg: String!, scope: String!) on FIELD_DEFINITION
+```
+
+**Applied to Mutations:**
+```graphql
+type Mutation {
+  createStrategy(input: CreateStrategyInput!): Strategy!
+    @isAuthenticated
+
+  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy!
+    @hasScope(resourceArg: "id", scope: "edit")
+
+  deleteStrategy(id: ID!): ID!
+    @hasScope(resourceArg: "id", scope: "delete")
+}
+```
+
+**Directive Handlers:**
+
+**@isAuthenticated** (`internal/graph/directives.go:15-24`):
+```go
+func IsAuthenticatedDirective(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error) {
+	// Check if user context exists (set by middleware)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// User is authenticated, proceed with resolver
+	return next(ctx)
+}
+```
+
+**@hasScope** (`internal/graph/directives.go:28-78`):
+```go
+func HasScopeDirective(
+	ctx context.Context,
+	obj interface{},
+	next graphql.Resolver,
+	resourceArg string, // e.g., "id"
+	scope string,       // e.g., "edit", "delete"
+) (interface{}, error) {
+	// 1. Get authenticated user from context
+	userCtx, err := auth.GetUserContext(ctx)
+
+	// 2. Extract resource ID from GraphQL field arguments
+	fc := graphql.GetFieldContext(ctx)
+	resourceID := fc.Args[resourceArg].(string)
+
+	// 3. Get UMA client and ENT client from context
+	umaClient := GetUMAClientFromContext(ctx)
+	client := GetEntClientFromContext(ctx).(*ent.Client)
+
+	// 4. Check permission via UMA
+	hasPermission, err := VerifyStrategyPermission(
+		ctx, client, umaClient, resourceID, userCtx.RawToken, scope
+	)
+
+	if !hasPermission {
+		return nil, fmt.Errorf("insufficient permissions: missing '%s' scope on resource %s", scope, resourceID)
+	}
+
+	// Permission granted, proceed with resolver
+	return next(ctx)
+}
+```
+
+### UMA 2.0 Resource Management
+
+**Resource Lifecycle:**
+
+**1. Create Strategy → Create Keycloak Resource:**
+```go
+// internal/graph/keycloak_hooks.go:18-62
+func CreateStrategyWithResource(
+	ctx context.Context,
+	client *ent.Client,
+	umaClient *keycloak.UMAClient,
+	mutation *ent.StrategyCreate,
+) (*ent.Strategy, error) {
+	// Database-first approach with transaction
+	var strategy *ent.Strategy
+	err := WithTx(ctx, client, func(tx *ent.Tx) error {
+		// 1. Create Strategy in database
+		strategy, err = mutation.Save(ctx)
+
+		// 2. Create Keycloak resource
+		resourceName := fmt.Sprintf("Strategy: %s (v%d)", strategy.Name, strategy.VersionNumber)
+		err = umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, StrategyScopes)
+		if err != nil {
+			// Rollback transaction on failure
+			return fmt.Errorf("failed to create Keycloak resource (transaction will rollback): %w", err)
+		}
+
+		// 3. Create permission policy for owner
+		err = umaClient.CreatePermission(ctx, strategy.ID.String(), strategy.OwnerID)
+
+		return nil
+	})
+
+	return strategy, nil
+}
+```
+
+**2. Delete Strategy → Delete Keycloak Resource:**
+```go
+// internal/graph/keycloak_hooks.go:66-95
+func DeleteStrategyWithResource(
+	ctx context.Context,
+	client *ent.Client,
+	umaClient *keycloak.UMAClient,
+	strategyID string,
+) error {
+	// 1. Delete from database first
+	err = client.Strategy.DeleteOneID(id).Exec(ctx)
+
+	// 2. Attempt to delete Keycloak resource (best effort)
+	if umaClient != nil {
+		err = umaClient.DeleteResource(ctx, strategyID)
+		if err != nil {
+			// Log but don't fail - database deletion already succeeded
+			log.Printf("Warning: Strategy %s deleted from database but Keycloak cleanup failed: %v", strategyID, err)
+		}
+	}
+
+	return nil
+}
+```
+
+**Available Scopes** (`internal/graph/keycloak_hooks.go:14`):
+```go
+var StrategyScopes = []string{"view", "edit", "backtest", "delete"}
+```
+
+### UMA Permission Checking
+
+**Flow:**
+1. User makes GraphQL request with JWT
+2. `@hasScope` directive extracts resource ID from arguments
+3. Directive calls `VerifyStrategyPermission` with user's JWT
+4. UMA client requests RPT (Requesting Party Token) from Keycloak
+5. Keycloak evaluates policies and returns permission decision
+6. Directive allows/denies request based on result
+
+**Permission Check** (`internal/keycloak/uma_client.go:102-123`):
+```go
+func (u *UMAClient) CheckPermission(ctx context.Context, userToken, resourceID, scope string) (bool, error) {
+	// Request permission using UMA Protection API
+	// Format: resource#scope (e.g., "uuid#edit")
+	permission := fmt.Sprintf("%s#%s", resourceID, scope)
+
+	// Request RPT (Requesting Party Token) with permission
+	rpt, err := u.client.GetRequestingPartyToken(ctx, userToken, u.realm, gocloak.RequestingPartyTokenOptions{
+		Permissions: &[]string{permission},
+		Audience:    gocloak.StringP(u.clientID),
+	})
+
+	if err != nil {
+		// If error is "access_denied", user doesn't have permission
+		if IsAccessDenied(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check permission: %w", err)
+	}
+
+	// If we got an RPT, user has permission
+	return rpt != nil && rpt.AccessToken != "", nil
+}
+```
+
+### Transaction Safety
+
+**Database-First Approach:**
+- Strategy is created in database FIRST within a transaction
+- Keycloak resource is created SECOND within the same transaction
+- If Keycloak fails, entire transaction rolls back
+- Ensures database and Keycloak stay in sync
+
+**Transaction Helper** (`internal/graph/tx.go`):
+```go
+func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) error {
+	tx, err := client.Tx(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if v := recover(); v != nil {
+			tx.Rollback()
+			panic(v)
+		}
+	}()
+
+	if err := fn(tx); err != nil {
+		if rerr := tx.Rollback(); rerr != nil {
+			err = fmt.Errorf("%w: rolling back transaction: %v", err, rerr)
+		}
+		return err
+	}
+
+	return tx.Commit()
+}
+```
+
+### Context Injection
+
+**Middleware** (`cmd/server/main.go:247-256`):
+```go
+// Middleware to inject ENT and UMA clients into context for GraphQL directives
+injectClientsMiddleware := func(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// Inject ENT client
+		ctx = graph.SetEntClientInContext(ctx, client)
+		// Inject UMA client (always available)
+		ctx = graph.SetUMAClientInContext(ctx, umaClient)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+```
+
+**Route Setup** (`cmd/server/main.go:260-263`):
+```go
+// GraphQL routes - Keycloak authentication required for all requests
+router.With(auth.OptionalAuth(keycloakClient), injectClientsMiddleware).Handle("/", playground.Handler("GraphQL Playground", "/query"))
+router.With(auth.RequireAuth(keycloakClient), injectClientsMiddleware).Handle("/query", srv)
+```
+
+### Strategy Ownership
+
+**Owner Field** (`internal/ent/schema/strategy.go`):
+```go
+field.String("owner_id").
+	NotEmpty().
+	Comment("User ID (Keycloak sub) of the strategy owner")
+```
+
+**Set on Creation** (`internal/graph/schema.resolvers.go:29-42`):
+```go
+func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error) {
+	// Extract owner_id from user context (injected by @isAuthenticated directive)
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create mutation with owner_id
+	mutation := r.client.Strategy.Create().
+		SetInput(input).
+		SetOwnerID(userCtx.UserID)
+
+	// Create strategy with Keycloak resource sync
+	return CreateStrategyWithResource(ctx, r.client, r.umaClient, mutation)
+}
+```
+
+**Fast Ownership Check** (`internal/graph/keycloak_hooks.go:98-111`):
+```go
+func VerifyStrategyOwnership(ctx context.Context, client *ent.Client, strategyID, userID string) (bool, error) {
+	id, err := uuid.Parse(strategyID)
+	strategy, err := client.Strategy.Get(ctx, id)
+	return strategy.OwnerID == userID, nil
+}
+```
+
+### Security Best Practices
+
+**1. Defense in Depth:**
+- JWT validation at HTTP layer (middleware)
+- Permission checks at GraphQL layer (directives)
+- Ownership validation at resolver layer (fast local check)
+- UMA authorization at Keycloak (authoritative)
+
+**2. Fail-Safe Defaults:**
+- All mutations require authentication by default
+- Sensitive mutations require explicit scopes
+- Missing UMA client = authorization denied
+- Missing Keycloak config = server won't start
+
+**3. Transaction Integrity:**
+- Database-first approach with rollback on Keycloak failure
+- Ensures consistency between database and authorization server
+- Prevents orphaned resources in either system
+
+**4. Least Privilege:**
+- Resource owners have all scopes by default
+- Other users must be explicitly granted permissions
+- Fine-grained scopes (view, edit, backtest, delete)
+- Owner-managed access enabled for delegation
+
+### Testing
+
+**Test Coverage:**
+- `internal/auth/middleware_test.go` - JWT validation (pending)
+- `internal/graph/authorization_test.go` - Directive and permission checks (pending)
+
+**Manual Testing:**
+```graphql
+# 1. Create strategy (authenticated user becomes owner)
+mutation {
+  createStrategy(input: {
+    name: "TestStrategy"
+    code: "..."
+  }) {
+    id
+    name
+    ownerID
+  }
+}
+
+# 2. Try to update (requires edit scope)
+mutation {
+  updateStrategy(id: "uuid", input: { code: "..." }) {
+    id
+  }
+}
+
+# 3. Try to delete (requires delete scope)
+mutation {
+  deleteStrategy(id: "uuid")
+}
+```
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **"Keycloak configuration is required"**
+   - Solution: Set all required environment variables (URL, ClientID, ClientSecret)
+
+2. **"authentication required"**
+   - Solution: Include valid JWT in Authorization header (`Bearer <token>`)
+
+3. **"insufficient permissions: missing 'edit' scope"**
+   - Solution: Ensure user has permission via Keycloak policies or owns the resource
+
+4. **"UMA client not available - authorization required"**
+   - Solution: Server misconfiguration - UMA client should always be initialized
+
+**Debug Commands:**
+```bash
+# Check Keycloak connectivity
+curl https://keycloak.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configuration
+
+# Decode JWT
+echo "<token>" | cut -d. -f2 | base64 -d | jq
+
+# Check server logs for auth errors
+kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "auth\|keycloak\|uma"
+```
+
+### Future Enhancements
+
+**Planned:**
+- Permission sharing UI (allow users to grant access to their strategies)
+- Role-based access control (admin, power-user, read-only)
+- Audit logging for permission changes
+- Permission caching for performance
+- Batch permission checks for list queries
+
+**Keycloak Policies (TODO):**
+Currently using owner-managed access (`OwnerManagedAccess: true`) with stub permission creation. Full policy implementation requires:
+- User-based policies (grant access to specific users)
+- Group-based policies (grant access to groups)
+- Role-based policies (grant access by role)
+- Time-based policies (temporary access)
+
+See `internal/keycloak/uma_client.go:128-136` for CreatePermission stub.
 

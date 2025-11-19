@@ -45,7 +45,11 @@ services:
 
   # Keycloak - Identity and Access Management
   keycloak:
-    image: quay.io/keycloak/keycloak:latest
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+      args:
+        KEYCLOAK_VERSION: 26.4.5
     container_name: volaticloud-keycloak
     command: start-dev
     environment:

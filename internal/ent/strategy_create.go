@@ -97,6 +97,12 @@ func (_c *StrategyCreate) SetNillableVersionNumber(v *int) *StrategyCreate {
 	return _c
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_c *StrategyCreate) SetOwnerID(v string) *StrategyCreate {
+	_c.mutation.SetOwnerID(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *StrategyCreate) SetCreatedAt(v time.Time) *StrategyCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -284,6 +290,14 @@ func (_c *StrategyCreate) check() error {
 	if _, ok := _c.mutation.VersionNumber(); !ok {
 		return &ValidationError{Name: "version_number", err: errors.New(`ent: missing required field "Strategy.version_number"`)}
 	}
+	if _, ok := _c.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Strategy.owner_id"`)}
+	}
+	if v, ok := _c.mutation.OwnerID(); ok {
+		if err := strategy.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Strategy.owner_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Strategy.created_at"`)}
 	}
@@ -348,6 +362,10 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.VersionNumber(); ok {
 		_spec.SetField(strategy.FieldVersionNumber, field.TypeInt, value)
 		_node.VersionNumber = value
+	}
+	if value, ok := _c.mutation.OwnerID(); ok {
+		_spec.SetField(strategy.FieldOwnerID, field.TypeString, value)
+		_node.OwnerID = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(strategy.FieldCreatedAt, field.TypeTime, value)

@@ -1851,11 +1851,11 @@ type Strategy implements Node {
   """
   Python strategy code
   """
-  code: String!
+  code: String! @requiresPermission(scope: "view")
   """
   Strategy-specific configuration (config.json) - REQUIRED
   """
-  config: Map!
+  config: Map! @requiresPermission(scope: "view")
   """
   Parent strategy ID for versioning (null for root v1)
   """
@@ -1868,6 +1868,10 @@ type Strategy implements Node {
   Auto-incremented version number
   """
   versionNumber: Int!
+  """
+  User ID (sub claim from JWT) who created this strategy
+  """
+  ownerID: String!
   createdAt: Time!
   updatedAt: Time!
   bots(
@@ -2030,6 +2034,22 @@ input StrategyWhereInput {
   versionNumberGTE: Int
   versionNumberLT: Int
   versionNumberLTE: Int
+  """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
   """
   created_at field predicates
   """

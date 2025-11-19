@@ -141,12 +141,16 @@ func init() {
 	strategyDescVersionNumber := strategyFields[7].Descriptor()
 	// strategy.DefaultVersionNumber holds the default value on creation for the version_number field.
 	strategy.DefaultVersionNumber = strategyDescVersionNumber.Default.(int)
+	// strategyDescOwnerID is the schema descriptor for owner_id field.
+	strategyDescOwnerID := strategyFields[8].Descriptor()
+	// strategy.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	strategy.OwnerIDValidator = strategyDescOwnerID.Validators[0].(func(string) error)
 	// strategyDescCreatedAt is the schema descriptor for created_at field.
-	strategyDescCreatedAt := strategyFields[8].Descriptor()
+	strategyDescCreatedAt := strategyFields[9].Descriptor()
 	// strategy.DefaultCreatedAt holds the default value on creation for the created_at field.
 	strategy.DefaultCreatedAt = strategyDescCreatedAt.Default.(func() time.Time)
 	// strategyDescUpdatedAt is the schema descriptor for updated_at field.
-	strategyDescUpdatedAt := strategyFields[9].Descriptor()
+	strategyDescUpdatedAt := strategyFields[10].Descriptor()
 	// strategy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	strategy.DefaultUpdatedAt = strategyDescUpdatedAt.Default.(func() time.Time)
 	// strategy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

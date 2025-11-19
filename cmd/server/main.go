@@ -17,17 +17,24 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
 
+	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
 	_ "volaticloud/internal/ent/runtime"
 	"volaticloud/internal/graph"
+	"volaticloud/internal/keycloak"
 	"volaticloud/internal/monitor"
 )
 
 func main() {
+	// Load .env file if present (for local development)
+	// Silently ignore errors if .env doesn't exist
+	_ = godotenv.Load()
+
 	app := &cli.App{
 		Name:    "volaticloud",
 		Usage:   "VolatiCloud Control Plane - Manage freqtrade trading bots",
@@ -61,6 +68,28 @@ func main() {
 				Usage:   "How often to check bot status",
 				Value:   30 * time.Second,
 				EnvVars: []string{"VOLATICLOUD_MONITOR_INTERVAL"},
+			},
+			&cli.StringFlag{
+				Name:    "keycloak-url",
+				Usage:   "Keycloak server URL (e.g., https://keycloak.volaticloud.com)",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_URL"},
+			},
+			&cli.StringFlag{
+				Name:    "keycloak-realm",
+				Usage:   "Keycloak realm name",
+				Value:   "volaticloud",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_REALM"},
+			},
+			&cli.StringFlag{
+				Name:    "keycloak-client-id",
+				Usage:   "Keycloak client ID for backend API",
+				Value:   "volaticloud-api",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_CLIENT_ID"},
+			},
+			&cli.StringFlag{
+				Name:    "keycloak-client-secret",
+				Usage:   "Keycloak client secret for UMA resource management",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_CLIENT_SECRET"},
 			},
 		},
 		Action: runServer,
@@ -162,9 +191,41 @@ func runServer(c *cli.Context) error {
 		}
 	}()
 
-	// Setup GraphQL server
+	// Initialize Keycloak client (REQUIRED in all environments)
+	keycloakConfig := auth.KeycloakConfig{
+		URL:          c.String("keycloak-url"),
+		Realm:        c.String("keycloak-realm"),
+		ClientID:     c.String("keycloak-client-id"),
+		ClientSecret: c.String("keycloak-client-secret"),
+	}
+
+	// Validate that Keycloak is configured
+	if keycloakConfig.URL == "" || keycloakConfig.ClientID == "" || keycloakConfig.ClientSecret == "" {
+		return fmt.Errorf("Keycloak configuration is required (URL, ClientID, ClientSecret must be set)")
+	}
+
+	keycloakClient, err := auth.InitKeycloak(ctx, keycloakConfig)
+	if err != nil {
+		return fmt.Errorf("failed to initialize Keycloak: %w", err)
+	}
+
+	// Initialize UMA client for resource-level authorization
+	umaClient := keycloak.NewUMAClient(
+		keycloakConfig.URL,
+		keycloakConfig.Realm,
+		keycloakConfig.ClientID,
+		keycloakConfig.ClientSecret,
+	)
+	log.Println("✓ Keycloak UMA 2.0 authorization enabled")
+
+	// Setup GraphQL server with auth clients and directive handlers
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
-		Resolvers: graph.NewResolver(client),
+		Resolvers: graph.NewResolver(client, keycloakClient, umaClient),
+		Directives: graph.DirectiveRoot{
+			IsAuthenticated:    graph.IsAuthenticatedDirective,
+			HasScope:           graph.HasScopeDirective,
+			RequiresPermission: graph.RequiresPermissionDirective,
+		},
 	}))
 
 	// Setup Chi router
@@ -187,9 +248,24 @@ func runServer(c *cli.Context) error {
 		MaxAge:           300,
 	}))
 
-	// GraphQL routes
-	router.Handle("/", playground.Handler("GraphQL Playground", "/query"))
-	router.Handle("/query", srv)
+	// Middleware to inject ENT and UMA clients into context for GraphQL directives
+	injectClientsMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			// Inject ENT client
+			ctx = graph.SetEntClientInContext(ctx, client)
+			// Inject UMA client (always available)
+			ctx = graph.SetUMAClientInContext(ctx, umaClient)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	// GraphQL routes - Keycloak authentication required for all requests
+	// Playground with optional auth (for development convenience)
+	router.With(auth.OptionalAuth(keycloakClient), injectClientsMiddleware).Handle("/", playground.Handler("GraphQL Playground", "/query"))
+
+	// GraphQL API with required authentication
+	router.With(auth.RequireAuth(keycloakClient), injectClientsMiddleware).Handle("/query", srv)
 
 	// Health check endpoint
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {

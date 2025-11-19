@@ -8,6 +8,15 @@ exec:
   filename: internal/graph/generated.go
   package: graph
 
+# Directive configuration
+directives:
+  isAuthenticated:
+    skip_runtime: false
+  hasScope:
+    skip_runtime: false
+  requiresPermission:
+    skip_runtime: false
+
 # Skip model generation - using ENT models directly
 model:
   filename: internal/graph/model/models_gen.go

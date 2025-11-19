@@ -53,6 +53,9 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	HasScope           func(ctx context.Context, obj any, next graphql.Resolver, resource string, scope string) (res any, err error)
+	IsAuthenticated    func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	RequiresPermission func(ctx context.Context, obj any, next graphql.Resolver, scope string, idField *string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -285,6 +288,7 @@ type ComplexityRoot struct {
 		ID            func(childComplexity int) int
 		IsLatest      func(childComplexity int) int
 		Name          func(childComplexity int) int
+		OwnerID       func(childComplexity int) int
 		Parent        func(childComplexity int) int
 		ParentID      func(childComplexity int) int
 		UpdatedAt     func(childComplexity int) int
@@ -1667,6 +1671,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Name(childComplexity), true
+	case "Strategy.ownerID":
+		if e.complexity.Strategy.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.Strategy.OwnerID(childComplexity), true
 	case "Strategy.parent":
 		if e.complexity.Strategy.Parent == nil {
 			break
@@ -2028,6 +2038,38 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_hasScope_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "resource", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["resource"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "scope", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["scope"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) dir_requiresPermission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "scope", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["scope"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "idField", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["idField"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_BotRunner_backtests_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -3157,6 +3199,8 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -4539,6 +4583,8 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -7107,7 +7153,20 @@ func (ec *executionContext) _Mutation_createStrategy(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateStrategy(ctx, fc.Args["input"].(ent.CreateStrategyInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
@@ -7138,6 +7197,8 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -7178,7 +7239,30 @@ func (ec *executionContext) _Mutation_updateStrategy(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateStrategy(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateStrategyInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
@@ -7209,6 +7293,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -7249,7 +7335,30 @@ func (ec *executionContext) _Mutation_deleteStrategy(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteStrategy(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -9171,6 +9280,8 @@ func (ec *executionContext) fieldContext_Query_strategyVersions(ctx context.Cont
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -9405,7 +9516,30 @@ func (ec *executionContext) _Strategy_code(ctx context.Context, field graphql.Co
 		func(ctx context.Context) (any, error) {
 			return obj.Code, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal string
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal string
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal string
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNString2string,
 		true,
 		true,
@@ -9434,7 +9568,30 @@ func (ec *executionContext) _Strategy_config(ctx context.Context, field graphql.
 		func(ctx context.Context) (any, error) {
 			return obj.Config, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNMap2map,
 		true,
 		true,
@@ -9536,6 +9693,35 @@ func (ec *executionContext) fieldContext_Strategy_versionNumber(_ context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9751,6 +9937,8 @@ func (ec *executionContext) fieldContext_Strategy_children(_ context.Context, fi
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -9810,6 +9998,8 @@ func (ec *executionContext) fieldContext_Strategy_parent(_ context.Context, fiel
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -9972,6 +10162,8 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -17798,7 +17990,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18281,6 +18473,97 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.VersionNumberLTE = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -22616,6 +22899,11 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "versionNumber":
 			out.Values[i] = ec._Strategy_versionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ownerID":
+			out.Values[i] = ec._Strategy_ownerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

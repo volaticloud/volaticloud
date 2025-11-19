@@ -1276,6 +1276,11 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, strategy.FieldVersionNumber)
 				fieldSeen[strategy.FieldVersionNumber] = struct{}{}
 			}
+		case "ownerID":
+			if _, ok := fieldSeen[strategy.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldOwnerID)
+				fieldSeen[strategy.FieldOwnerID] = struct{}{}
+			}
 		case "createdAt":
 			if _, ok := fieldSeen[strategy.FieldCreatedAt]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldCreatedAt)

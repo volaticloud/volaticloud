@@ -19,8 +19,16 @@ export const createOidcConfig = (
     scope: 'openid profile email',
     automaticSilentRenew: true,
     loadUserInfo: true,
+    // Enable session monitoring to detect external logouts
+    monitorSession: true,
+    // Check session every 2 seconds (Keycloak default)
+    checkSessionInterval: 2000,
     onSigninCallback: () => {
       // Remove query parameters after successful login
+      window.history.replaceState({}, document.title, window.location.pathname);
+    },
+    onSignoutCallback: () => {
+      // Clean up after logout
       window.history.replaceState({}, document.title, window.location.pathname);
     },
   };

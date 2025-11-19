@@ -36,6 +36,9 @@ func defaultTestConfig() map[string]interface{} {
 	}
 }
 
+// testOwnerID is the default test owner ID for all test strategies
+const testOwnerID = "test-user-123"
+
 func TestUpdateStrategy_CreatesNewVersion(t *testing.T) {
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
@@ -56,6 +59,7 @@ func TestUpdateStrategy_CreatesNewVersion(t *testing.T) {
 		SetConfig(config).
 		SetVersionNumber(1).
 		SetIsLatest(true).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 1, strategy.VersionNumber)
@@ -100,6 +104,7 @@ func TestUpdateStrategy_PreservesUnchangedFields(t *testing.T) {
 		SetDescription("Original description").
 		SetCode("original code").
 		SetConfig(defaultTestConfig()).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -129,6 +134,7 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 		SetName("TestStrategy").
 		SetCode("v1 code").
 		SetConfig(defaultTestConfig()).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -203,6 +209,7 @@ func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 		SetConfig(backtestConfig).
 		SetVersionNumber(1).
 		SetIsLatest(true).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -290,6 +297,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 		SetConfig(defaultTestConfig()).
 		SetVersionNumber(1).
 		SetIsLatest(false).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -300,6 +308,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 		SetVersionNumber(2).
 		SetIsLatest(false).
 		SetParentID(strategyA1.ID).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -310,6 +319,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 		SetVersionNumber(3).
 		SetIsLatest(true).
 		SetParentID(strategyA2.ID).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -320,6 +330,7 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 		SetConfig(defaultTestConfig()).
 		SetVersionNumber(1).
 		SetIsLatest(true).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -375,6 +386,7 @@ func TestUpdateStrategy_WithConfig(t *testing.T) {
 		SetName("TestStrategy").
 		SetCode("test code").
 		SetConfig(originalConfig).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 

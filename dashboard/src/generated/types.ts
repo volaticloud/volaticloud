@@ -12,6 +12,10 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /**
+   * Define a Relay Cursor type:
+   * https://relay.dev/graphql/connections.htm#sec-Cursor
+   */
   Cursor: { input: string; output: string; }
   Map: { input: Record<string, any>; output: Record<string, any>; }
   Time: { input: string; output: string; }
@@ -1619,6 +1623,8 @@ export type Strategy = Node & {
   isLatest: Scalars['Boolean']['output'];
   /** Strategy name (not unique, allows versions) */
   name: Scalars['String']['output'];
+  /** User ID (sub claim from JWT) who created this strategy */
+  ownerID: Scalars['String']['output'];
   parent?: Maybe<Strategy>;
   /** Parent strategy ID for versioning (null for root v1) */
   parentID?: Maybe<Scalars['ID']['output']>;
@@ -1741,6 +1747,20 @@ export type StrategyWhereInput = {
   nameNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   not?: InputMaybe<StrategyWhereInput>;
   or?: InputMaybe<Array<StrategyWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** parent_id field predicates */
   parentID?: InputMaybe<Scalars['ID']['input']>;
   parentIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;

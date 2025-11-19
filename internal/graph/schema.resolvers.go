@@ -11,6 +11,7 @@ import (
 	"log"
 	"strings"
 	"time"
+	"volaticloud/internal/auth"
 	backtest1 "volaticloud/internal/backtest"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
@@ -62,7 +63,14 @@ func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bo
 }
 
 func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error) {
-	return r.client.Strategy.Create().SetInput(input).Save(ctx)
+	// Extract owner_id from user context (injected by @isAuthenticated directive)
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create strategy with Keycloak resource sync (uses transaction internally)
+	return CreateStrategyWithResource(ctx, r.client, r.umaClient, input, userCtx.UserID)
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
@@ -89,7 +97,8 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 			SetCode(coalesce(input.Code, &oldStrategy.Code)).
 			SetVersionNumber(oldStrategy.VersionNumber + 1).
 			SetParentID(oldStrategy.ID).
-			SetIsLatest(true)
+			SetIsLatest(true).
+			SetOwnerID(oldStrategy.OwnerID) // Preserve owner_id from parent
 
 		// Handle optional fields
 		if input.Config != nil {
@@ -101,7 +110,20 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 		// Save new version (this will trigger validation hook)
 		// If validation fails, the entire transaction rolls back
 		result, err = newVersion.Save(ctx)
-		return err
+		if err != nil {
+			return err
+		}
+
+		// Sync Keycloak resource for new version
+		if r.umaClient != nil {
+			err = SyncStrategyVersionResource(ctx, r.umaClient, result)
+			if err != nil {
+				// Keycloak sync failed - rollback transaction
+				return fmt.Errorf("failed to sync Keycloak resource (transaction will rollback): %w", err)
+			}
+		}
+
+		return nil
 	})
 
 	if err != nil {
@@ -112,7 +134,8 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Strategy.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteStrategyWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
@@ -774,10 +797,20 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	return status, nil
 }
 
+// StrategyVersions returns all versions of a strategy by name, filtered by owner
 func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error) {
-	// Get all versions of a strategy by name, ordered by version number
+	// Get user context (injected by auth middleware)
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Get all versions of a strategy by name, filtered by owner, ordered by version number
 	return r.client.Strategy.Query().
-		Where(strategy.Name(name)).
+		Where(
+			strategy.Name(name),
+			strategy.OwnerID(userCtx.UserID),
+		).
 		Order(ent.Asc(strategy.FieldVersionNumber)).
 		All(ctx)
 }

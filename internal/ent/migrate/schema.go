@@ -172,6 +172,7 @@ var (
 		{Name: "config", Type: field.TypeJSON},
 		{Name: "is_latest", Type: field.TypeBool, Default: true},
 		{Name: "version_number", Type: field.TypeInt, Default: 1},
+		{Name: "owner_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
@@ -184,7 +185,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "strategies_strategies_parent",
-				Columns:    []*schema.Column{StrategiesColumns[9]},
+				Columns:    []*schema.Column{StrategiesColumns[10]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -203,7 +204,17 @@ var (
 			{
 				Name:    "strategy_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[9]},
+				Columns: []*schema.Column{StrategiesColumns[10]},
+			},
+			{
+				Name:    "strategy_owner_id",
+				Unique:  false,
+				Columns: []*schema.Column{StrategiesColumns[7]},
+			},
+			{
+				Name:    "strategy_owner_id_is_latest",
+				Unique:  false,
+				Columns: []*schema.Column{StrategiesColumns[7], StrategiesColumns[5]},
 			},
 		},
 	}

@@ -6,6 +6,47 @@
 scalar Time
 scalar Map
 
+# Authorization directives
+
+"""
+Requires the request to be authenticated (valid JWT token)
+Ensures user context is available in resolver
+"""
+directive @isAuthenticated on FIELD_DEFINITION
+
+"""
+Requires the user to have a specific permission scope on a resource
+Uses Keycloak UMA 2.0 for fine-grained authorization
+"""
+directive @hasScope(
+  """
+  The resource ID argument name (e.g., "id" for mutations that take an ID)
+  """
+  resource: String!
+
+  """
+  The permission scope to check (e.g., "edit", "delete", "view", "backtest")
+  """
+  scope: String!
+) on FIELD_DEFINITION
+
+"""
+Requires the user to have a specific permission scope on the parent node/object
+Uses Keycloak UMA 2.0 for node-level field authorization
+This directive inspects the parent object to get the resource ID and checks permission
+"""
+directive @requiresPermission(
+  """
+  The permission scope to check (e.g., "view", "view:code", "edit")
+  """
+  scope: String!
+
+  """
+  The field name containing the resource ID in the parent object (defaults to "id")
+  """
+  idField: String = "id"
+) on FIELD_DEFINITION
+
 # Runner configuration inputs
 
 input RegistryAuthInput {
@@ -148,6 +189,9 @@ extend type Backtest {
   summary: BacktestSummary
 }
 
+# Note: Strategy field-level authorization is applied via ENT schema annotations
+# See: internal/ent/schema/strategy.go - code and config fields use RequiresPermission("view")
+
 # Connection test result
 type ConnectionTestResult {
   success: Boolean!
@@ -175,9 +219,9 @@ type Mutation {
   deleteExchange(id: ID!): Boolean!
 
   # Strategy mutations
-  createStrategy(input: CreateStrategyInput!): Strategy!
-  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy!
-  deleteStrategy(id: ID!): Boolean!
+  createStrategy(input: CreateStrategyInput!): Strategy! @isAuthenticated
+  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit")
+  deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Bot mutations
   createBot(input: CreateBotInput!): Bot!

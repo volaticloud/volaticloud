@@ -7,7 +7,9 @@ package graph
 import (
 	"context"
 	"fmt"
+	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/strategy"
 
 	"entgo.io/contrib/entgql"
 	"github.com/google/uuid"
@@ -65,8 +67,19 @@ func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) 
 	return r.client.Exchange.Query().All(ctx)
 }
 
+// Strategies resolver with owner_id filtering for multi-tenant data isolation
 func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
-	query := r.client.Strategy.Query()
+	// Get user context (injected by auth middleware)
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Start with base query filtered by owner_id
+	query := r.client.Strategy.Query().
+		Where(strategy.OwnerID(userCtx.UserID))
+
+	// Apply additional where filters if provided
 	if where != nil {
 		p, err := where.P()
 		if err != nil {
@@ -74,6 +87,8 @@ func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uui
 		}
 		query = query.Where(p)
 	}
+
+	// Return paginated results
 	return query.Paginate(ctx, after, first, before, last)
 }
 
