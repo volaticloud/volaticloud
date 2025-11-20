@@ -29,3 +29,6 @@ ARG KEYCLOAK_EXTRA_ARGS
 ENV KEYCLOAK_EXTRA_ARGS=$KEYCLOAK_EXTRA_ARGS
 
 COPY --chown=keycloak:root --from=provider-builder /providers/* /opt/keycloak/providers/
+
+# Build Keycloak with custom providers to support --optimized flag
+RUN /opt/keycloak/bin/kc.sh build
