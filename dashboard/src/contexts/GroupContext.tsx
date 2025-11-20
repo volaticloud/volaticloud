@@ -177,6 +177,7 @@ export function GroupProvider({ children }: GroupProviderProps) {
 /**
  * Hook to access the active group context
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useActiveGroup() {
   const context = useContext(GroupContext);
   if (context === undefined) {
