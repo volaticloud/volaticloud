@@ -85,8 +85,8 @@ func (k *KeycloakClient) VerifyToken(ctx context.Context, tokenString string) (*
 	}
 
 	// Check if this is an access token (typ claim)
-	typ, _ := claims["typ"].(string)
-	if typ != "Bearer" {
+	typ, ok := claims["typ"].(string)
+	if !ok || typ != "Bearer" {
 		// If not explicitly Bearer, check for azp claim (client assertion)
 		if _, hasAzp := claims["azp"]; !hasAzp {
 			return nil, fmt.Errorf("invalid token type: expected Bearer access token")

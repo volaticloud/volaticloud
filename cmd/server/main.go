@@ -32,8 +32,10 @@ import (
 
 func main() {
 	// Load .env file if present (for local development)
-	// Silently ignore errors if .env doesn't exist
-	_ = godotenv.Load()
+	// Ignore error only if file doesn't exist (expected in production)
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		log.Printf("Warning: Error loading .env file: %v", err)
+	}
 
 	app := &cli.App{
 		Name:    "volaticloud",
