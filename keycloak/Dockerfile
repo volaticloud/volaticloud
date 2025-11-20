@@ -30,6 +30,10 @@ ENV KEYCLOAK_EXTRA_ARGS=$KEYCLOAK_EXTRA_ARGS
 
 COPY --chown=keycloak:root --from=provider-builder /providers/* /opt/keycloak/providers/
 
+# Fix file timestamps to avoid provider loading issues (Docker may truncate timestamps)
+# See: https://www.keycloak.org/server/containers
+RUN touch -m --date=@1743465600 /opt/keycloak/providers/*
+
 # Build Keycloak with custom providers and PostgreSQL support for --optimized flag
 # Pre-configure database vendor to match runtime configuration from operator
 RUN /opt/keycloak/bin/kc.sh build --db=postgres
