@@ -30,5 +30,6 @@ ENV KEYCLOAK_EXTRA_ARGS=$KEYCLOAK_EXTRA_ARGS
 
 COPY --chown=keycloak:root --from=provider-builder /providers/* /opt/keycloak/providers/
 
-# Build Keycloak with custom providers to support --optimized flag
-RUN /opt/keycloak/bin/kc.sh build
+# Build Keycloak with custom providers and PostgreSQL support for --optimized flag
+# Pre-configure database vendor to match runtime configuration from operator
+RUN /opt/keycloak/bin/kc.sh build --db=postgres
