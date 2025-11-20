@@ -23,6 +23,9 @@ export const createOidcConfig = (
     monitorSession: true,
     // Check session every 2 seconds (Keycloak default)
     checkSessionInterval: 2000,
+    // Token revocation config (best practice for Keycloak 18+)
+    revokeTokensOnSignout: true,
+    revokeTokenTypes: ['access_token', 'refresh_token'],
     onSigninCallback: () => {
       // Remove query parameters after successful login
       window.history.replaceState({}, document.title, window.location.pathname);
