@@ -39,6 +39,8 @@ type _ForceEnterPayload ForceEnterPayload
 func NewForceEnterPayload(pair string) *ForceEnterPayload {
 	this := ForceEnterPayload{}
 	this.Pair = pair
+	var side SignalDirection = SIGNALDIRECTION_LONG
+	this.Side = &side
 	return &this
 }
 
@@ -47,6 +49,8 @@ func NewForceEnterPayload(pair string) *ForceEnterPayload {
 // but it doesn't guarantee that properties required by API are set
 func NewForceEnterPayloadWithDefaults() *ForceEnterPayload {
 	this := ForceEnterPayload{}
+	var side SignalDirection = SIGNALDIRECTION_LONG
+	this.Side = &side
 	return &this
 }
 
