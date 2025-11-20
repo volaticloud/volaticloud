@@ -11,7 +11,7 @@ spec:
   instances: 2
 
   # Custom Keycloak image with extensions and custom configuration
-  image: ghcr.io/volaticloud/volaticloud/keycloak:latest
+  image: ghcr.io/volaticloud/volaticloud-keycloak:${KEYCLOAK_IMAGE_TAG}
 
   # Image pull secret for GHCR
   imagePullSecrets:
@@ -42,11 +42,11 @@ spec:
   proxy:
     headers: xforwarded  # Trust X-Forwarded-* headers from nginx
 
-  # Hostname configuration
+  # Hostname configuration (v2 - Keycloak 26.x)
   hostname:
     hostname: ${KEYCLOAK_HOSTNAME}
     strict: false
-    strictBackchannel: false
+    backchannelDynamic: false  # Must be false when hostname is not a full URL
 
   # Ingress configuration
   ingress:

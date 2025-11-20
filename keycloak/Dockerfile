@@ -1,4 +1,5 @@
 # region Global args
+# Custom Keycloak image with Group Resource Policy Provider extension
 ARG KEYCLOAK_VERSION="26.4.5"
 ARG KEYCLOAK_EXTRA_ARGS="-Dkeycloak.client.searchableAttributes=organization-id,is-deleted,user-id,partner-id -Dkeycloak.user.searchableAttributes=owner-user,is-deleted,invitation-code -Dkeycloak.organization.searchableAttributes=easydmarcOrganizationId"
 # endregion
@@ -28,3 +29,11 @@ ARG KEYCLOAK_EXTRA_ARGS
 ENV KEYCLOAK_EXTRA_ARGS=$KEYCLOAK_EXTRA_ARGS
 
 COPY --chown=keycloak:root --from=provider-builder /providers/* /opt/keycloak/providers/
+
+# Fix file timestamps to avoid provider loading issues (Docker may truncate timestamps)
+# See: https://www.keycloak.org/server/containers
+RUN touch -m --date=@1743465600 /opt/keycloak/providers/*
+
+# Build Keycloak with custom providers and PostgreSQL support for --optimized flag
+# Pre-configure database vendor to match runtime configuration from operator
+RUN /opt/keycloak/bin/kc.sh build --db=postgres
