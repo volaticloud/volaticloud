@@ -46,7 +46,7 @@ spec:
   hostname:
     hostname: ${KEYCLOAK_HOSTNAME}
     strict: false
-    backchannelDynamic: true  # Replaced strictBackchannel: false in v2
+    backchannelDynamic: false  # Must be false when hostname is not a full URL
 
   # Ingress configuration
   ingress:
