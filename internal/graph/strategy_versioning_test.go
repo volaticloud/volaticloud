@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
 	backtestent "volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/enttest"
@@ -288,7 +289,11 @@ func TestStrategyVersions_ReturnsAllVersionsByName(t *testing.T) {
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
 
-	ctx := context.Background()
+	// Set up authenticated context
+	ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+		UserID: testOwnerID,
+		Email:  "test@example.com",
+	})
 
 	// Create Strategy A with 3 versions
 	strategyA1, err := client.Strategy.Create().
@@ -361,7 +366,11 @@ func TestStrategyVersions_EmptyForNonexistentStrategy(t *testing.T) {
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
 
-	ctx := context.Background()
+	// Set up authenticated context
+	ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+		UserID: testOwnerID,
+		Email:  "test@example.com",
+	})
 
 	// Query versions for a strategy that doesn't exist
 	versions, err := resolver.Query().StrategyVersions(ctx, "NonexistentStrategy")
