@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
-	"volaticloud/internal/ent/strategy"
 
 	"entgo.io/contrib/entgql"
 	"github.com/google/uuid"
@@ -67,19 +66,21 @@ func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) 
 	return r.client.Exchange.Query().All(ctx)
 }
 
-// Strategies resolver with owner_id filtering for multi-tenant data isolation
+// Strategies resolver
+// Note: This query does NOT filter by owner_id automatically.
+// Authorization should be handled by UMA/Keycloak, or the client should pass
+// the appropriate ownerID (group ID) in the where clause.
 func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
-	// Get user context (injected by auth middleware)
-	userCtx, err := auth.GetUserContext(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
 
-	// Start with base query filtered by owner_id
-	query := r.client.Strategy.Query().
-		Where(strategy.OwnerID(userCtx.UserID))
+	// Start with base query (no automatic filtering by owner_id)
+	query := r.client.Strategy.Query()
 
-	// Apply additional where filters if provided
+	// Apply where filters if provided (including ownerID from client)
 	if where != nil {
 		p, err := where.P()
 		if err != nil {
