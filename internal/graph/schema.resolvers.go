@@ -63,14 +63,15 @@ func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bo
 }
 
 func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error) {
-	// Extract owner_id from user context (injected by @isAuthenticated directive)
-	userCtx, err := auth.GetUserContext(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
 	// Create strategy with Keycloak resource sync (uses transaction internally)
-	return CreateStrategyWithResource(ctx, r.client, r.umaClient, input, userCtx.UserID)
+	// OwnerID comes from the input and represents the selected group/organization
+	return CreateStrategyWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
@@ -797,20 +798,20 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	return status, nil
 }
 
-// StrategyVersions returns all versions of a strategy by name, filtered by owner
+// StrategyVersions returns all versions of a strategy by name
+// Note: This query does NOT filter by owner - authorization should be handled by UMA/Keycloak
+// or by the client passing the appropriate ownerID in the where clause of the main strategies query
 func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error) {
-	// Get user context (injected by auth middleware)
-	userCtx, err := auth.GetUserContext(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
 
-	// Get all versions of a strategy by name, filtered by owner, ordered by version number
+	// Get all versions of a strategy by name, ordered by version number
+	// No owner filtering here - that's handled at the authorization layer
 	return r.client.Strategy.Query().
-		Where(
-			strategy.Name(name),
-			strategy.OwnerID(userCtx.UserID),
-		).
+		Where(strategy.Name(name)).
 		Order(ent.Asc(strategy.FieldVersionNumber)).
 		All(ctx)
 }

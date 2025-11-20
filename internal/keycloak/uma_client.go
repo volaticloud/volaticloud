@@ -38,11 +38,12 @@ func (u *UMAClient) getClientToken(ctx context.Context) (string, error) {
 	return token.AccessToken, nil
 }
 
-// CreateResource registers a new resource in Keycloak with specified scopes
+// CreateResource registers a new resource in Keycloak with specified scopes and attributes
 // resourceID should be the Strategy UUID
 // resourceName is a human-readable name (e.g., "Strategy: MyStrategy")
 // scopes are the available permissions (e.g., ["view", "edit", "backtest", "delete"])
-func (u *UMAClient) CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string) error {
+// attributes are custom key-value pairs (e.g., ownerId, type)
+func (u *UMAClient) CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error {
 	token, err := u.getClientToken(ctx)
 	if err != nil {
 		return err
@@ -66,6 +67,7 @@ func (u *UMAClient) CreateResource(ctx context.Context, resourceID, resourceName
 		DisplayName: gocloak.StringP(resourceName), // Human-readable name with version
 		Type:        gocloak.StringP("strategy"),
 		Scopes:      &resourceScopes,
+		Attributes:  &attributes, // Custom attributes (ownerId, type, etc.)
 		// Owner is set automatically by Keycloak based on client token
 		OwnerManagedAccess: gocloak.BoolP(true), // Enable user-managed access for permission sharing
 	}

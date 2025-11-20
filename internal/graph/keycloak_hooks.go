@@ -38,7 +38,14 @@ func CreateStrategyWithResource(
 		// If UMA client is configured, create Keycloak resource
 		if umaClient != nil {
 			resourceName := fmt.Sprintf("%s (v%d)", strategy.Name, strategy.VersionNumber)
-			err = umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, StrategyScopes)
+
+			// Set resource attributes: ownerId (group) and type
+			attributes := map[string][]string{
+				"ownerId": {ownerID}, // ownerID is now the group ID
+				"type":    {"strategy"},
+			}
+
+			err = umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, StrategyScopes, attributes)
 			if err != nil {
 				// Keycloak resource creation failed - rollback transaction
 				log.Printf("Failed to create Keycloak resource for strategy %s: %v", strategy.ID, err)
@@ -148,7 +155,14 @@ func SyncStrategyVersionResource(
 	}
 
 	resourceName := fmt.Sprintf("%s (v%d)", strategy.Name, strategy.VersionNumber)
-	err := umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, StrategyScopes)
+
+	// Set resource attributes: ownerId (group) and type
+	attributes := map[string][]string{
+		"ownerId": {strategy.OwnerID}, // ownerID is the group ID
+		"type":    {"strategy"},
+	}
+
+	err := umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, StrategyScopes, attributes)
 	if err != nil {
 		return fmt.Errorf("failed to sync Keycloak resource for strategy version: %w", err)
 	}

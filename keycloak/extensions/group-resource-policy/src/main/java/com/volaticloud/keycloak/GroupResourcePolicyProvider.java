@@ -25,30 +25,21 @@ public class GroupResourcePolicyProvider implements PolicyProvider {
         EvaluationContext context = evaluation.getContext();
         String userId = context.getIdentity().getId();
 
-        // Try to get groupId first, then fallback to groupAlias
-        String groupId = getResourceAttribute(evaluation, "groupId");
-        String groupAlias = getResourceAttribute(evaluation, "groupAlias");
+        // Get resource name directly
+        String resourceName = evaluation.getPermission().getResource().getName();
 
-        if ((groupId == null || groupId.isEmpty()) && (groupAlias == null || groupAlias.isEmpty())) {
-            logger.debugf("No groupId or groupAlias found in resource attributes for policy %s", evaluation.getPolicy().getName());
-            return; // Deny access if neither groupId nor groupAlias is specified
+        if (resourceName == null || resourceName.isEmpty()) {
+            logger.debugf("No resource name found for policy %s", evaluation.getPolicy().getName());
+            return; // Deny access if resource name is not specified
         }
 
         KeycloakSession session = evaluation.getAuthorizationProvider().getKeycloakSession();
         RealmModel realm = session.getContext().getRealm();
         UserModel user = session.users().getUserById(realm, userId);
 
-        GroupModel group = null;
-        String groupIdentifier = null;
-
-        // Try to find a group by ID first, then by alias
-        if (groupId != null && !groupId.isEmpty()) {
-            group = session.groups().getGroupById(realm, groupId);
-            groupIdentifier = "groupId: " + groupId;
-        } else if (groupAlias != null && !groupAlias.isEmpty()) {
-            group = findGroupByAlias(session, realm, groupAlias);
-            groupIdentifier = "groupAlias: " + groupAlias;
-        }
+        // Find group by resource name
+        GroupModel group = findGroupByName(session, realm, resourceName);
+        String groupIdentifier = "resourceName: " + resourceName;
 
         if (user != null && group != null) {
             // Extract roles from policy configuration
@@ -76,14 +67,9 @@ public class GroupResourcePolicyProvider implements PolicyProvider {
             evaluation.getPolicy().getName(), evaluation.getEffect(), userId, groupIdentifier);
     }
 
-    private String getResourceAttribute(Evaluation evaluation, String attributeName) {
-        var attributes = evaluation.getPermission().getResource().getAttributes().get(attributeName);
-        return attributes != null && !attributes.isEmpty() ? attributes.get(0) : null;
-    }
-
-    private GroupModel findGroupByAlias(KeycloakSession session, RealmModel realm, String alias) {
+    private GroupModel findGroupByName(KeycloakSession session, RealmModel realm, String name) {
         return session.groups().getGroupsStream(realm)
-                .filter(group -> alias.equals(group.getName()))
+                .filter(group -> name.equals(group.getName()))
                 .findFirst()
                 .orElse(null);
     }

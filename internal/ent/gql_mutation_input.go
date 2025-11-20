@@ -765,6 +765,7 @@ type CreateStrategyInput struct {
 	Config        map[string]interface{}
 	IsLatest      *bool
 	VersionNumber *int
+	OwnerID       string
 	CreatedAt     *time.Time
 	UpdatedAt     *time.Time
 	BotIDs        []uuid.UUID
@@ -789,6 +790,7 @@ func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 	if v := i.VersionNumber; v != nil {
 		m.SetVersionNumber(*v)
 	}
+	m.SetOwnerID(i.OwnerID)
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
 	}
@@ -824,6 +826,7 @@ type UpdateStrategyInput struct {
 	Config           map[string]interface{}
 	IsLatest         *bool
 	VersionNumber    *int
+	OwnerID          *string
 	UpdatedAt        *time.Time
 	ClearBots        bool
 	AddBotIDs        []uuid.UUID
@@ -859,6 +862,9 @@ func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	}
 	if v := i.VersionNumber; v != nil {
 		m.SetVersionNumber(*v)
+	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)

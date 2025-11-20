@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useCreateStrategyMutation } from './strategies.generated';
 import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
 interface CreateStrategyDialogProps {
   open: boolean;
@@ -25,10 +26,11 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
   const [code, setCode] = useState('');
   const [config, setConfig] = useState<object | null>(null);
 
+  const { activeGroupId } = useActiveGroup();
   const [createStrategy, { loading, error }] = useCreateStrategyMutation();
 
   const handleSubmit = async () => {
-    if (!name || !code || !config) {
+    if (!name || !code || !config || !activeGroupId) {
       return;
     }
 
@@ -40,6 +42,7 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
             description: description || undefined,
             code,
             config,
+            ownerID: activeGroupId,
           },
         },
       });
@@ -123,7 +126,7 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || !name || !code || !config}
+          disabled={loading || !name || !code || !config || !activeGroupId}
         >
           {loading ? 'Creating...' : 'Create Strategy'}
         </Button>

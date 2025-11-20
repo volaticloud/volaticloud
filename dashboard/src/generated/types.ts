@@ -1147,6 +1147,8 @@ export type CreateStrategyInput = {
   isLatest?: InputMaybe<Scalars['Boolean']['input']>;
   /** Strategy name (not unique, allows versions) */
   name: Scalars['String']['input'];
+  /** Group ID (organization) that owns this strategy */
+  ownerID: Scalars['String']['input'];
   parentID?: InputMaybe<Scalars['ID']['input']>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Auto-incremented version number */
@@ -1623,7 +1625,7 @@ export type Strategy = Node & {
   isLatest: Scalars['Boolean']['output'];
   /** Strategy name (not unique, allows versions) */
   name: Scalars['String']['output'];
-  /** User ID (sub claim from JWT) who created this strategy */
+  /** Group ID (organization) that owns this strategy */
   ownerID: Scalars['String']['output'];
   parent?: Maybe<Strategy>;
   /** Parent strategy ID for versioning (null for root v1) */
@@ -2218,6 +2220,8 @@ export type UpdateStrategyInput = {
   isLatest?: InputMaybe<Scalars['Boolean']['input']>;
   /** Strategy name (not unique, allows versions) */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Group ID (organization) that owns this strategy */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
   parentID?: InputMaybe<Scalars['ID']['input']>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeChildIDs?: InputMaybe<Array<Scalars['ID']['input']>>;

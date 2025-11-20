@@ -51,10 +51,7 @@ func (Strategy) Fields() []ent.Field {
 			Comment("Auto-incremented version number"),
 		field.String("owner_id").
 			NotEmpty().
-			Comment("User ID (sub claim from JWT) who created this strategy").
-			Annotations(
-				entgql.Skip(entgql.SkipMutationCreateInput, entgql.SkipMutationUpdateInput),
-			),
+			Comment("Group ID (organization) that owns this strategy"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

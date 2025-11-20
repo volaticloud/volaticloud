@@ -6,6 +6,7 @@ import { createAppTheme } from './theme/theme';
 import { createApolloClient } from './graphql/client';
 import { useConfigValue } from './contexts/ConfigContext';
 import { useAuth } from './contexts/AuthContext';
+import { GroupProvider } from './contexts/GroupContext';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { BotsPage } from './pages/Bots/BotsPage';
@@ -45,23 +46,25 @@ function App() {
           }}
         />
         <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<DashboardLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
-            >
-              <Route index element={<DashboardPage />} />
-              <Route path="bots" element={<BotsPage />} />
-              <Route path="bots/:id" element={<BotDetailPage />} />
-              <Route path="exchanges" element={<ExchangesPage />} />
-              <Route path="strategies" element={<StrategiesPage />} />
-              <Route path="strategies/:id" element={<StrategyDetailPage />} />
-              <Route path="backtests" element={<BacktestsPage />} />
-              <Route path="backtests/:id" element={<BacktestDetailPage />} />
-              <Route path="trades" element={<div>Trades (Coming Soon)</div>} />
-              <Route path="runners" element={<RunnersPage />} />
-            </Route>
-          </Routes>
+          <GroupProvider>
+            <Routes>
+              <Route
+                path="/"
+                element={<DashboardLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
+              >
+                <Route index element={<DashboardPage />} />
+                <Route path="bots" element={<BotsPage />} />
+                <Route path="bots/:id" element={<BotDetailPage />} />
+                <Route path="exchanges" element={<ExchangesPage />} />
+                <Route path="strategies" element={<StrategiesPage />} />
+                <Route path="strategies/:id" element={<StrategyDetailPage />} />
+                <Route path="backtests" element={<BacktestsPage />} />
+                <Route path="backtests/:id" element={<BacktestDetailPage />} />
+                <Route path="trades" element={<div>Trades (Coming Soon)</div>} />
+                <Route path="runners" element={<RunnersPage />} />
+              </Route>
+            </Routes>
+          </GroupProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ApolloProvider>

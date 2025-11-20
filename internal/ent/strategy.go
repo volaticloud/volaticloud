@@ -34,7 +34,7 @@ type Strategy struct {
 	IsLatest bool `json:"is_latest,omitempty"`
 	// Auto-incremented version number
 	VersionNumber int `json:"version_number,omitempty"`
-	// User ID (sub claim from JWT) who created this strategy
+	// Group ID (organization) that owns this strategy
 	OwnerID string `json:"owner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`

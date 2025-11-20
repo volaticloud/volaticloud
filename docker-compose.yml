@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL - Optional, only if you prefer PostgreSQL over SQLite
   postgres:
@@ -12,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data/postgresql:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U volaticloud"]
       interval: 10s
@@ -48,8 +46,6 @@ services:
     build:
       context: ./keycloak
       dockerfile: Dockerfile
-      args:
-        KEYCLOAK_VERSION: 26.4.5
     container_name: volaticloud-keycloak
     command: start-dev
     environment:

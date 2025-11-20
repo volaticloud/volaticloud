@@ -1462,6 +1462,10 @@ input CreateStrategyInput {
   Auto-incremented version number
   """
   versionNumber: Int
+  """
+  Group ID (organization) that owns this strategy
+  """
+  ownerID: String!
   createdAt: Time
   updatedAt: Time
   botIDs: [ID!]
@@ -1869,7 +1873,7 @@ type Strategy implements Node {
   """
   versionNumber: Int!
   """
-  User ID (sub claim from JWT) who created this strategy
+  Group ID (organization) that owns this strategy
   """
   ownerID: String!
   createdAt: Time!
@@ -2677,6 +2681,10 @@ input UpdateStrategyInput {
   Auto-incremented version number
   """
   versionNumber: Int
+  """
+  Group ID (organization) that owns this strategy
+  """
+  ownerID: String
   updatedAt: Time
   addBotIDs: [ID!]
   removeBotIDs: [ID!]

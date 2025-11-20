@@ -16967,7 +16967,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code", "config", "isLatest", "versionNumber", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
+	fieldsInOrder := [...]string{"name", "description", "code", "config", "isLatest", "versionNumber", "ownerID", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17016,6 +17016,13 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.VersionNumber = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -20644,7 +20651,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "config", "isLatest", "versionNumber", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "config", "isLatest", "versionNumber", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20700,6 +20707,13 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.VersionNumber = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
