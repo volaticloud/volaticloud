@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
 	"volaticloud/internal/enum"
@@ -61,6 +62,9 @@ func (Bot) Fields() []ent.Field {
 			Comment("Foreign key to strategy (provides code)"),
 		field.UUID("runner_id", uuid.UUID{}).
 			Comment("Foreign key to runner (provides execution environment)"),
+		field.String("owner_id").
+			NotEmpty().
+			Comment("Group ID (organization) that owns this bot"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -92,6 +96,14 @@ func (Bot) Edges() []ent.Edge {
 			Annotations(entgql.RelayConnection()),
 		edge.To("metrics", BotMetrics.Type).
 			Unique(),
+	}
+}
+
+// Indexes of the Bot.
+func (Bot) Indexes() []ent.Index {
+	return []ent.Index{
+		// Index on owner_id for efficient ownership queries
+		index.Fields("owner_id"),
 	}
 }
 

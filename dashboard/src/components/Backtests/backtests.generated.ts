@@ -18,7 +18,9 @@ export type GetBacktestQueryVariables = Types.Exact<{
 
 export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, logs?: string | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
 
-export type GetBacktestOptionsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type GetBacktestOptionsQueryVariables = Types.Exact<{
+  ownerID?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
 
 
 export type GetBacktestOptionsQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null }, botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } | null } | null> | null } };
@@ -184,8 +186,8 @@ export type GetBacktestLazyQueryHookResult = ReturnType<typeof useGetBacktestLaz
 export type GetBacktestSuspenseQueryHookResult = ReturnType<typeof useGetBacktestSuspenseQuery>;
 export type GetBacktestQueryResult = Apollo.QueryResult<GetBacktestQuery, GetBacktestQueryVariables>;
 export const GetBacktestOptionsDocument = gql`
-    query GetBacktestOptions {
-  strategies(first: 50) {
+    query GetBacktestOptions($ownerID: String) {
+  strategies(first: 50, where: {ownerID: $ownerID}) {
     edges {
       node {
         id
@@ -195,7 +197,7 @@ export const GetBacktestOptionsDocument = gql`
       }
     }
   }
-  botRunners(first: 50) {
+  botRunners(first: 50, where: {ownerID: $ownerID}) {
     edges {
       node {
         id
@@ -219,6 +221,7 @@ export const GetBacktestOptionsDocument = gql`
  * @example
  * const { data, loading, error } = useGetBacktestOptionsQuery({
  *   variables: {
+ *      ownerID: // value for 'ownerID'
  *   },
  * });
  */

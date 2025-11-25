@@ -217,6 +217,20 @@ func (_u *BotUpdate) SetNillableRunnerID(v *uuid.UUID) *BotUpdate {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *BotUpdate) SetOwnerID(v string) *BotUpdate {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *BotUpdate) SetNillableOwnerID(v *string) *BotUpdate {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotUpdate) SetUpdatedAt(v time.Time) *BotUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -375,6 +389,11 @@ func (_u *BotUpdate) check() error {
 			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "Bot.mode": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := bot.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Bot.owner_id": %w`, err)}
+		}
+	}
 	if _u.mutation.ExchangeCleared() && len(_u.mutation.ExchangeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.exchange"`)
 	}
@@ -440,6 +459,9 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ErrorMessageCleared() {
 		_spec.ClearField(bot.FieldErrorMessage, field.TypeString)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(bot.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(bot.FieldUpdatedAt, field.TypeTime, value)
@@ -807,6 +829,20 @@ func (_u *BotUpdateOne) SetNillableRunnerID(v *uuid.UUID) *BotUpdateOne {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *BotUpdateOne) SetOwnerID(v string) *BotUpdateOne {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *BotUpdateOne) SetNillableOwnerID(v *string) *BotUpdateOne {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotUpdateOne) SetUpdatedAt(v time.Time) *BotUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -978,6 +1014,11 @@ func (_u *BotUpdateOne) check() error {
 			return &ValidationError{Name: "mode", err: fmt.Errorf(`ent: validator failed for field "Bot.mode": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := bot.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Bot.owner_id": %w`, err)}
+		}
+	}
 	if _u.mutation.ExchangeCleared() && len(_u.mutation.ExchangeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Bot.exchange"`)
 	}
@@ -1060,6 +1101,9 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	}
 	if _u.mutation.ErrorMessageCleared() {
 		_spec.ClearField(bot.FieldErrorMessage, field.TypeString)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(bot.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(bot.FieldUpdatedAt, field.TypeTime, value)

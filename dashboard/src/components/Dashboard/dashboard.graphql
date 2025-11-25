@@ -40,9 +40,14 @@ query GetDashboardData {
     totalCount
   }
 
-  exchanges {
-    id
-    name
+  exchanges(first: 50) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+    totalCount
   }
 
   strategies(first: 10) {

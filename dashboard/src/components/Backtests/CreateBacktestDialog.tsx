@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useCreateBacktestMutation, useGetBacktestOptionsQuery } from './backtests.generated';
+import { useActiveGroup } from '../../contexts/GroupContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -41,7 +42,15 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
 
-  const { data: optionsData } = useGetBacktestOptionsQuery();
+  // Get active group for filtering strategies and runners
+  const { activeGroupId } = useActiveGroup();
+
+  const { data: optionsData } = useGetBacktestOptionsQuery({
+    variables: {
+      ownerID: activeGroupId || undefined,
+    },
+    skip: !activeGroupId, // Skip query if no active group
+  });
   const [createBacktest, { loading, error }] = useCreateBacktestMutation();
 
   // Set pre-selected strategy when dialog opens

@@ -46,12 +46,16 @@ func init() {
 	botDescFreqtradeVersion := botFields[7].Descriptor()
 	// bot.DefaultFreqtradeVersion holds the default value on creation for the freqtrade_version field.
 	bot.DefaultFreqtradeVersion = botDescFreqtradeVersion.Default.(string)
+	// botDescOwnerID is the schema descriptor for owner_id field.
+	botDescOwnerID := botFields[13].Descriptor()
+	// bot.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	bot.OwnerIDValidator = botDescOwnerID.Validators[0].(func(string) error)
 	// botDescCreatedAt is the schema descriptor for created_at field.
-	botDescCreatedAt := botFields[13].Descriptor()
+	botDescCreatedAt := botFields[14].Descriptor()
 	// bot.DefaultCreatedAt holds the default value on creation for the created_at field.
 	bot.DefaultCreatedAt = botDescCreatedAt.Default.(func() time.Time)
 	// botDescUpdatedAt is the schema descriptor for updated_at field.
-	botDescUpdatedAt := botFields[14].Descriptor()
+	botDescUpdatedAt := botFields[15].Descriptor()
 	// bot.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	bot.DefaultUpdatedAt = botDescUpdatedAt.Default.(func() time.Time)
 	// bot.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -89,12 +93,16 @@ func init() {
 	botrunnerDescDataIsReady := botrunnerFields[4].Descriptor()
 	// botrunner.DefaultDataIsReady holds the default value on creation for the data_is_ready field.
 	botrunner.DefaultDataIsReady = botrunnerDescDataIsReady.Default.(bool)
+	// botrunnerDescOwnerID is the schema descriptor for owner_id field.
+	botrunnerDescOwnerID := botrunnerFields[10].Descriptor()
+	// botrunner.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	botrunner.OwnerIDValidator = botrunnerDescOwnerID.Validators[0].(func(string) error)
 	// botrunnerDescCreatedAt is the schema descriptor for created_at field.
-	botrunnerDescCreatedAt := botrunnerFields[10].Descriptor()
+	botrunnerDescCreatedAt := botrunnerFields[11].Descriptor()
 	// botrunner.DefaultCreatedAt holds the default value on creation for the created_at field.
 	botrunner.DefaultCreatedAt = botrunnerDescCreatedAt.Default.(func() time.Time)
 	// botrunnerDescUpdatedAt is the schema descriptor for updated_at field.
-	botrunnerDescUpdatedAt := botrunnerFields[11].Descriptor()
+	botrunnerDescUpdatedAt := botrunnerFields[12].Descriptor()
 	// botrunner.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	botrunner.DefaultUpdatedAt = botrunnerDescUpdatedAt.Default.(func() time.Time)
 	// botrunner.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -111,12 +119,16 @@ func init() {
 	exchangeDescName := exchangeFields[1].Descriptor()
 	// exchange.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	exchange.NameValidator = exchangeDescName.Validators[0].(func(string) error)
+	// exchangeDescOwnerID is the schema descriptor for owner_id field.
+	exchangeDescOwnerID := exchangeFields[3].Descriptor()
+	// exchange.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	exchange.OwnerIDValidator = exchangeDescOwnerID.Validators[0].(func(string) error)
 	// exchangeDescCreatedAt is the schema descriptor for created_at field.
-	exchangeDescCreatedAt := exchangeFields[3].Descriptor()
+	exchangeDescCreatedAt := exchangeFields[4].Descriptor()
 	// exchange.DefaultCreatedAt holds the default value on creation for the created_at field.
 	exchange.DefaultCreatedAt = exchangeDescCreatedAt.Default.(func() time.Time)
 	// exchangeDescUpdatedAt is the schema descriptor for updated_at field.
-	exchangeDescUpdatedAt := exchangeFields[4].Descriptor()
+	exchangeDescUpdatedAt := exchangeFields[5].Descriptor()
 	// exchange.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	exchange.DefaultUpdatedAt = exchangeDescUpdatedAt.Default.(func() time.Time)
 	// exchange.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

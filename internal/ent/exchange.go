@@ -23,6 +23,8 @@ type Exchange struct {
 	Name string `json:"name,omitempty"`
 	// Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
+	// Group ID (organization) that owns this exchange
+	OwnerID string `json:"owner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -62,7 +64,7 @@ func (*Exchange) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case exchange.FieldConfig:
 			values[i] = new([]byte)
-		case exchange.FieldName:
+		case exchange.FieldName, exchange.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case exchange.FieldCreatedAt, exchange.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -102,6 +104,12 @@ func (_m *Exchange) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Config); err != nil {
 					return fmt.Errorf("unmarshal field config: %w", err)
 				}
+			}
+		case exchange.FieldOwnerID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
+			} else if value.Valid {
+				_m.OwnerID = value.String
 			}
 		case exchange.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -161,6 +169,9 @@ func (_m *Exchange) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))
+	builder.WriteString(", ")
+	builder.WriteString("owner_id=")
+	builder.WriteString(_m.OwnerID)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

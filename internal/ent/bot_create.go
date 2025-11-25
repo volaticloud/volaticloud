@@ -147,6 +147,12 @@ func (_c *BotCreate) SetRunnerID(v uuid.UUID) *BotCreate {
 	return _c
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_c *BotCreate) SetOwnerID(v string) *BotCreate {
+	_c.mutation.SetOwnerID(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *BotCreate) SetCreatedAt(v time.Time) *BotCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -337,6 +343,14 @@ func (_c *BotCreate) check() error {
 	if _, ok := _c.mutation.RunnerID(); !ok {
 		return &ValidationError{Name: "runner_id", err: errors.New(`ent: missing required field "Bot.runner_id"`)}
 	}
+	if _, ok := _c.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Bot.owner_id"`)}
+	}
+	if v, ok := _c.mutation.OwnerID(); ok {
+		if err := bot.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Bot.owner_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Bot.created_at"`)}
 	}
@@ -422,6 +436,10 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ErrorMessage(); ok {
 		_spec.SetField(bot.FieldErrorMessage, field.TypeString, value)
 		_node.ErrorMessage = value
+	}
+	if value, ok := _c.mutation.OwnerID(); ok {
+		_spec.SetField(bot.FieldOwnerID, field.TypeString, value)
+		_node.OwnerID = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(bot.FieldCreatedAt, field.TypeTime, value)

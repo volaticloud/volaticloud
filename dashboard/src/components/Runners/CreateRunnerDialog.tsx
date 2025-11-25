@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { useCreateRunnerMutation, useTestRunnerConnectionMutation } from './runners.generated';
 import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
 interface CreateRunnerDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface CreateRunnerDialogProps {
 }
 
 export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDialogProps) => {
+  const { activeGroupId } = useActiveGroup();
   const [name, setName] = useState('');
   const [type, setType] = useState<'docker' | 'kubernetes' | 'local'>('docker');
 
@@ -90,7 +92,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
   };
 
   const handleSubmit = async () => {
-    if (!name) {
+    if (!name || !activeGroupId) {
       return;
     }
 
@@ -109,6 +111,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             type: type as any,
             config,
             dataDownloadConfig,
+            ownerID: activeGroupId,
           },
         },
       });

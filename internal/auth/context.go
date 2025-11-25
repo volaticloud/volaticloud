@@ -16,6 +16,7 @@ type UserContext struct {
 	Email             string   // Email claim
 	PreferredUsername string   // Preferred username
 	Roles             []string // Realm roles from JWT
+	Groups            []string // Group memberships (organization UUIDs) from JWT
 	RawToken          string   // Original JWT token for UMA permission checks
 }
 

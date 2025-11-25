@@ -13,11 +13,11 @@ import (
 type Resolver struct {
 	client    *ent.Client
 	auth      *auth.KeycloakClient
-	umaClient *keycloak.UMAClient
+	umaClient keycloak.UMAClientInterface
 }
 
 // NewResolver creates a new resolver with the ENT client and auth clients
-func NewResolver(client *ent.Client, authClient *auth.KeycloakClient, umaClient *keycloak.UMAClient) *Resolver {
+func NewResolver(client *ent.Client, authClient *auth.KeycloakClient, umaClient keycloak.UMAClientInterface) *Resolver {
 	return &Resolver{
 		client:    client,
 		auth:      authClient,

@@ -3,10 +3,14 @@ import * as Types from '../../generated/types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type GetExchangesQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type GetExchangesQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  after?: Types.InputMaybe<Types.Scalars['Cursor']['input']>;
+  where?: Types.InputMaybe<Types.ExchangeWhereInput>;
+}>;
 
 
-export type GetExchangesQuery = { __typename?: 'Query', exchanges: Array<{ __typename?: 'Exchange', id: string, name: string, config?: Record<string, any> | null, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number } }> };
+export type GetExchangesQuery = { __typename?: 'Query', exchanges: { __typename?: 'ExchangeConnection', totalCount: number, edges?: Array<{ __typename?: 'ExchangeEdge', node?: { __typename?: 'Exchange', id: string, name: string, config?: Record<string, any> | null, ownerID: string, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetExchangeQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -47,16 +51,28 @@ export type DeleteExchangeMutation = { __typename?: 'Mutation', deleteExchange: 
 
 
 export const GetExchangesDocument = gql`
-    query GetExchanges {
-  exchanges {
-    id
-    name
-    config
-    createdAt
-    updatedAt
-    bots(first: 10) {
-      totalCount
+    query GetExchanges($first: Int, $after: Cursor, $where: ExchangeWhereInput) {
+  exchanges(first: $first, after: $after, where: $where) {
+    edges {
+      node {
+        id
+        name
+        config
+        ownerID
+        createdAt
+        updatedAt
+        bots(first: 10) {
+          totalCount
+        }
+      }
     }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
   }
 }
     `;
@@ -73,6 +89,9 @@ export const GetExchangesDocument = gql`
  * @example
  * const { data, loading, error } = useGetExchangesQuery({
  *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *      where: // value for 'where'
  *   },
  * });
  */

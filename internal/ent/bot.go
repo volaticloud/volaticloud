@@ -48,6 +48,8 @@ type Bot struct {
 	StrategyID uuid.UUID `json:"strategy_id,omitempty"`
 	// Foreign key to runner (provides execution environment)
 	RunnerID uuid.UUID `json:"runner_id,omitempty"`
+	// Group ID (organization) that owns this bot
+	OwnerID string `json:"owner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -139,7 +141,7 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case bot.FieldConfig, bot.FieldSecureConfig:
 			values[i] = new([]byte)
-		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldFreqtradeVersion, bot.FieldErrorMessage:
+		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldFreqtradeVersion, bot.FieldErrorMessage, bot.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -241,6 +243,12 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field runner_id", values[i])
 			} else if value != nil {
 				_m.RunnerID = *value
+			}
+		case bot.FieldOwnerID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
+			} else if value.Valid {
+				_m.OwnerID = value.String
 			}
 		case bot.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -350,6 +358,9 @@ func (_m *Bot) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("runner_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RunnerID))
+	builder.WriteString(", ")
+	builder.WriteString("owner_id=")
+	builder.WriteString(_m.OwnerID)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

@@ -1,4 +1,4 @@
-.PHONY: help setup dev test coverage lint generate migrate clean build
+.PHONY: help setup dev test test-authz coverage lint generate migrate clean build
 
 # Default target
 help:
@@ -12,6 +12,7 @@ help:
 	@echo "  make dev          - Run server in development mode"
 	@echo "  make build        - Build binary"
 	@echo "  make test         - Run tests with coverage"
+	@echo "  make test-authz   - Run authorization integration tests only"
 	@echo "  make coverage     - Run tests and open HTML coverage report"
 	@echo "  make lint         - Run linters"
 	@echo ""
@@ -92,6 +93,13 @@ test:
 	@echo ""
 	@echo "=== Schema Coverage ==="
 	@go tool cover -func=coverage.filtered.out | grep "schema/" || echo "  No schema data"
+
+# Run authorization integration tests only
+test-authz:
+	@echo "Running authorization integration tests..."
+	go test -v -race ./internal/graph -run TestAuthorization
+	@echo ""
+	@echo "Authorization integration tests complete!"
 
 # Run tests and open coverage report
 coverage: test

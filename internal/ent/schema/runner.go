@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
 	"volaticloud/internal/enum"
@@ -53,6 +54,9 @@ func (BotRunner) Fields() []ent.Field {
 		field.JSON("data_download_config", map[string]interface{}{}).
 			Optional().
 			Comment("Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}"),
+		field.String("owner_id").
+			NotEmpty().
+			Comment("Group ID (organization) that owns this bot runner"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -69,6 +73,14 @@ func (BotRunner) Edges() []ent.Edge {
 			Annotations(entgql.RelayConnection()),
 		edge.To("backtests", Backtest.Type).
 			Annotations(entgql.RelayConnection()),
+	}
+}
+
+// Indexes of the BotRunner.
+func (BotRunner) Indexes() []ent.Index {
+	return []ent.Index{
+		// Index on owner_id for efficient ownership queries
+		index.Fields("owner_id"),
 	}
 }
 

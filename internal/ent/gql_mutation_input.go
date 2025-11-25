@@ -77,6 +77,7 @@ type CreateBotInput struct {
 	FreqtradeVersion *string
 	LastSeenAt       *time.Time
 	ErrorMessage     *string
+	OwnerID          string
 	CreatedAt        *time.Time
 	UpdatedAt        *time.Time
 	ExchangeID       uuid.UUID
@@ -110,6 +111,7 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	if v := i.ErrorMessage; v != nil {
 		m.SetErrorMessage(*v)
 	}
+	m.SetOwnerID(i.OwnerID)
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
 	}
@@ -147,6 +149,7 @@ type UpdateBotInput struct {
 	LastSeenAt        *time.Time
 	ClearErrorMessage bool
 	ErrorMessage      *string
+	OwnerID           *string
 	UpdatedAt         *time.Time
 	ExchangeID        *uuid.UUID
 	StrategyID        *uuid.UUID
@@ -195,6 +198,9 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	}
 	if v := i.ErrorMessage; v != nil {
 		m.SetErrorMessage(*v)
+	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
@@ -520,6 +526,7 @@ type CreateBotRunnerInput struct {
 	DataDownloadProgress map[string]interface{}
 	DataErrorMessage     *string
 	DataDownloadConfig   map[string]interface{}
+	OwnerID              string
 	CreatedAt            *time.Time
 	UpdatedAt            *time.Time
 	BotIDs               []uuid.UUID
@@ -553,6 +560,7 @@ func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	if v := i.DataDownloadConfig; v != nil {
 		m.SetDataDownloadConfig(v)
 	}
+	m.SetOwnerID(i.OwnerID)
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
 	}
@@ -589,6 +597,7 @@ type UpdateBotRunnerInput struct {
 	DataErrorMessage          *string
 	ClearDataDownloadConfig   bool
 	DataDownloadConfig        map[string]interface{}
+	OwnerID                   *string
 	UpdatedAt                 *time.Time
 	ClearBots                 bool
 	AddBotIDs                 []uuid.UUID
@@ -642,6 +651,9 @@ func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	if v := i.DataDownloadConfig; v != nil {
 		m.SetDataDownloadConfig(v)
 	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
+	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
 	}
@@ -681,6 +693,7 @@ func (c *BotRunnerUpdateOne) SetInput(i UpdateBotRunnerInput) *BotRunnerUpdateOn
 type CreateExchangeInput struct {
 	Name      string
 	Config    map[string]interface{}
+	OwnerID   string
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 	BotIDs    []uuid.UUID
@@ -692,6 +705,7 @@ func (i *CreateExchangeInput) Mutate(m *ExchangeMutation) {
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
 	}
+	m.SetOwnerID(i.OwnerID)
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
 	}
@@ -714,6 +728,7 @@ type UpdateExchangeInput struct {
 	Name         *string
 	ClearConfig  bool
 	Config       map[string]interface{}
+	OwnerID      *string
 	UpdatedAt    *time.Time
 	ClearBots    bool
 	AddBotIDs    []uuid.UUID
@@ -730,6 +745,9 @@ func (i *UpdateExchangeInput) Mutate(m *ExchangeMutation) {
 	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
+	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
