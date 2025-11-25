@@ -1,5 +1,5 @@
-query GetBots($first: Int, $after: Cursor) {
-  bots(first: $first, after: $after) {
+query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
+  bots(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
@@ -12,6 +12,7 @@ query GetBots($first: Int, $after: Cursor) {
         errorMessage
         createdAt
         config
+        ownerID
         exchange {
           id
           name

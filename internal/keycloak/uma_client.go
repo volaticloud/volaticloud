@@ -8,6 +8,15 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 )
 
+// UMAClientInterface defines the interface for UMA 2.0 operations
+// This allows for mocking in tests
+type UMAClientInterface interface {
+	CheckPermission(ctx context.Context, token, resourceID, scope string) (bool, error)
+	CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error
+	DeleteResource(ctx context.Context, resourceID string) error
+	CreatePermission(ctx context.Context, resourceID, ownerID string) error
+}
+
 // UMAClient handles UMA 2.0 (User-Managed Access) operations for resource-level authorization
 type UMAClient struct {
 	client       *gocloak.GoCloak

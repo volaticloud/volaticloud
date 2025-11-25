@@ -6,8 +6,13 @@ query GetBotsCount {
 }
 
 query GetExchangesForLayout {
-  exchanges {
-    id
-    name
+  exchanges(first: 50) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+    totalCount
   }
 }

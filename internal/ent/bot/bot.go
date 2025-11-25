@@ -42,6 +42,8 @@ const (
 	FieldStrategyID = "strategy_id"
 	// FieldRunnerID holds the string denoting the runner_id field in the database.
 	FieldRunnerID = "runner_id"
+	// FieldOwnerID holds the string denoting the owner_id field in the database.
+	FieldOwnerID = "owner_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -110,6 +112,7 @@ var Columns = []string{
 	FieldExchangeID,
 	FieldStrategyID,
 	FieldRunnerID,
+	FieldOwnerID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -129,6 +132,8 @@ var (
 	NameValidator func(string) error
 	// DefaultFreqtradeVersion holds the default value on creation for the "freqtrade_version" field.
 	DefaultFreqtradeVersion string
+	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	OwnerIDValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -219,6 +224,11 @@ func ByStrategyID(opts ...sql.OrderTermOption) OrderOption {
 // ByRunnerID orders the results by the runner_id field.
 func ByRunnerID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRunnerID, opts...).ToFunc()
+}
+
+// ByOwnerID orders the results by the owner_id field.
+func ByOwnerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOwnerID, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

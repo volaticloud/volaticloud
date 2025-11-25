@@ -21,9 +21,13 @@ import { JSONEditor } from '../JSONEditor';
 // Query to get available exchanges, strategies, and runners
 const GET_BOT_OPTIONS = gql`
   query GetBotOptions {
-    exchanges {
-      id
-      name
+    exchanges(first: 50) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
     }
     strategies(first: 50) {
       edges {
@@ -113,7 +117,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
     }
   };
 
-  const exchanges = optionsData?.exchanges || [];
+  const exchanges = optionsData?.exchanges?.edges?.map(edge => edge?.node).filter(Boolean) || [];
   const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
   const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 

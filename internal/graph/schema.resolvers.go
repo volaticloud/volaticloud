@@ -50,7 +50,15 @@ func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*bac
 }
 
 func (r *mutationResolver) CreateExchange(ctx context.Context, input ent.CreateExchangeInput) (*ent.Exchange, error) {
-	return r.client.Exchange.Create().SetInput(input).Save(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create exchange with Keycloak resource sync (uses transaction internally)
+	// OwnerID comes from the input and represents the selected group/organization
+	return CreateExchangeWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 }
 
 func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, input ent.UpdateExchangeInput) (*ent.Exchange, error) {
@@ -58,7 +66,8 @@ func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Exchange.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteExchangeWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
@@ -141,15 +150,22 @@ func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bo
 }
 
 func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error) {
-	// Step 1: Basic validation - just ensure config is provided
+	// Step 1: Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Step 2: Basic validation - just ensure config is provided
 	// Note: Full schema validation is available in validateFreqtradeConfigWithSchema()
 	// but requires a complete merged config (Exchange + Strategy + Bot)
 	if input.Config == nil {
 		return nil, fmt.Errorf("bot config is required for Freqtrade bots")
 	}
 
-	// Step 2: Create the bot in the database
-	createdBot, err := r.client.Bot.Create().SetInput(input).Save(ctx)
+	// Step 3: Create the bot in the database with Keycloak resource sync
+	// This uses transaction internally and syncs with Keycloak
+	createdBot, err := CreateBotWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
@@ -235,7 +251,8 @@ func (r *mutationResolver) UpdateBot(ctx context.Context, id uuid.UUID, input en
 }
 
 func (r *mutationResolver) DeleteBot(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Bot.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteBotWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
@@ -464,7 +481,15 @@ func (r *mutationResolver) RestartBot(ctx context.Context, id uuid.UUID) (*ent.B
 }
 
 func (r *mutationResolver) CreateBotRunner(ctx context.Context, input ent.CreateBotRunnerInput) (*ent.BotRunner, error) {
-	return r.client.BotRunner.Create().SetInput(input).Save(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create bot runner with Keycloak resource sync (uses transaction internally)
+	// OwnerID comes from the input and represents the selected group/organization
+	return CreateBotRunnerWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 }
 
 func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, input ent.UpdateBotRunnerInput) (*ent.BotRunner, error) {
@@ -472,7 +497,8 @@ func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, in
 }
 
 func (r *mutationResolver) DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.BotRunner.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteBotRunnerWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 

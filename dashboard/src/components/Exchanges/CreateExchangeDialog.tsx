@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useCreateExchangeMutation } from './exchanges.generated';
 import { JSONEditor } from '../JSONEditor';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
 interface CreateExchangeDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface CreateExchangeDialogProps {
 }
 
 export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchangeDialogProps) => {
+  const { activeGroupId } = useActiveGroup();
   const [name, setName] = useState('');
   const [config, setConfig] = useState<object | null>({
     exchange: {
@@ -35,7 +37,7 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
   const [createExchange, { loading, error }] = useCreateExchangeMutation();
 
   const handleSubmit = async () => {
-    if (!name || !config) {
+    if (!name || !config || !activeGroupId) {
       return;
     }
 
@@ -45,6 +47,7 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
           input: {
             name,
             config,
+            ownerID: activeGroupId,
           },
         },
       });

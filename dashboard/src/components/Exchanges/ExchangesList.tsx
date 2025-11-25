@@ -19,6 +19,7 @@ import { useGetExchangesQuery } from './exchanges.generated';
 import { CreateExchangeDialog } from './CreateExchangeDialog';
 import { EditExchangeDialog } from './EditExchangeDialog';
 import { DeleteExchangeDialog } from './DeleteExchangeDialog';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
 export const ExchangesList = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -30,7 +31,18 @@ export const ExchangesList = () => {
     config?: any;
   } | null>(null);
 
-  const { data, loading, error, refetch } = useGetExchangesQuery();
+  // Get active group for filtering
+  const { activeGroupId } = useActiveGroup();
+
+  const { data, loading, error, refetch } = useGetExchangesQuery({
+    variables: {
+      first: 50,
+      where: {
+        ownerID: activeGroupId || undefined
+      }
+    },
+    skip: !activeGroupId, // Skip query if no active group
+  });
 
   const handleEdit = (exchange: { id: string; name: string; config?: any }) => {
     setSelectedExchange(exchange);
@@ -64,7 +76,9 @@ export const ExchangesList = () => {
     );
   }
 
-  const exchanges = data?.exchanges || [];
+  const exchanges = (data?.exchanges?.edges
+    ?.map(edge => edge?.node)
+    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>

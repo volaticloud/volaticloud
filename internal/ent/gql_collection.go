@@ -393,6 +393,11 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				selectedFields = append(selectedFields, bot.FieldRunnerID)
 				fieldSeen[bot.FieldRunnerID] = struct{}{}
 			}
+		case "ownerID":
+			if _, ok := fieldSeen[bot.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, bot.FieldOwnerID)
+				fieldSeen[bot.FieldOwnerID] = struct{}{}
+			}
 		case "createdAt":
 			if _, ok := fieldSeen[bot.FieldCreatedAt]; !ok {
 				selectedFields = append(selectedFields, bot.FieldCreatedAt)
@@ -870,6 +875,11 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				selectedFields = append(selectedFields, botrunner.FieldDataDownloadConfig)
 				fieldSeen[botrunner.FieldDataDownloadConfig] = struct{}{}
 			}
+		case "ownerID":
+			if _, ok := fieldSeen[botrunner.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldOwnerID)
+				fieldSeen[botrunner.FieldOwnerID] = struct{}{}
+			}
 		case "createdAt":
 			if _, ok := fieldSeen[botrunner.FieldCreatedAt]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldCreatedAt)
@@ -1040,6 +1050,11 @@ func (_q *ExchangeQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			if _, ok := fieldSeen[exchange.FieldConfig]; !ok {
 				selectedFields = append(selectedFields, exchange.FieldConfig)
 				fieldSeen[exchange.FieldConfig] = struct{}{}
+			}
+		case "ownerID":
+			if _, ok := fieldSeen[exchange.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, exchange.FieldOwnerID)
+				fieldSeen[exchange.FieldOwnerID] = struct{}{}
 			}
 		case "createdAt":
 			if _, ok := fieldSeen[exchange.FieldCreatedAt]; !ok {

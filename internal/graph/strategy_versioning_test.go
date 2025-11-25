@@ -224,6 +224,7 @@ func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 		SetName("TestRunner").
 		SetType(enum.RunnerDocker).
 		SetConfig(runnerConfig).
+		SetOwnerID(testOwnerID).
 		Save(ctx)
 	require.NoError(t, err)
 

@@ -5,7 +5,9 @@ import lombok.extern.jbosslog.JBossLog;
 import org.keycloak.authorization.AuthorizationProvider;
 import org.keycloak.authorization.model.Resource;
 import org.keycloak.authorization.model.ResourceServer;
+import org.keycloak.authorization.model.Scope;
 import org.keycloak.authorization.store.ResourceStore;
+import org.keycloak.authorization.store.ScopeStore;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
@@ -18,12 +20,16 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Multi-tenant system event listener that manages hierarchical group structures.
  *
- * Handles two main events:
+ * Handles the following events:
  * 1. USER creation - Creates tenant group structure for each user
  * 2. AUTHORIZATION_RESOURCE creation - Creates resource groups with owner hierarchy
+ * 3. AUTHORIZATION_RESOURCE deletion - Removes groups for tenant resources
  */
 @JBossLog
 @RequiredArgsConstructor
@@ -35,6 +41,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
     private static final String GROUP_TYPE_ATTRIBUTE = "GROUP_TYPE";
     private static final String GROUP_TYPE_ORGANIZATION = "organization";
     private static final String GROUP_TYPE_NONE = "none";
+    private static final String RESOURCE_TYPE_TENANT = "urn:volaticloud:resources:tenant";
 
     private final KeycloakSession session;
 
@@ -57,22 +64,29 @@ public class TenantSystemEventListener implements EventListenerProvider {
         log.infof("Admin event received: type=%s, operation=%s, path=%s",
                   event.getResourceType(), event.getOperationType(), event.getResourcePath());
 
-        // Only process CREATE operations
-        if (event.getOperationType() != OperationType.CREATE) {
-            return;
-        }
-
         try {
-            // Handle USER creation
-            if (event.getResourceType() == ResourceType.USER) {
-                handleUserCreation(event);
-                return;
+            // Handle CREATE operations
+            if (event.getOperationType() == OperationType.CREATE) {
+                // Handle USER creation
+                if (event.getResourceType() == ResourceType.USER) {
+                    handleUserCreation(event);
+                    return;
+                }
+
+                // Handle AUTHORIZATION_RESOURCE creation
+                if (event.getResourceType() == ResourceType.AUTHORIZATION_RESOURCE) {
+                    handleResourceCreation(event);
+                    return;
+                }
             }
 
-            // Handle AUTHORIZATION_RESOURCE creation
-            if (event.getResourceType() == ResourceType.AUTHORIZATION_RESOURCE) {
-                handleResourceCreation(event);
-                return;
+            // Handle DELETE operations
+            if (event.getOperationType() == OperationType.DELETE) {
+                // Handle AUTHORIZATION_RESOURCE deletion
+                if (event.getResourceType() == ResourceType.AUTHORIZATION_RESOURCE) {
+                    handleResourceDeletion(event);
+                    return;
+                }
             }
         } catch (Exception e) {
             log.errorf(e, "Error processing admin event for tenant system");
@@ -152,14 +166,28 @@ public class TenantSystemEventListener implements EventListenerProvider {
 
     /**
      * Creates tenant structure for a user (works for both admin-created and self-registered users).
-     * Creates a group named with user's UUID and adds user to the admin role subgroup.
+     * Creates a UMA resource with type=organization, then creates the corresponding group structure.
+     * Finally adds user to the admin role subgroup.
      */
     private void createTenantStructureForUser(RealmModel realm, UserModel user, String userId) {
-        // Create group named with user's UUID with GROUP_TYPE=organization
-        GroupModel userGroup = createGroupWithRoles(realm, userId, null, GROUP_TYPE_ORGANIZATION);
-        log.infof("Created tenant group for user: %s with GROUP_TYPE=%s", userId, GROUP_TYPE_ORGANIZATION);
+        // Step 1: Create UMA resource with type=organization (no ownerId - root level)
+        Resource resource = createOrganizationResource(realm, userId);
+        if (resource == null) {
+            log.errorf("Failed to create organization resource for user: %s", userId);
+            return;
+        }
+        log.infof("Created organization resource for user: %s", userId);
 
-        // Add user to the admin role subgroup
+        // Step 2: Create group structure (same logic as handleResourceCreation)
+        createHierarchicalGroupStructure(realm, userId, null, GROUP_TYPE_ORGANIZATION);
+
+        // Step 3: Add user to admin role subgroup
+        GroupModel userGroup = session.groups().getGroupByName(realm, null, userId);
+        if (userGroup == null) {
+            log.errorf("Could not find tenant group for user: %s", userId);
+            return;
+        }
+
         GroupModel adminRole = session.groups().getGroupByName(realm, userGroup, ROLE_ADMIN);
         if (adminRole != null) {
             user.joinGroup(adminRole);
@@ -168,7 +196,66 @@ public class TenantSystemEventListener implements EventListenerProvider {
             log.errorf("Could not find admin role group for user: %s", userId);
         }
 
-        log.infof("Successfully created tenant structure for user: %s", userId);
+        log.infof("Successfully created tenant structure (resource + groups) for user: %s", userId);
+    }
+
+    /**
+     * Creates a UMA resource for an organization in the volaticloud client.
+     * Resource has type urn:volaticloud:resources:tenant and no ownerId (root-level).
+     */
+    private Resource createOrganizationResource(RealmModel realm, String resourceName) {
+        try {
+            ClientModel client = realm.getClientByClientId(VOLATICLOUD_CLIENT);
+            if (client == null) {
+                log.errorf("Client '%s' not found", VOLATICLOUD_CLIENT);
+                return null;
+            }
+
+            AuthorizationProvider authz = session.getProvider(AuthorizationProvider.class);
+            ResourceServer resourceServer = authz.getStoreFactory().getResourceServerStore()
+                .findByClient(client);
+
+            if (resourceServer == null) {
+                log.errorf("Resource server not found for client '%s'", VOLATICLOUD_CLIENT);
+                return null;
+            }
+
+            ResourceStore resourceStore = authz.getStoreFactory().getResourceStore();
+
+            // Check if resource already exists
+            Resource existing = resourceStore.findByName(resourceServer, resourceName);
+            if (existing != null) {
+                log.infof("Organization resource '%s' already exists", resourceName);
+                return existing;
+            }
+
+            // Get or create scopes (view, edit, manage)
+            ScopeStore scopeStore = authz.getStoreFactory().getScopeStore();
+            Set<Scope> scopes = new HashSet<>();
+            for (String scopeName : new String[]{"view", "edit", "manage"}) {
+                Scope scope = scopeStore.findByName(resourceServer, scopeName);
+                if (scope == null) {
+                    scope = scopeStore.create(resourceServer, scopeName);
+                    log.infof("Created scope: %s", scopeName);
+                }
+                scopes.add(scope);
+            }
+
+            // Create resource
+            Resource resource = resourceStore.create(resourceServer, resourceName, resourceServer.getClientId());
+
+            // Set resource type URN (no ownerId for root-level organization)
+            resource.setType(RESOURCE_TYPE_TENANT);
+
+            // Set scopes
+            resource.updateScopes(scopes);
+
+            log.infof("Created organization resource: %s with type=%s", resourceName, RESOURCE_TYPE_TENANT);
+            return resource;
+        } catch (Exception e) {
+            log.errorf(e, "Error creating organization resource: %s", resourceName);
+            return null;
+        }
     }
 
     /**
@@ -210,6 +297,57 @@ public class TenantSystemEventListener implements EventListenerProvider {
         createHierarchicalGroupStructure(realm, resourceName, ownerId, resourceType);
 
         log.infof("Successfully created group structure for resource: %s", resourceName);
+    }
+
+    /**
+     * Handles authorization resource deletion event.
+     * Removes the corresponding group if the resource has type urn:volaticloud:resources:tenant.
+     */
+    private void handleResourceDeletion(AdminEvent event) {
+        String representation = event.getRepresentation();
+        if (representation == null) {
+            log.warn("No representation found in resource deletion event");
+            return;
+        }
+
+        // Parse the resource name and type from the representation
+        String resourceName = extractFieldValue(representation, "name");
+        if (resourceName == null || resourceName.isEmpty()) {
+            log.warn("Could not extract resource name from event representation");
+            return;
+        }
+
+        // Extract resource type from the "type" field (not attribute)
+        String resourceType = extractFieldValue(representation, "type");
+        log.infof("Processing resource deletion: name=%s, type=%s", resourceName, resourceType);
+
+        // Only delete groups for tenant resources
+        if (!RESOURCE_TYPE_TENANT.equals(resourceType)) {
+            log.infof("Resource '%s' is not a tenant resource (type=%s), skipping group deletion", resourceName, resourceType);
+            return;
+        }
+
+        // Get the realm
+        RealmModel realm = session.getContext().getRealm();
+        if (realm == null) {
+            log.error("Could not get realm from session context");
+            return;
+        }
+
+        // Find and delete the group
+        GroupModel group = session.groups().getGroupByName(realm, null, resourceName);
+        if (group == null) {
+            log.warnf("Group '%s' not found, nothing to delete", resourceName);
+            return;
+        }
+
+        // Delete the group (this will also delete subgroups)
+        boolean removed = session.groups().removeGroup(realm, group);
+        if (removed) {
+            log.infof("Successfully deleted group '%s' and its subgroups for tenant resource deletion", resourceName);
+        } else {
+            log.errorf("Failed to delete group '%s'", resourceName);
+        }
     }
 
     /**

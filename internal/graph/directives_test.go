@@ -33,13 +33,33 @@ func TestExtractResourceID(t *testing.T) {
 			wantErr:   false,
 		},
 		{
-			name: "extract ID from ent.Bot",
+			name: "extract ID from ent.Bot (fast path)",
 			obj: &ent.Bot{
 				ID:   uuid.MustParse("987e6543-e21b-34d5-a678-543216789000"),
 				Name: "TestBot",
 			},
 			fieldName: "id",
 			wantID:    "987e6543-e21b-34d5-a678-543216789000",
+			wantErr:   false,
+		},
+		{
+			name: "extract ID from ent.Exchange (fast path)",
+			obj: &ent.Exchange{
+				ID:   uuid.MustParse("aaaa1111-2222-3333-4444-555555555555"),
+				Name: "TestExchange",
+			},
+			fieldName: "id",
+			wantID:    "aaaa1111-2222-3333-4444-555555555555",
+			wantErr:   false,
+		},
+		{
+			name: "extract ID from ent.BotRunner (fast path)",
+			obj: &ent.BotRunner{
+				ID:   uuid.MustParse("bbbb2222-3333-4444-5555-666666666666"),
+				Name: "TestRunner",
+			},
+			fieldName: "id",
+			wantID:    "bbbb2222-3333-4444-5555-666666666666",
 			wantErr:   false,
 		},
 		{
@@ -285,5 +305,217 @@ func TestContextHelpers(t *testing.T) {
 
 		retrieved := GetEntClientFromContext(ctx)
 		assert.Nil(t, retrieved, "Should return nil when no ENT client in context")
+	})
+}
+
+// TestEntityScopes tests that the scope definitions are correct
+func TestEntityScopes(t *testing.T) {
+	t.Run("BotScopes contains expected values", func(t *testing.T) {
+		expected := []string{"view", "run", "stop", "delete", "edit"}
+		assert.Equal(t, expected, BotScopes, "BotScopes should contain the expected values")
+		assert.Len(t, BotScopes, 5, "BotScopes should have 5 scopes")
+	})
+
+	t.Run("ExchangeScopes contains expected values", func(t *testing.T) {
+		expected := []string{"view", "edit", "delete"}
+		assert.Equal(t, expected, ExchangeScopes, "ExchangeScopes should contain the expected values")
+		assert.Len(t, ExchangeScopes, 3, "ExchangeScopes should have 3 scopes")
+	})
+
+	t.Run("BotRunnerScopes contains expected values", func(t *testing.T) {
+		expected := []string{"view", "edit", "delete", "make-public"}
+		assert.Equal(t, expected, BotRunnerScopes, "BotRunnerScopes should contain the expected values")
+		assert.Len(t, BotRunnerScopes, 4, "BotRunnerScopes should have 4 scopes")
+	})
+
+	t.Run("StrategyScopes contains expected values", func(t *testing.T) {
+		expected := []string{"view", "edit", "backtest", "delete"}
+		assert.Equal(t, expected, StrategyScopes, "StrategyScopes should contain the expected values")
+		assert.Len(t, StrategyScopes, 4, "StrategyScopes should have 4 scopes")
+	})
+}
+
+// TestRequiresPermissionDirective_AllEntityTypes tests the directive with different entity types
+func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
+	ownerID := "user-123"
+	rawToken := "test-token-123"
+
+	// Base setup context function
+	setupContextWithAuth := func() context.Context {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		// Add UMA client but NOT ENT client - this will cause "database client not available" error
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		return ctx
+	}
+
+	tests := []struct {
+		name   string
+		obj    interface{}
+		scope  string
+		errMsg string // Expected error (since we don't have a real DB)
+	}{
+		{
+			name: "Bot with view scope",
+			obj: &ent.Bot{
+				ID:      uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+				Name:    "TestBot",
+				OwnerID: ownerID,
+			},
+			scope:  "view",
+			errMsg: "database client not available",
+		},
+		{
+			name: "Bot with run scope",
+			obj: &ent.Bot{
+				ID:      uuid.MustParse("22222222-2222-2222-2222-222222222222"),
+				Name:    "TestBot2",
+				OwnerID: ownerID,
+			},
+			scope:  "run",
+			errMsg: "database client not available",
+		},
+		{
+			name: "Exchange with edit scope",
+			obj: &ent.Exchange{
+				ID:      uuid.MustParse("33333333-3333-3333-3333-333333333333"),
+				Name:    "TestExchange",
+				OwnerID: ownerID,
+			},
+			scope:  "edit",
+			errMsg: "database client not available",
+		},
+		{
+			name: "BotRunner with delete scope",
+			obj: &ent.BotRunner{
+				ID:      uuid.MustParse("44444444-4444-4444-4444-444444444444"),
+				Name:    "TestRunner",
+				OwnerID: ownerID,
+			},
+			scope:  "delete",
+			errMsg: "database client not available",
+		},
+		{
+			name: "Strategy with backtest scope",
+			obj: &ent.Strategy{
+				ID:      uuid.MustParse("55555555-5555-5555-5555-555555555555"),
+				Name:    "TestStrategy",
+				OwnerID: ownerID,
+			},
+			scope:  "backtest",
+			errMsg: "database client not available",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := setupContextWithAuth()
+
+			_, err := RequiresPermissionDirective(
+				ctx,
+				tt.obj,
+				mockResolver,
+				tt.scope,
+				nil,
+			)
+
+			// All tests should fail with "database client not available" since we don't have a real DB
+			require.Error(t, err, "Expected error but got none")
+			assert.Contains(t, err.Error(), tt.errMsg, "Error message should contain expected text")
+		})
+	}
+}
+
+// TestVerifyResourcePermission_Integration tests for all entity types
+// Note: These are integration test placeholders
+func TestVerifyResourcePermission_Integration(t *testing.T) {
+	t.Run("Bot permission verification", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. Bot exists and owner_id matches user
+		// 2. Keycloak UMA permission check for run/stop/view scopes
+		// 3. Bot does not exist
+		// 4. Bot exists but owner_id doesn't match
+	})
+
+	t.Run("Exchange permission verification", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. Exchange exists and owner_id matches user
+		// 2. Keycloak UMA permission check for edit/view scopes
+		// 3. Exchange does not exist
+		// 4. Exchange exists but owner_id doesn't match
+	})
+
+	t.Run("BotRunner permission verification", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. BotRunner exists and owner_id matches user
+		// 2. Keycloak UMA permission check for edit/delete/make-public scopes
+		// 3. BotRunner does not exist
+		// 4. BotRunner exists but owner_id doesn't match
+	})
+}
+
+// TestCreateWithResource_Integration tests for all entity types
+// Note: These are integration test placeholders
+func TestCreateWithResource_Integration(t *testing.T) {
+	t.Run("CreateBotWithResource", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. Bot is created in database
+		// 2. Keycloak resource is created with correct scopes
+		// 3. Keycloak permission is created for owner
+		// 4. Transaction rollback on Keycloak failure
+	})
+
+	t.Run("CreateExchangeWithResource", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. Exchange is created in database
+		// 2. Keycloak resource is created with correct scopes
+		// 3. Keycloak permission is created for owner
+		// 4. Transaction rollback on Keycloak failure
+	})
+
+	t.Run("CreateBotRunnerWithResource", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. BotRunner is created in database
+		// 2. Keycloak resource is created with correct scopes
+		// 3. Keycloak permission is created for owner
+		// 4. Transaction rollback on Keycloak failure
+	})
+}
+
+// TestDeleteWithResource_Integration tests for all entity types
+// Note: These are integration test placeholders
+func TestDeleteWithResource_Integration(t *testing.T) {
+	t.Run("DeleteBotWithResource", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. Bot is deleted from database
+		// 2. Keycloak resource is deleted
+		// 3. Error handling when bot doesn't exist
+	})
+
+	t.Run("DeleteExchangeWithResource", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. Exchange is deleted from database
+		// 2. Keycloak resource is deleted
+		// 3. Error handling when exchange doesn't exist
+	})
+
+	t.Run("DeleteBotRunnerWithResource", func(t *testing.T) {
+		t.Skip("Integration test - requires test database and Keycloak server")
+		// This would test:
+		// 1. BotRunner is deleted from database
+		// 2. Keycloak resource is deleted
+		// 3. Error handling when runner doesn't exist
 	})
 }

@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useMemo } from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { AuthProvider as OidcAuthProvider, useAuth } from 'react-oidc-context';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { createOidcConfig } from '../config/keycloak';
@@ -63,6 +63,28 @@ const AuthError: React.FC<{ error: Error }> = ({ error }) => {
  */
 const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useAuth();
+  const hasRefreshedOnLoad = useRef(false);
+
+  // Force token refresh on every page load
+  useEffect(() => {
+    // Skip if already refreshed this session, still loading, or during callback
+    if (hasRefreshedOnLoad.current || auth.isLoading || window.location.search.includes('code=')) {
+      return;
+    }
+
+    // Force token refresh on page load if user is authenticated
+    if (auth.isAuthenticated && auth.user) {
+      hasRefreshedOnLoad.current = true;
+      console.log('Refreshing token on page load...');
+      auth.signinSilent().then(() => {
+        console.log('Token refreshed successfully on page load');
+      }).catch((err) => {
+        console.error('Failed to refresh token on page load:', err);
+        // If silent refresh fails, redirect to login
+        auth.signinRedirect();
+      });
+    }
+  }, [auth]);
 
   // Handle authentication state changes
   useEffect(() => {
