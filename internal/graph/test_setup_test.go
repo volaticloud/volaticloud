@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,14 @@ func Setup(t *testing.T) *TestEnv {
 			RequiresPermission: RequiresPermissionDirective,
 		},
 	}))
+
+	// Add middleware to propagate HTTP request context to GraphQL operation context
+	// This is needed for tests to properly inject user context via WithContext()
+	srv.AroundResponses(func(ctx context.Context, next graphql.ResponseHandler) *graphql.Response {
+		// The context here already contains the HTTP request context set by WithContext()
+		// Simply pass it through to the GraphQL operation
+		return next(ctx)
+	})
 
 	// Create GraphQL test client
 	graphqlClient := client.New(srv)
