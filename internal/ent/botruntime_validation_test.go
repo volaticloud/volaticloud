@@ -28,6 +28,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		runtime, err := client.BotRunner.Create().
 			SetName("Docker Valid").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(validConfig).
 			Save(ctx)
 
@@ -46,6 +47,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		_, err := client.BotRunner.Create().
 			SetName("Docker Invalid").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(invalidConfig).
 			Save(ctx)
 
@@ -67,6 +69,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		runtime, err := client.BotRunner.Create().
 			SetName("Docker TLS").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(validTLSConfig).
 			Save(ctx)
 
@@ -85,6 +88,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		_, err := client.BotRunner.Create().
 			SetName("Docker Invalid TLS").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(invalidTLSConfig).
 			Save(ctx)
 
@@ -102,6 +106,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		_, err := client.BotRunner.Create().
 			SetName("K8s Runtime").
 			SetType(enum.RunnerKubernetes).
+			SetOwnerID("test-owner-id").
 			SetConfig(k8sConfig).
 			Save(ctx)
 
@@ -119,6 +124,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		_, err := client.BotRunner.Create().
 			SetName("Local Runtime").
 			SetType(enum.RunnerLocal).
+			SetOwnerID("test-owner-id").
 			SetConfig(localConfig).
 			Save(ctx)
 
@@ -132,6 +138,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		runtime, err := client.BotRunner.Create().
 			SetName("Docker No Config").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			Save(ctx)
 
 		require.NoError(t, err)
@@ -144,6 +151,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		runtime, err := client.BotRunner.Create().
 			SetName("Docker Update Test").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			Save(ctx)
 		require.NoError(t, err)
 
@@ -169,6 +177,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		runtime, err := client.BotRunner.Create().
 			SetName("Docker Update Invalid").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(validConfig).
 			Save(ctx)
 		require.NoError(t, err)
@@ -207,6 +216,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		runtime, err := client.BotRunner.Create().
 			SetName("Docker with Registry Auth").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(configWithAuth).
 			Save(ctx)
 
@@ -228,6 +238,7 @@ func TestBotRuntimeConfigValidation(t *testing.T) {
 		_, err := client.BotRunner.Create().
 			SetName("Docker Invalid Auth").
 			SetType(enum.RunnerDocker).
+			SetOwnerID("test-owner-id").
 			SetConfig(invalidAuthConfig).
 			Save(ctx)
 

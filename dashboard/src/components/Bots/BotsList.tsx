@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation } from './bots.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
+import { useActiveGroup } from '../../contexts/GroupContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
 import { DeleteBotDialog } from './DeleteBotDialog';
@@ -54,10 +55,19 @@ export const BotsList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
+  // Get active group for filtering
+  const { activeGroupId } = useActiveGroup();
+
   // Use generated Apollo hooks with polling for real-time updates
   const { data, loading, error, refetch } = useGetBotsQuery({
-    variables: { first: 50 },
+    variables: {
+      first: 50,
+      where: {
+        ownerID: activeGroupId || undefined
+      }
+    },
     pollInterval: 30000, // Poll every 30 seconds to sync with monitor interval
+    skip: !activeGroupId, // Skip query if no active group
   });
 
   // Mutations with refetch on completion

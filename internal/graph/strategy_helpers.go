@@ -23,7 +23,8 @@ func createStrategyVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy
 		SetCode(parent.Code).
 		SetVersionNumber(parent.VersionNumber + 1).
 		SetParentID(parent.ID).
-		SetIsLatest(true)
+		SetIsLatest(true).
+		SetOwnerID(parent.OwnerID) // Preserve owner_id from parent
 
 	// Copy config if exists
 	if parent.Config != nil {

@@ -19,8 +19,15 @@ export const createOidcConfig = (
     scope: 'openid profile email',
     automaticSilentRenew: true,
     loadUserInfo: true,
+    // Token revocation config (best practice for Keycloak 18+)
+    revokeTokensOnSignout: true,
+    revokeTokenTypes: ['access_token', 'refresh_token'],
     onSigninCallback: () => {
       // Remove query parameters after successful login
+      window.history.replaceState({}, document.title, window.location.pathname);
+    },
+    onSignoutCallback: () => {
+      // Clean up after logout
       window.history.replaceState({}, document.title, window.location.pathname);
     },
   };

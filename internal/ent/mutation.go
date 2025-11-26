@@ -1291,6 +1291,7 @@ type BotMutation struct {
 	freqtrade_version *string
 	last_seen_at      *time.Time
 	error_message     *string
+	owner_id          *string
 	created_at        *time.Time
 	updated_at        *time.Time
 	clearedFields     map[string]struct{}
@@ -1911,6 +1912,42 @@ func (m *BotMutation) ResetRunnerID() {
 	m.runner = nil
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (m *BotMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *BotMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the Bot entity.
+// If the Bot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *BotMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *BotMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -2191,7 +2228,7 @@ func (m *BotMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.name != nil {
 		fields = append(fields, bot.FieldName)
 	}
@@ -2227,6 +2264,9 @@ func (m *BotMutation) Fields() []string {
 	}
 	if m.runner != nil {
 		fields = append(fields, bot.FieldRunnerID)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, bot.FieldOwnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, bot.FieldCreatedAt)
@@ -2266,6 +2306,8 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 		return m.StrategyID()
 	case bot.FieldRunnerID:
 		return m.RunnerID()
+	case bot.FieldOwnerID:
+		return m.OwnerID()
 	case bot.FieldCreatedAt:
 		return m.CreatedAt()
 	case bot.FieldUpdatedAt:
@@ -2303,6 +2345,8 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldStrategyID(ctx)
 	case bot.FieldRunnerID:
 		return m.OldRunnerID(ctx)
+	case bot.FieldOwnerID:
+		return m.OldOwnerID(ctx)
 	case bot.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case bot.FieldUpdatedAt:
@@ -2399,6 +2443,13 @@ func (m *BotMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRunnerID(v)
+		return nil
+	case bot.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
 		return nil
 	case bot.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -2531,6 +2582,9 @@ func (m *BotMutation) ResetField(name string) error {
 		return nil
 	case bot.FieldRunnerID:
 		m.ResetRunnerID()
+		return nil
+	case bot.FieldOwnerID:
+		m.ResetOwnerID()
 		return nil
 	case bot.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -5037,6 +5091,7 @@ type BotRunnerMutation struct {
 	data_download_progress *map[string]interface{}
 	data_error_message     *string
 	data_download_config   *map[string]interface{}
+	owner_id               *string
 	created_at             *time.Time
 	updated_at             *time.Time
 	clearedFields          map[string]struct{}
@@ -5544,6 +5599,42 @@ func (m *BotRunnerMutation) ResetDataDownloadConfig() {
 	delete(m.clearedFields, botrunner.FieldDataDownloadConfig)
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (m *BotRunnerMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *BotRunnerMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *BotRunnerMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *BotRunnerMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -5758,7 +5849,7 @@ func (m *BotRunnerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotRunnerMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.name != nil {
 		fields = append(fields, botrunner.FieldName)
 	}
@@ -5785,6 +5876,9 @@ func (m *BotRunnerMutation) Fields() []string {
 	}
 	if m.data_download_config != nil {
 		fields = append(fields, botrunner.FieldDataDownloadConfig)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, botrunner.FieldOwnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, botrunner.FieldCreatedAt)
@@ -5818,6 +5912,8 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 		return m.DataErrorMessage()
 	case botrunner.FieldDataDownloadConfig:
 		return m.DataDownloadConfig()
+	case botrunner.FieldOwnerID:
+		return m.OwnerID()
 	case botrunner.FieldCreatedAt:
 		return m.CreatedAt()
 	case botrunner.FieldUpdatedAt:
@@ -5849,6 +5945,8 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDataErrorMessage(ctx)
 	case botrunner.FieldDataDownloadConfig:
 		return m.OldDataDownloadConfig(ctx)
+	case botrunner.FieldOwnerID:
+		return m.OldOwnerID(ctx)
 	case botrunner.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case botrunner.FieldUpdatedAt:
@@ -5924,6 +6022,13 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDataDownloadConfig(v)
+		return nil
+	case botrunner.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
 		return nil
 	case botrunner.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -6047,6 +6152,9 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 		return nil
 	case botrunner.FieldDataDownloadConfig:
 		m.ResetDataDownloadConfig()
+		return nil
+	case botrunner.FieldOwnerID:
+		m.ResetOwnerID()
 		return nil
 	case botrunner.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -6176,6 +6284,7 @@ type ExchangeMutation struct {
 	id            *uuid.UUID
 	name          *string
 	_config       *map[string]interface{}
+	owner_id      *string
 	created_at    *time.Time
 	updated_at    *time.Time
 	clearedFields map[string]struct{}
@@ -6376,6 +6485,42 @@ func (m *ExchangeMutation) ResetConfig() {
 	delete(m.clearedFields, exchange.FieldConfig)
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (m *ExchangeMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *ExchangeMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the Exchange entity.
+// If the Exchange object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ExchangeMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *ExchangeMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *ExchangeMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -6536,12 +6681,15 @@ func (m *ExchangeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ExchangeMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, exchange.FieldName)
 	}
 	if m._config != nil {
 		fields = append(fields, exchange.FieldConfig)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, exchange.FieldOwnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, exchange.FieldCreatedAt)
@@ -6561,6 +6709,8 @@ func (m *ExchangeMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case exchange.FieldConfig:
 		return m.Config()
+	case exchange.FieldOwnerID:
+		return m.OwnerID()
 	case exchange.FieldCreatedAt:
 		return m.CreatedAt()
 	case exchange.FieldUpdatedAt:
@@ -6578,6 +6728,8 @@ func (m *ExchangeMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldName(ctx)
 	case exchange.FieldConfig:
 		return m.OldConfig(ctx)
+	case exchange.FieldOwnerID:
+		return m.OldOwnerID(ctx)
 	case exchange.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case exchange.FieldUpdatedAt:
@@ -6604,6 +6756,13 @@ func (m *ExchangeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetConfig(v)
+		return nil
+	case exchange.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
 		return nil
 	case exchange.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -6682,6 +6841,9 @@ func (m *ExchangeMutation) ResetField(name string) error {
 		return nil
 	case exchange.FieldConfig:
 		m.ResetConfig()
+		return nil
+	case exchange.FieldOwnerID:
+		m.ResetOwnerID()
 		return nil
 	case exchange.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -6790,6 +6952,7 @@ type StrategyMutation struct {
 	is_latest         *bool
 	version_number    *int
 	addversion_number *int
+	owner_id          *string
 	created_at        *time.Time
 	updated_at        *time.Time
 	clearedFields     map[string]struct{}
@@ -7210,6 +7373,42 @@ func (m *StrategyMutation) ResetVersionNumber() {
 	m.addversion_number = nil
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (m *StrategyMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *StrategyMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *StrategyMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *StrategyMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -7490,7 +7689,7 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.name != nil {
 		fields = append(fields, strategy.FieldName)
 	}
@@ -7511,6 +7710,9 @@ func (m *StrategyMutation) Fields() []string {
 	}
 	if m.version_number != nil {
 		fields = append(fields, strategy.FieldVersionNumber)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, strategy.FieldOwnerID)
 	}
 	if m.created_at != nil {
 		fields = append(fields, strategy.FieldCreatedAt)
@@ -7540,6 +7742,8 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 		return m.IsLatest()
 	case strategy.FieldVersionNumber:
 		return m.VersionNumber()
+	case strategy.FieldOwnerID:
+		return m.OwnerID()
 	case strategy.FieldCreatedAt:
 		return m.CreatedAt()
 	case strategy.FieldUpdatedAt:
@@ -7567,6 +7771,8 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldIsLatest(ctx)
 	case strategy.FieldVersionNumber:
 		return m.OldVersionNumber(ctx)
+	case strategy.FieldOwnerID:
+		return m.OldOwnerID(ctx)
 	case strategy.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case strategy.FieldUpdatedAt:
@@ -7628,6 +7834,13 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVersionNumber(v)
+		return nil
+	case strategy.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
 		return nil
 	case strategy.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -7742,6 +7955,9 @@ func (m *StrategyMutation) ResetField(name string) error {
 		return nil
 	case strategy.FieldVersionNumber:
 		m.ResetVersionNumber()
+		return nil
+	case strategy.FieldOwnerID:
+		m.ResetOwnerID()
 		return nil
 	case strategy.FieldCreatedAt:
 		m.ResetCreatedAt()

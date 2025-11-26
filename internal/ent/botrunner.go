@@ -38,6 +38,8 @@ type BotRunner struct {
 	DataErrorMessage string `json:"data_error_message,omitempty"`
 	// Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
 	DataDownloadConfig map[string]interface{} `json:"data_download_config,omitempty"`
+	// Group ID (organization) that owns this bot runner
+	OwnerID string `json:"owner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -91,7 +93,7 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case botrunner.FieldDataIsReady:
 			values[i] = new(sql.NullBool)
-		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage:
+		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage, botrunner.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case botrunner.FieldDataLastUpdated, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -178,6 +180,12 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field data_download_config: %w", err)
 				}
 			}
+		case botrunner.FieldOwnerID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
+			} else if value.Valid {
+				_m.OwnerID = value.String
+			}
 		case botrunner.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -262,6 +270,9 @@ func (_m *BotRunner) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("data_download_config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadConfig))
+	builder.WriteString(", ")
+	builder.WriteString("owner_id=")
+	builder.WriteString(_m.OwnerID)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

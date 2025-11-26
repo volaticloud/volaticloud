@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useMemo } from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { AuthProvider as OidcAuthProvider, useAuth } from 'react-oidc-context';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { createOidcConfig } from '../config/keycloak';
@@ -63,7 +63,30 @@ const AuthError: React.FC<{ error: Error }> = ({ error }) => {
  */
 const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useAuth();
+  const hasRefreshedOnLoad = useRef(false);
 
+  // Force token refresh on every page load
+  useEffect(() => {
+    // Skip if already refreshed this session, still loading, or during callback
+    if (hasRefreshedOnLoad.current || auth.isLoading || window.location.search.includes('code=')) {
+      return;
+    }
+
+    // Force token refresh on page load if user is authenticated
+    if (auth.isAuthenticated && auth.user) {
+      hasRefreshedOnLoad.current = true;
+      console.log('Refreshing token on page load...');
+      auth.signinSilent().then(() => {
+        console.log('Token refreshed successfully on page load');
+      }).catch((err) => {
+        console.error('Failed to refresh token on page load:', err);
+        // If silent refresh fails, redirect to login
+        auth.signinRedirect();
+      });
+    }
+  }, [auth]);
+
+  // Handle authentication state changes
   useEffect(() => {
     // Handle redirect callback after login
     if (window.location.search.includes('code=') || window.location.search.includes('state=')) {
@@ -74,6 +97,38 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (!auth.isAuthenticated && !auth.isLoading && !auth.error) {
       auth.signinRedirect();
     }
+  }, [auth]);
+
+  // Monitor session and detect external logouts
+  useEffect(() => {
+    // Skip if still loading or during callback
+    if (auth.isLoading || window.location.search.includes('code=')) {
+      return;
+    }
+
+    // Detect when user becomes unauthenticated (external logout)
+    // This happens when Keycloak session is terminated from another source
+    if (!auth.isAuthenticated && !auth.error) {
+      console.log('Session terminated externally, redirecting to login...');
+      auth.signinRedirect();
+    }
+  }, [auth.isAuthenticated, auth.isLoading, auth.error, auth]);
+
+  // Monitor auth events for session changes
+  useEffect(() => {
+    // Listen for session terminated event
+    const handleUserUnloaded = () => {
+      console.log('User session unloaded, redirecting to login...');
+      auth.signinRedirect();
+    };
+
+    // Subscribe to auth events
+    auth.events.addUserUnloaded(handleUserUnloaded);
+
+    // Cleanup event listener
+    return () => {
+      auth.events.removeUserUnloaded(handleUserUnloaded);
+    };
   }, [auth]);
 
   // Show loading state

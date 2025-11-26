@@ -164,6 +164,20 @@ func (_u *BotRunnerUpdate) ClearDataDownloadConfig() *BotRunnerUpdate {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *BotRunnerUpdate) SetOwnerID(v string) *BotRunnerUpdate {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableOwnerID(v *string) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotRunnerUpdate) SetUpdatedAt(v time.Time) *BotRunnerUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -306,6 +320,11 @@ func (_u *BotRunnerUpdate) check() error {
 			return &ValidationError{Name: "data_download_status", err: fmt.Errorf(`ent: validator failed for field "BotRunner.data_download_status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := botrunner.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "BotRunner.owner_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -362,6 +381,9 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DataDownloadConfigCleared() {
 		_spec.ClearField(botrunner.FieldDataDownloadConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
@@ -608,6 +630,20 @@ func (_u *BotRunnerUpdateOne) ClearDataDownloadConfig() *BotRunnerUpdateOne {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *BotRunnerUpdateOne) SetOwnerID(v string) *BotRunnerUpdateOne {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableOwnerID(v *string) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotRunnerUpdateOne) SetUpdatedAt(v time.Time) *BotRunnerUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -763,6 +799,11 @@ func (_u *BotRunnerUpdateOne) check() error {
 			return &ValidationError{Name: "data_download_status", err: fmt.Errorf(`ent: validator failed for field "BotRunner.data_download_status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := botrunner.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "BotRunner.owner_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -836,6 +877,9 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	}
 	if _u.mutation.DataDownloadConfigCleared() {
 		_spec.ClearField(botrunner.FieldDataDownloadConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)

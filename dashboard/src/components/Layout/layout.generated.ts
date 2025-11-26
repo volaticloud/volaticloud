@@ -11,7 +11,7 @@ export type GetBotsCountQuery = { __typename?: 'Query', bots: { __typename?: 'Bo
 export type GetExchangesForLayoutQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type GetExchangesForLayoutQuery = { __typename?: 'Query', exchanges: Array<{ __typename?: 'Exchange', id: string, name: string }> };
+export type GetExchangesForLayoutQuery = { __typename?: 'Query', exchanges: { __typename?: 'ExchangeConnection', totalCount: number, edges?: Array<{ __typename?: 'ExchangeEdge', node?: { __typename?: 'Exchange', id: string, name: string } | null } | null> | null } };
 
 
 export const GetBotsCountDocument = gql`
@@ -55,9 +55,14 @@ export type GetBotsCountSuspenseQueryHookResult = ReturnType<typeof useGetBotsCo
 export type GetBotsCountQueryResult = Apollo.QueryResult<GetBotsCountQuery, GetBotsCountQueryVariables>;
 export const GetExchangesForLayoutDocument = gql`
     query GetExchangesForLayout {
-  exchanges {
-    id
-    name
+  exchanges(first: 50) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+    totalCount
   }
 }
     `;

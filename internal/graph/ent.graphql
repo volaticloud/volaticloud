@@ -298,6 +298,10 @@ type Bot implements Node {
   Foreign key to runner (provides execution environment)
   """
   runnerID: ID!
+  """
+  Group ID (organization) that owns this bot
+  """
+  ownerID: String!
   createdAt: Time!
   updatedAt: Time!
   exchange: Exchange!
@@ -796,6 +800,10 @@ type BotRunner implements Node {
   Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
   """
   dataDownloadConfig: Map
+  """
+  Group ID (organization) that owns this bot runner
+  """
+  ownerID: String!
   createdAt: Time!
   updatedAt: Time!
   bots(
@@ -984,6 +992,22 @@ input BotRunnerWhereInput {
   dataErrorMessageEqualFold: String
   dataErrorMessageContainsFold: String
   """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
+  """
   created_at field predicates
   """
   createdAt: Time
@@ -1152,6 +1176,22 @@ input BotWhereInput {
   runnerIDIn: [ID!]
   runnerIDNotIn: [ID!]
   """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
+  """
   created_at field predicates
   """
   createdAt: Time
@@ -1278,6 +1318,10 @@ input CreateBotInput {
   Last error message if status is error
   """
   errorMessage: String
+  """
+  Group ID (organization) that owns this bot
+  """
+  ownerID: String!
   createdAt: Time
   updatedAt: Time
   exchangeID: ID!
@@ -1411,6 +1455,10 @@ input CreateBotRunnerInput {
   Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
   """
   dataDownloadConfig: Map
+  """
+  Group ID (organization) that owns this bot runner
+  """
+  ownerID: String!
   createdAt: Time
   updatedAt: Time
   botIDs: [ID!]
@@ -1429,6 +1477,10 @@ input CreateExchangeInput {
   Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
   """
   config: Map
+  """
+  Group ID (organization) that owns this exchange
+  """
+  ownerID: String!
   createdAt: Time
   updatedAt: Time
   botIDs: [ID!]
@@ -1462,6 +1514,10 @@ input CreateStrategyInput {
   Auto-incremented version number
   """
   versionNumber: Int
+  """
+  Group ID (organization) that owns this strategy
+  """
+  ownerID: String!
   createdAt: Time
   updatedAt: Time
   botIDs: [ID!]
@@ -1549,6 +1605,10 @@ type Exchange implements Node {
   Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
   """
   config: Map
+  """
+  Group ID (organization) that owns this exchange
+  """
+  ownerID: String!
   createdAt: Time!
   updatedAt: Time!
   bots(
@@ -1577,6 +1637,36 @@ type Exchange implements Node {
     """
     where: BotWhereInput
   ): BotConnection!
+}
+"""
+A connection to a list of items.
+"""
+type ExchangeConnection {
+  """
+  A list of edges.
+  """
+  edges: [ExchangeEdge]
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+  """
+  Identifies the total count of items in the connection.
+  """
+  totalCount: Int!
+}
+"""
+An edge in a connection.
+"""
+type ExchangeEdge {
+  """
+  The item at the end of the edge.
+  """
+  node: Exchange
+  """
+  A cursor for use in pagination.
+  """
+  cursor: Cursor!
 }
 """
 ExchangeWhereInput is used for filtering Exchange objects.
@@ -1613,6 +1703,22 @@ input ExchangeWhereInput {
   nameHasSuffix: String
   nameEqualFold: String
   nameContainsFold: String
+  """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
   """
   created_at field predicates
   """
@@ -1784,7 +1890,32 @@ type Query {
     """
     where: BotRunnerWhereInput
   ): BotRunnerConnection!
-  exchanges: [Exchange!]!
+  exchanges(
+    """
+    Returns the elements in the list that come after the specified cursor.
+    """
+    after: Cursor
+
+    """
+    Returns the first _n_ elements from the list.
+    """
+    first: Int
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: Cursor
+
+    """
+    Returns the last _n_ elements from the list.
+    """
+    last: Int
+
+    """
+    Filtering options for Exchanges returned from the connection.
+    """
+    where: ExchangeWhereInput
+  ): ExchangeConnection!
   strategies(
     """
     Returns the elements in the list that come after the specified cursor.
@@ -1851,11 +1982,11 @@ type Strategy implements Node {
   """
   Python strategy code
   """
-  code: String!
+  code: String! @requiresPermission(scope: "view")
   """
   Strategy-specific configuration (config.json) - REQUIRED
   """
-  config: Map!
+  config: Map! @requiresPermission(scope: "view")
   """
   Parent strategy ID for versioning (null for root v1)
   """
@@ -1868,6 +1999,10 @@ type Strategy implements Node {
   Auto-incremented version number
   """
   versionNumber: Int!
+  """
+  Group ID (organization) that owns this strategy
+  """
+  ownerID: String!
   createdAt: Time!
   updatedAt: Time!
   bots(
@@ -2030,6 +2165,22 @@ input StrategyWhereInput {
   versionNumberGTE: Int
   versionNumberLT: Int
   versionNumberLTE: Int
+  """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
   """
   created_at field predicates
   """
@@ -2442,6 +2593,10 @@ input UpdateBotInput {
   """
   errorMessage: String
   clearErrorMessage: Boolean
+  """
+  Group ID (organization) that owns this bot
+  """
+  ownerID: String
   updatedAt: Time
   exchangeID: ID
   strategyID: ID
@@ -2600,6 +2755,10 @@ input UpdateBotRunnerInput {
   """
   dataDownloadConfig: Map
   clearDataDownloadConfig: Boolean
+  """
+  Group ID (organization) that owns this bot runner
+  """
+  ownerID: String
   updatedAt: Time
   addBotIDs: [ID!]
   removeBotIDs: [ID!]
@@ -2622,6 +2781,10 @@ input UpdateExchangeInput {
   """
   config: Map
   clearConfig: Boolean
+  """
+  Group ID (organization) that owns this exchange
+  """
+  ownerID: String
   updatedAt: Time
   addBotIDs: [ID!]
   removeBotIDs: [ID!]
@@ -2657,6 +2820,10 @@ input UpdateStrategyInput {
   Auto-incremented version number
   """
   versionNumber: Int
+  """
+  Group ID (organization) that owns this strategy
+  """
+  ownerID: String
   updatedAt: Time
   addBotIDs: [ID!]
   removeBotIDs: [ID!]

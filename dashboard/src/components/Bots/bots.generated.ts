@@ -6,10 +6,11 @@ const defaultOptions = {} as const;
 export type GetBotsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   after?: Types.InputMaybe<Types.Scalars['Cursor']['input']>;
+  where?: Types.InputMaybe<Types.BotWhereInput>;
 }>;
 
 
-export type GetBotsQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, containerID?: string | null, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, config?: Record<string, any> | null, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetBotsQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, containerID?: string | null, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, config?: Record<string, any> | null, ownerID: string, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetBotQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -70,8 +71,8 @@ export type RestartBotMutation = { __typename?: 'Mutation', restartBot: { __type
 
 
 export const GetBotsDocument = gql`
-    query GetBots($first: Int, $after: Cursor) {
-  bots(first: $first, after: $after) {
+    query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
+  bots(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
@@ -84,6 +85,7 @@ export const GetBotsDocument = gql`
         errorMessage
         createdAt
         config
+        ownerID
         exchange {
           id
           name
@@ -124,6 +126,7 @@ export const GetBotsDocument = gql`
  *   variables: {
  *      first: // value for 'first'
  *      after: // value for 'after'
+ *      where: // value for 'where'
  *   },
  * });
  */

@@ -11,6 +11,7 @@ import (
 	"log"
 	"strings"
 	"time"
+	"volaticloud/internal/auth"
 	backtest1 "volaticloud/internal/backtest"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
@@ -49,7 +50,15 @@ func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*bac
 }
 
 func (r *mutationResolver) CreateExchange(ctx context.Context, input ent.CreateExchangeInput) (*ent.Exchange, error) {
-	return r.client.Exchange.Create().SetInput(input).Save(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create exchange with Keycloak resource sync (uses transaction internally)
+	// OwnerID comes from the input and represents the selected group/organization
+	return CreateExchangeWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 }
 
 func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, input ent.UpdateExchangeInput) (*ent.Exchange, error) {
@@ -57,12 +66,21 @@ func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Exchange.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteExchangeWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
 func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error) {
-	return r.client.Strategy.Create().SetInput(input).Save(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create strategy with Keycloak resource sync (uses transaction internally)
+	// OwnerID comes from the input and represents the selected group/organization
+	return CreateStrategyWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
@@ -89,7 +107,8 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 			SetCode(coalesce(input.Code, &oldStrategy.Code)).
 			SetVersionNumber(oldStrategy.VersionNumber + 1).
 			SetParentID(oldStrategy.ID).
-			SetIsLatest(true)
+			SetIsLatest(true).
+			SetOwnerID(oldStrategy.OwnerID) // Preserve owner_id from parent
 
 		// Handle optional fields
 		if input.Config != nil {
@@ -101,7 +120,20 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 		// Save new version (this will trigger validation hook)
 		// If validation fails, the entire transaction rolls back
 		result, err = newVersion.Save(ctx)
-		return err
+		if err != nil {
+			return err
+		}
+
+		// Sync Keycloak resource for new version
+		if r.umaClient != nil {
+			err = SyncStrategyVersionResource(ctx, r.umaClient, result)
+			if err != nil {
+				// Keycloak sync failed - rollback transaction
+				return fmt.Errorf("failed to sync Keycloak resource (transaction will rollback): %w", err)
+			}
+		}
+
+		return nil
 	})
 
 	if err != nil {
@@ -112,20 +144,28 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Strategy.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteStrategyWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
 func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error) {
-	// Step 1: Basic validation - just ensure config is provided
+	// Step 1: Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Step 2: Basic validation - just ensure config is provided
 	// Note: Full schema validation is available in validateFreqtradeConfigWithSchema()
 	// but requires a complete merged config (Exchange + Strategy + Bot)
 	if input.Config == nil {
 		return nil, fmt.Errorf("bot config is required for Freqtrade bots")
 	}
 
-	// Step 2: Create the bot in the database
-	createdBot, err := r.client.Bot.Create().SetInput(input).Save(ctx)
+	// Step 3: Create the bot in the database with Keycloak resource sync
+	// This uses transaction internally and syncs with Keycloak
+	createdBot, err := CreateBotWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
@@ -211,7 +251,8 @@ func (r *mutationResolver) UpdateBot(ctx context.Context, id uuid.UUID, input en
 }
 
 func (r *mutationResolver) DeleteBot(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Bot.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteBotWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
@@ -440,7 +481,15 @@ func (r *mutationResolver) RestartBot(ctx context.Context, id uuid.UUID) (*ent.B
 }
 
 func (r *mutationResolver) CreateBotRunner(ctx context.Context, input ent.CreateBotRunnerInput) (*ent.BotRunner, error) {
-	return r.client.BotRunner.Create().SetInput(input).Save(ctx)
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user context not found: %w", err)
+	}
+
+	// Create bot runner with Keycloak resource sync (uses transaction internally)
+	// OwnerID comes from the input and represents the selected group/organization
+	return CreateBotRunnerWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
 }
 
 func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, input ent.UpdateBotRunnerInput) (*ent.BotRunner, error) {
@@ -448,7 +497,8 @@ func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, in
 }
 
 func (r *mutationResolver) DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.BotRunner.DeleteOneID(id).Exec(ctx)
+	// Use Keycloak-aware deletion
+	err := DeleteBotRunnerWithResource(ctx, r.client, r.umaClient, id.String())
 	return err == nil, err
 }
 
@@ -774,8 +824,18 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	return status, nil
 }
 
+// StrategyVersions returns all versions of a strategy by name
+// Note: This query does NOT filter by owner - authorization should be handled by UMA/Keycloak
+// or by the client passing the appropriate ownerID in the where clause of the main strategies query
 func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error) {
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
 	// Get all versions of a strategy by name, ordered by version number
+	// No owner filtering here - that's handled at the authorization layer
 	return r.client.Strategy.Query().
 		Where(strategy.Name(name)).
 		Order(ent.Asc(strategy.FieldVersionNumber)).

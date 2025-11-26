@@ -1,7 +1,11 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
-  schema: 'http://localhost:8080/query',
+  // Use local schema files instead of remote endpoint (avoids auth issues)
+  schema: [
+    '../internal/graph/ent.graphql',
+    '../internal/graph/schema.graphqls'
+  ],
   documents: ['src/**/*.graphql'],
   ignoreNoDocuments: true,
   generates: {

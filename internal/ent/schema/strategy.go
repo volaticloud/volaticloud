@@ -30,10 +30,14 @@ func (Strategy) Fields() []ent.Field {
 			Optional().
 			Comment("Strategy description"),
 		field.Text("code").
-			Comment("Python strategy code"),
+			Comment("Python strategy code").
+			Annotations(RequiresPermission("view")),
 		field.JSON("config", map[string]interface{}{}).
 			Comment("Strategy-specific configuration (config.json) - REQUIRED").
-			Annotations(entgql.Type("Map")),
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view"),
+			),
 		// Versioning fields
 		field.UUID("parent_id", uuid.UUID{}).
 			Optional().
@@ -45,6 +49,9 @@ func (Strategy) Fields() []ent.Field {
 		field.Int("version_number").
 			Default(1).
 			Comment("Auto-incremented version number"),
+		field.String("owner_id").
+			NotEmpty().
+			Comment("Group ID (organization) that owns this strategy"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -82,6 +89,10 @@ func (Strategy) Indexes() []ent.Index {
 		index.Fields("is_latest"),
 		// Index on parent_id for traversing version history
 		index.Fields("parent_id"),
+		// Index on owner_id for efficient ownership queries
+		index.Fields("owner_id"),
+		// Composite index on owner_id and is_latest for user's latest strategies
+		index.Fields("owner_id", "is_latest"),
 	}
 }
 

@@ -118,6 +118,12 @@ func (_c *BotRunnerCreate) SetDataDownloadConfig(v map[string]interface{}) *BotR
 	return _c
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_c *BotRunnerCreate) SetOwnerID(v string) *BotRunnerCreate {
+	_c.mutation.SetOwnerID(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *BotRunnerCreate) SetCreatedAt(v time.Time) *BotRunnerCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -292,6 +298,14 @@ func (_c *BotRunnerCreate) check() error {
 			return &ValidationError{Name: "data_download_status", err: fmt.Errorf(`ent: validator failed for field "BotRunner.data_download_status": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "BotRunner.owner_id"`)}
+	}
+	if v, ok := _c.mutation.OwnerID(); ok {
+		if err := botrunner.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "BotRunner.owner_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BotRunner.created_at"`)}
 	}
@@ -368,6 +382,10 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DataDownloadConfig(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadConfig, field.TypeJSON, value)
 		_node.DataDownloadConfig = value
+	}
+	if value, ok := _c.mutation.OwnerID(); ok {
+		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
+		_node.OwnerID = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(botrunner.FieldCreatedAt, field.TypeTime, value)

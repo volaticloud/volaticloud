@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 )
 
@@ -29,6 +30,9 @@ func (Exchange) Fields() []ent.Field {
 			Optional().
 			Annotations(entgql.Type("Map")).
 			Comment("Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)"),
+		field.String("owner_id").
+			NotEmpty().
+			Comment("Group ID (organization) that owns this exchange"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -46,9 +50,18 @@ func (Exchange) Edges() []ent.Edge {
 	}
 }
 
+// Indexes of the Exchange.
+func (Exchange) Indexes() []ent.Index {
+	return []ent.Index{
+		// Index on owner_id for efficient ownership queries
+		index.Fields("owner_id"),
+	}
+}
+
 // Annotations of the Exchange.
 func (Exchange) Annotations() []schema.Annotation {
 	return []schema.Annotation{
+		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
 	}

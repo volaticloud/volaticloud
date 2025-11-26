@@ -6,6 +6,47 @@
 scalar Time
 scalar Map
 
+# Authorization directives
+
+"""
+Requires the request to be authenticated (valid JWT token)
+Ensures user context is available in resolver
+"""
+directive @isAuthenticated on FIELD_DEFINITION
+
+"""
+Requires the user to have a specific permission scope on a resource
+Uses Keycloak UMA 2.0 for fine-grained authorization
+"""
+directive @hasScope(
+  """
+  The resource ID argument name (e.g., "id" for mutations that take an ID)
+  """
+  resource: String!
+
+  """
+  The permission scope to check (e.g., "edit", "delete", "view", "backtest")
+  """
+  scope: String!
+) on FIELD_DEFINITION
+
+"""
+Requires the user to have a specific permission scope on the parent node/object
+Uses Keycloak UMA 2.0 for node-level field authorization
+This directive inspects the parent object to get the resource ID and checks permission
+"""
+directive @requiresPermission(
+  """
+  The permission scope to check (e.g., "view", "view:code", "edit")
+  """
+  scope: String!
+
+  """
+  The field name containing the resource ID in the parent object (defaults to "id")
+  """
+  idField: String = "id"
+) on FIELD_DEFINITION
+
 # Runner configuration inputs
 
 input RegistryAuthInput {
@@ -148,6 +189,9 @@ extend type Backtest {
   summary: BacktestSummary
 }
 
+# Note: Strategy field-level authorization is applied via ENT schema annotations
+# See: internal/ent/schema/strategy.go - code and config fields use RequiresPermission("view")
+
 # Connection test result
 type ConnectionTestResult {
   success: Boolean!
@@ -156,61 +200,64 @@ type ConnectionTestResult {
 }
 
 # Query extensions
+# Note: ENT-generated list queries (exchanges, strategies, bots, botRunners, backtests) are defined in ent.graphql
+# Those queries already have @isAuthenticated checks in resolvers and require ownerID in where clause for authorization
+
 extend type Query {
   # Get runner status for a bot
-  getBotRunnerStatus(id: ID!): BotStatus
+  getBotRunnerStatus(id: ID!): BotStatus @hasScope(resource: "id", scope: "view")
 
   # Strategy versioning queries
   """
   Get all versions of a strategy by name (for version history view)
   """
-  strategyVersions(name: String!): [Strategy!]!
+  strategyVersions(name: String!): [Strategy!]! @isAuthenticated
 }
 
 # Mutations for managing entities
 type Mutation {
   # Exchange mutations
-  createExchange(input: CreateExchangeInput!): Exchange!
-  updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange!
-  deleteExchange(id: ID!): Boolean!
+  createExchange(input: CreateExchangeInput!): Exchange! @isAuthenticated
+  updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange! @hasScope(resource: "id", scope: "edit")
+  deleteExchange(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Strategy mutations
-  createStrategy(input: CreateStrategyInput!): Strategy!
-  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy!
-  deleteStrategy(id: ID!): Boolean!
+  createStrategy(input: CreateStrategyInput!): Strategy! @isAuthenticated
+  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit")
+  deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Bot mutations
-  createBot(input: CreateBotInput!): Bot!
-  updateBot(id: ID!, input: UpdateBotInput!): Bot!
-  deleteBot(id: ID!): Boolean!
+  createBot(input: CreateBotInput!): Bot! @isAuthenticated
+  updateBot(id: ID!, input: UpdateBotInput!): Bot! @hasScope(resource: "id", scope: "edit")
+  deleteBot(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Bot lifecycle mutations
-  startBot(id: ID!): Bot!
-  stopBot(id: ID!): Bot!
-  restartBot(id: ID!): Bot!
+  startBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run")
+  stopBot(id: ID!): Bot! @hasScope(resource: "id", scope: "stop")
+  restartBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run")
 
   # BotRunner mutations
-  createBotRunner(input: CreateBotRunnerInput!): BotRunner!
-  updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner!
-  deleteBotRunner(id: ID!): Boolean!
+  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @isAuthenticated
+  updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner! @hasScope(resource: "id", scope: "edit")
+  deleteBotRunner(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Runner data management
-  refreshRunnerData(id: ID!): BotRunner!
+  refreshRunnerData(id: ID!): BotRunner! @hasScope(resource: "id", scope: "edit")
 
   # Runner connection testing
-  testRunnerConnection(type: BotRunnerRunnerType!, config: RunnerConfigInput!): ConnectionTestResult!
+  testRunnerConnection(type: BotRunnerRunnerType!, config: RunnerConfigInput!): ConnectionTestResult! @isAuthenticated
 
   # Backtest mutations
   # Backtests are immutable - only creation is allowed, no updates
-  createBacktest(input: CreateBacktestInput!): Backtest!
-  deleteBacktest(id: ID!): Boolean!
+  createBacktest(input: CreateBacktestInput!): Backtest! @isAuthenticated
+  deleteBacktest(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Backtest lifecycle mutations
-  runBacktest(id: ID!): Backtest!
-  stopBacktest(id: ID!): Backtest!
+  runBacktest(id: ID!): Backtest! @hasScope(resource: "id", scope: "run")
+  stopBacktest(id: ID!): Backtest! @hasScope(resource: "id", scope: "stop")
 
   # Trade mutations
-  createTrade(input: CreateTradeInput!): Trade!
-  updateTrade(id: ID!, input: UpdateTradeInput!): Trade!
-  deleteTrade(id: ID!): Boolean!
+  createTrade(input: CreateTradeInput!): Trade! @isAuthenticated
+  updateTrade(id: ID!, input: UpdateTradeInput!): Trade! @hasScope(resource: "id", scope: "edit")
+  deleteTrade(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 }

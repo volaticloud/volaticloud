@@ -77,6 +77,11 @@ func DataErrorMessage(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldDataErrorMessage, v))
 }
 
+// OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
+func OwnerID(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldOwnerID, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldCreatedAt, v))
@@ -375,6 +380,71 @@ func DataDownloadConfigIsNil() predicate.BotRunner {
 // DataDownloadConfigNotNil applies the NotNil predicate on the "data_download_config" field.
 func DataDownloadConfigNotNil() predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldNotNull(FieldDataDownloadConfig))
+}
+
+// OwnerIDEQ applies the EQ predicate on the "owner_id" field.
+func OwnerIDEQ(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldOwnerID, v))
+}
+
+// OwnerIDNEQ applies the NEQ predicate on the "owner_id" field.
+func OwnerIDNEQ(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldOwnerID, v))
+}
+
+// OwnerIDIn applies the In predicate on the "owner_id" field.
+func OwnerIDIn(vs ...string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldOwnerID, vs...))
+}
+
+// OwnerIDNotIn applies the NotIn predicate on the "owner_id" field.
+func OwnerIDNotIn(vs ...string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldOwnerID, vs...))
+}
+
+// OwnerIDGT applies the GT predicate on the "owner_id" field.
+func OwnerIDGT(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldOwnerID, v))
+}
+
+// OwnerIDGTE applies the GTE predicate on the "owner_id" field.
+func OwnerIDGTE(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldOwnerID, v))
+}
+
+// OwnerIDLT applies the LT predicate on the "owner_id" field.
+func OwnerIDLT(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldOwnerID, v))
+}
+
+// OwnerIDLTE applies the LTE predicate on the "owner_id" field.
+func OwnerIDLTE(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldOwnerID, v))
+}
+
+// OwnerIDContains applies the Contains predicate on the "owner_id" field.
+func OwnerIDContains(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldContains(FieldOwnerID, v))
+}
+
+// OwnerIDHasPrefix applies the HasPrefix predicate on the "owner_id" field.
+func OwnerIDHasPrefix(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldHasPrefix(FieldOwnerID, v))
+}
+
+// OwnerIDHasSuffix applies the HasSuffix predicate on the "owner_id" field.
+func OwnerIDHasSuffix(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldHasSuffix(FieldOwnerID, v))
+}
+
+// OwnerIDEqualFold applies the EqualFold predicate on the "owner_id" field.
+func OwnerIDEqualFold(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEqualFold(FieldOwnerID, v))
+}
+
+// OwnerIDContainsFold applies the ContainsFold predicate on the "owner_id" field.
+func OwnerIDContainsFold(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldContainsFold(FieldOwnerID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

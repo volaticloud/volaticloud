@@ -34,6 +34,8 @@ type Strategy struct {
 	IsLatest bool `json:"is_latest,omitempty"`
 	// Auto-incremented version number
 	VersionNumber int `json:"version_number,omitempty"`
+	// Group ID (organization) that owns this strategy
+	OwnerID string `json:"owner_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -117,7 +119,7 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case strategy.FieldVersionNumber:
 			values[i] = new(sql.NullInt64)
-		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode:
+		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode, strategy.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case strategy.FieldCreatedAt, strategy.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -188,6 +190,12 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field version_number", values[i])
 			} else if value.Valid {
 				_m.VersionNumber = int(value.Int64)
+			}
+		case strategy.FieldOwnerID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
+			} else if value.Valid {
+				_m.OwnerID = value.String
 			}
 		case strategy.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -279,6 +287,9 @@ func (_m *Strategy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("version_number=")
 	builder.WriteString(fmt.Sprintf("%v", _m.VersionNumber))
+	builder.WriteString(", ")
+	builder.WriteString("owner_id=")
+	builder.WriteString(_m.OwnerID)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

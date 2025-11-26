@@ -32,6 +32,7 @@ import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateRunnerDialog } from './CreateRunnerDialog';
 import { EditRunnerDialog } from './EditRunnerDialog';
 import { DeleteRunnerDialog } from './DeleteRunnerDialog';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
 export const RunnersList = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -39,10 +40,19 @@ export const RunnersList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRunner, setSelectedRunner] = useState<any | null>(null);
 
+  // Get active group for filtering
+  const { activeGroupId } = useActiveGroup();
+
   const { data, loading, error, refetch } = useGetRunnersQuery({
-    variables: { first: 50 },
+    variables: {
+      first: 50,
+      where: {
+        ownerID: activeGroupId || undefined
+      }
+    },
     pollInterval: 10000, // Poll every 10 seconds to update download status
     fetchPolicy: 'network-only', // Force fetch from network to get updated schema
+    skip: !activeGroupId, // Skip query if no active group
   });
 
   const [refreshRunnerData] = useRefreshRunnerDataMutation();

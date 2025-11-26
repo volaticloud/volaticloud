@@ -126,11 +126,199 @@ VolatiCloud supports both SQLite and PostgreSQL:
 
 ### Environment Variables
 
+**Server Configuration:**
 - `VOLATICLOUD_HOST` - Server host (default: 0.0.0.0)
 - `VOLATICLOUD_PORT` - Server port (default: 8080)
 - `VOLATICLOUD_DATABASE` - Database connection string (default: sqlite://./data/volaticloud.db)
-- `VOLATICLOUD_ENCRYPTION_KEY` - 32-byte encryption key for secrets
-- `VOLATICLOUD_RUNTIME` - Default runtime type (docker, kubernetes, local)
+- `VOLATICLOUD_MONITOR_INTERVAL` - Bot monitoring interval (default: 30s)
+
+**Authentication (Required):**
+- `VOLATICLOUD_KEYCLOAK_URL` - Keycloak server URL (e.g., https://keycloak.example.com)
+- `VOLATICLOUD_KEYCLOAK_REALM` - Keycloak realm name (default: volaticloud)
+- `VOLATICLOUD_KEYCLOAK_CLIENT_ID` - Keycloak client ID (default: volaticloud-api)
+- `VOLATICLOUD_KEYCLOAK_CLIENT_SECRET` - Keycloak client secret (required)
+
+**Example .env:**
+```bash
+VOLATICLOUD_HOST=0.0.0.0
+VOLATICLOUD_PORT=8080
+VOLATICLOUD_DATABASE=sqlite://./data/volaticloud.db
+VOLATICLOUD_KEYCLOAK_URL=https://keycloak.volaticloud.com
+VOLATICLOUD_KEYCLOAK_REALM=volaticloud
+VOLATICLOUD_KEYCLOAK_CLIENT_ID=volaticloud-api
+VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=your-secret-here
+```
+
+## Authentication and Authorization
+
+VolatiCloud uses **Keycloak** for authentication and authorization. Keycloak is **REQUIRED** - the server will not start without proper configuration.
+
+### Security Model
+
+VolatiCloud implements a multi-layered security architecture:
+
+1. **JWT Authentication** - All API requests require a valid JWT token from Keycloak
+2. **GraphQL Directives** - Declarative authorization via `@isAuthenticated` and `@hasScope`
+3. **UMA 2.0 Resource Permissions** - Fine-grained resource-level authorization for strategies
+4. **Owner-Based Access** - Fast local ownership checks before hitting Keycloak
+
+### Keycloak Setup
+
+**Prerequisites:**
+- Keycloak 23+ server running and accessible
+- Admin access to create realms and clients
+
+**1. Create Realm:**
+
+```bash
+# Create a new realm called "volaticloud"
+# Or use an existing realm
+```
+
+**2. Create Backend Client (volaticloud-api):**
+
+Navigate to: **Clients → Create Client**
+
+**General Settings:**
+- Client ID: `volaticloud-api`
+- Client Protocol: `openid-connect`
+- Client Authentication: **ON** (confidential client)
+
+**Capability Config:**
+- Authorization: **ON** (enable UMA 2.0)
+- Service accounts: **ON** (for backend resource management)
+
+**Advanced Settings:**
+- Access Type: `confidential`
+- Standard Flow: **OFF**
+- Service Accounts: **ON**
+- Authorization: **ON**
+
+**Service Account Roles:**
+After client creation, go to **Service Account Roles** tab:
+- Assign realm-management role: `realm-admin` (or create custom role)
+
+**Client Secret:**
+- Go to **Credentials** tab
+- Copy the **Client Secret** - this is your `VOLATICLOUD_KEYCLOAK_CLIENT_SECRET`
+
+**3. Create Frontend Client (volaticloud-frontend):**
+
+Navigate to: **Clients → Create Client**
+
+**General Settings:**
+- Client ID: `volaticloud-frontend`
+- Client Protocol: `openid-connect`
+- Client Authentication: **OFF** (public client)
+
+**Capability Config:**
+- Standard Flow: **ON**
+- Direct Access Grants: **ON**
+- Authorization: **OFF**
+
+**Valid Redirect URIs:**
+```
+http://localhost:5173/*
+http://localhost:3000/*
+https://dashboard.volaticloud.com/*
+```
+
+**Web Origins:**
+```
+http://localhost:5173
+http://localhost:3000
+https://dashboard.volaticloud.com
+```
+
+**4. Enable UMA 2.0 Authorization:**
+
+For `volaticloud-api` client:
+- Go to **Authorization** tab
+- Ensure **Policy Enforcement Mode** is set to `Enforcing`
+- Enable **Resource Server** settings
+
+**5. Create Test User:**
+
+Navigate to: **Users → Add User**
+
+- Username: `testuser`
+- Email: `testuser@example.com`
+- Email Verified: **ON**
+
+Set password in **Credentials** tab:
+- Password: `your-password`
+- Temporary: **OFF**
+
+### Testing Authentication
+
+**1. Start the server:**
+```bash
+export VOLATICLOUD_KEYCLOAK_URL=https://your-keycloak-server.com
+export VOLATICLOUD_KEYCLOAK_REALM=volaticloud
+export VOLATICLOUD_KEYCLOAK_CLIENT_ID=volaticloud-api
+export VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=your-secret-here
+
+./bin/volaticloud server
+```
+
+**2. Get a JWT token:**
+```bash
+curl -X POST 'https://your-keycloak-server.com/realms/volaticloud/protocol/openid-connect/token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'username=testuser' \
+  -d 'password=your-password' \
+  -d 'grant_type=password' \
+  -d 'client_id=volaticloud-frontend'
+```
+
+**3. Use token in GraphQL requests:**
+```bash
+curl -X POST 'http://localhost:8080/query' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "{ latestStrategies { edges { node { id name } } } }"}'
+```
+
+### Permission Scopes
+
+VolatiCloud defines the following scopes for Strategy resources:
+
+- `view` - View strategy details
+- `edit` - Update strategy code
+- `backtest` - Run backtests with the strategy
+- `delete` - Delete the strategy
+
+**Automatic Permissions:**
+- Strategy owners automatically have all scopes
+- Other users can be granted permissions via Keycloak policies
+
+### Troubleshooting
+
+**"Keycloak configuration is required"**
+- Ensure all 4 environment variables are set
+- Check that values are not empty
+
+**"authentication required"**
+- Your JWT token is missing or invalid
+- Check Authorization header: `Bearer <token>`
+- Verify token hasn't expired
+
+**"insufficient permissions: missing 'edit' scope"**
+- You don't have permission to modify this resource
+- Check if you're the owner or have been granted access
+- Verify Keycloak policies and permissions
+
+**Check Keycloak connectivity:**
+```bash
+curl https://your-keycloak-server.com/realms/volaticloud/.well-known/openid-configuration
+```
+
+**Decode JWT token:**
+```bash
+echo "YOUR_TOKEN" | cut -d. -f2 | base64 -d | jq
+```
+
+For detailed authorization documentation, see [CLAUDE.md - Authentication and Authorization](/.claude/CLAUDE.md#authentication-and-authorization).
 
 ## Project Structure
 

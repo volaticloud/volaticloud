@@ -32,9 +32,11 @@ import { CreateStrategyDialog } from './CreateStrategyDialog';
 import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
 export const StrategiesList = () => {
   const navigate = useNavigate();
+  const { activeGroupId } = useActiveGroup();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -56,8 +58,12 @@ export const StrategiesList = () => {
   const { data, loading, error, refetch } = useGetStrategiesQuery({
     variables: {
       first: 50,
-      where: { isLatest: true }
-    }
+      where: {
+        isLatest: true,
+        ownerID: activeGroupId || undefined
+      }
+    },
+    skip: !activeGroupId, // Skip query if no active group
   });
 
   const handleCloseSnackbar = () => {

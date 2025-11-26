@@ -22,6 +22,7 @@ import {
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../shared/Logo';
+import { GroupSwitcher } from '../shared/GroupSwitcher';
 import { drawerWidth } from './Sidebar';
 
 interface HeaderProps {
@@ -43,8 +44,8 @@ export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: Heade
   };
 
   const handleLogout = () => {
-    handleMenuClose();
-    auth.removeUser();
+    // Simple logout - signoutRedirect handles everything
+    auth.signoutRedirect();
   };
 
   // Get user info from auth
@@ -80,6 +81,11 @@ export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: Heade
 
         {/* Spacer for desktop */}
         <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
+
+        {/* Group Switcher */}
+        <Box sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
+          <GroupSwitcher />
+        </Box>
 
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Tooltip title={darkMode ? 'Light mode' : 'Dark mode'}>
@@ -119,7 +125,6 @@ export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: Heade
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
-            onClick={handleMenuClose}
             transformOrigin={{ horizontal: 'right', vertical: 'top' }}
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           >

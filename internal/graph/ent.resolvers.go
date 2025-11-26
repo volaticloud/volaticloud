@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
 
 	"entgo.io/contrib/entgql"
@@ -21,7 +22,16 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder
 	return r.client.Noders(ctx, ids)
 }
 
+// Backtests resolver
+// Note: Backtests are associated with strategies which have owner_id.
+// Client should pass appropriate filters via where clause.
 func (r *queryResolver) Backtests(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) (*ent.BacktestConnection, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
 	query := r.client.Backtest.Query()
 	if where != nil {
 		p, err := where.P()
@@ -33,7 +43,16 @@ func (r *queryResolver) Backtests(ctx context.Context, after *entgql.Cursor[uuid
 	return query.Paginate(ctx, after, first, before, last)
 }
 
+// Bots resolver
+// Note: This query does NOT filter by owner_id automatically.
+// Client should pass the appropriate ownerID (group ID) in the where clause.
 func (r *queryResolver) Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) (*ent.BotConnection, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
 	query := r.client.Bot.Query()
 	if where != nil {
 		p, err := where.P()
@@ -49,8 +68,21 @@ func (r *queryResolver) BotMetricsSlice(ctx context.Context) ([]*ent.BotMetrics,
 	panic(fmt.Errorf("not implemented: BotMetricsSlice - botMetricsSlice"))
 }
 
+// BotRunners resolver
+// Note: This query does NOT filter by owner_id automatically.
+// Authorization should be handled by UMA/Keycloak, or the client should pass
+// the appropriate ownerID (group ID) in the where clause.
 func (r *queryResolver) BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) (*ent.BotRunnerConnection, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Start with base query (no automatic filtering by owner_id)
 	query := r.client.BotRunner.Query()
+
+	// Apply where filters if provided (including ownerID from client)
 	if where != nil {
 		p, err := where.P()
 		if err != nil {
@@ -61,12 +93,21 @@ func (r *queryResolver) BotRunners(ctx context.Context, after *entgql.Cursor[uui
 	return query.Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) Exchanges(ctx context.Context) ([]*ent.Exchange, error) {
-	return r.client.Exchange.Query().All(ctx)
-}
+// Exchanges resolver
+// Note: This query does NOT filter by owner_id automatically.
+// Authorization should be handled by UMA/Keycloak, or the client should pass
+// the appropriate ownerID (group ID) in the where clause.
+func (r *queryResolver) Exchanges(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) (*ent.ExchangeConnection, error) {
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
 
-func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
-	query := r.client.Strategy.Query()
+	// Start with base query (no automatic filtering by owner_id)
+	query := r.client.Exchange.Query()
+
+	// Apply where filters if provided (including ownerID from client)
 	if where != nil {
 		p, err := where.P()
 		if err != nil {
@@ -74,6 +115,33 @@ func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uui
 		}
 		query = query.Where(p)
 	}
+	return query.Paginate(ctx, after, first, before, last)
+}
+
+// Strategies resolver
+// Note: This query does NOT filter by owner_id automatically.
+// Authorization should be handled by UMA/Keycloak, or the client should pass
+// the appropriate ownerID (group ID) in the where clause.
+func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error) {
+	// Verify user is authenticated (required by @isAuthenticated directive)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Start with base query (no automatic filtering by owner_id)
+	query := r.client.Strategy.Query()
+
+	// Apply where filters if provided (including ownerID from client)
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+
+	// Return paginated results
 	return query.Paginate(ctx, after, first, before, last)
 }
 

@@ -34,6 +34,12 @@ func (_c *ExchangeCreate) SetConfig(v map[string]interface{}) *ExchangeCreate {
 	return _c
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_c *ExchangeCreate) SetOwnerID(v string) *ExchangeCreate {
+	_c.mutation.SetOwnerID(v)
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *ExchangeCreate) SetCreatedAt(v time.Time) *ExchangeCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -162,6 +168,14 @@ func (_c *ExchangeCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Exchange.name": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Exchange.owner_id"`)}
+	}
+	if v, ok := _c.mutation.OwnerID(); ok {
+		if err := exchange.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Exchange.owner_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Exchange.created_at"`)}
 	}
@@ -210,6 +224,10 @@ func (_c *ExchangeCreate) createSpec() (*Exchange, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(exchange.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
+	}
+	if value, ok := _c.mutation.OwnerID(); ok {
+		_spec.SetField(exchange.FieldOwnerID, field.TypeString, value)
+		_node.OwnerID = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(exchange.FieldCreatedAt, field.TypeTime, value)

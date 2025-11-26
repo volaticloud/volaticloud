@@ -1,11 +1,12 @@
-query GetRunners($first: Int, $after: Cursor) {
-  botRunners(first: $first, after: $after) {
+query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
+  botRunners(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
         name
         type
         config
+        ownerID
         createdAt
         dataIsReady
         dataLastUpdated

@@ -57,6 +57,7 @@ var (
 		{Name: "freqtrade_version", Type: field.TypeString, Default: "2025.10"},
 		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "owner_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "runner_id", Type: field.TypeUUID},
@@ -71,21 +72,28 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bots_bot_runners_bots",
-				Columns:    []*schema.Column{BotsColumns[12]},
+				Columns:    []*schema.Column{BotsColumns[13]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_exchanges_bots",
-				Columns:    []*schema.Column{BotsColumns[13]},
+				Columns:    []*schema.Column{BotsColumns[14]},
 				RefColumns: []*schema.Column{ExchangesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_strategies_bots",
-				Columns:    []*schema.Column{BotsColumns[14]},
+				Columns:    []*schema.Column{BotsColumns[15]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "bot_owner_id",
+				Unique:  false,
+				Columns: []*schema.Column{BotsColumns[10]},
 			},
 		},
 	}
@@ -140,6 +148,7 @@ var (
 		{Name: "data_download_progress", Type: field.TypeJSON, Nullable: true},
 		{Name: "data_error_message", Type: field.TypeString, Nullable: true},
 		{Name: "data_download_config", Type: field.TypeJSON, Nullable: true},
+		{Name: "owner_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -148,12 +157,20 @@ var (
 		Name:       "bot_runners",
 		Columns:    BotRunnersColumns,
 		PrimaryKey: []*schema.Column{BotRunnersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "botrunner_owner_id",
+				Unique:  false,
+				Columns: []*schema.Column{BotRunnersColumns[10]},
+			},
+		},
 	}
 	// ExchangesColumns holds the columns for the "exchanges" table.
 	ExchangesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
+		{Name: "owner_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -162,6 +179,13 @@ var (
 		Name:       "exchanges",
 		Columns:    ExchangesColumns,
 		PrimaryKey: []*schema.Column{ExchangesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "exchange_owner_id",
+				Unique:  false,
+				Columns: []*schema.Column{ExchangesColumns[3]},
+			},
+		},
 	}
 	// StrategiesColumns holds the columns for the "strategies" table.
 	StrategiesColumns = []*schema.Column{
@@ -172,6 +196,7 @@ var (
 		{Name: "config", Type: field.TypeJSON},
 		{Name: "is_latest", Type: field.TypeBool, Default: true},
 		{Name: "version_number", Type: field.TypeInt, Default: 1},
+		{Name: "owner_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
@@ -184,7 +209,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "strategies_strategies_parent",
-				Columns:    []*schema.Column{StrategiesColumns[9]},
+				Columns:    []*schema.Column{StrategiesColumns[10]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -203,7 +228,17 @@ var (
 			{
 				Name:    "strategy_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[9]},
+				Columns: []*schema.Column{StrategiesColumns[10]},
+			},
+			{
+				Name:    "strategy_owner_id",
+				Unique:  false,
+				Columns: []*schema.Column{StrategiesColumns[7]},
+			},
+			{
+				Name:    "strategy_owner_id_is_latest",
+				Unique:  false,
+				Columns: []*schema.Column{StrategiesColumns[7], StrategiesColumns[5]},
 			},
 		},
 	}

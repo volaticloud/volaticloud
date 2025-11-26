@@ -30,6 +30,8 @@ const (
 	FieldIsLatest = "is_latest"
 	// FieldVersionNumber holds the string denoting the version_number field in the database.
 	FieldVersionNumber = "version_number"
+	// FieldOwnerID holds the string denoting the owner_id field in the database.
+	FieldOwnerID = "owner_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -78,6 +80,7 @@ var Columns = []string{
 	FieldParentID,
 	FieldIsLatest,
 	FieldVersionNumber,
+	FieldOwnerID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -105,6 +108,8 @@ var (
 	DefaultIsLatest bool
 	// DefaultVersionNumber holds the default value on creation for the "version_number" field.
 	DefaultVersionNumber int
+	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	OwnerIDValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -151,6 +156,11 @@ func ByIsLatest(opts ...sql.OrderTermOption) OrderOption {
 // ByVersionNumber orders the results by the version_number field.
 func ByVersionNumber(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVersionNumber, opts...).ToFunc()
+}
+
+// ByOwnerID orders the results by the owner_id field.
+func ByOwnerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOwnerID, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

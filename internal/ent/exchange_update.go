@@ -56,6 +56,20 @@ func (_u *ExchangeUpdate) ClearConfig() *ExchangeUpdate {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *ExchangeUpdate) SetOwnerID(v string) *ExchangeUpdate {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *ExchangeUpdate) SetNillableOwnerID(v *string) *ExchangeUpdate {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ExchangeUpdate) SetUpdatedAt(v time.Time) *ExchangeUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -152,6 +166,11 @@ func (_u *ExchangeUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Exchange.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := exchange.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Exchange.owner_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -175,6 +194,9 @@ func (_u *ExchangeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(exchange.FieldConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(exchange.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(exchange.FieldUpdatedAt, field.TypeTime, value)
@@ -267,6 +289,20 @@ func (_u *ExchangeUpdateOne) SetConfig(v map[string]interface{}) *ExchangeUpdate
 // ClearConfig clears the value of the "config" field.
 func (_u *ExchangeUpdateOne) ClearConfig() *ExchangeUpdateOne {
 	_u.mutation.ClearConfig()
+	return _u
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (_u *ExchangeUpdateOne) SetOwnerID(v string) *ExchangeUpdateOne {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *ExchangeUpdateOne) SetNillableOwnerID(v *string) *ExchangeUpdateOne {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
 	return _u
 }
 
@@ -379,6 +415,11 @@ func (_u *ExchangeUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Exchange.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := exchange.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Exchange.owner_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -419,6 +460,9 @@ func (_u *ExchangeUpdateOne) sqlSave(ctx context.Context) (_node *Exchange, err 
 	}
 	if _u.mutation.ConfigCleared() {
 		_spec.ClearField(exchange.FieldConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(exchange.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(exchange.FieldUpdatedAt, field.TypeTime, value)

@@ -1,13 +1,25 @@
-query GetExchanges {
-  exchanges {
-    id
-    name
-    config
-    createdAt
-    updatedAt
-    bots(first: 10) {
-      totalCount
+query GetExchanges($first: Int, $after: Cursor, $where: ExchangeWhereInput) {
+  exchanges(first: $first, after: $after, where: $where) {
+    edges {
+      node {
+        id
+        name
+        config
+        ownerID
+        createdAt
+        updatedAt
+        bots(first: 10) {
+          totalCount
+        }
+      }
     }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
   }
 }
 

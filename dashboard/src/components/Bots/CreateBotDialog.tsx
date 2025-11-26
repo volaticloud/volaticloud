@@ -17,15 +17,20 @@ import { useCreateBotMutation } from './bots.generated';
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';
+import { useActiveGroup } from '../../contexts/GroupContext';
 
-// Query to get available exchanges, strategies, and runners
+// Query to get available exchanges, strategies, and runners filtered by owner
 const GET_BOT_OPTIONS = gql`
-  query GetBotOptions {
-    exchanges {
-      id
-      name
+  query GetBotOptions($ownerID: String) {
+    exchanges(first: 50, where: { ownerID: $ownerID }) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
     }
-    strategies(first: 50) {
+    strategies(first: 50, where: { ownerID: $ownerID }) {
       edges {
         node {
           id
@@ -35,7 +40,7 @@ const GET_BOT_OPTIONS = gql`
         }
       }
     }
-    botRunners(first: 50) {
+    botRunners(first: 50, where: { ownerID: $ownerID }) {
       edges {
         node {
           id
@@ -54,6 +59,7 @@ interface CreateBotDialogProps {
 }
 
 export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogProps) => {
+  const { activeGroupId } = useActiveGroup();
   const [name, setName] = useState('');
   const [exchangeID, setExchangeID] = useState('');
   const [strategyID, setStrategyID] = useState('');
@@ -106,11 +112,16 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
     },
   });
 
-  const { data: optionsData } = useQuery(GET_BOT_OPTIONS);
+  const { data: optionsData } = useQuery(GET_BOT_OPTIONS, {
+    variables: {
+      ownerID: activeGroupId || undefined,
+    },
+    skip: !activeGroupId, // Skip query if no active group
+  });
   const [createBot, { loading, error }] = useCreateBotMutation();
 
   const handleSubmit = async () => {
-    if (!name || !exchangeID || !strategyID || !runnerID) {
+    if (!name || !exchangeID || !strategyID || !runnerID || !activeGroupId) {
       return;
     }
 
@@ -125,6 +136,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             mode: mode as any,
             freqtradeVersion: '2025.10',
             config: config || undefined,
+            ownerID: activeGroupId,
           },
         },
       });
@@ -149,7 +161,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
     }
   };
 
-  const exchanges = optionsData?.exchanges || [];
+  const exchanges = optionsData?.exchanges?.edges?.map(edge => edge?.node).filter(Boolean) || [];
   const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
   const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 

@@ -12,6 +12,10 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /**
+   * Define a Relay Cursor type:
+   * https://relay.dev/graphql/connections.htm#sec-Cursor
+   */
   Cursor: { input: string; output: string; }
   Map: { input: Record<string, any>; output: Record<string, any>; }
   Time: { input: string; output: string; }
@@ -270,6 +274,8 @@ export type Bot = Node & {
   mode: BotBotMode;
   /** Bot display name */
   name: Scalars['String']['output'];
+  /** Group ID (organization) that owns this bot */
+  ownerID: Scalars['String']['output'];
   runner: BotRunner;
   /** Foreign key to runner (provides execution environment) */
   runnerID: Scalars['ID']['output'];
@@ -645,6 +651,8 @@ export type BotRunner = Node & {
   id: Scalars['ID']['output'];
   /** Runner display name */
   name: Scalars['String']['output'];
+  /** Group ID (organization) that owns this bot runner */
+  ownerID: Scalars['String']['output'];
   /** Runner environment type (docker, kubernetes, local) */
   type: BotRunnerRunnerType;
   updatedAt: Scalars['Time']['output'];
@@ -784,6 +792,20 @@ export type BotRunnerWhereInput = {
   nameNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   not?: InputMaybe<BotRunnerWhereInput>;
   or?: InputMaybe<Array<BotRunnerWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** type field predicates */
   type?: InputMaybe<BotRunnerRunnerType>;
   typeIn?: InputMaybe<Array<BotRunnerRunnerType>>;
@@ -939,6 +961,20 @@ export type BotWhereInput = {
   nameNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   not?: InputMaybe<BotWhereInput>;
   or?: InputMaybe<Array<BotWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** runner_id field predicates */
   runnerID?: InputMaybe<Scalars['ID']['input']>;
   runnerIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -1026,6 +1062,8 @@ export type CreateBotInput = {
   mode?: InputMaybe<BotBotMode>;
   /** Bot display name */
   name: Scalars['String']['input'];
+  /** Group ID (organization) that owns this bot */
+  ownerID: Scalars['String']['input'];
   runnerID: Scalars['ID']['input'];
   /** Bot lifecycle status */
   status?: InputMaybe<BotBotStatus>;
@@ -1105,6 +1143,8 @@ export type CreateBotRunnerInput = {
   dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
   /** Runner display name */
   name: Scalars['String']['input'];
+  /** Group ID (organization) that owns this bot runner */
+  ownerID: Scalars['String']['input'];
   /** Runner environment type (docker, kubernetes, local) */
   type?: InputMaybe<BotRunnerRunnerType>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
@@ -1121,6 +1161,8 @@ export type CreateExchangeInput = {
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Exchange display name (e.g., 'Binance Production', 'Coinbase Testnet') */
   name: Scalars['String']['input'];
+  /** Group ID (organization) that owns this exchange */
+  ownerID: Scalars['String']['input'];
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
 };
 
@@ -1143,6 +1185,8 @@ export type CreateStrategyInput = {
   isLatest?: InputMaybe<Scalars['Boolean']['input']>;
   /** Strategy name (not unique, allows versions) */
   name: Scalars['String']['input'];
+  /** Group ID (organization) that owns this strategy */
+  ownerID: Scalars['String']['input'];
   parentID?: InputMaybe<Scalars['ID']['input']>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Auto-incremented version number */
@@ -1220,6 +1264,8 @@ export type Exchange = Node & {
   id: Scalars['ID']['output'];
   /** Exchange display name (e.g., 'Binance Production', 'Coinbase Testnet') */
   name: Scalars['String']['output'];
+  /** Group ID (organization) that owns this exchange */
+  ownerID: Scalars['String']['output'];
   updatedAt: Scalars['Time']['output'];
 };
 
@@ -1241,6 +1287,26 @@ export type ExchangeConfigInput = {
   kraken?: InputMaybe<KrakenConfigInput>;
   kucoin?: InputMaybe<PassphraseExchangeConfigInput>;
   okx?: InputMaybe<PassphraseExchangeConfigInput>;
+};
+
+/** A connection to a list of items. */
+export type ExchangeConnection = {
+  __typename?: 'ExchangeConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<ExchangeEdge>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  /** Identifies the total count of items in the connection. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in a connection. */
+export type ExchangeEdge = {
+  __typename?: 'ExchangeEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['Cursor']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<Exchange>;
 };
 
 /**
@@ -1286,6 +1352,20 @@ export type ExchangeWhereInput = {
   nameNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   not?: InputMaybe<ExchangeWhereInput>;
   or?: InputMaybe<Array<ExchangeWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** updated_at field predicates */
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
   updatedAtGT?: InputMaybe<Scalars['Time']['input']>;
@@ -1511,7 +1591,7 @@ export type Query = {
   botMetricsSlice: Array<BotMetrics>;
   botRunners: BotRunnerConnection;
   bots: BotConnection;
-  exchanges: Array<Exchange>;
+  exchanges: ExchangeConnection;
   getBotRunnerStatus?: Maybe<BotStatus>;
   /** Fetches an object given its ID. */
   node?: Maybe<Node>;
@@ -1548,6 +1628,15 @@ export type QueryBotsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   where?: InputMaybe<BotWhereInput>;
+};
+
+
+export type QueryExchangesArgs = {
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  before?: InputMaybe<Scalars['Cursor']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ExchangeWhereInput>;
 };
 
 
@@ -1619,6 +1708,8 @@ export type Strategy = Node & {
   isLatest: Scalars['Boolean']['output'];
   /** Strategy name (not unique, allows versions) */
   name: Scalars['String']['output'];
+  /** Group ID (organization) that owns this strategy */
+  ownerID: Scalars['String']['output'];
   parent?: Maybe<Strategy>;
   /** Parent strategy ID for versioning (null for root v1) */
   parentID?: Maybe<Scalars['ID']['output']>;
@@ -1741,6 +1832,20 @@ export type StrategyWhereInput = {
   nameNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   not?: InputMaybe<StrategyWhereInput>;
   or?: InputMaybe<Array<StrategyWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** parent_id field predicates */
   parentID?: InputMaybe<Scalars['ID']['input']>;
   parentIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -2049,6 +2154,8 @@ export type UpdateBotInput = {
   mode?: InputMaybe<BotBotMode>;
   /** Bot display name */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Group ID (organization) that owns this bot */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
   removeTradeIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   runnerID?: InputMaybe<Scalars['ID']['input']>;
   /** Bot lifecycle status */
@@ -2152,6 +2259,8 @@ export type UpdateBotRunnerInput = {
   dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
   /** Runner display name */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Group ID (organization) that owns this bot runner */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
   removeBacktestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Runner environment type (docker, kubernetes, local) */
@@ -2171,6 +2280,8 @@ export type UpdateExchangeInput = {
   config?: InputMaybe<Scalars['Map']['input']>;
   /** Exchange display name (e.g., 'Binance Production', 'Coinbase Testnet') */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Group ID (organization) that owns this exchange */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
 };
@@ -2198,6 +2309,8 @@ export type UpdateStrategyInput = {
   isLatest?: InputMaybe<Scalars['Boolean']['input']>;
   /** Strategy name (not unique, allows versions) */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Group ID (organization) that owns this strategy */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
   parentID?: InputMaybe<Scalars['ID']['input']>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeChildIDs?: InputMaybe<Array<Scalars['ID']['input']>>;

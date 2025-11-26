@@ -53,6 +53,9 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	HasScope           func(ctx context.Context, obj any, next graphql.Resolver, resource string, scope string) (res any, err error)
+	IsAuthenticated    func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	RequiresPermission func(ctx context.Context, obj any, next graphql.Resolver, scope string, idField *string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -121,6 +124,7 @@ type ComplexityRoot struct {
 		Metrics          func(childComplexity int) int
 		Mode             func(childComplexity int) int
 		Name             func(childComplexity int) int
+		OwnerID          func(childComplexity int) int
 		Runner           func(childComplexity int) int
 		RunnerID         func(childComplexity int) int
 		Status           func(childComplexity int) int
@@ -180,6 +184,7 @@ type ComplexityRoot struct {
 		DataLastUpdated      func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		Name                 func(childComplexity int) int
+		OwnerID              func(childComplexity int) int
 		Type                 func(childComplexity int) int
 		UpdatedAt            func(childComplexity int) int
 	}
@@ -223,7 +228,19 @@ type ComplexityRoot struct {
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
+		OwnerID   func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+	}
+
+	ExchangeConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ExchangeEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -265,7 +282,7 @@ type ComplexityRoot struct {
 		BotMetricsSlice    func(childComplexity int) int
 		BotRunners         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) int
 		Bots               func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
-		Exchanges          func(childComplexity int) int
+		Exchanges          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) int
 		GetBotRunnerStatus func(childComplexity int, id uuid.UUID) int
 		Node               func(childComplexity int, id uuid.UUID) int
 		Nodes              func(childComplexity int, ids []uuid.UUID) int
@@ -285,6 +302,7 @@ type ComplexityRoot struct {
 		ID            func(childComplexity int) int
 		IsLatest      func(childComplexity int) int
 		Name          func(childComplexity int) int
+		OwnerID       func(childComplexity int) int
 		Parent        func(childComplexity int) int
 		ParentID      func(childComplexity int) int
 		UpdatedAt     func(childComplexity int) int
@@ -372,7 +390,7 @@ type QueryResolver interface {
 	Bots(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) (*ent.BotConnection, error)
 	BotMetricsSlice(ctx context.Context) ([]*ent.BotMetrics, error)
 	BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) (*ent.BotRunnerConnection, error)
-	Exchanges(ctx context.Context) ([]*ent.Exchange, error)
+	Exchanges(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) (*ent.ExchangeConnection, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
 	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
@@ -714,6 +732,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bot.Name(childComplexity), true
+	case "Bot.ownerID":
+		if e.complexity.Bot.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.Bot.OwnerID(childComplexity), true
 	case "Bot.runner":
 		if e.complexity.Bot.Runner == nil {
 			break
@@ -1015,6 +1039,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.Name(childComplexity), true
+	case "BotRunner.ownerID":
+		if e.complexity.BotRunner.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.OwnerID(childComplexity), true
 	case "BotRunner.type":
 		if e.complexity.BotRunner.Type == nil {
 			break
@@ -1193,12 +1223,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Exchange.Name(childComplexity), true
+	case "Exchange.ownerID":
+		if e.complexity.Exchange.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.Exchange.OwnerID(childComplexity), true
 	case "Exchange.updatedAt":
 		if e.complexity.Exchange.UpdatedAt == nil {
 			break
 		}
 
 		return e.complexity.Exchange.UpdatedAt(childComplexity), true
+
+	case "ExchangeConnection.edges":
+		if e.complexity.ExchangeConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ExchangeConnection.Edges(childComplexity), true
+	case "ExchangeConnection.pageInfo":
+		if e.complexity.ExchangeConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ExchangeConnection.PageInfo(childComplexity), true
+	case "ExchangeConnection.totalCount":
+		if e.complexity.ExchangeConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ExchangeConnection.TotalCount(childComplexity), true
+
+	case "ExchangeEdge.cursor":
+		if e.complexity.ExchangeEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ExchangeEdge.Cursor(childComplexity), true
+	case "ExchangeEdge.node":
+		if e.complexity.ExchangeEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ExchangeEdge.Node(childComplexity), true
 
 	case "Mutation.createBacktest":
 		if e.complexity.Mutation.CreateBacktest == nil {
@@ -1534,7 +1602,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Query.Exchanges(childComplexity), true
+		args, err := ec.field_Query_exchanges_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Exchanges(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.ExchangeWhereInput)), true
 	case "Query.getBotRunnerStatus":
 		if e.complexity.Query.GetBotRunnerStatus == nil {
 			break
@@ -1667,6 +1740,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Name(childComplexity), true
+	case "Strategy.ownerID":
+		if e.complexity.Strategy.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.Strategy.OwnerID(childComplexity), true
 	case "Strategy.parent":
 		if e.complexity.Strategy.Parent == nil {
 			break
@@ -2028,6 +2107,38 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_hasScope_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "resource", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["resource"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "scope", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["scope"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) dir_requiresPermission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "scope", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["scope"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "idField", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["idField"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_BotRunner_backtests_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -2544,6 +2655,37 @@ func (ec *executionContext) field_Query_bots_args(ctx context.Context, rawArgs m
 	}
 	args["last"] = arg3
 	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOBotWhereInput2ᚖvolaticloudᚋinternalᚋentᚐBotWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_exchanges_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursor2ᚖentgoᚗioᚋcontribᚋentgqlᚐCursor)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOExchangeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInput)
 	if err != nil {
 		return nil, err
 	}
@@ -3157,6 +3299,8 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -3220,6 +3364,8 @@ func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, fiel
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -4398,6 +4544,35 @@ func (ec *executionContext) fieldContext_Bot_runnerID(_ context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Bot_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Bot_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Bot_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bot",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bot_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4486,6 +4661,8 @@ func (ec *executionContext) fieldContext_Bot_exchange(_ context.Context, field g
 				return ec.fieldContext_Exchange_name(ctx, field)
 			case "config":
 				return ec.fieldContext_Exchange_config(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Exchange_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -4539,6 +4716,8 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -4602,6 +4781,8 @@ func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field gra
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -4894,6 +5075,8 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5630,6 +5813,8 @@ func (ec *executionContext) fieldContext_BotMetrics_bot(_ context.Context, field
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -5941,6 +6126,35 @@ func (ec *executionContext) fieldContext_BotRunner_dataDownloadConfig(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _BotRunner_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BotRunner_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6244,6 +6458,8 @@ func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, f
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -6839,6 +7055,35 @@ func (ec *executionContext) fieldContext_Exchange_config(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Exchange_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Exchange_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Exchange_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Exchange_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.Exchange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6946,6 +7191,183 @@ func (ec *executionContext) fieldContext_Exchange_bots(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _ExchangeConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExchangeConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalOExchangeEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeEdge,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExchangeConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExchangeConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_ExchangeEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_ExchangeEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExchangeEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExchangeConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExchangeConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExchangeConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExchangeConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExchangeConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExchangeConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExchangeConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExchangeConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExchangeEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExchangeEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalOExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExchangeEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExchangeEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Exchange_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Exchange_name(ctx, field)
+			case "config":
+				return ec.fieldContext_Exchange_config(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Exchange_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Exchange_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Exchange_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_Exchange_bots(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExchangeEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.ExchangeEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExchangeEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursor2entgoᚗioᚋcontribᚋentgqlᚐCursor,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExchangeEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExchangeEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6956,7 +7378,20 @@ func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateExchange(ctx, fc.Args["input"].(ent.CreateExchangeInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.Exchange
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange,
 		true,
 		true,
@@ -6977,6 +7412,8 @@ func (ec *executionContext) fieldContext_Mutation_createExchange(ctx context.Con
 				return ec.fieldContext_Exchange_name(ctx, field)
 			case "config":
 				return ec.fieldContext_Exchange_config(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Exchange_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -7011,7 +7448,30 @@ func (ec *executionContext) _Mutation_updateExchange(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateExchange(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateExchangeInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Exchange
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.Exchange
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Exchange
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange,
 		true,
 		true,
@@ -7032,6 +7492,8 @@ func (ec *executionContext) fieldContext_Mutation_updateExchange(ctx context.Con
 				return ec.fieldContext_Exchange_name(ctx, field)
 			case "config":
 				return ec.fieldContext_Exchange_config(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Exchange_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Exchange_createdAt(ctx, field)
 			case "updatedAt":
@@ -7066,7 +7528,30 @@ func (ec *executionContext) _Mutation_deleteExchange(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteExchange(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -7107,7 +7592,20 @@ func (ec *executionContext) _Mutation_createStrategy(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateStrategy(ctx, fc.Args["input"].(ent.CreateStrategyInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
@@ -7138,6 +7636,8 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -7178,7 +7678,30 @@ func (ec *executionContext) _Mutation_updateStrategy(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateStrategy(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateStrategyInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Strategy
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNStrategy2ᚖvolaticloudᚋinternalᚋentᚐStrategy,
 		true,
 		true,
@@ -7209,6 +7732,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -7249,7 +7774,30 @@ func (ec *executionContext) _Mutation_deleteStrategy(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteStrategy(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -7290,7 +7838,20 @@ func (ec *executionContext) _Mutation_createBot(ctx context.Context, field graph
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateBot(ctx, fc.Args["input"].(ent.CreateBotInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
@@ -7329,6 +7890,8 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -7371,7 +7934,30 @@ func (ec *executionContext) _Mutation_updateBot(ctx context.Context, field graph
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateBot(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBotInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
@@ -7410,6 +7996,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -7452,7 +8040,30 @@ func (ec *executionContext) _Mutation_deleteBot(ctx context.Context, field graph
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -7493,7 +8104,30 @@ func (ec *executionContext) _Mutation_startBot(ctx context.Context, field graphq
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().StartBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "run")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
@@ -7532,6 +8166,8 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -7574,7 +8210,30 @@ func (ec *executionContext) _Mutation_stopBot(ctx context.Context, field graphql
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().StopBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "stop")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
@@ -7613,6 +8272,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -7655,7 +8316,30 @@ func (ec *executionContext) _Mutation_restartBot(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RestartBot(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "run")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
 		true,
 		true,
@@ -7694,6 +8378,8 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -7736,7 +8422,20 @@ func (ec *executionContext) _Mutation_createBotRunner(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateBotRunner(ctx, fc.Args["input"].(ent.CreateBotRunnerInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
@@ -7771,6 +8470,8 @@ func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -7807,7 +8508,30 @@ func (ec *executionContext) _Mutation_updateBotRunner(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateBotRunner(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateBotRunnerInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
@@ -7842,6 +8566,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -7878,7 +8604,30 @@ func (ec *executionContext) _Mutation_deleteBotRunner(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteBotRunner(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -7919,7 +8668,30 @@ func (ec *executionContext) _Mutation_refreshRunnerData(ctx context.Context, fie
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RefreshRunnerData(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
 		true,
 		true,
@@ -7954,6 +8726,8 @@ func (ec *executionContext) fieldContext_Mutation_refreshRunnerData(ctx context.
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -7990,7 +8764,20 @@ func (ec *executionContext) _Mutation_testRunnerConnection(ctx context.Context, 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().TestRunnerConnection(ctx, fc.Args["type"].(enum.RunnerType), fc.Args["config"].(model.RunnerConfigInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *model.ConnectionTestResult
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNConnectionTestResult2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐConnectionTestResult,
 		true,
 		true,
@@ -8039,7 +8826,20 @@ func (ec *executionContext) _Mutation_createBacktest(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateBacktest(ctx, fc.Args["input"].(ent.CreateBacktestInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		true,
@@ -8114,7 +8914,30 @@ func (ec *executionContext) _Mutation_deleteBacktest(ctx context.Context, field 
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteBacktest(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -8155,7 +8978,30 @@ func (ec *executionContext) _Mutation_runBacktest(ctx context.Context, field gra
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RunBacktest(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "run")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		true,
@@ -8230,7 +9076,30 @@ func (ec *executionContext) _Mutation_stopBacktest(ctx context.Context, field gr
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().StopBacktest(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "stop")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
 		true,
 		true,
@@ -8305,7 +9174,20 @@ func (ec *executionContext) _Mutation_createTrade(ctx context.Context, field gra
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateTrade(ctx, fc.Args["input"].(ent.CreateTradeInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.Trade
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
 		true,
 		true,
@@ -8386,7 +9268,30 @@ func (ec *executionContext) _Mutation_updateTrade(ctx context.Context, field gra
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateTrade(ctx, fc.Args["id"].(uuid.UUID), fc.Args["input"].(ent.UpdateTradeInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "edit")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Trade
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
 		true,
 		true,
@@ -8467,7 +9372,30 @@ func (ec *executionContext) _Mutation_deleteTrade(ctx context.Context, field gra
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteTrade(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -8927,16 +9855,17 @@ func (ec *executionContext) _Query_exchanges(ctx context.Context, field graphql.
 		field,
 		ec.fieldContext_Query_exchanges,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Exchanges(ctx)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Exchanges(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.ExchangeWhereInput))
 		},
 		nil,
-		ec.marshalNExchange2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeᚄ,
+		ec.marshalNExchangeConnection2ᚖvolaticloudᚋinternalᚋentᚐExchangeConnection,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_exchanges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_exchanges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -8944,21 +9873,26 @@ func (ec *executionContext) fieldContext_Query_exchanges(_ context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Exchange_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Exchange_name(ctx, field)
-			case "config":
-				return ec.fieldContext_Exchange_config(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Exchange_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Exchange_updatedAt(ctx, field)
-			case "bots":
-				return ec.fieldContext_Exchange_bots(ctx, field)
+			case "edges":
+				return ec.fieldContext_ExchangeConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ExchangeConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ExchangeConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Exchange", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ExchangeConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_exchanges_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -9071,7 +10005,30 @@ func (ec *executionContext) _Query_getBotRunnerStatus(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Query().GetBotRunnerStatus(ctx, fc.Args["id"].(uuid.UUID))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *runner.BotStatus
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *runner.BotStatus
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *runner.BotStatus
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOBotStatus2ᚖvolaticloudᚋinternalᚋrunnerᚐBotStatus,
 		true,
 		false,
@@ -9140,7 +10097,20 @@ func (ec *executionContext) _Query_strategyVersions(ctx context.Context, field g
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Query().StrategyVersions(ctx, fc.Args["name"].(string))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal []*ent.Strategy
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNStrategy2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyᚄ,
 		true,
 		true,
@@ -9171,6 +10141,8 @@ func (ec *executionContext) fieldContext_Query_strategyVersions(ctx context.Cont
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -9405,7 +10377,30 @@ func (ec *executionContext) _Strategy_code(ctx context.Context, field graphql.Co
 		func(ctx context.Context) (any, error) {
 			return obj.Code, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal string
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal string
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal string
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNString2string,
 		true,
 		true,
@@ -9434,7 +10429,30 @@ func (ec *executionContext) _Strategy_config(ctx context.Context, field graphql.
 		func(ctx context.Context) (any, error) {
 			return obj.Config, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNMap2map,
 		true,
 		true,
@@ -9536,6 +10554,35 @@ func (ec *executionContext) fieldContext_Strategy_versionNumber(_ context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Strategy_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9751,6 +10798,8 @@ func (ec *executionContext) fieldContext_Strategy_children(_ context.Context, fi
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -9810,6 +10859,8 @@ func (ec *executionContext) fieldContext_Strategy_parent(_ context.Context, fiel
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -9972,6 +11023,8 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_isLatest(ctx, field)
 			case "versionNumber":
 				return ec.fieldContext_Strategy_versionNumber(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Strategy_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Strategy_createdAt(ctx, field)
 			case "updatedAt":
@@ -10590,6 +11643,8 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_strategyID(ctx, field)
 			case "runnerID":
 				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bot_createdAt(ctx, field)
 			case "updatedAt":
@@ -14725,7 +15780,7 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15145,6 +16200,97 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 				return it, err
 			}
 			it.DataErrorMessageContainsFold = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -15298,7 +16444,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "mode", "modeNEQ", "modeIn", "modeNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "freqtradeVersion", "freqtradeVersionNEQ", "freqtradeVersionIn", "freqtradeVersionNotIn", "freqtradeVersionGT", "freqtradeVersionGTE", "freqtradeVersionLT", "freqtradeVersionLTE", "freqtradeVersionContains", "freqtradeVersionHasPrefix", "freqtradeVersionHasSuffix", "freqtradeVersionEqualFold", "freqtradeVersionContainsFold", "lastSeenAt", "lastSeenAtNEQ", "lastSeenAtIn", "lastSeenAtNotIn", "lastSeenAtGT", "lastSeenAtGTE", "lastSeenAtLT", "lastSeenAtLTE", "lastSeenAtIsNil", "lastSeenAtNotNil", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "exchangeID", "exchangeIDNEQ", "exchangeIDIn", "exchangeIDNotIn", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasExchange", "hasExchangeWith", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith", "hasTrades", "hasTradesWith", "hasMetrics", "hasMetricsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "mode", "modeNEQ", "modeIn", "modeNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "freqtradeVersion", "freqtradeVersionNEQ", "freqtradeVersionIn", "freqtradeVersionNotIn", "freqtradeVersionGT", "freqtradeVersionGTE", "freqtradeVersionLT", "freqtradeVersionLTE", "freqtradeVersionContains", "freqtradeVersionHasPrefix", "freqtradeVersionHasSuffix", "freqtradeVersionEqualFold", "freqtradeVersionContainsFold", "lastSeenAt", "lastSeenAtNEQ", "lastSeenAtIn", "lastSeenAtNotIn", "lastSeenAtGT", "lastSeenAtGTE", "lastSeenAtLT", "lastSeenAtLTE", "lastSeenAtIsNil", "lastSeenAtNotNil", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "exchangeID", "exchangeIDNEQ", "exchangeIDIn", "exchangeIDNotIn", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasExchange", "hasExchangeWith", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith", "hasTrades", "hasTradesWith", "hasMetrics", "hasMetricsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15984,6 +17130,97 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 				return it, err
 			}
 			it.RunnerIDNotIn = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -16317,7 +17554,7 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs", "metricsID"}
+	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "ownerID", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs", "metricsID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16380,6 +17617,13 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ErrorMessage = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -16609,7 +17853,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "ownerID", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16679,6 +17923,13 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.DataDownloadConfig = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -16720,7 +17971,7 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "config", "createdAt", "updatedAt", "botIDs"}
+	fieldsInOrder := [...]string{"name", "config", "ownerID", "createdAt", "updatedAt", "botIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16741,6 +17992,13 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 				return it, err
 			}
 			it.Config = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -16775,7 +18033,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code", "config", "isLatest", "versionNumber", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
+	fieldsInOrder := [...]string{"name", "description", "code", "config", "isLatest", "versionNumber", "ownerID", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16824,6 +18082,13 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.VersionNumber = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -17259,7 +18524,7 @@ func (ec *executionContext) unmarshalInputExchangeWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17434,6 +18699,97 @@ func (ec *executionContext) unmarshalInputExchangeWhereInput(ctx context.Context
 				return it, err
 			}
 			it.NameContainsFold = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -17798,7 +19154,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18281,6 +19637,97 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.VersionNumberLTE = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -19665,7 +21112,7 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "clearContainerID", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades", "metricsID", "clearMetrics"}
+	fieldsInOrder := [...]string{"name", "status", "mode", "containerID", "clearContainerID", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "ownerID", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades", "metricsID", "clearMetrics"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19756,6 +21203,13 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ClearErrorMessage = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -20125,7 +21579,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20230,6 +21684,13 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.ClearDataDownloadConfig = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -20292,7 +21753,7 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "config", "clearConfig", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
+	fieldsInOrder := [...]string{"name", "config", "clearConfig", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20320,6 +21781,13 @@ func (ec *executionContext) unmarshalInputUpdateExchangeInput(ctx context.Contex
 				return it, err
 			}
 			it.ClearConfig = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -20361,7 +21829,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "config", "isLatest", "versionNumber", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
+	fieldsInOrder := [...]string{"name", "description", "clearDescription", "code", "config", "isLatest", "versionNumber", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20417,6 +21885,13 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.VersionNumber = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -21141,6 +22616,11 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "ownerID":
+			out.Values[i] = ec._Bot_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._Bot_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21610,6 +23090,11 @@ func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._BotRunner_dataErrorMessage(ctx, field, obj)
 		case "dataDownloadConfig":
 			out.Values[i] = ec._BotRunner_dataDownloadConfig(ctx, field, obj)
+		case "ownerID":
+			out.Values[i] = ec._BotRunner_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._BotRunner_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21961,6 +23446,11 @@ func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "config":
 			out.Values[i] = ec._Exchange_config(ctx, field, obj)
+		case "ownerID":
+			out.Values[i] = ec._Exchange_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._Exchange_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22007,6 +23497,93 @@ func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var exchangeConnectionImplementors = []string{"ExchangeConnection"}
+
+func (ec *executionContext) _ExchangeConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.ExchangeConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exchangeConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExchangeConnection")
+		case "edges":
+			out.Values[i] = ec._ExchangeConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._ExchangeConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._ExchangeConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var exchangeEdgeImplementors = []string{"ExchangeEdge"}
+
+func (ec *executionContext) _ExchangeEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.ExchangeEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exchangeEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExchangeEdge")
+		case "node":
+			out.Values[i] = ec._ExchangeEdge_node(ctx, field, obj)
+		case "cursor":
+			out.Values[i] = ec._ExchangeEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22616,6 +24193,11 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "versionNumber":
 			out.Values[i] = ec._Strategy_versionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ownerID":
+			out.Values[i] = ec._Strategy_ownerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -23743,50 +25325,6 @@ func (ec *executionContext) marshalNExchange2volaticloudᚋinternalᚋentᚐExch
 	return ec._Exchange(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExchange2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Exchange) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v *ent.Exchange) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -23795,6 +25333,20 @@ func (ec *executionContext) marshalNExchange2ᚖvolaticloudᚋinternalᚋentᚐE
 		return graphql.Null
 	}
 	return ec._Exchange(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNExchangeConnection2volaticloudᚋinternalᚋentᚐExchangeConnection(ctx context.Context, sel ast.SelectionSet, v ent.ExchangeConnection) graphql.Marshaler {
+	return ec._ExchangeConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExchangeConnection2ᚖvolaticloudᚋinternalᚋentᚐExchangeConnection(ctx context.Context, sel ast.SelectionSet, v *ent.ExchangeConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExchangeConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNExchangeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInput(ctx context.Context, v any) (*ent.ExchangeWhereInput, error) {
@@ -25156,6 +26708,61 @@ func (ec *executionContext) unmarshalODockerConfigInput2ᚖvolaticloudᚋinterna
 	}
 	res, err := ec.unmarshalInputDockerConfigInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOExchange2ᚖvolaticloudᚋinternalᚋentᚐExchange(ctx context.Context, sel ast.SelectionSet, v *ent.Exchange) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Exchange(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOExchangeEdge2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.ExchangeEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOExchangeEdge2ᚖvolaticloudᚋinternalᚋentᚐExchangeEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOExchangeEdge2ᚖvolaticloudᚋinternalᚋentᚐExchangeEdge(ctx context.Context, sel ast.SelectionSet, v *ent.ExchangeEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ExchangeEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOExchangeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐExchangeWhereInputᚄ(ctx context.Context, v any) ([]*ent.ExchangeWhereInput, error) {

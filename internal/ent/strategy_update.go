@@ -140,6 +140,20 @@ func (_u *StrategyUpdate) AddVersionNumber(v int) *StrategyUpdate {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *StrategyUpdate) SetOwnerID(v string) *StrategyUpdate {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *StrategyUpdate) SetNillableOwnerID(v *string) *StrategyUpdate {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *StrategyUpdate) SetUpdatedAt(v time.Time) *StrategyUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -308,6 +322,11 @@ func (_u *StrategyUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Strategy.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := strategy.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Strategy.owner_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -346,6 +365,9 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedVersionNumber(); ok {
 		_spec.AddField(strategy.FieldVersionNumber, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(strategy.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(strategy.FieldUpdatedAt, field.TypeTime, value)
@@ -627,6 +649,20 @@ func (_u *StrategyUpdateOne) AddVersionNumber(v int) *StrategyUpdateOne {
 	return _u
 }
 
+// SetOwnerID sets the "owner_id" field.
+func (_u *StrategyUpdateOne) SetOwnerID(v string) *StrategyUpdateOne {
+	_u.mutation.SetOwnerID(v)
+	return _u
+}
+
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *StrategyUpdateOne) SetNillableOwnerID(v *string) *StrategyUpdateOne {
+	if v != nil {
+		_u.SetOwnerID(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *StrategyUpdateOne) SetUpdatedAt(v time.Time) *StrategyUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -808,6 +844,11 @@ func (_u *StrategyUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Strategy.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.OwnerID(); ok {
+		if err := strategy.OwnerIDValidator(v); err != nil {
+			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Strategy.owner_id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -863,6 +904,9 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	}
 	if value, ok := _u.mutation.AddedVersionNumber(); ok {
 		_spec.AddField(strategy.FieldVersionNumber, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(strategy.FieldOwnerID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(strategy.FieldUpdatedAt, field.TypeTime, value)
