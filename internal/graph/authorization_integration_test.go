@@ -279,10 +279,10 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 				"name":    "Binance",
 				"ownerID": groupID,
 				"config": map[string]interface{}{
-					"name":      "binance",
-					"key":       "test_api_key",
-					"secret":    "test_api_secret",
-					"ccxt_config": map[string]interface{}{},
+					"name":              "binance",
+					"key":               "test_api_key",
+					"secret":            "test_api_secret",
+					"ccxt_config":       map[string]interface{}{},
 					"ccxt_async_config": map[string]interface{}{},
 				},
 			}),
@@ -334,10 +334,10 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 			SetName("TestExchange").
 			SetOwnerID(groupID).
 			SetConfig(map[string]interface{}{
-				"name":             "binance",
-				"key":              "test_key",
-				"secret":           "test_secret",
-				"ccxt_config":      map[string]interface{}{},
+				"name":              "binance",
+				"key":               "test_key",
+				"secret":            "test_secret",
+				"ccxt_config":       map[string]interface{}{},
 				"ccxt_async_config": map[string]interface{}{},
 			}).
 			Save(env.Context)

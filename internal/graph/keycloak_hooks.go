@@ -169,7 +169,6 @@ func SyncStrategyVersionResource(
 		return fmt.Errorf("failed to sync Keycloak resource for strategy version: %w", err)
 	}
 
-
 	log.Printf("Synced Keycloak resource for strategy version %s (v%d)", strategy.ID, strategy.VersionNumber)
 	return nil
 }
