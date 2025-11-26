@@ -1,4 +1,4 @@
-.PHONY: help setup dev test test-authz coverage lint generate migrate clean build
+.PHONY: help setup dev test test-authz coverage lint generate migrate clean build docs-generate docs-verify
 
 # Default target
 help:
@@ -17,8 +17,13 @@ help:
 	@echo "  make lint         - Run linters"
 	@echo ""
 	@echo "Database:"
-	@echo "  make migrate      - Run database migrations"
 	@echo "  make db-reset     - Reset database (removes data/volaticloud.db)"
+	@echo "                      Note: Migrations run automatically on server start"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  make docs-generate - Generate all documentation (ERD, GraphQL, dependencies)"
+	@echo "  make docs-verify   - Verify documentation structure and references"
+	@echo "  make docs-coverage - Check package documentation coverage metrics"
 	@echo ""
 	@echo "Other:"
 	@echo "  make clean        - Clean generated files and build artifacts"
@@ -118,16 +123,11 @@ lint:
 	@which golangci-lint > /dev/null || (echo "golangci-lint not installed. Install it from https://golangci-lint.run/usage/install/" && exit 1)
 	golangci-lint run --timeout=5m
 
-# Run database migrations
-migrate:
-	@echo "Running database migrations..."
-	go run ./cmd/server/main.go migrate
-
 # Reset database
 db-reset:
 	@echo "Resetting database..."
 	rm -f ./data/volaticloud.db
-	@echo "Database reset complete! Run 'make migrate' to recreate."
+	@echo "Database reset complete! Schema will be created automatically on next server start."
 
 # Clean generated files
 clean:
@@ -135,3 +135,29 @@ clean:
 	rm -f coverage.out coverage.filtered.out coverage.html
 	rm -rf bin/
 	@echo "Clean complete!"
+
+# Generate documentation diagrams
+docs-generate:
+	@echo "Generating documentation..."
+	@chmod +x scripts/generate-erd.sh scripts/generate-deps.sh
+	@./scripts/generate-erd.sh
+	@./scripts/generate-deps.sh
+	@echo ""
+	@echo "Documentation generated!"
+	@echo "  - ERD: docs/diagrams/erd.md"
+	@echo "  - Dependencies: docs/diagrams/dependencies.md"
+	@echo ""
+	@echo "Note: GraphQL docs require server running. Run:"
+	@echo "  ./scripts/generate-graphql-docs.sh"
+
+# Verify documentation structure
+docs-verify:
+	@echo "Verifying documentation..."
+	@chmod +x scripts/verify-docs.sh
+	@./scripts/verify-docs.sh
+
+# Check documentation coverage
+docs-coverage:
+	@echo "Checking documentation coverage..."
+	@chmod +x scripts/check-doc-coverage.sh
+	@./scripts/check-doc-coverage.sh

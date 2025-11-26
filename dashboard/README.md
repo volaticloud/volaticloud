@@ -109,7 +109,6 @@ dashboard/
 │   └── App.tsx                 # Routing
 │
 ├── codegen.ts
-├── ARCHITECTURE.md             # Detailed architecture guide
 └── package.json
 ```
 
@@ -119,8 +118,6 @@ dashboard/
 2. **Components = Reusable** - All UI logic lives here
 3. **Domain-based** - Organized by business feature (Bots, Exchanges, etc.)
 4. **Co-located GraphQL** - Each component directory has its `.graphql` and `.generated.tsx`
-
-See `ARCHITECTURE.md` for detailed design principles and examples.
 
 ## GraphQL Integration
 

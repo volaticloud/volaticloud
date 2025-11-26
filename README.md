@@ -48,12 +48,7 @@ cd volaticloud
 make setup
 ```
 
-3. Run database migrations:
-```bash
-make migrate
-```
-
-4. Start the server:
+3. Start the server (migrations run automatically):
 ```bash
 make dev
 # or
@@ -78,8 +73,8 @@ make test                 # Run tests with coverage
 make lint                 # Run linters
 
 # Database
-make migrate              # Run database migrations
 make db-reset             # Reset database (removes data/volaticloud.db)
+                          # Note: Migrations run automatically on server start
 
 # Other
 make clean                # Clean generated files and build artifacts
@@ -97,8 +92,7 @@ make clean                # Clean generated files and build artifacts
 # Start with PostgreSQL
 ./bin/volaticloud server --database postgresql://user:pass@localhost:5432/volaticloud
 
-# Run migrations
-./bin/volaticloud migrate
+# Migrations run automatically on server start - no manual migration needed!
 
 # Get help
 ./bin/volaticloud --help
@@ -159,99 +153,27 @@ VolatiCloud implements a multi-layered security architecture:
 
 1. **JWT Authentication** - All API requests require a valid JWT token from Keycloak
 2. **GraphQL Directives** - Declarative authorization via `@isAuthenticated` and `@hasScope`
-3. **UMA 2.0 Resource Permissions** - Fine-grained resource-level authorization for strategies
+3. **UMA 2.0 Resource Permissions** - Fine-grained resource-level authorization
 4. **Owner-Based Access** - Fast local ownership checks before hitting Keycloak
 
-### Keycloak Setup
-
-**Prerequisites:**
-- Keycloak 23+ server running and accessible
-- Admin access to create realms and clients
-
-**1. Create Realm:**
+### Required Environment Variables
 
 ```bash
-# Create a new realm called "volaticloud"
-# Or use an existing realm
+VOLATICLOUD_KEYCLOAK_URL=https://keycloak.volaticloud.com
+VOLATICLOUD_KEYCLOAK_REALM=volaticloud
+VOLATICLOUD_KEYCLOAK_CLIENT_ID=volaticloud-api
+VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=<your-secret-here>
 ```
 
-**2. Create Backend Client (volaticloud-api):**
+### Quick Start
 
-Navigate to: **Clients → Create Client**
+1. **Set up Keycloak** - See [ADR-0008: Multi-Tenant Authorization - Keycloak Setup Guide](docs/adr/0008-multi-tenant-authorization.md#keycloak-setup-guide) for detailed instructions on:
+   - Creating realm and clients
+   - Enabling UMA 2.0 authorization
+   - Creating test users
+   - Testing authentication
 
-**General Settings:**
-- Client ID: `volaticloud-api`
-- Client Protocol: `openid-connect`
-- Client Authentication: **ON** (confidential client)
-
-**Capability Config:**
-- Authorization: **ON** (enable UMA 2.0)
-- Service accounts: **ON** (for backend resource management)
-
-**Advanced Settings:**
-- Access Type: `confidential`
-- Standard Flow: **OFF**
-- Service Accounts: **ON**
-- Authorization: **ON**
-
-**Service Account Roles:**
-After client creation, go to **Service Account Roles** tab:
-- Assign realm-management role: `realm-admin` (or create custom role)
-
-**Client Secret:**
-- Go to **Credentials** tab
-- Copy the **Client Secret** - this is your `VOLATICLOUD_KEYCLOAK_CLIENT_SECRET`
-
-**3. Create Frontend Client (volaticloud-frontend):**
-
-Navigate to: **Clients → Create Client**
-
-**General Settings:**
-- Client ID: `volaticloud-frontend`
-- Client Protocol: `openid-connect`
-- Client Authentication: **OFF** (public client)
-
-**Capability Config:**
-- Standard Flow: **ON**
-- Direct Access Grants: **ON**
-- Authorization: **OFF**
-
-**Valid Redirect URIs:**
-```
-http://localhost:5173/*
-http://localhost:3000/*
-https://dashboard.volaticloud.com/*
-```
-
-**Web Origins:**
-```
-http://localhost:5173
-http://localhost:3000
-https://dashboard.volaticloud.com
-```
-
-**4. Enable UMA 2.0 Authorization:**
-
-For `volaticloud-api` client:
-- Go to **Authorization** tab
-- Ensure **Policy Enforcement Mode** is set to `Enforcing`
-- Enable **Resource Server** settings
-
-**5. Create Test User:**
-
-Navigate to: **Users → Add User**
-
-- Username: `testuser`
-- Email: `testuser@example.com`
-- Email Verified: **ON**
-
-Set password in **Credentials** tab:
-- Password: `your-password`
-- Temporary: **OFF**
-
-### Testing Authentication
-
-**1. Start the server:**
+2. **Start the server:**
 ```bash
 export VOLATICLOUD_KEYCLOAK_URL=https://your-keycloak-server.com
 export VOLATICLOUD_KEYCLOAK_REALM=volaticloud
@@ -261,7 +183,7 @@ export VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=your-secret-here
 ./bin/volaticloud server
 ```
 
-**2. Get a JWT token:**
+3. **Get a JWT token:**
 ```bash
 curl -X POST 'https://your-keycloak-server.com/realms/volaticloud/protocol/openid-connect/token' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -271,7 +193,7 @@ curl -X POST 'https://your-keycloak-server.com/realms/volaticloud/protocol/openi
   -d 'client_id=volaticloud-frontend'
 ```
 
-**3. Use token in GraphQL requests:**
+4. **Use token in GraphQL requests:**
 ```bash
 curl -X POST 'http://localhost:8080/query' \
   -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
@@ -279,46 +201,15 @@ curl -X POST 'http://localhost:8080/query' \
   -d '{"query": "{ latestStrategies { edges { node { id name } } } }"}'
 ```
 
-### Permission Scopes
-
-VolatiCloud defines the following scopes for Strategy resources:
-
-- `view` - View strategy details
-- `edit` - Update strategy code
-- `backtest` - Run backtests with the strategy
-- `delete` - Delete the strategy
-
-**Automatic Permissions:**
-- Strategy owners automatically have all scopes
-- Other users can be granted permissions via Keycloak policies
-
 ### Troubleshooting
 
-**"Keycloak configuration is required"**
-- Ensure all 4 environment variables are set
-- Check that values are not empty
+Common authentication errors:
 
-**"authentication required"**
-- Your JWT token is missing or invalid
-- Check Authorization header: `Bearer <token>`
-- Verify token hasn't expired
+- **"Keycloak configuration is required"** - Ensure all 4 environment variables are set
+- **"authentication required"** - JWT token is missing or invalid
+- **"insufficient permissions"** - User doesn't have required permissions on resource
 
-**"insufficient permissions: missing 'edit' scope"**
-- You don't have permission to modify this resource
-- Check if you're the owner or have been granted access
-- Verify Keycloak policies and permissions
-
-**Check Keycloak connectivity:**
-```bash
-curl https://your-keycloak-server.com/realms/volaticloud/.well-known/openid-configuration
-```
-
-**Decode JWT token:**
-```bash
-echo "YOUR_TOKEN" | cut -d. -f2 | base64 -d | jq
-```
-
-For detailed authorization documentation, see [CLAUDE.md - Authentication and Authorization](/.claude/CLAUDE.md#authentication-and-authorization).
+For detailed troubleshooting steps, see [ADR-0008: Keycloak Setup Guide - Troubleshooting](docs/adr/0008-multi-tenant-authorization.md#troubleshooting).
 
 ## Project Structure
 
@@ -386,5 +277,13 @@ Please read the [PLAN.md](PLAN.md) file for detailed architecture and implementa
 
 ## Documentation
 
-- [Architecture Plan](PLAN.md) - Detailed architecture and implementation plan
-- [Architecture Overview](ARCHITECTURE.md) - High-level architecture documentation
+For comprehensive documentation, see the `/docs/` directory:
+
+- **[ADRs](docs/adr/)** - Architecture Decision Records documenting key design decisions
+- **[Patterns](docs/patterns/)** - Reusable code patterns and best practices
+- **[Runbooks](docs/runbooks/)** - Operational guides for common tasks
+- **[API Docs](docs/api/graphql/)** - GraphQL API documentation
+
+Also see:
+- [PLAN.md](PLAN.md) - Detailed architecture and implementation plan
+- [CLAUDE.md](.claude/CLAUDE.md) - Development quick reference and notes
