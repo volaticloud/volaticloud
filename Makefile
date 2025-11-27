@@ -1,4 +1,4 @@
-.PHONY: help setup dev test test-authz coverage lint generate migrate clean build docs-generate docs-verify
+.PHONY: help setup dev test test-authz coverage lint generate migrate clean build docs-generate docs-verify docs-quality
 
 # Default target
 help:
@@ -21,9 +21,12 @@ help:
 	@echo "                      Note: Migrations run automatically on server start"
 	@echo ""
 	@echo "Documentation:"
-	@echo "  make docs-generate - Generate all documentation (ERD, GraphQL, dependencies)"
-	@echo "  make docs-verify   - Verify documentation structure and references"
-	@echo "  make docs-coverage - Check package documentation coverage metrics"
+	@echo "  make docs-generate - Generate all documentation (ERD, dependencies)"
+	@echo "  make docs-graphql  - Generate GraphQL markdown documentation"
+	@echo "  make docs-lint     - Lint markdown files"
+	@echo "  make docs-lint-fix - Fix markdown lint issues"
+	@echo "  make docs-links    - Check markdown links"
+	@echo "  make docs-verify   - Verify documentation structure"
 	@echo ""
 	@echo "Other:"
 	@echo "  make clean        - Clean generated files and build artifacts"
@@ -148,7 +151,28 @@ docs-generate:
 	@echo "  - Dependencies: docs/diagrams/dependencies.md"
 	@echo ""
 	@echo "Note: GraphQL docs require server running. Run:"
-	@echo "  ./scripts/generate-graphql-docs.sh"
+	@echo "  make docs-graphql"
+
+# Generate GraphQL markdown documentation
+docs-graphql:
+	@echo "Generating GraphQL markdown documentation..."
+	@chmod +x scripts/generate-graphql-markdown.sh
+	@./scripts/generate-graphql-markdown.sh
+
+# Lint markdown files
+docs-lint:
+	@echo "Linting markdown files..."
+	@npx --yes markdownlint-cli2 "**/*.md" "#node_modules" "#bin"
+
+# Fix markdown lint issues
+docs-lint-fix:
+	@echo "Fixing markdown lint issues..."
+	@npx --yes markdownlint-cli2 --fix "**/*.md" "#node_modules" "#bin"
+
+# Check markdown links
+docs-links:
+	@echo "Checking markdown links..."
+	@find docs -name "*.md" -print0 | xargs -0 -n1 npx --yes markdown-link-check --config .markdown-link-check.json
 
 # Verify documentation structure
 docs-verify:
@@ -161,3 +185,11 @@ docs-coverage:
 	@echo "Checking documentation coverage..."
 	@chmod +x scripts/check-doc-coverage.sh
 	@./scripts/check-doc-coverage.sh
+
+# Assess documentation quality
+docs-quality:
+	@echo "Assessing documentation quality..."
+	@chmod +x scripts/assess-docs-quality.sh
+	@./scripts/assess-docs-quality.sh
+	@echo ""
+	@echo "Detailed report: docs/quality-report.md"
