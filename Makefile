@@ -162,12 +162,12 @@ docs-graphql:
 # Lint markdown files
 docs-lint:
 	@echo "Linting markdown files..."
-	@npx --yes markdownlint-cli2 "**/*.md" "#node_modules" "#bin"
+	@npx --yes markdownlint-cli2 "**/*.md"
 
 # Fix markdown lint issues
 docs-lint-fix:
 	@echo "Fixing markdown lint issues..."
-	@npx --yes markdownlint-cli2 --fix "**/*.md" "#node_modules" "#bin"
+	@npx --yes markdownlint-cli2 --fix "**/*.md"
 
 # Check markdown links
 docs-links:

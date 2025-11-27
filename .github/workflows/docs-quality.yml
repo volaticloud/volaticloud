@@ -30,7 +30,7 @@ jobs:
       - name: Lint Markdown Files
         run: |
           echo "Running markdownlint-cli2..."
-          npx --yes markdownlint-cli2 "**/*.md" "#node_modules" "#bin"
+          npx --yes markdownlint-cli2 "**/*.md"
 
       - name: Check Markdown Links
         run: |

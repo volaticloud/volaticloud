@@ -1,0 +1,14 @@
+# Dependency directories
+**/node_modules/**
+
+# Build artifacts
+bin/
+dist/
+build/
+
+# Generated files
+*.min.js
+*.bundle.js
+
+# Temporary files
+.DS_Store
