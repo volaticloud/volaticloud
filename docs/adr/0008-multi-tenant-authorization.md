@@ -1287,4 +1287,4 @@ After completing Keycloak setup:
 2. Explore [Authorization Integration Tests](../../internal/graph/authorization_integration_test.go) for example scenarios
 3. Configure production deployment with proper secrets management
 4. Set up monitoring for Keycloak availability
-5. Review [Multi-Tenant Group System](#multi-tenant-group-system) for organization-level permissions
+5. Review the Implementation section above for details on hierarchical group structure and organization-level permissions
