@@ -9,6 +9,7 @@ Accepted
 ## Context and Problem Statement
 
 VolatiCloud backend needs production deployment on Kubernetes with:
+
 - **High availability**: Multiple replicas with auto-scaling
 - **Zero-downtime deployments**: Rolling updates without service interruption
 - **Health monitoring**: Liveness and readiness probes
@@ -35,10 +36,12 @@ VolatiCloud backend needs production deployment on Kubernetes with:
 Write Kubernetes YAML manifests, deploy with `kubectl apply`.
 
 **Pros:**
+
 - Full control over YAML
 - No dependencies on Helm
 
 **Cons:**
+
 - **Not GitOps-friendly** - hard to version and diff
 - **Manual updates** - requires running kubectl for every change
 - No templating (must duplicate YAML for staging/prod)
@@ -50,10 +53,12 @@ Write Kubernetes YAML manifests, deploy with `kubectl apply`.
 Write a custom Helm chart from scratch for VolatiCloud.
 
 **Pros:**
+
 - Tailored to exact needs
 - Full control
 
 **Cons:**
+
 - **Reinventing the wheel** - deployment, service, ingress, HPA, PDB all need writing
 - **Maintenance burden** - must keep chart updated with K8s best practices
 - **No community support** - bugs are our problem
@@ -64,6 +69,7 @@ Write a custom Helm chart from scratch for VolatiCloud.
 Use production-ready universal Helm chart (Nixys) with values override.
 
 **Pros:**
+
 - **Battle-tested** - used in production by many teams
 - **Feature-complete** - Deployment, Service, Ingress, HPA, PDB, Probes all included
 - **Best practices** - follows Kubernetes patterns
@@ -73,12 +79,14 @@ Use production-ready universal Helm chart (Nixys) with values override.
 - **Multiple ingress support** - Works with nginx-ingress, traefik, etc.
 
 **Cons:**
+
 - Less control than custom chart (acceptable trade-off)
 - Must understand chart's values structure
 
 ## Decision Outcome
 
 Chosen option: **Nixys Universal Chart**, because it:
+
 1. **Production-ready out of the box** - HPA, PDB, probes, affinity all configured
 2. **Zero custom chart maintenance** - leverage community-maintained chart
 3. **Fast time-to-production** - deploy in minutes with values.yaml
@@ -88,6 +96,7 @@ Chosen option: **Nixys Universal Chart**, because it:
 ### Consequences
 
 **Positive:**
+
 - Production deployment in days, not weeks
 - Automatic rollbacks on failed deployments (`--atomic` flag)
 - Community-maintained chart (security updates, K8s compatibility)
@@ -95,10 +104,12 @@ Chosen option: **Nixys Universal Chart**, because it:
 - Easy to replicate for other services
 
 **Negative:**
+
 - Must learn Nixys chart value structure (one-time investment)
 - Less flexibility than custom chart (but extensible via `extraDeploy`)
 
 **Neutral:**
+
 - Database migrations run automatically on server startup (no separate job needed)
 - Chart updates independent of app deployments
 
@@ -107,6 +118,7 @@ Chosen option: **Nixys Universal Chart**, because it:
 ### Architecture
 
 **Deployment Stack:**
+
 ```
 GitHub Container Registry (GHCR)
     ↓ Docker Image
@@ -122,6 +134,7 @@ VKE Cluster (Vultr Kubernetes Engine)
 ```
 
 **CI/CD Pipeline:**
+
 ```
 Push to main → GitHub Actions
     ↓
@@ -139,6 +152,7 @@ Health checks pass → Traffic routes to new pods
 ### Key Files
 
 **Helm Values:**
+
 - `deployments/backend/values.yaml` - Complete deployment configuration
   - Image: `ghcr.io/volaticloud/volaticloud:main-abc1234`
   - Replicas: 2 (min via HPA)
@@ -150,6 +164,7 @@ Health checks pass → Traffic routes to new pods
   - Affinity: Spread pods across nodes
 
 **GitHub Workflows:**
+
 - `.github/workflows/docker-build.yml` - Build and push Docker images
 - `.github/workflows/deploy-backend.yml` - Deploy to Kubernetes with Helm
   - Validates Helm values
@@ -159,6 +174,7 @@ Health checks pass → Traffic routes to new pods
   - Runs post-deployment tests
 
 **Dockerfile:**
+
 - Multi-stage build: Go 1.24 (build) + Alpine 3.x (runtime)
 - Non-root user (UID 1000)
 - Health check: `wget http://localhost:8080/health`
@@ -167,6 +183,7 @@ Health checks pass → Traffic routes to new pods
 ### Example Configuration
 
 **Helm Values (deployments/backend/values.yaml):**
+
 ```yaml
 image:
   repository: ghcr.io/volaticloud/volaticloud
@@ -263,6 +280,7 @@ env:
 Migrations run automatically when the server starts, eliminating the need for separate migration jobs.
 
 **Implementation** (`cmd/server/main.go:132-135`):
+
 ```go
 // Run auto migration before starting server
 if err := client.Schema.Create(ctx); err != nil {
@@ -271,6 +289,7 @@ if err := client.Schema.Create(ctx); err != nil {
 ```
 
 **Deployment Flow:**
+
 1. New pod starts → Binary runs
 2. Database connection established
 3. ENT auto-migration executes (`client.Schema.Create`)
@@ -279,6 +298,7 @@ if err := client.Schema.Create(ctx); err != nil {
 6. Traffic routes to pod
 
 **Benefits:**
+
 - ✅ 100% GitOps - no separate migration jobs
 - ✅ Zero-downtime - readiness probe prevents traffic during migration
 - ✅ Automatic rollback - pod fails if migration fails
@@ -287,6 +307,7 @@ if err := client.Schema.Create(ctx); err != nil {
 ### Deployment Commands
 
 **Deploy to Kubernetes:**
+
 ```bash
 # Add Nixys Helm repo
 helm repo add nixys https://registry.nixys.io/chartrepo/public
@@ -302,6 +323,7 @@ helm upgrade --install volaticloud-backend nixys/nxs-universal-chart \
 ```
 
 **Verify Deployment:**
+
 ```bash
 # Check pods
 kubectl get pods -n volaticloud -l app=volaticloud-backend
@@ -317,6 +339,7 @@ kubectl get hpa -n volaticloud
 ```
 
 **Rollback:**
+
 ```bash
 # Automatic rollback on failure (--atomic flag)
 # Or manual rollback to previous release
@@ -336,6 +359,7 @@ helm rollback volaticloud-backend -n volaticloud
 ### Automated Tests
 
 **Pre-Deployment Validation:**
+
 ```bash
 # Validate Helm values
 helm template volaticloud-backend nixys/nxs-universal-chart \
@@ -347,6 +371,7 @@ helm lint nixys/nxs-universal-chart -f deployments/backend/values.yaml
 ```
 
 **Post-Deployment Tests:**
+
 ```bash
 # Verify deployment
 kubectl rollout status deployment/volaticloud-backend -n volaticloud

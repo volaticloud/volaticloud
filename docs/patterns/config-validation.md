@@ -3,6 +3,7 @@
 ## Problem
 
 How do you validate complex configuration objects (bot configs, exchange configs) against:
+
 - Official external schemas (Freqtrade JSON schema)
 - Custom business rules
 - Required vs optional fields
@@ -269,12 +270,14 @@ func (r *mutationResolver) UpdateBot(ctx context.Context,
 ## Trade-offs
 
 ### Pros
+
 - Comprehensive validation coverage
 - Clear separation between format and business logic
 - Automatic schema updates (fetched from URL)
 - GraphQL errors automatically formatted
 
 ### Cons
+
 - External dependency on schema URL
 - JSON schema validation adds overhead
 - Multiple validation layers (complexity)

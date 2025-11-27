@@ -5,26 +5,31 @@ This directory contains step-by-step operational guides for common tasks and tro
 ## Available Runbooks
 
 ### Development
+
 - **Code Generation** - `make generate` - ENT and GraphQL code generation
 - **Running Tests** - `make test` - Run tests with coverage
 - **Linting** - `make lint` - Code quality checks
 - **Building** - `make build` - Build binary
 
 ### Database
+
 - **Migrations** - Database schema migrations (automatic on server start)
 - **Reset Database** - `make db-reset` - Reset local database
 
 ### Documentation
+
 - **Generate Diagrams** - `make docs-generate` - Generate ERD and dependency diagrams
 - **Verify Docs** - `make docs-verify` - Validate documentation structure
 - **GraphQL Docs** - `./scripts/generate-graphql-docs.sh` - Generate API docs (requires running server)
 
 ### Deployment
+
 - **Backend Deployment** - Kubernetes deployment with Helm
 - **Database Migrations** - Automatic on server startup
 - **Health Checks** - `/health` endpoint monitoring
 
 ### Troubleshooting
+
 - **Server Won't Start** - Check database connection, Keycloak availability
 - **GraphQL Errors** - Check schema sync, run `make generate`
 - **Test Failures** - Check database state, mock configurations

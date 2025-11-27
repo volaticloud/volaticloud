@@ -3,6 +3,7 @@
 ## Problem
 
 How do you create mocks for testing when:
+
 - Interfaces have multiple methods to implement
 - Mock behavior needs to vary per test case
 - Type safety must be maintained
@@ -288,12 +289,14 @@ func TestAuthorization(t *testing.T) {
 ## Trade-offs
 
 ### Pros
+
 - Full control over mock behavior
 - No external dependencies (mockgen, testify/mock)
 - Simple to understand and maintain
 - Works well with interfaces
 
 ### Cons
+
 - Manual implementation (must update when interface changes)
 - Verbose for interfaces with many methods
 - No automatic call verification (must implement manually)

@@ -35,10 +35,12 @@ VolatiCloud is a multi-tenant SaaS platform where users create and manage tradin
 Implement role-based permissions with database tables for roles and permissions.
 
 **Pros:**
+
 - Full control over authorization logic
 - No external dependencies
 
 **Cons:**
+
 - **No resource-level permissions** - only role-based (admin, user)
 - **No hierarchical inheritance** - must manually duplicate permissions
 - **Reinventing the wheel** - authorization is a solved problem
@@ -50,10 +52,12 @@ Implement role-based permissions with database tables for roles and permissions.
 Use Keycloak roles and groups for authorization without UMA.
 
 **Pros:**
+
 - Integrated with Keycloak authentication
 - Standard OIDC/OAuth2
 
 **Cons:**
+
 - **No resource-level permissions** - roles are global, not per-resource
 - **No automatic group provisioning** - must manually create groups
 - **No permission delegation** - users can't share resources
@@ -64,6 +68,7 @@ Use Keycloak roles and groups for authorization without UMA.
 Use Keycloak UMA 2.0 for resource protection combined with automatic group hierarchy creation.
 
 **Pros:**
+
 - **Resource-level permissions** - fine-grained per strategy/bot/exchange
 - **Hierarchical inheritance** - organization admins have access to all child resources
 - **Automatic provisioning** - organizations created on user registration
@@ -73,6 +78,7 @@ Use Keycloak UMA 2.0 for resource protection combined with automatic group hiera
 - **Extensible** - add new resource types without backend changes
 
 **Cons:**
+
 - Requires Keycloak extensions (Java)
 - Group structure mirrors resource hierarchy (tight coupling)
 - Deletion requires cleanup of both UMA resources and groups
@@ -80,6 +86,7 @@ Use Keycloak UMA 2.0 for resource protection combined with automatic group hiera
 ## Decision Outcome
 
 Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
+
 1. **Resource-level authorization** via UMA 2.0 protection API
 2. **Automatic multi-tenancy** via event-driven group creation
 3. **Hierarchical permissions** via parent-child group relationships
@@ -89,6 +96,7 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 ### Consequences
 
 **Positive:**
+
 - Automatic organization provisioning on user registration
 - Fine-grained per-resource authorization with < 100ms latency
 - Hierarchical permission inheritance (organization admin → all sub-resources)
@@ -97,12 +105,14 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 - Standards-based architecture (UMA 2.0 compatible with other OAuth2 systems)
 
 **Negative:**
+
 - Keycloak extensions must be deployed with Keycloak container
 - Group structure tightly coupled to resource hierarchy
 - Deletion requires cleanup of both UMA resources and groups
 - Java codebase separate from Go backend
 
 **Neutral:**
+
 - Resource name === Group name pattern (simple but inflexible)
 - Authorization state split between Keycloak (policies) and database (ownerID)
 
@@ -111,11 +121,13 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 ### A. Multi-Tenancy Model
 
 **Organization as Top-Level Tenant:**
+
 - Every user gets an organization on registration (user ID = organization name)
 - Organization is a UMA resource with type `urn:volaticloud:resources:tenant`
 - No `ownerId` attribute (root-level resource)
 
 **Hierarchical Group Structure:**
+
 ```
 {userId}/                          # Organization group
 ├── role:admin                     # Organization admins (user auto-added here)
@@ -132,6 +144,7 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 ```
 
 **Key Pattern:**
+
 - **Resource name === Group name** - Each UMA resource has matching Keycloak group
 - Each group has two role subgroups: `role:admin` and `role:viewer`
 - Users join role subgroups to get permissions on resources
@@ -141,6 +154,7 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 The hierarchical structure above represents **OWNERSHIP for authorization**, not business logic relationships.
 
 **Ownership Hierarchy (Authorization):**
+
 ```
 Organization
 ├── Bot           (owned by organization)
@@ -150,6 +164,7 @@ Organization
 ```
 
 **Usage Relationships (Business Logic):**
+
 ```
 Bot USES Strategy    (via strategy_id foreign key - which Python code to execute)
 Bot USES Exchange    (via exchange_id foreign key - which API credentials to use)
@@ -157,6 +172,7 @@ Bot USES BotRunner   (via runner_id foreign key - where to run the container)
 ```
 
 **Code Evidence:**
+
 - `internal/ent/schema/bot.go:67` - `owner_id` field: "Group ID (organization) that owns this bot"
 - `internal/ent/schema/strategy.go:53` - `owner_id` field: "Group ID (organization) that owns this strategy"
 - `internal/authz/resource.go:152` - Bot registered with `ownerID` = organization ID
@@ -175,6 +191,7 @@ Both Bot and Strategy are created with the **same `ownerID`** (the organization)
 **Event Handlers:**
 
 **User Registration/Creation:**
+
 ```java
 // Listens to: USER_REGISTER (self-signup) or USER CREATE (admin-created)
 private void handleUserRegistration(Event event) {
@@ -193,6 +210,7 @@ private void handleUserRegistration(Event event) {
 ```
 
 **Resource Creation:**
+
 ```java
 // Listens to: AUTHORIZATION_RESOURCE CREATE
 private void handleResourceCreation(AdminEvent event) {
@@ -222,6 +240,7 @@ private void createHierarchicalGroupStructure(
 ```
 
 **Resource Deletion:**
+
 ```java
 // Listens to: AUTHORIZATION_RESOURCE DELETE (only for tenant resources)
 private void handleResourceDeletion(AdminEvent event) {
@@ -242,6 +261,7 @@ private void handleResourceDeletion(AdminEvent event) {
 **Purpose:** Custom policy evaluator for group-based access control with hierarchical inheritance
 
 **Policy Evaluation:**
+
 ```java
 @Override
 public void evaluate(Evaluation evaluation) {
@@ -264,6 +284,7 @@ public void evaluate(Evaluation evaluation) {
 ```
 
 **Hierarchical Role Check:**
+
 ```java
 private boolean isUserMemberOfRoleInHierarchy(UserModel user, GroupModel group, String roleName) {
     Set<GroupModel> roleGroups = findRoleGroupsInHierarchy(group, roleName);
@@ -291,6 +312,7 @@ private void collectRoleGroupsRecursive(
 ```
 
 **How Inheritance Works:**
+
 - User in `userId/role:admin` has access to all child resources (`userId/strategyId/`, `userId/botId/`, etc.)
 - Policy checks traverse up the group hierarchy to find role membership
 - If found in any ancestor group → permission granted
@@ -300,6 +322,7 @@ private void collectRoleGroupsRecursive(
 **Implementation:** `internal/keycloak/uma_client.go`
 
 **Resource Registration:**
+
 ```go
 func (u *UMAClient) CreateResource(
     ctx context.Context,
@@ -322,10 +345,12 @@ func (u *UMAClient) CreateResource(
 ```
 
 **Resource Types:**
+
 - **Organization**: `type=urn:volaticloud:resources:tenant`, no `ownerId`
 - **Sub-resources**: `type=strategy|bot|exchange|bot_runner`, `ownerId` points to parent organization
 
 **Scopes (Permissions):**
+
 - `view` - Read resource
 - `edit` - Update resource
 - `delete` - Delete resource
@@ -335,6 +360,7 @@ func (u *UMAClient) CreateResource(
 - `backtest` - Run backtest on strategy
 
 **Permission Check:**
+
 ```go
 func (u *UMAClient) CheckPermission(
     ctx context.Context,
@@ -366,6 +392,7 @@ func (u *UMAClient) CheckPermission(
 **File:** `internal/graph/schema.graphqls`
 
 **Directive Definitions:**
+
 ```graphql
 """
 Requires the request to be authenticated (valid JWT token)
@@ -407,6 +434,7 @@ directive @requiresPermission(
 ```
 
 **Usage Examples:**
+
 ```graphql
 type Query {
   # Requires authentication only
@@ -431,6 +459,7 @@ type Mutation {
 **Implementation:** `internal/graph/directives.go`
 
 **@isAuthenticated Directive:**
+
 ```go
 func IsAuthenticatedDirective(
     ctx context.Context,
@@ -449,6 +478,7 @@ func IsAuthenticatedDirective(
 ```
 
 **@hasScope Directive:**
+
 ```go
 func HasScopeDirective(
     ctx context.Context,
@@ -492,6 +522,7 @@ func HasScopeDirective(
 ```
 
 **Generic Permission Verification:**
+
 ```go
 func verifyResourcePermission(
     ctx context.Context,
@@ -528,6 +559,7 @@ func verifyResourcePermission(
 ```
 
 **Resource-Specific Verification:**
+
 ```go
 // internal/graph/keycloak_hooks.go
 func VerifyStrategyPermission(
@@ -553,6 +585,7 @@ func VerifyStrategyPermission(
 ### Flow Diagrams
 
 **User Registration Flow:**
+
 ```
 User self-registers (or admin creates user)
                   ↓
@@ -574,6 +607,7 @@ User is now organization admin
 ```
 
 **Resource Creation Flow (e.g., createStrategy):**
+
 ```
 GraphQL mutation: createStrategy(input: {...})
                   ↓
@@ -610,6 +644,7 @@ Strategy created with automatic group structure
 ```
 
 **Permission Check Flow (e.g., updateStrategy):**
+
 ```
 GraphQL mutation: updateStrategy(id: "strategy-123", input: {...})
                   ↓
@@ -651,6 +686,7 @@ If DENIED:
 ```
 
 **Hierarchical Access Example:**
+
 ```
 User "alice" is in:
   alice/role:admin
@@ -691,6 +727,7 @@ Bob tries to edit "strat-123":
 ### Resource Lifecycle
 
 **Creation with Keycloak Registration:**
+
 ```go
 // internal/graph/keycloak_hooks.go
 func CreateStrategyWithResource(
@@ -736,6 +773,7 @@ func CreateStrategyWithResource(
 ```
 
 **Deletion with Cleanup:**
+
 ```go
 func DeleteStrategyWithResource(
     ctx context.Context,
@@ -768,6 +806,7 @@ func DeleteStrategyWithResource(
 ```
 
 **Why Database-First?**
+
 - Database is source of truth for entities
 - Keycloak is authorization service, not data store
 - Failed Keycloak registration → rollback database transaction
@@ -780,6 +819,7 @@ func DeleteStrategyWithResource(
 **Action:** User registers with email/password
 
 **Flow:**
+
 1. Keycloak creates user account
 2. Event: `USER_REGISTER` fired
 3. `TenantSystemEventListener` triggered
@@ -795,6 +835,7 @@ func DeleteStrategyWithResource(
 **Action:** `createStrategy` mutation
 
 **Flow:**
+
 1. GraphQL directive `@isAuthenticated` checks JWT → ✓
 2. Resolver calls `CreateStrategyWithResource`
 3. Database transaction:
@@ -813,11 +854,13 @@ func DeleteStrategyWithResource(
 **Action:** Add another user to strategy viewer role (via Keycloak admin or future GraphQL mutation)
 
 **Steps:**
+
 1. Admin adds `bob` to group `userId/strategyId/role:viewer`
 2. Bob can now query the strategy (has `view` permission)
 3. Bob cannot edit or delete (no `edit`/`delete` permission)
 
 **Permission Check:**
+
 ```
 Bob queries: strategy(id: "strategyId")
 @hasScope(resource: "id", scope: "view")
@@ -834,6 +877,7 @@ Bob sees strategy data
 **Action:** User tries `updateStrategy` on strategy they don't own
 
 **Flow:**
+
 1. `@hasScope(resource: "id", scope: "edit")` directive
 2. Extracts `strategyId` from args
 3. Calls `UMAClient.CheckPermission(token, strategyId, "edit")`
@@ -852,6 +896,7 @@ Bob sees strategy data
 **Action:** User in `userId/role:admin` queries any child resource
 
 **Flow:**
+
 1. User creates bot: `createBot`
 2. Group created: `userId/botId/role:admin`
 3. User tries to edit bot: `updateBot(id: "botId")`
@@ -869,6 +914,7 @@ Bob sees strategy data
 ### How to Verify This Decision
 
 **Manual Testing:**
+
 1. Register new user → Check Keycloak groups show `userId/role:admin` and `userId/role:viewer`
 2. Create strategy → Check UMA resource exists with `ownerId` attribute
 3. Try editing strategy → Should succeed (owner)
@@ -876,11 +922,13 @@ Bob sees strategy data
 5. Add viewer to strategy group → User can view but not edit
 
 **Automated Tests:**
+
 - `internal/graph/authorization_integration_test.go` - End-to-end authorization tests
 - `internal/graph/directives_test.go` - Directive unit tests
 - Test coverage: Permission checks, hierarchical inheritance, delegation
 
 **Verification Checklist:**
+
 - ✅ New users get automatic organization
 - ✅ Resources registered as UMA resources
 - ✅ Group structure mirrors resource hierarchy
@@ -892,6 +940,7 @@ Bob sees strategy data
 ## References
 
 ### Standards & Documentation
+
 - [UMA 2.0 Specification](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html)
 - [Keycloak Authorization Services](https://www.keycloak.org/docs/latest/authorization_services/)
 - [OAuth 2.0 Resource Protection](https://www.oauth.com/oauth2-servers/resource-protection/)
@@ -899,10 +948,12 @@ Bob sees strategy data
 ### Implementation Files
 
 **Keycloak Extensions (Java):**
+
 - `keycloak/extensions/tenant-system/src/main/java/com/volaticloud/keycloak/TenantSystemEventListener.java` - Automatic group creation
 - `keycloak/extensions/group-resource-policy/src/main/java/com/volaticloud/keycloak/GroupResourcePolicyProvider.java` - Group-based policy evaluator
 
 **Backend (Go):**
+
 - `internal/keycloak/doc.go` - UMA client documentation
 - `internal/keycloak/uma_client.go` - UMA 2.0 client implementation
 - `internal/graph/directives.go` - GraphQL authorization directives
@@ -910,10 +961,12 @@ Bob sees strategy data
 - `internal/graph/schema.graphqls` - GraphQL directive definitions
 
 **Tests:**
+
 - `internal/graph/authorization_integration_test.go` - Integration tests
 - `internal/graph/directives_test.go` - Unit tests
 
 ### Related ADRs
+
 - [ADR-0001: Context-Based Dependency Injection](0001-context-based-dependency-injection.md) - How UMA client is injected via context
 - [ADR-0002: ENT ORM with GraphQL Integration](0002-ent-orm-with-graphql.md) - How resources are stored in database
 - [ADR-0007: Kubernetes Deployment Strategy](0007-kubernetes-deployment-strategy.md) - How Keycloak extensions are deployed
@@ -947,15 +1000,18 @@ This client is used by the VolatiCloud backend for UMA resource management and s
 **Navigate to:** Clients → Create Client
 
 **General Settings:**
+
 - Client ID: `volaticloud-api`
 - Client Protocol: `openid-connect`
 - Client Authentication: **ON** (confidential client)
 
 **Capability Config:**
+
 - Authorization: **ON** (enable UMA 2.0 resource server)
 - Service accounts: **ON** (for backend resource management)
 
 **Advanced Settings:**
+
 - Access Type: `confidential`
 - Standard Flow: **OFF** (backend doesn't use browser flow)
 - Service Accounts: **ON**
@@ -983,11 +1039,13 @@ This client is used by the React dashboard for user authentication.
 **Navigate to:** Clients → Create Client
 
 **General Settings:**
+
 - Client ID: `volaticloud-frontend`
 - Client Protocol: `openid-connect`
 - Client Authentication: **OFF** (public client)
 
 **Capability Config:**
+
 - Standard Flow: **ON** (authorization code flow)
 - Direct Access Grants: **ON** (for development/testing)
 - Authorization: **OFF** (frontend doesn't manage resources)
@@ -1024,6 +1082,7 @@ Configure the backend client for UMA 2.0 resource protection:
 4. Configure authorization scopes (optional - VolatiCloud creates these programmatically)
 
 **Scopes used by VolatiCloud:**
+
 - `view` - View resource details
 - `edit` - Update resource
 - `backtest` - Run backtests (strategies)
@@ -1036,6 +1095,7 @@ Create a test user for development and testing:
 **Navigate to:** Users → Add User
 
 **User Details:**
+
 - Username: `testuser`
 - Email: `testuser@example.com`
 - Email Verified: **ON**
@@ -1084,6 +1144,7 @@ curl -X POST 'https://your-keycloak-server.com/realms/volaticloud/protocol/openi
 ```
 
 Response:
+
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI...",
@@ -1116,6 +1177,7 @@ curl -X POST 'http://localhost:8080/query' \
 ```
 
 The backend will:
+
 1. Verify JWT token
 2. Create Strategy in database
 3. Register UMA resource in Keycloak
@@ -1133,6 +1195,7 @@ VolatiCloud defines the following permission scopes:
 | `delete` | Delete resource | Owner |
 
 **Automatic Permissions:**
+
 - Resource owners automatically receive all scopes
 - Permissions are verified before database operations
 - Other users can be granted permissions via Keycloak policies
@@ -1144,6 +1207,7 @@ VolatiCloud defines the following permission scopes:
 **Cause:** Missing or invalid Keycloak environment variables
 
 **Solutions:**
+
 - Ensure all 4 environment variables are set:
   - `VOLATICLOUD_KEYCLOAK_URL`
   - `VOLATICLOUD_KEYCLOAK_REALM`
@@ -1157,6 +1221,7 @@ VolatiCloud defines the following permission scopes:
 **Cause:** JWT token is missing or invalid
 
 **Solutions:**
+
 - Check Authorization header format: `Bearer <token>`
 - Verify token hasn't expired (check `exp` claim)
 - Ensure token was issued by correct Keycloak realm
@@ -1167,6 +1232,7 @@ VolatiCloud defines the following permission scopes:
 **Cause:** User doesn't have required permission on resource
 
 **Solutions:**
+
 - Check if you're the resource owner (compare `ownerID` with user's `sub` claim)
 - Verify resource is registered in Keycloak UMA (check Keycloak Admin Console → Authorization → Resources)
 - Check permission policies in Keycloak
@@ -1191,6 +1257,7 @@ echo "YOUR_TOKEN" | cut -d. -f2 | base64 -d | jq
 ```
 
 Verify:
+
 - `iss` (issuer) matches Keycloak URL
 - `sub` (subject) is user ID
 - `exp` (expiration) is in the future

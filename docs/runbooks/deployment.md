@@ -22,6 +22,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
 #### Steps
 
 1. **Trigger Deployment**
+
    ```bash
    # Via GitHub CLI
    gh workflow run deploy-backend.yml
@@ -31,6 +32,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 2. **Monitor Deployment**
+
    ```bash
    # Watch workflow status
    gh run watch
@@ -40,6 +42,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 3. **Verify Deployment**
+
    ```bash
    # Check pod status
    kubectl get pods -n volaticloud -l app=volaticloud-backend
@@ -51,6 +54,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 4. **Verify Health**
+
    ```bash
    curl https://api.volaticloud.com/health
    # Expected: {"status":"ok"}
@@ -67,6 +71,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
 #### Steps
 
 1. **Set Up Environment**
+
    ```bash
    # Export required variables
    export NAMESPACE=volaticloud
@@ -75,12 +80,14 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 2. **Add Helm Repository**
+
    ```bash
    helm repo add nixys https://registry.nixys.io/chartrepo/public
    helm repo update
    ```
 
 3. **Validate Configuration**
+
    ```bash
    # Dry-run to validate
    helm template $RELEASE_NAME nixys/nxs-universal-chart \
@@ -91,11 +98,13 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 4. **Create Namespace (if needed)**
+
    ```bash
    kubectl create namespace $NAMESPACE
    ```
 
 5. **Create Database Secret**
+
    ```bash
    kubectl create secret generic volaticloud-db-secret \
      --namespace=$NAMESPACE \
@@ -107,6 +116,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 6. **Deploy with Helm**
+
    ```bash
    helm upgrade --install $RELEASE_NAME nixys/nxs-universal-chart \
      --namespace $NAMESPACE \
@@ -119,11 +129,13 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
    ```
 
 7. **Monitor Rollout**
+
    ```bash
    kubectl rollout status deployment/$RELEASE_NAME -n $NAMESPACE
    ```
 
 8. **Verify Deployment**
+
    ```bash
    # Check all resources
    kubectl get all -n $NAMESPACE -l app=volaticloud-backend
@@ -169,18 +181,21 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "failed creatin
 ## Health Checks
 
 ### Liveness Probe
+
 - **Endpoint**: `/health`
 - **Initial Delay**: 10s
 - **Period**: 10s
 - **Failure Threshold**: 3
 
 ### Readiness Probe
+
 - **Endpoint**: `/health`
 - **Initial Delay**: 5s
 - **Period**: 5s
 - **Failure Threshold**: 3
 
 ### Manual Health Check
+
 ```bash
 # Internal (from within cluster)
 kubectl run -it --rm curl-test --image=curlimages/curl --restart=Never -- \
@@ -197,12 +212,14 @@ curl https://api.volaticloud.com/health
 ### Horizontal Pod Autoscaler (HPA)
 
 **Configuration** (from `values.yaml`):
+
 - Min replicas: 2
 - Max replicas: 10
 - CPU target: 70%
 - Memory target: 80%
 
 ### Manual Scaling
+
 ```bash
 # Scale to specific replica count
 kubectl scale deployment volaticloud-backend -n volaticloud --replicas=5
@@ -212,6 +229,7 @@ kubectl get hpa -n volaticloud
 ```
 
 ### Disable Autoscaling (temporary)
+
 ```bash
 kubectl delete hpa volaticloud-backend -n volaticloud
 ```
@@ -223,6 +241,7 @@ kubectl delete hpa volaticloud-backend -n volaticloud
 ### Update Environment Variables
 
 1. **Edit values.yaml**
+
    ```yaml
    # deployments/backend/values.yaml
    deployment:
@@ -232,6 +251,7 @@ kubectl delete hpa volaticloud-backend -n volaticloud
    ```
 
 2. **Apply Changes**
+
    ```bash
    helm upgrade volaticloud-backend nixys/nxs-universal-chart \
      -f deployments/backend/values.yaml \
@@ -239,6 +259,7 @@ kubectl delete hpa volaticloud-backend -n volaticloud
    ```
 
 3. **Verify Rollout**
+
    ```bash
    kubectl rollout status deployment/volaticloud-backend -n volaticloud
    ```
@@ -246,6 +267,7 @@ kubectl delete hpa volaticloud-backend -n volaticloud
 ### Update Database Credentials
 
 1. **Update Secret**
+
    ```bash
    kubectl create secret generic volaticloud-db-secret \
      --namespace=volaticloud \
@@ -254,6 +276,7 @@ kubectl delete hpa volaticloud-backend -n volaticloud
    ```
 
 2. **Restart Pods** (to pick up new secret)
+
    ```bash
    kubectl rollout restart deployment/volaticloud-backend -n volaticloud
    ```
@@ -269,21 +292,25 @@ GitHub Actions and Helm (`--atomic` flag) automatically rollback on failure.
 ### Manual Rollback
 
 #### List Releases
+
 ```bash
 helm history volaticloud-backend -n volaticloud
 ```
 
 #### Rollback to Previous Version
+
 ```bash
 helm rollback volaticloud-backend -n volaticloud
 ```
 
 #### Rollback to Specific Version
+
 ```bash
 helm rollback volaticloud-backend <REVISION> -n volaticloud
 ```
 
 #### Verify Rollback
+
 ```bash
 kubectl get pods -n volaticloud -l app=volaticloud-backend
 kubectl logs -n volaticloud -l app=volaticloud-backend --tail=50
@@ -296,6 +323,7 @@ kubectl logs -n volaticloud -l app=volaticloud-backend --tail=50
 ### Pods Not Starting
 
 **Check pod status**:
+
 ```bash
 kubectl get pods -n volaticloud -l app=volaticloud-backend
 ```
@@ -303,6 +331,7 @@ kubectl get pods -n volaticloud -l app=volaticloud-backend
 **Common issues**:
 
 1. **ImagePullBackOff**
+
    ```bash
    # Check image exists
    kubectl describe pod <POD_NAME> -n volaticloud | grep -A 5 Events
@@ -312,6 +341,7 @@ kubectl get pods -n volaticloud -l app=volaticloud-backend
    ```
 
 2. **CrashLoopBackOff**
+
    ```bash
    # Check logs
    kubectl logs <POD_NAME> -n volaticloud --previous
@@ -323,6 +353,7 @@ kubectl get pods -n volaticloud -l app=volaticloud-backend
    ```
 
 3. **Pending**
+
    ```bash
    # Check resource availability
    kubectl describe pod <POD_NAME> -n volaticloud | grep -A 10 Events
@@ -360,6 +391,7 @@ kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx --tail=50
 ## Monitoring
 
 ### View Logs
+
 ```bash
 # Real-time logs
 kubectl logs -f -n volaticloud -l app=volaticloud-backend
@@ -372,11 +404,13 @@ kubectl logs -n volaticloud <POD_NAME>
 ```
 
 ### Check Events
+
 ```bash
 kubectl get events -n volaticloud --sort-by='.lastTimestamp' | head -20
 ```
 
 ### Resource Usage
+
 ```bash
 # Pod resource usage
 kubectl top pods -n volaticloud -l app=volaticloud-backend
@@ -386,6 +420,7 @@ kubectl top nodes
 ```
 
 ### HPA Status
+
 ```bash
 kubectl get hpa -n volaticloud
 kubectl describe hpa volaticloud-backend -n volaticloud

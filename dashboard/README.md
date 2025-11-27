@@ -36,17 +36,20 @@ npm install
 ### Development
 
 1. **Start the Go server** (from project root):
+
    ```bash
    cd ..
    ./bin/volaticloud server
    ```
 
 2. **Generate GraphQL types** (run this whenever schema changes):
+
    ```bash
    npm run codegen
    ```
 
 3. **Start development server**:
+
    ```bash
    npm run dev
    ```
@@ -190,6 +193,7 @@ export const BotsList = () => {
 ```
 
 **Benefits:**
+
 - ✅ Type-safe hooks generated per component
 - ✅ Co-located with component code
 - ✅ No global imports needed
@@ -207,6 +211,7 @@ VITE_GRAPHQL_URL=http://localhost:8080/query
 ## Features Roadmap
 
 ### Implemented
+
 - ✅ Project setup with Vite + React + TypeScript
 - ✅ Apollo Client configuration
 - ✅ MUI theme with dark mode
@@ -216,6 +221,7 @@ VITE_GRAPHQL_URL=http://localhost:8080/query
 - ✅ Placeholder pages for all sections
 
 ### TODO
+
 - [ ] Implement Bots list with real data
 - [ ] Bot detail page with metrics
 - [ ] Bot lifecycle controls (start/stop/restart)

@@ -3,6 +3,7 @@
 ## Problem
 
 How do you maintain type-safe GraphQL operations in both backend and frontend while:
+
 - Keeping schemas in sync across services
 - Generating type-safe resolvers and hooks
 - Avoiding manual type definitions
@@ -192,6 +193,7 @@ npm run codegen
 ```
 
 This generates:
+
 - `src/generated/types.ts` - Base TypeScript types
 - `src/components/Bots/bots.generated.ts` - Component-specific hooks
 
@@ -243,12 +245,14 @@ export function BotsList() {
 ## Trade-offs
 
 ### Pros
+
 - Complete type safety across stack
 - Automated synchronization of types
 - Developer experience (auto-complete, errors)
 - Reduced manual work
 
 ### Cons
+
 - Build step required after schema changes
 - Generated files can be large
 - Learning curve for configuration
@@ -345,6 +349,7 @@ const { data } = useGetBotQuery({
 ### After Schema Changes
 
 **Backend:**
+
 ```bash
 # 1. Update ENT schema
 vim internal/ent/schema/bot.go
@@ -357,6 +362,7 @@ make build
 ```
 
 **Frontend:**
+
 ```bash
 # 1. Regenerate types (reads local schema files)
 cd dashboard

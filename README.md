@@ -38,17 +38,20 @@ VolatiCloud uses a pluggable runtime abstraction layer that allows running bots 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd volaticloud
 ```
 
-2. Install dependencies:
+1. Install dependencies:
+
 ```bash
 make setup
 ```
 
-3. Start the server (migrations run automatically):
+1. Start the server (migrations run automatically):
+
 ```bash
 make dev
 # or
@@ -104,16 +107,20 @@ make clean                # Clean generated files and build artifacts
 VolatiCloud supports both SQLite and PostgreSQL:
 
 **SQLite (Default)**
+
 - Zero configuration
 - File-based: `./data/volaticloud.db`
 - Perfect for single-server deployments
+
 ```bash
 ./bin/volaticloud server --database sqlite://./data/volaticloud.db
 ```
 
 **PostgreSQL (Optional)**
+
 - Better for multi-server deployments
 - Requires PostgreSQL 14+
+
 ```bash
 ./bin/volaticloud server --database postgresql://user:pass@localhost:5432/volaticloud
 ```
@@ -121,18 +128,21 @@ VolatiCloud supports both SQLite and PostgreSQL:
 ### Environment Variables
 
 **Server Configuration:**
+
 - `VOLATICLOUD_HOST` - Server host (default: 0.0.0.0)
 - `VOLATICLOUD_PORT` - Server port (default: 8080)
 - `VOLATICLOUD_DATABASE` - Database connection string (default: sqlite://./data/volaticloud.db)
 - `VOLATICLOUD_MONITOR_INTERVAL` - Bot monitoring interval (default: 30s)
 
 **Authentication (Required):**
+
 - `VOLATICLOUD_KEYCLOAK_URL` - Keycloak server URL (e.g., https://keycloak.example.com)
 - `VOLATICLOUD_KEYCLOAK_REALM` - Keycloak realm name (default: volaticloud)
 - `VOLATICLOUD_KEYCLOAK_CLIENT_ID` - Keycloak client ID (default: volaticloud-api)
 - `VOLATICLOUD_KEYCLOAK_CLIENT_SECRET` - Keycloak client secret (required)
 
 **Example .env:**
+
 ```bash
 VOLATICLOUD_HOST=0.0.0.0
 VOLATICLOUD_PORT=8080
@@ -174,6 +184,7 @@ VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=<your-secret-here>
    - Testing authentication
 
 2. **Start the server:**
+
 ```bash
 export VOLATICLOUD_KEYCLOAK_URL=https://your-keycloak-server.com
 export VOLATICLOUD_KEYCLOAK_REALM=volaticloud
@@ -183,7 +194,8 @@ export VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=your-secret-here
 ./bin/volaticloud server
 ```
 
-3. **Get a JWT token:**
+1. **Get a JWT token:**
+
 ```bash
 curl -X POST 'https://your-keycloak-server.com/realms/volaticloud/protocol/openid-connect/token' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -193,7 +205,8 @@ curl -X POST 'https://your-keycloak-server.com/realms/volaticloud/protocol/openi
   -d 'client_id=volaticloud-frontend'
 ```
 
-4. **Use token in GraphQL requests:**
+1. **Use token in GraphQL requests:**
+
 ```bash
 curl -X POST 'http://localhost:8080/query' \
   -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
@@ -253,6 +266,7 @@ VolatiCloud uses the following main entities:
 ## Current Status
 
 ### ✅ Phase 1: Foundation (COMPLETED)
+
 - [x] Project structure setup
 - [x] Go modules initialized
 - [x] Dependencies installed (ENT, gqlgen, docker SDK)
@@ -263,6 +277,7 @@ VolatiCloud uses the following main entities:
 - [x] Zero external dependencies - works out of the box!
 
 ### 🚧 Next Steps (Phase 2: Database Layer)
+
 - [ ] Add encryption hooks for sensitive fields
 - [ ] Test schema with seed data
 - [ ] Write comprehensive tests
@@ -285,5 +300,6 @@ For comprehensive documentation, see the `/docs/` directory:
 - **[API Docs](docs/api/graphql/)** - GraphQL API documentation
 
 Also see:
+
 - [PLAN.md](PLAN.md) - Detailed architecture and implementation plan
 - [CLAUDE.md](.claude/CLAUDE.md) - Development quick reference and notes

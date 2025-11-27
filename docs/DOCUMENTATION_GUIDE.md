@@ -25,6 +25,7 @@
 VolatiCloud uses a **multi-layered documentation strategy** optimized for both human developers and AI-assisted development (Claude Code):
 
 **Philosophy:**
+
 1. **Living Documentation** - Generated from code, always in sync
 2. **Single Source of Truth** - Code is the source, docs are derived
 3. **ADR-Driven** - Architectural decisions documented with context
@@ -32,6 +33,7 @@ VolatiCloud uses a **multi-layered documentation strategy** optimized for both h
 5. **CI-Verified** - Automated validation ensures quality
 
 **Target Audiences:**
+
 - Human developers (general-purpose documentation)
 - AI assistants (structured, comprehensive context)
 - Operations teams (runbooks and troubleshooting)
@@ -91,12 +93,14 @@ scripts/
 **Template:** MADR (Markdown Any Decision Records)
 
 **When to Create:**
+
 - Choosing between technology alternatives (e.g., ENT vs GORM)
 - Architectural pattern decisions (e.g., DDD, context-based DI)
 - Deployment strategy changes (e.g., Kubernetes adoption)
 - API design decisions (e.g., GraphQL schema structure)
 
 **Format:**
+
 ```markdown
 # ADR-NNNN: Title
 
@@ -155,11 +159,13 @@ How is this decision implemented in the codebase?
 **Coverage Requirement:** All packages with complex logic (not simple utilities)
 
 **When to Create:**
+
 - New domain packages (`internal/bot/`, `internal/backtest/`)
 - Infrastructure packages (`internal/monitor/`, `internal/runner/`)
 - Integration packages (`internal/keycloak/`, `internal/graph/`)
 
 **Format:**
+
 ```go
 /*
 Package {name} provides {one-line description}.
@@ -172,13 +178,13 @@ High-level description of the package's purpose and responsibilities.
 
 ASCII diagram showing component relationships:
 
-	┌─────────────────┐
-	│   Component A   │
-	└────────┬────────┘
-	         │
-	    ┌────▼────┐
-	    │  Core   │
-	    └─────────┘
+ ┌─────────────────┐
+ │   Component A   │
+ └────────┬────────┘
+          │
+     ┌────▼────┐
+     │  Core   │
+     └─────────┘
 
 # Core Concepts
 
@@ -192,13 +198,13 @@ Detailed explanation...
 
 # Usage Examples
 
-	// Example 1: Basic usage
-	client := NewClient()
-	result, err := client.DoSomething(ctx)
+ // Example 1: Basic usage
+ client := NewClient()
+ result, err := client.DoSomething(ctx)
 
-	// Example 2: Advanced usage
-	opts := Options{...}
-	result, err := client.DoSomethingWithOptions(ctx, opts)
+ // Example 2: Advanced usage
+ opts := Options{...}
+ result, err := client.DoSomethingWithOptions(ctx, opts)
 
 # Implementation Details
 
@@ -214,7 +220,7 @@ Detailed explanation of Component B...
 
 How to test this package:
 
-	go test ./internal/{package}
+ go test ./internal/{package}
 
 # Related Packages
 
@@ -238,11 +244,13 @@ package {name}
 **Location:** `docs/patterns/{name}.md`
 
 **When to Create:**
+
 - Recurring implementation patterns
 - Best practice examples
 - Anti-pattern warnings
 
 **Structure:**
+
 1. **Problem** - What problem does this solve?
 2. **Solution** - How to implement the pattern
 3. **Code Examples** - Complete, runnable code
@@ -257,12 +265,14 @@ package {name}
 **Location:** `docs/runbooks/{name}.md`
 
 **When to Create:**
+
 - Deployment procedures
 - Troubleshooting guides
 - Emergency recovery procedures
 - Routine maintenance tasks
 
 **Structure:**
+
 1. **Prerequisites** - What's needed before starting
 2. **Steps** - Step-by-step instructions
 3. **Verification** - How to verify success
@@ -276,6 +286,7 @@ package {name}
 **Location:** `docs/diagrams/`
 
 **Generated Files:**
+
 - `erd.md` - Entity Relationship Diagram (from ENT schemas)
 - `dependencies.md` - Go module dependency graph
 - `api/graphql/schema.md` - GraphQL API documentation (requires running server)
@@ -289,6 +300,7 @@ package {name}
 ### ADRs
 
 **Step 1: Create ADR File**
+
 ```bash
 # Get next number
 NEXT_NUM=$(printf "%04d" $(($(ls docs/adr/*.md 2>/dev/null | wc -l) + 1)))
@@ -298,6 +310,7 @@ cp docs/adr/README.md docs/adr/${NEXT_NUM}-your-title.md
 ```
 
 **Step 2: Fill Template**
+
 - Clear problem statement
 - List all considered options
 - Explain decision with rationale
@@ -305,12 +318,14 @@ cp docs/adr/README.md docs/adr/${NEXT_NUM}-your-title.md
 - Link to related ADRs
 
 **Step 3: Update Index**
+
 ```bash
 # Edit docs/adr/README.md
 # Add entry to the ADR table
 ```
 
 **Step 4: Commit**
+
 ```bash
 git add docs/adr/${NEXT_NUM}-*.md docs/adr/README.md
 git commit -m "docs: add ADR-${NEXT_NUM} for [topic]"
@@ -319,11 +334,13 @@ git commit -m "docs: add ADR-${NEXT_NUM} for [topic]"
 ### Package Documentation (doc.go)
 
 **Step 1: Create doc.go**
+
 ```bash
 touch internal/{package}/doc.go
 ```
 
 **Step 2: Write Documentation**
+
 - Start with package comment block (`/* ... */`)
 - Include architecture diagram (ASCII art)
 - Document core concepts
@@ -332,6 +349,7 @@ touch internal/{package}/doc.go
 - Link to related packages/ADRs
 
 **Step 3: Verify Format**
+
 ```bash
 # Check with godoc
 go doc internal/{package}
@@ -342,6 +360,7 @@ godoc -http=:6060
 ```
 
 **Step 4: Verify with CI**
+
 ```bash
 ./scripts/verify-docs.sh
 ```
@@ -349,17 +368,20 @@ godoc -http=:6060
 ### Patterns
 
 **Step 1: Create Pattern File**
+
 ```bash
 touch docs/patterns/{pattern-name}.md
 ```
 
 **Step 2: Fill Structure**
+
 - Problem statement
 - Solution with code examples
 - Benefits and trade-offs
 - Related patterns
 
 **Step 3: Update Index**
+
 ```bash
 # Edit docs/patterns/README.md
 # Add entry to pattern list
@@ -368,11 +390,13 @@ touch docs/patterns/{pattern-name}.md
 ### Runbooks
 
 **Step 1: Create Runbook File**
+
 ```bash
 touch docs/runbooks/{operation-name}.md
 ```
 
 **Step 2: Document Procedure**
+
 - Prerequisites
 - Step-by-step instructions
 - Verification steps
@@ -380,6 +404,7 @@ touch docs/runbooks/{operation-name}.md
 - Rollback procedure
 
 **Step 3: Update Index**
+
 ```bash
 # Edit docs/runbooks/README.md
 # Add entry to runbook list
@@ -398,6 +423,7 @@ touch docs/runbooks/{operation-name}.md
 **Output:** `docs/diagrams/erd.md` (Mermaid diagram)
 
 **Generate:**
+
 ```bash
 make docs-generate
 # Or directly:
@@ -405,12 +431,14 @@ make docs-generate
 ```
 
 **What's Generated:**
+
 - All ENT entities with fields
 - Relationships between entities (edges)
 - Field types and constraints
 - Mermaid ERD syntax
 
 **When to Regenerate:**
+
 - After modifying ENT schemas
 - After adding/removing entities
 - After changing relationships
@@ -425,6 +453,7 @@ make docs-generate
 **Output:** `docs/diagrams/dependencies.md` (Mermaid diagram)
 
 **Generate:**
+
 ```bash
 make docs-generate
 # Or directly:
@@ -432,6 +461,7 @@ make docs-generate
 ```
 
 **What's Generated:**
+
 - Direct dependencies
 - Indirect (transitive) dependencies
 - Dependency statistics
@@ -439,6 +469,7 @@ make docs-generate
 - Key dependencies section
 
 **When to Regenerate:**
+
 - After updating dependencies (`go get -u`)
 - After adding new dependencies
 - Before major version releases
@@ -452,6 +483,7 @@ make docs-generate
 **Output:** `docs/api/graphql/schema.md`
 
 **Generate:**
+
 ```bash
 # IMPORTANT: Server must be running first
 ./bin/volaticloud server &
@@ -464,6 +496,7 @@ make docs-generate
 ```
 
 **What's Generated:**
+
 - All queries with arguments and return types
 - All mutations with arguments and return types
 - All object types with fields
@@ -473,6 +506,7 @@ make docs-generate
 - Usage examples
 
 **When to Regenerate:**
+
 - After modifying GraphQL schema
 - After adding new queries/mutations
 - After changing types
@@ -487,6 +521,7 @@ make docs-generate
 **Tool:** `scripts/verify-docs.sh`
 
 **Checks Performed:**
+
 1. ✅ ADR directory structure exists
 2. ✅ ADR README exists
 3. ✅ ADR numbering is sequential
@@ -500,17 +535,20 @@ make docs-generate
 11. ✅ Common typos check
 
 **Run Locally:**
+
 ```bash
 ./scripts/verify-docs.sh
 ```
 
 **CI Integration:**
+
 - Runs on all pull requests
 - Posts results as PR comment
 - Fails PR if errors found
 - Warnings don't fail build
 
 **Example Output:**
+
 ```
 ==========================================
 Documentation Verification
@@ -556,6 +594,7 @@ Before submitting documentation PR:
 ### Required Documentation
 
 **Must Have:**
+
 - ✅ ADRs for all major architectural decisions
 - ✅ `doc.go` for all domain packages (`internal/bot/`, `internal/backtest/`, etc.)
 - ✅ `doc.go` for all infrastructure packages (`internal/monitor/`, `internal/runner/`)
@@ -565,11 +604,13 @@ Before submitting documentation PR:
 - ✅ CLAUDE.md reference guide (<250 lines)
 
 **Should Have:**
+
 - ⚠️ Patterns for common code patterns
 - ⚠️ Runbooks for operational procedures
 - ⚠️ GraphQL API documentation (generated)
 
 **Nice to Have:**
+
 - 💡 Patterns for advanced techniques
 - 💡 Runbooks for rare procedures
 - 💡 Troubleshooting guides
@@ -577,16 +618,19 @@ Before submitting documentation PR:
 ### Coverage Metrics
 
 **ADR Coverage:**
+
 - Target: All major decisions documented
 - Metric: Count of ADRs vs architectural decisions
 - Tool: Manual review during design phase
 
 **Package Documentation Coverage:**
+
 - Target: 100% of non-trivial packages
 - Metric: Packages with `doc.go` vs total packages
 - Tool: `find internal/ -type d -mindepth 1 -maxdepth 1 | wc -l` vs `find internal/ -name doc.go | wc -l`
 
 **Check Coverage:**
+
 ```bash
 # Count packages
 TOTAL=$(find internal/ -type d -mindepth 1 -maxdepth 1 | wc -l)
@@ -599,6 +643,7 @@ echo "Package Documentation Coverage: $(($DOCUMENTED * 100 / $TOTAL))%"
 ```
 
 **Current Coverage:**
+
 - ADRs: 7 (context-DI, ENT+GraphQL, versioning, runtime, codegen, config, k8s)
 - Package docs: 5/14 packages (35.7%)
   - ✅ monitor/doc.go
@@ -617,6 +662,7 @@ echo "Package Documentation Coverage: $(($DOCUMENTED * 100 / $TOTAL))%"
   - ❌ utils/ (simple, may not need)
 
 **Coverage Goals:**
+
 - Short-term: 60% (8/14 packages)
 - Long-term: 80% (11/14 packages)
 
@@ -627,16 +673,19 @@ echo "Package Documentation Coverage: $(($DOCUMENTED * 100 / $TOTAL))%"
 ### Adding New Features
 
 **Step 1: Plan & Document**
+
 1. Create ADR for significant architectural decisions
 2. Update or create relevant patterns
 3. Plan package documentation
 
 **Step 2: Implement**
+
 1. Write code
 2. Add package `doc.go` if new package
 3. Update existing `doc.go` if modifying package
 
 **Step 3: Generate Docs**
+
 ```bash
 # Regenerate auto-generated docs
 make docs-generate
@@ -647,11 +696,13 @@ make docs-generate
 ```
 
 **Step 4: Verify**
+
 ```bash
 ./scripts/verify-docs.sh
 ```
 
 **Step 5: Commit**
+
 ```bash
 git add docs/ internal/*/doc.go
 git commit -m "docs: add documentation for [feature]"
@@ -687,18 +738,21 @@ make docs-generate && make docs-verify
 ### Scripts
 
 **Generate ERD:**
+
 ```bash
 ./scripts/generate-erd.sh [output-file]
 # Default: docs/diagrams/erd.md
 ```
 
 **Generate Dependencies:**
+
 ```bash
 ./scripts/generate-deps.sh [output-file]
 # Default: docs/diagrams/dependencies.md
 ```
 
 **Generate GraphQL Docs:**
+
 ```bash
 ./scripts/generate-graphql-docs.sh [server-url] [output-file]
 # Defaults: http://localhost:8080/query, docs/api/graphql/schema.md
@@ -706,6 +760,7 @@ make docs-generate && make docs-verify
 ```
 
 **Verify Documentation:**
+
 ```bash
 ./scripts/verify-docs.sh
 # Exit code 0: passed, 1: failed, 0 with warnings: passed with warnings
@@ -714,6 +769,7 @@ make docs-generate && make docs-verify
 ### Go Tools
 
 **View Package Documentation:**
+
 ```bash
 # Command line
 go doc internal/{package}
@@ -724,6 +780,7 @@ godoc -http=:6060
 ```
 
 **Extract Package Summary:**
+
 ```bash
 go list -f '{{.Doc}}' ./internal/{package}
 ```

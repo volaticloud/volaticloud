@@ -16,6 +16,7 @@ Trading strategies in VolatiCloud are used by both bots (live trading) and backt
 - **Explicit upgrades**: Bot owners should consciously decide when to adopt new strategy versions
 
 **The Core Problem:** If strategies are mutable, updating a strategy breaks:
+
 1. Historical backtest results (strategy code changed, results no longer valid)
 2. Running bots (code changes unexpectedly, behavior changes mid-execution)
 3. Audit trails (can't determine which version caused what behavior)
@@ -38,10 +39,12 @@ How do we allow strategy evolution while preserving reproducibility and safety?
 Allow strategy updates in-place, create snapshot only when backtest runs.
 
 **Pros:**
+
 - Simple mental model
 - Less database storage (only snapshots when needed)
 
 **Cons:**
+
 - **Breaks running bots** when strategy updated
 - No complete version history
 - Backtest-only snapshots miss other use cases
@@ -52,10 +55,12 @@ Allow strategy updates in-place, create snapshot only when backtest runs.
 Keep all versions, mark one as "active", others as "archived".
 
 **Pros:**
+
 - Simple queries (just filter active=true)
 - Single entity ID for all versions
 
 **Cons:**
+
 - **Mutable active version** - can still be edited
 - Complex logic to determine which version is "current"
 - No clear parent-child relationship
@@ -65,6 +70,7 @@ Keep all versions, mark one as "active", others as "archived".
 Every update creates new immutable version with link to parent.
 
 **Pros:**
+
 - **True immutability** - versions never change after creation
 - Clear lineage (v1 → v2 → v3 via parent_id)
 - Safe for concurrent use (multiple bots can use different versions)
@@ -73,6 +79,7 @@ Every update creates new immutable version with link to parent.
 - Transaction-safe (version creation is atomic)
 
 **Cons:**
+
 - More database rows (each version is a separate row)
 - Slightly more complex queries (need to filter is_latest=true for current version)
 - Manual cleanup needed for very old versions (can be automated)
@@ -80,6 +87,7 @@ Every update creates new immutable version with link to parent.
 ## Decision Outcome
 
 Chosen option: **Immutable Versioning with Linear Parent-Child Chain**, because it:
+
 1. **Guarantees reproducibility** - Strategies never change once created
 2. **Protects running bots** - Bots stay on their version, unaffected by updates
 3. **Preserves audit trail** - Complete history of all changes
@@ -89,6 +97,7 @@ Chosen option: **Immutable Versioning with Linear Parent-Child Chain**, because 
 ### Consequences
 
 **Positive:**
+
 - Backtest results remain valid forever (strategy code is immutable)
 - Bots never experience unexpected behavior changes
 - Complete version history for debugging and compliance
@@ -96,11 +105,13 @@ Chosen option: **Immutable Versioning with Linear Parent-Child Chain**, because 
 - Explicit version selection (users choose when to upgrade)
 
 **Negative:**
+
 - Database storage increases (one row per version)
 - Queries need `is_latest=true` filter for current versions
 - Users must explicitly upgrade bots to new strategy versions
 
 **Neutral:**
+
 - Version number increments automatically (managed by system)
 - Old versions can be archived/deleted after retention period
 
@@ -109,6 +120,7 @@ Chosen option: **Immutable Versioning with Linear Parent-Child Chain**, because 
 ### Architecture Flow
 
 **Update Strategy Flow:**
+
 ```
 User requests updateStrategy
     ↓
@@ -133,6 +145,7 @@ Transaction COMMIT
 ```
 
 **Create Backtest Flow:**
+
 ```
 User requests createBacktest(strategyID)
     ↓
@@ -155,6 +168,7 @@ Create backtest with strategy ID
 ### Key Files
 
 **ENT Schema:**
+
 - `internal/ent/schema/strategy.go:42-79` - Strategy versioning fields and edges
   - `parent_id` (UUID, nullable) - Points to parent version (null for v1)
   - `version_number` (int, default 1) - Auto-incremented version number
@@ -163,12 +177,14 @@ Create backtest with strategy ID
   - Edge `parent` → self-referential relationship for version chain
 
 **Transaction Helper:**
+
 - `internal/graph/tx.go:23-53` - `WithTx` helper wraps operations in database transactions
   - Ensures atomicity: mark old version + create new version happen together
   - Auto-rollback on error or panic
   - Follows ENT best practices
 
 **Resolver Implementation:**
+
 - `internal/graph/schema.resolvers.go:67-110` - `UpdateStrategy` mutation
   - Loads existing strategy
   - Starts transaction via `WithTx`
@@ -177,12 +193,14 @@ Create backtest with strategy ID
   - Commits or rolls back atomically
 
 **Auto-Versioning on Backtest:**
+
 - `internal/graph/schema.resolvers.go` (`CreateBacktest` mutation)
   - Checks if strategy already has a backtest using `.WithBacktest()` (one-to-one relationship)
   - If backtest exists, calls `createStrategyVersion` to create new version first
   - Uses new version ID for backtest (prevents mutation of tested strategy)
 
 **GraphQL Queries:**
+
 - `internal/graph/schema.graphqls` - Custom queries for versioning
   - `latestStrategies` - Returns only latest versions (`is_latest=true`)
   - `strategyVersions(name: String!)` - Returns all versions for a strategy name
@@ -190,6 +208,7 @@ Create backtest with strategy ID
 ### Example Code
 
 **UpdateStrategy Resolver (Transaction-Safe):**
+
 ```go
 // internal/graph/schema.resolvers.go:67
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID,
@@ -229,6 +248,7 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID,
 ```
 
 **Create Backtest with Auto-Versioning:**
+
 ```go
 // internal/graph/schema.resolvers.go (CreateBacktest mutation)
 func (r *mutationResolver) CreateBacktest(ctx context.Context,
@@ -260,6 +280,7 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context,
 ```
 
 **GraphQL Queries:**
+
 ```graphql
 # Get only latest versions (dashboard default)
 query GetLatestStrategies {
@@ -292,6 +313,7 @@ query GetStrategyVersions($name: String!) {
 ### Critical Implementation Details
 
 **Schema Edge Configuration (CRITICAL):**
+
 ```go
 // internal/ent/schema/strategy.go (Edges function)
 func (Strategy) Edges() []ent.Edge {

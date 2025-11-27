@@ -9,11 +9,13 @@ Accepted
 ## Context and Problem Statement
 
 Freqtrade bots require complex configuration covering multiple concerns:
+
 - **Exchange settings**: API credentials, pair whitelist, trading mode (spot/futures)
 - **Strategy parameters**: Strategy-specific settings (e.g., RSI period, stop-loss %)
 - **Bot-specific overrides**: Stake amount, max open trades, dry_run mode
 
 **The Problem:** If all configuration is in a single file:
+
 1. **Credentials leak**: Storing exchange secrets in bot config exposes them to strategy developers
 2. **Config duplication**: Multiple bots using same exchange duplicate credentials
 3. **Update cascades**: Changing exchange API key requires updating all bot configs
@@ -38,10 +40,12 @@ How do we separate concerns while maintaining Freqtrade compatibility?
 All configuration in one `config.json` file per bot.
 
 **Pros:**
+
 - Simple - one file to manage
 - Standard Freqtrade approach
 
 **Cons:**
+
 - **Credentials duplicated** across all bots
 - **Update explosion** - changing API key requires editing N configs
 - **Security risk** - secrets mixed with bot config
@@ -52,10 +56,12 @@ All configuration in one `config.json` file per bot.
 Store exchange credentials in environment variables, bot config in files.
 
 **Pros:**
+
 - Credentials not in files
 - Standard 12-factor app approach
 
 **Cons:**
+
 - **Freqtrade doesn't support env vars well** - requires custom wrapper
 - Hard to manage multiple exchanges
 - No clear separation between strategy and bot settings
@@ -65,6 +71,7 @@ Store exchange credentials in environment variables, bot config in files.
 Three separate config files merged by Freqtrade's native `--config` flag.
 
 **Pros:**
+
 - **Clear separation**: Exchange, strategy, bot configs separate
 - **DRY**: One exchange config, many bots
 - **Security**: Sensitive credentials isolated
@@ -73,12 +80,14 @@ Three separate config files merged by Freqtrade's native `--config` flag.
 - **Read-only**: All configs mounted read-only (immutable)
 
 **Cons:**
+
 - Three files instead of one (acceptable trade-off)
 - Must understand Freqtrade config merging rules
 
 ## Decision Outcome
 
 Chosen option: **Layered Config Files with Merge Strategy**, because it:
+
 1. **Separates concerns** - Exchange, strategy, bot configs independent
 2. **Reduces duplication** - One exchange config shared by all bots
 3. **Improves security** - Credentials isolated and never committed
@@ -89,6 +98,7 @@ Chosen option: **Layered Config Files with Merge Strategy**, because it:
 ### Consequences
 
 **Positive:**
+
 - Exchange API keys changed once, affects all bots automatically
 - Strategy authors define sensible defaults
 - Bot owners override only what they need
@@ -96,10 +106,12 @@ Chosen option: **Layered Config Files with Merge Strategy**, because it:
 - Clean separation enables role-based access (exchange admins ≠ strategy devs ≠ bot operators)
 
 **Negative:**
+
 - Three config files per bot (vs one monolithic file)
 - Must understand Freqtrade's config merging precedence
 
 **Neutral:**
+
 - Freqtrade merges configs in order: later files override earlier ones
 - Config generation happens at bot creation time (not runtime)
 
@@ -108,6 +120,7 @@ Chosen option: **Layered Config Files with Merge Strategy**, because it:
 ### Architecture
 
 **Config Layer Stack:**
+
 ```
 1. config.exchange.json        (shared across all bots using same exchange)
    ├─ API credentials
@@ -129,6 +142,7 @@ Freqtrade merge: exchange < strategy < bot (bot wins conflicts)
 ```
 
 **Freqtrade Command:**
+
 ```bash
 freqtrade trade \
   --config /freqtrade/config/config.exchange.json \
@@ -140,20 +154,24 @@ freqtrade trade \
 ### Key Files
 
 **Config Generation:**
+
 - `internal/bot/spec.go` - Generates all three config layers
 - `internal/exchange/` - Extracts exchange credentials and pair whitelist
 - `internal/strategy/` - Extracts strategy parameters (future enhancement)
 
 **Config Validation:**
+
 - `internal/bot/config.go:ValidateFreqtradeConfig()` - Validates required fields
 - `internal/exchange/validator.go` - Validates exchange configs against JSON schema
 
 **Dockerfile:**
+
 - Config files mounted read-only: `-v /tmp/volaticloud-configs/{botID}:/freqtrade/config:ro`
 
 ### Example Configs
 
 **1. config.exchange.json (shared)**
+
 ```json
 {
   "exchange": {
@@ -168,6 +186,7 @@ freqtrade trade \
 ```
 
 **2. config.strategy.json (shared)**
+
 ```json
 {
   "strategy": "MyStrategy",
@@ -191,6 +210,7 @@ freqtrade trade \
 ```
 
 **3. config.bot.json (unique, with auto-injected dry_run)**
+
 ```json
 {
   "dry_run": true,
@@ -206,6 +226,7 @@ freqtrade trade \
 **Critical Feature:** The `dry_run` field is automatically injected based on bot mode.
 
 **Implementation** (`internal/bot/spec.go`):
+
 ```go
 func BuildSpec(ctx context.Context, input CreateBotInput, exchange Exchange, strategy Strategy) (BotSpec, error) {
     // Prepare bot config
@@ -234,6 +255,7 @@ func BuildSpec(ctx context.Context, input CreateBotInput, exchange Exchange, str
 ### Config Lifecycle
 
 **1. Bot Creation:**
+
 ```
 User creates bot (GraphQL mutation)
     ↓
@@ -248,6 +270,7 @@ Create Docker container with volume mount (read-only)
 ```
 
 **2. Bot Start:**
+
 ```
 Freqtrade starts with --config flags (3 files)
     ↓
@@ -257,6 +280,7 @@ Bot runs with final merged config
 ```
 
 **3. Config Update:**
+
 ```
 IMPORTANT: Config files generated at creation time
     ↓

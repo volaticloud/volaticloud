@@ -3,6 +3,7 @@
 ## Problem
 
 How do you ensure atomicity for multi-step database operations when:
+
 - Multiple related entities must be created/updated together
 - Validation failures should rollback all changes
 - Panics or errors should prevent partial state
@@ -221,12 +222,14 @@ func (r *mutationResolver) DeleteBot(ctx context.Context,
 ## Trade-offs
 
 ### Pros
+
 - Guaranteed atomicity
 - Simple API with helper function
 - Automatic cleanup on errors
 - Clear transaction scope
 
 ### Cons
+
 - No nested transactions (ENT limitation)
 - External API calls aren't transactional
 - Performance overhead (locks, isolation)

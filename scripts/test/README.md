@@ -23,6 +23,7 @@ This directory contains manual test scripts for testing various VolatiCloud feat
 These scripts are meant for manual testing and development. They are not part of the automated test suite.
 
 Example:
+
 ```bash
 # Run from project root
 ./scripts/test/test_bot_lifecycle.sh
@@ -31,6 +32,7 @@ Example:
 ## Note
 
 For automated tests, see:
+
 - `internal/graph/*_test.go` - GraphQL resolver tests
 - `internal/backtest/summary_test.go` - Backtest summary tests
 - `internal/monitor/data_download_test.go` - Data download tests

@@ -28,6 +28,7 @@ kubectl get events -n volaticloud --sort-by='.lastTimestamp' | head -20
 ## Server Won't Start
 
 ### Symptom
+
 Pods in `CrashLoopBackOff` or `Error` state
 
 ### Diagnosis
@@ -50,6 +51,7 @@ kubectl describe pod <POD_NAME> -n volaticloud
 **Error message**: `failed to connect to postgres`
 
 **Check**:
+
 ```bash
 # Verify database secret exists
 kubectl get secret volaticloud-db-secret -n volaticloud
@@ -63,6 +65,7 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 ```
 
 **Solutions**:
+
 - Verify database credentials in secret
 - Check database firewall rules (allow VKE cluster IPs)
 - Verify database is running: `pg_isready -h <DB_HOST>`
@@ -73,13 +76,16 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 **Error message**: `Keycloak configuration required`
 
 **Check**:
+
 ```bash
 # Verify environment variables
 kubectl get deployment volaticloud-backend -n volaticloud -o yaml | grep -A 10 env:
 ```
 
 **Solutions**:
+
 - Add Keycloak environment variables to `values.yaml`:
+
   ```yaml
   deployment:
     env:
@@ -95,6 +101,7 @@ kubectl get deployment volaticloud-backend -n volaticloud -o yaml | grep -A 10 e
             name: keycloak-client-secret
             key: client-secret
   ```
+
 - Redeploy: `helm upgrade volaticloud-backend ...`
 
 #### 3. Migration Failure
@@ -102,12 +109,14 @@ kubectl get deployment volaticloud-backend -n volaticloud -o yaml | grep -A 10 e
 **Error message**: `failed creating schema resources`
 
 **Check**:
+
 ```bash
 # Check logs for migration error
 kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "failed creating schema"
 ```
 
 **Solutions**:
+
 - Verify database schema permissions (user needs CREATE TABLE)
 - Check for conflicting manual changes to database
 - Rollback manual schema changes and let ENT manage schema
@@ -118,6 +127,7 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "failed creatin
 ## GraphQL Errors
 
 ### Symptom
+
 GraphQL queries return errors or unexpected results
 
 ### Diagnosis
@@ -140,6 +150,7 @@ git status  # Check for uncommitted schema changes
 **Error message**: `Cannot query field "xyz" on type "ABC"`
 
 **Solutions**:
+
 ```bash
 # Regenerate schema
 make generate
@@ -160,6 +171,7 @@ kubectl rollout restart deployment/volaticloud-backend -n volaticloud
 **Error message**: `permission denied` or `403 Forbidden`
 
 **Check**:
+
 ```bash
 # Verify Keycloak is accessible
 curl https://keycloak.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configuration
@@ -169,6 +181,7 @@ echo $JWT_TOKEN | cut -d. -f2 | base64 -d | jq
 ```
 
 **Solutions**:
+
 - Verify user has correct permissions in Keycloak
 - Check resource ownership (user must own resource or have permission)
 - Verify JWT token is not expired
@@ -179,12 +192,14 @@ echo $JWT_TOKEN | cut -d. -f2 | base64 -d | jq
 **Error message**: `config validation failed`
 
 **Check**:
+
 ```bash
 # Test config validation locally
 go test -v ./internal/bot -run TestValidateConfig
 ```
 
 **Solutions**:
+
 - Ensure all required fields present (stake_currency, stake_amount, etc.)
 - Verify field types match schema (numbers not strings)
 - Check nested objects (entry_pricing, exit_pricing)
@@ -195,6 +210,7 @@ go test -v ./internal/bot -run TestValidateConfig
 ## Database Issues
 
 ### Symptom
+
 Database queries slow or failing
 
 ### Diagnosis
@@ -214,6 +230,7 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "database"
 **Error message**: `pq: sorry, too many clients already`
 
 **Solutions**:
+
 - Increase database max_connections (via Vultr control panel)
 - Reduce connection pool size in application
 - Scale up database instance
@@ -222,12 +239,14 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "database"
 #### 2. Slow Queries
 
 **Check**:
+
 ```bash
 # Enable query logging in PostgreSQL
 # ALTER SYSTEM SET log_min_duration_statement = 1000;  -- Log queries > 1s
 ```
 
 **Solutions**:
+
 - Add indexes for frequently queried fields
 - Optimize N+1 query patterns (use eager loading)
 - Use ENT query optimizations (`.WithXXX()` methods)
@@ -238,6 +257,7 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "database"
 **Error message**: `deadlock detected`
 
 **Solutions**:
+
 - Migrations run automatically on server startup (ENT auto-migration)
 - Each pod attempts migration (idempotent, safe to run multiple times)
 - Deadlocks are rare due to idempotent nature of ENT migrations
@@ -248,6 +268,7 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "database"
 ## Docker Issues
 
 ### Symptom
+
 Bots or backtests not starting, container errors
 
 ### Diagnosis
@@ -272,6 +293,7 @@ docker volume inspect volaticloud-freqtrade-data
 **Error message**: `no such file or directory`
 
 **Solutions**:
+
 ```bash
 # Recreate volume
 docker volume rm volaticloud-freqtrade-data
@@ -286,6 +308,7 @@ docker run --rm -v volaticloud-freqtrade-data:/data alpine ls -la /data
 **Error message**: `Failed to pull image`
 
 **Solutions**:
+
 - Verify Docker Hub rate limits
 - Check internet connectivity
 - Use authenticated Docker Hub account
@@ -294,6 +317,7 @@ docker run --rm -v volaticloud-freqtrade-data:/data alpine ls -la /data
 #### 3. Container Won't Start
 
 **Check**:
+
 ```bash
 # Inspect container
 docker inspect <CONTAINER_ID>
@@ -303,6 +327,7 @@ docker logs <CONTAINER_ID>
 ```
 
 **Solutions**:
+
 - Verify required environment variables set
 - Check mounted volumes exist
 - Ensure sufficient disk space
@@ -313,6 +338,7 @@ docker logs <CONTAINER_ID>
 ## Performance Issues
 
 ### Symptom
+
 Slow API responses, high latency
 
 ### Diagnosis
@@ -338,6 +364,7 @@ curl -w "@curl-format.txt" -o /dev/null -s https://api.volaticloud.com/health
 #### 1. High CPU/Memory Usage
 
 **Solutions**:
+
 - Scale horizontally (increase replica count)
 - Scale vertically (increase resource limits)
 - Profile application for bottlenecks
@@ -346,6 +373,7 @@ curl -w "@curl-format.txt" -o /dev/null -s https://api.volaticloud.com/health
 #### 2. Database Query Performance
 
 **Solutions**:
+
 ```go
 // Use ENT query optimization
 bots := client.Bot.Query().
@@ -361,6 +389,7 @@ index.Fields("owner_id", "created_at")
 #### 3. Excessive GraphQL Queries (N+1 Problem)
 
 **Solutions**:
+
 - Use DataLoader pattern
 - Implement query batching
 - Use ENT's `.WithXXX()` methods for eager loading
@@ -371,6 +400,7 @@ index.Fields("owner_id", "created_at")
 ## Keycloak Integration Issues
 
 ### Symptom
+
 Authentication or authorization failures
 
 ### Diagnosis
@@ -390,6 +420,7 @@ docker logs volaticloud-keycloak
 **Error message**: `failed to register UMA resource`
 
 **Check**:
+
 ```bash
 # Verify client credentials
 curl -X POST https://keycloak.volaticloud.com/auth/realms/volaticloud/protocol/openid-connect/token \
@@ -399,6 +430,7 @@ curl -X POST https://keycloak.volaticloud.com/auth/realms/volaticloud/protocol/o
 ```
 
 **Solutions**:
+
 - Verify client credentials are correct
 - Check client has UMA protection enabled
 - Verify client has `uma_protection` scope
@@ -409,6 +441,7 @@ curl -X POST https://keycloak.volaticloud.com/auth/realms/volaticloud/protocol/o
 **Error message**: `permission denied`
 
 **Solutions**:
+
 - Verify user exists in Keycloak
 - Check resource ownership (owner_id matches user ID)
 - Verify resource registered in Keycloak UMA
@@ -419,6 +452,7 @@ curl -X POST https://keycloak.volaticloud.com/auth/realms/volaticloud/protocol/o
 ## Test Failures
 
 ### Symptom
+
 `make test` fails
 
 ### Diagnosis
@@ -439,6 +473,7 @@ go test -cover ./internal/graph
 #### 1. Database State Issues
 
 **Solutions**:
+
 ```bash
 # Tests use in-memory SQLite - should be isolated
 # If tests fail intermittently, check for:
@@ -450,6 +485,7 @@ go test -cover ./internal/graph
 #### 2. Mock Configuration Issues
 
 **Solutions**:
+
 ```go
 // Ensure mocks are properly configured
 mockUMA := &keycloak.MockUMAClient{
@@ -462,6 +498,7 @@ mockUMA := &keycloak.MockUMAClient{
 #### 3. Fixture Data Issues
 
 **Solutions**:
+
 - Verify test fixtures are created correctly
 - Check foreign key constraints (Strategy before Bot)
 - Use setupTestResolver() helper consistently
@@ -471,6 +508,7 @@ mockUMA := &keycloak.MockUMAClient{
 ## Network Issues
 
 ### Symptom
+
 Services unreachable, timeouts
 
 ### Diagnosis
@@ -492,11 +530,13 @@ kubectl run -it --rm curl-test --image=curlimages/curl --restart=Never -- \
 #### 1. Service Not Exposing Pods
 
 **Check**:
+
 ```bash
 kubectl describe svc volaticloud-backend -n volaticloud
 ```
 
 **Solutions**:
+
 - Verify pod labels match service selector
 - Check pod readiness (readiness probe must pass)
 - Verify service port matches container port
@@ -504,12 +544,14 @@ kubectl describe svc volaticloud-backend -n volaticloud
 #### 2. Ingress Issues
 
 **Check**:
+
 ```bash
 kubectl describe ingress -n volaticloud
 kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
 ```
 
 **Solutions**:
+
 - Verify DNS points to correct LoadBalancer IP
 - Check TLS certificate validity
 - Verify ingress-nginx controller is running

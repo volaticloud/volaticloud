@@ -3,6 +3,7 @@
 ## Problem
 
 How do you manage trading strategy evolution while ensuring:
+
 - Backtest results remain valid over time (reproducibility)
 - Running bots aren't affected by strategy updates (safety)
 - Complete history of changes for compliance (audit trail)
@@ -269,12 +270,14 @@ func (r *queryResolver) StrategyVersions(ctx context.Context,
 ## Trade-offs
 
 ### Pros
+
 - True immutability (versions never change)
 - Safe for concurrent use
 - Complete version history
 - Clear parent-child lineage
 
 ### Cons
+
 - More database rows (one per version)
 - Queries need `is_latest=true` filter
 - Users must manually upgrade bots

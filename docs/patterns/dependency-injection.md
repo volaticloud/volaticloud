@@ -3,6 +3,7 @@
 ## Problem
 
 How do you inject dependencies (database clients, auth clients, etc.) into GraphQL resolvers when:
+
 - gqlgen uses code generation and doesn't support constructor injection
 - Dependencies need to be request-scoped, not global
 - Multiple dependencies must be available to resolvers
@@ -216,12 +217,14 @@ func (r *mutationResolver) CreateBot(ctx context.Context,
 ## Trade-offs
 
 ### Pros
+
 - Clean separation of concerns
 - Request-scoped dependencies
 - Easy testing with mock clients
 - Works with gqlgen's generated code
 
 ### Cons
+
 - Context values are `interface{}` (requires type assertion)
 - Panic if required dependency missing (use `Must*` functions)
 - Directives add slight overhead

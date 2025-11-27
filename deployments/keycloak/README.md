@@ -7,6 +7,7 @@ This directory contains all Kubernetes manifests for deploying Keycloak via the 
 Keycloak provides authentication and authorization for the VolatiCloud platform using OpenID Connect (OIDC) and OAuth 2.0.
 
 **Components**:
+
 - **Keycloak Operator**: Manages Keycloak instances via OLM
 - **Keycloak Instance**: 2-replica high-availability setup
 - **Managed PostgreSQL**: Uses VKE managed database (not deployed here)
@@ -55,6 +56,7 @@ git push origin main
 ```
 
 The workflow `.github/workflows/deploy-keycloak.yaml` will:
+
 1. Validate all manifests
 2. Install OLM (if not present)
 3. Create namespace and secrets
@@ -140,12 +142,14 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 The `volaticloud` realm includes:
 
 **Roles**:
+
 - `admin`: Full access to all operations
 - `trader`: Manage bots, strategies, and backtests
 - `viewer`: Read-only access
 - `user`: Standard user (default role)
 
 **Security Settings**:
+
 - Brute force protection enabled
 - Email login enabled
 - Remember me enabled
@@ -154,6 +158,7 @@ The `volaticloud` realm includes:
 ### OIDC Clients
 
 #### volaticloud-dashboard (Public Client)
+
 - **Type**: Public (for React SPA)
 - **Protocol**: OpenID Connect
 - **Flow**: Authorization Code with PKCE
@@ -161,6 +166,7 @@ The `volaticloud` realm includes:
 - **Scopes**: profile, email, roles
 
 #### volaticloud-api (Bearer-Only Client)
+
 - **Type**: Bearer-only (for GraphQL API)
 - **Protocol**: OpenID Connect
 - **Purpose**: Token validation only
@@ -188,16 +194,19 @@ kubectl logs -n keycloak -l app=keycloak
 ### Access Keycloak
 
 1. **Admin Console**:
+
    ```
    https://${KEYCLOAK_HOSTNAME}/auth/admin
    ```
 
 2. **Realm OIDC Configuration**:
+
    ```
    https://${KEYCLOAK_HOSTNAME}/auth/realms/volaticloud/.well-known/openid-configuration
    ```
 
 3. **Get admin credentials**:
+
    ```bash
    kubectl get secret volaticloud-keycloak-initial-admin \
      -n keycloak -o jsonpath='{.data.username}' | base64 -d
@@ -237,6 +246,7 @@ psql -h ${KEYCLOAK_DB_HOST} -U keycloak -d keycloak
 ### Database Connection Issues
 
 Common issues:
+
 1. **Wrong hostname**: Verify `KEYCLOAK_DB_HOST` includes port
 2. **Database doesn't exist**: Create `keycloak` database manually
 3. **Credentials invalid**: Check `keycloak-db-secret`
@@ -267,6 +277,7 @@ kubectl apply -f deployments/keycloak/keycloak-realm.yaml
 1. Edit `keycloak-client.yaml`
 2. Commit and push (triggers automatic deployment)
 3. Or apply manually:
+
    ```bash
    export VOLATICLOUD_URL="https://volaticloud.com"
    envsubst < keycloak-client.yaml | kubectl apply -f -
@@ -306,6 +317,7 @@ kubectl exec -it -n keycloak <pod-name> -- \
 ### Database Backup
 
 Use Vultr's managed PostgreSQL backup features:
+
 - Automated daily backups
 - Point-in-time recovery
 - Manual snapshots
@@ -337,6 +349,7 @@ curl https://${KEYCLOAK_HOSTNAME}/auth/health/live
 ### Metrics (Future)
 
 Keycloak exposes Prometheus metrics:
+
 - Endpoint: `/auth/metrics`
 - Configure ServiceMonitor for Prometheus scraping
 
@@ -350,6 +363,7 @@ Keycloak exposes Prometheus metrics:
 ## Support
 
 For issues:
+
 1. Check logs: `kubectl logs -n keycloak -l app=keycloak`
 2. Check status: `kubectl describe keycloak volaticloud-keycloak -n keycloak`
 3. Review troubleshooting section above

@@ -48,6 +48,7 @@ graph LR
 ### 1. VKE Cluster
 
 Create a Kubernetes cluster on Vultr:
+
 - **Nodes**: 2-4 nodes (depending on environment)
 - **Node Size**: At least 2 vCPU, 4GB RAM per node
 - **Region**: Choose appropriate region
@@ -56,11 +57,13 @@ Create a Kubernetes cluster on Vultr:
 ### 2. Managed PostgreSQL
 
 Create a managed PostgreSQL database on Vultr for Keycloak:
+
 - **Database Name**: `keycloak`
 - **User**: `keycloak`
 - **Version**: PostgreSQL 14+
 
 Create the database:
+
 ```sql
 CREATE DATABASE keycloak;
 GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
@@ -69,6 +72,7 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 ### 3. Domain Configuration
 
 Set up DNS records:
+
 - `auth.yourdomain.com` â†’ Keycloak (A record pointing to VKE load balancer)
 - `yourdomain.com` â†’ VolatiCloud application
 
@@ -91,9 +95,11 @@ Configure the following secrets in your GitHub repository settings (**Settings â
 
 1. Download kubeconfig from Vultr dashboard
 2. Base64 encode it:
+
    ```bash
    cat vke-kubeconfig.yaml | base64
    ```
+
 3. Copy the output and paste it as the secret value
 
 ## Deployment Order
@@ -101,6 +107,7 @@ Configure the following secrets in your GitHub repository settings (**Settings â
 ### First-Time Setup
 
 1. **Install OLM** (one-time):
+
    ```bash
    # Via GitHub Actions
    gh workflow run deploy-keycloak.yaml
@@ -111,6 +118,7 @@ Configure the following secrets in your GitHub repository settings (**Settings â
    ```
 
 2. **Deploy Keycloak** (automatic after OLM):
+
    ```bash
    # Commit Keycloak configuration
    git add deployments/keycloak/
@@ -121,6 +129,7 @@ Configure the following secrets in your GitHub repository settings (**Settings â
    ```
 
 3. **Verify Deployment**:
+
    ```bash
    # Check OLM
    kubectl get csv -n olm
@@ -142,11 +151,13 @@ Configure the following secrets in your GitHub repository settings (**Settings â
 ### deploy-keycloak.yaml
 
 **Triggers**:
+
 - Push to `main` branch with changes in `deployments/olm/**` or `deployments/keycloak/**`
 - Manual trigger via `gh workflow run deploy-keycloak.yaml`
 - Pull requests (validation only)
 
 **Jobs**:
+
 1. **Validate**: Lint and validate all manifests
 2. **Install OLM**: Install OLM if not present (skips if already installed)
 3. **Deploy Keycloak**: Deploy Keycloak operator and instance
@@ -187,6 +198,7 @@ kubectl get ingress -n keycloak
 ### Access Keycloak
 
 1. Get admin credentials:
+
    ```bash
    kubectl get secret volaticloud-keycloak-initial-admin \
      -n keycloak -o jsonpath='{.data.username}' | base64 -d
@@ -195,11 +207,13 @@ kubectl get ingress -n keycloak
    ```
 
 2. Access admin console:
+
    ```
    https://auth.yourdomain.com/auth/admin
    ```
 
 3. Test OIDC configuration:
+
    ```
    https://auth.yourdomain.com/auth/realms/volaticloud/.well-known/openid-configuration
    ```
@@ -259,6 +273,7 @@ kubectl rollout status statefulset/volaticloud-keycloak -n keycloak
 **Issue**: OLM installation times out or fails
 
 **Solution**:
+
 ```bash
 # Check OLM namespace exists
 kubectl get namespace olm
@@ -274,6 +289,7 @@ cd deployments/olm
 **Issue**: Keycloak operator not installing
 
 **Solution**:
+
 ```bash
 # Check subscription status
 kubectl describe subscription keycloak-operator -n keycloak
@@ -291,6 +307,7 @@ kubectl apply -f deployments/keycloak/operator-subscription.yaml
 **Issue**: Database connection problems
 
 **Solution**:
+
 ```bash
 # Check database secret
 kubectl get secret keycloak-db-secret -n keycloak
@@ -308,6 +325,7 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 **Issue**: Workflow fails with "secret not found"
 
 **Solution**:
+
 1. Verify secrets are configured: **Settings â†’ Secrets and variables â†’ Actions**
 2. Check secret names match exactly (case-sensitive)
 3. Re-encode kubeconfig if kubectl commands fail
@@ -363,6 +381,7 @@ After Keycloak is deployed:
 ## Support
 
 For issues or questions:
+
 1. Check troubleshooting section above
 2. Review logs: `kubectl logs -n keycloak -l app=keycloak`
 3. Check GitHub Actions workflow output

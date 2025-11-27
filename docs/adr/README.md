@@ -22,6 +22,7 @@ An Architecture Decision Record (ADR) is a document that captures an important a
 ## When to create an ADR?
 
 Create an ADR when you make a decision that:
+
 - Affects the structure, patterns, or principles of the codebase
 - Is difficult or expensive to change later
 - Requires team alignment and consensus
@@ -163,6 +164,7 @@ Alternatively, copy the template manually and follow the numbering convention.
 ## Reviewing ADRs
 
 When reviewing an ADR:
+
 - [ ] Problem statement is clear
 - [ ] Multiple options were considered
 - [ ] Decision is justified

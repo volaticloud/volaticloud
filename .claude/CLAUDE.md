@@ -65,6 +65,7 @@ func (r *mutationResolver) CreateBot(...) {
 See `/docs/adr/README.md` for complete index.
 
 **Key ADRs:**
+
 - [ADR-0001](../docs/adr/0001-context-based-dependency-injection.md) - Context-Based DI (gqlgen integration)
 - [ADR-0002](../docs/adr/0002-ent-orm-with-graphql.md) - ENT ORM + GraphQL Integration
 - [ADR-0003](../docs/adr/0003-strategy-immutable-versioning.md) - Strategy Immutable Versioning
@@ -122,6 +123,7 @@ cd dashboard && npm run codegen && npm run dev
 ### Strategy Versioning
 
 ⚠️ **Strategy has one-to-one relationship with Backtest**
+
 ```go
 // ✅ CORRECT - Use singular edge
 existingStrategy, _ := r.client.Strategy.Query().
@@ -139,11 +141,13 @@ See [ADR-0003](../docs/adr/0003-strategy-immutable-versioning.md) for full detai
 ### GraphQL Code Generation
 
 **Backend:**
+
 ```bash
 make generate  # Runs: ENT generation → GraphQL schema generation → gqlgen
 ```
 
 **Frontend:**
+
 ```bash
 # Generate TypeScript types (reads local schema files - no server needed)
 cd dashboard && npm run codegen
@@ -156,6 +160,7 @@ See [ADR-0005](../docs/adr/0005-per-component-graphql-codegen.md) for architectu
 **Keycloak is MANDATORY** - Server won't start without proper configuration.
 
 **Required Environment Variables:**
+
 ```bash
 VOLATICLOUD_KEYCLOAK_URL=https://keycloak.volaticloud.com
 VOLATICLOUD_KEYCLOAK_REALM=volaticloud
@@ -164,6 +169,7 @@ VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=<secret>
 ```
 
 **Multi-Entity Authorization:**
+
 - Strategy, Bot, Exchange, BotRunner all have UMA 2.0 resource management
 - GraphQL directives: `@isAuthenticated`, `@hasScope(resourceArg: "id", scope: "edit")`
 - Database-first approach with transaction rollback on Keycloak failure
@@ -180,6 +186,7 @@ make coverage   # Open HTML report
 ```
 
 **Test files follow pattern:**
+
 - `internal/{package}/*_test.go` - Unit tests
 - Uses table-driven tests for multiple scenarios
 - 100% coverage goal for business logic
@@ -187,9 +194,11 @@ make coverage   # Open HTML report
 ## Documentation Index
 
 **📚 Meta-Documentation:**
+
 - **`/docs/DOCUMENTATION_GUIDE.md`** - Complete guide to creating, maintaining, and verifying documentation
 
 **Primary Documentation:**
+
 - `/docs/adr/` - Architecture Decision Records
 - `/docs/patterns/` - Reusable code patterns
 - `/docs/runbooks/` - Operational guides
@@ -198,6 +207,7 @@ make coverage   # Open HTML report
 - `/deployments/backend/` - Kubernetes deployment guide
 
 **Package Documentation:**
+
 - `internal/monitor/doc.go` - Bot/backtest monitoring architecture
 - `internal/runner/doc.go` - Runtime abstraction (Docker/K8s)
 - `internal/graph/doc.go` - GraphQL resolver architecture
@@ -205,6 +215,7 @@ make coverage   # Open HTML report
 - `internal/keycloak/doc.go` - Keycloak UMA 2.0 integration
 
 **Generated Documentation:**
+
 ```bash
 make docs-generate  # Generate all diagrams
 make docs-verify    # Validate documentation
@@ -227,6 +238,7 @@ make docs-verify    # Validate documentation
 4. **Test failures** → Check `make test` output, review test coverage
 
 **Debug Commands:**
+
 ```bash
 # View logs
 kubectl logs -n volaticloud -l app=volaticloud-backend --tail=100

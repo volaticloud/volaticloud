@@ -3,14 +3,17 @@
 ## Design Principles
 
 ### 1. Separation of Concerns
+
 - **Pages** = Thin route handlers (no logic, just routing)
 - **Components** = Reusable, domain-specific UI components (with logic)
 - **GraphQL** = Co-located with components that use them
 
 ### 2. Component Reusability
+
 All components are designed to be reusable across multiple pages or contexts.
 
 ### 3. Domain-Based Organization
+
 Components are organized by business domain (Bots, Exchanges, Strategies, etc.), not by technical role.
 
 ## Directory Structure
@@ -117,6 +120,7 @@ User navigates → Page (route handler) → Component (reusable UI)
 ## Example: Bots Feature
 
 ### Page Level (Thin)
+
 ```typescript
 // pages/Bots/BotsPage.tsx
 import { BotsList } from '../../components/Bots/BotsList';
@@ -127,6 +131,7 @@ export const BotsPage = () => {
 ```
 
 ### Component Level (Reusable)
+
 ```typescript
 // components/Bots/BotsList.tsx
 import { useGetBotsQuery } from './bots.generated';
@@ -148,6 +153,7 @@ export const BotsList = ({ limit = 50 }) => {
 ```
 
 ### Sub-Component (Reusable)
+
 ```typescript
 // components/Bots/BotCard.tsx
 import { Card } from '@mui/material';
@@ -165,6 +171,7 @@ export const BotCard = ({ bot }) => {
 ## Benefits
 
 ### ✅ Component Reusability
+
 - `BotsList` can be used in:
   - `/bots` page (full list)
   - Dashboard (recent bots)
@@ -172,16 +179,19 @@ export const BotCard = ({ bot }) => {
   - Exchange detail (bots on this exchange)
 
 ### ✅ Clear Separation
+
 - **Pages** = "What route shows what?"
 - **Components** = "How does this feature work?"
 - **GraphQL** = "What data do we need?"
 
 ### ✅ Easy Testing
+
 - Test components in isolation
 - Mock GraphQL with `MockBacktestRunner`
 - No routing concerns in component tests
 
 ### ✅ Scalability
+
 - Add new features by adding components
 - Pages remain thin and simple
 - Components can be composed
@@ -189,6 +199,7 @@ export const BotCard = ({ bot }) => {
 ## GraphQL Co-location
 
 Each component directory contains:
+
 1. Component files (`.tsx`)
 2. GraphQL queries (`.graphql`)
 3. Generated hooks (`.generated.tsx`)
@@ -205,11 +216,13 @@ components/Bots/
 ## Adding a New Feature
 
 1. **Create component directory**
+
    ```bash
    mkdir src/components/NewFeature
    ```
 
 2. **Create GraphQL file**
+
    ```graphql
    # components/NewFeature/newFeature.graphql
    query GetItems {
@@ -218,11 +231,13 @@ components/Bots/
    ```
 
 3. **Run codegen**
+
    ```bash
    npm run codegen
    ```
 
 4. **Create component**
+
    ```typescript
    // components/NewFeature/ItemsList.tsx
    import { useGetItemsQuery } from './newFeature.generated';
@@ -234,6 +249,7 @@ components/Bots/
    ```
 
 5. **Create page (if needed)**
+
    ```typescript
    // pages/NewFeature/NewFeaturePage.tsx
    import { ItemsList } from '../../components/NewFeature/ItemsList';
@@ -242,6 +258,7 @@ components/Bots/
    ```
 
 6. **Add route**
+
    ```typescript
    // App.tsx
    <Route path="items" element={<NewFeaturePage />} />
@@ -250,6 +267,7 @@ components/Bots/
 ## Anti-Patterns to Avoid
 
 ### ❌ DON'T: Put logic in pages
+
 ```typescript
 // ❌ Bad: Logic in page
 export const BotsPage = () => {
@@ -268,6 +286,7 @@ export const BotsPage = () => {
 ```
 
 ### ❌ DON'T: Put components in pages directory
+
 ```
 pages/Bots/
 ├── BotsPage.tsx
@@ -286,6 +305,7 @@ pages/Bots/
 ```
 
 ### ❌ DON'T: Import components from other domains directly
+
 ```typescript
 // ❌ Bad: Cross-domain coupling
 import { BotCard } from '../Bots/BotCard';

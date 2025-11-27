@@ -3,6 +3,7 @@
 ## Problem
 
 How do you integrate a type-safe ORM with GraphQL while maintaining:
+
 - Single source of truth for schema definitions
 - Automatic resolver generation
 - Type safety across database and API layers
@@ -166,12 +167,14 @@ func (r *mutationResolver) CreateBot(ctx context.Context,
 ## Trade-offs
 
 ### Pros
+
 - Minimal manual code for CRUD operations
 - Schemas stay in sync automatically
 - Type-safe database operations
 - Excellent developer experience
 
 ### Cons
+
 - Learning curve for ENT schema annotations
 - Generated code can be large (mitigated with `.gitignore`)
 - Custom GraphQL types require manual mapping

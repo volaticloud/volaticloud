@@ -5,6 +5,7 @@ This guide explains the GitOps setup for nginx ingress controller, cert-manager,
 ## Overview
 
 All infrastructure is deployed via GitHub Actions workflows:
+
 - Nginx Ingress Controller (creates Vultr Load Balancer)
 - cert-manager (automatic Let's Encrypt TLS certificates)
 - Updated Keycloak Ingress with TLS
@@ -19,6 +20,7 @@ gh secret set LETSENCRYPT_EMAIL --env prod --body "your-email@example.com"
 ```
 
 **Existing secrets** (already configured):
+
 - `VKE_KUBECONFIG` - Kubernetes cluster access
 - `KEYCLOAK_HOSTNAME` - Domain for Keycloak (e.g., auth.volaticloud.com)
 
@@ -43,6 +45,7 @@ deployments/
 ### Workflow Triggers
 
 The workflow runs automatically on:
+
 - Push to `main` or `feature/keycloak-openid-integration` branches
 - Changes to any file in:
   - `deployments/ingress-nginx/**`
@@ -60,6 +63,7 @@ The workflow runs automatically on:
 ### Smart Installation
 
 The workflow checks if components are already installed:
+
 - If not installed → Install fresh
 - If already installed → Upgrade with new configuration
 
@@ -110,6 +114,7 @@ gh run watch
 ```
 
 **Expected duration:** 5-8 minutes
+
 - Validate: 10 seconds
 - Deploy nginx ingress: 2-3 minutes (Vultr provisions load balancer)
 - Deploy cert-manager: 1 minute
@@ -135,6 +140,7 @@ Save the EXTERNAL-IP for DNS configuration.
 Add an A record in your DNS provider:
 
 **Using Cloudflare:**
+
 1. Go to DNS → Records
 2. Add A record:
    - Type: `A`
@@ -144,6 +150,7 @@ Add an A record in your DNS provider:
    - TTL: Auto
 
 **Using Other DNS Providers:**
+
 - Add A record pointing `auth.volaticloud.com` to load balancer IP
 - Disable proxy/CDN initially (enable after TLS works)
 
@@ -176,6 +183,7 @@ kubectl get challenges -n keycloak
 ```
 
 **Certificate issuance happens automatically** after DNS is configured:
+
 1. cert-manager creates a temporary HTTP endpoint
 2. Let's Encrypt validates domain ownership via HTTP-01 challenge
 3. Certificate is issued and stored in Kubernetes secret
@@ -204,6 +212,7 @@ openssl s_client -connect auth.volaticloud.com:443 -servername auth.volaticloud.
 **File:** `deployments/ingress-nginx/values.yaml`
 
 Key settings:
+
 - Creates Vultr Load Balancer with `service.type: LoadBalancer`
 - Vultr-specific annotations for protocol and proxy
 - Resource limits: 100m/128Mi requests, 200m/256Mi limits
@@ -215,6 +224,7 @@ Key settings:
 **File:** `deployments/cert-manager/values.yaml`
 
 Key settings:
+
 - Installs CRDs automatically
 - Resource limits for controller, webhook, and cainjector
 - Lightweight configuration suitable for production
@@ -224,6 +234,7 @@ Key settings:
 **File:** `deployments/cert-manager/cluster-issuer.yaml`
 
 Creates two issuers:
+
 - `letsencrypt-prod` - Production certificates (use in production)
 - `letsencrypt-staging` - Staging certificates (use for testing to avoid rate limits)
 
@@ -232,6 +243,7 @@ Creates two issuers:
 **File:** `deployments/keycloak/keycloak-ingress.yaml`
 
 Key settings:
+
 - Uses `ingressClassName: nginx`
 - cert-manager annotation for automatic TLS
 - TLS configuration with secret `keycloak-tls-cert`
@@ -257,6 +269,7 @@ gh workflow run deploy-ingress.yaml \
 ### Idempotent Deployments
 
 The workflow is designed to be run multiple times safely:
+
 - Checks if components exist before installing
 - Upgrades existing installations with new config
 - No downtime for running services
@@ -432,6 +445,7 @@ kubectl get secret keycloak-tls-cert -n keycloak -o jsonpath='{.data.tls\.crt}' 
 ## Cost Estimation
 
 **Vultr VKE Resources:**
+
 - Load Balancer: ~$10/month
 - Ingress Controller: ~$5/month (CPU/memory)
 - cert-manager: ~$2/month (CPU/memory)
@@ -448,6 +462,7 @@ After successful deployment:
 3. ✅ Certificate auto-renewal configured
 
 **For production readiness:**
+
 1. Enable Cloudflare proxy (orange cloud) for DDoS protection
 2. Set up monitoring and alerts for certificate expiry
 3. Configure backup for cert-manager secrets

@@ -24,6 +24,7 @@
 **License:** MIT
 
 **What it does:**
+
 - Auto-generates beautiful static documentation from GraphQL schema
 - Supports introspection query (live endpoint) or SDL file
 - Customizable themes and styling
@@ -69,6 +70,7 @@ spectaql spectaql-config.yml -t docs/api/graphql
 ```
 
 **Benefits over custom script:**
+
 - ✅ 2 lines vs 400 lines of custom code
 - ✅ Professional, searchable UI
 - ✅ Maintained by community (Anvil Co)
@@ -90,6 +92,7 @@ spectaql spectaql-config.yml -t docs/api/graphql
 **License:** MIT
 
 **What it does:**
+
 - Enforces consistent Markdown style
 - 50+ built-in rules (MD001-MD053)
 - Fixes common formatting issues automatically
@@ -133,6 +136,7 @@ markdownlint-cli2 --config .markdownlint.json "docs/**/*.md"
 ```
 
 **Benefits:**
+
 - ✅ Industry-standard linter
 - ✅ Auto-fix capability
 - ✅ VSCode integration
@@ -148,6 +152,7 @@ markdownlint-cli2 --config .markdownlint.json "docs/**/*.md"
 **License:** ISC
 
 **What it does:**
+
 - Validates all links in markdown files
 - Checks internal and external links
 - Configurable timeout and retry logic
@@ -196,6 +201,7 @@ markdown-link-check --config .markdown-link-check.json docs/**/*.md
 **License:** MIT
 
 **Why MkDocs for this project:**
+
 - ✅ Python-based (matches Go ecosystem tools like Sphinx)
 - ✅ Material theme is stunning and professional
 - ✅ Built-in search
@@ -287,6 +293,7 @@ mkdocs gh-deploy
 ```
 
 **Benefits:**
+
 - ✅ Professional, modern UI
 - ✅ Built-in search
 - ✅ Mobile-responsive
@@ -307,6 +314,7 @@ mkdocs gh-deploy
 **License:** MIT
 
 **What it does:**
+
 - Grammar and style checking for technical docs
 - Customizable style guides (Google, Microsoft, RedHat, etc.)
 - CI/CD integration
@@ -342,6 +350,7 @@ vale --output=JSON docs/ > vale-results.json
 ```
 
 **Benefits:**
+
 - ✅ Catches grammar/style issues
 - ✅ Enforces consistent terminology
 - ✅ Multiple style guides available
@@ -354,13 +363,16 @@ vale --output=JSON docs/ > vale-results.json
 ### Phase 1: Replace GraphQL Docs Generator (1 hour)
 
 **Actions:**
+
 1. Install SpectaQL: `npm install -g spectaql`
 2. Create `spectaql-config.yml`
 3. Update Makefile:
+
    ```makefile
    docs-graphql:
        spectaql spectaql-config.yml -t docs/api/graphql
    ```
+
 4. Delete `scripts/generate-graphql-docs.sh` (400 lines → 1 line)
 
 **Effort:** Low | **Impact:** High
@@ -370,10 +382,12 @@ vale --output=JSON docs/ > vale-results.json
 ### Phase 2: Add Markdown Linting (2 hours)
 
 **Actions:**
+
 1. Install markdownlint-cli2
 2. Create `.markdownlint.json` config
 3. Install markdown-link-check
 4. Update CI/CD workflow:
+
    ```yaml
    - name: Lint Markdown
      run: markdownlint-cli2 "docs/**/*.md"
@@ -381,7 +395,9 @@ vale --output=JSON docs/ > vale-results.json
    - name: Check Links
      run: markdown-link-check docs/**/*.md
    ```
+
 5. Add VSCode settings for team:
+
    ```json
    {
      "markdownlint.config": ".markdownlint.json",
@@ -396,6 +412,7 @@ vale --output=JSON docs/ > vale-results.json
 ### Phase 3: Set Up MkDocs Site (4 hours)
 
 **Actions:**
+
 1. Install `mkdocs-material`
 2. Create `mkdocs.yml` configuration
 3. Reorganize docs/ structure for MkDocs
@@ -410,6 +427,7 @@ vale --output=JSON docs/ > vale-results.json
 ### Phase 4: Add Vale for Prose Quality (2 hours)
 
 **Actions:**
+
 1. Install Vale
 2. Download Google or Microsoft style guide
 3. Create `.vale.ini`
@@ -423,6 +441,7 @@ vale --output=JSON docs/ > vale-results.json
 ## Migration from Custom Scripts
 
 ### What to Keep
+
 - ✅ Package doc.go coverage script (Go-specific, no standard tool)
 - ✅ ENT/GraphQL diagram generators (project-specific)
 - ✅ Custom verification logic for ADRs/patterns structure
@@ -443,11 +462,13 @@ vale --output=JSON docs/ > vale-results.json
 ## Cost-Benefit Analysis
 
 ### Costs
+
 - **Time:** ~9 hours initial setup
 - **Learning:** Team needs to learn new tools (minimal - all well-documented)
 - **Maintenance:** Tool updates via npm/pip (much easier than bash scripts)
 
 ### Benefits
+
 - **Maintenance:** 95% reduction in custom code maintenance
 - **Quality:** Professional, battle-tested tools
 - **Team Velocity:** Faster onboarding (standard tools)
@@ -506,6 +527,7 @@ vale --output=JSON docs/ > vale-results.json
 **Recommendation:** Migrate to industry-standard tools over the next 2 weeks.
 
 **Rationale:**
+
 1. **Less maintenance** - Community maintains tools
 2. **Better quality** - Battle-tested by thousands of projects
 3. **Faster development** - Leverage existing features

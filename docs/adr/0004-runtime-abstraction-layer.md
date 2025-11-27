@@ -9,11 +9,13 @@ Accepted
 ## Context and Problem Statement
 
 VolatiCloud needs to run Freqtrade trading bots across multiple deployment environments:
+
 - **Local development**: Docker Desktop on macOS/Windows/Linux
 - **Production**: Kubernetes clusters (VKE, GKE, EKS)
 - **Edge cases**: Local processes for debugging without containers
 
 Each runtime has different APIs and lifecycle semantics:
+
 - Docker SDK uses container IDs and Docker API
 - Kubernetes uses Pods, Deployments, kubectl/client-go
 - Local processes use OS process management
@@ -35,10 +37,12 @@ Each runtime has different APIs and lifecycle semantics:
 Use Docker SDK directly in GraphQL resolvers and business logic.
 
 **Pros:**
+
 - Simple initial implementation
 - Direct access to all Docker features
 
 **Cons:**
+
 - **Locks us into Docker forever**
 - Cannot test without Docker daemon
 - Impossible to support Kubernetes without massive refactoring
@@ -49,9 +53,11 @@ Use Docker SDK directly in GraphQL resolvers and business logic.
 Create DockerManager, K8sManager, LocalManager as separate implementations.
 
 **Pros:**
+
 - Runtime-specific optimizations possible
 
 **Cons:**
+
 - **No polymorphism** - need runtime type checks everywhere
 - Code duplication across managers
 - Difficult to test (each manager needs its own mocks)
@@ -62,6 +68,7 @@ Create DockerManager, K8sManager, LocalManager as separate implementations.
 Define `Runtime` interface with common lifecycle operations, implement per runtime.
 
 **Pros:**
+
 - **Runtime-agnostic business logic** - code works with any Runtime implementation
 - Easy to mock for tests (MockRuntime)
 - Adding new runtime = implement interface + factory case
@@ -69,6 +76,7 @@ Define `Runtime` interface with common lifecycle operations, implement per runti
 - Factory pattern handles runtime selection based on config
 
 **Cons:**
+
 - Abstraction layer adds indirection
 - Interface may not capture all runtime-specific features (use optional extension interfaces)
 - Slightly more upfront design work
@@ -76,6 +84,7 @@ Define `Runtime` interface with common lifecycle operations, implement per runti
 ## Decision Outcome
 
 Chosen option: **Runtime Interface with Factory Pattern**, because it:
+
 1. **Decouples business logic from infrastructure** - GraphQL resolvers don't know about Docker/K8s
 2. **Enables testing** - MockRuntime for unit tests without Docker daemon
 3. **Supports multi-runtime** - Same code runs locally (Docker) and production (K8s)
@@ -85,6 +94,7 @@ Chosen option: **Runtime Interface with Factory Pattern**, because it:
 ### Consequences
 
 **Positive:**
+
 - Bot lifecycle code is runtime-agnostic
 - Full test coverage without Docker daemon (using MockRuntime)
 - Easy to support multiple runtimes simultaneously (users choose per BotRunner)
@@ -92,12 +102,14 @@ Chosen option: **Runtime Interface with Factory Pattern**, because it:
 - Can optimize per-runtime without affecting interface
 
 **Negative:**
+
 - Interface cannot expose runtime-specific features (e.g., Docker networks, K8s pod affinity)
   - Mitigation: Use optional extension interfaces or runtime-specific config
 - Factory adds one extra layer of indirection
 - Must maintain interface backward compatibility
 
 **Neutral:**
+
 - Need to implement interface for each new runtime (expected trade-off)
 - Runtime-specific configuration stored in BotRunner.config JSON field
 
@@ -122,29 +134,34 @@ Container Orchestrator (Docker SDK / K8s client-go / OS)
 ### Key Files
 
 **Runtime Interface:**
+
 - `internal/runner/interface.go:8-60` - Runtime interface definition
   - 12 lifecycle methods: CreateBot, DeleteBot, StartBot, StopBot, RestartBot, etc.
   - BotStatus, LogReader, Health Check
   - MockRuntime implementation for testing (lines 63-172)
 
 **Factory Pattern:**
+
 - `internal/runner/factory.go:10-129` - Factory creates Runtime based on enum.RunnerType
   - `Create(ctx, runnerType, config)` - Returns Runtime interface
   - Separate factories for bots (Runtime) and backtests (BacktestRunner)
   - Health check on creation (fail fast if runtime unavailable)
 
 **Implementations:**
+
 - `internal/runner/docker_runner.go` - Docker SDK implementation
 - `internal/runner/kubernetes.go` - K8s client-go implementation (stub)
 - `internal/runner/local.go` - OS process implementation (stub)
 - `internal/runner/docker_backtest.go` - Docker backtest implementation
 
 **Types:**
+
 - `internal/runner/types.go` - BotSpec, BotStatus, LogOptions, UpdateBotSpec
 
 ### Example Usage
 
 **Runtime Interface Contract:**
+
 ```go
 // internal/runner/interface.go:8
 type Runtime interface {
@@ -165,6 +182,7 @@ type Runtime interface {
 ```
 
 **Factory Creation (Runtime Selection):**
+
 ```go
 // internal/runner/factory.go:19
 func (f *Factory) Create(ctx context.Context, runnerType enum.RunnerType,
@@ -184,6 +202,7 @@ func (f *Factory) Create(ctx context.Context, runnerType enum.RunnerType,
 ```
 
 **Docker Runtime Implementation:**
+
 ```go
 // internal/runner/docker_runner.go (simplified)
 type DockerRuntime struct {
@@ -208,6 +227,7 @@ func (d *DockerRuntime) StartBot(ctx context.Context, botID string) error {
 ```
 
 **Usage in GraphQL Resolver:**
+
 ```go
 // internal/graph/schema.resolvers.go (bot mutations)
 func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error) {
@@ -235,6 +255,7 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 ```
 
 **Testing with MockRuntime:**
+
 ```go
 // internal/graph/*_test.go
 func TestCreateBot(t *testing.T) {
@@ -255,6 +276,7 @@ func TestCreateBot(t *testing.T) {
 ### Separate Interfaces for Bots and Backtests
 
 **Why two interfaces?**
+
 - Bots are long-running stateful containers (start/stop/restart)
 - Backtests are one-shot jobs (run once, collect results, cleanup)
 

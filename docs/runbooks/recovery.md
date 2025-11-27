@@ -42,6 +42,7 @@ kubectl get pods -n volaticloud -w
    - Verify no maintenance windows active
 
 2. **Check Network Connectivity**
+
    ```bash
    # From within Kubernetes cluster
    kubectl run -it --rm netshoot --image=nicolaka/netshoot -- /bin/bash
@@ -51,11 +52,13 @@ kubectl get pods -n volaticloud -w
    ```
 
 3. **Verify Credentials**
+
    ```bash
    kubectl get secret volaticloud-db-secret -n volaticloud -o jsonpath='{.data}' | jq 'map_values(@base64d)'
    ```
 
 4. **Restart Pods** (if needed)
+
    ```bash
    kubectl rollout restart deployment/volaticloud-backend -n volaticloud
    ```
@@ -85,12 +88,14 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 #### Recovery Steps
 
 1. **Stop All Write Operations**
+
    ```bash
    # Scale backend to 0
    kubectl scale deployment volaticloud-backend -n volaticloud --replicas=0
    ```
 
 2. **Assess Damage**
+
    ```sql
    -- Check for missing tables
    SELECT tablename FROM pg_tables WHERE schemaname = 'public';
@@ -105,6 +110,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
    ```
 
 3. **Restore from Backup**
+
    ```bash
    # Via Vultr control panel:
    # 1. Navigate to database cluster
@@ -115,6 +121,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
    ```
 
 4. **Verify Restoration**
+
    ```bash
    # Test database connectivity
    psql -h <DB_HOST> -U volaticloud -d volaticloud -c "\dt"
@@ -124,6 +131,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
    ```
 
 5. **Restart Backend**
+
    ```bash
    kubectl scale deployment volaticloud-backend -n volaticloud --replicas=2
    kubectl rollout status deployment/volaticloud-backend -n volaticloud
@@ -141,6 +149,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 #### Recovery Steps
 
 1. **Create New Database Instance**
+
    ```bash
    # Via Vultr CLI or control panel
    # 1. Create new PostgreSQL cluster
@@ -149,6 +158,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
    ```
 
 2. **Update Kubernetes Secret**
+
    ```bash
    kubectl create secret generic volaticloud-db-secret \
      --namespace=volaticloud \
@@ -160,11 +170,13 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
    ```
 
 3. **Deploy Backend** (migrations run automatically)
+
    ```bash
    kubectl rollout restart deployment/volaticloud-backend -n volaticloud
    ```
 
 4. **Restore Data from Backup**
+
    ```bash
    # If backup available:
    pg_restore -h <NEW_DB_HOST> -U volaticloud -d volaticloud /path/to/backup.dump
@@ -173,6 +185,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
    ```
 
 5. **Verify System Health**
+
    ```bash
    curl https://api.volaticloud.com/health
    kubectl logs -n volaticloud -l app=volaticloud-backend --tail=50
@@ -194,17 +207,20 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 Kubernetes automatically handles node failures:
 
 1. **Verify Pod Rescheduling**
+
    ```bash
    kubectl get pods -n volaticloud -o wide
    # Pods should be rescheduled to healthy nodes automatically
    ```
 
 2. **Monitor Events**
+
    ```bash
    kubectl get events -n volaticloud --sort-by='.lastTimestamp'
    ```
 
 3. **Manual Intervention** (if needed)
+
    ```bash
    # Cordon failed node (if still in cluster)
    kubectl cordon <NODE_NAME>
@@ -233,6 +249,7 @@ Kubernetes automatically handles node failures:
    - Provide cluster ID and error details
 
 2. **Monitor Application**
+
    ```bash
    # Existing pods continue serving traffic
    curl https://api.volaticloud.com/health
@@ -257,6 +274,7 @@ Kubernetes automatically handles node failures:
 #### Recovery Steps
 
 1. **Create New VKE Cluster**
+
    ```bash
    # Via Vultr control panel:
    # 1. Create new Kubernetes cluster
@@ -265,12 +283,14 @@ Kubernetes automatically handles node failures:
    ```
 
 2. **Configure kubectl**
+
    ```bash
    export KUBECONFIG=/path/to/new-kubeconfig.yaml
    kubectl cluster-info
    ```
 
 3. **Install Prerequisites**
+
    ```bash
    # Ingress-nginx
    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -283,6 +303,7 @@ Kubernetes automatically handles node failures:
    ```
 
 4. **Deploy Backend**
+
    ```bash
    # Create namespace and secrets
    kubectl create namespace volaticloud
@@ -303,6 +324,7 @@ Kubernetes automatically handles node failures:
    ```
 
 5. **Update DNS**
+
    ```bash
    # Get new ingress IP
    kubectl get svc -n ingress-nginx ingress-nginx-controller
@@ -312,6 +334,7 @@ Kubernetes automatically handles node failures:
    ```
 
 6. **Verify Deployment**
+
    ```bash
    kubectl get all -n volaticloud
    curl https://api.volaticloud.com/health
@@ -342,6 +365,7 @@ kubectl logs -n keycloak -l app=keycloak
 #### Recovery Steps
 
 1. **Restart Keycloak**
+
    ```bash
    # If containerized
    docker restart volaticloud-keycloak
@@ -351,11 +375,13 @@ kubectl logs -n keycloak -l app=keycloak
    ```
 
 2. **Verify Health**
+
    ```bash
    curl https://keycloak.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configuration
    ```
 
 3. **Test Authentication**
+
    ```bash
    # Get access token
    curl -X POST https://keycloak.volaticloud.com/auth/realms/volaticloud/protocol/openid-connect/token \
@@ -376,18 +402,21 @@ kubectl logs -n keycloak -l app=keycloak
 #### Recovery Steps
 
 1. **Restore Keycloak from Backup**
+
    ```bash
    # If using Keycloak database backup
    pg_restore -h <KC_DB_HOST> -U keycloak -d keycloak /path/to/keycloak-backup.dump
    ```
 
 2. **Reconfigure Realm**
+
    ```bash
    # Import realm configuration
    /opt/keycloak/bin/kc.sh import --file /path/to/volaticloud-realm.json
    ```
 
 3. **Re-register UMA Resources**
+
    ```bash
    # Backend will automatically re-register resources on next create/update
    # Or trigger manual sync via GraphQL mutation
@@ -407,11 +436,13 @@ kubectl logs -n keycloak -l app=keycloak
 #### Recovery
 
 1. **Check Database**
+
    ```sql
    SELECT id, name, status FROM bots;
    ```
 
 2. **Restore from Backup** (if recent backup exists)
+
    ```bash
    # Restore specific table
    pg_restore -h <DB_HOST> -U volaticloud -d volaticloud -t bots /path/to/backup.dump
@@ -430,11 +461,13 @@ kubectl logs -n keycloak -l app=keycloak
 #### Recovery
 
 1. **Check Git History** (if strategies committed)
+
    ```bash
    git log --all --grep="<STRATEGY_NAME>"
    ```
 
 2. **Restore from Database Backup**
+
    ```bash
    pg_restore -h <DB_HOST> -U volaticloud -d volaticloud -t strategies /path/to/backup.dump
    ```
@@ -517,11 +550,13 @@ kubectl logs -n volaticloud -l app=volaticloud-backend --tail=100
 ### Database Backups
 
 **Automated** (Vultr managed):
+
 - Daily automatic backups
 - 7-day retention
 - Point-in-time recovery available
 
 **Manual Backup**:
+
 ```bash
 pg_dump -h <DB_HOST> -U volaticloud -d volaticloud \
   -Fc -f "volaticloud-backup-$(date +%Y%m%d).dump"

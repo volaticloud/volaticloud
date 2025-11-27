@@ -3,6 +3,7 @@
 ## Problem
 
 How do you test GraphQL resolvers when:
+
 - Resolvers depend on database clients, external APIs, and context values
 - Tests need to be fast and isolated (no external dependencies)
 - Setup requires creating test databases and fixtures
@@ -291,12 +292,14 @@ func TestBotLifecycle_Integration(t *testing.T) {
 ## Trade-offs
 
 ### Pros
+
 - Fast test execution (in-memory)
 - Complete isolation between tests
 - Easy to mock external dependencies
 - Full control over test data
 
 ### Cons
+
 - SQLite behavior differs from PostgreSQL
 - Mock complexity for external APIs
 - Setup overhead for complex scenarios
