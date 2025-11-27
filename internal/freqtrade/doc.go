@@ -41,11 +41,11 @@ Or run the full code generation pipeline (ENT + GraphQL + Freqtrade):
 	make generate
 
 The generation process:
-  1. Reads openapi.json from internal/freqtrade/openapi.json
-  2. Runs openapitools/openapi-generator-cli in Docker
-  3. Generates Go code with int64 type mappings (for Unix millisecond timestamps)
-  4. Cleans up generated test files and docs (we maintain our own)
-  5. Formats the generated Go code with gofmt
+ 1. Reads openapi.json from internal/freqtrade/openapi.json
+ 2. Runs openapitools/openapi-generator-cli in Docker
+ 3. Generates Go code with int64 type mappings (for Unix millisecond timestamps)
+ 4. Cleans up generated test files and docs (we maintain our own)
+ 5. Formats the generated Go code with gofmt
 
 ## Important Configuration
 
@@ -57,6 +57,7 @@ This ensures all integer fields use int64 instead of int32, which is essential
 for handling Freqtrade's Unix timestamps in milliseconds (values > 2.1 billion).
 
 Without this mapping, you'll get JSON unmarshaling errors like:
+
 	cannot unmarshal number 1761743045808 into Go struct field of type int32
 
 # Obtaining and Updating the OpenAPI Specification
@@ -64,6 +65,7 @@ Without this mapping, you'll get JSON unmarshaling errors like:
 ## Current Specification
 
 The current OpenAPI spec (v0.1.0) is located at:
+
 	internal/freqtrade/openapi.json
 
 ## Updating to a New Freqtrade Version
@@ -94,6 +96,7 @@ extract the spec from a running Freqtrade instance:
 **Method 3: View Official API Docs**
 
 Freqtrade's API documentation is available at:
+
 	https://www.freqtrade.io/en/stable/rest-api/
 
 The spec is embedded in their running instances but not published separately.
@@ -101,13 +104,13 @@ The spec is embedded in their running instances but not published separately.
 ## Version Compatibility
 
 When updating the OpenAPI spec to a new Freqtrade version:
-  1. Check breaking changes in Freqtrade release notes
-  2. Update openapi.json with the new spec
-  3. Run make generate-freqtrade
-  4. Review generated code for breaking changes
-  5. Update manual wrapper code (bot_client.go, etc.) if needed
-  6. Run tests: make test
-  7. Update this doc.go with the new version number
+ 1. Check breaking changes in Freqtrade release notes
+ 2. Update openapi.json with the new spec
+ 3. Run make generate-freqtrade
+ 4. Review generated code for breaking changes
+ 5. Update manual wrapper code (bot_client.go, etc.) if needed
+ 6. Run tests: make test
+ 7. Update this doc.go with the new version number
 
 # Integration with VolatiCloud
 
@@ -132,6 +135,7 @@ being stored in the database:
 	}
 
 JSON schema validation is performed using the official Freqtrade schema:
+
 	https://schema.freqtrade.io/schema.json
 
 See internal/graph/schema_validator.go for implementation.
@@ -213,9 +217,9 @@ The client supports multiple connection strategies for different deployment scen
 	)
 
 The bot monitor implements automatic fallback:
-  1. Try container IP with 2-second timeout
-  2. If failed, fall back to localhost:hostPort
-  3. Log connection method for debugging
+ 1. Try container IP with 2-second timeout
+ 2. If failed, fall back to localhost:hostPort
+ 3. Log connection method for debugging
 
 See internal/monitor/bot_monitor.go for the universal connection strategy.
 
@@ -283,10 +287,10 @@ test against real Freqtrade instances in Docker.
 ## When to Regenerate
 
 Regenerate the client when:
-  1. Upgrading to a new Freqtrade version
-  2. New API endpoints are added
-  3. Request/response models change
-  4. Bug fixes in the OpenAPI spec
+ 1. Upgrading to a new Freqtrade version
+ 2. New API endpoints are added
+ 3. Request/response models change
+ 4. Bug fixes in the OpenAPI spec
 
 ## DO NOT Edit Generated Files
 

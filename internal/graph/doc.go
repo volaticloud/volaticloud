@@ -57,27 +57,27 @@ context-based dependency injection pattern (ADR-0001).
 
 The package uses gqlgen for automatic code generation:
 
-  Generated Files (DO NOT EDIT):
-    - generated.go: GraphQL server implementation
-    - ent.resolvers.go: ENT-generated entity resolvers
+	Generated Files (DO NOT EDIT):
+	  - generated.go: GraphQL server implementation
+	  - ent.resolvers.go: ENT-generated entity resolvers
 
-  Manual Files (EDIT FREELY):
-    - resolver.go: Resolver struct and dependencies
-    - schema.resolvers.go: Custom query/mutation implementations
-    - directives.go: Custom directive implementations
-    - helpers.go: Helper functions for building specs
-    - tx.go: Transaction helper utilities
+	Manual Files (EDIT FREELY):
+	  - resolver.go: Resolver struct and dependencies
+	  - schema.resolvers.go: Custom query/mutation implementations
+	  - directives.go: Custom directive implementations
+	  - helpers.go: Helper functions for building specs
+	  - tx.go: Transaction helper utilities
 
 ## Schema Integration
 
 ENT ORM generates GraphQL schema automatically:
 
-  Schema Flow:
-    1. Define ENT schema (internal/ent/schema/*.go)
-    2. Run `go generate` → generates internal/graph/ent.graphql
-    3. gqlgen merges ent.graphql + schema.graphqls
-    4. gqlgen generates resolvers and types
-    5. Implement custom resolver methods
+	Schema Flow:
+	  1. Define ENT schema (internal/ent/schema/*.go)
+	  2. Run `go generate` → generates internal/graph/ent.graphql
+	  3. gqlgen merges ent.graphql + schema.graphqls
+	  4. gqlgen generates resolvers and types
+	  5. Implement custom resolver methods
 
 This ensures single source of truth for database and API schemas (ADR-0002).
 
@@ -160,10 +160,10 @@ Enforces authorization checks using Keycloak UMA:
 	}
 
 Flow:
-  1. Extract resource ID from mutation args
-  2. Request permission token from Keycloak
-  3. If granted: proceed to resolver
-  4. If denied: return 403 Forbidden error
+ 1. Extract resource ID from mutation args
+ 2. Request permission token from Keycloak
+ 3. If granted: proceed to resolver
+ 4. If denied: return 403 Forbidden error
 
 # Transaction Management
 
@@ -230,10 +230,10 @@ Benefits:
 
 buildBotSpec creates runner.BotSpec from Bot entity:
 
-  Three-Layer Config Architecture:
-    1. ExchangeConfig (config.exchange.json)
-    2. StrategyConfig (config.strategy.json)
-    3. Config (config.bot.json)
+	Three-Layer Config Architecture:
+	  1. ExchangeConfig (config.exchange.json)
+	  2. StrategyConfig (config.strategy.json)
+	  3. Config (config.bot.json)
 
 Freqtrade merges them via:
 
@@ -253,27 +253,27 @@ Critical Features:
 
 buildBacktestSpec creates runner.BacktestSpec from Backtest entity:
 
-  Backtest Configuration:
-    - Strategy code and config
-    - Timerange (e.g., "20240101-20241101")
-    - Pair list (e.g., ["BTC/USDT", "ETH/USDT"])
-    - Stake amount and currency
-    - Entry/exit pricing
+	Backtest Configuration:
+	  - Strategy code and config
+	  - Timerange (e.g., "20240101-20241101")
+	  - Pair list (e.g., ["BTC/USDT", "ETH/USDT"])
+	  - Stake amount and currency
+	  - Entry/exit pricing
 
 ## Config Validation
 
 validateFreqtradeConfig ensures required Freqtrade fields:
 
-  Required Fields:
-    - stake_currency (string)
-    - stake_amount (number)
-    - exit_pricing (object with price_side, use_order_book, order_book_top)
-    - entry_pricing (object with price_side, use_order_book, order_book_top)
+	Required Fields:
+	  - stake_currency (string)
+	  - stake_amount (number)
+	  - exit_pricing (object with price_side, use_order_book, order_book_top)
+	  - entry_pricing (object with price_side, use_order_book, order_book_top)
 
 validateExchangeConfig validates against Freqtrade JSON schema:
 
-  Uses official schema from:
-    https://schema.freqtrade.io/schema.json
+	Uses official schema from:
+	  https://schema.freqtrade.io/schema.json
 
 # Strategy Versioning
 
@@ -281,28 +281,28 @@ Immutable strategy versioning ensures reproducibility (ADR-0003):
 
 ## Auto-Versioning Triggers:
 
-  updateStrategy Mutation:
-    1. Load existing strategy
-    2. Start transaction
-    3. Mark old version as is_latest=false
-    4. Create new version with incremented version_number
-    5. Commit (or rollback on error)
+	updateStrategy Mutation:
+	  1. Load existing strategy
+	  2. Start transaction
+	  3. Mark old version as is_latest=false
+	  4. Create new version with incremented version_number
+	  5. Commit (or rollback on error)
 
-  createBacktest Mutation:
-    1. Check if strategy has existing backtests
-    2. If yes: auto-create new version first
-    3. Use new version ID for backtest
-    4. Ensures backtest doesn't mutate tested strategy
+	createBacktest Mutation:
+	  1. Check if strategy has existing backtests
+	  2. If yes: auto-create new version first
+	  3. Use new version ID for backtest
+	  4. Ensures backtest doesn't mutate tested strategy
 
 ## Query Patterns:
 
-  latestStrategies:
-    - Returns only strategies with is_latest=true
-    - Default dashboard view
+	latestStrategies:
+	  - Returns only strategies with is_latest=true
+	  - Default dashboard view
 
-  strategyVersions(name: String!):
-    - Returns all versions for given strategy name
-    - Ordered by version_number descending
+	strategyVersions(name: String!):
+	  - Returns all versions for given strategy name
+	  - Ordered by version_number descending
 
 ## Critical Implementation Detail:
 
@@ -331,25 +331,25 @@ Bot and exchange configs validated against official Freqtrade schema:
 
 ### Implementation (schema_validator.go):
 
-  Schema Loading:
-    - Fetches from https://schema.freqtrade.io/schema.json
-    - Caches in memory (fetched once per server lifecycle)
+	Schema Loading:
+	  - Fetches from https://schema.freqtrade.io/schema.json
+	  - Caches in memory (fetched once per server lifecycle)
 
-  Validation:
-    - Uses github.com/xeipuuv/gojsonschema
-    - Returns descriptive error messages
-    - Filters to relevant fields (exchange validation only shows exchange errors)
+	Validation:
+	  - Uses github.com/xeipuuv/gojsonschema
+	  - Returns descriptive error messages
+	  - Filters to relevant fields (exchange validation only shows exchange errors)
 
 ### Usage:
 
-  validateFreqtradeConfigWithSchema(config):
-    - Validates complete bot config
-    - Called in updateBot mutation
+	validateFreqtradeConfigWithSchema(config):
+	  - Validates complete bot config
+	  - Called in updateBot mutation
 
-  exchange.ValidateConfigWithSchema(config):
-    - Validates exchange config only
-    - Wraps partial config in minimal Freqtrade structure
-    - Filters errors to exchange-related fields
+	exchange.ValidateConfigWithSchema(config):
+	  - Validates exchange config only
+	  - Wraps partial config in minimal Freqtrade structure
+	  - Filters errors to exchange-related fields
 
 Benefits:
   - Automatic validation against Freqtrade requirements
@@ -365,16 +365,16 @@ Automatic UMA resource registration for authorization:
 
 ### Entity Lifecycle Hooks (keycloak_hooks.go):
 
-  On Create:
-    - Register resource in Keycloak UMA
-    - Store resource_id in entity
-    - Set owner permissions
+	On Create:
+	  - Register resource in Keycloak UMA
+	  - Store resource_id in entity
+	  - Set owner permissions
 
-  On Update:
-    - Update resource metadata
+	On Update:
+	  - Update resource metadata
 
-  On Delete:
-    - Deregister resource from Keycloak
+	On Delete:
+	  - Deregister resource from Keycloak
 
 ### Supported Entities:
 
@@ -385,19 +385,19 @@ Automatic UMA resource registration for authorization:
 
 ### Permission Patterns:
 
-  bot:view   - Read bot details
-  bot:update - Modify bot configuration
-  bot:delete - Remove bot
-  bot:start  - Start/stop bot operations
+	bot:view   - Read bot details
+	bot:update - Modify bot configuration
+	bot:delete - Remove bot
+	bot:start  - Start/stop bot operations
 
 ## Authorization Flow:
 
-  1. User makes GraphQL request
-  2. @authorized directive intercepts
-  3. Extract resource ID from args
-  4. Request permission token from Keycloak
-  5. Keycloak checks policies and permissions
-  6. If granted: proceed, If denied: 403 error
+ 1. User makes GraphQL request
+ 2. @authorized directive intercepts
+ 3. Extract resource ID from args
+ 4. Request permission token from Keycloak
+ 5. Keycloak checks policies and permissions
+ 6. If granted: proceed, If denied: 403 error
 
 # Error Handling
 
@@ -415,19 +415,19 @@ Automatic UMA resource registration for authorization:
 
 ## Common Error Patterns:
 
-  Validation Errors:
-    - Invalid config format
-    - Missing required fields
-    - Type mismatches
+	Validation Errors:
+	  - Invalid config format
+	  - Missing required fields
+	  - Type mismatches
 
-  Authorization Errors:
-    - 401 Unauthorized (no token)
-    - 403 Forbidden (no permission)
+	Authorization Errors:
+	  - 401 Unauthorized (no token)
+	  - 403 Forbidden (no permission)
 
-  Database Errors:
-    - Constraint violations
-    - Foreign key errors
-    - Transaction rollbacks
+	Database Errors:
+	  - Constraint violations
+	  - Foreign key errors
+	  - Transaction rollbacks
 
 ## Error Propagation:
 
@@ -443,30 +443,30 @@ gqlgen automatically wraps errors with path and extensions.
 
 ## Test Infrastructure (resolver_test.go, test_setup_test.go):
 
-  Setup:
-    - In-memory SQLite database
-    - Fresh schema migration
-    - Test data fixtures
+	Setup:
+	  - In-memory SQLite database
+	  - Fresh schema migration
+	  - Test data fixtures
 
-  Helpers:
-    - setupTestResolver() - Creates resolver with test ENT client
-    - ptr() - Helper for pointer fields
-    - ctx() - Creates context
-    - Mock Keycloak clients
+	Helpers:
+	  - setupTestResolver() - Creates resolver with test ENT client
+	  - ptr() - Helper for pointer fields
+	  - ctx() - Creates context
+	  - Mock Keycloak clients
 
 ## Test Coverage:
 
-  Resolver Tests:
-    - Query resolvers: 100%
-    - Mutation resolvers: 97%
-    - Total: 91.9% (excluding generated code)
+	Resolver Tests:
+	  - Query resolvers: 100%
+	  - Mutation resolvers: 97%
+	  - Total: 91.9% (excluding generated code)
 
-  Test Categories:
-    - CRUD operations for all entities
-    - Strategy versioning logic
-    - Config validation
-    - Authorization integration
-    - Transaction rollback scenarios
+	Test Categories:
+	  - CRUD operations for all entities
+	  - Strategy versioning logic
+	  - Config validation
+	  - Authorization integration
+	  - Transaction rollback scenarios
 
 ## Running Tests:
 
@@ -575,40 +575,40 @@ Variables:
 
 # Files
 
-  resolver.go                     - Resolver struct and dependency injection
-  generated.go                    - gqlgen generated server (DO NOT EDIT)
-  ent.resolvers.go                - ENT generated entity resolvers (DO NOT EDIT)
-  schema.resolvers.go             - Custom query/mutation implementations
-  directives.go                   - Custom directive implementations
-  tx.go                           - Transaction helper utilities
-  helpers.go                      - BotSpec/BacktestSpec builders
-  strategy_helpers.go             - Strategy versioning logic
-  schema_validator.go             - Freqtrade JSON schema validation
-  keycloak_hooks.go               - UMA resource registration hooks
+	resolver.go                     - Resolver struct and dependency injection
+	generated.go                    - gqlgen generated server (DO NOT EDIT)
+	ent.resolvers.go                - ENT generated entity resolvers (DO NOT EDIT)
+	schema.resolvers.go             - Custom query/mutation implementations
+	directives.go                   - Custom directive implementations
+	tx.go                           - Transaction helper utilities
+	helpers.go                      - BotSpec/BacktestSpec builders
+	strategy_helpers.go             - Strategy versioning logic
+	schema_validator.go             - Freqtrade JSON schema validation
+	keycloak_hooks.go               - UMA resource registration hooks
 
-  resolver_test.go                - Test infrastructure setup
-  test_setup_test.go              - Test helpers and fixtures
-  test_helpers_test.go            - Test utility functions
-  test_mocks_test.go              - Mock implementations
-  helpers_test.go                 - Helper function tests (100% coverage)
-  strategy_versioning_test.go     - Strategy versioning tests (100% coverage)
-  directives_test.go              - Directive tests
-  authorization_integration_test.go - Full authorization flow tests
+	resolver_test.go                - Test infrastructure setup
+	test_setup_test.go              - Test helpers and fixtures
+	test_helpers_test.go            - Test utility functions
+	test_mocks_test.go              - Mock implementations
+	helpers_test.go                 - Helper function tests (100% coverage)
+	strategy_versioning_test.go     - Strategy versioning tests (100% coverage)
+	directives_test.go              - Directive tests
+	authorization_integration_test.go - Full authorization flow tests
 
 # Schema Files
 
-  schema/
-    ent.graphql                   - ENT generated schema (DO NOT EDIT)
-    schema.graphqls               - Custom types and extensions
+	schema/
+	  ent.graphql                   - ENT generated schema (DO NOT EDIT)
+	  schema.graphqls               - Custom types and extensions
 
 # Related Packages
 
-  internal/ent                    - Database ORM and entities
-  internal/auth                   - Keycloak authentication
-  internal/keycloak               - Keycloak UMA authorization
-  internal/runner                 - Bot runtime abstraction
-  internal/monitor                - Bot monitoring
-  internal/backtest               - Backtest result processing
+	internal/ent                    - Database ORM and entities
+	internal/auth                   - Keycloak authentication
+	internal/keycloak               - Keycloak UMA authorization
+	internal/runner                 - Bot runtime abstraction
+	internal/monitor                - Bot monitoring
+	internal/backtest               - Backtest result processing
 
 # References
 

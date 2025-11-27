@@ -84,22 +84,22 @@ The Factory creates runtime instances based on BotRunner configuration:
 
 Factory selects runtime based on enum.RunnerType:
 
-  Docker (enum.RunnerDocker):
-    - Uses Docker SDK
-    - Supports TLS with certificates
-    - Default host: unix:///var/run/docker.sock
-    - API version negotiation
+	Docker (enum.RunnerDocker):
+	  - Uses Docker SDK
+	  - Supports TLS with certificates
+	  - Default host: unix:///var/run/docker.sock
+	  - API version negotiation
 
-  Kubernetes (enum.RunnerKubernetes):
-    - Uses client-go library
-    - Kubeconfig or in-cluster config
-    - Namespace isolation
-    - Pod management
+	Kubernetes (enum.RunnerKubernetes):
+	  - Uses client-go library
+	  - Kubeconfig or in-cluster config
+	  - Namespace isolation
+	  - Pod management
 
-  Local (enum.RunnerLocal):
-    - Direct OS process spawning
-    - For debugging and development
-    - No container isolation
+	Local (enum.RunnerLocal):
+	  - Direct OS process spawning
+	  - For debugging and development
+	  - No container isolation
 
 # Implementations
 
@@ -121,9 +121,9 @@ Production runtime for Docker environments:
 
 Three-layer config file generation:
 
-  1. config.exchange.json (shared credentials)
-  2. config.strategy.json (strategy defaults)
-  3. config.bot.json (bot-specific overrides + dry_run)
+ 1. config.exchange.json (shared credentials)
+ 2. config.strategy.json (strategy defaults)
+ 3. config.bot.json (bot-specific overrides + dry_run)
 
 Freqtrade merges them via command:
 
@@ -135,35 +135,35 @@ Freqtrade merges them via command:
 
 ### Volume Mounts:
 
-  Config Volume:
-    - Host: /tmp/volaticloud-configs/{botID}/
-    - Container: /freqtrade/config/
-    - Read-only: true
-    - Contains: 3 layered config files
+	Config Volume:
+	  - Host: /tmp/volaticloud-configs/{botID}/
+	  - Container: /freqtrade/config/
+	  - Read-only: true
+	  - Contains: 3 layered config files
 
-  Strategy Volume:
-    - Host: /tmp/volaticloud-strategies/{botID}/
-    - Container: /freqtrade/user_data/strategies/
-    - Read-only: true
-    - Contains: strategy Python file
+	Strategy Volume:
+	  - Host: /tmp/volaticloud-strategies/{botID}/
+	  - Container: /freqtrade/user_data/strategies/
+	  - Read-only: true
+	  - Contains: strategy Python file
 
-  Data Volume (Optional):
-    - Named volume: volaticloud-freqtrade-data
-    - Container: /freqtrade/user_data/data/
-    - Shared across bots for historical data
+	Data Volume (Optional):
+	  - Named volume: volaticloud-freqtrade-data
+	  - Container: /freqtrade/user_data/data/
+	  - Shared across bots for historical data
 
 ### Network Configuration:
 
-  Default Network:
-    - Name: volaticloud-network
-    - Driver: bridge
-    - Auto-created if missing
-    - All bots connected to same network
+	Default Network:
+	  - Name: volaticloud-network
+	  - Driver: bridge
+	  - Auto-created if missing
+	  - All bots connected to same network
 
-  Port Mapping:
-    - Container port: 8080 (Freqtrade API)
-    - Host port: Dynamic allocation
-    - Used for metrics fetching and monitoring
+	Port Mapping:
+	  - Container port: 8080 (Freqtrade API)
+	  - Host port: Dynamic allocation
+	  - Used for metrics fetching and monitoring
 
 ## DockerBacktest
 
@@ -189,17 +189,17 @@ Each backtest gets isolated workspace while sharing data:
 
 Volume Mounts:
 
-  Config Volume (Per-Backtest):
-    - Source: volaticloud-backtest-{backtestID}
-    - Target: /freqtrade/user_data
-    - Isolation: Each backtest has own volume
-    - Contains: configs, results, logs
+	Config Volume (Per-Backtest):
+	  - Source: volaticloud-backtest-{backtestID}
+	  - Target: /freqtrade/user_data
+	  - Isolation: Each backtest has own volume
+	  - Contains: configs, results, logs
 
-  Data Volume (Shared):
-    - Source: volaticloud-freqtrade-data
-    - Target: /freqtrade/user_data/{backtestID}/data
-    - Shared: All backtests use same historical data
-    - Benefits: Single data download, parallel execution
+	Data Volume (Shared):
+	  - Source: volaticloud-freqtrade-data
+	  - Target: /freqtrade/user_data/{backtestID}/data
+	  - Shared: All backtests use same historical data
+	  - Benefits: Single data download, parallel execution
 
 Command Structure:
 
@@ -217,36 +217,36 @@ Benefits:
 
 ### Result Processing:
 
-  1. Container execution completes
-  2. Check exit code (0 = success)
-  3. Read result files from volume
-  4. Parse backtest-result.json
-  5. Extract trades and metrics
-  6. Cleanup container and volume
-  7. Return BacktestResult with parsed data
+ 1. Container execution completes
+ 2. Check exit code (0 = success)
+ 3. Read result files from volume
+ 4. Parse backtest-result.json
+ 5. Extract trades and metrics
+ 6. Cleanup container and volume
+ 7. Return BacktestResult with parsed data
 
 ## KubernetesRuntime (Stub)
 
 Kubernetes implementation for production clusters:
 
-  Planned Features:
-    - Pod lifecycle management
-    - Deployment/StatefulSet support
-    - ConfigMap for configs
-    - Secret for credentials
-    - PVC for data volumes
-    - Service for API access
-    - Resource quotas and limits
+	Planned Features:
+	  - Pod lifecycle management
+	  - Deployment/StatefulSet support
+	  - ConfigMap for configs
+	  - Secret for credentials
+	  - PVC for data volumes
+	  - Service for API access
+	  - Resource quotas and limits
 
 ## LocalRuntime (Stub)
 
 Local process implementation for debugging:
 
-  Planned Features:
-    - Direct process spawning (exec.Command)
-    - No container isolation
-    - Direct filesystem access
-    - For development only
+	Planned Features:
+	  - Direct process spawning (exec.Command)
+	  - No container isolation
+	  - Direct filesystem access
+	  - For development only
 
 # Bot Specification
 
@@ -283,25 +283,25 @@ BotSpec defines complete bot configuration:
 
 ## Three-Layer Config Architecture:
 
-  ExchangeConfig (config.exchange.json):
-    - API credentials (key, secret)
-    - Pair whitelist
-    - Trading mode (spot/futures)
-    - Shared across all bots using same exchange
+	ExchangeConfig (config.exchange.json):
+	  - API credentials (key, secret)
+	  - Pair whitelist
+	  - Trading mode (spot/futures)
+	  - Shared across all bots using same exchange
 
-  StrategyConfig (config.strategy.json):
-    - Strategy-specific parameters
-    - Entry/exit pricing
-    - Order types
-    - Timeframe
-    - Shared across all bots using same strategy
+	StrategyConfig (config.strategy.json):
+	  - Strategy-specific parameters
+	  - Entry/exit pricing
+	  - Order types
+	  - Timeframe
+	  - Shared across all bots using same strategy
 
-  Config (config.bot.json):
-    - Stake amount
-    - Max open trades
-    - dry_run flag (auto-injected based on bot mode)
-    - Bot-specific overrides
-    - Unique per bot
+	Config (config.bot.json):
+	  - Stake amount
+	  - Max open trades
+	  - dry_run flag (auto-injected based on bot mode)
+	  - Bot-specific overrides
+	  - Unique per bot
 
 Benefits:
   - DRY: No credential duplication
@@ -336,44 +336,44 @@ BotStatus represents runtime state:
 
 ## Status States:
 
-  Creating:
-    - Container being created
-    - Configs being generated
-    - Image being pulled
+	Creating:
+	  - Container being created
+	  - Configs being generated
+	  - Image being pulled
 
-  Running:
-    - Container started successfully
-    - Freqtrade process running
-    - API responding to health checks
+	Running:
+	  - Container started successfully
+	  - Freqtrade process running
+	  - API responding to health checks
 
-  Stopped:
-    - Container stopped gracefully
-    - Can be restarted
+	Stopped:
+	  - Container stopped gracefully
+	  - Can be restarted
 
-  Error:
-    - Container failed to start
-    - Health checks failing
-    - Freqtrade crashed
-    - ErrorMessage contains details
+	Error:
+	  - Container failed to start
+	  - Health checks failing
+	  - Freqtrade crashed
+	  - ErrorMessage contains details
 
 ## Health Checks:
 
 DockerRuntime health check:
 
-  1. Check container state (Inspect API)
-  2. Parse health check output (if defined)
-  3. Check last health check timestamp
-  4. Return healthy=true only if all pass
+ 1. Check container state (Inspect API)
+ 2. Parse health check output (if defined)
+ 3. Check last health check timestamp
+ 4. Return healthy=true only if all pass
 
 Container health is exposed to Kubernetes probes:
 
-  Liveness Probe:
-    - Kills unhealthy containers
-    - Triggers restart
+	Liveness Probe:
+	  - Kills unhealthy containers
+	  - Triggers restart
 
-  Readiness Probe:
-    - Removes from load balancer
-    - Prevents traffic to unhealthy bots
+	Readiness Probe:
+	  - Removes from load balancer
+	  - Prevents traffic to unhealthy bots
 
 # Error Handling
 
@@ -388,25 +388,25 @@ RunnerError provides structured error information:
 
 ## Common Errors:
 
-  ErrBotNotFound:
-    - Container doesn't exist in runtime
-    - Non-retryable
+	ErrBotNotFound:
+	  - Container doesn't exist in runtime
+	  - Non-retryable
 
-  ErrBotAlreadyExists:
-    - Container with same ID already exists
-    - Non-retryable (delete first)
+	ErrBotAlreadyExists:
+	  - Container with same ID already exists
+	  - Non-retryable (delete first)
 
-  ErrRunnerNotConnected:
-    - Docker daemon not reachable
-    - Retryable (connection may recover)
+	ErrRunnerNotConnected:
+	  - Docker daemon not reachable
+	  - Retryable (connection may recover)
 
-  ErrInvalidSpec:
-    - BotSpec validation failed
-    - Non-retryable (fix spec first)
+	ErrInvalidSpec:
+	  - BotSpec validation failed
+	  - Non-retryable (fix spec first)
 
-  ErrResourceLimit:
-    - Resource constraints exceeded
-    - Non-retryable (adjust limits)
+	ErrResourceLimit:
+	  - Resource constraints exceeded
+	  - Non-retryable (adjust limits)
 
 ## Error Wrapping:
 
@@ -614,25 +614,25 @@ Factory tests verify runtime creation:
 
 # Files
 
-  interface.go           - Runtime interface definition
-  backtest_interface.go  - BacktestRunner interface definition
-  factory.go             - Runtime factory implementation
-  docker_runner.go       - Docker SDK implementation
-  docker_backtest.go     - Docker backtest implementation
-  kubernetes.go          - Kubernetes implementation (stub)
-  local.go               - Local process implementation (stub)
-  types.go               - Core types (BotSpec, BotStatus, etc.)
-  backtest_types.go      - Backtest-specific types
-  config.go              - Runtime configuration types
-  config_validator.go    - BotSpec validation logic
+	interface.go           - Runtime interface definition
+	backtest_interface.go  - BacktestRunner interface definition
+	factory.go             - Runtime factory implementation
+	docker_runner.go       - Docker SDK implementation
+	docker_backtest.go     - Docker backtest implementation
+	kubernetes.go          - Kubernetes implementation (stub)
+	local.go               - Local process implementation (stub)
+	types.go               - Core types (BotSpec, BotStatus, etc.)
+	backtest_types.go      - Backtest-specific types
+	config.go              - Runtime configuration types
+	config_validator.go    - BotSpec validation logic
 
 # Related Packages
 
-  internal/monitor        - Bot monitoring and metrics collection
-  internal/graph          - GraphQL resolvers (runtime consumers)
-  internal/ent            - Database entities (BotRunner, Bot)
-  internal/freqtrade      - Freqtrade API client
-  internal/backtest       - Backtest result parsing
+	internal/monitor        - Bot monitoring and metrics collection
+	internal/graph          - GraphQL resolvers (runtime consumers)
+	internal/ent            - Database entities (BotRunner, Bot)
+	internal/freqtrade      - Freqtrade API client
+	internal/backtest       - Backtest result parsing
 
 # References
 

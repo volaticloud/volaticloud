@@ -11,10 +11,10 @@ type-safe access to key metrics without requiring frontend code to parse complex
 Freqtrade produces comprehensive JSON results (103+ fields) after backtest execution.
 This package provides:
 
-  1. Typed summary extraction (20 key metrics)
-  2. Type-safe field access via Go structs
-  3. GraphQL API integration via gqlgen autobind
-  4. Optional field handling (nil vs zero values)
+ 1. Typed summary extraction (20 key metrics)
+ 2. Type-safe field access via Go structs
+ 3. GraphQL API integration via gqlgen autobind
+ 4. Optional field handling (nil vs zero values)
 
 Flow:
 
@@ -54,17 +54,17 @@ BacktestSummary contains commonly accessed metrics:
 
 ## Optional vs Required Fields
 
-  Required Fields (zero values if missing):
-    - StrategyName
-    - TotalTrades
-    - Wins
-    - Losses
-    - ProfitTotalAbs
-    - ProfitTotal
-    - StakeCurrency
+	Required Fields (zero values if missing):
+	  - StrategyName
+	  - TotalTrades
+	  - Wins
+	  - Losses
+	  - ProfitTotalAbs
+	  - ProfitTotal
+	  - StakeCurrency
 
-  Optional Fields (nil if missing):
-    - All pointer fields (ProfitMean, WinRate, etc.)
+	Optional Fields (nil if missing):
+	  - All pointer fields (ProfitMean, WinRate, etc.)
 
 This distinction allows:
   - Proper GraphQL null handling
@@ -89,12 +89,12 @@ ExtractSummaryFromResult navigates Freqtrade's nested structure:
 
 Steps:
 
-  1. Navigate to strategy map
-  2. Extract first (and usually only) strategy
-  3. Parse required fields with type conversion
-  4. Parse optional fields (return nil if missing)
-  5. Parse timestamps with time.Parse
-  6. Return typed summary
+ 1. Navigate to strategy map
+ 2. Extract first (and usually only) strategy
+ 3. Parse required fields with type conversion
+ 4. Parse optional fields (return nil if missing)
+ 5. Parse timestamps with time.Parse
+ 6. Return typed summary
 
 ## Type Conversion Helpers
 
@@ -205,10 +205,10 @@ ExtractSummaryFromResult returns (nil, nil) if:
 This is not an error - some backtests may not produce summaries.
 
 Caller should:
-  1. Check if summary is nil
-  2. Store backtest as completed
-  3. Store result JSON (even without summary)
-  4. Log warning (not error)
+ 1. Check if summary is nil
+ 2. Store backtest as completed
+ 3. Store result JSON (even without summary)
+ 4. Log warning (not error)
 
 # Testing
 
@@ -216,28 +216,28 @@ Test coverage: 96.4%
 
 ## Test Categories:
 
-  Valid Summaries:
-    - Full result with all fields
-    - Minimal result (only required fields)
-    - Multiple strategies (uses first)
+	Valid Summaries:
+	  - Full result with all fields
+	  - Minimal result (only required fields)
+	  - Multiple strategies (uses first)
 
-  Type Conversions:
-    - int → int
-    - float64 → int
-    - int → float64
+	Type Conversions:
+	  - int → int
+	  - float64 → int
+	  - int → float64
 
-  Optional Fields:
-    - nil vs zero distinction
-    - Missing optional fields
+	Optional Fields:
+	  - nil vs zero distinction
+	  - Missing optional fields
 
-  Timestamps:
-    - Valid timestamp parsing
-    - Invalid format handling
+	Timestamps:
+	  - Valid timestamp parsing
+	  - Invalid format handling
 
-  Edge Cases:
-    - Nil/empty result
-    - Invalid strategy structure
-    - Type mismatches
+	Edge Cases:
+	  - Nil/empty result
+	  - Invalid strategy structure
+	  - Type mismatches
 
 ## Running Tests:
 
@@ -246,16 +246,16 @@ Test coverage: 96.4%
 
 # Files
 
-  summary.go      - Summary extraction and type conversion
-  summary_test.go - Comprehensive test coverage (96.4%)
-  spec.go         - Backtest specification types
+	summary.go      - Summary extraction and type conversion
+	summary_test.go - Comprehensive test coverage (96.4%)
+	spec.go         - Backtest specification types
 
 # Related Packages
 
-  internal/monitor - Calls ExtractSummaryFromResult when backtest completes
-  internal/graph   - GraphQL API exposes BacktestSummary
-  internal/runner  - BacktestRunner provides result JSON
-  dashboard        - Frontend TypeScript types (src/types/freqtrade.ts)
+	internal/monitor - Calls ExtractSummaryFromResult when backtest completes
+	internal/graph   - GraphQL API exposes BacktestSummary
+	internal/runner  - BacktestRunner provides result JSON
+	dashboard        - Frontend TypeScript types (src/types/freqtrade.ts)
 
 # References
 

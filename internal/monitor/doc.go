@@ -115,27 +115,27 @@ The BotMonitor performs the following checks every 30 seconds:
 1. Query database for bots in active states (Running, Unhealthy, Stopped, Creating)
 2. Filter bots assigned to this instance via coordinator
 3. For each assigned bot:
-   - Get container status from runtime (Docker/Kubernetes)
-   - Update bot status in database
-   - If running and healthy: fetch Freqtrade metrics
-   - Universal connection: try container IP, fallback to localhost
+  - Get container status from runtime (Docker/Kubernetes)
+  - Update bot status in database
+  - If running and healthy: fetch Freqtrade metrics
+  - Universal connection: try container IP, fallback to localhost
 
 ## Universal Connection Strategy
 
 The monitor supports multiple deployment scenarios:
 
-  Development (Host Machine):
-    - Container IP fails (not accessible from macOS/Windows host)
-    - Fallback to localhost:hostPort succeeds
-    - 2-second timeout on container IP attempt
+	Development (Host Machine):
+	  - Container IP fails (not accessible from macOS/Windows host)
+	  - Fallback to localhost:hostPort succeeds
+	  - 2-second timeout on container IP attempt
 
-  Docker Compose (Shared Network):
-    - Container IP succeeds immediately
-    - No fallback needed
+	Docker Compose (Shared Network):
+	  - Container IP succeeds immediately
+	  - No fallback needed
 
-  Kubernetes (Within Cluster):
-    - Container IP succeeds immediately
-    - No fallback needed
+	Kubernetes (Within Cluster):
+	  - Container IP succeeds immediately
+	  - No fallback needed
 
 This automatic fallback ensures monitoring works across all environments without manual configuration.
 
@@ -145,35 +145,35 @@ The BacktestMonitor handles one-time backtest jobs:
 
 1. Query database for backtests in "running" status
 2. For each running backtest:
-   - Check container exit code and status
-   - If completed: fetch results, parse summary, update database
-   - If failed: capture logs, update error message
-   - Auto-cleanup container after result capture
+  - Check container exit code and status
+  - If completed: fetch results, parse summary, update database
+  - If failed: capture logs, update error message
+  - Auto-cleanup container after result capture
 
 ## Result Processing
 
 When a backtest completes:
 
-  1. Fetch result ZIP from container
-  2. Extract JSON files (backtest-result.json, trades.json)
-  3. Parse typed summary (20 key metrics)
-  4. Store full result + summary in database
-  5. Cleanup container automatically
+ 1. Fetch result ZIP from container
+ 2. Extract JSON files (backtest-result.json, trades.json)
+ 3. Parse typed summary (20 key metrics)
+ 4. Store full result + summary in database
+ 5. Cleanup container automatically
 
 ## Summary Extraction
 
 The monitor extracts typed summaries for GraphQL API:
 
-  Typed Summary (20 fields):
-    - strategyName, totalTrades, wins, losses
-    - profitTotalAbs, profitTotalPercent
-    - winrate, profitFactor, expectancy
-    - maxDrawdown, maxDrawdownAbs
-    - firstTradeTimestamp, latestTradeTimestamp
+	Typed Summary (20 fields):
+	  - strategyName, totalTrades, wins, losses
+	  - profitTotalAbs, profitTotalPercent
+	  - winrate, profitFactor, expectancy
+	  - maxDrawdown, maxDrawdownAbs
+	  - firstTradeTimestamp, latestTradeTimestamp
 
-  Full Result (JSON):
-    - Complete Freqtrade output (103+ fields)
-    - Available for advanced analysis
+	Full Result (JSON):
+	  - Complete Freqtrade output (103+ fields)
+	  - Available for advanced analysis
 
 # Distributed Coordination
 
@@ -218,28 +218,28 @@ When an instance joins or leaves:
 
 ## Config Fields
 
-  DatabaseClient (*ent.Client):
-    Required. ENT client for querying and updating entities.
+	DatabaseClient (*ent.Client):
+	  Required. ENT client for querying and updating entities.
 
-  EtcdEndpoints ([]string):
-    Optional. If empty, runs in single-instance mode.
-    Example: []string{"etcd1:2379", "etcd2:2379"}
+	EtcdEndpoints ([]string):
+	  Optional. If empty, runs in single-instance mode.
+	  Example: []string{"etcd1:2379", "etcd2:2379"}
 
-  InstanceID (string):
-    Optional. Auto-generated if not provided.
-    Format: "{hostname}-{nanoseconds}"
+	InstanceID (string):
+	  Optional. Auto-generated if not provided.
+	  Format: "{hostname}-{nanoseconds}"
 
-  MonitorInterval (time.Duration):
-    Optional. Bot monitoring interval (default: 30s)
+	MonitorInterval (time.Duration):
+	  Optional. Bot monitoring interval (default: 30s)
 
-  RunnerMonitorInterval (time.Duration):
-    Optional. Runner data monitoring interval (default: 5m)
+	RunnerMonitorInterval (time.Duration):
+	  Optional. Runner data monitoring interval (default: 5m)
 
-  HeartbeatInterval (time.Duration):
-    Optional. etcd heartbeat interval (default: 10s)
+	HeartbeatInterval (time.Duration):
+	  Optional. etcd heartbeat interval (default: 10s)
 
-  LeaseTTL (int64):
-    Optional. etcd lease TTL in seconds (default: 15)
+	LeaseTTL (int64):
+	  Optional. etcd lease TTL in seconds (default: 15)
 
 # Metrics Collection
 
@@ -255,88 +255,88 @@ The monitor fetches metrics from Freqtrade's REST API:
 
 Stored in BotMetrics entity (one-to-one with Bot):
 
-  Profit Metrics:
-    - profit_closed_coin, profit_closed_percent
-    - profit_all_coin, profit_all_percent
+	Profit Metrics:
+	  - profit_closed_coin, profit_closed_percent
+	  - profit_all_coin, profit_all_percent
 
-  Trade Counts:
-    - trade_count, closed_trade_count
-    - winning_trades, losing_trades
+	Trade Counts:
+	  - trade_count, closed_trade_count
+	  - winning_trades, losing_trades
 
-  Performance:
-    - winrate (0.0-1.0)
-    - profit_factor (wins/losses ratio)
-    - expectancy (expected profit per trade)
+	Performance:
+	  - winrate (0.0-1.0)
+	  - profit_factor (wins/losses ratio)
+	  - expectancy (expected profit per trade)
 
-  Risk:
-    - max_drawdown (percentage)
-    - max_drawdown_abs (absolute value)
+	Risk:
+	  - max_drawdown (percentage)
+	  - max_drawdown_abs (absolute value)
 
-  Best Performing:
-    - best_pair (symbol)
-    - best_rate (profit percentage)
+	Best Performing:
+	  - best_pair (symbol)
+	  - best_rate (profit percentage)
 
-  Timestamps:
-    - first_trade_timestamp (Unix → time.Time)
-    - latest_trade_timestamp (Unix → time.Time)
-    - fetched_at (last successful fetch)
+	Timestamps:
+	  - first_trade_timestamp (Unix → time.Time)
+	  - latest_trade_timestamp (Unix → time.Time)
+	  - fetched_at (last successful fetch)
 
 ## Upsert Strategy
 
 Metrics use upsert pattern (update existing or create new):
 
-	1. Query for existing BotMetrics by bot_id
-	2. If exists: UpdateOneID with new values
-	3. If not exists: Create with all fields
-	4. Store fetched_at = time.Now()
+ 1. Query for existing BotMetrics by bot_id
+ 2. If exists: UpdateOneID with new values
+ 3. If not exists: Create with all fields
+ 4. Store fetched_at = time.Now()
 
 # Error Handling
 
 ## Bot Status Errors
 
-  Container Not Found:
-    - Mark bot as "stopped" status
-    - Clear error message
-    - Only log on status change (not every check)
+	Container Not Found:
+	  - Mark bot as "stopped" status
+	  - Clear error message
+	  - Only log on status change (not every check)
 
-  Container Error State:
-    - Mark bot as "error" status
-    - Store error message
-    - Continue monitoring (may recover)
+	Container Error State:
+	  - Mark bot as "error" status
+	  - Store error message
+	  - Continue monitoring (may recover)
 
-  Metrics Fetch Failed:
-    - Log error but don't fail status check
-    - Bot remains "running" status
-    - Metrics update skipped for this cycle
+	Metrics Fetch Failed:
+	  - Log error but don't fail status check
+	  - Bot remains "running" status
+	  - Metrics update skipped for this cycle
 
 ## Backtest Errors
 
-  Container Exit Non-Zero:
-    - Mark backtest as "failed" status
-    - Capture logs for debugging
-    - Cleanup container automatically
+	Container Exit Non-Zero:
+	  - Mark backtest as "failed" status
+	  - Capture logs for debugging
+	  - Cleanup container automatically
 
-  Result Parse Failed:
-    - Mark backtest as "completed" without results
-    - Store error message
-    - Cleanup container
+	Result Parse Failed:
+	  - Mark backtest as "completed" without results
+	  - Store error message
+	  - Cleanup container
 
-  Cleanup Failed:
-    - Log warning but don't fail
-    - Results/status already saved
-    - Manual cleanup may be needed
+	Cleanup Failed:
+	  - Log warning but don't fail
+	  - Results/status already saved
+	  - Manual cleanup may be needed
 
 ## Distributed Errors
 
-  etcd Connection Lost:
-    - Registry auto-reestablishes lease
-    - Heartbeat loop continues
-    - Instance re-registers automatically
+	etcd Connection Lost:
+	  - Registry auto-reestablishes lease
+	  - Heartbeat loop continues
+	  - Instance re-registers automatically
 
-  Instance Deregistered:
-    - Other instances detect via watch
-    - Reassign bots via consistent hashing
-    - Seamless failover
+	Instance Deregistered:
+	  - Other instances detect via watch
+	  - Reassign bots via consistent hashing
+	  - Seamless failover
 
 # Testing
 
@@ -369,22 +369,22 @@ Requires etcd for distributed tests:
 
 # Files
 
-  manager.go          - Monitor manager (orchestration)
-  bot_monitor.go      - Bot status and metrics monitoring
-  backtest_monitor.go - Backtest lifecycle management
-  coordinator.go      - Distributed bot assignment
-  registry.go         - Instance registration in etcd
-  runner_monitor.go   - Runner data monitoring
-  data_download.go    - Historical data download
-  types.go            - Shared types and constants
+	manager.go          - Monitor manager (orchestration)
+	bot_monitor.go      - Bot status and metrics monitoring
+	backtest_monitor.go - Backtest lifecycle management
+	coordinator.go      - Distributed bot assignment
+	registry.go         - Instance registration in etcd
+	runner_monitor.go   - Runner data monitoring
+	data_download.go    - Historical data download
+	types.go            - Shared types and constants
 
 # Related Packages
 
-  internal/runner     - Runtime abstraction (Docker/Kubernetes)
-  internal/freqtrade  - Freqtrade API client (auto-generated)
-  internal/backtest   - Backtest result parsing and summary extraction
-  internal/etcd       - etcd client wrapper
-  internal/ent        - Database entities and queries
+	internal/runner     - Runtime abstraction (Docker/Kubernetes)
+	internal/freqtrade  - Freqtrade API client (auto-generated)
+	internal/backtest   - Backtest result parsing and summary extraction
+	internal/etcd       - etcd client wrapper
+	internal/ent        - Database entities and queries
 
 # References
 

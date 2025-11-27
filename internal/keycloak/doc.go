@@ -46,42 +46,42 @@ Interface for UMA operations:
 
 ## Key Operations
 
-  Register Resource:
-    - Called when entity is created (Bot, Strategy, etc.)
-    - Stores resource_id in database
-    - Sets owner permissions automatically
+	Register Resource:
+	  - Called when entity is created (Bot, Strategy, etc.)
+	  - Stores resource_id in database
+	  - Sets owner permissions automatically
 
-  Update Resource:
-    - Called when entity is updated
-    - Syncs resource metadata
+	Update Resource:
+	  - Called when entity is updated
+	  - Syncs resource metadata
 
-  Delete Resource:
-    - Called when entity is deleted
-    - Cleanup UMA resource
+	Delete Resource:
+	  - Called when entity is deleted
+	  - Cleanup UMA resource
 
-  Request Permission:
-    - Called by @authorized directive
-    - Returns permission token if granted
+	Request Permission:
+	  - Called by @authorized directive
+	  - Returns permission token if granted
 
-  Check Token:
-    - Validates permission tokens
-    - Returns token claims and permissions
+	Check Token:
+	  - Validates permission tokens
+	  - Returns token claims and permissions
 
 # Resource Types
 
 Supported resource types:
 
-  bot:
-    - Permissions: bot:view, bot:update, bot:delete, bot:start, bot:stop
+	bot:
+	  - Permissions: bot:view, bot:update, bot:delete, bot:start, bot:stop
 
-  strategy:
-    - Permissions: strategy:view, strategy:update, strategy:delete
+	strategy:
+	  - Permissions: strategy:view, strategy:update, strategy:delete
 
-  exchange:
-    - Permissions: exchange:view, exchange:update, exchange:delete
+	exchange:
+	  - Permissions: exchange:view, exchange:update, exchange:delete
 
-  backtest:
-    - Permissions: backtest:view, backtest:update, backtest:delete
+	backtest:
+	  - Permissions: backtest:view, backtest:update, backtest:delete
 
 # Authorization Flow
 
@@ -127,12 +127,12 @@ Supported resource types:
 	}
 
 Flow:
-  1. User makes deleteBot mutation
-  2. @authorized directive intercepts
-  3. Extract bot ID from args
-  4. Call RequestPermission(botID, "bot:delete")
-  5. If granted: call resolver
-  6. If denied: return error
+ 1. User makes deleteBot mutation
+ 2. @authorized directive intercepts
+ 3. Extract bot ID from args
+ 4. Call RequestPermission(botID, "bot:delete")
+ 5. If granted: call resolver
+ 6. If denied: return error
 
 ## Context Injection:
 
@@ -192,48 +192,48 @@ UMAClient creation:
 
 Environment variables:
 
-  KEYCLOAK_URL:           Keycloak server URL
-  KEYCLOAK_REALM:         Realm name
-  KEYCLOAK_CLIENT_ID:     Client ID
-  KEYCLOAK_CLIENT_SECRET: Client secret
+	KEYCLOAK_URL:           Keycloak server URL
+	KEYCLOAK_REALM:         Realm name
+	KEYCLOAK_CLIENT_ID:     Client ID
+	KEYCLOAK_CLIENT_SECRET: Client secret
 
 # Permission Policies
 
 Keycloak supports various policy types:
 
-  User-Based:
-    - Grant permission to specific users
+	User-Based:
+	  - Grant permission to specific users
 
-  Role-Based:
-    - Grant permission to users with roles
+	Role-Based:
+	  - Grant permission to users with roles
 
-  Group-Based:
-    - Grant permission to group members
+	Group-Based:
+	  - Grant permission to group members
 
-  JavaScript:
-    - Custom logic for complex rules
+	JavaScript:
+	  - Custom logic for complex rules
 
-  Time-Based:
-    - Grant permission during specific hours
+	Time-Based:
+	  - Grant permission during specific hours
 
-  Aggregated:
-    - Combine multiple policies
+	Aggregated:
+	  - Combine multiple policies
 
 # Error Handling
 
 Common errors:
 
-  401 Unauthorized:
-    - No authentication token
-    - Invalid token
+	401 Unauthorized:
+	  - No authentication token
+	  - Invalid token
 
-  403 Forbidden:
-    - Valid token but no permission
-    - Resource not found
+	403 Forbidden:
+	  - Valid token but no permission
+	  - Resource not found
 
-  500 Internal Server Error:
-    - Keycloak unavailable
-    - Network errors
+	500 Internal Server Error:
+	  - Keycloak unavailable
+	  - Network errors
 
 Error propagation:
 
@@ -263,15 +263,15 @@ Usage in tests:
 
 # Files
 
-  uma_client.go      - UMA client implementation
-  types.go           - Request/response types
-  mock.go            - Mock implementation for testing
+	uma_client.go      - UMA client implementation
+	types.go           - Request/response types
+	mock.go            - Mock implementation for testing
 
 # Related Packages
 
-  internal/graph       - GraphQL directives use UMA client
-  internal/auth        - Authentication (JWT tokens)
-  internal/ent         - Entity hooks register resources
+	internal/graph       - GraphQL directives use UMA client
+	internal/auth        - Authentication (JWT tokens)
+	internal/ent         - Entity hooks register resources
 
 # References
 
