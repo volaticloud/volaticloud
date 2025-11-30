@@ -55,7 +55,7 @@ kubectl --kubeconfig=vke-kubeconfig.yaml cluster-info
 
 GitHub Secrets need to be base64-encoded.
 
-### On macOS/Linux:
+### On macOS/Linux
 
 ```bash
 cat vke-kubeconfig.yaml | base64 > vke-kubeconfig-base64.txt
@@ -64,7 +64,7 @@ cat vke-kubeconfig.yaml | base64 > vke-kubeconfig-base64.txt
 cat vke-kubeconfig-base64.txt
 ```
 
-### On Windows (PowerShell):
+### On Windows (PowerShell)
 
 ```powershell
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("vke-kubeconfig.yaml")) | Out-File -Encoding ASCII vke-kubeconfig-base64.txt
@@ -79,7 +79,7 @@ Get-Content vke-kubeconfig-base64.txt
 
 ## Step 3: Get PostgreSQL Connection Details
 
-### Via Vultr Dashboard:
+### Via Vultr Dashboard
 
 1. Navigate to **Products → Databases**
 2. Click on your PostgreSQL instance
@@ -90,7 +90,7 @@ Get-Content vke-kubeconfig-base64.txt
    - **Username**: `keycloak` (or your custom user)
    - **Password**: Your database password
 
-### Create Keycloak Database (if needed):
+### Create Keycloak Database (if needed)
 
 ```bash
 # Connect to your PostgreSQL
@@ -197,7 +197,7 @@ gh secret list
 
 ## Step 6: Verify Secrets Are Set
 
-### Via GitHub Web UI:
+### Via GitHub Web UI
 
 1. Go to **Settings** → **Secrets and variables** → **Actions**
 2. You should see 6 secrets listed:
@@ -208,13 +208,14 @@ gh secret list
    - ✅ KEYCLOAK_HOSTNAME
    - ✅ VOLATICLOUD_URL
 
-### Via GitHub CLI:
+### Via GitHub CLI
 
 ```bash
 gh secret list
 ```
 
 Expected output:
+
 ```
 VKE_KUBECONFIG          Updated YYYY-MM-DD
 KEYCLOAK_DB_HOST        Updated YYYY-MM-DD
@@ -283,6 +284,7 @@ If this succeeds, your secrets are correctly configured! ✅
 **Cause**: Kubeconfig is not properly encoded or expired
 
 **Solution**:
+
 ```bash
 # Re-download kubeconfig from Vultr
 # Re-encode it
@@ -297,6 +299,7 @@ gh secret set VKE_KUBECONFIG < vke-kubeconfig-base64.txt
 **Cause**: Kubeconfig has line breaks or encoding issues
 
 **Solution**:
+
 ```bash
 # Encode without line breaks
 cat vke-kubeconfig.yaml | base64 | tr -d '\n' > vke-kubeconfig-base64.txt
@@ -310,6 +313,7 @@ gh secret set VKE_KUBECONFIG < vke-kubeconfig-base64.txt
 **Cause**: Wrong host, port, or credentials
 
 **Solution**:
+
 ```bash
 # Verify database connectivity from your local machine
 psql -h $KEYCLOAK_DB_HOST -p 16751 -U keycloak -d keycloak
@@ -326,6 +330,7 @@ gh secret set KEYCLOAK_DB_PASSWORD
 **Cause**: Secret name mismatch (case-sensitive)
 
 **Solution**:
+
 - Verify secret names match exactly in workflow YAML
 - Secrets are case-sensitive: `VKE_KUBECONFIG` ≠ `vke_kubeconfig`
 
@@ -333,7 +338,7 @@ gh secret set KEYCLOAK_DB_PASSWORD
 
 ## Security Best Practices
 
-### ✅ Do's:
+### ✅ Do's
 
 - ✅ Use base64 encoding for kubeconfig
 - ✅ Use strong, unique passwords for database
@@ -341,7 +346,7 @@ gh secret set KEYCLOAK_DB_PASSWORD
 - ✅ Limit GitHub Actions permissions to minimum needed
 - ✅ Enable GitHub Actions approval for production deployments
 
-### ❌ Don'ts:
+### ❌ Don'ts
 
 - ❌ Never commit kubeconfig to git
 - ❌ Never echo secrets in workflow logs (GitHub auto-masks them, but be careful)
@@ -363,7 +368,7 @@ After secrets are configured:
 
 ## Quick Reference
 
-### Update a Secret:
+### Update a Secret
 
 ```bash
 # Via GitHub CLI
@@ -373,7 +378,7 @@ gh secret set SECRET_NAME -b"new-value"
 # Settings → Secrets and variables → Actions → Click secret → Update
 ```
 
-### Delete a Secret:
+### Delete a Secret
 
 ```bash
 # Via GitHub CLI
@@ -383,7 +388,7 @@ gh secret delete SECRET_NAME
 # Settings → Secrets and variables → Actions → Click secret → Delete
 ```
 
-### List All Secrets:
+### List All Secrets
 
 ```bash
 gh secret list
@@ -394,15 +399,18 @@ gh secret list
 ## Support
 
 If you encounter issues:
+
 1. Check troubleshooting section above
 2. Verify all 6 secrets are set correctly
 3. Run the test connection workflow
 4. Check GitHub Actions logs for detailed error messages
 
 For VKE-specific issues:
+
 - [Vultr VKE Documentation](https://www.vultr.com/docs/vultr-kubernetes-engine/)
 - [Vultr Support](https://my.vultr.com/support/)
 
 For GitHub Actions issues:
+
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Encrypted Secrets Guide](https://docs.github.com/en/actions/security-guides/encrypted-secrets)

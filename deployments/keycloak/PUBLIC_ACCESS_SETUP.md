@@ -77,6 +77,7 @@ kubectl get svc -n ingress-nginx
 **Save this IP address** - you'll need it for DNS configuration.
 
 You can also get it with:
+
 ```bash
 export LOAD_BALANCER_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo "Load Balancer IP: $LOAD_BALANCER_IP"
@@ -105,6 +106,7 @@ Point your domain to the load balancer IP address.
 ### Using Other DNS Providers
 
 The process is similar for any DNS provider:
+
 - Add an **A record** pointing `auth.volaticloud.com` to your load balancer IP
 - Wait 5-10 minutes for DNS propagation
 
@@ -371,6 +373,7 @@ kubectl describe challenge <challenge-name> -n keycloak
 ### Issue: Cloudflare SSL Error
 
 If using Cloudflare proxy (orange cloud):
+
 1. Set SSL/TLS mode to **Full (strict)**
 2. Or disable proxy temporarily to test
 3. Install Cloudflare Origin Certificate instead of Let's Encrypt

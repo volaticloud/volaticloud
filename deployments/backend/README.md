@@ -5,6 +5,7 @@ This directory contains Kubernetes deployment configuration for the VolatiCloud 
 ## Overview
 
 The backend is deployed as a Kubernetes Deployment with:
+
 - **Horizontal Pod Autoscaling** (2-10 replicas based on CPU/memory)
 - **Health checks** (liveness & readiness probes)
 - **Database migrations** (pre-install/pre-upgrade hook)
@@ -39,11 +40,13 @@ The backend is deployed as a Kubernetes Deployment with:
 ### 1. GitHub Container Registry (GHCR)
 
 Docker images are automatically built and pushed to GHCR:
+
 - **Registry**: `ghcr.io/volaticloud/volaticloud`
 - **Tags**: `latest`, `main-<sha>`, version tags
 - **Auth**: GitHub Actions uses `GITHUB_TOKEN` (automatic)
 
 To pull images manually:
+
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 docker pull ghcr.io/volaticloud/volaticloud:latest
@@ -52,6 +55,7 @@ docker pull ghcr.io/volaticloud/volaticloud:latest
 ### 2. VKE Cluster
 
 Ensure your VKE cluster has:
+
 - ✅ Ingress Nginx Controller installed
 - ✅ Cert-manager installed
 - ✅ ClusterIssuer `letsencrypt-prod` configured
@@ -60,6 +64,7 @@ Ensure your VKE cluster has:
 ### 3. PostgreSQL Database
 
 Create a managed PostgreSQL database on Vultr:
+
 - **Database**: `volaticloud`
 - **User**: `volaticloud`
 - **Version**: PostgreSQL 14+
@@ -77,6 +82,7 @@ Configure these secrets in the `prod` environment:
 **Note:** The secret name `VOLATICLOUD_DATABASE` matches the environment variable used in `cmd/server/main.go:52`.
 
 Set secrets:
+
 ```bash
 gh secret set VKE_KUBECONFIG --env prod
 # When prompted, enter: postgresql://volaticloud:your-password@postgres-abc.vultr.com:16751/volaticloud?sslmode=require
@@ -90,6 +96,7 @@ gh secret set VOLATICLOUD_DATABASE --env prod
 Key configuration sections:
 
 **Image:**
+
 ```yaml
 image:
   repository: ghcr.io/volaticloud/volaticloud
@@ -98,6 +105,7 @@ image:
 ```
 
 **Replicas & Autoscaling:**
+
 ```yaml
 replicaCount: 2
 
@@ -110,6 +118,7 @@ hpa:
 ```
 
 **Resources:**
+
 ```yaml
 resources:
   limits:
@@ -121,6 +130,7 @@ resources:
 ```
 
 **Ingress:**
+
 ```yaml
 ingress:
   - name: main
@@ -139,6 +149,7 @@ ingress:
 ```
 
 **Database Migration (extraDeploy):**
+
 ```yaml
 extraDeploy:
   - |
@@ -168,6 +179,7 @@ extraDeploy:
 ### Manual Deployment
 
 Trigger manual deployment:
+
 ```bash
 # Deploy latest image
 gh workflow run deploy-backend.yml
@@ -179,6 +191,7 @@ gh workflow run deploy-backend.yml -f image_tag=main-abc1234
 ### Local Testing
 
 Test Helm rendering locally:
+
 ```bash
 # Add Nixys Helm repository
 helm repo add nixys https://registry.nixys.io/chartrepo/public
@@ -199,6 +212,7 @@ helm lint nixys/nxs-universal-chart \
 Migrations run automatically as a Kubernetes Job before each deployment:
 
 **Migration Job Behavior:**
+
 - **Hook**: `pre-upgrade`, `pre-install`
 - **Command**: `/app/volaticloud migrate`
 - **Backoff**: 3 retries
@@ -206,6 +220,7 @@ Migrations run automatically as a Kubernetes Job before each deployment:
 - **Failure**: Deployment fails if migration fails
 
 **Manual Migration:**
+
 ```bash
 # Run migration manually
 kubectl run -it --rm migrate --image=ghcr.io/volaticloud/volaticloud:latest \
@@ -271,6 +286,7 @@ kubectl get hpa -n volaticloud
 ### Prometheus Metrics
 
 Pods are annotated for Prometheus scraping:
+
 ```yaml
 podAnnotations:
   prometheus.io/scrape: "true"
@@ -293,18 +309,21 @@ kubectl get events -n volaticloud --watch
 ### Deployment Fails
 
 **Check pod status:**
+
 ```bash
 kubectl get pods -n volaticloud
 kubectl describe pod <pod-name> -n volaticloud
 ```
 
 **Check logs:**
+
 ```bash
 kubectl logs <pod-name> -n volaticloud
 kubectl logs <pod-name> -n volaticloud --previous  # Previous container
 ```
 
 **Check events:**
+
 ```bash
 kubectl get events -n volaticloud --sort-by='.lastTimestamp'
 ```
@@ -312,12 +331,14 @@ kubectl get events -n volaticloud --sort-by='.lastTimestamp'
 ### Migration Job Fails
 
 **View migration logs:**
+
 ```bash
 kubectl get jobs -n volaticloud
 kubectl logs job/volaticloud-backend-migrate -n volaticloud
 ```
 
 **Debug migration:**
+
 ```bash
 kubectl describe job volaticloud-backend-migrate -n volaticloud
 ```
@@ -325,12 +346,14 @@ kubectl describe job volaticloud-backend-migrate -n volaticloud
 ### Database Connection Issues
 
 **Test database connectivity:**
+
 ```bash
 kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
   psql -h <POSTGRES_HOST> -U volaticloud -d volaticloud
 ```
 
 **Check secret:**
+
 ```bash
 kubectl get secret volaticloud-secrets -n volaticloud -o yaml
 ```
@@ -338,17 +361,20 @@ kubectl get secret volaticloud-secrets -n volaticloud -o yaml
 ### Ingress/TLS Issues
 
 **Check ingress:**
+
 ```bash
 kubectl describe ingress -n volaticloud
 ```
 
 **Check certificate:**
+
 ```bash
 kubectl get certificate -n volaticloud
 kubectl describe certificate volaticloud-api-tls -n volaticloud
 ```
 
 **Check cert-manager logs:**
+
 ```bash
 kubectl logs -n cert-manager -l app=cert-manager
 ```
@@ -365,6 +391,7 @@ kubectl scale deployment volaticloud-backend -n volaticloud --replicas=5
 ### Update HPA
 
 Edit `values.yaml` and redeploy:
+
 ```yaml
 hpa:
   minReplicas: 3
@@ -377,6 +404,7 @@ hpa:
 ### Security Context
 
 Pods run as non-root user (UID 1000):
+
 ```yaml
 securityContext:
   runAsNonRoot: true
@@ -394,6 +422,7 @@ securityContext:
 ### Secrets Management
 
 Database credentials stored in Kubernetes Secrets:
+
 - Created by GitHub Actions during deployment
 - Referenced via environment variables
 - Not committed to git
@@ -404,6 +433,7 @@ Database credentials stored in Kubernetes Secrets:
 
 **Triggers:** Push to main (Go code changes)
 **Steps:**
+
 1. Build multi-arch Docker image (amd64, arm64)
 2. Push to GHCR
 3. Tag: `latest`, `main-<sha>`, version tags
@@ -412,6 +442,7 @@ Database credentials stored in Kubernetes Secrets:
 
 **Triggers:** Push to main (deployment config changes)
 **Steps:**
+
 1. Validate Helm values
 2. Create namespace & secrets
 3. Run database migrations (Helm hook)
@@ -439,6 +470,7 @@ Database credentials stored in Kubernetes Secrets:
 ## Support
 
 For deployment issues:
+
 1. Check this README
 2. Review GitHub Actions logs
 3. Check Kubernetes events and logs

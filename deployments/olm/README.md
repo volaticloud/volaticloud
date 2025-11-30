@@ -43,6 +43,7 @@ kubectl get catalogsource -n olm
 ```
 
 Expected output:
+
 - `olm-operator` pod running
 - `catalog-operator` pod running
 - `operatorhubio-catalog` catalog source available
@@ -50,6 +51,7 @@ Expected output:
 ## Configuration
 
 Configuration is defined in `values.yaml`:
+
 - OLM version: `v0.28.0`
 - Namespace: `olm`
 - Catalog sources: OperatorHub.io community operators

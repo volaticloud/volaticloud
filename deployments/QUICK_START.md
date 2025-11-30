@@ -18,6 +18,7 @@
 ## Step 1: Get Your Kubeconfig (2 minutes)
 
 **Via Vultr Dashboard**:
+
 1. Go to https://my.vultr.com/
 2. Click **Products** → **Kubernetes**
 3. Click your cluster
@@ -25,6 +26,7 @@
 5. Save as `vke-kubeconfig.yaml`
 
 **Test it works**:
+
 ```bash
 kubectl --kubeconfig=vke-kubeconfig.yaml get nodes
 ```
@@ -42,6 +44,7 @@ chmod +x scripts/setup-github-secrets.sh
 ```
 
 The script will prompt you for:
+
 - Path to kubeconfig file
 - PostgreSQL host, port, username, password
 - Keycloak hostname
@@ -52,6 +55,7 @@ The script will prompt you for:
 Follow the detailed guide: [`GITHUB_SECRETS_SETUP.md`](./GITHUB_SECRETS_SETUP.md)
 
 **Required secrets**:
+
 - `VKE_KUBECONFIG` - Base64-encoded kubeconfig
 - `KEYCLOAK_DB_HOST` - PostgreSQL host:port
 - `KEYCLOAK_DB_USERNAME` - Database username
@@ -60,6 +64,7 @@ Follow the detailed guide: [`GITHUB_SECRETS_SETUP.md`](./GITHUB_SECRETS_SETUP.md
 - `VOLATICLOUD_URL` - Application URL (e.g., `https://volaticloud.com`)
 
 **Verify secrets**:
+
 ```bash
 gh secret list
 ```
@@ -97,6 +102,7 @@ git push origin feature/keycloak-openid-integration
 ```
 
 **That's it!** GitHub Actions will automatically:
+
 1. Validate manifests
 2. Install OLM
 3. Deploy Keycloak operator
@@ -107,7 +113,7 @@ git push origin feature/keycloak-openid-integration
 
 ## Step 5: Monitor Deployment (10 minutes)
 
-### Watch GitHub Actions:
+### Watch GitHub Actions
 
 ```bash
 # Watch the workflow run
@@ -117,7 +123,7 @@ gh run watch
 open https://github.com/volaticloud/volaticloud/actions
 ```
 
-### Check Kubernetes:
+### Check Kubernetes
 
 ```bash
 export KUBECONFIG=vke-kubeconfig.yaml
@@ -139,7 +145,7 @@ kubectl logs -n keycloak -l app=keycloak -f
 
 ## Step 6: Access Keycloak (2 minutes)
 
-### Get admin credentials:
+### Get admin credentials
 
 ```bash
 kubectl get secret volaticloud-keycloak-initial-admin \
@@ -151,13 +157,13 @@ kubectl get secret volaticloud-keycloak-initial-admin \
 echo ""
 ```
 
-### Access admin console:
+### Access admin console
 
 ```
 https://auth.volaticloud.com/auth/admin
 ```
 
-### Verify OIDC configuration:
+### Verify OIDC configuration
 
 ```
 https://auth.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configuration
@@ -172,6 +178,7 @@ https://auth.volaticloud.com/auth/realms/volaticloud/.well-known/openid-configur
 **Issue**: Kubeconfig is invalid or expired
 
 **Fix**:
+
 ```bash
 # Re-download from Vultr and update secret
 cat vke-kubeconfig.yaml | base64 | gh secret set VKE_KUBECONFIG
@@ -182,6 +189,7 @@ cat vke-kubeconfig.yaml | base64 | gh secret set VKE_KUBECONFIG
 **Issue**: Database connection failed
 
 **Fix**:
+
 ```bash
 # Check database secret
 kubectl get secret keycloak-db-secret -n keycloak -o yaml
@@ -196,6 +204,7 @@ kubectl run -it --rm psql-test --image=postgres:14 --restart=Never -- \
 **Issue**: OLM or catalog source issue
 
 **Fix**:
+
 ```bash
 # Check OLM
 kubectl get pods -n olm
@@ -272,6 +281,7 @@ git push
 ## Support
 
 Need help?
+
 - **Detailed guide**: See [`GITHUB_SECRETS_SETUP.md`](./GITHUB_SECRETS_SETUP.md)
 - **Keycloak docs**: See [`keycloak/README.md`](./keycloak/README.md)
 - **Full plan**: See [`../.claude/KUBERNETES_PLAN.md`](../.claude/KUBERNETES_PLAN.md)

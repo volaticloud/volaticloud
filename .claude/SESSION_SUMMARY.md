@@ -22,6 +22,7 @@ Successfully implemented a comprehensive bot detail page with real-time metrics 
 - Responsive Material-UI layout
 
 **Routing:**
+
 - Added route `/bots/:id` in `App.tsx`
 - Updated `BotsList.tsx` to make rows clickable
 - Proper navigation with `useNavigate` hook
@@ -31,11 +32,13 @@ Successfully implemented a comprehensive bot detail page with real-time metrics 
 **Created:** `dashboard/src/components/Bots/BotMetrics.tsx`
 
 **Smart State Handling:**
+
 1. **Bot Not Running State**: Shows info alert explaining metrics require running bot
 2. **Fetching Metrics State**: Shows skeleton loaders and "Fetching Metrics" alert
 3. **Metrics Available State**: Shows 7 professional metric cards with icons
 
 **Metric Cards:**
+
 - Total Profit (with trending icon)
 - Closed Profit
 - Total Trades (closed/open breakdown)
@@ -45,6 +48,7 @@ Successfully implemented a comprehensive bot detail page with real-time metrics 
 - Profit Factor + Expectancy
 
 **Features:**
+
 - Proper number formatting (2-4 decimals based on metric type)
 - Percentage formatting with % symbol
 - Date formatting for last updated timestamp
@@ -73,6 +77,7 @@ query GetBot($id: ID!) {
 ```
 
 **Benefits:**
+
 - Uses ENT's built-in filtering capability
 - No custom resolvers needed
 - Follows ENT best practices
@@ -102,6 +107,7 @@ if status.HostPort > 0 {
 ```
 
 **Deployment Scenarios Supported:**
+
 - ✅ Development on host machine (localhost fallback)
 - ✅ Docker Compose (container IP works if in same network)
 - ✅ Kubernetes (container IP works within cluster)
@@ -112,6 +118,7 @@ if status.HostPort > 0 {
 **Problem:** Freqtrade returns Unix timestamps in milliseconds (>2.1B) which overflow int32
 
 **Error:**
+
 ```
 json: cannot unmarshal number 1761743045808 into Go struct field
 _Profit.bot_start_timestamp of type int32
@@ -124,12 +131,14 @@ _Profit.bot_start_timestamp of type int32
 ```
 
 **Result:**
+
 - All timestamp fields now use int64
 - No manual editing of generated code
 - Future regenerations will maintain int64 types
 - Proper handling of large timestamp values
 
 **Files Regenerated:**
+
 - `internal/freqtrade/model_profit.go` (and other models)
 
 ### 6. GraphQL Schema Updates (Backend)
@@ -137,6 +146,7 @@ _Profit.bot_start_timestamp of type int32
 **Query:** Added metrics field to Bot type in ENT schema
 
 **Fields in BotMetrics:**
+
 - profitClosedCoin, profitClosedPercent
 - profitAllCoin, profitAllPercent
 - tradeCount, closedTradeCount, openTradeCount
@@ -154,14 +164,14 @@ _Profit.bot_start_timestamp of type int32
 ```makefile
 # Generate Freqtrade API client from OpenAPI spec (using Docker)
 generate-freqtrade:
-	@docker run --rm -v $${PWD}:/local openapitools/openapi-generator-cli generate \
-		-i /local/internal/freqtrade/openapi.json \
-		-g go \
-		-o /local/internal/freqtrade \
-		--package-name freqtrade \
-		--additional-properties=withGoMod=false,enumClassPrefix=true \
-		--type-mappings=integer=int64 \
-		--openapi-normalizer SET_TAGS_FOR_ALL_OPERATIONS=freqtrade
+ @docker run --rm -v $${PWD}:/local openapitools/openapi-generator-cli generate \
+  -i /local/internal/freqtrade/openapi.json \
+  -g go \
+  -o /local/internal/freqtrade \
+  --package-name freqtrade \
+  --additional-properties=withGoMod=false,enumClassPrefix=true \
+  --type-mappings=integer=int64 \
+  --openapi-normalizer SET_TAGS_FOR_ALL_OPERATIONS=freqtrade
 ```
 
 **Key Change:** Added `--type-mappings=integer=int64`
@@ -190,6 +200,7 @@ PASS
 ```
 
 **Key Test Coverage:**
+
 - Validation functions (helpers.go): 100%
 - Utils: 84.6%
 - Runner factory: 13.5%
@@ -225,12 +236,14 @@ PASS
 ## Files Modified
 
 ### Backend
+
 - `internal/ent/entc.go` - Enabled where filters
 - `internal/monitor/bot_monitor.go` - Fallback connection strategy
 - `Makefile` - Added int64 type mapping
 - `internal/freqtrade/model_profit.go` - Regenerated with int64
 
 ### Frontend
+
 - `dashboard/src/components/Bots/BotDetail.tsx` - Created
 - `dashboard/src/components/Bots/BotMetrics.tsx` - Created
 - `dashboard/src/components/Bots/bots.graphql` - Updated GetBot query

@@ -36,17 +36,20 @@ npm install
 ### Development
 
 1. **Start the Go server** (from project root):
+
    ```bash
    cd ..
    ./bin/volaticloud server
    ```
 
 2. **Generate GraphQL types** (run this whenever schema changes):
+
    ```bash
    npm run codegen
    ```
 
 3. **Start development server**:
+
    ```bash
    npm run dev
    ```
@@ -109,7 +112,6 @@ dashboard/
 │   └── App.tsx                 # Routing
 │
 ├── codegen.ts
-├── ARCHITECTURE.md             # Detailed architecture guide
 └── package.json
 ```
 
@@ -119,8 +121,6 @@ dashboard/
 2. **Components = Reusable** - All UI logic lives here
 3. **Domain-based** - Organized by business feature (Bots, Exchanges, etc.)
 4. **Co-located GraphQL** - Each component directory has its `.graphql` and `.generated.tsx`
-
-See `ARCHITECTURE.md` for detailed design principles and examples.
 
 ## GraphQL Integration
 
@@ -193,6 +193,7 @@ export const BotsList = () => {
 ```
 
 **Benefits:**
+
 - ✅ Type-safe hooks generated per component
 - ✅ Co-located with component code
 - ✅ No global imports needed
@@ -210,6 +211,7 @@ VITE_GRAPHQL_URL=http://localhost:8080/query
 ## Features Roadmap
 
 ### Implemented
+
 - ✅ Project setup with Vite + React + TypeScript
 - ✅ Apollo Client configuration
 - ✅ MUI theme with dark mode
@@ -219,6 +221,7 @@ VITE_GRAPHQL_URL=http://localhost:8080/query
 - ✅ Placeholder pages for all sections
 
 ### TODO
+
 - [ ] Implement Bots list with real data
 - [ ] Bot detail page with metrics
 - [ ] Bot lifecycle controls (start/stop/restart)

@@ -13,6 +13,7 @@
 ## Executive Summary
 
 This plan outlines the complete implementation of **GitOps-based Kubernetes deployment** for VolatiCloud, where:
+
 - **Git is the single source of truth** - All infrastructure and application configuration lives in git
 - **Deployments are automatic** - Every commit triggers appropriate deployment workflows
 - **Everything is reproducible** - Complete cluster state can be recreated from git repository
@@ -20,6 +21,7 @@ This plan outlines the complete implementation of **GitOps-based Kubernetes depl
 - **Full audit trail** - Git history provides complete deployment audit log
 
 ### Key Features
+
 - OLM (Operator Lifecycle Manager) installation via automated scripts
 - Keycloak operator deployment for authentication
 - Smart GitHub Actions workflows with path-based triggers
@@ -129,15 +131,18 @@ volaticloud/
 ### Version Control Strategy
 
 **Branches**:
+
 - `main` → Production deployments (auto-deploy with approval)
 - `develop` → Development environment (auto-deploy)
 - `feature/*` → Feature branches (manual deploy for testing)
 
 **Tags**:
+
 - `v1.0.0` → Application releases
 - `infra-v1.0.0` → Infrastructure releases
 
 **Commits**:
+
 - Conventional commits for automatic changelog
 - Signed commits for security audit
 
@@ -151,6 +156,7 @@ This procedure shows how to deploy **everything** from scratch using only the gi
 
 1. **VKE Cluster** - Created via Vultr dashboard or API
 2. **GitHub Secrets** - Configure once:
+
    ```
    VKE_KUBECONFIG          - Base64-encoded kubeconfig
    GHCR_TOKEN              - GitHub token for image pulls
@@ -169,6 +175,7 @@ gh workflow run bootstrap.yml
 ```
 
 **What it does**:
+
 1. Install OLM on cluster
 2. Install cert-manager for TLS
 3. Install ingress-nginx controller
@@ -219,6 +226,7 @@ git push origin main
 
 **Automatic**: GitHub Actions output
 **Manual verification**:
+
 ```bash
 # Check workflow status
 gh run list --workflow=deploy-app.yml
@@ -346,6 +354,7 @@ echo "   Trigger: gh workflow run bootstrap.yml"
    - App changes → `docker-build.yml` + `deploy-app.yml`
 
 2. **Automatic Trigger Detection**
+
    ```yaml
    on:
      push:
@@ -359,6 +368,7 @@ echo "   Trigger: gh workflow run bootstrap.yml"
    - Helm `upgrade --install`
 
 4. **Rollback via Git**
+
    ```bash
    git revert HEAD          # Revert last commit
    git push origin main     # Triggers automatic rollback deployment
@@ -467,6 +477,7 @@ jobs:
 ## Phase 1: Containerization (Foundation)
 
 ### Objectives
+
 - Create production-ready Docker image for VolatiCloud
 - Set up automated container builds
 - Publish to GitHub Container Registry
@@ -474,6 +485,7 @@ jobs:
 ### Deliverables
 
 #### 1.1 Dockerfile (`/Dockerfile`)
+
 ```dockerfile
 # Multi-stage build
 FROM golang:1.24-alpine AS builder
@@ -484,6 +496,7 @@ FROM alpine:latest
 ```
 
 **Requirements**:
+
 - Multi-stage build (minimize image size)
 - Alpine Linux base (security + size)
 - Health check endpoint
@@ -491,25 +504,29 @@ FROM alpine:latest
 - Proper signal handling
 
 #### 1.2 .dockerignore (`/.dockerignore`)
+
 Exclude development files, tests, documentation
 
 #### 1.3 Makefile Updates
+
 ```makefile
 docker-build:
-	docker build -t volaticloud:latest .
+ docker build -t volaticloud:latest .
 
 docker-push:
-	docker push ghcr.io/volaticloud/volaticloud:latest
+ docker push ghcr.io/volaticloud/volaticloud:latest
 ```
 
 #### 1.4 GitHub Action: `.github/workflows/docker-build.yml`
 
 **Triggers**:
+
 - Push to `main` branch
 - Changes to: `internal/**`, `cmd/**`, `go.mod`, `go.sum`, `Dockerfile`
 - Manual trigger (workflow_dispatch)
 
 **Jobs**:
+
 1. Run tests (reuse backend-ci.yml)
 2. Build multi-arch image (amd64, arm64)
 3. Tag with git SHA + semantic version
@@ -517,6 +534,7 @@ docker-push:
 5. Create GitHub release on tag push
 
 **Outputs**:
+
 - Image: `ghcr.io/volaticloud/volaticloud:latest`
 - Image: `ghcr.io/volaticloud/volaticloud:v1.0.0`
 - Image: `ghcr.io/volaticloud/volaticloud:sha-abc123`
@@ -526,11 +544,13 @@ docker-push:
 ## Phase 2: Helm Chart Foundation
 
 ### Objectives
+
 - Create reusable Helm chart for VolatiCloud
 - Support multiple environments (dev/staging/prod)
 - Configure VKE-specific optimizations
 
 ### Directory Structure
+
 ```
 deployments/helm/volaticloud/
 ├── Chart.yaml
@@ -610,6 +630,7 @@ ingress:
 ### Helm Dependencies
 
 **Option A**: Include PostgreSQL/etcd as subchart dependencies
+
 ```yaml
 # Chart.yaml
 dependencies:
@@ -620,6 +641,7 @@ dependencies:
 ```
 
 **Option B**: Reference external services (recommended for production)
+
 - Use managed PostgreSQL on Vultr
 - Use managed etcd or Redis for coordination
 
@@ -628,6 +650,7 @@ dependencies:
 ## Phase 3: OLM Installation
 
 ### Objectives
+
 - Install OLM on VKE cluster
 - Prepare operator management infrastructure
 - Document OLM lifecycle
@@ -635,6 +658,7 @@ dependencies:
 ### Deliverables
 
 #### 3.1 OLM Installation Script (`deployments/olm/install.sh`)
+
 ```bash
 #!/bin/bash
 # Install OLM if not present
@@ -642,6 +666,7 @@ dependencies:
 ```
 
 #### 3.2 OLM Configuration (`deployments/olm/values.yaml`)
+
 ```yaml
 olm:
   version: v0.28.0  # Pin OLM version
@@ -655,6 +680,7 @@ olm:
 **Trigger**: Manual (workflow_dispatch)
 
 **Jobs**:
+
 1. Check if OLM is installed (`kubectl get csv -n olm`)
 2. Install OLM if missing
 3. Verify OLM health
@@ -663,6 +689,7 @@ olm:
 **Use Case**: One-time setup or disaster recovery
 
 #### 3.4 Documentation (`deployments/olm/README.md`)
+
 - What is OLM and why we use it
 - Installation instructions
 - Troubleshooting common issues
@@ -673,11 +700,13 @@ olm:
 ## Phase 4: Keycloak Operator Deployment
 
 ### Objectives
+
 - Deploy Keycloak operator via OLM
 - Create Keycloak instance with PostgreSQL backend
 - Configure VolatiCloud realm with OIDC client
 
 ### Directory Structure
+
 ```
 deployments/keycloak/
 ├── values.yaml                          # Configuration values
@@ -689,6 +718,7 @@ deployments/keycloak/
 ```
 
 ### Keycloak Operator Subscription (`operator-subscription.yaml`)
+
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -703,6 +733,7 @@ spec:
 ```
 
 ### Keycloak Instance (`keycloak-instance.yaml`)
+
 ```yaml
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
@@ -734,6 +765,7 @@ spec:
 **Realm**: `volaticloud`
 
 **OIDC Client**:
+
 - Client ID: `volaticloud-dashboard`
 - Client Protocol: `openid-connect`
 - Access Type: `public` (for React SPA)
@@ -743,11 +775,13 @@ spec:
 - Web Origins: `+` (allow same origin)
 
 **Roles**:
+
 - `admin` - Full access to all operations
 - `trader` - Manage bots, view backtests
 - `viewer` - Read-only access
 
 **Default Users** (dev only):
+
 - admin@volaticloud.com (admin role)
 - trader@volaticloud.com (trader role)
 - viewer@volaticloud.com (viewer role)
@@ -755,10 +789,12 @@ spec:
 ### GitHub Action: `.github/workflows/deploy-keycloak.yml`
 
 **Triggers**:
+
 - Changes to `deployments/keycloak/**`
 - Manual trigger (workflow_dispatch)
 
 **Jobs**:
+
 1. Apply operator subscription
 2. Wait for operator ready
 3. Apply Keycloak instance CR
@@ -772,6 +808,7 @@ spec:
 ## Phase 5: Authentication Integration
 
 ### Objectives
+
 - Integrate Keycloak with Go backend (JWT validation)
 - Integrate Keycloak with React frontend (OIDC login)
 - Implement role-based access control (RBAC)
@@ -779,12 +816,14 @@ spec:
 ### Backend Integration (Go)
 
 #### 5.1 Dependencies
+
 ```bash
 go get github.com/coreos/go-oidc/v3/oidc
 go get github.com/golang-jwt/jwt/v5
 ```
 
 #### 5.2 JWT Middleware (`internal/auth/middleware.go`)
+
 ```go
 package auth
 
@@ -805,6 +844,7 @@ const UserContextKey = contextKey("user")
 ```
 
 #### 5.3 GraphQL Auth Directives (`internal/graph/schema.graphqls`)
+
 ```graphql
 directive @auth(requires: Role = USER) on FIELD_DEFINITION
 
@@ -823,6 +863,7 @@ type Mutation {
 ```
 
 #### 5.4 Authorization Checks
+
 - Extract user from context in resolvers
 - Check roles before sensitive operations
 - Return proper error codes (401/403)
@@ -830,12 +871,14 @@ type Mutation {
 ### Frontend Integration (React)
 
 #### 5.1 Dependencies
+
 ```bash
 cd dashboard
 npm install react-oidc-context oidc-client-ts
 ```
 
 #### 5.2 Auth Provider (`dashboard/src/AuthProvider.tsx`)
+
 ```typescript
 import { AuthProvider } from "react-oidc-context";
 
@@ -856,6 +899,7 @@ export function AuthWrapper({ children }) {
 ```
 
 #### 5.3 Protected Routes
+
 ```typescript
 function ProtectedRoute({ children, requiredRole }) {
   const auth = useAuth();
@@ -873,6 +917,7 @@ function ProtectedRoute({ children, requiredRole }) {
 ```
 
 #### 5.4 Apollo Client Integration
+
 ```typescript
 // Add JWT token to GraphQL requests
 const authLink = setContext((_, { headers }) => {
@@ -887,6 +932,7 @@ const authLink = setContext((_, { headers }) => {
 ```
 
 #### 5.5 Login/Logout Flow
+
 - Login button → `auth.signinRedirect()`
 - Logout button → `auth.signoutRedirect()`
 - Automatic token refresh
@@ -895,6 +941,7 @@ const authLink = setContext((_, { headers }) => {
 ### Helm Chart Updates
 
 Add Keycloak environment variables:
+
 ```yaml
 # values.yaml
 env:
@@ -911,6 +958,7 @@ env:
 ## Phase 6: GitHub Actions Automation (GitOps Implementation)
 
 ### Objectives
+
 - Implement complete GitOps workflows with smart triggers
 - Automate entire deployment pipeline from commit to production
 - Zero manual kubectl/helm commands required
@@ -1423,17 +1471,21 @@ jobs:
 Configure these secrets in GitHub repository settings:
 
 **Cluster Access**:
+
 - `VKE_KUBECONFIG` - Base64-encoded kubeconfig for dev/staging
 - `VKE_KUBECONFIG_PROD` - Base64-encoded kubeconfig for production
 
 **Container Registry**:
+
 - `GITHUB_TOKEN` - Automatically provided (for ghcr.io)
 
 **Keycloak**:
+
 - `DB_PASSWORD` - PostgreSQL password for Keycloak database
 - `ADMIN_EMAIL` - Admin user email
 
 **Optional**:
+
 - `SLACK_WEBHOOK` - Slack notifications
 - `VULTR_API_KEY` - Dynamic kubeconfig generation
 
@@ -1492,7 +1544,9 @@ Developer makes change → Commits to feature branch → Opens PR
 ### Documentation Files
 
 #### 7.1 Update `.claude/CLAUDE.md`
+
 Add sections:
+
 - Kubernetes deployment overview
 - OLM operator management
 - Keycloak authentication flow
@@ -1500,7 +1554,9 @@ Add sections:
 - Troubleshooting common issues
 
 #### 7.2 Create `deployments/README.md`
+
 **Contents**:
+
 - Quick start guide for local development
 - VKE production deployment guide
 - Prerequisites and dependencies
@@ -1510,7 +1566,9 @@ Add sections:
 - Cost optimization tips
 
 #### 7.3 Create `deployments/TROUBLESHOOTING.md`
+
 Common issues and solutions:
+
 - OLM installation failures
 - Keycloak operator issues
 - Authentication problems
@@ -1521,6 +1579,7 @@ Common issues and solutions:
 ### Testing & Validation
 
 #### 7.1 Helm Chart Linting
+
 ```yaml
 # Add to .github/workflows/quality.yml
 - name: Lint Helm Chart
@@ -1530,6 +1589,7 @@ Common issues and solutions:
 ```
 
 #### 7.2 Dry-Run Tests
+
 ```bash
 # Test deployment without applying
 helm install volaticloud deployments/helm/volaticloud --dry-run --debug
@@ -1537,12 +1597,14 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ```
 
 #### 7.3 Integration Tests
+
 - Test OIDC login flow
 - Verify JWT token validation
 - Check role-based access control
 - Test bot operations with auth
 
 #### 7.4 Security Scanning
+
 - Container image scanning (Trivy)
 - Kubernetes manifest scanning (Kubesec)
 - Dependency vulnerability scanning
@@ -1553,20 +1615,24 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ## Implementation Timeline
 
 ### Week 1: Foundation
+
 - [ ] Phase 1: Containerization (2 days)
 - [ ] Phase 2: Helm Chart (3 days)
 
 ### Week 2: Operators
+
 - [ ] Phase 3: OLM Setup (1 day)
 - [ ] Phase 4: Keycloak Operator (3 days)
 
 ### Week 3: Integration
+
 - [ ] Phase 5: Authentication Integration (5 days)
   - Backend: 2 days
   - Frontend: 2 days
   - Testing: 1 day
 
 ### Week 4: Automation & Polish
+
 - [ ] Phase 6: GitHub Actions (3 days)
 - [ ] Phase 7: Documentation (2 days)
 
@@ -1577,41 +1643,48 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ## Success Criteria
 
 ### Phase 1
+
 - ✅ Docker image builds successfully
 - ✅ Image pushed to ghcr.io
 - ✅ Health check responds correctly
 - ✅ Image size < 100MB
 
 ### Phase 2
+
 - ✅ Helm chart installs without errors
 - ✅ All pods running and healthy
 - ✅ GraphQL API accessible
 - ✅ Values files for all environments
 
 ### Phase 3
+
 - ✅ OLM installed and running
 - ✅ Can install operators via OLM
 - ✅ Catalog sources available
 
 ### Phase 4
+
 - ✅ Keycloak operator deployed
 - ✅ Keycloak instance running
 - ✅ Realm configured correctly
 - ✅ OIDC endpoints accessible
 
 ### Phase 5
+
 - ✅ Login redirects to Keycloak
 - ✅ JWT tokens validated correctly
 - ✅ Role-based access enforced
 - ✅ Protected GraphQL operations work
 
 ### Phase 6
+
 - ✅ Deployments triggered automatically
 - ✅ Container builds on code changes
 - ✅ Keycloak updates on config changes
 - ✅ Deployment notifications working
 
 ### Phase 7
+
 - ✅ Complete documentation available
 - ✅ Helm chart lint passes
 - ✅ Integration tests pass
@@ -1624,16 +1697,19 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ### High Risk Items
 
 **1. Kubernetes Runtime Implementation**
+
 - **Risk**: `internal/runner/kubernetes.go` is currently a stub
 - **Impact**: Bots won't run in Kubernetes
 - **Mitigation**: May need to keep Docker runtime initially, implement K8s runtime separately
 
 **2. Database Migration**
+
 - **Risk**: SQLite to PostgreSQL migration complexity
 - **Impact**: Data loss or downtime
 - **Mitigation**: Backup strategy, migration scripts, testing
 
 **3. Keycloak Single Point of Failure**
+
 - **Risk**: Authentication down = entire system unusable
 - **Impact**: High availability critical
 - **Mitigation**: Run 2+ Keycloak replicas, PostgreSQL HA
@@ -1641,14 +1717,17 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ### Medium Risk Items
 
 **1. OLM Complexity**
+
 - **Risk**: OLM adds operational overhead
 - **Mitigation**: Document thoroughly, have rollback plan
 
 **2. Token Expiration Handling**
+
 - **Risk**: Poor UX if token refresh fails
 - **Mitigation**: Implement automatic refresh, clear error messages
 
 **3. VKE-Specific Issues**
+
 - **Risk**: Vultr-specific limitations or bugs
 - **Mitigation**: Test early, have Vultr support contact
 
@@ -1657,12 +1736,14 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ## Cost Estimation (Vultr VKE)
 
 ### Development Environment
+
 - **Cluster**: 2 nodes × $12/month = $24/month
 - **Load Balancer**: $10/month
 - **Block Storage**: 20GB × $0.10/GB = $2/month
 - **Total**: ~$36/month
 
 ### Production Environment
+
 - **Cluster**: 4 nodes × $24/month = $96/month
 - **Load Balancer**: $10/month
 - **Managed PostgreSQL**: $15/month
@@ -1671,6 +1752,7 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 - **Total**: ~$136/month
 
 ### Cost Optimization
+
 - Use node autoscaling
 - Implement pod resource limits
 - Use spot instances for dev (if available)
@@ -1681,6 +1763,7 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ## Security Considerations
 
 ### Container Security
+
 - [ ] Run as non-root user
 - [ ] Use distroless/alpine base images
 - [ ] Scan images for vulnerabilities
@@ -1688,6 +1771,7 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 - [ ] Implement image pull secrets
 
 ### Kubernetes Security
+
 - [ ] Enable RBAC
 - [ ] Use NetworkPolicies
 - [ ] Implement PodSecurityPolicies/Standards
@@ -1695,6 +1779,7 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 - [ ] Enable audit logging
 
 ### Application Security
+
 - [ ] Validate JWT signatures
 - [ ] Implement rate limiting
 - [ ] Sanitize user inputs
@@ -1702,6 +1787,7 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 - [ ] Rotate credentials regularly
 
 ### Secrets Management
+
 - [ ] Use Kubernetes Secrets
 - [ ] Consider external secrets operator
 - [ ] Never commit secrets to git
@@ -1713,21 +1799,25 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ## Monitoring & Observability
 
 ### Metrics (Future Phase)
+
 - Prometheus for metrics collection
 - Grafana for visualization
 - Key metrics: API latency, error rate, bot count
 
 ### Logging (Future Phase)
+
 - Centralized logging (Loki or ELK)
 - Structured logging in JSON
 - Log aggregation from all pods
 
 ### Alerting (Future Phase)
+
 - Alertmanager for alerts
 - Slack/PagerDuty integration
 - Alerts: Pod crashes, API errors, high latency
 
 ### Tracing (Future Phase)
+
 - OpenTelemetry for distributed tracing
 - Jaeger for trace visualization
 - Trace GraphQL operations
@@ -1737,6 +1827,7 @@ kubectl apply -f deployments/keycloak/ --dry-run=client
 ## Rollback Procedures
 
 ### Application Rollback
+
 ```bash
 # Rollback to previous Helm release
 helm rollback volaticloud
@@ -1746,6 +1837,7 @@ helm rollback volaticloud 5
 ```
 
 ### Keycloak Rollback
+
 ```bash
 # Delete Keycloak instance
 kubectl delete keycloak volaticloud-keycloak -n keycloak
@@ -1755,6 +1847,7 @@ kubectl apply -f keycloak-backup.yaml
 ```
 
 ### Database Rollback
+
 - Restore from snapshot
 - Apply database migration rollback scripts
 - Verify data integrity

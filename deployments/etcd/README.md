@@ -7,6 +7,7 @@ Production-ready etcd cluster for VolatiCloud distributed monitoring coordinatio
 This deployment creates a 3-node etcd cluster using the Bitnami Helm chart in a dedicated `etcd-system` namespace.
 
 **Key Features:**
+
 - 3-node cluster for high availability
 - Persistent storage (8Gi per node)
 - Pod anti-affinity (spread across nodes)
@@ -56,6 +57,7 @@ env:
 ```
 
 **Full DNS:**
+
 - Client endpoint: `etcd.etcd-system.svc.cluster.local:2379`
 - Headless service: `etcd-headless.etcd-system.svc.cluster.local:2379`
 - Individual pods:
@@ -68,6 +70,7 @@ env:
 ### Automated (GitOps)
 
 Push changes to `main` branch:
+
 ```bash
 git add deployments/etcd/
 git commit -m "feat: deploy etcd cluster"
@@ -205,11 +208,13 @@ helm rollback etcd 2 -n etcd-system
 ### Metrics
 
 Prometheus annotations are enabled. Metrics available at:
+
 ```
 http://etcd.etcd-system.svc.cluster.local:2379/metrics
 ```
 
 **Key Metrics:**
+
 - `etcd_server_has_leader` - Leader election status
 - `etcd_server_leader_changes_seen_total` - Leader changes
 - `etcd_mvcc_db_total_size_in_bytes` - Database size

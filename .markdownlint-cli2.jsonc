@@ -1,0 +1,19 @@
+{
+  // Configuration for markdownlint-cli2
+  "config": {
+    // Include rules from .markdownlint.json
+    "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
+    "extends": ".markdownlint.json"
+  },
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    "**/node_modules/**",
+    "bin/**",
+    "dist/**",
+    "build/**",
+    ".claude/**",
+    "**/doc.go"
+  ]
+}

@@ -49,6 +49,7 @@ npm run codegen
 ```
 
 This generates `pages/Bots/bots.generated.tsx` with:
+
 - `useGetBotsQuery` - Type-safe query hook
 - `useStartBotMutation` - Type-safe mutation hook
 - Full TypeScript types for all fields
@@ -114,25 +115,30 @@ The code generator is configured in `codegen.ts`:
 ## Benefits
 
 ### ✅ Co-location
+
 - Generated code lives next to the component that uses it
 - Easy to find and navigate
 - Clear ownership
 
 ### ✅ Type Safety
+
 - Full TypeScript types for all GraphQL operations
 - IntelliSense for all fields
 - Compile-time error checking
 
 ### ✅ No Import Path Issues
+
 - Import from `'./component.generated'` - always relative
 - No need for path aliases or complex imports
 
 ### ✅ Modularity
+
 - Each component has its own generated file
 - Changes to one component's queries don't affect others
 - Easier to understand what data each component needs
 
 ### ✅ Git-Friendly
+
 - All `*.generated.tsx` files are gitignored
 - Generated fresh on each machine
 - No merge conflicts in generated code
@@ -165,6 +171,7 @@ src/
 ## Development Workflow
 
 ### Initial Setup
+
 ```bash
 npm install
 npm run codegen  # Generate all types
@@ -172,11 +179,13 @@ npm run dev      # Start dev server
 ```
 
 ### When Schema Changes
+
 ```bash
 npm run codegen  # Regenerate all types
 ```
 
 ### Watch Mode (Auto-regenerate)
+
 ```bash
 npm run codegen:watch  # In terminal 1
 npm run dev            # In terminal 2
@@ -185,6 +194,7 @@ npm run dev            # In terminal 2
 ## Best Practices
 
 ### DO ✅
+
 - Keep GraphQL queries focused and minimal
 - Name queries descriptively (e.g., `GetBotsForList`, not just `GetBots`)
 - Co-locate queries with the component that uses them
@@ -192,6 +202,7 @@ npm run dev            # In terminal 2
 - Run codegen after any `.graphql` file changes
 
 ### DON'T ❌
+
 - Don't manually edit `*.generated.tsx` files (they'll be overwritten)
 - Don't commit generated files to git
 - Don't create huge queries that fetch everything
@@ -201,16 +212,19 @@ npm run dev            # In terminal 2
 ## Troubleshooting
 
 ### "Cannot find module './component.generated'"
+
 - Run `npm run codegen` to generate the file
 - Make sure the `.graphql` file exists
 - Check that the GraphQL server is running
 
 ### "Type 'undefined' is not assignable to..."
+
 - The query might have failed to generate
 - Check the console output from `npm run codegen`
 - Ensure your GraphQL query is valid
 
 ### Duplicate Operation Names
+
 - Each query/mutation must have a unique name
 - Use descriptive names: `GetBotsForList`, `GetBotForDetail`, etc.
 - Run `npm run codegen` to see which files have conflicts
@@ -218,6 +232,7 @@ npm run dev            # In terminal 2
 ## Example: Full Component
 
 See `src/pages/Bots/BotsListWithData.tsx` for a complete example showing:
+
 - Query usage with loading/error states
 - Mutation usage with callbacks
 - Type-safe data access

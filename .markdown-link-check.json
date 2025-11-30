@@ -1,0 +1,29 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://localhost"
+    },
+    {
+      "pattern": "^http://127.0.0.1"
+    },
+    {
+      "pattern": "^https://the-guild.dev"
+    },
+    {
+      "pattern": "^https://www.hashicorp.com"
+    },
+    {
+      "pattern": "^https://docs.kantarainitiative.org"
+    },
+    {
+      "pattern": "^https://www.oauth.com"
+    }
+  ],
+  "timeout": "5s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "aliveStatusCodes": [200, 206, 301, 302]
+}

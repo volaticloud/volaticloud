@@ -5,6 +5,7 @@ This document explains how GitHub Environments work with the deployment workflow
 ## What are GitHub Environments?
 
 GitHub Environments provide:
+
 - **Environment-specific secrets**: Different secrets for dev/staging/prod
 - **Protection rules**: Require manual approval before deployment
 - **Deployment history**: Track all deployments to each environment
@@ -19,6 +20,7 @@ You've created a `prod` environment in GitHub. Here's how it integrates with the
 **Location**: GitHub Repository → Settings → Environments → prod
 
 **Features**:
+
 - ✅ Environment-specific secrets (VKE_KUBECONFIG, KEYCLOAK_DB_*, etc.)
 - ✅ Optional: Require reviewers before deployment
 - ✅ Optional: Wait timer before deployment
@@ -43,6 +45,7 @@ prod environment secrets:
 ```
 
 **Benefits**:
+
 - Secrets are only available to workflows using `environment: prod`
 - Different values per environment (dev/staging/prod)
 - Protected by environment rules
@@ -54,6 +57,7 @@ Secrets can also be set at repository level:
 **Path**: Repository → Settings → Secrets and variables → Actions → Repository secrets
 
 **Difference**:
+
 - Available to ALL workflows
 - Cannot have different values per environment
 - No protection rules
@@ -125,6 +129,7 @@ You can add protection rules to the `prod` environment:
 - Example: Require 1 approval from @your-team
 
 **Effect**:
+
 - Workflow pauses before deploying
 - Sends notification to reviewers
 - Deployment continues after approval
@@ -141,6 +146,7 @@ You can add protection rules to the `prod` environment:
 **Setup**: Environments → prod → Deployment branches
 
 Options:
+
 - **All branches**: Any branch can deploy (current setting)
 - **Protected branches only**: Only branches with protection rules
 - **Selected branches**: Specific branches (e.g., only `main`)
@@ -154,7 +160,7 @@ Branch name pattern: main
 
 ## Deployment Workflow with Environment
 
-### Without Protection Rules:
+### Without Protection Rules
 
 ```
 1. Push to main
@@ -168,7 +174,7 @@ Branch name pattern: main
 5. Success! ✅
 ```
 
-### With Required Reviewers:
+### With Required Reviewers
 
 ```
 1. Push to main
@@ -193,6 +199,7 @@ Branch name pattern: main
 **Path**: Repository → Deployments tab
 
 Shows:
+
 - All deployments to `prod` environment
 - Commit SHA
 - Timestamp
@@ -204,6 +211,7 @@ Shows:
 **Path**: Repository → Actions → deploy-keycloak workflow
 
 Shows:
+
 - All workflow runs
 - Environment used
 - Approval status (if required)
@@ -218,6 +226,7 @@ You can create additional environments for different stages:
 **Name**: `dev`
 
 **Secrets**:
+
 - Different VKE cluster (dev cluster)
 - Different database (dev database)
 - Different hostnames (dev.volaticloud.com)
@@ -229,6 +238,7 @@ You can create additional environments for different stages:
 **Name**: `staging`
 
 **Secrets**:
+
 - Staging VKE cluster
 - Staging database
 - Different hostnames (staging.volaticloud.com)
@@ -240,6 +250,7 @@ You can create additional environments for different stages:
 **Name**: `prod` (current)
 
 **Secrets**:
+
 - Production VKE cluster
 - Production database
 - Production hostnames (auth.volaticloud.com)
@@ -271,6 +282,7 @@ jobs:
 ### 1. Use Environment-Specific Secrets ✅
 
 **Good**:
+
 ```yaml
 environment: prod
 steps:
@@ -278,6 +290,7 @@ steps:
 ```
 
 **Bad**:
+
 ```yaml
 # No environment specified
 steps:
@@ -287,6 +300,7 @@ steps:
 ### 2. Protect Production
 
 **Recommended settings for `prod`**:
+
 - ✅ Required reviewers: At least 1
 - ✅ Deployment branches: `main` only
 - ✅ Wait timer: 2-5 minutes (optional)
@@ -294,6 +308,7 @@ steps:
 ### 3. Keep Dev/Staging Unprotected
 
 **Dev environment**:
+
 - ❌ No reviewers (auto-deploy)
 - ❌ No wait timer
 - ✅ All branches allowed
@@ -313,6 +328,7 @@ git commit -m "update"
 ### 5. Monitor Deployment History
 
 Regularly check deployment status:
+
 ```bash
 # List recent deployments
 gh api repos/volaticloud/volaticloud/deployments --jq '.[] | {environment: .environment, ref: .ref, created_at: .created_at}'
@@ -327,6 +343,7 @@ gh api repos/volaticloud/volaticloud/deployments --jq '.[] | {environment: .envi
 **Cause**: Secret is in repository secrets, not environment secrets
 
 **Solution**:
+
 1. Delete secret from repository secrets
 2. Add secret to environment secrets (`prod`)
 3. Re-run workflow
@@ -338,6 +355,7 @@ gh api repos/volaticloud/volaticloud/deployments --jq '.[] | {environment: .envi
 **Cause**: Required reviewers protection rule is enabled
 
 **Solution**:
+
 1. Go to Actions → Running workflow
 2. Click "Review deployments"
 3. Select environment and approve
@@ -350,6 +368,7 @@ gh api repos/volaticloud/volaticloud/deployments --jq '.[] | {environment: .envi
 **Cause**: Deployment branches restricted to `main` only
 
 **Solution**:
+
 1. Merge to `main` first
 2. Or temporarily allow feature branches:
    - Settings → Environments → prod → Deployment branches → All branches
@@ -379,6 +398,7 @@ gh api repos/volaticloud/volaticloud/environments/prod --jq '.protection_rules'
 ## Next Steps
 
 1. **Verify secrets are in environment** (not repository):
+
    ```bash
    gh secret list --env prod
    ```
@@ -389,6 +409,7 @@ gh api repos/volaticloud/volaticloud/environments/prod --jq '.protection_rules'
    - Restrict to main branch only (recommended)
 
 3. **Test deployment**:
+
    ```bash
    git add .
    git commit -m "feat(k8s): deploy Keycloak with prod environment"
@@ -396,6 +417,7 @@ gh api repos/volaticloud/volaticloud/environments/prod --jq '.protection_rules'
    ```
 
 4. **Monitor deployment**:
+
    ```bash
    gh run watch
    ```

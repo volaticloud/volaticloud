@@ -3,6 +3,7 @@
 ## Overview
 
 The backend deployment is now **100% automated with GitOps principles**:
+
 - ✅ No manual commands required
 - ✅ Migrations run automatically on server startup
 - ✅ Environment-driven configuration
@@ -24,6 +25,7 @@ All configuration is done via environment variables:
 ### Database Credentials (From Kubernetes Secrets)
 
 These are injected from the `volaticloud-db-secret`:
+
 - `POSTGRES_HOST` - PostgreSQL hostname:port
 - `POSTGRES_DB` - Database name
 - `POSTGRES_USER` - Database username
@@ -38,6 +40,7 @@ These are injected from the `volaticloud-db-secret`:
 3. **After Migration** → Starts HTTP server and monitoring
 
 **Code Reference:** `cmd/server/main.go:132-135`
+
 ```go
 // Run auto migration
 if err := client.Schema.Create(ctx); err != nil {
@@ -46,6 +49,7 @@ if err := client.Schema.Create(ctx); err != nil {
 ```
 
 **Benefits:**
+
 - ✅ Zero-downtime deployments (migrations complete before accepting traffic)
 - ✅ No separate migration jobs needed
 - ✅ Kubernetes readiness probes prevent traffic during migration
@@ -56,17 +60,20 @@ if err := client.Schema.Create(ctx); err != nil {
 ### 1. Simplified Binary (`cmd/server/main.go`)
 
 **Before:**
+
 ```bash
 ./volaticloud server  # Start server
 ./volaticloud migrate # Run migrations (separate command)
 ```
 
 **After:**
+
 ```bash
 ./volaticloud  # Starts server with automatic migrations
 ```
 
 **Changes:**
+
 - ❌ Removed `migrate` subcommand
 - ❌ Removed `runMigrate()` function
 - ✅ Server command is now the default action
@@ -75,12 +82,14 @@ if err := client.Schema.Create(ctx); err != nil {
 ### 2. Simplified Dockerfile
 
 **Before:**
+
 ```dockerfile
 ENTRYPOINT ["/app/volaticloud"]
 CMD ["server"]
 ```
 
 **After:**
+
 ```dockerfile
 ENTRYPOINT ["/app/volaticloud"]  # No CMD needed
 ```
@@ -88,6 +97,7 @@ ENTRYPOINT ["/app/volaticloud"]  # No CMD needed
 ### 3. Cleaned Helm Values (`deployments/backend/values.yaml`)
 
 **Removed:**
+
 - ❌ `extraDeploy` section with migration Job
 - ❌ Pre-install Helm hooks
 - ❌ Migration container configuration
@@ -154,6 +164,7 @@ kubectl get pods -n volaticloud -w
 **How Kubernetes ensures zero-downtime:**
 
 1. **Readiness Probe:** Prevents traffic until migration completes
+
    ```yaml
    readinessProbe:
      httpGet:
@@ -164,6 +175,7 @@ kubectl get pods -n volaticloud -w
    ```
 
 2. **Rolling Update Strategy:**
+
    ```yaml
    strategy:
      type: RollingUpdate

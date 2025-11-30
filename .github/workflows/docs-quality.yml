@@ -1,0 +1,169 @@
+name: Documentation Quality
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'internal/**/doc.go'
+      - '**/*.md'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'internal/**/doc.go'
+      - '**/*.md'
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  markdown-lint:
+    name: Markdown Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Lint Markdown Files
+        run: |
+          echo "Running markdownlint-cli2..."
+          npx --yes markdownlint-cli2 "**/*.md"
+
+      - name: Check Markdown Links
+        run: |
+          echo "Checking markdown links..."
+          find docs -name "*.md" -print0 | xargs -0 -n1 npx --yes markdown-link-check --config .markdown-link-check.json
+
+  assess-quality:
+    name: Assess Documentation Quality
+    runs-on: ubuntu-latest
+    needs: markdown-lint  # Run after linting passes
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for freshness checks
+
+      - name: Run Documentation Quality Assessment
+        id: quality
+        run: |
+          chmod +x scripts/assess-docs-quality.sh
+          ./scripts/assess-docs-quality.sh | tee assessment-output.txt
+
+          # Extract overall score
+          SCORE=$(grep "Overall Score:" assessment-output.txt | awk '{print $3}' | cut -d'/' -f1)
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+          # Extract grade
+          GRADE=$(grep "Grade:" assessment-output.txt | awk -F': ' '{print $2}' | sed 's/\x1b\[[0-9;]*m//g')
+          echo "grade=$GRADE" >> $GITHUB_OUTPUT
+
+      - name: Check Quality Threshold
+        run: |
+          SCORE=${{ steps.quality.outputs.score }}
+
+          if [ "$SCORE" -lt 70 ]; then
+            echo "❌ Documentation quality score ($SCORE/100) is below acceptable threshold (70)"
+            exit 1
+          elif [ "$SCORE" -lt 80 ]; then
+            echo "⚠️  Documentation quality score ($SCORE/100) needs improvement (target: 80+)"
+          else
+            echo "✅ Documentation quality score ($SCORE/100) is good!"
+          fi
+
+      - name: Upload Quality Report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-quality-report
+          path: docs/quality-report.md
+          retention-days: 90
+
+      - name: Comment PR with Quality Score
+        if: github.event_name == 'pull_request' && hashFiles('docs/quality-report.md') != ''
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const score = '${{ steps.quality.outputs.score }}';
+            const grade = '${{ steps.quality.outputs.grade }}';
+            const fs = require('fs');
+            const report = fs.readFileSync('docs/quality-report.md', 'utf8');
+
+            // Extract key metrics from report
+            const metricsSection = report.match(/## Metrics[\s\S]*?## Component Scores/);
+            const recommendations = report.match(/## Recommendations[\s\S]*?## How to Improve/);
+
+            let emoji = '✅';
+            if (score < 70) emoji = '❌';
+            else if (score < 80) emoji = '⚠️';
+
+            const body = `## ${emoji} Documentation Quality Report
+
+            **Overall Score:** ${score}/100
+            **Grade:** ${grade}
+
+            ${metricsSection ? metricsSection[0] : ''}
+
+            ${recommendations ? recommendations[0] : ''}
+
+            <details>
+            <summary>View Full Report</summary>
+
+            ${report}
+
+            </details>
+
+            ---
+            📊 Run \`make docs-quality\` locally to assess documentation quality.
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Create Issue on Quality Degradation
+        if: github.event_name == 'schedule' && steps.quality.outputs.score < 75
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const score = '${{ steps.quality.outputs.score }}';
+            const grade = '${{ steps.quality.outputs.grade }}';
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📚 Documentation Quality Alert: Score Dropped to ${score}/100`,
+              body: `## Documentation Quality Alert
+
+              The weekly documentation quality assessment detected a score below threshold.
+
+              **Current Score:** ${score}/100 (Grade: ${grade})
+              **Threshold:** 75/100
+
+              ### Action Required
+
+              1. Review the [quality report artifact](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              2. Address high-priority issues
+              3. Run \`make docs-quality\` locally to verify improvements
+
+              ### Common Issues
+
+              - Broken internal links
+              - Missing package documentation (doc.go files)
+              - Stale documents (>90 days old)
+              - Insufficient code examples
+
+              ---
+              *This issue was created automatically by the Documentation Quality workflow.*
+              `,
+              labels: ['documentation', 'quality', 'maintenance']
+            });
