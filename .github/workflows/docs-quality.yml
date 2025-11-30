@@ -76,6 +76,8 @@ jobs:
           fi
 
       - name: Upload Quality Report
+        if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: documentation-quality-report
@@ -83,7 +85,8 @@ jobs:
           retention-days: 90
 
       - name: Comment PR with Quality Score
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && hashFiles('docs/quality-report.md') != ''
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
