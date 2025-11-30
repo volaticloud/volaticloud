@@ -11,10 +11,10 @@ This section is under construction. It will cover:
 
 For now, refer to the following resources:
 
-- [Graph Package Documentation](../../../internal/graph/doc.go) - Detailed architecture and implementation
-- [GraphQL Schema](../../../internal/graph/schema/schema.graphqls) - Custom types and extensions
-- [ENT Generated Schema](../../../internal/graph/schema/ent.graphql) - Auto-generated entity types
-- [Resolver Implementation](../../../internal/graph/schema.resolvers.go) - Query and mutation logic
+- Graph Package Documentation (`internal/graph/doc.go`) - Detailed architecture and implementation
+- GraphQL Schema (`internal/graph/schema.graphqls`) - Custom types and extensions
+- ENT Generated Schema (`internal/graph/ent.graphql`) - Auto-generated entity types
+- Resolver Implementation (`internal/graph/schema.resolvers.go`) - Query and mutation logic
 
 ## Quick Start
 
@@ -51,10 +51,10 @@ All API requests require a valid JWT token in the Authorization header:
 Authorization: Bearer <your-jwt-token>
 ```
 
-See the [Authentication Guide](../../auth/) for details on obtaining tokens.
+See the Authentication Guide documentation for details on obtaining tokens.
 
 ## Additional Resources
 
 - [ADR-0001: Context-Based Dependency Injection](../../adr/0001-context-based-dependency-injection.md)
-- [ADR-0002: ENT ORM with GraphQL Integration](../../adr/0002-ent-orm-graphql-integration.md)
+- [ADR-0002: ENT ORM with GraphQL Integration](../../adr/0002-ent-orm-with-graphql.md)
 - [Dashboard GraphQL Integration](../../../dashboard/README.md#graphql-integration)
