@@ -74,7 +74,7 @@ func (u *UMAClient) CreateResource(ctx context.Context, resourceID, resourceName
 		ID:          gocloak.StringP(resourceID),
 		Name:        gocloak.StringP(resourceID),   // Use UUID as the name for uniqueness
 		DisplayName: gocloak.StringP(resourceName), // Human-readable name with version
-		Type:        gocloak.StringP("strategy"),
+		Type:        gocloak.StringP("urn:" + u.clientID + ":resources:tenant"),
 		Scopes:      &resourceScopes,
 		Attributes:  &attributes, // Custom attributes (ownerId, type, etc.)
 		// Owner is set automatically by Keycloak based on client token
