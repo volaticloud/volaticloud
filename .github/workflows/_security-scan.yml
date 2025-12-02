@@ -75,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.scan-docker && inputs.docker-image != '' }}
     permissions:
+      contents: read
       security-events: write
     steps:
       - name: Checkout
@@ -99,6 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.scan-codeql }}
     permissions:
+      contents: read
       security-events: write
     steps:
       - name: Checkout

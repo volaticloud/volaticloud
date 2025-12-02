@@ -29,21 +29,25 @@ VolatiCloud has 12+ GitHub Actions workflows covering CI, Docker builds, Kuberne
 ## Considered Options
 
 ### Option 1: Keep Standalone Workflows
+
 Each workflow remains independent and self-contained.
 
 **Cons:** High duplication, inconsistent patterns, maintenance burden.
 
 ### Option 2: Reusable Workflows Only
+
 Create reusable workflows for all common patterns.
 
 **Cons:** Cannot use matrix strategies, cannot add steps around calls, heavier for simple tasks.
 
 ### Option 3: Composite Actions Only
+
 Create composite actions for all shared logic.
 
 **Cons:** Cannot contain jobs, secrets must be passed explicitly, harder to debug.
 
 ### Option 4: Hybrid Approach
+
 Use **Composite Actions** for shared steps and **Reusable Workflows** for entire pipelines.
 
 **Pros:** Best of both worlds - appropriate abstraction level for each use case.
@@ -159,12 +163,14 @@ Enable comprehensive security scanning with four layers:
 ## Consequences
 
 **Positive:**
+
 - ~60% reduction in duplicated code
 - Consistent patterns enforced automatically
 - Security scanning enabled by default
 - Single source of truth for each pattern
 
 **Negative:**
+
 - Initial refactoring effort required
 - Team must learn composite action / reusable workflow patterns
 

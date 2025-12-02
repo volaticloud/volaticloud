@@ -2,7 +2,9 @@ name: Security Scan
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/github-actions-*'  # TODO: Remove after testing
   pull_request:
     branches: [main]
   schedule:
@@ -11,6 +13,10 @@ on:
 concurrency:
   group: security-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
   security:
@@ -21,6 +27,3 @@ jobs:
       node-working-directory: 'dashboard'
       scan-codeql: true
       codeql-languages: 'go,javascript'
-    permissions:
-      contents: read
-      security-events: write
