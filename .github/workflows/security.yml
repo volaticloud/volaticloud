@@ -1,0 +1,26 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly Monday 9 AM UTC
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    uses: ./.github/workflows/_security-scan.yml
+    with:
+      scan-go: true
+      scan-node: true
+      node-working-directory: 'dashboard'
+      scan-codeql: true
+      codeql-languages: 'go,javascript'
+    permissions:
+      contents: read
+      security-events: write

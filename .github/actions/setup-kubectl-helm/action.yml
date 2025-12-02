@@ -1,0 +1,33 @@
+name: 'Setup kubectl and Helm'
+description: 'Setup Kubernetes tooling with kubeconfig configuration'
+
+inputs:
+  kubeconfig:
+    description: 'Base64-encoded kubeconfig content'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v4
+      with:
+        version: 'latest'
+
+    - name: Setup Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'latest'
+
+    - name: Configure kubeconfig
+      shell: bash
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ inputs.kubeconfig }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+
+    - name: Verify cluster access
+      shell: bash
+      run: |
+        kubectl cluster-info
+        kubectl get nodes

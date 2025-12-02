@@ -12,65 +12,51 @@ jobs:
   coverage-report:
     name: Coverage Report
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.x'
-          cache: true
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
 
-      - name: Run tests with coverage
-        run: |
-          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Filter coverage (exclude generated code)
-        run: |
-          grep -v -E "/(ent|graph)/.*_create\.go|/(ent|graph)/.*_update\.go|/(ent|graph)/.*_delete\.go|/(ent|graph)/.*_query\.go|/ent/(backtest|bot|exchange|exchangesecret|strategy|trade|botrunner)\.go|/ent/(backtest|bot|exchange|exchangesecret|strategy|trade|botrunner)/|/ent/client\.go|/ent/ent\.go|/ent/tx\.go|/ent/mutation\.go|/ent/runtime\.go|/ent/gql_.*\.go|/ent/migrate/|/ent/hook/|/ent/predicate/|/ent/enttest/|/ent/schema/|/graph/generated\.go|/graph/ent\.graphql|/enum/|cmd/server/main\.go" coverage.out > coverage.filtered.out || true
-
-      - name: Generate coverage report
+      - name: Filter coverage
         id: coverage
+        uses: ./.github/actions/coverage-filter
+
+      - name: Generate report
         run: |
           echo "### Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "**Total: ${{ steps.coverage.outputs.coverage }}%**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          go tool cover -func=coverage.filtered.out >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          go tool cover -func=coverage.filtered.out | tail -20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
-          # Extract total coverage percentage
-          COVERAGE=$(go tool cover -func=coverage.filtered.out | grep total | awk '{print $3}')
-          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Total Coverage (excluding generated code): $COVERAGE**" >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment PR with coverage
+      - name: Comment PR
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const coverage = '${{ steps.coverage.outputs.coverage }}';
-
-            // Read coverage details
             const { execSync } = require('child_process');
-            const coverageDetails = execSync('go tool cover -func=coverage.filtered.out | tail -20').toString();
+            const coverage = '${{ steps.coverage.outputs.coverage }}';
+            const details = execSync('go tool cover -func=coverage.filtered.out | tail -20').toString();
 
             const comment = `## Test Coverage Report
 
-            **Total Coverage (excluding generated code): ${coverage}**
+            **Total Coverage (excluding generated code): ${coverage}%**
 
             <details>
             <summary>View detailed coverage</summary>
 
             \`\`\`
-            ${coverageDetails}
+            ${details}
             \`\`\`
 
             </details>
 
-            Coverage report generated for commit ${context.sha.substring(0, 7)}
+            Coverage report for commit ${context.sha.substring(0, 7)}
             `;
 
             github.rest.issues.createComment({
@@ -82,39 +68,26 @@ jobs:
 
       - name: Coverage gate
         run: |
-          COVERAGE=$(go tool cover -func=coverage.filtered.out | grep total | awk '{print $3}' | sed 's/%//')
+          COVERAGE=${{ steps.coverage.outputs.coverage }}
           THRESHOLD=85.0
-
-          echo "Current coverage: $COVERAGE%"
-          echo "Coverage threshold: $THRESHOLD%"
-
           if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-            echo "❌ Coverage $COVERAGE% is below threshold $THRESHOLD%"
-            echo "::warning::Coverage $COVERAGE% is below threshold $THRESHOLD%"
-            # Don't fail the build, just warn
-            # exit 1
-          else
-            echo "✅ Coverage $COVERAGE% meets threshold $THRESHOLD%"
+            echo "::warning::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
           fi
 
   go-report-card:
-    name: Go Report Card Checks
+    name: Go Report Card
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.x'
-          cache: true
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
 
-      - name: gofmt check
+      - name: gofmt
         run: |
           if [ -n "$(gofmt -l .)" ]; then
-            echo "The following files need formatting:"
+            echo "Files need formatting:"
             gofmt -l .
             exit 1
           fi
