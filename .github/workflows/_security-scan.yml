@@ -7,6 +7,10 @@ on:
         description: 'Run Go vulnerability scan (govulncheck)'
         type: boolean
         default: true
+      scan-gosec:
+        description: 'Run Go security scan (gosec)'
+        type: boolean
+        default: true
       scan-node:
         description: 'Run npm audit'
         type: boolean
@@ -23,14 +27,10 @@ on:
         description: 'Docker image to scan'
         type: string
         default: ''
-      scan-codeql:
-        description: 'Run CodeQL SAST analysis'
+      scan-semgrep:
+        description: 'Run Semgrep SAST analysis'
         type: boolean
         default: true
-      codeql-languages:
-        description: 'Languages for CodeQL (comma-separated)'
-        type: string
-        default: 'go'
 
 jobs:
   govulncheck:
@@ -53,6 +53,26 @@ jobs:
       - name: Run govulncheck
         run: govulncheck ./...
 
+  gosec:
+    name: Go Security (gosec)
+    runs-on: ubuntu-latest
+    if: ${{ inputs.scan-gosec }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run gosec
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: gosec-results.sarif
+        continue-on-error: true
+
   npm-audit:
     name: npm Audit
     runs-on: ubuntu-latest
@@ -74,9 +94,6 @@ jobs:
     name: Container Scan
     runs-on: ubuntu-latest
     if: ${{ inputs.scan-docker && inputs.docker-image != '' }}
-    permissions:
-      contents: read
-      security-events: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,35 +102,28 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ inputs.docker-image }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'table'
           severity: 'CRITICAL,HIGH'
+          exit-code: '1'
 
-      - name: Upload to Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  codeql:
-    name: CodeQL Analysis
+  semgrep:
+    name: Semgrep SAST
     runs-on: ubuntu-latest
-    if: ${{ inputs.scan-codeql }}
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
+    if: ${{ inputs.scan-semgrep }}
+    container:
+      image: semgrep/semgrep
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      - name: Run Semgrep
+        run: semgrep scan --config auto --error --json --output semgrep-results.json .
+        continue-on-error: true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          languages: ${{ inputs.codeql-languages }}
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform Analysis
-        uses: github/codeql-action/analyze@v3
+          name: semgrep-results
+          path: semgrep-results.json
+          retention-days: 30

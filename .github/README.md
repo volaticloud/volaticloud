@@ -24,8 +24,9 @@ flowchart TB
     subgraph "Security"
         SEC[security.yml]
         SEC --> GOV[govulncheck]
+        SEC --> GSC[gosec]
         SEC --> NPM[npm audit]
-        SEC --> CQL[CodeQL]
+        SEC --> SEM[Semgrep]
     end
 ```
 
@@ -98,11 +99,12 @@ gh workflow run deploy-backend.yml
 
 ## Security Scanning
 
-The `security.yml` workflow runs:
+The `security.yml` workflow runs free, open-source security tools:
 
-- **govulncheck**: Go vulnerability scanning
+- **govulncheck**: Go vulnerability scanning (CVEs)
+- **gosec**: Go security linter (code patterns)
 - **npm audit**: Node.js dependency audit
-- **CodeQL**: Static analysis (SAST)
+- **Semgrep**: Multi-language SAST analysis
 
 Schedule: Every Monday 9 AM UTC + on every PR/push
 

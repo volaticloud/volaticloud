@@ -126,7 +126,8 @@ flowchart LR
         SEC --> |govulncheck| GO[Go CVEs]
         SEC --> |npm audit| NPM[Node CVEs]
         SEC --> |trivy| TRI[Container Scan]
-        SEC --> |codeql| CQL[SAST Analysis]
+        SEC --> |semgrep| SEM[SAST Analysis]
+        SEC --> |gosec| GSC[Go Security]
     end
 ```
 
@@ -140,14 +141,15 @@ flowchart LR
 
 ### Security Scanning Strategy
 
-Enable comprehensive security scanning with four layers:
+Enable comprehensive security scanning with free, open-source tools:
 
 | Tool | Purpose | Trigger |
 |------|---------|---------|
 | govulncheck | Go CVE scanning | Every PR + push |
+| gosec | Go security linter | Every PR + push |
 | npm audit | Node.js dependency audit | Every PR + push |
 | Trivy | Container vulnerability scanning | After Docker build |
-| CodeQL | SAST analysis | Weekly + PR |
+| Semgrep | SAST analysis (multi-language) | Weekly + PR |
 
 ### Configuration Standards
 
@@ -209,5 +211,6 @@ Enable comprehensive security scanning with four layers:
 - [GitHub Docs: Reusable Workflows](https://docs.github.com/en/actions/sharing-automations/reusing-workflows)
 - [GitHub Docs: Composite Actions](https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action)
 - [Trivy GitHub Action](https://github.com/aquasecurity/trivy-action)
-- [CodeQL for GitHub Actions](https://github.blog/security/application-security/how-to-secure-your-github-actions-workflows-with-codeql/)
+- [Gosec - Go Security Checker](https://github.com/securego/gosec)
+- [Semgrep - Open Source SAST](https://semgrep.dev/)
 - [ADR-0007: Kubernetes Deployment Strategy](./0007-kubernetes-deployment-strategy.md)
