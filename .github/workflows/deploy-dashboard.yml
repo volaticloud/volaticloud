@@ -1,109 +1,58 @@
 name: Deploy Dashboard to VKE
 
 on:
-  # Wait for build to complete before deploying
   workflow_run:
     workflows: ["Build and Push Dashboard Image"]
-    types:
-      - completed
-    branches: [main]
-  # Allow manual deployments (for manifest-only changes or rollbacks)
+    types: [completed]
+    branches:
+      - main
+      - 'feature/github-actions-*'  # TODO: Remove after testing
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'prod'
-        type: choice
-        options:
-          - prod
-          - staging
       image_tag:
-        description: 'Docker image tag to deploy (leave empty for latest)'
+        description: 'Docker image tag (leave empty for latest commit)'
         required: false
         type: string
 
 concurrency:
   group: deploy-dashboard-${{ github.ref }}
-  cancel-in-progress: false  # Don't cancel deployments
+  cancel-in-progress: false
 
 jobs:
-  validate:
-    name: Validate Manifests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
-
-      - name: Add Nixys Helm repository
-        run: |
-          helm repo add nixys https://registry.nixys.io/chartrepo/public
-          helm repo update
-
-      - name: Validate Helm values
-        run: |
-          helm template volaticloud-dashboard nixys/nxs-universal-chart \
-            -f deployments/dashboard/values.yaml \
-            --dry-run --debug
-
   deploy:
-    name: Deploy to Kubernetes
+    name: Deploy
     runs-on: ubuntu-latest
-    needs: validate
-    # Only deploy if the build was successful
-    if: github.ref == 'refs/heads/main' && github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: prod
       url: https://console.volaticloud.com
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Setup kubectl and Helm
+        uses: ./.github/actions/setup-kubectl-helm
         with:
-          version: 'latest'
+          kubeconfig: ${{ secrets.VKE_KUBECONFIG }}
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-
-      - name: Verify cluster access
-        run: |
-          kubectl cluster-info
-          kubectl get nodes
-
-      - name: Add Nixys Helm repository
+      - name: Add Helm repos
         run: |
           helm repo add nixys https://registry.nixys.io/chartrepo/public
           helm repo update
 
       - name: Determine image tag
-        id: image_tag
+        id: tag
         run: |
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
             echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
           else
-            # Use short commit SHA to match the build workflow
             echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create namespace if not exists
+      - name: Create namespace
         run: |
-          kubectl create namespace volaticloud --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create namespace volaticloud \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create image pull secret
         run: |
@@ -114,106 +63,51 @@ jobs:
             --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy dashboard with Helm
+      - name: Deploy
         run: |
           helm upgrade --install volaticloud-dashboard nixys/nxs-universal-chart \
             --namespace volaticloud \
-            --create-namespace \
             -f deployments/dashboard/values.yaml \
             --set deployments.volaticloud-dashboard.containers[0].image=ghcr.io/volaticloud/volaticloud-dashboard \
-            --set deployments.volaticloud-dashboard.containers[0].imageTag=${{ steps.image_tag.outputs.tag }} \
+            --set deployments.volaticloud-dashboard.containers[0].imageTag=${{ steps.tag.outputs.tag }} \
             --set deployments.volaticloud-dashboard.imagePullSecrets[0].name=ghcr-pull-secret \
-            --wait \
-            --timeout 10m \
-            --atomic
+            --wait --timeout 10m --atomic
 
-      - name: Verify deployment
+      - name: Verify
         run: |
-          echo "Waiting for deployment to be ready..."
           kubectl wait --for=condition=available --timeout=300s \
             deployment/volaticloud-dashboard-volaticloud-dashboard -n volaticloud
-
-          echo "Checking pod status..."
-          kubectl get pods -n volaticloud -l app=volaticloud-dashboard
-
-          echo "Getting service info..."
-          kubectl get svc -n volaticloud -l app=volaticloud-dashboard
-
-          echo "Getting ingress info..."
-          kubectl get ingress -n volaticloud
-
-      - name: Run post-deployment tests
-        run: |
-          # Wait for service to be fully ready
           sleep 30
+          curl -f -s "https://console.volaticloud.com" || true
 
-          # Get the service endpoint
-          DASHBOARD_URL="https://console.volaticloud.com"
-
-          echo "Testing dashboard endpoint..."
-          curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" ${DASHBOARD_URL} || true
-
-      - name: Generate deployment summary
+      - name: Summary
         run: |
-          echo "### Dashboard Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** prod" >> $GITHUB_STEP_SUMMARY
-          echo "**Image Tag:** ${{ steps.image_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Namespace:** volaticloud" >> $GITHUB_STEP_SUMMARY
+          echo "### Dashboard Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${{ steps.tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "**URL:** https://console.volaticloud.com" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment Resources:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get all -n volaticloud -l app=volaticloud-dashboard >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "### Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Check the logs above for details**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Recent Pod Events:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          kubectl get events -n volaticloud --sort-by='.lastTimestamp' | tail -20 >> $GITHUB_STEP_SUMMARY || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
 
   rollback:
-    name: Rollback on Failure
+    name: Rollback
     runs-on: ubuntu-latest
     needs: deploy
-    if: failure() && github.ref == 'refs/heads/main'
+    if: failure()
     environment: prod
-
     steps:
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
+      - name: Setup kubectl and Helm
+        uses: ./.github/actions/setup-kubectl-helm
         with:
-          version: 'latest'
+          kubeconfig: ${{ secrets.VKE_KUBECONFIG }}
 
-      - name: Rollback Helm release
+      - name: Rollback
         run: |
-          echo "Rolling back to previous version..."
           helm rollback volaticloud-dashboard -n volaticloud
-
-          echo "Waiting for rollback to complete..."
           kubectl wait --for=condition=available --timeout=300s \
             deployment/volaticloud-dashboard-volaticloud-dashboard -n volaticloud
 
-      - name: Verify rollback
+      - name: Summary
         run: |
-          echo "### Rollback Completed ⚠️" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The deployment has been rolled back to the previous version." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Current Status:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          helm history volaticloud-dashboard -n volaticloud >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Rollback Completed" >> $GITHUB_STEP_SUMMARY
+          helm history volaticloud-dashboard -n volaticloud

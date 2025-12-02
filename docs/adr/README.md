@@ -14,6 +14,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0006](0006-bot-config-layer-separation.md) | Bot Configuration Layer Separation | Accepted | 2025-10-23 |
 | [0007](0007-kubernetes-deployment-strategy.md) | Kubernetes Deployment Strategy | Accepted | 2025-11-14 |
 | [0008](0008-multi-tenant-authorization.md) | Multi-Tenant Authorization with UMA 2.0 and Hierarchical Groups | Accepted | 2025-11-26 |
+| [0009](0009-github-actions-architecture.md) | GitHub Actions CI/CD Architecture | Accepted | 2025-12-01 |
 
 ## What is an ADR?
 

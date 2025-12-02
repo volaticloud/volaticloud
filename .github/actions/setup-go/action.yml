@@ -1,0 +1,25 @@
+name: 'Setup Go'
+description: 'Setup Go environment with caching, module download, and verification'
+
+inputs:
+  go-version:
+    description: 'Go version to install'
+    required: false
+    default: '1.24.x'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+
+    - name: Download dependencies
+      shell: bash
+      run: go mod download
+
+    - name: Verify dependencies
+      shell: bash
+      run: go mod verify

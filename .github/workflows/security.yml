@@ -1,0 +1,25 @@
+name: Security Scan
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/github-actions-*'  # TODO: Remove after testing
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly Monday 9 AM UTC
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    uses: ./.github/workflows/_security-scan.yml
+    with:
+      scan-go: true
+      scan-gosec: true
+      scan-node: true
+      node-working-directory: 'dashboard'
+      scan-semgrep: true

@@ -1,0 +1,129 @@
+name: Security Scan (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      scan-go:
+        description: 'Run Go vulnerability scan (govulncheck)'
+        type: boolean
+        default: true
+      scan-gosec:
+        description: 'Run Go security scan (gosec)'
+        type: boolean
+        default: true
+      scan-node:
+        description: 'Run npm audit'
+        type: boolean
+        default: false
+      node-working-directory:
+        description: 'Working directory for npm operations'
+        type: string
+        default: 'dashboard'
+      scan-docker:
+        description: 'Run container scan (Trivy)'
+        type: boolean
+        default: false
+      docker-image:
+        description: 'Docker image to scan'
+        type: string
+        default: ''
+      scan-semgrep:
+        description: 'Run Semgrep SAST analysis'
+        type: boolean
+        default: true
+
+jobs:
+  govulncheck:
+    name: Go Vulnerabilities
+    runs-on: ubuntu-latest
+    if: ${{ inputs.scan-go }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          cache: true
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+
+  gosec:
+    name: Go Security (gosec)
+    runs-on: ubuntu-latest
+    if: ${{ inputs.scan-gosec }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run gosec
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: gosec-results.sarif
+        continue-on-error: true
+
+  npm-audit:
+    name: npm Audit
+    runs-on: ubuntu-latest
+    if: ${{ inputs.scan-node }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run npm audit
+        working-directory: ${{ inputs.node-working-directory }}
+        run: npm audit --audit-level=moderate
+
+  trivy:
+    name: Container Scan
+    runs-on: ubuntu-latest
+    if: ${{ inputs.scan-docker && inputs.docker-image != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ inputs.docker-image }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    if: ${{ inputs.scan-semgrep }}
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: semgrep scan --config auto --error --json --output semgrep-results.json .
+        continue-on-error: true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+          retention-days: 30

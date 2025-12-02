@@ -1,0 +1,155 @@
+name: Helm Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      release-name:
+        description: 'Helm release name'
+        type: string
+        required: true
+      namespace:
+        description: 'Kubernetes namespace'
+        type: string
+        default: 'volaticloud'
+      values-file:
+        description: 'Path to Helm values file'
+        type: string
+        required: true
+      image-name:
+        description: 'Docker image name (without registry)'
+        type: string
+        required: true
+      image-tag:
+        description: 'Docker image tag'
+        type: string
+        required: true
+      helm-chart:
+        description: 'Helm chart to use'
+        type: string
+        default: 'nixys/nxs-universal-chart'
+      environment:
+        description: 'GitHub environment name'
+        type: string
+        default: 'prod'
+      health-url:
+        description: 'URL for health check'
+        type: string
+        required: true
+    secrets:
+      VKE_KUBECONFIG:
+        required: true
+      GHCR_TOKEN:
+        required: true
+
+concurrency:
+  group: deploy-${{ inputs.release-name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Add Helm repos
+        run: |
+          helm repo add nixys https://registry.nixys.io/chartrepo/public
+          helm repo update
+
+      - name: Validate
+        run: |
+          helm template ${{ inputs.release-name }} ${{ inputs.helm-chart }} \
+            -f ${{ inputs.values-file }} \
+            --dry-run --debug
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: validate
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.health-url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl and Helm
+        uses: ./.github/actions/setup-kubectl-helm
+        with:
+          kubeconfig: ${{ secrets.VKE_KUBECONFIG }}
+
+      - name: Add Helm repos
+        run: |
+          helm repo add nixys https://registry.nixys.io/chartrepo/public
+          helm repo update
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace ${{ inputs.namespace }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GHCR_TOKEN }} \
+            --namespace=${{ inputs.namespace }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy
+        run: |
+          helm upgrade --install ${{ inputs.release-name }} ${{ inputs.helm-chart }} \
+            --namespace ${{ inputs.namespace }} \
+            -f ${{ inputs.values-file }} \
+            --set deployments.${{ inputs.release-name }}.containers[0].image=ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }} \
+            --set deployments.${{ inputs.release-name }}.containers[0].imageTag=${{ inputs.image-tag }} \
+            --set deployments.${{ inputs.release-name }}.imagePullSecrets[0].name=ghcr-pull-secret \
+            --wait --timeout 10m --atomic
+
+      - name: Verify
+        run: |
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/${{ inputs.release-name }}-${{ inputs.release-name }} \
+            -n ${{ inputs.namespace }}
+          sleep 30
+          curl -f -s "${{ inputs.health-url }}/health" || true
+
+      - name: Summary
+        run: |
+          echo "### Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ inputs.release-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ${{ inputs.image-name }}:${{ inputs.image-tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ inputs.health-url }}" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    name: Rollback
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl and Helm
+        uses: ./.github/actions/setup-kubectl-helm
+        with:
+          kubeconfig: ${{ secrets.VKE_KUBECONFIG }}
+
+      - name: Rollback
+        run: |
+          helm rollback ${{ inputs.release-name }} -n ${{ inputs.namespace }}
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/${{ inputs.release-name }}-${{ inputs.release-name }} \
+            -n ${{ inputs.namespace }}
+
+      - name: Summary
+        run: |
+          echo "### Rollback Completed" >> $GITHUB_STEP_SUMMARY
+          helm history ${{ inputs.release-name }} -n ${{ inputs.namespace }}

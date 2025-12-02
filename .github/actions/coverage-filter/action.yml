@@ -1,0 +1,44 @@
+name: 'Coverage Filter'
+description: 'Filter generated code from Go coverage reports'
+
+inputs:
+  input-file:
+    description: 'Input coverage file path'
+    required: false
+    default: 'coverage.out'
+  output-file:
+    description: 'Output filtered coverage file path'
+    required: false
+    default: 'coverage.filtered.out'
+
+outputs:
+  coverage:
+    description: 'Total coverage percentage (without % sign)'
+    value: ${{ steps.calc.outputs.coverage }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Filter generated code
+      shell: bash
+      run: |
+        # Exclude generated code:
+        #   /ent/* - except schema/, entc.go, generate.go
+        #   /graph/generated.go
+        #   /graph/model/
+
+        grep -v -E "/ent/" ${{ inputs.input-file }} | \
+          grep -v -E "/graph/generated\.go|/graph/model/" \
+          > ${{ inputs.output-file }}
+
+        # Re-add hand-written ent files
+        grep -E "/ent/schema/|/ent/entc\.go|/ent/generate\.go" ${{ inputs.input-file }} \
+          >> ${{ inputs.output-file }} || true
+
+    - name: Calculate coverage
+      id: calc
+      shell: bash
+      run: |
+        COVERAGE=$(go tool cover -func=${{ inputs.output-file }} | tail -1 | awk '{print $3}' | tr -d '%')
+        echo "coverage=${COVERAGE}" >> $GITHUB_OUTPUT
+        echo "Total coverage: ${COVERAGE}%"
