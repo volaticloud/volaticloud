@@ -58,6 +58,10 @@ jobs:
         run: |
           kubectl create secret generic volaticloud-backend-volaticloud-secrets \
             --from-literal=VOLATICLOUD_DATABASE="${{ secrets.VOLATICLOUD_DATABASE }}" \
+            --from-literal=VOLATICLOUD_KEYCLOAK_URL="${{ secrets.VOLATICLOUD_KEYCLOAK_URL }}" \
+            --from-literal=VOLATICLOUD_KEYCLOAK_REALM="${{ secrets.VOLATICLOUD_KEYCLOAK_REALM }}" \
+            --from-literal=VOLATICLOUD_KEYCLOAK_CLIENT_ID="${{ secrets.VOLATICLOUD_KEYCLOAK_CLIENT_ID }}" \
+            --from-literal=VOLATICLOUD_KEYCLOAK_CLIENT_SECRET="${{ secrets.VOLATICLOUD_KEYCLOAK_CLIENT_SECRET }}" \
             --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 

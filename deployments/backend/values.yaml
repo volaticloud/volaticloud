@@ -37,6 +37,10 @@ deployments:
         envsFromSecret:
           volaticloud-secrets:
             - VOLATICLOUD_DATABASE
+            - VOLATICLOUD_KEYCLOAK_URL
+            - VOLATICLOUD_KEYCLOAK_REALM
+            - VOLATICLOUD_KEYCLOAK_CLIENT_ID
+            - VOLATICLOUD_KEYCLOAK_CLIENT_SECRET
 
         livenessProbe:
           httpGet:
