@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'feature/github-actions-*'  # TODO: Remove after testing
     paths:
       - 'dashboard/**'
       - '.github/workflows/build-dashboard.yml'

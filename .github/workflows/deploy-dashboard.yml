@@ -6,7 +6,6 @@ on:
     types: [completed]
     branches:
       - main
-      - 'feature/github-actions-*'  # TODO: Remove after testing
   workflow_dispatch:
     inputs:
       image_tag:
