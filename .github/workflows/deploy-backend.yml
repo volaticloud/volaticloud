@@ -44,10 +44,29 @@ jobs:
         id: tag
         run: |
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+            TAG="${{ github.event.inputs.image_tag }}"
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # Use the SHA from the triggering workflow (first 7 chars)
+            FULL_SHA="${{ github.event.workflow_run.head_sha }}"
+            TAG="${FULL_SHA:0:7}"
           else
-            echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+            TAG="${GITHUB_SHA::7}"
           fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Using image tag: ${TAG}"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify image exists
+        run: |
+          echo "Checking if image exists: ghcr.io/${{ github.repository_owner }}/volaticloud:${{ steps.tag.outputs.tag }}"
+          docker pull ghcr.io/${{ github.repository_owner }}/volaticloud:${{ steps.tag.outputs.tag }} || \
+            (echo "::error::Image not found. Please ensure Docker build completed successfully." && exit 1)
 
       - name: Create namespace
         run: |
