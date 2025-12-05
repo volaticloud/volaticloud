@@ -9,6 +9,7 @@ import (
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 const (
@@ -130,23 +131,25 @@ func (m *RunnerMonitor) checkRunnerBatch(ctx context.Context, runners []*ent.Bot
 
 // checkRunner checks a single runner and triggers data download if needed
 func (m *RunnerMonitor) checkRunner(ctx context.Context, runner *ent.BotRunner) {
-	// Skip if currently downloading
+	// Check if currently downloading - verify if download is actually running
 	if runner.DataDownloadStatus == enum.DataDownloadStatusDownloading {
-		log.Printf("Runner %s: data download already in progress", runner.Name)
+		if m.isDownloadStuck(ctx, runner) {
+			log.Printf("Runner %s: download appears to be stuck, marking as failed", runner.Name)
+			m.markDownloadFailed(ctx, runner, "download process not responding (container not found)")
+		} else {
+			log.Printf("Runner %s: data download in progress", runner.Name)
+		}
 		return
 	}
 
 	needsDownload := false
 	reason := ""
 
-	// Check if data is not ready
-	if !runner.DataIsReady {
+	// Check if data is not ready and has never been downloaded
+	// Don't auto-retry failed downloads - user should manually trigger
+	if !runner.DataIsReady && runner.DataDownloadStatus != enum.DataDownloadStatusFailed {
 		needsDownload = true
 		reason = "data not downloaded yet"
-	} else if runner.DataDownloadStatus == enum.DataDownloadStatusFailed {
-		// Retry failed downloads
-		needsDownload = true
-		reason = "retrying failed download"
 	} else if !runner.DataLastUpdated.IsZero() {
 		// Check if data needs refresh (older than 24 hours)
 		timeSinceUpdate := time.Since(runner.DataLastUpdated)
@@ -164,11 +167,97 @@ func (m *RunnerMonitor) checkRunner(ctx context.Context, runner *ent.BotRunner) 
 	}
 }
 
+// isDownloadStuck checks if a download process is stuck by verifying container status
+func (m *RunnerMonitor) isDownloadStuck(ctx context.Context, r *ent.BotRunner) bool {
+	// If no start time recorded, consider it stuck (legacy case)
+	if r.DataDownloadStartedAt == nil {
+		log.Printf("Runner %s: no download start time recorded, assuming stuck", r.Name)
+		return true
+	}
+
+	// Get the current exchange being downloaded from progress
+	progress := r.DataDownloadProgress
+	currentExchange := ""
+	if progress != nil {
+		if ce, ok := progress["current_pair"].(string); ok {
+			currentExchange = ce
+		}
+	}
+
+	// If no exchange info yet, the download just started - give it some time
+	// Only consider stuck if started more than 5 minutes ago without exchange info
+	if currentExchange == "" {
+		timeSinceStart := time.Since(*r.DataDownloadStartedAt)
+		if timeSinceStart < 5*time.Minute {
+			// Just started, not stuck yet
+			return false
+		}
+		log.Printf("Runner %s: download started %v ago but no exchange info in progress", r.Name, timeSinceStart.Round(time.Second))
+		return true
+	}
+
+	// Create Docker client to check container status
+	factory := runner.NewFactory()
+	rt, err := factory.Create(ctx, r.Type, r.Config)
+	if err != nil {
+		log.Printf("Runner %s: failed to create runtime for status check: %v", r.Name, err)
+		return false // Can't determine, don't mark as stuck
+	}
+	defer func() {
+		if err := rt.Close(); err != nil {
+			log.Printf("Warning: failed to close runtime: %v", err)
+		}
+	}()
+
+	dockerRT, ok := rt.(*runner.DockerRuntime)
+	if !ok {
+		return false
+	}
+
+	cli := dockerRT.GetClient()
+	containerName := GetDataDownloadContainerName(r.ID.String(), currentExchange)
+
+	running, exists, err := CheckDownloadContainerStatus(ctx, cli, containerName)
+	if err != nil {
+		log.Printf("Runner %s: failed to check container status: %v", r.Name, err)
+		return false
+	}
+
+	// If container is running, download is in progress
+	if running {
+		return false
+	}
+
+	// Container doesn't exist or stopped - check if it's been too long since download started
+	if !exists {
+		// Container was auto-removed (completed or failed) but status not updated
+		// This means the goroutine handling the download crashed or DB update failed
+		log.Printf("Runner %s: container %s not found but status is downloading", r.Name, containerName)
+		return true
+	}
+
+	return false
+}
+
+// markDownloadFailed marks a runner's download as failed
+func (m *RunnerMonitor) markDownloadFailed(ctx context.Context, runner *ent.BotRunner, errorMsg string) {
+	if _, err := m.dbClient.BotRunner.UpdateOne(runner).
+		SetDataDownloadStatus(enum.DataDownloadStatusFailed).
+		SetDataIsReady(false).
+		SetDataErrorMessage(errorMsg).
+		ClearDataDownloadStartedAt().
+		Save(ctx); err != nil {
+		log.Printf("Runner %s: failed to mark download as failed: %v", runner.Name, err)
+	}
+}
+
 // triggerDataDownload triggers the data download process for a runner
-func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.BotRunner) error {
-	// Update status to downloading
-	runner, err := m.dbClient.BotRunner.UpdateOne(runner).
+func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunner) error {
+	// Update status to downloading with start timestamp
+	now := time.Now()
+	r, err := m.dbClient.BotRunner.UpdateOne(r).
 		SetDataDownloadStatus(enum.DataDownloadStatusDownloading).
+		SetDataDownloadStartedAt(now).
 		SetDataDownloadProgress(map[string]interface{}{
 			"pairs_completed":  0,
 			"pairs_total":      0,
@@ -186,30 +275,32 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, runner *ent.Bot
 		downloadCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 		defer cancel()
 
-		if err := DownloadRunnerData(downloadCtx, m.dbClient, runner); err != nil {
-			log.Printf("Runner %s: data download failed: %v", runner.Name, err)
+		if err := DownloadRunnerData(downloadCtx, m.dbClient, r); err != nil {
+			log.Printf("Runner %s: data download failed: %v", r.Name, err)
 
 			// Update status to failed
-			if _, saveErr := m.dbClient.BotRunner.UpdateOne(runner).
+			if _, saveErr := m.dbClient.BotRunner.UpdateOne(r).
 				SetDataDownloadStatus(enum.DataDownloadStatusFailed).
 				SetDataIsReady(false).
 				SetDataErrorMessage(err.Error()).
+				ClearDataDownloadStartedAt().
 				Save(context.Background()); saveErr != nil {
-				log.Printf("Runner %s: failed to update runner status after download error: %v", runner.Name, saveErr)
+				log.Printf("Runner %s: failed to update runner status after download error: %v", r.Name, saveErr)
 			}
 		} else {
-			log.Printf("Runner %s: data download completed successfully", runner.Name)
+			log.Printf("Runner %s: data download completed successfully", r.Name)
 
 			// Update status to completed
-			now := time.Now()
-			if _, saveErr := m.dbClient.BotRunner.UpdateOne(runner).
+			completedAt := time.Now()
+			if _, saveErr := m.dbClient.BotRunner.UpdateOne(r).
 				SetDataDownloadStatus(enum.DataDownloadStatusCompleted).
 				SetDataIsReady(true).
-				SetDataLastUpdated(now).
+				SetDataLastUpdated(completedAt).
 				ClearDataErrorMessage().
 				ClearDataDownloadProgress().
+				ClearDataDownloadStartedAt().
 				Save(context.Background()); saveErr != nil {
-				log.Printf("Runner %s: failed to update runner status after successful download: %v", runner.Name, saveErr)
+				log.Printf("Runner %s: failed to update runner status after successful download: %v", r.Name, saveErr)
 			}
 		}
 	}()

@@ -23,7 +23,59 @@ const (
 
 	// FreqtradeImage is the Docker image to use for data download
 	FreqtradeImage = "freqtradeorg/freqtrade:stable"
+
+	// DataDownloadContainerPrefix is the prefix for data download container names
+	DataDownloadContainerPrefix = "volaticloud-data-download"
 )
+
+// GetDataDownloadContainerName returns the deterministic container name for a runner's data download
+func GetDataDownloadContainerName(runnerID string, exchange string) string {
+	return fmt.Sprintf("%s-%s-%s", DataDownloadContainerPrefix, runnerID, exchange)
+}
+
+// CheckDownloadContainerStatus checks if a download container exists and returns its status
+// Returns: running (bool), exists (bool), error
+func CheckDownloadContainerStatus(ctx context.Context, cli *client.Client, containerName string) (running bool, exists bool, err error) {
+	info, err := cli.ContainerInspect(ctx, containerName)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return false, false, nil
+		}
+		return false, false, err
+	}
+	return info.State.Running, true, nil
+}
+
+// removeContainerIfExists stops and removes a container if it exists
+// This is used to clean up any leftover containers from previous failed/stuck downloads
+func removeContainerIfExists(ctx context.Context, cli *client.Client, containerName string) error {
+	// Check if container exists
+	info, err := cli.ContainerInspect(ctx, containerName)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			// Container doesn't exist, nothing to do
+			return nil
+		}
+		return fmt.Errorf("failed to inspect container: %w", err)
+	}
+
+	// If container is running, stop it first
+	if info.State.Running {
+		log.Printf("Stopping existing container %s", containerName)
+		timeout := 10 // seconds
+		if err := cli.ContainerStop(ctx, containerName, container.StopOptions{Timeout: &timeout}); err != nil {
+			log.Printf("Warning: failed to stop container %s: %v", containerName, err)
+		}
+	}
+
+	// Remove the container
+	log.Printf("Removing existing container %s", containerName)
+	if err := cli.ContainerRemove(ctx, containerName, container.RemoveOptions{Force: true}); err != nil {
+		return fmt.Errorf("failed to remove container: %w", err)
+	}
+
+	return nil
+}
 
 // DownloadRunnerData downloads historical data for a runner
 func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRunner) error {
@@ -116,7 +168,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 			log.Printf("Warning: failed to update runner progress: %v", err)
 		}
 
-		if err := downloadExchangeData(ctx, cli, exchangeName, exchConfig); err != nil {
+		if err := downloadExchangeData(ctx, cli, r.ID.String(), exchangeName, exchConfig); err != nil {
 			return fmt.Errorf("failed to download %s data: %w", exchangeName, err)
 		}
 	}
@@ -126,7 +178,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 }
 
 // downloadExchangeData downloads data for a specific exchange using its configuration
-func downloadExchangeData(ctx context.Context, cli *client.Client, exchange string, config map[string]interface{}) error {
+func downloadExchangeData(ctx context.Context, cli *client.Client, runnerID string, exchange string, config map[string]interface{}) error {
 
 	// Extract configuration (using camelCase field names from GraphQL)
 	pairsPattern, ok := config["pairsPattern"].(string)
@@ -182,8 +234,8 @@ func downloadExchangeData(ctx context.Context, cli *client.Client, exchange stri
 	log.Printf("Downloading %s: pairs=%s, timeframes=%v, days=%s, mode=%s",
 		exchange, pairsPattern, timeframes, days, tradingMode)
 
-	// Run the download container
-	containerName := fmt.Sprintf("volaticloud-data-download-%s", exchange)
+	// Run the download container with deterministic name based on runner ID and exchange
+	containerName := GetDataDownloadContainerName(runnerID, exchange)
 
 	if err := runFreqtradeCommand(ctx, cli, containerName, args); err != nil {
 		return fmt.Errorf("failed to run freqtrade download command: %w", err)
@@ -199,6 +251,11 @@ func runFreqtradeCommand(ctx context.Context, cli *client.Client, containerName 
 	log.Printf("Pulling Freqtrade image: %s", FreqtradeImage)
 	if err := pullImage(ctx, cli, FreqtradeImage); err != nil {
 		return fmt.Errorf("failed to pull image: %w", err)
+	}
+
+	// Remove existing container if it exists (from previous failed/stuck download)
+	if err := removeContainerIfExists(ctx, cli, containerName); err != nil {
+		log.Printf("Warning: failed to remove existing container %s: %v", containerName, err)
 	}
 
 	// Create container config

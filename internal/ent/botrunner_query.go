@@ -340,12 +340,12 @@ func (_q *BotRunnerQuery) WithBacktests(opts ...func(*BacktestQuery)) *BotRunner
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Public bool `json:"public,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.BotRunner.Query().
-//		GroupBy(botrunner.FieldName).
+//		GroupBy(botrunner.FieldPublic).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *BotRunnerQuery) GroupBy(field string, fields ...string) *BotRunnerGroupBy {
@@ -363,11 +363,11 @@ func (_q *BotRunnerQuery) GroupBy(field string, fields ...string) *BotRunnerGrou
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Public bool `json:"public,omitempty"`
 //	}
 //
 //	client.BotRunner.Query().
-//		Select(botrunner.FieldName).
+//		Select(botrunner.FieldPublic).
 //		Scan(ctx, &v)
 func (_q *BotRunnerQuery) Select(fields ...string) *BotRunnerSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -69,6 +69,7 @@ func (c *BacktestCreate) SetInput(i CreateBacktestInput) *BacktestCreate {
 
 // CreateBotInput represents a mutation input for creating bots.
 type CreateBotInput struct {
+	Public           *bool
 	Name             string
 	Status           *enum.BotStatus
 	Mode             *enum.BotMode
@@ -89,6 +90,9 @@ type CreateBotInput struct {
 
 // Mutate applies the CreateBotInput on the BotMutation builder.
 func (i *CreateBotInput) Mutate(m *BotMutation) {
+	if v := i.Public; v != nil {
+		m.SetPublic(*v)
+	}
 	m.SetName(i.Name)
 	if v := i.Status; v != nil {
 		m.SetStatus(*v)
@@ -137,6 +141,7 @@ func (c *BotCreate) SetInput(i CreateBotInput) *BotCreate {
 
 // UpdateBotInput represents a mutation input for updating bots.
 type UpdateBotInput struct {
+	Public            *bool
 	Name              *string
 	Status            *enum.BotStatus
 	Mode              *enum.BotMode
@@ -163,6 +168,9 @@ type UpdateBotInput struct {
 
 // Mutate applies the UpdateBotInput on the BotMutation builder.
 func (i *UpdateBotInput) Mutate(m *BotMutation) {
+	if v := i.Public; v != nil {
+		m.SetPublic(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
@@ -517,24 +525,29 @@ func (c *BotMetricsUpdateOne) SetInput(i UpdateBotMetricsInput) *BotMetricsUpdat
 
 // CreateBotRunnerInput represents a mutation input for creating botrunners.
 type CreateBotRunnerInput struct {
-	Name                 string
-	Type                 *enum.RunnerType
-	Config               map[string]interface{}
-	DataIsReady          *bool
-	DataLastUpdated      *time.Time
-	DataDownloadStatus   *enum.DataDownloadStatus
-	DataDownloadProgress map[string]interface{}
-	DataErrorMessage     *string
-	DataDownloadConfig   map[string]interface{}
-	OwnerID              string
-	CreatedAt            *time.Time
-	UpdatedAt            *time.Time
-	BotIDs               []uuid.UUID
-	BacktestIDs          []uuid.UUID
+	Public                *bool
+	Name                  string
+	Type                  *enum.RunnerType
+	Config                map[string]interface{}
+	DataIsReady           *bool
+	DataLastUpdated       *time.Time
+	DataDownloadStatus    *enum.DataDownloadStatus
+	DataDownloadStartedAt *time.Time
+	DataDownloadProgress  map[string]interface{}
+	DataErrorMessage      *string
+	DataDownloadConfig    map[string]interface{}
+	OwnerID               string
+	CreatedAt             *time.Time
+	UpdatedAt             *time.Time
+	BotIDs                []uuid.UUID
+	BacktestIDs           []uuid.UUID
 }
 
 // Mutate applies the CreateBotRunnerInput on the BotRunnerMutation builder.
 func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
+	if v := i.Public; v != nil {
+		m.SetPublic(*v)
+	}
 	m.SetName(i.Name)
 	if v := i.Type; v != nil {
 		m.SetType(*v)
@@ -550,6 +563,9 @@ func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.DataDownloadStatus; v != nil {
 		m.SetDataDownloadStatus(*v)
+	}
+	if v := i.DataDownloadStartedAt; v != nil {
+		m.SetDataDownloadStartedAt(*v)
 	}
 	if v := i.DataDownloadProgress; v != nil {
 		m.SetDataDownloadProgress(v)
@@ -583,32 +599,38 @@ func (c *BotRunnerCreate) SetInput(i CreateBotRunnerInput) *BotRunnerCreate {
 
 // UpdateBotRunnerInput represents a mutation input for updating botrunners.
 type UpdateBotRunnerInput struct {
-	Name                      *string
-	Type                      *enum.RunnerType
-	ClearConfig               bool
-	Config                    map[string]interface{}
-	DataIsReady               *bool
-	ClearDataLastUpdated      bool
-	DataLastUpdated           *time.Time
-	DataDownloadStatus        *enum.DataDownloadStatus
-	ClearDataDownloadProgress bool
-	DataDownloadProgress      map[string]interface{}
-	ClearDataErrorMessage     bool
-	DataErrorMessage          *string
-	ClearDataDownloadConfig   bool
-	DataDownloadConfig        map[string]interface{}
-	OwnerID                   *string
-	UpdatedAt                 *time.Time
-	ClearBots                 bool
-	AddBotIDs                 []uuid.UUID
-	RemoveBotIDs              []uuid.UUID
-	ClearBacktests            bool
-	AddBacktestIDs            []uuid.UUID
-	RemoveBacktestIDs         []uuid.UUID
+	Public                     *bool
+	Name                       *string
+	Type                       *enum.RunnerType
+	ClearConfig                bool
+	Config                     map[string]interface{}
+	DataIsReady                *bool
+	ClearDataLastUpdated       bool
+	DataLastUpdated            *time.Time
+	DataDownloadStatus         *enum.DataDownloadStatus
+	ClearDataDownloadStartedAt bool
+	DataDownloadStartedAt      *time.Time
+	ClearDataDownloadProgress  bool
+	DataDownloadProgress       map[string]interface{}
+	ClearDataErrorMessage      bool
+	DataErrorMessage           *string
+	ClearDataDownloadConfig    bool
+	DataDownloadConfig         map[string]interface{}
+	OwnerID                    *string
+	UpdatedAt                  *time.Time
+	ClearBots                  bool
+	AddBotIDs                  []uuid.UUID
+	RemoveBotIDs               []uuid.UUID
+	ClearBacktests             bool
+	AddBacktestIDs             []uuid.UUID
+	RemoveBacktestIDs          []uuid.UUID
 }
 
 // Mutate applies the UpdateBotRunnerInput on the BotRunnerMutation builder.
 func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
+	if v := i.Public; v != nil {
+		m.SetPublic(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
@@ -632,6 +654,12 @@ func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.DataDownloadStatus; v != nil {
 		m.SetDataDownloadStatus(*v)
+	}
+	if i.ClearDataDownloadStartedAt {
+		m.ClearDataDownloadStartedAt()
+	}
+	if v := i.DataDownloadStartedAt; v != nil {
+		m.SetDataDownloadStartedAt(*v)
 	}
 	if i.ClearDataDownloadProgress {
 		m.ClearDataDownloadProgress()
@@ -777,6 +805,7 @@ func (c *ExchangeUpdateOne) SetInput(i UpdateExchangeInput) *ExchangeUpdateOne {
 
 // CreateStrategyInput represents a mutation input for creating strategies.
 type CreateStrategyInput struct {
+	Public        *bool
 	Name          string
 	Description   *string
 	Code          string
@@ -794,6 +823,9 @@ type CreateStrategyInput struct {
 
 // Mutate applies the CreateStrategyInput on the StrategyMutation builder.
 func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
+	if v := i.Public; v != nil {
+		m.SetPublic(*v)
+	}
 	m.SetName(i.Name)
 	if v := i.Description; v != nil {
 		m.SetDescription(*v)
@@ -837,6 +869,7 @@ func (c *StrategyCreate) SetInput(i CreateStrategyInput) *StrategyCreate {
 
 // UpdateStrategyInput represents a mutation input for updating strategies.
 type UpdateStrategyInput struct {
+	Public           *bool
 	Name             *string
 	ClearDescription bool
 	Description      *string
@@ -860,6 +893,9 @@ type UpdateStrategyInput struct {
 
 // Mutate applies the UpdateStrategyInput on the StrategyMutation builder.
 func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
+	if v := i.Public; v != nil {
+		m.SetPublic(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}

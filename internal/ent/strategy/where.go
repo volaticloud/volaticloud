@@ -56,6 +56,11 @@ func IDLTE(id uuid.UUID) predicate.Strategy {
 	return predicate.Strategy(sql.FieldLTE(FieldID, id))
 }
 
+// Public applies equality check predicate on the "public" field. It's identical to PublicEQ.
+func Public(v bool) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldPublic, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldEQ(FieldName, v))
@@ -99,6 +104,16 @@ func CreatedAt(v time.Time) predicate.Strategy {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Strategy {
 	return predicate.Strategy(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// PublicEQ applies the EQ predicate on the "public" field.
+func PublicEQ(v bool) predicate.Strategy {
+	return predicate.Strategy(sql.FieldEQ(FieldPublic, v))
+}
+
+// PublicNEQ applies the NEQ predicate on the "public" field.
+func PublicNEQ(v bool) predicate.Strategy {
+	return predicate.Strategy(sql.FieldNEQ(FieldPublic, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

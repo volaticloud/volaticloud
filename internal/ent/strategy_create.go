@@ -23,6 +23,20 @@ type StrategyCreate struct {
 	hooks    []Hook
 }
 
+// SetPublic sets the "public" field.
+func (_c *StrategyCreate) SetPublic(v bool) *StrategyCreate {
+	_c.mutation.SetPublic(v)
+	return _c
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_c *StrategyCreate) SetNillablePublic(v *bool) *StrategyCreate {
+	if v != nil {
+		_c.SetPublic(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *StrategyCreate) SetName(v string) *StrategyCreate {
 	_c.mutation.SetName(v)
@@ -236,6 +250,10 @@ func (_c *StrategyCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *StrategyCreate) defaults() error {
+	if _, ok := _c.mutation.Public(); !ok {
+		v := strategy.DefaultPublic
+		_c.mutation.SetPublic(v)
+	}
 	if _, ok := _c.mutation.IsLatest(); !ok {
 		v := strategy.DefaultIsLatest
 		_c.mutation.SetIsLatest(v)
@@ -270,6 +288,9 @@ func (_c *StrategyCreate) defaults() error {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *StrategyCreate) check() error {
+	if _, ok := _c.mutation.Public(); !ok {
+		return &ValidationError{Name: "public", err: errors.New(`ent: missing required field "Strategy.public"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Strategy.name"`)}
 	}
@@ -338,6 +359,10 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.Public(); ok {
+		_spec.SetField(strategy.FieldPublic, field.TypeBool, value)
+		_node.Public = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(strategy.FieldName, field.TypeString, value)

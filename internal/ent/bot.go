@@ -24,6 +24,8 @@ type Bot struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Whether this resource is publicly visible to all authenticated users
+	Public bool `json:"public,omitempty"`
 	// Bot display name
 	Name string `json:"name,omitempty"`
 	// Bot lifecycle status
@@ -141,6 +143,8 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case bot.FieldConfig, bot.FieldSecureConfig:
 			values[i] = new([]byte)
+		case bot.FieldPublic:
+			values[i] = new(sql.NullBool)
 		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldFreqtradeVersion, bot.FieldErrorMessage, bot.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
@@ -167,6 +171,12 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case bot.FieldPublic:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field public", values[i])
+			} else if value.Valid {
+				_m.Public = value.Bool
 			}
 		case bot.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -323,6 +333,9 @@ func (_m *Bot) String() string {
 	var builder strings.Builder
 	builder.WriteString("Bot(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("public=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Public))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")

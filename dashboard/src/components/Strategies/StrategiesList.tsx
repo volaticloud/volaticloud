@@ -16,31 +16,40 @@ import {
   Snackbar,
   Alert,
   Chip,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   PlayArrow as PlayArrowIcon,
+  Public as PublicIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetStrategiesQuery } from './strategies.generated';
+import { useGetStrategiesQuery, useSetStrategyVisibilityMutation } from './strategies.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateStrategyDialog } from './CreateStrategyDialog';
 import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
+import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
 import { useActiveGroup } from '../../contexts/GroupContext';
+
+type ViewMode = 'mine' | 'public';
 
 export const StrategiesList = () => {
   const navigate = useNavigate();
   const { activeGroupId } = useActiveGroup();
+  const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
+  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
   const [selectedStrategyForBacktest, setSelectedStrategyForBacktest] = useState<string | null>(null);
   const [selectedStrategy, setSelectedStrategy] = useState<{
     id: string;
@@ -48,6 +57,7 @@ export const StrategiesList = () => {
     description?: string | null;
     code: string;
     versionNumber: number;
+    public?: boolean;
   } | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -55,15 +65,19 @@ export const StrategiesList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
+  const [setStrategyVisibility, { loading: visibilityLoading }] = useSetStrategyVisibilityMutation();
+
   const { data, loading, error, refetch } = useGetStrategiesQuery({
     variables: {
       first: 50,
       where: {
         isLatest: true,
-        ownerID: activeGroupId || undefined
+        ...(viewMode === 'mine'
+          ? { ownerID: activeGroupId || undefined }
+          : { public: true })
       }
     },
-    skip: !activeGroupId, // Skip query if no active group
+    skip: viewMode === 'mine' && !activeGroupId, // Skip query if viewing "mine" without active group
   });
 
   const handleCloseSnackbar = () => {
@@ -95,14 +109,33 @@ export const StrategiesList = () => {
             {data?.strategies?.totalCount || 0} latest strategies
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-          sx={{ flexShrink: 0 }}
-        >
-          Create Strategy
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, newMode) => newMode && setViewMode(newMode)}
+            size="small"
+          >
+            <ToggleButton value="mine">
+              <LockIcon sx={{ mr: 0.5 }} fontSize="small" />
+              My Strategies
+            </ToggleButton>
+            <ToggleButton value="public">
+              <PublicIcon sx={{ mr: 0.5 }} fontSize="small" />
+              Public
+            </ToggleButton>
+          </ToggleButtonGroup>
+          {viewMode === 'mine' && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateDialogOpen(true)}
+              sx={{ flexShrink: 0 }}
+            >
+              Create Strategy
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {strategies.length === 0 ? (
@@ -149,6 +182,15 @@ export const StrategiesList = () => {
                         color="primary"
                         variant="outlined"
                       />
+                      {strategy.public && (
+                        <Chip
+                          icon={<PublicIcon />}
+                          label="Public"
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                        />
+                      )}
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -183,29 +225,45 @@ export const StrategiesList = () => {
                         <PlayArrowIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setSelectedStrategy(strategy);
-                          setEditDialogOpen(true);
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => {
-                          setSelectedStrategy(strategy);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    {viewMode === 'mine' && (
+                      <>
+                        <Tooltip title={strategy.public ? 'Make Private' : 'Make Public'}>
+                          <IconButton
+                            size="small"
+                            color={strategy.public ? 'info' : 'default'}
+                            onClick={() => {
+                              setSelectedStrategy(strategy);
+                              setVisibilityDialogOpen(true);
+                            }}
+                          >
+                            {strategy.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setSelectedStrategy(strategy);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setSelectedStrategy(strategy);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -289,6 +347,37 @@ export const StrategiesList = () => {
         }}
         preSelectedStrategyId={selectedStrategyForBacktest || undefined}
       />
+
+      {selectedStrategy && (
+        <VisibilityToggleDialog
+          open={visibilityDialogOpen}
+          onClose={() => {
+            setVisibilityDialogOpen(false);
+            setSelectedStrategy(null);
+          }}
+          onConfirm={async () => {
+            const result = await setStrategyVisibility({
+              variables: {
+                id: selectedStrategy.id,
+                public: !selectedStrategy.public,
+              },
+            });
+            if (result.errors) {
+              throw new Error(result.errors[0]?.message || 'Failed to update visibility');
+            }
+            refetch();
+            setSnackbar({
+              open: true,
+              message: `Strategy is now ${selectedStrategy.public ? 'private' : 'public'}`,
+              severity: 'success',
+            });
+          }}
+          resourceType="strategy"
+          resourceName={selectedStrategy.name}
+          currentlyPublic={selectedStrategy.public || false}
+          loading={visibilityLoading}
+        />
+      )}
 
       <Snackbar
         open={snackbar.open}

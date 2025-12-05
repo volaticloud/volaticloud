@@ -13,6 +13,7 @@ query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
         createdAt
         config
         ownerID
+        public
         exchange {
           id
           name
@@ -173,5 +174,13 @@ mutation RestartBot($id: ID!) {
     id
     name
     status
+  }
+}
+
+mutation SetBotVisibility($id: ID!, $public: Boolean!) {
+  setBotVisibility(id: $id, public: $public) {
+    id
+    name
+    public
   }
 }

@@ -57,6 +57,11 @@ func IDLTE(id uuid.UUID) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldLTE(FieldID, id))
 }
 
+// Public applies equality check predicate on the "public" field. It's identical to PublicEQ.
+func Public(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldPublic, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldName, v))
@@ -70,6 +75,11 @@ func DataIsReady(v bool) predicate.BotRunner {
 // DataLastUpdated applies equality check predicate on the "data_last_updated" field. It's identical to DataLastUpdatedEQ.
 func DataLastUpdated(v time.Time) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldDataLastUpdated, v))
+}
+
+// DataDownloadStartedAt applies equality check predicate on the "data_download_started_at" field. It's identical to DataDownloadStartedAtEQ.
+func DataDownloadStartedAt(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataDownloadStartedAt, v))
 }
 
 // DataErrorMessage applies equality check predicate on the "data_error_message" field. It's identical to DataErrorMessageEQ.
@@ -90,6 +100,16 @@ func CreatedAt(v time.Time) predicate.BotRunner {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// PublicEQ applies the EQ predicate on the "public" field.
+func PublicEQ(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldPublic, v))
+}
+
+// PublicNEQ applies the NEQ predicate on the "public" field.
+func PublicNEQ(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldPublic, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -285,6 +305,56 @@ func DataDownloadStatusNotIn(vs ...enum.DataDownloadStatus) predicate.BotRunner 
 		v[i] = vs[i]
 	}
 	return predicate.BotRunner(sql.FieldNotIn(FieldDataDownloadStatus, v...))
+}
+
+// DataDownloadStartedAtEQ applies the EQ predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtEQ(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldDataDownloadStartedAt, v))
+}
+
+// DataDownloadStartedAtNEQ applies the NEQ predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtNEQ(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldDataDownloadStartedAt, v))
+}
+
+// DataDownloadStartedAtIn applies the In predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtIn(vs ...time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldDataDownloadStartedAt, vs...))
+}
+
+// DataDownloadStartedAtNotIn applies the NotIn predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtNotIn(vs ...time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldDataDownloadStartedAt, vs...))
+}
+
+// DataDownloadStartedAtGT applies the GT predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtGT(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldDataDownloadStartedAt, v))
+}
+
+// DataDownloadStartedAtGTE applies the GTE predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtGTE(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldDataDownloadStartedAt, v))
+}
+
+// DataDownloadStartedAtLT applies the LT predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtLT(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldDataDownloadStartedAt, v))
+}
+
+// DataDownloadStartedAtLTE applies the LTE predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtLTE(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldDataDownloadStartedAt, v))
+}
+
+// DataDownloadStartedAtIsNil applies the IsNil predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldDataDownloadStartedAt))
+}
+
+// DataDownloadStartedAtNotNil applies the NotNil predicate on the "data_download_started_at" field.
+func DataDownloadStartedAtNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldDataDownloadStartedAt))
 }
 
 // DataDownloadProgressIsNil applies the IsNil predicate on the "data_download_progress" field.

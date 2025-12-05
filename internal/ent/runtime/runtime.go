@@ -36,8 +36,15 @@ func init() {
 	backtestDescID := backtestFields[0].Descriptor()
 	// backtest.DefaultID holds the default value on creation for the id field.
 	backtest.DefaultID = backtestDescID.Default.(func() uuid.UUID)
+	botMixin := schema.Bot{}.Mixin()
+	botMixinFields0 := botMixin[0].Fields()
+	_ = botMixinFields0
 	botFields := schema.Bot{}.Fields()
 	_ = botFields
+	// botDescPublic is the schema descriptor for public field.
+	botDescPublic := botMixinFields0[0].Descriptor()
+	// bot.DefaultPublic holds the default value on creation for the public field.
+	bot.DefaultPublic = botDescPublic.Default.(bool)
 	// botDescName is the schema descriptor for name field.
 	botDescName := botFields[1].Descriptor()
 	// bot.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -80,11 +87,18 @@ func init() {
 	botmetricsDescID := botmetricsFields[0].Descriptor()
 	// botmetrics.DefaultID holds the default value on creation for the id field.
 	botmetrics.DefaultID = botmetricsDescID.Default.(func() uuid.UUID)
+	botrunnerMixin := schema.BotRunner{}.Mixin()
 	botrunnerHooks := schema.BotRunner{}.Hooks()
 	botrunner.Hooks[0] = botrunnerHooks[0]
 	botrunner.Hooks[1] = botrunnerHooks[1]
+	botrunnerMixinFields0 := botrunnerMixin[0].Fields()
+	_ = botrunnerMixinFields0
 	botrunnerFields := schema.BotRunner{}.Fields()
 	_ = botrunnerFields
+	// botrunnerDescPublic is the schema descriptor for public field.
+	botrunnerDescPublic := botrunnerMixinFields0[0].Descriptor()
+	// botrunner.DefaultPublic holds the default value on creation for the public field.
+	botrunner.DefaultPublic = botrunnerDescPublic.Default.(bool)
 	// botrunnerDescName is the schema descriptor for name field.
 	botrunnerDescName := botrunnerFields[1].Descriptor()
 	// botrunner.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -94,15 +108,15 @@ func init() {
 	// botrunner.DefaultDataIsReady holds the default value on creation for the data_is_ready field.
 	botrunner.DefaultDataIsReady = botrunnerDescDataIsReady.Default.(bool)
 	// botrunnerDescOwnerID is the schema descriptor for owner_id field.
-	botrunnerDescOwnerID := botrunnerFields[10].Descriptor()
+	botrunnerDescOwnerID := botrunnerFields[11].Descriptor()
 	// botrunner.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	botrunner.OwnerIDValidator = botrunnerDescOwnerID.Validators[0].(func(string) error)
 	// botrunnerDescCreatedAt is the schema descriptor for created_at field.
-	botrunnerDescCreatedAt := botrunnerFields[11].Descriptor()
+	botrunnerDescCreatedAt := botrunnerFields[12].Descriptor()
 	// botrunner.DefaultCreatedAt holds the default value on creation for the created_at field.
 	botrunner.DefaultCreatedAt = botrunnerDescCreatedAt.Default.(func() time.Time)
 	// botrunnerDescUpdatedAt is the schema descriptor for updated_at field.
-	botrunnerDescUpdatedAt := botrunnerFields[12].Descriptor()
+	botrunnerDescUpdatedAt := botrunnerFields[13].Descriptor()
 	// botrunner.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	botrunner.DefaultUpdatedAt = botrunnerDescUpdatedAt.Default.(func() time.Time)
 	// botrunner.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -137,10 +151,17 @@ func init() {
 	exchangeDescID := exchangeFields[0].Descriptor()
 	// exchange.DefaultID holds the default value on creation for the id field.
 	exchange.DefaultID = exchangeDescID.Default.(func() uuid.UUID)
+	strategyMixin := schema.Strategy{}.Mixin()
 	strategyHooks := schema.Strategy{}.Hooks()
 	strategy.Hooks[0] = strategyHooks[0]
+	strategyMixinFields0 := strategyMixin[0].Fields()
+	_ = strategyMixinFields0
 	strategyFields := schema.Strategy{}.Fields()
 	_ = strategyFields
+	// strategyDescPublic is the schema descriptor for public field.
+	strategyDescPublic := strategyMixinFields0[0].Descriptor()
+	// strategy.DefaultPublic holds the default value on creation for the public field.
+	strategy.DefaultPublic = strategyDescPublic.Default.(bool)
 	// strategyDescName is the schema descriptor for name field.
 	strategyDescName := strategyFields[1].Descriptor()
 	// strategy.NameValidator is a validator for the "name" field. It is called by the builders before save.

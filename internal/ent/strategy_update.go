@@ -31,6 +31,20 @@ func (_u *StrategyUpdate) Where(ps ...predicate.Strategy) *StrategyUpdate {
 	return _u
 }
 
+// SetPublic sets the "public" field.
+func (_u *StrategyUpdate) SetPublic(v bool) *StrategyUpdate {
+	_u.mutation.SetPublic(v)
+	return _u
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_u *StrategyUpdate) SetNillablePublic(v *bool) *StrategyUpdate {
+	if v != nil {
+		_u.SetPublic(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *StrategyUpdate) SetName(v string) *StrategyUpdate {
 	_u.mutation.SetName(v)
@@ -342,6 +356,9 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.Public(); ok {
+		_spec.SetField(strategy.FieldPublic, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(strategy.FieldName, field.TypeString, value)
 	}
@@ -538,6 +555,20 @@ type StrategyUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *StrategyMutation
+}
+
+// SetPublic sets the "public" field.
+func (_u *StrategyUpdateOne) SetPublic(v bool) *StrategyUpdateOne {
+	_u.mutation.SetPublic(v)
+	return _u
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_u *StrategyUpdateOne) SetNillablePublic(v *bool) *StrategyUpdateOne {
+	if v != nil {
+		_u.SetPublic(*v)
+	}
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -880,6 +911,9 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Public(); ok {
+		_spec.SetField(strategy.FieldPublic, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(strategy.FieldName, field.TypeString, value)

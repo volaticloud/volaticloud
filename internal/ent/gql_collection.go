@@ -338,6 +338,11 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				return err
 			}
 			_q.withMetrics = query
+		case "public":
+			if _, ok := fieldSeen[bot.FieldPublic]; !ok {
+				selectedFields = append(selectedFields, bot.FieldPublic)
+				fieldSeen[bot.FieldPublic] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[bot.FieldName]; !ok {
 				selectedFields = append(selectedFields, bot.FieldName)
@@ -830,6 +835,11 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 			_q.WithNamedBacktests(alias, func(wq *BacktestQuery) {
 				*wq = *query
 			})
+		case "public":
+			if _, ok := fieldSeen[botrunner.FieldPublic]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldPublic)
+				fieldSeen[botrunner.FieldPublic] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[botrunner.FieldName]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldName)
@@ -859,6 +869,11 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 			if _, ok := fieldSeen[botrunner.FieldDataDownloadStatus]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldDataDownloadStatus)
 				fieldSeen[botrunner.FieldDataDownloadStatus] = struct{}{}
+			}
+		case "dataDownloadStartedAt":
+			if _, ok := fieldSeen[botrunner.FieldDataDownloadStartedAt]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataDownloadStartedAt)
+				fieldSeen[botrunner.FieldDataDownloadStartedAt] = struct{}{}
 			}
 		case "dataDownloadProgress":
 			if _, ok := fieldSeen[botrunner.FieldDataDownloadProgress]; !ok {
@@ -1255,6 +1270,11 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			if _, ok := fieldSeen[strategy.FieldParentID]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldParentID)
 				fieldSeen[strategy.FieldParentID] = struct{}{}
+			}
+		case "public":
+			if _, ok := fieldSeen[strategy.FieldPublic]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldPublic)
+				fieldSeen[strategy.FieldPublic] = struct{}{}
 			}
 		case "name":
 			if _, ok := fieldSeen[strategy.FieldName]; !ok {

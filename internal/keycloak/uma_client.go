@@ -13,6 +13,7 @@ import (
 type UMAClientInterface interface {
 	CheckPermission(ctx context.Context, token, resourceID, scope string) (bool, error)
 	CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error
+	UpdateResource(ctx context.Context, resourceID string, attributes map[string][]string) error
 	DeleteResource(ctx context.Context, resourceID string) error
 	CreatePermission(ctx context.Context, resourceID, ownerID string) error
 }
@@ -109,6 +110,41 @@ func (u *UMAClient) DeleteResource(ctx context.Context, resourceID string) error
 	}
 
 	log.Printf("Deleted Keycloak resource: %s", resourceID)
+	return nil
+}
+
+// UpdateResource updates the attributes of an existing resource in Keycloak
+// This is used to sync the public attribute when visibility is toggled
+func (u *UMAClient) UpdateResource(ctx context.Context, resourceID string, attributes map[string][]string) error {
+	token, err := u.getClientToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Get existing resource first to preserve other fields
+	resources, err := u.client.GetResourcesClient(ctx, token, u.realm, gocloak.GetResourceParams{
+		Name: gocloak.StringP(resourceID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get resource: %w", err)
+	}
+
+	if len(resources) == 0 {
+		return fmt.Errorf("resource not found: %s", resourceID)
+	}
+
+	existingResource := resources[0]
+
+	// Update attributes on existing resource
+	existingResource.Attributes = &attributes
+
+	// Update resource using UMA Protection API
+	err = u.client.UpdateResourceClient(ctx, token, u.realm, *existingResource)
+	if err != nil {
+		return fmt.Errorf("failed to update resource in Keycloak: %w", err)
+	}
+
+	log.Printf("Updated Keycloak resource: %s with attributes: %v", resourceID, attributes)
 	return nil
 }
 

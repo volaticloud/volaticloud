@@ -35,6 +35,20 @@ func (_u *BotUpdate) Where(ps ...predicate.Bot) *BotUpdate {
 	return _u
 }
 
+// SetPublic sets the "public" field.
+func (_u *BotUpdate) SetPublic(v bool) *BotUpdate {
+	_u.mutation.SetPublic(v)
+	return _u
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_u *BotUpdate) SetNillablePublic(v *bool) *BotUpdate {
+	if v != nil {
+		_u.SetPublic(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BotUpdate) SetName(v string) *BotUpdate {
 	_u.mutation.SetName(v)
@@ -418,6 +432,9 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.Public(); ok {
+		_spec.SetField(bot.FieldPublic, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(bot.FieldName, field.TypeString, value)
 	}
@@ -645,6 +662,20 @@ type BotUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *BotMutation
+}
+
+// SetPublic sets the "public" field.
+func (_u *BotUpdateOne) SetPublic(v bool) *BotUpdateOne {
+	_u.mutation.SetPublic(v)
+	return _u
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_u *BotUpdateOne) SetNillablePublic(v *bool) *BotUpdateOne {
+	if v != nil {
+		_u.SetPublic(*v)
+	}
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -1059,6 +1090,9 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Public(); ok {
+		_spec.SetField(bot.FieldPublic, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(bot.FieldName, field.TypeString, value)

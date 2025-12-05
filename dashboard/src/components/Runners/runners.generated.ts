@@ -10,7 +10,7 @@ export type GetRunnersQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, ownerID: string, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, ownerID: string, public: boolean, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetRunnerQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -64,6 +64,14 @@ export type TestRunnerConnectionMutationVariables = Types.Exact<{
 
 export type TestRunnerConnectionMutation = { __typename?: 'Mutation', testRunnerConnection: { __typename?: 'ConnectionTestResult', success: boolean, message: string, version?: string | null } };
 
+export type SetRunnerVisibilityMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+  public: Types.Scalars['Boolean']['input'];
+}>;
+
+
+export type SetRunnerVisibilityMutation = { __typename?: 'Mutation', setRunnerVisibility: { __typename?: 'BotRunner', id: string, name: string, public: boolean } };
+
 
 export const GetRunnersDocument = gql`
     query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
@@ -75,6 +83,7 @@ export const GetRunnersDocument = gql`
         type
         config
         ownerID
+        public
         createdAt
         dataIsReady
         dataLastUpdated
@@ -369,3 +378,39 @@ export function useTestRunnerConnectionMutation(baseOptions?: Apollo.MutationHoo
 export type TestRunnerConnectionMutationHookResult = ReturnType<typeof useTestRunnerConnectionMutation>;
 export type TestRunnerConnectionMutationResult = Apollo.MutationResult<TestRunnerConnectionMutation>;
 export type TestRunnerConnectionMutationOptions = Apollo.BaseMutationOptions<TestRunnerConnectionMutation, TestRunnerConnectionMutationVariables>;
+export const SetRunnerVisibilityDocument = gql`
+    mutation SetRunnerVisibility($id: ID!, $public: Boolean!) {
+  setRunnerVisibility(id: $id, public: $public) {
+    id
+    name
+    public
+  }
+}
+    `;
+export type SetRunnerVisibilityMutationFn = Apollo.MutationFunction<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>;
+
+/**
+ * __useSetRunnerVisibilityMutation__
+ *
+ * To run a mutation, you first call `useSetRunnerVisibilityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetRunnerVisibilityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setRunnerVisibilityMutation, { data, loading, error }] = useSetRunnerVisibilityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      public: // value for 'public'
+ *   },
+ * });
+ */
+export function useSetRunnerVisibilityMutation(baseOptions?: Apollo.MutationHookOptions<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>(SetRunnerVisibilityDocument, options);
+      }
+export type SetRunnerVisibilityMutationHookResult = ReturnType<typeof useSetRunnerVisibilityMutation>;
+export type SetRunnerVisibilityMutationResult = Apollo.MutationResult<SetRunnerVisibilityMutation>;
+export type SetRunnerVisibilityMutationOptions = Apollo.BaseMutationOptions<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>;

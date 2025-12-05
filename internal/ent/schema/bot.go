@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -113,5 +114,12 @@ func (Bot) Annotations() []schema.Annotation {
 		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+	}
+}
+
+// Mixin of the Bot.
+func (Bot) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.PublicMixin{},
 	}
 }

@@ -276,6 +276,8 @@ export type Bot = Node & {
   name: Scalars['String']['output'];
   /** Group ID (organization) that owns this bot */
   ownerID: Scalars['String']['output'];
+  /** Whether this resource is publicly visible to all authenticated users */
+  public: Scalars['Boolean']['output'];
   runner: BotRunner;
   /** Foreign key to runner (provides execution environment) */
   runnerID: Scalars['ID']['output'];
@@ -640,6 +642,8 @@ export type BotRunner = Node & {
   dataDownloadConfig?: Maybe<Scalars['Map']['output']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
   dataDownloadProgress?: Maybe<Scalars['Map']['output']>;
+  /** When the current data download started (for stuck detection) */
+  dataDownloadStartedAt?: Maybe<Scalars['Time']['output']>;
   /** Current data download status (idle, downloading, completed, failed) */
   dataDownloadStatus: BotRunnerDataDownloadStatus;
   /** Error message if data download failed */
@@ -653,6 +657,8 @@ export type BotRunner = Node & {
   name: Scalars['String']['output'];
   /** Group ID (organization) that owns this bot runner */
   ownerID: Scalars['String']['output'];
+  /** Whether this resource is publicly visible to all authenticated users */
+  public: Scalars['Boolean']['output'];
   /** Runner environment type (docker, kubernetes, local) */
   type: BotRunnerRunnerType;
   updatedAt: Scalars['Time']['output'];
@@ -726,6 +732,17 @@ export type BotRunnerWhereInput = {
   createdAtLTE?: InputMaybe<Scalars['Time']['input']>;
   createdAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   createdAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** data_download_started_at field predicates */
+  dataDownloadStartedAt?: InputMaybe<Scalars['Time']['input']>;
+  dataDownloadStartedAtGT?: InputMaybe<Scalars['Time']['input']>;
+  dataDownloadStartedAtGTE?: InputMaybe<Scalars['Time']['input']>;
+  dataDownloadStartedAtIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  dataDownloadStartedAtIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  dataDownloadStartedAtLT?: InputMaybe<Scalars['Time']['input']>;
+  dataDownloadStartedAtLTE?: InputMaybe<Scalars['Time']['input']>;
+  dataDownloadStartedAtNEQ?: InputMaybe<Scalars['Time']['input']>;
+  dataDownloadStartedAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  dataDownloadStartedAtNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** data_download_status field predicates */
   dataDownloadStatus?: InputMaybe<BotRunnerDataDownloadStatus>;
   dataDownloadStatusIn?: InputMaybe<Array<BotRunnerDataDownloadStatus>>;
@@ -806,6 +823,9 @@ export type BotRunnerWhereInput = {
   ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
   ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
   ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** public field predicates */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
+  publicNEQ?: InputMaybe<Scalars['Boolean']['input']>;
   /** type field predicates */
   type?: InputMaybe<BotRunnerRunnerType>;
   typeIn?: InputMaybe<Array<BotRunnerRunnerType>>;
@@ -975,6 +995,9 @@ export type BotWhereInput = {
   ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
   ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
   ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** public field predicates */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
+  publicNEQ?: InputMaybe<Scalars['Boolean']['input']>;
   /** runner_id field predicates */
   runnerID?: InputMaybe<Scalars['ID']['input']>;
   runnerIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -1064,6 +1087,8 @@ export type CreateBotInput = {
   name: Scalars['String']['input'];
   /** Group ID (organization) that owns this bot */
   ownerID: Scalars['String']['input'];
+  /** Whether this resource is publicly visible to all authenticated users */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
   runnerID: Scalars['ID']['input'];
   /** Bot lifecycle status */
   status?: InputMaybe<BotBotStatus>;
@@ -1133,6 +1158,8 @@ export type CreateBotRunnerInput = {
   dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
   dataDownloadProgress?: InputMaybe<Scalars['Map']['input']>;
+  /** When the current data download started (for stuck detection) */
+  dataDownloadStartedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Current data download status (idle, downloading, completed, failed) */
   dataDownloadStatus?: InputMaybe<BotRunnerDataDownloadStatus>;
   /** Error message if data download failed */
@@ -1145,6 +1172,8 @@ export type CreateBotRunnerInput = {
   name: Scalars['String']['input'];
   /** Group ID (organization) that owns this bot runner */
   ownerID: Scalars['String']['input'];
+  /** Whether this resource is publicly visible to all authenticated users */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
   /** Runner environment type (docker, kubernetes, local) */
   type?: InputMaybe<BotRunnerRunnerType>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
@@ -1188,6 +1217,8 @@ export type CreateStrategyInput = {
   /** Group ID (organization) that owns this strategy */
   ownerID: Scalars['String']['input'];
   parentID?: InputMaybe<Scalars['ID']['input']>;
+  /** Whether this resource is publicly visible to all authenticated users */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Auto-incremented version number */
   versionNumber?: InputMaybe<Scalars['Int']['input']>;
@@ -1409,6 +1440,21 @@ export type Mutation = {
   refreshRunnerData: BotRunner;
   restartBot: Bot;
   runBacktest: Backtest;
+  /**
+   * Toggle bot visibility (public/private)
+   * Only the owner can change visibility
+   */
+  setBotVisibility: Bot;
+  /**
+   * Toggle runner visibility (public/private)
+   * Only the owner can change visibility
+   */
+  setRunnerVisibility: BotRunner;
+  /**
+   * Toggle strategy visibility (public/private)
+   * Only the owner can change visibility
+   */
+  setStrategyVisibility: Strategy;
   startBot: Bot;
   stopBacktest: Backtest;
   stopBot: Bot;
@@ -1493,6 +1539,24 @@ export type MutationRestartBotArgs = {
 
 export type MutationRunBacktestArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationSetBotVisibilityArgs = {
+  id: Scalars['ID']['input'];
+  public: Scalars['Boolean']['input'];
+};
+
+
+export type MutationSetRunnerVisibilityArgs = {
+  id: Scalars['ID']['input'];
+  public: Scalars['Boolean']['input'];
+};
+
+
+export type MutationSetStrategyVisibilityArgs = {
+  id: Scalars['ID']['input'];
+  public: Scalars['Boolean']['input'];
 };
 
 
@@ -1713,6 +1777,8 @@ export type Strategy = Node & {
   parent?: Maybe<Strategy>;
   /** Parent strategy ID for versioning (null for root v1) */
   parentID?: Maybe<Scalars['ID']['output']>;
+  /** Whether this resource is publicly visible to all authenticated users */
+  public: Scalars['Boolean']['output'];
   updatedAt: Scalars['Time']['output'];
   /** Auto-incremented version number */
   versionNumber: Scalars['Int']['output'];
@@ -1853,6 +1919,9 @@ export type StrategyWhereInput = {
   parentIDNEQ?: InputMaybe<Scalars['ID']['input']>;
   parentIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
   parentIDNotNil?: InputMaybe<Scalars['Boolean']['input']>;
+  /** public field predicates */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
+  publicNEQ?: InputMaybe<Scalars['Boolean']['input']>;
   /** updated_at field predicates */
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
   updatedAtGT?: InputMaybe<Scalars['Time']['input']>;
@@ -2156,6 +2225,8 @@ export type UpdateBotInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   /** Group ID (organization) that owns this bot */
   ownerID?: InputMaybe<Scalars['String']['input']>;
+  /** Whether this resource is publicly visible to all authenticated users */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
   removeTradeIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   runnerID?: InputMaybe<Scalars['ID']['input']>;
   /** Bot lifecycle status */
@@ -2241,6 +2312,7 @@ export type UpdateBotRunnerInput = {
   clearConfig?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadConfig?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadProgress?: InputMaybe<Scalars['Boolean']['input']>;
+  clearDataDownloadStartedAt?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataErrorMessage?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataLastUpdated?: InputMaybe<Scalars['Boolean']['input']>;
   /** Runner connection configuration (host, port, credentials, etc.) */
@@ -2249,6 +2321,8 @@ export type UpdateBotRunnerInput = {
   dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
   dataDownloadProgress?: InputMaybe<Scalars['Map']['input']>;
+  /** When the current data download started (for stuck detection) */
+  dataDownloadStartedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Current data download status (idle, downloading, completed, failed) */
   dataDownloadStatus?: InputMaybe<BotRunnerDataDownloadStatus>;
   /** Error message if data download failed */
@@ -2261,6 +2335,8 @@ export type UpdateBotRunnerInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   /** Group ID (organization) that owns this bot runner */
   ownerID?: InputMaybe<Scalars['String']['input']>;
+  /** Whether this resource is publicly visible to all authenticated users */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
   removeBacktestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Runner environment type (docker, kubernetes, local) */
@@ -2312,6 +2388,8 @@ export type UpdateStrategyInput = {
   /** Group ID (organization) that owns this strategy */
   ownerID?: InputMaybe<Scalars['String']['input']>;
   parentID?: InputMaybe<Scalars['ID']['input']>;
+  /** Whether this resource is publicly visible to all authenticated users */
+  public?: InputMaybe<Scalars['Boolean']['input']>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeChildIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;

@@ -7,6 +7,7 @@ query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
         type
         config
         ownerID
+        public
         createdAt
         dataIsReady
         dataLastUpdated
@@ -92,5 +93,13 @@ mutation TestRunnerConnection($type: BotRunnerRunnerType!, $config: RunnerConfig
     success
     message
     version
+  }
+}
+
+mutation SetRunnerVisibility($id: ID!, $public: Boolean!) {
+  setRunnerVisibility(id: $id, public: $public) {
+    id
+    name
+    public
   }
 }

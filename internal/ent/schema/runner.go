@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -45,6 +46,10 @@ func (BotRunner) Fields() []ent.Field {
 			GoType(enum.DataDownloadStatus("")).
 			Default(string(enum.DataDownloadStatusIdle)).
 			Comment("Current data download status (idle, downloading, completed, failed)"),
+		field.Time("data_download_started_at").
+			Optional().
+			Nillable().
+			Comment("When the current data download started (for stuck detection)"),
 		field.JSON("data_download_progress", map[string]interface{}{}).
 			Optional().
 			Comment("Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}"),
@@ -98,5 +103,12 @@ func (BotRunner) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateRunnerConfig,
 		validateDataDownloadConfig,
+	}
+}
+
+// Mixin of the BotRunner.
+func (BotRunner) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.PublicMixin{},
 	}
 }

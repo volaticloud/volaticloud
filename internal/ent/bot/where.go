@@ -57,6 +57,11 @@ func IDLTE(id uuid.UUID) predicate.Bot {
 	return predicate.Bot(sql.FieldLTE(FieldID, id))
 }
 
+// Public applies equality check predicate on the "public" field. It's identical to PublicEQ.
+func Public(v bool) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldPublic, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldName, v))
@@ -110,6 +115,16 @@ func CreatedAt(v time.Time) predicate.Bot {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// PublicEQ applies the EQ predicate on the "public" field.
+func PublicEQ(v bool) predicate.Bot {
+	return predicate.Bot(sql.FieldEQ(FieldPublic, v))
+}
+
+// PublicNEQ applies the NEQ predicate on the "public" field.
+func PublicNEQ(v bool) predicate.Bot {
+	return predicate.Bot(sql.FieldNEQ(FieldPublic, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

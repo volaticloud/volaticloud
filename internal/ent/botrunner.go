@@ -20,6 +20,8 @@ type BotRunner struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Whether this resource is publicly visible to all authenticated users
+	Public bool `json:"public,omitempty"`
 	// Runner display name
 	Name string `json:"name,omitempty"`
 	// Runner environment type (docker, kubernetes, local)
@@ -32,6 +34,8 @@ type BotRunner struct {
 	DataLastUpdated time.Time `json:"data_last_updated,omitempty"`
 	// Current data download status (idle, downloading, completed, failed)
 	DataDownloadStatus enum.DataDownloadStatus `json:"data_download_status,omitempty"`
+	// When the current data download started (for stuck detection)
+	DataDownloadStartedAt *time.Time `json:"data_download_started_at,omitempty"`
 	// Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}
 	DataDownloadProgress map[string]interface{} `json:"data_download_progress,omitempty"`
 	// Error message if data download failed
@@ -91,11 +95,11 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig:
 			values[i] = new([]byte)
-		case botrunner.FieldDataIsReady:
+		case botrunner.FieldPublic, botrunner.FieldDataIsReady:
 			values[i] = new(sql.NullBool)
 		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage, botrunner.FieldOwnerID:
 			values[i] = new(sql.NullString)
-		case botrunner.FieldDataLastUpdated, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
+		case botrunner.FieldDataLastUpdated, botrunner.FieldDataDownloadStartedAt, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case botrunner.FieldID:
 			values[i] = new(uuid.UUID)
@@ -119,6 +123,12 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case botrunner.FieldPublic:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field public", values[i])
+			} else if value.Valid {
+				_m.Public = value.Bool
 			}
 		case botrunner.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -157,6 +167,13 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field data_download_status", values[i])
 			} else if value.Valid {
 				_m.DataDownloadStatus = enum.DataDownloadStatus(value.String)
+			}
+		case botrunner.FieldDataDownloadStartedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field data_download_started_at", values[i])
+			} else if value.Valid {
+				_m.DataDownloadStartedAt = new(time.Time)
+				*_m.DataDownloadStartedAt = value.Time
 			}
 		case botrunner.FieldDataDownloadProgress:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -244,6 +261,9 @@ func (_m *BotRunner) String() string {
 	var builder strings.Builder
 	builder.WriteString("BotRunner(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("public=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Public))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
@@ -261,6 +281,11 @@ func (_m *BotRunner) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("data_download_status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadStatus))
+	builder.WriteString(", ")
+	if v := _m.DataDownloadStartedAt; v != nil {
+		builder.WriteString("data_download_started_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("data_download_progress=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadProgress))

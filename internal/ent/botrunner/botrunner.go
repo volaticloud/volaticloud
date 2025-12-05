@@ -19,6 +19,8 @@ const (
 	Label = "bot_runner"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldPublic holds the string denoting the public field in the database.
+	FieldPublic = "public"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldType holds the string denoting the type field in the database.
@@ -31,6 +33,8 @@ const (
 	FieldDataLastUpdated = "data_last_updated"
 	// FieldDataDownloadStatus holds the string denoting the data_download_status field in the database.
 	FieldDataDownloadStatus = "data_download_status"
+	// FieldDataDownloadStartedAt holds the string denoting the data_download_started_at field in the database.
+	FieldDataDownloadStartedAt = "data_download_started_at"
 	// FieldDataDownloadProgress holds the string denoting the data_download_progress field in the database.
 	FieldDataDownloadProgress = "data_download_progress"
 	// FieldDataErrorMessage holds the string denoting the data_error_message field in the database.
@@ -68,12 +72,14 @@ const (
 // Columns holds all SQL columns for botrunner fields.
 var Columns = []string{
 	FieldID,
+	FieldPublic,
 	FieldName,
 	FieldType,
 	FieldConfig,
 	FieldDataIsReady,
 	FieldDataLastUpdated,
 	FieldDataDownloadStatus,
+	FieldDataDownloadStartedAt,
 	FieldDataDownloadProgress,
 	FieldDataErrorMessage,
 	FieldDataDownloadConfig,
@@ -99,6 +105,8 @@ func ValidColumn(column string) bool {
 //	import _ "volaticloud/internal/ent/runtime"
 var (
 	Hooks [2]ent.Hook
+	// DefaultPublic holds the default value on creation for the "public" field.
+	DefaultPublic bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultDataIsReady holds the default value on creation for the "data_is_ready" field.
@@ -147,6 +155,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByPublic orders the results by the public field.
+func ByPublic(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPublic, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -170,6 +183,11 @@ func ByDataLastUpdated(opts ...sql.OrderTermOption) OrderOption {
 // ByDataDownloadStatus orders the results by the data_download_status field.
 func ByDataDownloadStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDataDownloadStatus, opts...).ToFunc()
+}
+
+// ByDataDownloadStartedAt orders the results by the data_download_started_at field.
+func ByDataDownloadStartedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataDownloadStartedAt, opts...).ToFunc()
 }
 
 // ByDataErrorMessage orders the results by the data_error_message field.

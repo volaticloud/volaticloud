@@ -32,6 +32,20 @@ func (_u *BotRunnerUpdate) Where(ps ...predicate.BotRunner) *BotRunnerUpdate {
 	return _u
 }
 
+// SetPublic sets the "public" field.
+func (_u *BotRunnerUpdate) SetPublic(v bool) *BotRunnerUpdate {
+	_u.mutation.SetPublic(v)
+	return _u
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillablePublic(v *bool) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetPublic(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BotRunnerUpdate) SetName(v string) *BotRunnerUpdate {
 	_u.mutation.SetName(v)
@@ -117,6 +131,26 @@ func (_u *BotRunnerUpdate) SetNillableDataDownloadStatus(v *enum.DataDownloadSta
 	if v != nil {
 		_u.SetDataDownloadStatus(*v)
 	}
+	return _u
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (_u *BotRunnerUpdate) SetDataDownloadStartedAt(v time.Time) *BotRunnerUpdate {
+	_u.mutation.SetDataDownloadStartedAt(v)
+	return _u
+}
+
+// SetNillableDataDownloadStartedAt sets the "data_download_started_at" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableDataDownloadStartedAt(v *time.Time) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetDataDownloadStartedAt(*v)
+	}
+	return _u
+}
+
+// ClearDataDownloadStartedAt clears the value of the "data_download_started_at" field.
+func (_u *BotRunnerUpdate) ClearDataDownloadStartedAt() *BotRunnerUpdate {
+	_u.mutation.ClearDataDownloadStartedAt()
 	return _u
 }
 
@@ -340,6 +374,9 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.Public(); ok {
+		_spec.SetField(botrunner.FieldPublic, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 	}
@@ -363,6 +400,12 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.DataDownloadStatus(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.DataDownloadStartedAt(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadStartedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DataDownloadStartedAtCleared() {
+		_spec.ClearField(botrunner.FieldDataDownloadStartedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.DataDownloadProgress(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadProgress, field.TypeJSON, value)
@@ -498,6 +541,20 @@ type BotRunnerUpdateOne struct {
 	mutation *BotRunnerMutation
 }
 
+// SetPublic sets the "public" field.
+func (_u *BotRunnerUpdateOne) SetPublic(v bool) *BotRunnerUpdateOne {
+	_u.mutation.SetPublic(v)
+	return _u
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillablePublic(v *bool) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetPublic(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BotRunnerUpdateOne) SetName(v string) *BotRunnerUpdateOne {
 	_u.mutation.SetName(v)
@@ -583,6 +640,26 @@ func (_u *BotRunnerUpdateOne) SetNillableDataDownloadStatus(v *enum.DataDownload
 	if v != nil {
 		_u.SetDataDownloadStatus(*v)
 	}
+	return _u
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (_u *BotRunnerUpdateOne) SetDataDownloadStartedAt(v time.Time) *BotRunnerUpdateOne {
+	_u.mutation.SetDataDownloadStartedAt(v)
+	return _u
+}
+
+// SetNillableDataDownloadStartedAt sets the "data_download_started_at" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableDataDownloadStartedAt(v *time.Time) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetDataDownloadStartedAt(*v)
+	}
+	return _u
+}
+
+// ClearDataDownloadStartedAt clears the value of the "data_download_started_at" field.
+func (_u *BotRunnerUpdateOne) ClearDataDownloadStartedAt() *BotRunnerUpdateOne {
+	_u.mutation.ClearDataDownloadStartedAt()
 	return _u
 }
 
@@ -836,6 +913,9 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 			}
 		}
 	}
+	if value, ok := _u.mutation.Public(); ok {
+		_spec.SetField(botrunner.FieldPublic, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 	}
@@ -859,6 +939,12 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	}
 	if value, ok := _u.mutation.DataDownloadStatus(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.DataDownloadStartedAt(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadStartedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DataDownloadStartedAtCleared() {
+		_spec.ClearField(botrunner.FieldDataDownloadStartedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.DataDownloadProgress(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadProgress, field.TypeJSON, value)

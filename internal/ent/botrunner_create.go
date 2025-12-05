@@ -24,6 +24,20 @@ type BotRunnerCreate struct {
 	hooks    []Hook
 }
 
+// SetPublic sets the "public" field.
+func (_c *BotRunnerCreate) SetPublic(v bool) *BotRunnerCreate {
+	_c.mutation.SetPublic(v)
+	return _c
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillablePublic(v *bool) *BotRunnerCreate {
+	if v != nil {
+		_c.SetPublic(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *BotRunnerCreate) SetName(v string) *BotRunnerCreate {
 	_c.mutation.SetName(v)
@@ -88,6 +102,20 @@ func (_c *BotRunnerCreate) SetDataDownloadStatus(v enum.DataDownloadStatus) *Bot
 func (_c *BotRunnerCreate) SetNillableDataDownloadStatus(v *enum.DataDownloadStatus) *BotRunnerCreate {
 	if v != nil {
 		_c.SetDataDownloadStatus(*v)
+	}
+	return _c
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (_c *BotRunnerCreate) SetDataDownloadStartedAt(v time.Time) *BotRunnerCreate {
+	_c.mutation.SetDataDownloadStartedAt(v)
+	return _c
+}
+
+// SetNillableDataDownloadStartedAt sets the "data_download_started_at" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableDataDownloadStartedAt(v *time.Time) *BotRunnerCreate {
+	if v != nil {
+		_c.SetDataDownloadStartedAt(*v)
 	}
 	return _c
 }
@@ -233,6 +261,10 @@ func (_c *BotRunnerCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *BotRunnerCreate) defaults() error {
+	if _, ok := _c.mutation.Public(); !ok {
+		v := botrunner.DefaultPublic
+		_c.mutation.SetPublic(v)
+	}
 	if _, ok := _c.mutation.GetType(); !ok {
 		v := botrunner.DefaultType
 		_c.mutation.SetType(v)
@@ -271,6 +303,9 @@ func (_c *BotRunnerCreate) defaults() error {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BotRunnerCreate) check() error {
+	if _, ok := _c.mutation.Public(); !ok {
+		return &ValidationError{Name: "public", err: errors.New(`ent: missing required field "BotRunner.public"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "BotRunner.name"`)}
 	}
@@ -347,6 +382,10 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.Public(); ok {
+		_spec.SetField(botrunner.FieldPublic, field.TypeBool, value)
+		_node.Public = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -370,6 +409,10 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DataDownloadStatus(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadStatus, field.TypeEnum, value)
 		_node.DataDownloadStatus = value
+	}
+	if value, ok := _c.mutation.DataDownloadStartedAt(); ok {
+		_spec.SetField(botrunner.FieldDataDownloadStartedAt, field.TypeTime, value)
+		_node.DataDownloadStartedAt = &value
 	}
 	if value, ok := _c.mutation.DataDownloadProgress(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadProgress, field.TypeJSON, value)
