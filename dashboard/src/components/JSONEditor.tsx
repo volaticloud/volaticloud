@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { json } from '@codemirror/lang-json';
+import Editor from '@monaco-editor/react';
 import { Box, Typography, Paper, useTheme } from '@mui/material';
 
 interface JSONEditorProps {
@@ -23,6 +22,7 @@ export const JSONEditor: React.FC<JSONEditorProps> = ({
   placeholder = '{}',
 }) => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [textValue, setTextValue] = useState('');
   const [internalError, setInternalError] = useState<string | null>(null);
 
@@ -39,18 +39,19 @@ export const JSONEditor: React.FC<JSONEditorProps> = ({
     }
   }, [value]);
 
-  const handleChange = (val: string) => {
-    setTextValue(val);
+  const handleChange = (val: string | undefined) => {
+    const newValue = val ?? '';
+    setTextValue(newValue);
 
     // Validate JSON
-    if (!val.trim()) {
+    if (!newValue.trim()) {
       setInternalError(null);
       onChange(null);
       return;
     }
 
     try {
-      const parsed = JSON.parse(val);
+      const parsed = JSON.parse(newValue);
       setInternalError(null);
       onChange(parsed);
     } catch (err) {
@@ -83,18 +84,24 @@ export const JSONEditor: React.FC<JSONEditorProps> = ({
           overflow: 'hidden',
         }}
       >
-        <CodeMirror
-          value={textValue}
+        <Editor
           height={height}
-          extensions={[json()]}
+          defaultLanguage="json"
+          value={textValue || placeholder}
           onChange={handleChange}
-          placeholder={placeholder}
-          theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-          basicSetup={{
-            lineNumbers: true,
-            foldGutter: true,
-            highlightActiveLine: true,
-            highlightActiveLineGutter: true,
+          theme={isDarkMode ? 'vs-dark' : 'light'}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            wordWrap: 'on',
+            folding: true,
+            renderLineHighlight: 'line',
+            formatOnPaste: true,
+            formatOnType: true,
           }}
         />
       </Paper>

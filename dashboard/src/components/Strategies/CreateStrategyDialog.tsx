@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useCreateStrategyMutation } from './strategies.generated';
 import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
 import { useActiveGroup } from '../../contexts/GroupContext';
+import { PythonCodeEditor } from './PythonCodeEditor';
 
 interface CreateStrategyDialogProps {
   open: boolean;
@@ -88,16 +89,9 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
             rows={3}
           />
 
-          <TextField
-            label="Python Strategy Code"
+          <PythonCodeEditor
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            fullWidth
-            multiline
-            rows={10}
-            placeholder="# Enter your Freqtrade strategy code here..."
-            sx={{ fontFamily: 'monospace' }}
+            onChange={setCode}
           />
 
           <Box sx={{ mt: 2 }}>
