@@ -1,0 +1,28 @@
+# Query for runner selector - fetches both own and public runners
+query GetRunnersForSelector($ownerID: String) {
+  # My runners
+  myRunners: botRunners(first: 50, where: { ownerID: $ownerID }) {
+    edges {
+      node {
+        id
+        name
+        type
+        public
+        dataIsReady
+      }
+    }
+  }
+  # Public runners (excludes own since they're already in myRunners)
+  publicRunners: botRunners(first: 50, where: { public: true }) {
+    edges {
+      node {
+        id
+        name
+        type
+        public
+        dataIsReady
+        ownerID
+      }
+    }
+  }
+}

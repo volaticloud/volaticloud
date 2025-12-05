@@ -16,6 +16,8 @@ import {
   Paper,
   Snackbar,
   Alert,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,27 +26,35 @@ import {
   Refresh as RestartIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Public as PublicIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation } from './bots.generated';
+import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation, useSetBotVisibilityMutation } from './bots.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
 import { DeleteBotDialog } from './DeleteBotDialog';
+import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+
+type ViewMode = 'mine' | 'public';
 
 // Reusable BotsList component
 export const BotsList = () => {
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<{
     id: string;
     name: string;
     mode: string;
+    public?: boolean;
     exchange: { id: string; name: string };
     strategy: { id: string; name: string };
     runner: { id: string; name: string };
@@ -63,11 +73,13 @@ export const BotsList = () => {
     variables: {
       first: 50,
       where: {
-        ownerID: activeGroupId || undefined
+        ...(viewMode === 'mine'
+          ? { ownerID: activeGroupId || undefined }
+          : { public: true })
       }
     },
     pollInterval: 30000, // Poll every 30 seconds to sync with monitor interval
-    skip: !activeGroupId, // Skip query if no active group
+    skip: viewMode === 'mine' && !activeGroupId, // Skip query if viewing "mine" without active group
   });
 
   // Mutations with refetch on completion
@@ -82,6 +94,8 @@ export const BotsList = () => {
   const [restartBot] = useRestartBotMutation({
     onCompleted: () => refetch()
   });
+
+  const [setBotVisibility, { loading: visibilityLoading }] = useSetBotVisibilityMutation();
 
   const handleStartBot = async (id: string) => {
     try {
@@ -232,14 +246,33 @@ export const BotsList = () => {
             {data?.bots?.totalCount || 0} total bots
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-          sx={{ flexShrink: 0 }}
-        >
-          Create Bot
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, newMode) => newMode && setViewMode(newMode)}
+            size="small"
+          >
+            <ToggleButton value="mine">
+              <LockIcon sx={{ mr: 0.5 }} fontSize="small" />
+              My Bots
+            </ToggleButton>
+            <ToggleButton value="public">
+              <PublicIcon sx={{ mr: 0.5 }} fontSize="small" />
+              Public
+            </ToggleButton>
+          </ToggleButtonGroup>
+          {viewMode === 'mine' && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateDialogOpen(true)}
+              sx={{ flexShrink: 0 }}
+            >
+              Create Bot
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {bots.length === 0 ? (
@@ -275,9 +308,20 @@ export const BotsList = () => {
                   sx={{ cursor: 'pointer' }}
                 >
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {bot.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" fontWeight={500}>
+                        {bot.name}
+                      </Typography>
+                      {bot.public && (
+                        <Chip
+                          icon={<PublicIcon />}
+                          label="Public"
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -309,70 +353,87 @@ export const BotsList = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Start">
-                      <IconButton
-                        size="small"
-                        color="success"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartBot(bot.id);
-                        }}
-                        disabled={!canStart(bot.status)}
-                      >
-                        <StartIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Stop">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStopBot(bot.id);
-                        }}
-                        disabled={!canStopOrRestart(bot.status)}
-                      >
-                        <StopIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Restart">
-                      <IconButton
-                        size="small"
-                        color="warning"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRestartBot(bot.id);
-                        }}
-                        disabled={!canStopOrRestart(bot.status)}
-                      >
-                        <RestartIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBot(bot);
-                          setEditDialogOpen(true);
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBot(bot);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    {viewMode === 'mine' && (
+                      <>
+                        <Tooltip title="Start">
+                          <IconButton
+                            size="small"
+                            color="success"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartBot(bot.id);
+                            }}
+                            disabled={!canStart(bot.status)}
+                          >
+                            <StartIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Stop">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStopBot(bot.id);
+                            }}
+                            disabled={!canStopOrRestart(bot.status)}
+                          >
+                            <StopIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Restart">
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRestartBot(bot.id);
+                            }}
+                            disabled={!canStopOrRestart(bot.status)}
+                          >
+                            <RestartIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={bot.public ? 'Make Private' : 'Make Public'}>
+                          <IconButton
+                            size="small"
+                            color={bot.public ? 'info' : 'default'}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBot(bot);
+                              setVisibilityDialogOpen(true);
+                            }}
+                          >
+                            {bot.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBot(bot);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBot(bot);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -414,6 +475,35 @@ export const BotsList = () => {
               setSelectedBot(null);
             }}
             bot={selectedBot}
+          />
+
+          <VisibilityToggleDialog
+            open={visibilityDialogOpen}
+            onClose={() => {
+              setVisibilityDialogOpen(false);
+              setSelectedBot(null);
+            }}
+            onConfirm={async () => {
+              const result = await setBotVisibility({
+                variables: {
+                  id: selectedBot.id,
+                  public: !selectedBot.public,
+                },
+              });
+              if (result.errors) {
+                throw new Error(result.errors[0]?.message || 'Failed to update visibility');
+              }
+              refetch();
+              setSnackbar({
+                open: true,
+                message: `Bot is now ${selectedBot.public ? 'private' : 'public'}`,
+                severity: 'success',
+              });
+            }}
+            resourceType="bot"
+            resourceName={selectedBot.name}
+            currentlyPublic={selectedBot.public || false}
+            loading={visibilityLoading}
           />
         </>
       )}

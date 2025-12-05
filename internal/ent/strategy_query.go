@@ -410,12 +410,12 @@ func (_q *StrategyQuery) WithParent(opts ...func(*StrategyQuery)) *StrategyQuery
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Public bool `json:"public,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Strategy.Query().
-//		GroupBy(strategy.FieldName).
+//		GroupBy(strategy.FieldPublic).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *StrategyQuery) GroupBy(field string, fields ...string) *StrategyGroupBy {
@@ -433,11 +433,11 @@ func (_q *StrategyQuery) GroupBy(field string, fields ...string) *StrategyGroupB
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Public bool `json:"public,omitempty"`
 //	}
 //
 //	client.Strategy.Query().
-//		Select(strategy.FieldName).
+//		Select(strategy.FieldPublic).
 //		Scan(ctx, &v)
 func (_q *StrategyQuery) Select(fields ...string) *StrategySelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

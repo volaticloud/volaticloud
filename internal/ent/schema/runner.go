@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -34,6 +35,10 @@ func (BotRunner) Fields() []ent.Field {
 			Comment("Runner environment type (docker, kubernetes, local)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view-secrets"),
+			).
 			Comment("Runner connection configuration (host, port, credentials, etc.)"),
 		field.Bool("data_is_ready").
 			Default(false).
@@ -45,6 +50,10 @@ func (BotRunner) Fields() []ent.Field {
 			GoType(enum.DataDownloadStatus("")).
 			Default(string(enum.DataDownloadStatusIdle)).
 			Comment("Current data download status (idle, downloading, completed, failed)"),
+		field.Time("data_download_started_at").
+			Optional().
+			Nillable().
+			Comment("When the current data download started (for stuck detection)"),
 		field.JSON("data_download_progress", map[string]interface{}{}).
 			Optional().
 			Comment("Progress details: {pairs_completed, pairs_total, current_pair, percent_complete}"),
@@ -53,6 +62,10 @@ func (BotRunner) Fields() []ent.Field {
 			Comment("Error message if data download failed"),
 		field.JSON("data_download_config", map[string]interface{}{}).
 			Optional().
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view"),
+			).
 			Comment("Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}"),
 		field.String("owner_id").
 			NotEmpty().
@@ -98,5 +111,12 @@ func (BotRunner) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateRunnerConfig,
 		validateDataDownloadConfig,
+	}
+}
+
+// Mixin of the BotRunner.
+func (BotRunner) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.PublicMixin{},
 	}
 }

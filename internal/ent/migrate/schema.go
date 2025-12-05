@@ -48,6 +48,7 @@ var (
 	// BotsColumns holds the columns for the "bots" table.
 	BotsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "public", Type: field.TypeBool, Default: false},
 		{Name: "name", Type: field.TypeString},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "unhealthy", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
@@ -72,19 +73,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bots_bot_runners_bots",
-				Columns:    []*schema.Column{BotsColumns[13]},
+				Columns:    []*schema.Column{BotsColumns[14]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_exchanges_bots",
-				Columns:    []*schema.Column{BotsColumns[14]},
+				Columns:    []*schema.Column{BotsColumns[15]},
 				RefColumns: []*schema.Column{ExchangesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_strategies_bots",
-				Columns:    []*schema.Column{BotsColumns[15]},
+				Columns:    []*schema.Column{BotsColumns[16]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -93,7 +94,7 @@ var (
 			{
 				Name:    "bot_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotsColumns[10]},
+				Columns: []*schema.Column{BotsColumns[11]},
 			},
 		},
 	}
@@ -139,12 +140,14 @@ var (
 	// BotRunnersColumns holds the columns for the "bot_runners" table.
 	BotRunnersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "public", Type: field.TypeBool, Default: false},
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"docker", "kubernetes", "local"}, Default: "docker"},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "data_is_ready", Type: field.TypeBool, Default: false},
 		{Name: "data_last_updated", Type: field.TypeTime, Nullable: true},
 		{Name: "data_download_status", Type: field.TypeEnum, Enums: []string{"idle", "downloading", "completed", "failed"}, Default: "idle"},
+		{Name: "data_download_started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "data_download_progress", Type: field.TypeJSON, Nullable: true},
 		{Name: "data_error_message", Type: field.TypeString, Nullable: true},
 		{Name: "data_download_config", Type: field.TypeJSON, Nullable: true},
@@ -161,7 +164,7 @@ var (
 			{
 				Name:    "botrunner_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotRunnersColumns[10]},
+				Columns: []*schema.Column{BotRunnersColumns[12]},
 			},
 		},
 	}
@@ -190,6 +193,7 @@ var (
 	// StrategiesColumns holds the columns for the "strategies" table.
 	StrategiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "public", Type: field.TypeBool, Default: false},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "code", Type: field.TypeString, Size: 2147483647},
@@ -209,7 +213,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "strategies_strategies_parent",
-				Columns:    []*schema.Column{StrategiesColumns[10]},
+				Columns:    []*schema.Column{StrategiesColumns[11]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -218,27 +222,27 @@ var (
 			{
 				Name:    "strategy_name_version_number",
 				Unique:  true,
-				Columns: []*schema.Column{StrategiesColumns[1], StrategiesColumns[6]},
+				Columns: []*schema.Column{StrategiesColumns[2], StrategiesColumns[7]},
 			},
 			{
 				Name:    "strategy_is_latest",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[5]},
+				Columns: []*schema.Column{StrategiesColumns[6]},
 			},
 			{
 				Name:    "strategy_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[10]},
+				Columns: []*schema.Column{StrategiesColumns[11]},
 			},
 			{
 				Name:    "strategy_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[7]},
+				Columns: []*schema.Column{StrategiesColumns[8]},
 			},
 			{
 				Name:    "strategy_owner_id_is_latest",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[7], StrategiesColumns[5]},
+				Columns: []*schema.Column{StrategiesColumns[8], StrategiesColumns[6]},
 			},
 		},
 	}

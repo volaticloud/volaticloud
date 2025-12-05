@@ -28,7 +28,10 @@ func (Exchange) Fields() []ent.Field {
 			Comment("Exchange display name (e.g., 'Binance Production', 'Coinbase Testnet')"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Type("Map")).
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view-secrets"),
+			).
 			Comment("Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)"),
 		field.String("owner_id").
 			NotEmpty().

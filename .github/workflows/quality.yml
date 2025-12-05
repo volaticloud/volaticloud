@@ -99,4 +99,7 @@ jobs:
         uses: dominikh/staticcheck-action@v1
         with:
           version: "latest"
-          install-go: false
+          # Let staticcheck install its own compatible Go version
+          # until staticcheck supports Go 1.24.11+
+          install-go: true
+          min-go-version: "1.24"

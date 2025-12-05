@@ -16,6 +16,7 @@
 
     <modules>
         <module>group-resource-policy</module>
+        <module>public-resource-policy</module>
         <module>tenant-system</module>
     </modules>
 </project>

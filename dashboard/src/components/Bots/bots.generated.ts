@@ -10,7 +10,7 @@ export type GetBotsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBotsQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, containerID?: string | null, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, config?: Record<string, any> | null, ownerID: string, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetBotsQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, containerID?: string | null, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, config?: Record<string, any> | null, ownerID: string, public: boolean, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetBotQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -69,6 +69,14 @@ export type RestartBotMutationVariables = Types.Exact<{
 
 export type RestartBotMutation = { __typename?: 'Mutation', restartBot: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus } };
 
+export type SetBotVisibilityMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+  public: Types.Scalars['Boolean']['input'];
+}>;
+
+
+export type SetBotVisibilityMutation = { __typename?: 'Mutation', setBotVisibility: { __typename?: 'Bot', id: string, name: string, public: boolean } };
+
 
 export const GetBotsDocument = gql`
     query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
@@ -86,6 +94,7 @@ export const GetBotsDocument = gql`
         createdAt
         config
         ownerID
+        public
         exchange {
           id
           name
@@ -515,3 +524,39 @@ export function useRestartBotMutation(baseOptions?: Apollo.MutationHookOptions<R
 export type RestartBotMutationHookResult = ReturnType<typeof useRestartBotMutation>;
 export type RestartBotMutationResult = Apollo.MutationResult<RestartBotMutation>;
 export type RestartBotMutationOptions = Apollo.BaseMutationOptions<RestartBotMutation, RestartBotMutationVariables>;
+export const SetBotVisibilityDocument = gql`
+    mutation SetBotVisibility($id: ID!, $public: Boolean!) {
+  setBotVisibility(id: $id, public: $public) {
+    id
+    name
+    public
+  }
+}
+    `;
+export type SetBotVisibilityMutationFn = Apollo.MutationFunction<SetBotVisibilityMutation, SetBotVisibilityMutationVariables>;
+
+/**
+ * __useSetBotVisibilityMutation__
+ *
+ * To run a mutation, you first call `useSetBotVisibilityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetBotVisibilityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setBotVisibilityMutation, { data, loading, error }] = useSetBotVisibilityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      public: // value for 'public'
+ *   },
+ * });
+ */
+export function useSetBotVisibilityMutation(baseOptions?: Apollo.MutationHookOptions<SetBotVisibilityMutation, SetBotVisibilityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetBotVisibilityMutation, SetBotVisibilityMutationVariables>(SetBotVisibilityDocument, options);
+      }
+export type SetBotVisibilityMutationHookResult = ReturnType<typeof useSetBotVisibilityMutation>;
+export type SetBotVisibilityMutationResult = Apollo.MutationResult<SetBotVisibilityMutation>;
+export type SetBotVisibilityMutationOptions = Apollo.BaseMutationOptions<SetBotVisibilityMutation, SetBotVisibilityMutationVariables>;

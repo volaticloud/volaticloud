@@ -1,3 +1,4 @@
+# List query - no secrets, safe for public runners
 query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
   botRunners(first: $first, after: $after, where: $where) {
     edges {
@@ -5,14 +6,13 @@ query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
         id
         name
         type
-        config
         ownerID
+        public
         createdAt
         dataIsReady
         dataLastUpdated
         dataDownloadStatus
         dataDownloadProgress
-        dataDownloadConfig
         dataErrorMessage
         bots {
           totalCount
@@ -29,22 +29,25 @@ query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
   }
 }
 
-query GetRunner($id: ID!) {
-  node(id: $id) {
-    ... on BotRunner {
-      id
-      name
-      type
-      config
-      createdAt
-      dataIsReady
-      dataLastUpdated
-      dataDownloadStatus
-      dataDownloadProgress
-      dataDownloadConfig
-      dataErrorMessage
-      bots {
-        totalCount
+# Detail query with secrets - for owner's edit dialog
+query GetRunnerWithSecrets($id: ID!) {
+  botRunners(where: { id: $id }) {
+    edges {
+      node {
+        id
+        name
+        type
+        config
+        createdAt
+        dataIsReady
+        dataLastUpdated
+        dataDownloadStatus
+        dataDownloadProgress
+        dataDownloadConfig
+        dataErrorMessage
+        bots {
+          totalCount
+        }
       }
     }
   }
@@ -92,5 +95,13 @@ mutation TestRunnerConnection($type: BotRunnerRunnerType!, $config: RunnerConfig
     success
     message
     version
+  }
+}
+
+mutation SetRunnerVisibility($id: ID!, $public: Boolean!) {
+  setRunnerVisibility(id: $id, public: $public) {
+    id
+    name
+    public
   }
 }

@@ -20,6 +20,8 @@ type Strategy struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Whether this resource is publicly visible to all authenticated users
+	Public bool `json:"public,omitempty"`
 	// Strategy name (not unique, allows versions)
 	Name string `json:"name,omitempty"`
 	// Strategy description
@@ -115,7 +117,7 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case strategy.FieldConfig:
 			values[i] = new([]byte)
-		case strategy.FieldIsLatest:
+		case strategy.FieldPublic, strategy.FieldIsLatest:
 			values[i] = new(sql.NullBool)
 		case strategy.FieldVersionNumber:
 			values[i] = new(sql.NullInt64)
@@ -145,6 +147,12 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case strategy.FieldPublic:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field public", values[i])
+			} else if value.Valid {
+				_m.Public = value.Bool
 			}
 		case strategy.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -265,6 +273,9 @@ func (_m *Strategy) String() string {
 	var builder strings.Builder
 	builder.WriteString("Strategy(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("public=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Public))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")

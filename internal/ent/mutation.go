@@ -1282,6 +1282,7 @@ type BotMutation struct {
 	op                Op
 	typ               string
 	id                *uuid.UUID
+	public            *bool
 	name              *string
 	status            *enum.BotStatus
 	mode              *enum.BotMode
@@ -1413,6 +1414,42 @@ func (m *BotMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetPublic sets the "public" field.
+func (m *BotMutation) SetPublic(b bool) {
+	m.public = &b
+}
+
+// Public returns the value of the "public" field in the mutation.
+func (m *BotMutation) Public() (r bool, exists bool) {
+	v := m.public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublic returns the old "public" field's value of the Bot entity.
+// If the Bot object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMutation) OldPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublic: %w", err)
+	}
+	return oldValue.Public, nil
+}
+
+// ResetPublic resets all changes to the "public" field.
+func (m *BotMutation) ResetPublic() {
+	m.public = nil
 }
 
 // SetName sets the "name" field.
@@ -2228,7 +2265,10 @@ func (m *BotMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
+	if m.public != nil {
+		fields = append(fields, bot.FieldPublic)
+	}
 	if m.name != nil {
 		fields = append(fields, bot.FieldName)
 	}
@@ -2282,6 +2322,8 @@ func (m *BotMutation) Fields() []string {
 // schema.
 func (m *BotMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case bot.FieldPublic:
+		return m.Public()
 	case bot.FieldName:
 		return m.Name()
 	case bot.FieldStatus:
@@ -2321,6 +2363,8 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case bot.FieldPublic:
+		return m.OldPublic(ctx)
 	case bot.FieldName:
 		return m.OldName(ctx)
 	case bot.FieldStatus:
@@ -2360,6 +2404,13 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 // type.
 func (m *BotMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case bot.FieldPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublic(v)
+		return nil
 	case bot.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -2547,6 +2598,9 @@ func (m *BotMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *BotMutation) ResetField(name string) error {
 	switch name {
+	case bot.FieldPublic:
+		m.ResetPublic()
+		return nil
 	case bot.FieldName:
 		m.ResetName()
 		return nil
@@ -5079,31 +5133,33 @@ func (m *BotMetricsMutation) ResetEdge(name string) error {
 // BotRunnerMutation represents an operation that mutates the BotRunner nodes in the graph.
 type BotRunnerMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *uuid.UUID
-	name                   *string
-	_type                  *enum.RunnerType
-	_config                *map[string]interface{}
-	data_is_ready          *bool
-	data_last_updated      *time.Time
-	data_download_status   *enum.DataDownloadStatus
-	data_download_progress *map[string]interface{}
-	data_error_message     *string
-	data_download_config   *map[string]interface{}
-	owner_id               *string
-	created_at             *time.Time
-	updated_at             *time.Time
-	clearedFields          map[string]struct{}
-	bots                   map[uuid.UUID]struct{}
-	removedbots            map[uuid.UUID]struct{}
-	clearedbots            bool
-	backtests              map[uuid.UUID]struct{}
-	removedbacktests       map[uuid.UUID]struct{}
-	clearedbacktests       bool
-	done                   bool
-	oldValue               func(context.Context) (*BotRunner, error)
-	predicates             []predicate.BotRunner
+	op                       Op
+	typ                      string
+	id                       *uuid.UUID
+	public                   *bool
+	name                     *string
+	_type                    *enum.RunnerType
+	_config                  *map[string]interface{}
+	data_is_ready            *bool
+	data_last_updated        *time.Time
+	data_download_status     *enum.DataDownloadStatus
+	data_download_started_at *time.Time
+	data_download_progress   *map[string]interface{}
+	data_error_message       *string
+	data_download_config     *map[string]interface{}
+	owner_id                 *string
+	created_at               *time.Time
+	updated_at               *time.Time
+	clearedFields            map[string]struct{}
+	bots                     map[uuid.UUID]struct{}
+	removedbots              map[uuid.UUID]struct{}
+	clearedbots              bool
+	backtests                map[uuid.UUID]struct{}
+	removedbacktests         map[uuid.UUID]struct{}
+	clearedbacktests         bool
+	done                     bool
+	oldValue                 func(context.Context) (*BotRunner, error)
+	predicates               []predicate.BotRunner
 }
 
 var _ ent.Mutation = (*BotRunnerMutation)(nil)
@@ -5208,6 +5264,42 @@ func (m *BotRunnerMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetPublic sets the "public" field.
+func (m *BotRunnerMutation) SetPublic(b bool) {
+	m.public = &b
+}
+
+// Public returns the value of the "public" field in the mutation.
+func (m *BotRunnerMutation) Public() (r bool, exists bool) {
+	v := m.public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublic returns the old "public" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublic: %w", err)
+	}
+	return oldValue.Public, nil
+}
+
+// ResetPublic resets all changes to the "public" field.
+func (m *BotRunnerMutation) ResetPublic() {
+	m.public = nil
 }
 
 // SetName sets the "name" field.
@@ -5450,6 +5542,55 @@ func (m *BotRunnerMutation) OldDataDownloadStatus(ctx context.Context) (v enum.D
 // ResetDataDownloadStatus resets all changes to the "data_download_status" field.
 func (m *BotRunnerMutation) ResetDataDownloadStatus() {
 	m.data_download_status = nil
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (m *BotRunnerMutation) SetDataDownloadStartedAt(t time.Time) {
+	m.data_download_started_at = &t
+}
+
+// DataDownloadStartedAt returns the value of the "data_download_started_at" field in the mutation.
+func (m *BotRunnerMutation) DataDownloadStartedAt() (r time.Time, exists bool) {
+	v := m.data_download_started_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataDownloadStartedAt returns the old "data_download_started_at" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataDownloadStartedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataDownloadStartedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataDownloadStartedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataDownloadStartedAt: %w", err)
+	}
+	return oldValue.DataDownloadStartedAt, nil
+}
+
+// ClearDataDownloadStartedAt clears the value of the "data_download_started_at" field.
+func (m *BotRunnerMutation) ClearDataDownloadStartedAt() {
+	m.data_download_started_at = nil
+	m.clearedFields[botrunner.FieldDataDownloadStartedAt] = struct{}{}
+}
+
+// DataDownloadStartedAtCleared returns if the "data_download_started_at" field was cleared in this mutation.
+func (m *BotRunnerMutation) DataDownloadStartedAtCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldDataDownloadStartedAt]
+	return ok
+}
+
+// ResetDataDownloadStartedAt resets all changes to the "data_download_started_at" field.
+func (m *BotRunnerMutation) ResetDataDownloadStartedAt() {
+	m.data_download_started_at = nil
+	delete(m.clearedFields, botrunner.FieldDataDownloadStartedAt)
 }
 
 // SetDataDownloadProgress sets the "data_download_progress" field.
@@ -5849,7 +5990,10 @@ func (m *BotRunnerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotRunnerMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 14)
+	if m.public != nil {
+		fields = append(fields, botrunner.FieldPublic)
+	}
 	if m.name != nil {
 		fields = append(fields, botrunner.FieldName)
 	}
@@ -5867,6 +6011,9 @@ func (m *BotRunnerMutation) Fields() []string {
 	}
 	if m.data_download_status != nil {
 		fields = append(fields, botrunner.FieldDataDownloadStatus)
+	}
+	if m.data_download_started_at != nil {
+		fields = append(fields, botrunner.FieldDataDownloadStartedAt)
 	}
 	if m.data_download_progress != nil {
 		fields = append(fields, botrunner.FieldDataDownloadProgress)
@@ -5894,6 +6041,8 @@ func (m *BotRunnerMutation) Fields() []string {
 // schema.
 func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case botrunner.FieldPublic:
+		return m.Public()
 	case botrunner.FieldName:
 		return m.Name()
 	case botrunner.FieldType:
@@ -5906,6 +6055,8 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 		return m.DataLastUpdated()
 	case botrunner.FieldDataDownloadStatus:
 		return m.DataDownloadStatus()
+	case botrunner.FieldDataDownloadStartedAt:
+		return m.DataDownloadStartedAt()
 	case botrunner.FieldDataDownloadProgress:
 		return m.DataDownloadProgress()
 	case botrunner.FieldDataErrorMessage:
@@ -5927,6 +6078,8 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case botrunner.FieldPublic:
+		return m.OldPublic(ctx)
 	case botrunner.FieldName:
 		return m.OldName(ctx)
 	case botrunner.FieldType:
@@ -5939,6 +6092,8 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDataLastUpdated(ctx)
 	case botrunner.FieldDataDownloadStatus:
 		return m.OldDataDownloadStatus(ctx)
+	case botrunner.FieldDataDownloadStartedAt:
+		return m.OldDataDownloadStartedAt(ctx)
 	case botrunner.FieldDataDownloadProgress:
 		return m.OldDataDownloadProgress(ctx)
 	case botrunner.FieldDataErrorMessage:
@@ -5960,6 +6115,13 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 // type.
 func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case botrunner.FieldPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublic(v)
+		return nil
 	case botrunner.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -6001,6 +6163,13 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDataDownloadStatus(v)
+		return nil
+	case botrunner.FieldDataDownloadStartedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataDownloadStartedAt(v)
 		return nil
 	case botrunner.FieldDataDownloadProgress:
 		v, ok := value.(map[string]interface{})
@@ -6080,6 +6249,9 @@ func (m *BotRunnerMutation) ClearedFields() []string {
 	if m.FieldCleared(botrunner.FieldDataLastUpdated) {
 		fields = append(fields, botrunner.FieldDataLastUpdated)
 	}
+	if m.FieldCleared(botrunner.FieldDataDownloadStartedAt) {
+		fields = append(fields, botrunner.FieldDataDownloadStartedAt)
+	}
 	if m.FieldCleared(botrunner.FieldDataDownloadProgress) {
 		fields = append(fields, botrunner.FieldDataDownloadProgress)
 	}
@@ -6109,6 +6281,9 @@ func (m *BotRunnerMutation) ClearField(name string) error {
 	case botrunner.FieldDataLastUpdated:
 		m.ClearDataLastUpdated()
 		return nil
+	case botrunner.FieldDataDownloadStartedAt:
+		m.ClearDataDownloadStartedAt()
+		return nil
 	case botrunner.FieldDataDownloadProgress:
 		m.ClearDataDownloadProgress()
 		return nil
@@ -6126,6 +6301,9 @@ func (m *BotRunnerMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *BotRunnerMutation) ResetField(name string) error {
 	switch name {
+	case botrunner.FieldPublic:
+		m.ResetPublic()
+		return nil
 	case botrunner.FieldName:
 		m.ResetName()
 		return nil
@@ -6143,6 +6321,9 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 		return nil
 	case botrunner.FieldDataDownloadStatus:
 		m.ResetDataDownloadStatus()
+		return nil
+	case botrunner.FieldDataDownloadStartedAt:
+		m.ResetDataDownloadStartedAt()
 		return nil
 	case botrunner.FieldDataDownloadProgress:
 		m.ResetDataDownloadProgress()
@@ -6945,6 +7126,7 @@ type StrategyMutation struct {
 	op                Op
 	typ               string
 	id                *uuid.UUID
+	public            *bool
 	name              *string
 	description       *string
 	code              *string
@@ -7073,6 +7255,42 @@ func (m *StrategyMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetPublic sets the "public" field.
+func (m *StrategyMutation) SetPublic(b bool) {
+	m.public = &b
+}
+
+// Public returns the value of the "public" field in the mutation.
+func (m *StrategyMutation) Public() (r bool, exists bool) {
+	v := m.public
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublic returns the old "public" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldPublic(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublic: %w", err)
+	}
+	return oldValue.Public, nil
+}
+
+// ResetPublic resets all changes to the "public" field.
+func (m *StrategyMutation) ResetPublic() {
+	m.public = nil
 }
 
 // SetName sets the "name" field.
@@ -7689,7 +7907,10 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
+	if m.public != nil {
+		fields = append(fields, strategy.FieldPublic)
+	}
 	if m.name != nil {
 		fields = append(fields, strategy.FieldName)
 	}
@@ -7728,6 +7949,8 @@ func (m *StrategyMutation) Fields() []string {
 // schema.
 func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case strategy.FieldPublic:
+		return m.Public()
 	case strategy.FieldName:
 		return m.Name()
 	case strategy.FieldDescription:
@@ -7757,6 +7980,8 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case strategy.FieldPublic:
+		return m.OldPublic(ctx)
 	case strategy.FieldName:
 		return m.OldName(ctx)
 	case strategy.FieldDescription:
@@ -7786,6 +8011,13 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 // type.
 func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case strategy.FieldPublic:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublic(v)
+		return nil
 	case strategy.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -7935,6 +8167,9 @@ func (m *StrategyMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *StrategyMutation) ResetField(name string) error {
 	switch name {
+	case strategy.FieldPublic:
+		m.ResetPublic()
+		return nil
 	case strategy.FieldName:
 		m.ResetName()
 		return nil

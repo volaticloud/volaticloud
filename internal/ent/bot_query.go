@@ -447,12 +447,12 @@ func (_q *BotQuery) WithMetrics(opts ...func(*BotMetricsQuery)) *BotQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Public bool `json:"public,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Bot.Query().
-//		GroupBy(bot.FieldName).
+//		GroupBy(bot.FieldPublic).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *BotQuery) GroupBy(field string, fields ...string) *BotGroupBy {
@@ -470,11 +470,11 @@ func (_q *BotQuery) GroupBy(field string, fields ...string) *BotGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Public bool `json:"public,omitempty"`
 //	}
 //
 //	client.Bot.Query().
-//		Select(bot.FieldName).
+//		Select(bot.FieldPublic).
 //		Scan(ctx, &v)
 func (_q *BotQuery) Select(fields ...string) *BotSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

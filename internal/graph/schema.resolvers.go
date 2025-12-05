@@ -515,8 +515,10 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 	}
 
 	// Update status to downloading and clear any previous errors
+	startedAt := time.Now()
 	runner, err = r.client.BotRunner.UpdateOneID(id).
 		SetDataDownloadStatus(enum.DataDownloadStatusDownloading).
+		SetDataDownloadStartedAt(startedAt).
 		SetDataDownloadProgress(map[string]interface{}{
 			"pairs_completed":  0,
 			"pairs_total":      0,
@@ -542,6 +544,7 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 				SetDataDownloadStatus(enum.DataDownloadStatusFailed).
 				SetDataIsReady(false).
 				SetDataErrorMessage(err.Error()).
+				ClearDataDownloadStartedAt().
 				Save(context.Background())
 		} else {
 			log.Printf("Runner %s: data download completed successfully", runner.Name)
@@ -554,6 +557,7 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 				SetDataLastUpdated(now).
 				ClearDataErrorMessage().
 				ClearDataDownloadProgress().
+				ClearDataDownloadStartedAt().
 				Save(context.Background())
 		}
 	}()
@@ -784,6 +788,18 @@ func (r *mutationResolver) UpdateTrade(ctx context.Context, id uuid.UUID, input 
 func (r *mutationResolver) DeleteTrade(ctx context.Context, id uuid.UUID) (bool, error) {
 	err := r.client.Trade.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
+}
+
+func (r *mutationResolver) SetStrategyVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.Strategy, error) {
+	return UpdateStrategyVisibility(ctx, r.client, r.umaClient, id.String(), public)
+}
+
+func (r *mutationResolver) SetBotVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.Bot, error) {
+	return UpdateBotVisibility(ctx, r.client, r.umaClient, id.String(), public)
+}
+
+func (r *mutationResolver) SetRunnerVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.BotRunner, error) {
+	return UpdateBotRunnerVisibility(ctx, r.client, r.umaClient, id.String(), public)
 }
 
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {

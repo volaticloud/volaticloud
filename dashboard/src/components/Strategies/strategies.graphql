@@ -9,6 +9,7 @@ query GetStrategies($first: Int, $after: Cursor, $where: StrategyWhereInput) {
         versionNumber
         isLatest
         ownerID
+        public
         config
         createdAt
         bots {
@@ -52,4 +53,12 @@ mutation UpdateStrategy($id: ID!, $input: UpdateStrategyInput!) {
 
 mutation DeleteStrategy($id: ID!) {
   deleteStrategy(id: $id)
+}
+
+mutation SetStrategyVisibility($id: ID!, $public: Boolean!) {
+  setStrategyVisibility(id: $id, public: $public) {
+    id
+    name
+    public
+  }
 }

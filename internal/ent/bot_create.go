@@ -27,6 +27,20 @@ type BotCreate struct {
 	hooks    []Hook
 }
 
+// SetPublic sets the "public" field.
+func (_c *BotCreate) SetPublic(v bool) *BotCreate {
+	_c.mutation.SetPublic(v)
+	return _c
+}
+
+// SetNillablePublic sets the "public" field if the given value is not nil.
+func (_c *BotCreate) SetNillablePublic(v *bool) *BotCreate {
+	if v != nil {
+		_c.SetPublic(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *BotCreate) SetName(v string) *BotCreate {
 	_c.mutation.SetName(v)
@@ -279,6 +293,10 @@ func (_c *BotCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *BotCreate) defaults() {
+	if _, ok := _c.mutation.Public(); !ok {
+		v := bot.DefaultPublic
+		_c.mutation.SetPublic(v)
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		v := bot.DefaultStatus
 		_c.mutation.SetStatus(v)
@@ -307,6 +325,9 @@ func (_c *BotCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BotCreate) check() error {
+	if _, ok := _c.mutation.Public(); !ok {
+		return &ValidationError{Name: "public", err: errors.New(`ent: missing required field "Bot.public"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Bot.name"`)}
 	}
@@ -400,6 +421,10 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.Public(); ok {
+		_spec.SetField(bot.FieldPublic, field.TypeBool, value)
+		_node.Public = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(bot.FieldName, field.TypeString, value)

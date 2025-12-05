@@ -10,22 +10,14 @@ export type GetRunnersQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, ownerID: string, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, ownerID: string, public: boolean, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
-export type GetRunnerQueryVariables = Types.Exact<{
+export type GetRunnerWithSecretsQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetRunnerQuery = { __typename?: 'Query', node?:
-    | { __typename?: 'Backtest' }
-    | { __typename?: 'Bot' }
-    | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } }
-    | { __typename?: 'Exchange' }
-    | { __typename?: 'Strategy' }
-    | { __typename?: 'Trade' }
-   | null };
+export type GetRunnerWithSecretsQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null } };
 
 export type CreateRunnerMutationVariables = Types.Exact<{
   input: Types.CreateBotRunnerInput;
@@ -64,6 +56,14 @@ export type TestRunnerConnectionMutationVariables = Types.Exact<{
 
 export type TestRunnerConnectionMutation = { __typename?: 'Mutation', testRunnerConnection: { __typename?: 'ConnectionTestResult', success: boolean, message: string, version?: string | null } };
 
+export type SetRunnerVisibilityMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+  public: Types.Scalars['Boolean']['input'];
+}>;
+
+
+export type SetRunnerVisibilityMutation = { __typename?: 'Mutation', setRunnerVisibility: { __typename?: 'BotRunner', id: string, name: string, public: boolean } };
+
 
 export const GetRunnersDocument = gql`
     query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
@@ -73,14 +73,13 @@ export const GetRunnersDocument = gql`
         id
         name
         type
-        config
         ownerID
+        public
         createdAt
         dataIsReady
         dataLastUpdated
         dataDownloadStatus
         dataDownloadProgress
-        dataDownloadConfig
         dataErrorMessage
         bots {
           totalCount
@@ -132,23 +131,25 @@ export type GetRunnersQueryHookResult = ReturnType<typeof useGetRunnersQuery>;
 export type GetRunnersLazyQueryHookResult = ReturnType<typeof useGetRunnersLazyQuery>;
 export type GetRunnersSuspenseQueryHookResult = ReturnType<typeof useGetRunnersSuspenseQuery>;
 export type GetRunnersQueryResult = Apollo.QueryResult<GetRunnersQuery, GetRunnersQueryVariables>;
-export const GetRunnerDocument = gql`
-    query GetRunner($id: ID!) {
-  node(id: $id) {
-    ... on BotRunner {
-      id
-      name
-      type
-      config
-      createdAt
-      dataIsReady
-      dataLastUpdated
-      dataDownloadStatus
-      dataDownloadProgress
-      dataDownloadConfig
-      dataErrorMessage
-      bots {
-        totalCount
+export const GetRunnerWithSecretsDocument = gql`
+    query GetRunnerWithSecrets($id: ID!) {
+  botRunners(where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+        type
+        config
+        createdAt
+        dataIsReady
+        dataLastUpdated
+        dataDownloadStatus
+        dataDownloadProgress
+        dataDownloadConfig
+        dataErrorMessage
+        bots {
+          totalCount
+        }
       }
     }
   }
@@ -156,37 +157,37 @@ export const GetRunnerDocument = gql`
     `;
 
 /**
- * __useGetRunnerQuery__
+ * __useGetRunnerWithSecretsQuery__
  *
- * To run a query within a React component, call `useGetRunnerQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetRunnerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetRunnerWithSecretsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRunnerWithSecretsQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetRunnerQuery({
+ * const { data, loading, error } = useGetRunnerWithSecretsQuery({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useGetRunnerQuery(baseOptions: Apollo.QueryHookOptions<GetRunnerQuery, GetRunnerQueryVariables> & ({ variables: GetRunnerQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetRunnerWithSecretsQuery(baseOptions: Apollo.QueryHookOptions<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables> & ({ variables: GetRunnerWithSecretsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetRunnerQuery, GetRunnerQueryVariables>(GetRunnerDocument, options);
+        return Apollo.useQuery<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>(GetRunnerWithSecretsDocument, options);
       }
-export function useGetRunnerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRunnerQuery, GetRunnerQueryVariables>) {
+export function useGetRunnerWithSecretsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetRunnerQuery, GetRunnerQueryVariables>(GetRunnerDocument, options);
+          return Apollo.useLazyQuery<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>(GetRunnerWithSecretsDocument, options);
         }
-export function useGetRunnerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnerQuery, GetRunnerQueryVariables>) {
+export function useGetRunnerWithSecretsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetRunnerQuery, GetRunnerQueryVariables>(GetRunnerDocument, options);
+          return Apollo.useSuspenseQuery<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>(GetRunnerWithSecretsDocument, options);
         }
-export type GetRunnerQueryHookResult = ReturnType<typeof useGetRunnerQuery>;
-export type GetRunnerLazyQueryHookResult = ReturnType<typeof useGetRunnerLazyQuery>;
-export type GetRunnerSuspenseQueryHookResult = ReturnType<typeof useGetRunnerSuspenseQuery>;
-export type GetRunnerQueryResult = Apollo.QueryResult<GetRunnerQuery, GetRunnerQueryVariables>;
+export type GetRunnerWithSecretsQueryHookResult = ReturnType<typeof useGetRunnerWithSecretsQuery>;
+export type GetRunnerWithSecretsLazyQueryHookResult = ReturnType<typeof useGetRunnerWithSecretsLazyQuery>;
+export type GetRunnerWithSecretsSuspenseQueryHookResult = ReturnType<typeof useGetRunnerWithSecretsSuspenseQuery>;
+export type GetRunnerWithSecretsQueryResult = Apollo.QueryResult<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>;
 export const CreateRunnerDocument = gql`
     mutation CreateRunner($input: CreateBotRunnerInput!) {
   createBotRunner(input: $input) {
@@ -369,3 +370,39 @@ export function useTestRunnerConnectionMutation(baseOptions?: Apollo.MutationHoo
 export type TestRunnerConnectionMutationHookResult = ReturnType<typeof useTestRunnerConnectionMutation>;
 export type TestRunnerConnectionMutationResult = Apollo.MutationResult<TestRunnerConnectionMutation>;
 export type TestRunnerConnectionMutationOptions = Apollo.BaseMutationOptions<TestRunnerConnectionMutation, TestRunnerConnectionMutationVariables>;
+export const SetRunnerVisibilityDocument = gql`
+    mutation SetRunnerVisibility($id: ID!, $public: Boolean!) {
+  setRunnerVisibility(id: $id, public: $public) {
+    id
+    name
+    public
+  }
+}
+    `;
+export type SetRunnerVisibilityMutationFn = Apollo.MutationFunction<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>;
+
+/**
+ * __useSetRunnerVisibilityMutation__
+ *
+ * To run a mutation, you first call `useSetRunnerVisibilityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetRunnerVisibilityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setRunnerVisibilityMutation, { data, loading, error }] = useSetRunnerVisibilityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      public: // value for 'public'
+ *   },
+ * });
+ */
+export function useSetRunnerVisibilityMutation(baseOptions?: Apollo.MutationHookOptions<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>(SetRunnerVisibilityDocument, options);
+      }
+export type SetRunnerVisibilityMutationHookResult = ReturnType<typeof useSetRunnerVisibilityMutation>;
+export type SetRunnerVisibilityMutationResult = Apollo.MutationResult<SetRunnerVisibilityMutation>;
+export type SetRunnerVisibilityMutationOptions = Apollo.BaseMutationOptions<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>;

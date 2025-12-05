@@ -10,6 +10,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
+
+	entmixin "volaticloud/internal/ent/mixin"
 )
 
 // Strategy holds the schema definition for the Strategy entity.
@@ -109,5 +111,12 @@ func (Strategy) Annotations() []schema.Annotation {
 func (Strategy) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateStrategyConfig,
+	}
+}
+
+// Mixin of the Strategy.
+func (Strategy) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.PublicMixin{},
 	}
 }

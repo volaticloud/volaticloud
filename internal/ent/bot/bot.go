@@ -18,6 +18,8 @@ const (
 	Label = "bot"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldPublic holds the string denoting the public field in the database.
+	FieldPublic = "public"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldStatus holds the string denoting the status field in the database.
@@ -100,6 +102,7 @@ const (
 // Columns holds all SQL columns for bot fields.
 var Columns = []string{
 	FieldID,
+	FieldPublic,
 	FieldName,
 	FieldStatus,
 	FieldMode,
@@ -128,6 +131,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultPublic holds the default value on creation for the "public" field.
+	DefaultPublic bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultFreqtradeVersion holds the default value on creation for the "freqtrade_version" field.
@@ -174,6 +179,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByPublic orders the results by the public field.
+func ByPublic(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPublic, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

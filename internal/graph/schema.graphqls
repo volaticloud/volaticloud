@@ -260,4 +260,23 @@ type Mutation {
   createTrade(input: CreateTradeInput!): Trade! @isAuthenticated
   updateTrade(id: ID!, input: UpdateTradeInput!): Trade! @hasScope(resource: "id", scope: "edit")
   deleteTrade(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+
+  # Visibility mutations
+  """
+  Toggle strategy visibility (public/private)
+  Only the owner can change visibility
+  """
+  setStrategyVisibility(id: ID!, public: Boolean!): Strategy! @hasScope(resource: "id", scope: "edit")
+
+  """
+  Toggle bot visibility (public/private)
+  Only the owner can change visibility
+  """
+  setBotVisibility(id: ID!, public: Boolean!): Bot! @hasScope(resource: "id", scope: "edit")
+
+  """
+  Toggle runner visibility (public/private)
+  Only the owner can change visibility
+  """
+  setRunnerVisibility(id: ID!, public: Boolean!): BotRunner! @hasScope(resource: "id", scope: "edit")
 }

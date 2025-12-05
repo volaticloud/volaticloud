@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -41,7 +42,10 @@ func (Bot) Fields() []ent.Field {
 			Comment("Runner-specific identifier (container ID, pod name, etc.)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Type("Map")).
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view-secrets"),
+			).
 			Comment("Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)"),
 		field.JSON("secure_config", map[string]interface{}{}).
 			Optional().
@@ -113,5 +117,12 @@ func (Bot) Annotations() []schema.Annotation {
 		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+	}
+}
+
+// Mixin of the Bot.
+func (Bot) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.PublicMixin{},
 	}
 }

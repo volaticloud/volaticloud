@@ -638,6 +638,10 @@ type BotWhereInput struct {
 	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
 	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
 
+	// "public" field predicates.
+	Public    *bool `json:"public,omitempty"`
+	PublicNEQ *bool `json:"publicNEQ,omitempty"`
+
 	// "name" field predicates.
 	Name             *string  `json:"name,omitempty"`
 	NameNEQ          *string  `json:"nameNEQ,omitempty"`
@@ -894,6 +898,12 @@ func (i *BotWhereInput) P() (predicate.Bot, error) {
 	}
 	if i.IDLTE != nil {
 		predicates = append(predicates, bot.IDLTE(*i.IDLTE))
+	}
+	if i.Public != nil {
+		predicates = append(predicates, bot.PublicEQ(*i.Public))
+	}
+	if i.PublicNEQ != nil {
+		predicates = append(predicates, bot.PublicNEQ(*i.PublicNEQ))
 	}
 	if i.Name != nil {
 		predicates = append(predicates, bot.NameEQ(*i.Name))
@@ -2366,6 +2376,10 @@ type BotRunnerWhereInput struct {
 	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
 	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
 
+	// "public" field predicates.
+	Public    *bool `json:"public,omitempty"`
+	PublicNEQ *bool `json:"publicNEQ,omitempty"`
+
 	// "name" field predicates.
 	Name             *string  `json:"name,omitempty"`
 	NameNEQ          *string  `json:"nameNEQ,omitempty"`
@@ -2408,6 +2422,18 @@ type BotRunnerWhereInput struct {
 	DataDownloadStatusNEQ   *enum.DataDownloadStatus  `json:"dataDownloadStatusNEQ,omitempty"`
 	DataDownloadStatusIn    []enum.DataDownloadStatus `json:"dataDownloadStatusIn,omitempty"`
 	DataDownloadStatusNotIn []enum.DataDownloadStatus `json:"dataDownloadStatusNotIn,omitempty"`
+
+	// "data_download_started_at" field predicates.
+	DataDownloadStartedAt       *time.Time  `json:"dataDownloadStartedAt,omitempty"`
+	DataDownloadStartedAtNEQ    *time.Time  `json:"dataDownloadStartedAtNEQ,omitempty"`
+	DataDownloadStartedAtIn     []time.Time `json:"dataDownloadStartedAtIn,omitempty"`
+	DataDownloadStartedAtNotIn  []time.Time `json:"dataDownloadStartedAtNotIn,omitempty"`
+	DataDownloadStartedAtGT     *time.Time  `json:"dataDownloadStartedAtGT,omitempty"`
+	DataDownloadStartedAtGTE    *time.Time  `json:"dataDownloadStartedAtGTE,omitempty"`
+	DataDownloadStartedAtLT     *time.Time  `json:"dataDownloadStartedAtLT,omitempty"`
+	DataDownloadStartedAtLTE    *time.Time  `json:"dataDownloadStartedAtLTE,omitempty"`
+	DataDownloadStartedAtIsNil  bool        `json:"dataDownloadStartedAtIsNil,omitempty"`
+	DataDownloadStartedAtNotNil bool        `json:"dataDownloadStartedAtNotNil,omitempty"`
 
 	// "data_error_message" field predicates.
 	DataErrorMessage             *string  `json:"dataErrorMessage,omitempty"`
@@ -2565,6 +2591,12 @@ func (i *BotRunnerWhereInput) P() (predicate.BotRunner, error) {
 	if i.IDLTE != nil {
 		predicates = append(predicates, botrunner.IDLTE(*i.IDLTE))
 	}
+	if i.Public != nil {
+		predicates = append(predicates, botrunner.PublicEQ(*i.Public))
+	}
+	if i.PublicNEQ != nil {
+		predicates = append(predicates, botrunner.PublicNEQ(*i.PublicNEQ))
+	}
 	if i.Name != nil {
 		predicates = append(predicates, botrunner.NameEQ(*i.Name))
 	}
@@ -2663,6 +2695,36 @@ func (i *BotRunnerWhereInput) P() (predicate.BotRunner, error) {
 	}
 	if len(i.DataDownloadStatusNotIn) > 0 {
 		predicates = append(predicates, botrunner.DataDownloadStatusNotIn(i.DataDownloadStatusNotIn...))
+	}
+	if i.DataDownloadStartedAt != nil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtEQ(*i.DataDownloadStartedAt))
+	}
+	if i.DataDownloadStartedAtNEQ != nil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtNEQ(*i.DataDownloadStartedAtNEQ))
+	}
+	if len(i.DataDownloadStartedAtIn) > 0 {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtIn(i.DataDownloadStartedAtIn...))
+	}
+	if len(i.DataDownloadStartedAtNotIn) > 0 {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtNotIn(i.DataDownloadStartedAtNotIn...))
+	}
+	if i.DataDownloadStartedAtGT != nil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtGT(*i.DataDownloadStartedAtGT))
+	}
+	if i.DataDownloadStartedAtGTE != nil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtGTE(*i.DataDownloadStartedAtGTE))
+	}
+	if i.DataDownloadStartedAtLT != nil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtLT(*i.DataDownloadStartedAtLT))
+	}
+	if i.DataDownloadStartedAtLTE != nil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtLTE(*i.DataDownloadStartedAtLTE))
+	}
+	if i.DataDownloadStartedAtIsNil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtIsNil())
+	}
+	if i.DataDownloadStartedAtNotNil {
+		predicates = append(predicates, botrunner.DataDownloadStartedAtNotNil())
 	}
 	if i.DataErrorMessage != nil {
 		predicates = append(predicates, botrunner.DataErrorMessageEQ(*i.DataErrorMessage))
@@ -3182,6 +3244,10 @@ type StrategyWhereInput struct {
 	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
 	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
 
+	// "public" field predicates.
+	Public    *bool `json:"public,omitempty"`
+	PublicNEQ *bool `json:"publicNEQ,omitempty"`
+
 	// "name" field predicates.
 	Name             *string  `json:"name,omitempty"`
 	NameNEQ          *string  `json:"nameNEQ,omitempty"`
@@ -3397,6 +3463,12 @@ func (i *StrategyWhereInput) P() (predicate.Strategy, error) {
 	}
 	if i.IDLTE != nil {
 		predicates = append(predicates, strategy.IDLTE(*i.IDLTE))
+	}
+	if i.Public != nil {
+		predicates = append(predicates, strategy.PublicEQ(*i.Public))
+	}
+	if i.PublicNEQ != nil {
+		predicates = append(predicates, strategy.PublicNEQ(*i.PublicNEQ))
 	}
 	if i.Name != nil {
 		predicates = append(predicates, strategy.NameEQ(*i.Name))

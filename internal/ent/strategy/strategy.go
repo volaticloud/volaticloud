@@ -16,6 +16,8 @@ const (
 	Label = "strategy"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldPublic holds the string denoting the public field in the database.
+	FieldPublic = "public"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -73,6 +75,7 @@ const (
 // Columns holds all SQL columns for strategy fields.
 var Columns = []string{
 	FieldID,
+	FieldPublic,
 	FieldName,
 	FieldDescription,
 	FieldCode,
@@ -102,6 +105,8 @@ func ValidColumn(column string) bool {
 //	import _ "volaticloud/internal/ent/runtime"
 var (
 	Hooks [1]ent.Hook
+	// DefaultPublic holds the default value on creation for the "public" field.
+	DefaultPublic bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultIsLatest holds the default value on creation for the "is_latest" field.
@@ -126,6 +131,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByPublic orders the results by the public field.
+func ByPublic(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPublic, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

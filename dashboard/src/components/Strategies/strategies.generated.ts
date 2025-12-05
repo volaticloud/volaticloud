@@ -10,7 +10,7 @@ export type GetStrategiesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, versionNumber: number, isLatest: boolean, ownerID: string, config: Record<string, any>, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', totalCount: number, edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, versionNumber: number, isLatest: boolean, ownerID: string, public: boolean, config: Record<string, any>, createdAt: string, bots: { __typename?: 'BotConnection', totalCount: number }, backtest?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } | null } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CreateStrategyMutationVariables = Types.Exact<{
   input: Types.CreateStrategyInput;
@@ -34,6 +34,14 @@ export type DeleteStrategyMutationVariables = Types.Exact<{
 
 export type DeleteStrategyMutation = { __typename?: 'Mutation', deleteStrategy: boolean };
 
+export type SetStrategyVisibilityMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+  public: Types.Scalars['Boolean']['input'];
+}>;
+
+
+export type SetStrategyVisibilityMutation = { __typename?: 'Mutation', setStrategyVisibility: { __typename?: 'Strategy', id: string, name: string, public: boolean } };
+
 
 export const GetStrategiesDocument = gql`
     query GetStrategies($first: Int, $after: Cursor, $where: StrategyWhereInput) {
@@ -47,6 +55,7 @@ export const GetStrategiesDocument = gql`
         versionNumber
         isLatest
         ownerID
+        public
         config
         createdAt
         bots {
@@ -209,3 +218,39 @@ export function useDeleteStrategyMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteStrategyMutationHookResult = ReturnType<typeof useDeleteStrategyMutation>;
 export type DeleteStrategyMutationResult = Apollo.MutationResult<DeleteStrategyMutation>;
 export type DeleteStrategyMutationOptions = Apollo.BaseMutationOptions<DeleteStrategyMutation, DeleteStrategyMutationVariables>;
+export const SetStrategyVisibilityDocument = gql`
+    mutation SetStrategyVisibility($id: ID!, $public: Boolean!) {
+  setStrategyVisibility(id: $id, public: $public) {
+    id
+    name
+    public
+  }
+}
+    `;
+export type SetStrategyVisibilityMutationFn = Apollo.MutationFunction<SetStrategyVisibilityMutation, SetStrategyVisibilityMutationVariables>;
+
+/**
+ * __useSetStrategyVisibilityMutation__
+ *
+ * To run a mutation, you first call `useSetStrategyVisibilityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetStrategyVisibilityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setStrategyVisibilityMutation, { data, loading, error }] = useSetStrategyVisibilityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      public: // value for 'public'
+ *   },
+ * });
+ */
+export function useSetStrategyVisibilityMutation(baseOptions?: Apollo.MutationHookOptions<SetStrategyVisibilityMutation, SetStrategyVisibilityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetStrategyVisibilityMutation, SetStrategyVisibilityMutationVariables>(SetStrategyVisibilityDocument, options);
+      }
+export type SetStrategyVisibilityMutationHookResult = ReturnType<typeof useSetStrategyVisibilityMutation>;
+export type SetStrategyVisibilityMutationResult = Apollo.MutationResult<SetStrategyVisibilityMutation>;
+export type SetStrategyVisibilityMutationOptions = Apollo.BaseMutationOptions<SetStrategyVisibilityMutation, SetStrategyVisibilityMutationVariables>;
