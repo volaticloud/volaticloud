@@ -9,6 +9,7 @@ This directory contains reusable code patterns and best practices for VolatiClou
 - [ENT ORM Integration](ent-orm-integration.md) - Database ORM with GraphQL integration
 - [GraphQL Code Generation](graphql-codegen.md) - Schema-first GraphQL with gqlgen
 - [Dependency Injection](dependency-injection.md) - Context-based DI pattern
+- [Field-Level Authorization](field-level-authorization.md) - Protecting sensitive fields with view-secrets scope
 
 ### Domain Patterns
 

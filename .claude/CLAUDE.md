@@ -73,6 +73,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0005](../docs/adr/0005-per-component-graphql-codegen.md) - Per-Component GraphQL Codegen
 - [ADR-0006](../docs/adr/0006-bot-config-layer-separation.md) - Bot Config Layer Separation
 - [ADR-0007](../docs/adr/0007-kubernetes-deployment-strategy.md) - Kubernetes Deployment
+- [ADR-0008](../docs/adr/0008-multi-tenant-authorization.md) - Multi-Tenant Authorization (UMA 2.0, public/private visibility)
 
 ## Project Structure
 
@@ -174,7 +175,20 @@ VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=<secret>
 - GraphQL directives: `@isAuthenticated`, `@hasScope(resourceArg: "id", scope: "edit")`
 - Database-first approach with transaction rollback on Keycloak failure
 
-See `internal/keycloak/doc.go` for comprehensive UMA integration guide.
+**Public/Private Visibility:**
+
+- Resources have `public` boolean field (default: false)
+- Public resources visible to all authenticated users
+- Sensitive fields protected by `view-secrets` scope (API keys, credentials)
+- Use `setStrategyVisibility`, `setBotVisibility`, `setRunnerVisibility` mutations
+
+**View-Secrets Scope:**
+
+- `view` scope: basic resource info (id, name, status)
+- `view-secrets` scope: sensitive config (Bot.config, Exchange.config, BotRunner.config)
+- Dashboard uses lazy queries to fetch secrets only when editing
+
+See `internal/keycloak/doc.go` and `internal/authz/doc.go` for details.
 
 ### Testing
 
@@ -208,6 +222,7 @@ make coverage   # Open HTML report
 
 **Package Documentation:**
 
+- `internal/authz/doc.go` - Authorization scopes and resource types
 - `internal/monitor/doc.go` - Bot/backtest monitoring architecture
 - `internal/runner/doc.go` - Runtime abstraction (Docker/K8s)
 - `internal/graph/doc.go` - GraphQL resolver architecture
