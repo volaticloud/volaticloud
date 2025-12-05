@@ -12,6 +12,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useUpdateStrategyMutation } from './strategies.generated';
 import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
+import { PythonCodeEditor } from './PythonCodeEditor';
 
 interface EditStrategyDialogProps {
   open: boolean;
@@ -98,16 +99,9 @@ export const EditStrategyDialog = ({ open, onClose, onSuccess, strategy }: EditS
             rows={3}
           />
 
-          <TextField
-            label="Python Strategy Code"
+          <PythonCodeEditor
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            fullWidth
-            multiline
-            rows={10}
-            placeholder="# Enter your Freqtrade strategy code here..."
-            sx={{ fontFamily: 'monospace' }}
+            onChange={setCode}
           />
 
           <Box sx={{ mt: 2 }}>
