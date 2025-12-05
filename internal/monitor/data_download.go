@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/errdefs"
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
@@ -38,7 +39,7 @@ func GetDataDownloadContainerName(runnerID string, exchange string) string {
 func CheckDownloadContainerStatus(ctx context.Context, cli *client.Client, containerName string) (running bool, exists bool, err error) {
 	info, err := cli.ContainerInspect(ctx, containerName)
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return false, false, nil
 		}
 		return false, false, err
@@ -52,7 +53,7 @@ func removeContainerIfExists(ctx context.Context, cli *client.Client, containerN
 	// Check if container exists
 	info, err := cli.ContainerInspect(ctx, containerName)
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			// Container doesn't exist, nothing to do
 			return nil
 		}

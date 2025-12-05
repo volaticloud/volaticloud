@@ -592,13 +592,14 @@ func UpdateStrategyVisibility(
 	}
 
 	// Get strategy first to get owner_id
-	strategy, err := client.Strategy.Get(ctx, id)
+	existingStrategy, err := client.Strategy.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("strategy not found: %w", err)
 	}
+	ownerID := existingStrategy.OwnerID
 
 	// Update database
-	strategy, err = client.Strategy.UpdateOneID(id).
+	strategy, err := client.Strategy.UpdateOneID(id).
 		SetPublic(isPublic).
 		Save(ctx)
 	if err != nil {
@@ -607,7 +608,7 @@ func UpdateStrategyVisibility(
 
 	// Update Keycloak resource attributes
 	if umaClient != nil {
-		attrs := buildResourceAttributes(strategy.OwnerID, "strategy", isPublic)
+		attrs := buildResourceAttributes(ownerID, "strategy", isPublic)
 		if err := umaClient.UpdateResource(ctx, strategyID, attrs); err != nil {
 			log.Printf("Warning: failed to update Keycloak resource for strategy %s: %v", strategyID, err)
 			// Don't fail the operation - DB is the source of truth
@@ -633,13 +634,14 @@ func UpdateBotVisibility(
 	}
 
 	// Get bot first to get owner_id
-	bot, err := client.Bot.Get(ctx, id)
+	existingBot, err := client.Bot.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("bot not found: %w", err)
 	}
+	ownerID := existingBot.OwnerID
 
 	// Update database
-	bot, err = client.Bot.UpdateOneID(id).
+	bot, err := client.Bot.UpdateOneID(id).
 		SetPublic(isPublic).
 		Save(ctx)
 	if err != nil {
@@ -648,7 +650,7 @@ func UpdateBotVisibility(
 
 	// Update Keycloak resource attributes
 	if umaClient != nil {
-		attrs := buildResourceAttributes(bot.OwnerID, "bot", isPublic)
+		attrs := buildResourceAttributes(ownerID, "bot", isPublic)
 		if err := umaClient.UpdateResource(ctx, botID, attrs); err != nil {
 			log.Printf("Warning: failed to update Keycloak resource for bot %s: %v", botID, err)
 			// Don't fail the operation - DB is the source of truth
@@ -674,13 +676,14 @@ func UpdateBotRunnerVisibility(
 	}
 
 	// Get runner first to get owner_id
-	runner, err := client.BotRunner.Get(ctx, id)
+	existingRunner, err := client.BotRunner.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("runner not found: %w", err)
 	}
+	ownerID := existingRunner.OwnerID
 
 	// Update database
-	runner, err = client.BotRunner.UpdateOneID(id).
+	runner, err := client.BotRunner.UpdateOneID(id).
 		SetPublic(isPublic).
 		Save(ctx)
 	if err != nil {
@@ -689,7 +692,7 @@ func UpdateBotRunnerVisibility(
 
 	// Update Keycloak resource attributes
 	if umaClient != nil {
-		attrs := buildResourceAttributes(runner.OwnerID, "bot_runner", isPublic)
+		attrs := buildResourceAttributes(ownerID, "bot_runner", isPublic)
 		if err := umaClient.UpdateResource(ctx, runnerID, attrs); err != nil {
 			log.Printf("Warning: failed to update Keycloak resource for runner %s: %v", runnerID, err)
 			// Don't fail the operation - DB is the source of truth
