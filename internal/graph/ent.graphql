@@ -9,7 +9,7 @@ type Backtest implements Node {
   """
   Backtest result data (metrics, logs, trades, etc.)
   """
-  result: Map
+  result: Map @requiresPermission(scope: "view", idField: "strategyID")
   """
   Docker container ID for running backtest
   """
@@ -21,7 +21,7 @@ type Backtest implements Node {
   """
   Container logs from backtest execution
   """
-  logs: String
+  logs: String @requiresPermission(scope: "view", idField: "strategyID")
   """
   Foreign key to strategy
   """
@@ -277,7 +277,7 @@ type Bot implements Node {
   """
   Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)
   """
-  config: Map
+  config: Map @requiresPermission(scope: "view-secrets")
   """
   Freqtrade Docker image version tag
   """
@@ -783,7 +783,7 @@ type BotRunner implements Node {
   """
   Runner connection configuration (host, port, credentials, etc.)
   """
-  config: Map
+  config: Map @requiresPermission(scope: "view-secrets")
   """
   Whether runner has downloaded historical data for backtesting
   """
@@ -811,7 +811,7 @@ type BotRunner implements Node {
   """
   Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
   """
-  dataDownloadConfig: Map
+  dataDownloadConfig: Map @requiresPermission(scope: "view")
   """
   Group ID (organization) that owns this bot runner
   """
@@ -1655,7 +1655,7 @@ type Exchange implements Node {
   """
   Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
   """
-  config: Map
+  config: Map @requiresPermission(scope: "view-secrets")
   """
   Group ID (organization) that owns this exchange
   """

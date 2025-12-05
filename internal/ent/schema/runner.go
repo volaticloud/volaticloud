@@ -35,6 +35,10 @@ func (BotRunner) Fields() []ent.Field {
 			Comment("Runner environment type (docker, kubernetes, local)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view-secrets"),
+			).
 			Comment("Runner connection configuration (host, port, credentials, etc.)"),
 		field.Bool("data_is_ready").
 			Default(false).
@@ -58,6 +62,10 @@ func (BotRunner) Fields() []ent.Field {
 			Comment("Error message if data download failed"),
 		field.JSON("data_download_config", map[string]interface{}{}).
 			Optional().
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view"),
+			).
 			Comment("Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}"),
 		field.String("owner_id").
 			NotEmpty().

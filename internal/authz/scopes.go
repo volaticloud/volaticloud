@@ -17,13 +17,16 @@ const (
 var StrategyScopes = []string{"view", "edit", "backtest", "delete"}
 
 // BotScopes defines the available permission scopes for Bot resources
-var BotScopes = []string{"view", "run", "stop", "delete", "edit"}
+// view-secrets is for sensitive config fields (API keys, trading params)
+var BotScopes = []string{"view", "view-secrets", "run", "stop", "delete", "edit"}
 
 // ExchangeScopes defines the available permission scopes for Exchange resources
-var ExchangeScopes = []string{"view", "edit", "delete"}
+// view-secrets is for sensitive config fields (API keys, secrets)
+var ExchangeScopes = []string{"view", "view-secrets", "edit", "delete"}
 
 // BotRunnerScopes defines the available permission scopes for BotRunner resources
-var BotRunnerScopes = []string{"view", "edit", "delete", "make-public"}
+// view-secrets is for sensitive config fields (connection credentials)
+var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-public"}
 
 // GetScopesForType returns the permission scopes for a given resource type
 func GetScopesForType(resourceType ResourceType) []string {

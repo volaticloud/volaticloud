@@ -32,7 +32,7 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useGetRunnersQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation } from './runners.generated';
+import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation } from './runners.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateRunnerDialog } from './CreateRunnerDialog';
@@ -75,6 +75,7 @@ export const RunnersList = () => {
 
   const [refreshRunnerData] = useRefreshRunnerDataMutation();
   const [setRunnerVisibility, { loading: visibilityLoading }] = useSetRunnerVisibilityMutation();
+  const [getRunnerWithSecrets] = useGetRunnerWithSecretsLazyQuery();
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -309,13 +310,11 @@ export const RunnersList = () => {
                           <IconButton
                             size="small"
                             onClick={async () => {
-                              // Refetch to ensure we have the latest data including config
-                              const result = await refetch();
-                              // Find the updated runner from the fresh data
-                              const updatedRunner = result.data?.botRunners?.edges
-                                ?.find(edge => edge?.node?.id === runner.id)?.node;
-                              if (updatedRunner) {
-                                setSelectedRunner(updatedRunner);
+                              // Fetch runner with secrets (config, dataDownloadConfig) for edit dialog
+                              const result = await getRunnerWithSecrets({ variables: { id: runner.id } });
+                              const runnerData = result.data?.botRunners?.edges?.[0]?.node;
+                              if (runnerData) {
+                                setSelectedRunner(runnerData);
                                 setEditDialogOpen(true);
                               }
                             }}

@@ -42,7 +42,10 @@ func (Bot) Fields() []ent.Field {
 			Comment("Runner-specific identifier (container ID, pod name, etc.)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
-			Annotations(entgql.Type("Map")).
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view-secrets"),
+			).
 			Comment("Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)"),
 		field.JSON("secure_config", map[string]interface{}{}).
 			Optional().

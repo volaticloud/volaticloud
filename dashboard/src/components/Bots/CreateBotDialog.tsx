@@ -18,8 +18,10 @@ import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';
 import { useActiveGroup } from '../../contexts/GroupContext';
+import { RunnerSelector } from '../shared/RunnerSelector';
 
-// Query to get available exchanges, strategies, and runners filtered by owner
+// Query to get available exchanges and strategies filtered by owner
+// (Runners are fetched by RunnerSelector component)
 const GET_BOT_OPTIONS = gql`
   query GetBotOptions($ownerID: String) {
     exchanges(first: 50, where: { ownerID: $ownerID }) {
@@ -37,15 +39,6 @@ const GET_BOT_OPTIONS = gql`
           name
           versionNumber
           isLatest
-        }
-      }
-    }
-    botRunners(first: 50, where: { ownerID: $ownerID }) {
-      edges {
-        node {
-          id
-          name
-          type
         }
       }
     }
@@ -163,7 +156,6 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
 
   const exchanges = optionsData?.exchanges?.edges?.map(edge => edge?.node).filter(Boolean) || [];
   const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -233,25 +225,11 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             )}
           </FormControl>
 
-          <FormControl fullWidth required>
-            <InputLabel>Runner</InputLabel>
-            <Select
-              value={runnerID}
-              onChange={(e) => setRunnerID(e.target.value)}
-              label="Runner"
-            >
-              {runners.map((runner) => (
-                <MenuItem key={runner.id} value={runner.id}>
-                  {runner.name} ({runner.type})
-                </MenuItem>
-              ))}
-            </Select>
-            {runners.length === 0 && (
-              <FormHelperText error>
-                No runners configured. Please add a runner first.
-              </FormHelperText>
-            )}
-          </FormControl>
+          <RunnerSelector
+            value={runnerID}
+            onChange={setRunnerID}
+            required
+          />
 
           <Box>
             <JSONEditor

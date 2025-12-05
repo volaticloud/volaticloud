@@ -3064,7 +3064,30 @@ func (ec *executionContext) _Backtest_result(ctx context.Context, field graphql.
 		func(ctx context.Context) (any, error) {
 			return obj.Result, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "strategyID")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOMap2map,
 		true,
 		false,
@@ -3151,7 +3174,30 @@ func (ec *executionContext) _Backtest_logs(ctx context.Context, field graphql.Co
 		func(ctx context.Context) (any, error) {
 			return obj.Logs, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal string
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "strategyID")
+				if err != nil {
+					var zeroVal string
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal string
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOString2string,
 		true,
 		false,
@@ -4500,7 +4546,30 @@ func (ec *executionContext) _Bot_config(ctx context.Context, field graphql.Colle
 		func(ctx context.Context) (any, error) {
 			return obj.Config, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view-secrets")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOMap2map,
 		true,
 		false,
@@ -6121,7 +6190,30 @@ func (ec *executionContext) _BotRunner_config(ctx context.Context, field graphql
 		func(ctx context.Context) (any, error) {
 			return obj.Config, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view-secrets")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOMap2map,
 		true,
 		false,
@@ -6324,7 +6416,30 @@ func (ec *executionContext) _BotRunner_dataDownloadConfig(ctx context.Context, f
 		func(ctx context.Context) (any, error) {
 			return obj.DataDownloadConfig, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOMap2map,
 		true,
 		false,
@@ -7257,7 +7372,30 @@ func (ec *executionContext) _Exchange_config(ctx context.Context, field graphql.
 		func(ctx context.Context) (any, error) {
 			return obj.Config, nil
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view-secrets")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOMap2map,
 		true,
 		false,

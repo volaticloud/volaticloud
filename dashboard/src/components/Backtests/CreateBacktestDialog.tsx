@@ -25,6 +25,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { RunnerSelector } from '../shared/RunnerSelector';
 
 interface CreateBacktestDialogProps {
   open: boolean;
@@ -137,7 +138,6 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
   };
 
   const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -182,25 +182,12 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
               )}
             </FormControl>
 
-            <FormControl fullWidth required>
-              <InputLabel>Runner</InputLabel>
-              <Select
-                value={runnerID}
-                onChange={(e) => setRunnerID(e.target.value)}
-                label="Runner"
-              >
-                {runners.map((runner) => (
-                  <MenuItem key={runner.id} value={runner.id}>
-                    {runner.name} ({runner.type})
-                  </MenuItem>
-                ))}
-              </Select>
-              {runners.length === 0 && (
-                <FormHelperText error>
-                  No runners configured. Please add a runner first.
-                </FormHelperText>
-              )}
-            </FormControl>
+            <RunnerSelector
+              value={runnerID}
+              onChange={setRunnerID}
+              required
+              dataReadyOnly
+            />
 
             <Divider />
 
