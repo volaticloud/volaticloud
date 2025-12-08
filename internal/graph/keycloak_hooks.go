@@ -7,11 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"volaticloud/internal/ent"
+	strategyPredicate "volaticloud/internal/ent/strategy"
 	"volaticloud/internal/keycloak"
 )
 
 // StrategyScopes defines the available permission scopes for Strategy resources
-var StrategyScopes = []string{"view", "edit", "backtest", "delete"}
+// Includes backtest lifecycle scopes since backtests inherit permissions from their parent strategy
+var StrategyScopes = []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest"}
 
 // BotScopes defines the available permission scopes for Bot resources
 var BotScopes = []string{"view", "run", "stop", "delete", "edit"}
@@ -75,6 +77,7 @@ func CreateStrategyWithResource(
 }
 
 // DeleteStrategyWithResource deletes a Strategy entity and removes its Keycloak resource
+// Also deletes associated backtest (cascade delete)
 // Deletion is more forgiving - Keycloak cleanup failure is logged but doesn't block DB deletion
 func DeleteStrategyWithResource(
 	ctx context.Context,
@@ -88,7 +91,25 @@ func DeleteStrategyWithResource(
 		return fmt.Errorf("invalid strategy ID: %w", err)
 	}
 
-	// Delete from database first
+	// Load strategy with backtest to check for cascade delete
+	strategy, err := client.Strategy.Query().
+		Where(strategyPredicate.ID(id)).
+		WithBacktest().
+		Only(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load strategy: %w", err)
+	}
+
+	// Delete associated backtest first (cascade delete)
+	if strategy.Edges.Backtest != nil {
+		err = client.Backtest.DeleteOneID(strategy.Edges.Backtest.ID).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete associated backtest: %w", err)
+		}
+		log.Printf("Deleted backtest %s associated with strategy %s", strategy.Edges.Backtest.ID, strategyID)
+	}
+
+	// Delete strategy from database
 	err = client.Strategy.DeleteOneID(id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete strategy: %w", err)

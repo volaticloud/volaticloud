@@ -629,8 +629,8 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 			log.Printf("Strategy %s (v%d) already has a backtest, creating new version for backtest",
 				existingStrategy.Name, existingStrategy.VersionNumber)
 
-			// Create new strategy version using helper function
-			newVersion, err := createStrategyVersion(ctx, tx, existingStrategy)
+			// Create new strategy version with Keycloak resource sync
+			newVersion, err := createStrategyVersionWithResource(ctx, tx, r.umaClient, existingStrategy)
 			if err != nil {
 				return fmt.Errorf("failed to create new strategy version: %w", err)
 			}

@@ -7,14 +7,19 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import BusinessIcon from '@mui/icons-material/Business';
 
 export function GroupSwitcher() {
+  const navigate = useNavigate();
   const { activeGroupId, availableGroups, setActiveGroup } = useActiveGroup();
 
   const handleChange = (event: SelectChangeEvent) => {
-    setActiveGroup(event.target.value);
+    const newGroupId = event.target.value;
+    setActiveGroup(newGroupId);
+    // Redirect to home page with the NEW organization (not preserving current)
+    navigate(`/?groupId=${newGroupId}`);
   };
 
   // Don't render if no groups available

@@ -329,9 +329,9 @@ func TestEntityScopes(t *testing.T) {
 	})
 
 	t.Run("StrategyScopes contains expected values", func(t *testing.T) {
-		expected := []string{"view", "edit", "backtest", "delete"}
+		expected := []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest"}
 		assert.Equal(t, expected, StrategyScopes, "StrategyScopes should contain the expected values")
-		assert.Len(t, StrategyScopes, 4, "StrategyScopes should have 4 scopes")
+		assert.Len(t, StrategyScopes, 6, "StrategyScopes should have 6 scopes")
 	})
 }
 

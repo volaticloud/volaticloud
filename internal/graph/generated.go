@@ -9309,7 +9309,7 @@ func (ec *executionContext) _Mutation_deleteBacktest(ctx context.Context, field 
 					var zeroVal bool
 					return zeroVal, err
 				}
-				scope, err := ec.unmarshalNString2string(ctx, "delete")
+				scope, err := ec.unmarshalNString2string(ctx, "delete-backtest")
 				if err != nil {
 					var zeroVal bool
 					return zeroVal, err
@@ -9373,7 +9373,7 @@ func (ec *executionContext) _Mutation_runBacktest(ctx context.Context, field gra
 					var zeroVal *ent.Backtest
 					return zeroVal, err
 				}
-				scope, err := ec.unmarshalNString2string(ctx, "run")
+				scope, err := ec.unmarshalNString2string(ctx, "run-backtest")
 				if err != nil {
 					var zeroVal *ent.Backtest
 					return zeroVal, err
@@ -9471,7 +9471,7 @@ func (ec *executionContext) _Mutation_stopBacktest(ctx context.Context, field gr
 					var zeroVal *ent.Backtest
 					return zeroVal, err
 				}
-				scope, err := ec.unmarshalNString2string(ctx, "stop")
+				scope, err := ec.unmarshalNString2string(ctx, "stop-backtest")
 				if err != nil {
 					var zeroVal *ent.Backtest
 					return zeroVal, err

@@ -18,8 +18,9 @@ import {
   ShowChart as TradeIcon,
   Storage as RuntimeIcon,
 } from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
+import { useGroupNavigate } from '../../contexts/GroupContext';
 
 export const drawerWidth = 260;
 
@@ -39,7 +40,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
   const location = useLocation();
 
   const handleNavigate = (path: string) => {

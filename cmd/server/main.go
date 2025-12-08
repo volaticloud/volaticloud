@@ -24,6 +24,7 @@ import (
 
 	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/migrate"
 	_ "volaticloud/internal/ent/runtime"
 	"volaticloud/internal/graph"
 	"volaticloud/internal/keycloak"
@@ -160,8 +161,14 @@ func runServer(c *cli.Context) error {
 	}
 	defer client.Close()
 
-	// Run auto migration
-	if err := client.Schema.Create(ctx); err != nil {
+	// Run auto migration with options for schema flexibility
+	// Note: SQLite cannot alter FK constraints on existing tables.
+	// Cascade deletes are enforced at application level in DeleteStrategyWithResource.
+	if err := client.Schema.Create(
+		ctx,
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
 		return fmt.Errorf("failed creating schema resources: %w", err)
 	}
 

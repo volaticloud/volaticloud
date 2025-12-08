@@ -6,6 +6,7 @@ const defaultOptions = {} as const;
 export type GetBacktestsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   after?: Types.InputMaybe<Types.Scalars['Cursor']['input']>;
+  where?: Types.InputMaybe<Types.BacktestWhereInput>;
 }>;
 
 
@@ -55,8 +56,8 @@ export type StopBacktestMutation = { __typename?: 'Mutation', stopBacktest: { __
 
 
 export const GetBacktestsDocument = gql`
-    query GetBacktests($first: Int, $after: Cursor) {
-  backtests(first: $first, after: $after) {
+    query GetBacktests($first: Int, $after: Cursor, $where: BacktestWhereInput) {
+  backtests(first: $first, after: $after, where: $where) {
     edges {
       node {
         id
@@ -104,6 +105,7 @@ export const GetBacktestsDocument = gql`
  *   variables: {
  *      first: // value for 'first'
  *      after: // value for 'after'
+ *      where: // value for 'where'
  *   },
  * });
  */

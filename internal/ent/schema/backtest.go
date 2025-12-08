@@ -5,6 +5,7 @@ import (
 
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -80,7 +81,8 @@ func (Backtest) Edges() []ent.Edge {
 			Ref("backtest").
 			Field("strategy_id").
 			Required().
-			Unique(),
+			Unique().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.From("runner", BotRunner.Type).
 			Ref("backtests").
 			Field("runner_id").

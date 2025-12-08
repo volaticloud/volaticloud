@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -24,10 +24,11 @@ import { StrategyInfo } from './StrategyInfo';
 import { StrategyCode } from './StrategyCode';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
 import { BacktestResults } from '../Backtests/BacktestResults';
+import { useGroupNavigate } from '../../contexts/GroupContext';
 
 const StrategyDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

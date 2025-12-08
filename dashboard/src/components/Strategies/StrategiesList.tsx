@@ -28,7 +28,6 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useGetStrategiesQuery, useSetStrategyVisibilityMutation } from './strategies.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
@@ -37,12 +36,12 @@ import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
 
 type ViewMode = 'mine' | 'public';
 
 export const StrategiesList = () => {
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
   const { activeGroupId } = useActiveGroup();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
