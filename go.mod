@@ -8,7 +8,7 @@ require (
 	github.com/99designs/gqlgen v0.17.81
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/containerd/errdefs v1.0.0
-	github.com/coreos/go-oidc/v3 v3.16.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/docker/docker v28.5.1+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/go-chi/chi/v5 v5.2.3
