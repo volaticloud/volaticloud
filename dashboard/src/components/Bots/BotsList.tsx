@@ -30,11 +30,10 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation, useSetBotVisibilityMutation } from './bots.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
 import { DeleteBotDialog } from './DeleteBotDialog';
@@ -44,7 +43,7 @@ type ViewMode = 'mine' | 'public';
 
 // Reusable BotsList component
 export const BotsList = () => {
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -20,10 +20,11 @@ import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code } from 
 import { useGetBacktestQuery } from './backtests.generated';
 import TradesTable from '../shared/TradesTable';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
+import { useGroupNavigate } from '../../contexts/GroupContext';
 
 const BacktestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
   const { data, loading, error } = useGetBacktestQuery({
     variables: { id: id! },
     skip: !id,

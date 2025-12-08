@@ -25,15 +25,16 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation } from './backtests.generated';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorAlert } from '../shared/ErrorAlert';
 import { CreateBacktestDialog } from './CreateBacktestDialog';
 import { DeleteBacktestDialog } from './DeleteBacktestDialog';
+import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
 
 export const BacktestsList = () => {
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
+  const { activeGroupId } = useActiveGroup();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedBacktest, setSelectedBacktest] = useState<{
@@ -48,8 +49,15 @@ export const BacktestsList = () => {
   }>({ open: false, message: '', severity: 'error' });
 
   // Use generated Apollo hooks
+  // Filter backtests by strategy's ownerID to ensure users only see their own backtests
   const { data, loading, error, refetch } = useGetBacktestsQuery({
-    variables: { first: 50 }
+    variables: {
+      first: 50,
+      where: activeGroupId ? {
+        hasStrategyWith: [{ ownerID: activeGroupId }]
+      } : undefined
+    },
+    skip: !activeGroupId, // Skip query if no active group selected
   });
 
   // Mutations with refetch on completion

@@ -1,5 +1,5 @@
-query GetBacktests($first: Int, $after: Cursor) {
-  backtests(first: $first, after: $after) {
+query GetBacktests($first: Int, $after: Cursor, $where: BacktestWhereInput) {
+  backtests(first: $first, after: $after, where: $where) {
     edges {
       node {
         id

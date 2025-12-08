@@ -27,7 +27,8 @@ func IsAuthenticatedDirective(ctx context.Context, obj interface{}, next graphql
 }
 
 // verifyResourcePermission dynamically determines the resource type and verifies permission
-// This is a generic helper that works with all resource types (Strategy, Bot, Exchange, BotRunner, Group)
+// This is a generic helper that works with all resource types (Strategy, Bot, Exchange, BotRunner, Backtest, Group)
+// For Backtest: permission is checked against the parent Strategy (backtests don't have their own Keycloak resources)
 func verifyResourcePermission(
 	ctx context.Context,
 	client *ent.Client,
@@ -59,6 +60,13 @@ func verifyResourcePermission(
 	// Check BotRunner
 	if _, err := client.BotRunner.Get(ctx, id); err == nil {
 		return VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
+	}
+
+	// Check Backtest - authorization is delegated to the parent Strategy
+	// Backtests don't have their own Keycloak resources; they inherit permissions from Strategy
+	if bt, err := client.Backtest.Get(ctx, id); err == nil {
+		// Use the strategy_id to check permission on the parent strategy
+		return VerifyStrategyPermission(ctx, client, umaClient, bt.StrategyID.String(), userToken, scope)
 	}
 
 	// If not found in database, it might be a Group resource (managed by Keycloak, not ENT)

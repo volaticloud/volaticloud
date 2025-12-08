@@ -5,11 +5,37 @@ import (
 	"fmt"
 
 	"volaticloud/internal/ent"
+	"volaticloud/internal/keycloak"
 )
 
-// createStrategyVersion creates a new version of an existing strategy
-// This is a helper function used by both UpdateStrategy and CreateBacktest mutations
-func createStrategyVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy) (*ent.Strategy, error) {
+// createStrategyVersionWithResource creates a new version of an existing strategy
+// and syncs it with Keycloak UMA.
+// This is the primary helper function that should be used when creating strategy versions.
+func createStrategyVersionWithResource(
+	ctx context.Context,
+	tx *ent.Tx,
+	umaClient keycloak.UMAClientInterface,
+	parent *ent.Strategy,
+) (*ent.Strategy, error) {
+	// Create the new version in database
+	newVersion, err := createStrategyVersionDB(ctx, tx, parent)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sync Keycloak resource for new version
+	if err := SyncStrategyVersionResource(ctx, umaClient, newVersion); err != nil {
+		// Keycloak sync failed - return error to rollback transaction
+		return nil, fmt.Errorf("failed to sync Keycloak resource (transaction will rollback): %w", err)
+	}
+
+	return newVersion, nil
+}
+
+// createStrategyVersionDB creates a new version of an existing strategy in the database only.
+// This is the low-level helper that handles DB operations without Keycloak sync.
+// Use createStrategyVersionWithResource for full resource management.
+func createStrategyVersionDB(ctx context.Context, tx *ent.Tx, parent *ent.Strategy) (*ent.Strategy, error) {
 	// Mark parent strategy as not latest
 	err := tx.Strategy.UpdateOneID(parent.ID).SetIsLatest(false).Exec(ctx)
 	if err != nil {

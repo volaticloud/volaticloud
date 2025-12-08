@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { Box, Container, Paper, Typography, Alert } from '@mui/material';
@@ -184,4 +184,39 @@ export function useActiveGroup() {
     throw new Error('useActiveGroup must be used within a GroupProvider');
   }
   return context;
+}
+
+/**
+ * Hook to navigate while preserving the groupId query parameter.
+ * Use this instead of useNavigate() to ensure groupId is always in the URL.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useGroupNavigate() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  return useCallback(
+    (to: string, options?: { replace?: boolean; state?: unknown }) => {
+      const groupId = searchParams.get('groupId');
+
+      // Parse the target path to handle paths that might already have query params
+      const [pathname, existingSearch] = to.split('?');
+      const newParams = new URLSearchParams(existingSearch || '');
+
+      // Preserve groupId if it exists and isn't already in the target URL
+      if (groupId && !newParams.has('groupId')) {
+        newParams.set('groupId', groupId);
+      }
+
+      const search = newParams.toString();
+      navigate(
+        {
+          pathname,
+          search: search ? `?${search}` : '',
+        },
+        options
+      );
+    },
+    [navigate, searchParams]
+  );
 }

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -34,10 +34,11 @@ import {
   useDeleteBotMutation,
 } from './bots.generated';
 import BotMetrics from './BotMetrics';
+import { useGroupNavigate } from '../../contexts/GroupContext';
 
 const BotDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const navigate = useGroupNavigate();
   const [actionLoading, setActionLoading] = useState(false);
 
   const { data, loading, error, refetch } = useGetBotQuery({
