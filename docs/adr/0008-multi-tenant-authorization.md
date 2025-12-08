@@ -1189,16 +1189,153 @@ VolatiCloud defines the following permission scopes:
 
 | Scope | Description | Automatically Granted To |
 |-------|-------------|-------------------------|
-| `view` | View resource details | Owner |
+| `view` | View resource details | Owner, Public resource viewers |
+| `view-secrets` | View sensitive config (API keys, credentials) | Owner only |
 | `edit` | Update resource code/config | Owner |
 | `backtest` | Run backtests with strategy | Owner |
 | `delete` | Delete resource | Owner |
+| `run` | Start bot | Owner |
+| `stop` | Stop bot | Owner |
 
 **Automatic Permissions:**
 
 - Resource owners automatically receive all scopes
 - Permissions are verified before database operations
 - Other users can be granted permissions via Keycloak policies
+- Public resources grant `view` scope to all authenticated users (not `view-secrets`)
+
+### Public/Private Visibility
+
+Resources can be made public to allow any authenticated user to view them.
+
+**Implementation:**
+
+- `public` boolean field on Strategy, Bot, BotRunner, Exchange entities
+- Default: `false` (private)
+- Public resources are visible to all authenticated users
+- Public resources hide sensitive data (`view-secrets` scope required)
+
+**ENT Schema Mixin:**
+
+```go
+// internal/ent/mixin/public.go
+type PublicMixin struct {
+    mixin.Schema
+}
+
+func (PublicMixin) Fields() []ent.Field {
+    return []ent.Field{
+        field.Bool("public").
+            Default(false).
+            Comment("Whether this resource is publicly visible"),
+    }
+}
+```
+
+**GraphQL Mutations:**
+
+```graphql
+type Mutation {
+    setStrategyVisibility(id: ID!, public: Boolean!): Strategy!
+        @hasScope(resource: "id", scope: "edit")
+    setBotVisibility(id: ID!, public: Boolean!): Bot!
+        @hasScope(resource: "id", scope: "edit")
+    setRunnerVisibility(id: ID!, public: Boolean!): BotRunner!
+        @hasScope(resource: "id", scope: "edit")
+}
+```
+
+**Keycloak Integration:**
+
+When visibility changes, the `public` attribute is updated on the UMA resource:
+
+```go
+// internal/keycloak/uma_client.go
+func (u *UMAClient) UpdateResource(ctx context.Context, resourceID string,
+    attributes map[string][]string) error {
+    // Update resource attributes including public=true/false
+}
+```
+
+**Custom Keycloak Policy:**
+
+A custom `PublicResourcePolicyProvider` grants access to resources with `public=true`:
+
+```java
+// keycloak/extensions/public-resource-policy/
+public class PublicResourcePolicyProvider implements PolicyProvider {
+    @Override
+    public void evaluate(Evaluation evaluation) {
+        Resource resource = evaluation.getPermission().getResource();
+        Map<String, List<String>> attributes = resource.getAttributes();
+
+        if (attributes.containsKey("public") &&
+            attributes.get("public").contains("true")) {
+            evaluation.grant();
+        }
+    }
+}
+```
+
+### View-Secrets Scope
+
+The `view-secrets` scope protects sensitive configuration fields separately from general `view` scope.
+
+**Purpose:**
+
+- Allow public resources to be viewable without exposing credentials
+- Separate "can see resource exists" from "can see sensitive config"
+- Enable sharing resources without credential exposure
+
+**Protected Fields:**
+
+| Entity | Field | Scope Required |
+|--------|-------|----------------|
+| Bot | `config` | `view-secrets` |
+| Exchange | `config` | `view-secrets` |
+| BotRunner | `config` | `view-secrets` |
+| BotRunner | `dataDownloadConfig` | `view` |
+
+**ENT Schema Annotation:**
+
+```go
+// internal/ent/schema/runner.go
+field.JSON("config", map[string]interface{}{}).
+    Annotations(
+        entgql.Skip(entgql.SkipMutationCreateInput, entgql.SkipMutationUpdateInput),
+        entgql.RequiresPermission(entgql.PermConfig{Scope: "view-secrets"}),
+    )
+```
+
+**GraphQL Query Splitting:**
+
+Dashboard uses separate queries to avoid fetching secrets unnecessarily:
+
+```graphql
+# List view - no secrets
+query GetRunners {
+    botRunners { edges { node { id name type public } } }
+}
+
+# Edit view - with secrets (lazy loaded)
+query GetRunnerWithSecrets($id: ID!) {
+    node(id: $id) {
+        ... on BotRunner { id name config dataDownloadConfig }
+    }
+}
+```
+
+**Dashboard Implementation:**
+
+```typescript
+// RunnerSelector component
+const [fetchRunnerSecrets] = useLazyQuery(GET_RUNNER_WITH_SECRETS);
+
+// Only fetch secrets when editing
+const handleEdit = (runner) => {
+    fetchRunnerSecrets({ variables: { id: runner.id } });
+};
+```
 
 ### Troubleshooting
 
