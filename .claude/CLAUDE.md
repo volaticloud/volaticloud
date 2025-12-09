@@ -9,6 +9,15 @@
    - No "🤖 Generated with Claude Code" footers
    - Keep commit messages professional and descriptive
 
+2. **MANDATORY: Pre-commit checklist**
+   - [ ] Run dashboard lint: `npm run lint`
+   - [ ] Run dashboard TypeScript check: `npx tsc --noEmit`
+   - [ ] Run backend tests: `go test ./...`
+   - [ ] Run backend vet: `go vet ./...`
+   - [ ] Run backend lint: `golangci-lint run ./...`
+   - [ ] Update documentation if API or architecture changed
+   - [ ] All checks must pass before committing
+
 ## Domain-Driven Design (DDD) - MANDATORY
 
 **The `internal/graph/` package is a THIN LAYER - only GraphQL resolvers.**

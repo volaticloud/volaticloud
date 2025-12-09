@@ -5,36 +5,10 @@ import (
 	"fmt"
 
 	"volaticloud/internal/ent"
-	"volaticloud/internal/keycloak"
 )
 
-// createStrategyVersionWithResource creates a new version of an existing strategy
-// and syncs it with Keycloak UMA.
-// This is the primary helper function that should be used when creating strategy versions.
-func createStrategyVersionWithResource(
-	ctx context.Context,
-	tx *ent.Tx,
-	umaClient keycloak.UMAClientInterface,
-	parent *ent.Strategy,
-) (*ent.Strategy, error) {
-	// Create the new version in database
-	newVersion, err := createStrategyVersionDB(ctx, tx, parent)
-	if err != nil {
-		return nil, err
-	}
-
-	// Sync Keycloak resource for new version
-	if err := SyncStrategyVersionResource(ctx, umaClient, newVersion); err != nil {
-		// Keycloak sync failed - return error to rollback transaction
-		return nil, fmt.Errorf("failed to sync Keycloak resource (transaction will rollback): %w", err)
-	}
-
-	return newVersion, nil
-}
-
-// createStrategyVersionDB creates a new version of an existing strategy in the database only.
-// This is the low-level helper that handles DB operations without Keycloak sync.
-// Use createStrategyVersionWithResource for full resource management.
+// createStrategyVersionDB creates a new version of an existing strategy in the database.
+// The ENT hook in internal/authz/hooks.go handles Keycloak resource sync automatically.
 func createStrategyVersionDB(ctx context.Context, tx *ent.Tx, parent *ent.Strategy) (*ent.Strategy, error) {
 	// Mark parent strategy as not latest
 	err := tx.Strategy.UpdateOneID(parent.ID).SetIsLatest(false).Exec(ctx)
@@ -43,6 +17,7 @@ func createStrategyVersionDB(ctx context.Context, tx *ent.Tx, parent *ent.Strate
 	}
 
 	// Create new version with all parent fields
+	// ENT hook will automatically create Keycloak resource for this new version
 	builder := tx.Strategy.Create().
 		SetName(parent.Name).
 		SetDescription(parent.Description).
@@ -57,7 +32,7 @@ func createStrategyVersionDB(ctx context.Context, tx *ent.Tx, parent *ent.Strate
 		builder.SetConfig(parent.Config)
 	}
 
-	// Save new version (this will trigger validation hook)
+	// Save new version (this will trigger validation hook AND Keycloak hook)
 	return builder.Save(ctx)
 }
 

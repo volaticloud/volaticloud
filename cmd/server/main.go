@@ -23,6 +23,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"volaticloud/internal/auth"
+	"volaticloud/internal/authz"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/migrate"
 	_ "volaticloud/internal/ent/runtime"
@@ -227,6 +228,10 @@ func runServer(c *cli.Context) error {
 	)
 	log.Println("✓ Keycloak UMA 2.0 authorization enabled")
 
+	// Register ENT hooks for automatic Keycloak resource sync
+	// This ensures resources are created/deleted in Keycloak when entities are created/deleted
+	authz.RegisterKeycloakHooks(client)
+
 	// Setup GraphQL server with auth clients and directive handlers
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: graph.NewResolver(client, keycloakClient, umaClient),
@@ -257,14 +262,16 @@ func runServer(c *cli.Context) error {
 		MaxAge:           300,
 	}))
 
-	// Middleware to inject ENT and UMA clients into context for GraphQL directives
+	// Middleware to inject ENT and UMA clients into context for GraphQL directives and ENT hooks
 	injectClientsMiddleware := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			// Inject ENT client
+			// Inject ENT client (for GraphQL directives)
 			ctx = graph.SetEntClientInContext(ctx, client)
-			// Inject UMA client (always available)
+			// Inject UMA client for GraphQL directives
 			ctx = graph.SetUMAClientInContext(ctx, umaClient)
+			// Inject UMA client for ENT hooks (authz package uses its own context key)
+			ctx = authz.SetUMAClientInContext(ctx, umaClient)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
