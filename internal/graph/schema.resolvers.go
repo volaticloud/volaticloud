@@ -56,9 +56,9 @@ func (r *mutationResolver) CreateExchange(ctx context.Context, input ent.CreateE
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
-	// Create exchange with Keycloak resource sync (uses transaction internally)
+	// Create exchange - ENT hook handles Keycloak resource sync automatically
 	// OwnerID comes from the input and represents the selected group/organization
-	return CreateExchangeWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
+	return r.client.Exchange.Create().SetInput(input).Save(ctx)
 }
 
 func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, input ent.UpdateExchangeInput) (*ent.Exchange, error) {
@@ -66,8 +66,8 @@ func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Use Keycloak-aware deletion
-	err := DeleteExchangeWithResource(ctx, r.client, r.umaClient, id.String())
+	// Delete exchange - ENT hook handles Keycloak resource cleanup automatically
+	err := r.client.Exchange.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
 }
 
@@ -78,15 +78,16 @@ func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateS
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
-	// Create strategy with Keycloak resource sync (uses transaction internally)
+	// Create strategy - ENT hook handles Keycloak resource sync automatically
 	// OwnerID comes from the input and represents the selected group/organization
-	return CreateStrategyWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
+	return r.client.Strategy.Create().SetInput(input).Save(ctx)
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
 	var result *ent.Strategy
 
 	// Use transaction to ensure atomicity - both operations succeed or both fail
+	// ENT hook handles Keycloak resource sync for new version automatically
 	err := WithTx(ctx, r.client, func(tx *ent.Tx) error {
 		// Load existing strategy (within transaction)
 		oldStrategy, err := tx.Strategy.Get(ctx, id)
@@ -101,6 +102,7 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 		}
 
 		// Create new version with input values, falling back to old values (within transaction)
+		// ENT hook will automatically create Keycloak resource for this new version
 		newVersion := tx.Strategy.Create().
 			SetName(coalesce(input.Name, &oldStrategy.Name)).
 			SetDescription(coalesce(input.Description, &oldStrategy.Description)).
@@ -117,20 +119,11 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 			newVersion.SetConfig(oldStrategy.Config)
 		}
 
-		// Save new version (this will trigger validation hook)
-		// If validation fails, the entire transaction rolls back
+		// Save new version (this will trigger validation hook AND Keycloak hook)
+		// If validation or Keycloak sync fails, the entire transaction rolls back
 		result, err = newVersion.Save(ctx)
 		if err != nil {
 			return err
-		}
-
-		// Sync Keycloak resource for new version
-		if r.umaClient != nil {
-			err = SyncStrategyVersionResource(ctx, r.umaClient, result)
-			if err != nil {
-				// Keycloak sync failed - rollback transaction
-				return fmt.Errorf("failed to sync Keycloak resource (transaction will rollback): %w", err)
-			}
 		}
 
 		return nil
@@ -144,8 +137,9 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Use Keycloak-aware deletion
-	err := DeleteStrategyWithResource(ctx, r.client, r.umaClient, id.String())
+	// Delete strategy - ENT hook handles Keycloak resource cleanup automatically
+	// Also deletes associated backtest via cascade
+	err := r.client.Strategy.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
 }
 
@@ -163,14 +157,13 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 		return nil, fmt.Errorf("bot config is required for Freqtrade bots")
 	}
 
-	// Step 3: Create the bot in the database with Keycloak resource sync
-	// This uses transaction internally and syncs with Keycloak
-	createdBot, err := CreateBotWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
+	// Step 3: Create the bot in the database - ENT hook handles Keycloak resource sync automatically
+	createdBot, err := r.client.Bot.Create().SetInput(input).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
 
-	// Step 2.5: Generate secure_config and update the bot
+	// Step 4: Generate secure_config and update the bot
 	// This config contains system-forced settings that users cannot override
 	secureConfig, err := generateSecureConfig()
 	if err != nil {
@@ -251,8 +244,8 @@ func (r *mutationResolver) UpdateBot(ctx context.Context, id uuid.UUID, input en
 }
 
 func (r *mutationResolver) DeleteBot(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Use Keycloak-aware deletion
-	err := DeleteBotWithResource(ctx, r.client, r.umaClient, id.String())
+	// Delete bot - ENT hook handles Keycloak resource cleanup automatically
+	err := r.client.Bot.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
 }
 
@@ -487,9 +480,9 @@ func (r *mutationResolver) CreateBotRunner(ctx context.Context, input ent.Create
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
-	// Create bot runner with Keycloak resource sync (uses transaction internally)
+	// Create bot runner - ENT hook handles Keycloak resource sync automatically
 	// OwnerID comes from the input and represents the selected group/organization
-	return CreateBotRunnerWithResource(ctx, r.client, r.umaClient, input, input.OwnerID)
+	return r.client.BotRunner.Create().SetInput(input).Save(ctx)
 }
 
 func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, input ent.UpdateBotRunnerInput) (*ent.BotRunner, error) {
@@ -497,8 +490,8 @@ func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, in
 }
 
 func (r *mutationResolver) DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Use Keycloak-aware deletion
-	err := DeleteBotRunnerWithResource(ctx, r.client, r.umaClient, id.String())
+	// Delete bot runner - ENT hook handles Keycloak resource cleanup automatically
+	err := r.client.BotRunner.DeleteOneID(id).Exec(ctx)
 	return err == nil, err
 }
 
@@ -629,8 +622,8 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 			log.Printf("Strategy %s (v%d) already has a backtest, creating new version for backtest",
 				existingStrategy.Name, existingStrategy.VersionNumber)
 
-			// Create new strategy version with Keycloak resource sync
-			newVersion, err := createStrategyVersionWithResource(ctx, tx, r.umaClient, existingStrategy)
+			// Create new strategy version - ENT hook handles Keycloak resource sync automatically
+			newVersion, err := createStrategyVersionDB(ctx, tx, existingStrategy)
 			if err != nil {
 				return fmt.Errorf("failed to create new strategy version: %w", err)
 			}

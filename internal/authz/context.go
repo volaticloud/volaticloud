@@ -16,13 +16,13 @@ const (
 )
 
 // SetUMAClientInContext stores the UMA client in context
-func SetUMAClientInContext(ctx context.Context, client *keycloak.UMAClient) context.Context {
+func SetUMAClientInContext(ctx context.Context, client keycloak.UMAClientInterface) context.Context {
 	return context.WithValue(ctx, umaClientKey, client)
 }
 
 // GetUMAClientFromContext retrieves the UMA client from context
-func GetUMAClientFromContext(ctx context.Context) *keycloak.UMAClient {
-	if client, ok := ctx.Value(umaClientKey).(*keycloak.UMAClient); ok {
+func GetUMAClientFromContext(ctx context.Context) keycloak.UMAClientInterface {
+	if client, ok := ctx.Value(umaClientKey).(keycloak.UMAClientInterface); ok {
 		return client
 	}
 	return nil
