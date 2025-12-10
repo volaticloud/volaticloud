@@ -21,7 +21,6 @@ import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { StrategyInfo } from './StrategyInfo';
-import { StrategyCode } from './StrategyCode';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
 import { BacktestResults } from '../Backtests/BacktestResults';
 import { useGroupNavigate } from '../../contexts/GroupContext';
@@ -153,9 +152,6 @@ const StrategyDetail = () => {
         {strategy.backtest && (
           <BacktestResults backtest={strategy.backtest} />
         )}
-
-        {/* Strategy Code */}
-        <StrategyCode code={strategy.code} />
       </Box>
 
       {/* Dialogs */}

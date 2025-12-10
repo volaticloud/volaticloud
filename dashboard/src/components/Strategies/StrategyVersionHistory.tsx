@@ -154,14 +154,14 @@ export const StrategyVersionHistory = ({
                             variant="caption"
                             color={
                               version.backtest?.summary?.winRate
-                                ? version.backtest.summary.winRate >= 50
+                                ? version.backtest.summary.winRate * 100 >= 50
                                   ? 'success.main'
                                   : 'text.secondary'
                                 : 'text.secondary'
                             }
                           >
                             {version.backtest?.summary?.winRate
-                              ? `${version.backtest.summary.winRate.toFixed(1)}%`
+                              ? `${(version.backtest.summary.winRate * 100).toFixed(1)}%`
                               : '-'}
                           </Typography>
                         </TableCell>
