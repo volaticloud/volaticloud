@@ -9,7 +9,6 @@ import {
   CircularProgress,
   Alert,
   Button,
-  Divider,
   Paper,
   Grid,
   Accordion,
@@ -18,7 +17,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code } from '@mui/icons-material';
 import { useGetBacktestQuery } from './backtests.generated';
-import TradesTable from '../shared/TradesTable';
+import { BacktestCharts } from './BacktestCharts';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
 import { useGroupNavigate } from '../../contexts/GroupContext';
 
@@ -261,13 +260,11 @@ const BacktestDetail: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
-
-          {/* Trades Table */}
-          <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
-            Trades ({trades.length})
-          </Typography>
-          <TradesTable trades={trades} />
+          {/* Charts and Trades */}
+          <BacktestCharts
+            strategyData={strategyData}
+            trades={trades}
+          />
         </>
       )}
 

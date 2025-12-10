@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import { Assessment, ExpandMore, Code } from '@mui/icons-material';
 import { BacktestMetrics } from './BacktestMetrics';
-import { BacktestTrades } from './BacktestTrades';
+import { BacktestCharts } from './BacktestCharts';
+import { extractStrategyData, extractTrades } from '../../types/freqtrade';
 
 interface BacktestResultsProps {
   backtest: {
@@ -36,6 +37,10 @@ interface BacktestResultsProps {
 }
 
 export const BacktestResults = ({ backtest }: BacktestResultsProps) => {
+  // Extract strategy data and trades for charts
+  const strategyData = backtest.result ? extractStrategyData(backtest.result) : null;
+  const trades = backtest.result ? extractTrades(backtest.result) : [];
+
   return (
     <Card>
       <CardContent>
@@ -62,7 +67,19 @@ export const BacktestResults = ({ backtest }: BacktestResultsProps) => {
           createdAt={backtest.createdAt}
         />
 
-        {backtest.result && <BacktestTrades result={backtest.result} />}
+        {/* Charts Section */}
+        {backtest.status === 'completed' && strategyData && trades.length > 0 && (
+          <Box sx={{ mt: 3 }}>
+            <BacktestCharts
+              strategyData={strategyData}
+              trades={trades}
+              exchange="binance"
+              timeframe={strategyData.timeframe}
+              backtestStart={strategyData.backtest_start}
+              backtestEnd={strategyData.backtest_end}
+            />
+          </Box>
+        )}
 
         {/* Backtest Logs */}
         {backtest.logs && (
