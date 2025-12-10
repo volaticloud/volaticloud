@@ -2,23 +2,15 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  Chip,
   IconButton,
   Tooltip,
   Snackbar,
   Alert,
-  Chip,
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -27,18 +19,21 @@ import {
   Public as PublicIcon,
   Lock as LockIcon,
 } from '@mui/icons-material';
-import { useState } from 'react';
-import { useGetStrategiesQuery, useSetStrategyVisibilityMutation } from './strategies.generated';
-import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { ErrorAlert } from '../shared/ErrorAlert';
+import { useState, useEffect } from 'react';
+import { useGetStrategiesQuery, useSetStrategyVisibilityMutation, GetStrategiesQuery } from './strategies.generated';
 import { CreateStrategyDialog } from './CreateStrategyDialog';
 import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
+import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
 
 type ViewMode = 'mine' | 'public';
+
+// Extract Strategy type from generated query
+type Strategy = NonNullable<NonNullable<NonNullable<GetStrategiesQuery['strategies']['edges']>[number]>['node']>;
 
 export const StrategiesList = () => {
   const navigate = useGroupNavigate();
@@ -64,11 +59,16 @@ export const StrategiesList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
+  // Pagination hook
+  const pagination = useCursorPagination<Strategy>({ initialPageSize: 10 });
+  const { setLoading, updateFromResponse, reset } = pagination;
+
   const [setStrategyVisibility, { loading: visibilityLoading }] = useSetStrategyVisibilityMutation();
 
-  const { data, loading, error, refetch } = useGetStrategiesQuery({
+  const { data, loading, refetch } = useGetStrategiesQuery({
     variables: {
-      first: 50,
+      first: pagination.pageSize,
+      after: pagination.cursor,
       where: {
         isLatest: true,
         ...(viewMode === 'mine'
@@ -76,19 +76,147 @@ export const StrategiesList = () => {
           : { public: true })
       }
     },
-    skip: viewMode === 'mine' && !activeGroupId, // Skip query if viewing "mine" without active group
+    skip: viewMode === 'mine' && !activeGroupId,
   });
+
+  // Sync pagination state with query results
+  useEffect(() => {
+    setLoading(loading);
+    if (data?.strategies) {
+      updateFromResponse(data.strategies);
+    }
+  }, [data, loading, setLoading, updateFromResponse]);
+
+  // Reset pagination when view mode changes
+  useEffect(() => {
+    reset();
+  }, [viewMode, activeGroupId, reset]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  if (loading) return <LoadingSpinner message="Loading strategies..." />;
-  if (error) return <ErrorAlert error={error} />;
-
-  const strategies = (data?.strategies?.edges
-    ?.map(edge => edge?.node)
-    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
+  // Define columns for the DataGrid
+  const columns: GridColDef<Strategy>[] = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: GridRenderCellParams<Strategy>) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" fontWeight={500}>
+            {params.row.name}
+          </Typography>
+          <Chip
+            label={`v${params.row.versionNumber}`}
+            size="small"
+            color="primary"
+            variant="outlined"
+          />
+          {params.row.public && (
+            <Chip
+              icon={<PublicIcon />}
+              label="Public"
+              size="small"
+              color="info"
+              variant="outlined"
+            />
+          )}
+        </Box>
+      ),
+    },
+    {
+      field: 'description',
+      headerName: 'Description',
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params: GridRenderCellParams<Strategy>) => (
+        <Typography variant="body2" color="text.secondary">
+          {params.row.description || '-'}
+        </Typography>
+      ),
+    },
+    {
+      field: 'bots',
+      headerName: 'Bots',
+      width: 80,
+      renderCell: (params: GridRenderCellParams<Strategy>) => params.row.bots?.totalCount || 0,
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Created',
+      width: 120,
+      renderCell: (params: GridRenderCellParams<Strategy>) => (
+        <Typography variant="caption" color="text.secondary">
+          {new Date(params.row.createdAt).toLocaleDateString()}
+        </Typography>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 180,
+      sortable: false,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams<Strategy>) => (
+        <Box onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Quick Backtest">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => {
+                setSelectedStrategyForBacktest(params.row.id);
+                setBacktestDialogOpen(true);
+              }}
+            >
+              <PlayArrowIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {viewMode === 'mine' && (
+            <>
+              <Tooltip title={params.row.public ? 'Make Private' : 'Make Public'}>
+                <IconButton
+                  size="small"
+                  color={params.row.public ? 'info' : 'default'}
+                  onClick={() => {
+                    setSelectedStrategy(params.row);
+                    setVisibilityDialogOpen(true);
+                  }}
+                >
+                  {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Edit">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSelectedStrategy(params.row);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => {
+                    setSelectedStrategy(params.row);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+      ),
+    },
+  ];
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -105,7 +233,7 @@ export const StrategiesList = () => {
             Strategies
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.strategies?.totalCount || 0} latest strategies
+            {pagination.totalCount || 0} latest strategies
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -137,140 +265,12 @@ export const StrategiesList = () => {
         </Box>
       </Box>
 
-      {strategies.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Typography variant="body2" color="text.secondary">
-              No strategies yet. Create your first strategy to get started.
-            </Typography>
-          </CardContent>
-        </Card>
-      ) : (
-        <Paper sx={{ width: '100%', mb: 2 }}>
-          <TableContainer>
-            <Table sx={{ minWidth: 750 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Version</TableCell>
-                <TableCell>Bots</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {strategies.map((strategy) => (
-                <TableRow key={strategy.id} hover>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={500}
-                        sx={{
-                          cursor: 'pointer',
-                          '&:hover': { color: 'primary.main' }
-                        }}
-                        onClick={() => navigate(`/strategies/${strategy.id}`)}
-                      >
-                        {strategy.name}
-                      </Typography>
-                      <Chip
-                        label={`v${strategy.versionNumber}`}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                      {strategy.public && (
-                        <Chip
-                          icon={<PublicIcon />}
-                          label="Public"
-                          size="small"
-                          color="info"
-                          variant="outlined"
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {strategy.description || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={`v${strategy.versionNumber}`}
-                      size="small"
-                      color="default"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>{strategy.bots?.totalCount || 0}</TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(strategy.createdAt).toLocaleDateString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Quick Backtest">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => {
-                          setSelectedStrategyForBacktest(strategy.id);
-                          setBacktestDialogOpen(true);
-                        }}
-                      >
-                        <PlayArrowIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    {viewMode === 'mine' && (
-                      <>
-                        <Tooltip title={strategy.public ? 'Make Private' : 'Make Public'}>
-                          <IconButton
-                            size="small"
-                            color={strategy.public ? 'info' : 'default'}
-                            onClick={() => {
-                              setSelectedStrategy(strategy);
-                              setVisibilityDialogOpen(true);
-                            }}
-                          >
-                            {strategy.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit">
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              setSelectedStrategy(strategy);
-                              setEditDialogOpen(true);
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              setSelectedStrategy(strategy);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        </Paper>
-      )}
+      <PaginatedDataGrid<Strategy>
+        columns={columns}
+        pagination={pagination}
+        emptyMessage="No strategies yet. Create your first strategy to get started."
+        onRowClick={(row) => navigate(`/strategies/${row.id}`)}
+      />
 
       <CreateStrategyDialog
         open={createDialogOpen}
@@ -339,7 +339,6 @@ export const StrategiesList = () => {
             message: 'Backtest created successfully',
             severity: 'success',
           });
-          // Navigate to the new strategy version if provided
           if (newStrategyId) {
             navigate(`/strategies/${newStrategyId}`);
           }

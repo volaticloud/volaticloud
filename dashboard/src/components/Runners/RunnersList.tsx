@@ -2,16 +2,7 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
-  Paper,
   IconButton,
   Tooltip,
   LinearProgress,
@@ -20,6 +11,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -31,17 +23,20 @@ import {
   Public as PublicIcon,
   Lock as LockIcon,
 } from '@mui/icons-material';
-import { useState } from 'react';
-import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation } from './runners.generated';
-import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { ErrorAlert } from '../shared/ErrorAlert';
+import { useState, useEffect } from 'react';
+import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation, GetRunnersQuery } from './runners.generated';
 import { CreateRunnerDialog } from './CreateRunnerDialog';
 import { EditRunnerDialog } from './EditRunnerDialog';
 import { DeleteRunnerDialog } from './DeleteRunnerDialog';
 import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
+import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
 
 type ViewMode = 'mine' | 'public';
+
+// Extract Runner type from generated query
+type Runner = NonNullable<NonNullable<NonNullable<GetRunnersQuery['botRunners']['edges']>[number]>['node']>;
 
 export const RunnersList = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
@@ -49,29 +44,46 @@ export const RunnersList = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
-  const [selectedRunner, setSelectedRunner] = useState<any | null>(null);
+  const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  // Get active group for filtering
   const { activeGroupId } = useActiveGroup();
 
-  const { data, loading, error, refetch } = useGetRunnersQuery({
+  // Pagination hook
+  const pagination = useCursorPagination<Runner>({ initialPageSize: 10 });
+  const { setLoading, updateFromResponse, reset } = pagination;
+
+  const { data, loading, refetch } = useGetRunnersQuery({
     variables: {
-      first: 50,
+      first: pagination.pageSize,
+      after: pagination.cursor,
       where: {
         ...(viewMode === 'mine'
           ? { ownerID: activeGroupId || undefined }
           : { public: true })
       }
     },
-    pollInterval: 10000, // Poll every 10 seconds to update download status
-    fetchPolicy: 'network-only', // Force fetch from network to get updated schema
-    skip: viewMode === 'mine' && !activeGroupId, // Skip query if viewing "mine" without active group
+    pollInterval: 10000,
+    fetchPolicy: 'network-only',
+    skip: viewMode === 'mine' && !activeGroupId,
   });
+
+  // Sync pagination state with query results
+  useEffect(() => {
+    setLoading(loading);
+    if (data?.botRunners) {
+      updateFromResponse(data.botRunners);
+    }
+  }, [data, loading, setLoading, updateFromResponse]);
+
+  // Reset pagination when view mode changes
+  useEffect(() => {
+    reset();
+  }, [viewMode, activeGroupId, reset]);
 
   const [refreshRunnerData] = useRefreshRunnerDataMutation();
   const [setRunnerVisibility, { loading: visibilityLoading }] = useSetRunnerVisibilityMutation();
@@ -84,21 +96,19 @@ export const RunnersList = () => {
   const handleRefreshData = async (id: string, name: string) => {
     try {
       await refreshRunnerData({ variables: { id } });
-      // Refetch immediately to show the updated status
       refetch();
     } catch (err) {
       console.error(`Failed to refresh data for runner ${name}:`, err);
     }
   };
 
-  const renderDataStatus = (runner: any) => {
+  const renderDataStatus = (runner: Runner) => {
     const status = runner.dataDownloadStatus;
-    const progress = runner.dataDownloadProgress;
+    const progress = runner.dataDownloadProgress as { percent_complete?: number; current_pair?: string; pairs_completed?: number; pairs_total?: number } | null;
     const isReady = runner.dataIsReady;
     const lastUpdated = runner.dataLastUpdated;
     const errorMsg = runner.dataErrorMessage;
 
-    // Downloading status
     if (status === 'downloading') {
       const percentComplete = progress?.percent_complete || 0;
       return (
@@ -119,63 +129,145 @@ export const RunnersList = () => {
       );
     }
 
-    // Failed status
     if (status === 'failed') {
       return (
-        <Box>
-          <Chip
-            icon={<ErrorIcon />}
-            label="Failed"
-            color="error"
-            size="small"
-            sx={{ mb: 0.5 }}
-          />
-          {errorMsg && (
-            <Typography variant="caption" color="error" display="block">
-              {errorMsg.substring(0, 50)}...
-            </Typography>
-          )}
-        </Box>
+        <Tooltip title={errorMsg || 'Download failed'}>
+          <Chip icon={<ErrorIcon />} label="Failed" color="error" size="small" />
+        </Tooltip>
       );
     }
 
-    // Completed/Ready status
     if (isReady && status === 'completed') {
       return (
-        <Box>
-          <Chip
-            icon={<CheckCircleIcon />}
-            label="Ready"
-            color="success"
-            size="small"
-            sx={{ mb: 0.5 }}
-          />
-          {lastUpdated && (
-            <Typography variant="caption" color="text.secondary" display="block">
-              Updated {new Date(lastUpdated).toLocaleDateString()}
-            </Typography>
-          )}
-        </Box>
+        <Tooltip title={lastUpdated ? `Updated ${new Date(lastUpdated).toLocaleDateString()}` : ''}>
+          <Chip icon={<CheckCircleIcon />} label="Ready" color="success" size="small" />
+        </Tooltip>
       );
     }
 
-    // Idle/Not ready status
-    return (
-      <Chip
-        label="No Data"
-        color="default"
-        size="small"
-        variant="outlined"
-      />
-    );
+    return <Chip label="No Data" color="default" size="small" variant="outlined" />;
   };
 
-  if (loading) return <LoadingSpinner message="Loading runners..." />;
-  if (error) return <ErrorAlert error={error} />;
-
-  const runners = (data?.botRunners?.edges
-    ?.map(edge => edge?.node)
-    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
+  // Define columns for the DataGrid
+  const columns: GridColDef<Runner>[] = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params: GridRenderCellParams<Runner>) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" fontWeight={500}>
+            {params.row.name}
+          </Typography>
+          {params.row.public && (
+            <Chip
+              icon={<PublicIcon />}
+              label="Public"
+              size="small"
+              color="info"
+              variant="outlined"
+            />
+          )}
+        </Box>
+      ),
+    },
+    {
+      field: 'type',
+      headerName: 'Type',
+      width: 100,
+      renderCell: (params: GridRenderCellParams<Runner>) => (
+        <Chip label={params.row.type} variant="outlined" size="small" />
+      ),
+    },
+    {
+      field: 'dataStatus',
+      headerName: 'Data Status',
+      width: 200,
+      renderCell: (params: GridRenderCellParams<Runner>) => renderDataStatus(params.row),
+    },
+    {
+      field: 'bots',
+      headerName: 'Bots',
+      width: 80,
+      renderCell: (params: GridRenderCellParams<Runner>) => params.row.bots?.totalCount || 0,
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Created',
+      width: 120,
+      renderCell: (params: GridRenderCellParams<Runner>) => (
+        <Typography variant="caption" color="text.secondary">
+          {new Date(params.row.createdAt).toLocaleDateString()}
+        </Typography>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 180,
+      sortable: false,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams<Runner>) => (
+        <Box onClick={(e) => e.stopPropagation()}>
+          {viewMode === 'mine' && (
+            <>
+              <Tooltip title="Refresh Data">
+                <IconButton
+                  size="small"
+                  color="primary"
+                  disabled={params.row.dataDownloadStatus === 'downloading'}
+                  onClick={() => handleRefreshData(params.row.id, params.row.name)}
+                >
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={params.row.public ? 'Make Private' : 'Make Public'}>
+                <IconButton
+                  size="small"
+                  color={params.row.public ? 'info' : 'default'}
+                  onClick={() => {
+                    setSelectedRunner(params.row);
+                    setVisibilityDialogOpen(true);
+                  }}
+                >
+                  {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Edit Runner">
+                <IconButton
+                  size="small"
+                  onClick={async () => {
+                    const result = await getRunnerWithSecrets({ variables: { id: params.row.id } });
+                    const runnerData = result.data?.botRunners?.edges?.[0]?.node;
+                    if (runnerData) {
+                      setSelectedRunner(runnerData as Runner);
+                      setEditDialogOpen(true);
+                    }
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete Runner">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => {
+                    setSelectedRunner(params.row);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+      ),
+    },
+  ];
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -192,7 +284,7 @@ export const RunnersList = () => {
             Runners
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.botRunners?.totalCount || 0} total runners
+            {pagination.totalCount || 0} total runners
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -224,126 +316,12 @@ export const RunnersList = () => {
         </Box>
       </Box>
 
-      {runners.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Typography variant="body2" color="text.secondary">
-              No runners yet. Create your first runner to get started.
-            </Typography>
-          </CardContent>
-        </Card>
-      ) : (
-        <Paper sx={{ width: '100%', mb: 2 }}>
-          <TableContainer>
-            <Table sx={{ minWidth: 750 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Data Status</TableCell>
-                <TableCell>Bots</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {runners.map((runner) => (
-                <TableRow key={runner.id} hover>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" fontWeight={500}>
-                        {runner.name}
-                      </Typography>
-                      {runner.public && (
-                        <Chip
-                          icon={<PublicIcon />}
-                          label="Public"
-                          size="small"
-                          color="info"
-                          variant="outlined"
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={runner.type}
-                      variant="outlined"
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell sx={{ minWidth: 200 }}>
-                    {renderDataStatus(runner)}
-                  </TableCell>
-                  <TableCell>{runner.bots?.totalCount || 0}</TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(runner.createdAt).toLocaleDateString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    {viewMode === 'mine' && (
-                      <>
-                        <Tooltip title="Refresh Data">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            disabled={runner.dataDownloadStatus === 'downloading'}
-                            onClick={() => handleRefreshData(runner.id, runner.name)}
-                          >
-                            <RefreshIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={runner.public ? 'Make Private' : 'Make Public'}>
-                          <IconButton
-                            size="small"
-                            color={runner.public ? 'info' : 'default'}
-                            onClick={() => {
-                              setSelectedRunner(runner);
-                              setVisibilityDialogOpen(true);
-                            }}
-                          >
-                            {runner.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit Runner">
-                          <IconButton
-                            size="small"
-                            onClick={async () => {
-                              // Fetch runner with secrets (config, dataDownloadConfig) for edit dialog
-                              const result = await getRunnerWithSecrets({ variables: { id: runner.id } });
-                              const runnerData = result.data?.botRunners?.edges?.[0]?.node;
-                              if (runnerData) {
-                                setSelectedRunner(runnerData);
-                                setEditDialogOpen(true);
-                              }
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete Runner">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              setSelectedRunner(runner);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        </Paper>
-      )}
+      <PaginatedDataGrid<Runner>
+        columns={columns}
+        pagination={pagination}
+        emptyMessage="No runners yet. Create your first runner to get started."
+        isPolling={!pagination.loading && data !== undefined}
+      />
 
       <CreateRunnerDialog
         open={createDialogOpen}
