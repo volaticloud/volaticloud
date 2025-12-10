@@ -2,24 +2,26 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
   IconButton,
-  CircularProgress,
-  Alert,
-  Stack,
+  Tooltip,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useState } from 'react';
-import { useGetExchangesQuery } from './exchanges.generated';
+import { useState, useEffect } from 'react';
+import { useGetExchangesQuery, GetExchangesQuery } from './exchanges.generated';
 import { CreateExchangeDialog } from './CreateExchangeDialog';
 import { EditExchangeDialog } from './EditExchangeDialog';
 import { DeleteExchangeDialog } from './DeleteExchangeDialog';
+import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
+import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
+
+// Extract Exchange type from generated query
+type Exchange = NonNullable<NonNullable<NonNullable<GetExchangesQuery['exchanges']['edges']>[number]>['node']>;
 
 export const ExchangesList = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -28,57 +30,123 @@ export const ExchangesList = () => {
   const [selectedExchange, setSelectedExchange] = useState<{
     id: string;
     name: string;
-    config?: any;
+    config?: Record<string, unknown>;
   } | null>(null);
 
-  // Get active group for filtering
   const { activeGroupId } = useActiveGroup();
 
-  const { data, loading, error, refetch } = useGetExchangesQuery({
+  // Pagination hook
+  const pagination = useCursorPagination<Exchange>({ initialPageSize: 10 });
+  const { setLoading, updateFromResponse, reset } = pagination;
+
+  const { data, loading, refetch } = useGetExchangesQuery({
     variables: {
-      first: 50,
+      first: pagination.pageSize,
+      after: pagination.cursor,
       where: {
         ownerID: activeGroupId || undefined
       }
     },
-    skip: !activeGroupId, // Skip query if no active group
+    skip: !activeGroupId,
   });
 
-  const handleEdit = (exchange: { id: string; name: string; config?: any }) => {
-    setSelectedExchange(exchange);
-    setEditDialogOpen(true);
-  };
+  // Sync pagination state with query results
+  useEffect(() => {
+    setLoading(loading);
+    if (data?.exchanges) {
+      updateFromResponse(data.exchanges);
+    }
+  }, [data, loading, setLoading, updateFromResponse]);
 
-  const handleDelete = (exchange: { id: string; name: string }) => {
-    setSelectedExchange(exchange);
-    setDeleteDialogOpen(true);
-  };
+  // Reset pagination when activeGroupId changes
+  useEffect(() => {
+    reset();
+  }, [activeGroupId, reset]);
 
   const handleSuccess = () => {
     refetch();
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box>
-        <Alert severity="error">
-          Error loading exchanges: {error.message}
-        </Alert>
-      </Box>
-    );
-  }
-
-  const exchanges = (data?.exchanges?.edges
-    ?.map(edge => edge?.node)
-    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
+  // Define columns for the DataGrid
+  const columns: GridColDef<Exchange>[] = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: GridRenderCellParams<Exchange>) => (
+        <Typography variant="body2" fontWeight={600}>
+          {params.row.name}
+        </Typography>
+      ),
+    },
+    {
+      field: 'bots',
+      headerName: 'Bots',
+      width: 100,
+      renderCell: (params: GridRenderCellParams<Exchange>) => (
+        <Typography variant="body2" color="text.secondary">
+          {params.row.bots.totalCount}
+        </Typography>
+      ),
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Created',
+      width: 160,
+      renderCell: (params: GridRenderCellParams<Exchange>) => (
+        <Typography variant="caption" color="text.secondary">
+          {new Date(params.row.createdAt).toLocaleString()}
+        </Typography>
+      ),
+    },
+    {
+      field: 'updatedAt',
+      headerName: 'Updated',
+      width: 160,
+      renderCell: (params: GridRenderCellParams<Exchange>) => (
+        <Typography variant="caption" color="text.secondary">
+          {new Date(params.row.updatedAt).toLocaleString()}
+        </Typography>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      sortable: false,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams<Exchange>) => (
+        <Box onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setSelectedExchange(params.row);
+                setEditDialogOpen(true);
+              }}
+              color="primary"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setSelectedExchange(params.row);
+                setDeleteDialogOpen(true);
+              }}
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
@@ -95,7 +163,7 @@ export const ExchangesList = () => {
             Exchanges
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage your exchange connections and API credentials
+            {pagination.totalCount || 0} exchange connections
           </Typography>
         </Box>
         <Button
@@ -108,65 +176,11 @@ export const ExchangesList = () => {
         </Button>
       </Box>
 
-      {exchanges.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Typography variant="body2" color="text.secondary">
-              No exchanges configured. Add an exchange to connect to trading platforms.
-            </Typography>
-          </CardContent>
-        </Card>
-      ) : (
-        <Stack spacing={2}>
-          {exchanges.map((exchange) => (
-            <Card key={exchange.id}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        {exchange.name}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Bots: {exchange.bots.totalCount}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Created: {new Date(exchange.createdAt).toLocaleString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Updated: {new Date(exchange.updatedAt).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEdit(exchange)}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(exchange)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-      )}
+      <PaginatedDataGrid<Exchange>
+        columns={columns}
+        pagination={pagination}
+        emptyMessage="No exchanges configured. Add an exchange to connect to trading platforms."
+      />
 
       <CreateExchangeDialog
         open={createDialogOpen}

@@ -2,21 +2,13 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
   IconButton,
   Tooltip,
-  Paper,
   Snackbar,
   Alert,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   PlayArrow as RunIcon,
@@ -24,13 +16,16 @@ import {
   Assessment as ResultsIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useState } from 'react';
-import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation } from './backtests.generated';
-import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { ErrorAlert } from '../shared/ErrorAlert';
+import { useState, useEffect } from 'react';
+import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation, GetBacktestsQuery } from './backtests.generated';
 import { CreateBacktestDialog } from './CreateBacktestDialog';
 import { DeleteBacktestDialog } from './DeleteBacktestDialog';
+import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
+import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+
+// Extract Backtest type from generated query
+type Backtest = NonNullable<NonNullable<NonNullable<GetBacktestsQuery['backtests']['edges']>[number]>['node']>;
 
 export const BacktestsList = () => {
   const navigate = useGroupNavigate();
@@ -48,50 +43,52 @@ export const BacktestsList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  // Use generated Apollo hooks
-  // Filter backtests by strategy's ownerID to ensure users only see their own backtests
-  const { data, loading, error, refetch } = useGetBacktestsQuery({
+  // Pagination hook
+  const pagination = useCursorPagination<Backtest>({ initialPageSize: 10 });
+  const { setLoading, updateFromResponse, reset } = pagination;
+
+  const { data, loading, refetch } = useGetBacktestsQuery({
     variables: {
-      first: 50,
+      first: pagination.pageSize,
+      after: pagination.cursor,
       where: activeGroupId ? {
         hasStrategyWith: [{ ownerID: activeGroupId }]
       } : undefined
     },
-    skip: !activeGroupId, // Skip query if no active group selected
+    skip: !activeGroupId,
   });
 
-  // Mutations with refetch on completion
-  const [runBacktest] = useRunBacktestMutation({
-    onCompleted: () => refetch()
-  });
+  // Sync pagination state with query results
+  useEffect(() => {
+    setLoading(loading);
+    if (data?.backtests) {
+      updateFromResponse(data.backtests);
+    }
+  }, [data, loading, setLoading, updateFromResponse]);
 
-  const [stopBacktest] = useStopBacktestMutation({
-    onCompleted: () => refetch()
-  });
+  // Reset pagination when activeGroupId changes
+  useEffect(() => {
+    reset();
+  }, [activeGroupId, reset]);
+
+  // Mutations
+  const [runBacktest] = useRunBacktestMutation({ onCompleted: () => refetch() });
+  const [stopBacktest] = useStopBacktestMutation({ onCompleted: () => refetch() });
 
   const handleRunBacktest = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     try {
       const result = await runBacktest({ variables: { id } });
-
-      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
       if (result.errors || !result.data?.runBacktest) {
-        const errorMsg = result.errors?.[0]?.message || 'Failed to run backtest';
         setSnackbar({
           open: true,
-          message: errorMsg,
+          message: result.errors?.[0]?.message || 'Failed to run backtest',
           severity: 'error',
         });
       } else {
-        setSnackbar({
-          open: true,
-          message: 'Backtest started successfully',
-          severity: 'success',
-        });
+        setSnackbar({ open: true, message: 'Backtest started successfully', severity: 'success' });
       }
     } catch (err) {
-      // Catch network errors
-      console.error('Failed to run backtest:', err);
       setSnackbar({
         open: true,
         message: err instanceof Error ? err.message : 'Failed to run backtest',
@@ -101,28 +98,19 @@ export const BacktestsList = () => {
   };
 
   const handleStopBacktest = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     try {
       const result = await stopBacktest({ variables: { id } });
-
-      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
       if (result.errors || !result.data?.stopBacktest) {
-        const errorMsg = result.errors?.[0]?.message || 'Failed to stop backtest';
         setSnackbar({
           open: true,
-          message: errorMsg,
+          message: result.errors?.[0]?.message || 'Failed to stop backtest',
           severity: 'error',
         });
       } else {
-        setSnackbar({
-          open: true,
-          message: 'Backtest stopped successfully',
-          severity: 'success',
-        });
+        setSnackbar({ open: true, message: 'Backtest stopped successfully', severity: 'success' });
       }
     } catch (err) {
-      // Catch network errors
-      console.error('Failed to stop backtest:', err);
       setSnackbar({
         open: true,
         message: err instanceof Error ? err.message : 'Failed to stop backtest',
@@ -137,16 +125,11 @@ export const BacktestsList = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'running':
-        return 'info';
-      case 'completed':
-        return 'success';
-      case 'failed':
-        return 'error';
-      case 'pending':
-        return 'default';
-      default:
-        return 'warning';
+      case 'running': return 'info';
+      case 'completed': return 'success';
+      case 'failed': return 'error';
+      case 'pending': return 'default';
+      default: return 'warning';
     }
   };
 
@@ -154,19 +137,137 @@ export const BacktestsList = () => {
     return new Date(dateStr).toLocaleString();
   };
 
-  const getConfigSummary = (config: any) => {
+  const getConfigSummary = (config: Record<string, unknown> | null | undefined) => {
     if (!config) return 'No config';
-    const pairs = config.pairs?.length || 0;
+    const pairs = (config.pairs as unknown[])?.length || 0;
     const timeframe = config.timeframe || 'N/A';
     return `${pairs} pairs, ${timeframe}`;
   };
 
-  if (loading) return <LoadingSpinner message="Loading backtests..." />;
-  if (error) return <ErrorAlert error={error} />;
-
-  const backtests = (data?.backtests?.edges
-    ?.map(edge => edge?.node)
-    .filter((node): node is NonNullable<typeof node> => node !== null && node !== undefined) || []);
+  // Define columns for the DataGrid
+  const columns: GridColDef<Backtest>[] = [
+    {
+      field: 'strategy',
+      headerName: 'Strategy',
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Typography variant="body2" fontWeight={500}>
+          {params.row.strategy.name}
+        </Typography>
+      ),
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 110,
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Chip
+          label={params.row.status}
+          color={getStatusColor(params.row.status)}
+          size="small"
+        />
+      ),
+    },
+    {
+      field: 'config',
+      headerName: 'Configuration',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Typography variant="body2">
+          {getConfigSummary(params.row.strategy.config)}
+        </Typography>
+      ),
+    },
+    {
+      field: 'runner',
+      headerName: 'Runner',
+      width: 140,
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Tooltip title={`Type: ${params.row.runner.type}`}>
+          <Typography variant="body2">{params.row.runner.name}</Typography>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Created',
+      width: 160,
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Typography variant="caption" color="text.secondary">
+          {formatDate(params.row.createdAt)}
+        </Typography>
+      ),
+    },
+    {
+      field: 'completedAt',
+      headerName: 'Completed',
+      width: 160,
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Typography variant="caption" color="text.secondary">
+          {params.row.completedAt ? formatDate(params.row.completedAt) : '-'}
+        </Typography>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 160,
+      sortable: false,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams<Backtest>) => (
+        <Box onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Run">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={(e) => handleRunBacktest(e, params.row.id)}
+              disabled={params.row.status === 'running'}
+            >
+              <RunIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Stop">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => handleStopBacktest(e, params.row.id)}
+              disabled={params.row.status !== 'running'}
+            >
+              <StopIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="View Results">
+            <IconButton
+              size="small"
+              color="info"
+              disabled={!params.row.result || params.row.status !== 'completed'}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/backtests/${params.row.id}`);
+              }}
+            >
+              <ResultsIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedBacktest(params.row);
+                setDeleteDialogOpen(true);
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -183,7 +284,7 @@ export const BacktestsList = () => {
             Backtests
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.backtests?.totalCount || 0} total backtests
+            {pagination.totalCount || 0} total backtests
           </Typography>
         </Box>
         <Button
@@ -196,127 +297,12 @@ export const BacktestsList = () => {
         </Button>
       </Box>
 
-      {backtests.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Typography variant="body2" color="text.secondary">
-              No backtests yet. Create your first backtest to get started.
-            </Typography>
-          </CardContent>
-        </Card>
-      ) : (
-        <Paper sx={{ width: '100%', mb: 2 }}>
-          <TableContainer>
-            <Table sx={{ minWidth: 750 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Strategy</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Configuration</TableCell>
-                <TableCell>Runner</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell>Completed</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {backtests.map((backtest) => (
-                <TableRow
-                  key={backtest.id}
-                  hover
-                  onClick={() => navigate(`/backtests/${backtest.id}`)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {backtest.strategy.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={backtest.status}
-                      color={getStatusColor(backtest.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {getConfigSummary(backtest.strategy.config)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {backtest.runner.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {backtest.runner.type}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatDate(backtest.createdAt)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {backtest.completedAt ? formatDate(backtest.completedAt) : '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Run">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={(e) => handleRunBacktest(e, backtest.id)}
-                        disabled={backtest.status === 'running'}
-                      >
-                        <RunIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Stop">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={(e) => handleStopBacktest(e, backtest.id)}
-                        disabled={backtest.status !== 'running'}
-                      >
-                        <StopIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="View Results">
-                      <IconButton
-                        size="small"
-                        color="info"
-                        disabled={!backtest.result || backtest.status !== 'completed'}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/backtests/${backtest.id}`);
-                        }}
-                      >
-                        <ResultsIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBacktest(backtest);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        </Paper>
-      )}
+      <PaginatedDataGrid<Backtest>
+        columns={columns}
+        pagination={pagination}
+        emptyMessage="No backtests yet. Create your first backtest to get started."
+        onRowClick={(row) => navigate(`/backtests/${row.id}`)}
+      />
 
       <CreateBacktestDialog
         open={createDialogOpen}
