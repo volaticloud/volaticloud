@@ -2,19 +2,21 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 
 /**
  * PageInfo structure from Relay-style GraphQL connections
+ * Note: startCursor and endCursor are optional to match GraphQL codegen types
  */
 export interface PageInfo {
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-  startCursor: string | null;
-  endCursor: string | null;
+  startCursor?: string | null;
+  endCursor?: string | null;
 }
 
 /**
  * Connection response structure from Relay-style GraphQL
+ * Note: edges and node are optional to match GraphQL codegen types
  */
 export interface ConnectionResponse<TNode> {
-  edges: Array<{ node: TNode | null } | null> | null;
+  edges?: Array<{ node?: TNode | null } | null> | null;
   pageInfo: PageInfo;
   totalCount: number;
 }

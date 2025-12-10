@@ -65,7 +65,7 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
   pagination,
   emptyMessage = 'No data available.',
   onRowClick,
-  getRowId = (row) => (row as { id: string }).id,
+  getRowId = (row) => (row as unknown as { id: string }).id,
   autoHeight = true,
   disableRowSelectionOnClick = true,
   rowHeight = 52,
@@ -151,14 +151,6 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
           backgroundColor: 'background.paper',
           borderRadius: 1,
           overflow: 'hidden',
-        }}
-        // Localization - customize pagination labels
-        localeText={{
-          MuiTablePagination: {
-            labelRowsPerPage: 'Rows per page:',
-            labelDisplayedRows: ({ from, to, count }) =>
-              `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`,
-          },
         }}
       />
     </Box>
