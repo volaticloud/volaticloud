@@ -182,8 +182,10 @@ func (h *DockerVolumeHelper) runTempContainer(ctx context.Context, containerConf
 		return fmt.Errorf("failed to create temp container: %w", err)
 	}
 
-	// Ensure cleanup
-	defer h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	// Ensure cleanup - ignore error as this is best-effort cleanup
+	defer func() {
+		_ = h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	}()
 
 	// Start container
 	if err := h.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
@@ -215,8 +217,10 @@ func (h *DockerVolumeHelper) runTempContainerWithOutput(ctx context.Context, con
 		return nil, fmt.Errorf("failed to create temp container: %w", err)
 	}
 
-	// Ensure cleanup
-	defer h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	// Ensure cleanup - ignore error as this is best-effort cleanup
+	defer func() {
+		_ = h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	}()
 
 	// Start container
 	if err := h.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
