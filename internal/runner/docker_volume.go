@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -182,9 +183,11 @@ func (h *DockerVolumeHelper) runTempContainer(ctx context.Context, containerConf
 		return fmt.Errorf("failed to create temp container: %w", err)
 	}
 
-	// Ensure cleanup - ignore error as this is best-effort cleanup
+	// Ensure cleanup
 	defer func() {
-		_ = h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+		if err := h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true}); err != nil {
+			log.Printf("failed to remove temp container %s: %v", resp.ID, err)
+		}
 	}()
 
 	// Start container
@@ -217,9 +220,11 @@ func (h *DockerVolumeHelper) runTempContainerWithOutput(ctx context.Context, con
 		return nil, fmt.Errorf("failed to create temp container: %w", err)
 	}
 
-	// Ensure cleanup - ignore error as this is best-effort cleanup
+	// Ensure cleanup
 	defer func() {
-		_ = h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+		if err := h.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true}); err != nil {
+			log.Printf("failed to remove temp container %s: %v", resp.ID, err)
+		}
 	}()
 
 	// Start container
