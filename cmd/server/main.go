@@ -30,6 +30,7 @@ import (
 	"volaticloud/internal/graph"
 	"volaticloud/internal/keycloak"
 	"volaticloud/internal/monitor"
+	"volaticloud/internal/proxy"
 )
 
 func main() {
@@ -287,6 +288,15 @@ func runServer(c *cli.Context) error {
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
+	})
+
+	// Bot proxy endpoint - forwards requests to running bot containers
+	// URL pattern: /bot/{id}/* -> proxied to bot's Freqtrade API
+	// No Keycloak auth - bots have their own Freqtrade API authentication
+	botProxy := proxy.NewBotProxy(client)
+	router.Route("/bot/{id}", func(r chi.Router) {
+		r.Handle("/*", botProxy.Handler())
+		r.Handle("/", botProxy.Handler())
 	})
 
 	// HTTP server

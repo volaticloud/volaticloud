@@ -32,8 +32,8 @@ func getSchemaLoader() (gojsonschema.JSONLoader, error) {
 	return schemaLoader, schemaLoaderErr
 }
 
-// validateFreqtradeConfigWithSchema validates a config against the Freqtrade JSON schema
-func validateFreqtradeConfigWithSchema(config map[string]interface{}) error {
+// ValidateFreqtradeConfigWithSchema validates a config against the Freqtrade JSON schema
+func ValidateFreqtradeConfigWithSchema(config map[string]interface{}) error {
 	if config == nil {
 		return fmt.Errorf("config cannot be nil")
 	}

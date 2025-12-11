@@ -233,13 +233,11 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 }
 
 func (r *mutationResolver) UpdateBot(ctx context.Context, id uuid.UUID, input ent.UpdateBotInput) (*ent.Bot, error) {
-	// Validate bot config if it's being updated
-	if input.Config != nil {
-		if err := validateFreqtradeConfigWithSchema(input.Config); err != nil {
-			return nil, fmt.Errorf("invalid bot configuration: %w", err)
-		}
-	}
-
+	// Note: Bot config is just one layer of the full Freqtrade config.
+	// Exchange config is stored separately in the Exchange entity.
+	// Full schema validation requires merging all config layers, which happens
+	// at container creation time (StartBot), not at update time.
+	// Basic nil check is sufficient here.
 	return r.client.Bot.UpdateOneID(id).SetInput(input).Save(ctx)
 }
 
