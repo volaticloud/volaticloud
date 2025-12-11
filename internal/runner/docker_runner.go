@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -44,8 +43,9 @@ const (
 
 // DockerRuntime implements Runtime for Docker environments
 type DockerRuntime struct {
-	client *client.Client
-	config *DockerConfig
+	client       *client.Client
+	config       *DockerConfig
+	volumeHelper *DockerVolumeHelper
 }
 
 // NewDockerRuntime creates a new Docker runtime instance
@@ -89,8 +89,9 @@ func NewDockerRuntime(ctx context.Context, config *DockerConfig) (*DockerRuntime
 	}
 
 	return &DockerRuntime{
-		client: cli,
-		config: config,
+		client:       cli,
+		config:       config,
+		volumeHelper: NewDockerVolumeHelper(cli),
 	}, nil
 }
 
@@ -496,22 +497,24 @@ func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFi
 	cmd := []string{"trade"}
 
 	// Add config file arguments in order: exchange -> strategy -> bot -> secure
-	if configPaths.exchangeConfigHost != "" {
+	if configPaths.hasExchangeConfig {
 		cmd = append(cmd, "--config", configPaths.exchangeConfigContainer)
 	}
-	if configPaths.strategyConfigHost != "" {
+	if configPaths.hasStrategyConfig {
 		cmd = append(cmd, "--config", configPaths.strategyConfigContainer)
 	}
-	if configPaths.botConfigHost != "" {
+	if configPaths.hasBotConfig {
 		cmd = append(cmd, "--config", configPaths.botConfigContainer)
 	}
-	if configPaths.secureConfigHost != "" {
+	if configPaths.hasSecureConfig {
 		cmd = append(cmd, "--config", configPaths.secureConfigContainer)
 	}
 
-	// Add strategy name
+	// Add strategy name and userdir for strategy file lookup
 	if spec.StrategyName != "" {
 		cmd = append(cmd, "--strategy", spec.StrategyName)
+		// Set userdir so freqtrade can find the strategy file
+		cmd = append(cmd, "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", configPaths.botID))
 	}
 
 	return &container.Config{
@@ -532,51 +535,16 @@ func (d *DockerRuntime) buildHostConfig(spec BotSpec, configPaths *configFilePat
 		RestartPolicy: container.RestartPolicy{
 			Name: "unless-stopped",
 		},
-		Mounts: []mount.Mount{},
-	}
-
-	// Add volume mounts for config files in order: exchange -> strategy -> bot -> secure
-	if configPaths.exchangeConfigHost != "" {
-		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   configPaths.exchangeConfigHost,
-			Target:   configPaths.exchangeConfigContainer,
-			ReadOnly: true,
-		})
-	}
-	if configPaths.strategyConfigHost != "" {
-		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   configPaths.strategyConfigHost,
-			Target:   configPaths.strategyConfigContainer,
-			ReadOnly: true,
-		})
-	}
-	if configPaths.botConfigHost != "" {
-		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   configPaths.botConfigHost,
-			Target:   configPaths.botConfigContainer,
-			ReadOnly: true,
-		})
-	}
-	if configPaths.secureConfigHost != "" {
-		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   configPaths.secureConfigHost,
-			Target:   configPaths.secureConfigContainer,
-			ReadOnly: true,
-		})
-	}
-
-	// Add volume mount for strategy Python file
-	if configPaths.strategyFileHost != "" {
-		hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   configPaths.strategyFileHost,
-			Target:   configPaths.strategyFileContainer,
-			ReadOnly: true,
-		})
+		Mounts: []mount.Mount{
+			// Mount the shared bot config volume
+			// Each bot's files are in a subdirectory named by bot ID
+			{
+				Type:     mount.TypeVolume,
+				Source:   configPaths.volumeName,
+				Target:   "/freqtrade/user_data",
+				ReadOnly: false, // Must be writable for bot data
+			},
+		},
 	}
 
 	// Add resource limits if specified
@@ -791,121 +759,117 @@ func loadTLSConfig(config *DockerConfig) (*tls.Config, error) {
 }
 
 // configFilePaths holds the paths to config files for a bot
+// Uses Docker volumes for remote Docker daemon compatibility
 type configFilePaths struct {
-	exchangeConfigHost      string // Host path to exchange config file
+	volumeName              string // Docker volume name for bot configs
+	botID                   string // Bot ID used as subdirectory in volume
 	exchangeConfigContainer string // Container path to exchange config file
-	strategyConfigHost      string // Host path to strategy config file
 	strategyConfigContainer string // Container path to strategy config file
-	botConfigHost           string // Host path to bot config file
 	botConfigContainer      string // Container path to bot config file
-	secureConfigHost        string // Host path to secure config file (system-forced)
 	secureConfigContainer   string // Container path to secure config file
-	strategyFileHost        string // Host path to strategy Python file
 	strategyFileContainer   string // Container path to strategy Python file
+	hasExchangeConfig       bool   // Whether exchange config exists
+	hasStrategyConfig       bool   // Whether strategy config exists
+	hasBotConfig            bool   // Whether bot config exists
+	hasSecureConfig         bool   // Whether secure config exists
+	hasStrategyFile         bool   // Whether strategy file exists
 }
 
-// createConfigFiles creates temporary config files for the bot
+// createConfigFiles creates config files in Docker volume for the bot
+// Uses Docker volumes instead of bind mounts for remote Docker daemon compatibility
 func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error) {
-	// Create config directory for this bot
-	configDir := getConfigDir(spec.ID)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create config directory: %w", err)
-	}
+	ctx := context.Background()
 
 	paths := &configFilePaths{
-		exchangeConfigContainer: "/freqtrade/user_data/config.exchange.json",
-		strategyConfigContainer: "/freqtrade/user_data/config.strategy.json",
-		botConfigContainer:      "/freqtrade/user_data/config.bot.json",
-		secureConfigContainer:   "/freqtrade/user_data/config.secure.json",
+		volumeName:              BotConfigVolume,
+		botID:                   spec.ID,
+		exchangeConfigContainer: fmt.Sprintf("/freqtrade/user_data/%s/config.exchange.json", spec.ID),
+		strategyConfigContainer: fmt.Sprintf("/freqtrade/user_data/%s/config.strategy.json", spec.ID),
+		botConfigContainer:      fmt.Sprintf("/freqtrade/user_data/%s/config.bot.json", spec.ID),
+		secureConfigContainer:   fmt.Sprintf("/freqtrade/user_data/%s/config.secure.json", spec.ID),
 	}
 
-	// Create exchange config file - write as-is (NO BUILDING, NO WRAPPING)
-	// Exchange config is already complete freqtrade format: {"exchange": {"name": "...", "key": "...", ...}}
+	// Write exchange config file to Docker volume
 	if len(spec.ExchangeConfig) > 0 {
-		exchangeConfigPath := filepath.Join(configDir, "config.exchange.json")
 		exchangeConfigJSON, err := json.MarshalIndent(spec.ExchangeConfig, "", "  ")
 		if err != nil {
 			d.cleanupConfigFiles(spec.ID)
 			return nil, fmt.Errorf("failed to marshal exchange config: %w", err)
 		}
-		if err := os.WriteFile(exchangeConfigPath, exchangeConfigJSON, 0644); err != nil {
+		volumePath := filepath.Join(spec.ID, "config.exchange.json")
+		if err := d.volumeHelper.WriteFile(ctx, BotConfigVolume, volumePath, exchangeConfigJSON); err != nil {
 			d.cleanupConfigFiles(spec.ID)
-			return nil, fmt.Errorf("failed to write exchange config file: %w", err)
+			return nil, fmt.Errorf("failed to write exchange config to volume: %w", err)
 		}
-		paths.exchangeConfigHost = exchangeConfigPath
+		paths.hasExchangeConfig = true
 	}
 
-	// Create strategy config file if strategy config exists
+	// Write strategy config file to Docker volume
 	if len(spec.StrategyConfig) > 0 {
-		strategyConfigPath := filepath.Join(configDir, "config.strategy.json")
 		strategyConfigJSON, err := json.MarshalIndent(spec.StrategyConfig, "", "  ")
 		if err != nil {
 			d.cleanupConfigFiles(spec.ID)
 			return nil, fmt.Errorf("failed to marshal strategy config: %w", err)
 		}
-		if err := os.WriteFile(strategyConfigPath, strategyConfigJSON, 0644); err != nil {
+		volumePath := filepath.Join(spec.ID, "config.strategy.json")
+		if err := d.volumeHelper.WriteFile(ctx, BotConfigVolume, volumePath, strategyConfigJSON); err != nil {
 			d.cleanupConfigFiles(spec.ID)
-			return nil, fmt.Errorf("failed to write strategy config file: %w", err)
+			return nil, fmt.Errorf("failed to write strategy config to volume: %w", err)
 		}
-		paths.strategyConfigHost = strategyConfigPath
+		paths.hasStrategyConfig = true
 	}
 
-	// Create bot config file if bot config exists
+	// Write bot config file to Docker volume
 	if len(spec.Config) > 0 {
-		botConfigPath := filepath.Join(configDir, "config.bot.json")
 		botConfigJSON, err := json.MarshalIndent(spec.Config, "", "  ")
 		if err != nil {
 			d.cleanupConfigFiles(spec.ID)
 			return nil, fmt.Errorf("failed to marshal bot config: %w", err)
 		}
-		if err := os.WriteFile(botConfigPath, botConfigJSON, 0644); err != nil {
+		volumePath := filepath.Join(spec.ID, "config.bot.json")
+		if err := d.volumeHelper.WriteFile(ctx, BotConfigVolume, volumePath, botConfigJSON); err != nil {
 			d.cleanupConfigFiles(spec.ID)
-			return nil, fmt.Errorf("failed to write bot config file: %w", err)
+			return nil, fmt.Errorf("failed to write bot config to volume: %w", err)
 		}
-		paths.botConfigHost = botConfigPath
+		paths.hasBotConfig = true
 	}
 
-	// Create secure config file (system-forced settings, NEVER exposed to users)
-	// This config has highest priority and overrides all other configs
+	// Write secure config file to Docker volume
 	if len(spec.SecureConfig) > 0 {
-		secureConfigPath := filepath.Join(configDir, "config.secure.json")
 		secureConfigJSON, err := json.MarshalIndent(spec.SecureConfig, "", "  ")
 		if err != nil {
 			d.cleanupConfigFiles(spec.ID)
 			return nil, fmt.Errorf("failed to marshal secure config: %w", err)
 		}
-		if err := os.WriteFile(secureConfigPath, secureConfigJSON, 0644); err != nil {
+		volumePath := filepath.Join(spec.ID, "config.secure.json")
+		if err := d.volumeHelper.WriteFile(ctx, BotConfigVolume, volumePath, secureConfigJSON); err != nil {
 			d.cleanupConfigFiles(spec.ID)
-			return nil, fmt.Errorf("failed to write secure config file: %w", err)
+			return nil, fmt.Errorf("failed to write secure config to volume: %w", err)
 		}
-		paths.secureConfigHost = secureConfigPath
+		paths.hasSecureConfig = true
 	}
 
-	// Create strategy Python file if strategy code exists
+	// Write strategy Python file to Docker volume
 	if spec.StrategyCode != "" && spec.StrategyName != "" {
 		strategyFileName := spec.StrategyName + ".py"
-		strategyFilePath := filepath.Join(configDir, strategyFileName)
-
-		// Write the strategy Python code
-		if err := os.WriteFile(strategyFilePath, []byte(spec.StrategyCode), 0644); err != nil {
+		volumePath := filepath.Join(spec.ID, "strategies", strategyFileName)
+		if err := d.volumeHelper.WriteFile(ctx, BotConfigVolume, volumePath, []byte(spec.StrategyCode)); err != nil {
 			d.cleanupConfigFiles(spec.ID)
-			return nil, fmt.Errorf("failed to write strategy file: %w", err)
+			return nil, fmt.Errorf("failed to write strategy file to volume: %w", err)
 		}
-
-		paths.strategyFileHost = strategyFilePath
-		paths.strategyFileContainer = "/freqtrade/user_data/strategies/" + strategyFileName
+		paths.strategyFileContainer = fmt.Sprintf("/freqtrade/user_data/%s/strategies/%s", spec.ID, strategyFileName)
+		paths.hasStrategyFile = true
 	}
 
 	return paths, nil
 }
 
-// cleanupConfigFiles removes the temporary config files for a bot
+// cleanupConfigFiles removes the config files for a bot from Docker volume
 func (d *DockerRuntime) cleanupConfigFiles(botID string) {
-	configDir := getConfigDir(botID)
-	os.RemoveAll(configDir) // Ignore errors - best effort cleanup
-}
-
-// getConfigDir returns the config directory path for a bot
-func getConfigDir(botID string) string {
-	return filepath.Join(os.TempDir(), "volaticloud-configs", botID)
+	ctx := context.Background()
+	// Remove bot's directory from the shared volume
+	if err := d.volumeHelper.RemoveDirectory(ctx, BotConfigVolume, botID); err != nil {
+		// Log but don't fail - cleanup is best effort
+		fmt.Printf("Warning: failed to cleanup bot config files for %s: %v\n", botID, err)
+	}
 }
