@@ -31,11 +31,13 @@ FreqUI connects to Freqtrade bot instances. Users configure the bot API URL thro
 ## CI/CD
 
 ### Build Pipeline
+
 - **Workflow:** `.github/workflows/build-frequi.yml`
 - **Triggers:** Push to `main` affecting `frequi/` directory
 - **Output:** Docker image pushed to `ghcr.io/volaticloud/volaticloud-frequi`
 
 ### Deploy Pipeline
+
 - **Workflow:** `.github/workflows/deploy-frequi.yml`
 - **Triggers:** After successful build, or manual dispatch
 - **Environment:** `prod`
