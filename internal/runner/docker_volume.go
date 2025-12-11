@@ -17,9 +17,9 @@ import (
 
 const (
 	// Default volume names
-	BotConfigVolume     = "volaticloud-bot-configs"
-	BacktestUserDirVol  = "volaticloud-freqtrade-userdir"
-	BacktestDataVol     = "volaticloud-freqtrade-data"
+	BotConfigVolume    = "volaticloud-bot-configs"
+	BacktestUserDirVol = "volaticloud-freqtrade-userdir"
+	BacktestDataVol    = "volaticloud-freqtrade-data"
 
 	// Helper image for volume operations
 	alpineImage = "alpine:latest"
