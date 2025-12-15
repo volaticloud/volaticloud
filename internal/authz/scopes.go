@@ -18,7 +18,8 @@ var StrategyScopes = []string{"view", "edit", "backtest", "delete"}
 
 // BotScopes defines the available permission scopes for Bot resources
 // view-secrets is for sensitive config fields (API keys, trading params)
-var BotScopes = []string{"view", "view-secrets", "run", "stop", "delete", "edit"}
+// freqtrade-api is for obtaining Freqtrade API tokens (used by FreqUI)
+var BotScopes = []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api"}
 
 // ExchangeScopes defines the available permission scopes for Exchange resources
 // view-secrets is for sensitive config fields (API keys, secrets)

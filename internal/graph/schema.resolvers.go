@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 	"volaticloud/internal/auth"
@@ -19,6 +20,7 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/graph/model"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
@@ -761,6 +763,111 @@ func (r *mutationResolver) SetBotVisibility(ctx context.Context, id uuid.UUID, p
 
 func (r *mutationResolver) SetRunnerVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.BotRunner, error) {
 	return UpdateBotRunnerVisibility(ctx, r.client, r.umaClient, id.String(), public)
+}
+
+func (r *mutationResolver) GetFreqtradeToken(ctx context.Context, botID uuid.UUID) (*model.FreqtradeToken, error) {
+	// Load the bot with its runner configuration
+	b, err := r.client.Bot.Query().
+		Where(bot.ID(botID)).
+		WithRunner().
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load bot: %w", err)
+	}
+
+	// Verify bot has a container (is running or at least created)
+	if b.ContainerID == "" {
+		return nil, fmt.Errorf("bot has no container - please start the bot first")
+	}
+
+	// Get the runner
+	botRunner := b.Edges.Runner
+	if botRunner == nil {
+		return nil, fmt.Errorf("bot has no runner configuration")
+	}
+
+	// Create runner client to get bot status (for API URL)
+	factory := runner.NewFactory()
+	rt, err := factory.Create(ctx, botRunner.Type, botRunner.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create runner client: %w", err)
+	}
+	defer rt.Close()
+
+	// Get bot status from runner to find the API URL (hostPort)
+	status, err := rt.GetBotStatus(ctx, b.ContainerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bot status: %w", err)
+	}
+
+	// Verify bot is running and healthy
+	if status.Status != enum.BotStatusRunning {
+		return nil, fmt.Errorf("bot is not running (status: %s)", status.Status)
+	}
+
+	// Extract username and password from secure_config
+	secureConfig := b.SecureConfig
+	if secureConfig == nil {
+		return nil, fmt.Errorf("bot has no secure_config")
+	}
+
+	apiServer, ok := secureConfig["api_server"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("secure_config missing api_server")
+	}
+
+	username, ok := apiServer["username"].(string)
+	if !ok || username == "" {
+		return nil, fmt.Errorf("secure_config missing api_server.username")
+	}
+
+	password, ok := apiServer["password"].(string)
+	if !ok || password == "" {
+		return nil, fmt.Errorf("secure_config missing api_server.password")
+	}
+
+	// Parse runner config to get Docker host
+	// Config may be nested under runner type key (e.g., {"docker": {...}})
+	typeConfig := runner.ExtractRunnerConfig(botRunner.Config, botRunner.Type)
+	dockerConfig, err := runner.ParseDockerConfig(typeConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse runner config: %w", err)
+	}
+
+	// Extract hostname from Docker host URL for backend-to-bot communication
+	// tcp://192.168.1.x:2375 → 192.168.1.x
+	// unix:///var/run/docker.sock → localhost
+	dockerHostURL := dockerConfig.Host
+	apiHost := "localhost"
+	if strings.HasPrefix(dockerHostURL, "tcp://") {
+		// Parse the TCP URL to extract host
+		parsed, err := url.Parse(dockerHostURL)
+		if err == nil && parsed.Hostname() != "" {
+			apiHost = parsed.Hostname()
+		}
+	}
+
+	// Build the direct API URL for backend-to-bot communication
+	// The hostPort is the exposed port on the Docker host
+	directAPIURL := fmt.Sprintf("http://%s:%d", apiHost, status.HostPort)
+
+	// Create Freqtrade client and login using direct URL
+	ftClient := freqtrade.NewBotClient(directAPIURL, username, password)
+	tokens, err := ftClient.Login(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login to bot API: %w", err)
+	}
+
+	// Return the gateway proxy URL for frontend use
+	// Frontend accesses bot via /gateway/v1/bot/{botId}/* which proxies to the bot
+	proxyAPIURL := fmt.Sprintf("/gateway/v1/bot/%s", botID.String())
+
+	return &model.FreqtradeToken{
+		APIURL:       proxyAPIURL,
+		Username:     username,
+		AccessToken:  tokens.GetAccessToken(),
+		RefreshToken: tokens.GetRefreshToken(),
+	}, nil
 }
 
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {

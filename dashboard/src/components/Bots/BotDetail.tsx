@@ -24,6 +24,7 @@ import {
   Refresh,
   Delete,
   ArrowBack,
+  Dashboard,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import {
@@ -34,12 +35,14 @@ import {
   useDeleteBotMutation,
 } from './bots.generated';
 import BotMetrics from './BotMetrics';
+import FreqUIDialog from './FreqUIDialog';
 import { useGroupNavigate } from '../../contexts/GroupContext';
 
 const BotDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useGroupNavigate();
   const [actionLoading, setActionLoading] = useState(false);
+  const [frequiDialogOpen, setFrequiDialogOpen] = useState(false);
 
   const { data, loading, error, refetch } = useGetBotQuery({
     variables: { id: id! },
@@ -226,6 +229,18 @@ const BotDetail = () => {
               </Button>
             </span>
           </Tooltip>
+
+          <Tooltip title="Open FreqUI Dashboard">
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<Dashboard />}
+                onClick={() => setFrequiDialogOpen(true)}
+              >
+                Open FreqUI
+              </Button>
+            </span>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -390,6 +405,14 @@ const BotDetail = () => {
           </TableContainer>
         </Paper>
       )}
+
+      {/* FreqUI Dialog */}
+      <FreqUIDialog
+        open={frequiDialogOpen}
+        onClose={() => setFrequiDialogOpen(false)}
+        botId={bot.id}
+        botName={bot.name}
+      />
     </Box>
   );
 };

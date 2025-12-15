@@ -1408,6 +1408,18 @@ export type ExchangeWhereInput = {
   updatedAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
 };
 
+export type FreqtradeToken = {
+  __typename?: 'FreqtradeToken';
+  /** JWT access token for bot API authentication */
+  accessToken: Scalars['String']['output'];
+  /** The bot API URL to connect to */
+  apiUrl: Scalars['String']['output'];
+  /** JWT refresh token for renewing access */
+  refreshToken: Scalars['String']['output'];
+  /** Username for the bot API */
+  username: Scalars['String']['output'];
+};
+
 export type KrakenConfigInput = {
   apiKey: Scalars['String']['input'];
   apiSecret: Scalars['String']['input'];
@@ -1437,6 +1449,12 @@ export type Mutation = {
   deleteExchange: Scalars['Boolean']['output'];
   deleteStrategy: Scalars['Boolean']['output'];
   deleteTrade: Scalars['Boolean']['output'];
+  /**
+   * Get Freqtrade API token for a bot (for FreqUI authentication)
+   * Backend authenticates with bot API and returns JWT tokens
+   * This avoids exposing bot credentials to the frontend
+   */
+  getFreqtradeToken: FreqtradeToken;
   refreshRunnerData: BotRunner;
   restartBot: Bot;
   runBacktest: Backtest;
@@ -1524,6 +1542,11 @@ export type MutationDeleteStrategyArgs = {
 
 export type MutationDeleteTradeArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationGetFreqtradeTokenArgs = {
+  botId: Scalars['ID']['input'];
 };
 
 

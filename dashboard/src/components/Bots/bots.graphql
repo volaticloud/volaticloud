@@ -184,3 +184,12 @@ mutation SetBotVisibility($id: ID!, $public: Boolean!) {
     public
   }
 }
+
+mutation GetFreqtradeToken($botId: ID!) {
+  getFreqtradeToken(botId: $botId) {
+    apiUrl
+    username
+    accessToken
+    refreshToken
+  }
+}

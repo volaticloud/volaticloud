@@ -1,5 +1,6 @@
 {
-  "VOLATICLOUD__GRAPHQL_URL": "/query",
+  "VOLATICLOUD__GATEWAY_URL": "/gateway/v1",
+  "VOLATICLOUD__FREQUI_URL": "/frequi/",
   "VOLATICLOUD__KEYCLOAK_AUTHORITY": "http://localhost:8180/realms/dev",
   "VOLATICLOUD__KEYCLOAK_CLIENT_ID": "dashboard",
   "VOLATICLOUD__KEYCLOAK_REDIRECT_URI": "http://localhost:5173",

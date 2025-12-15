@@ -105,7 +105,7 @@ func GenerateSecureConfig() (map[string]interface{}, error) {
 			"password":          password,
 			"jwt_secret_key":    jwtSecret,
 			"enable_openapi":    true,
-			"CORS_origins":      []string{"https://frequi.volaticloud.com"},
+			"CORS_origins":      []string{"https://frequi.volaticloud.com", "http://localhost:8181"},
 		},
 	}
 
