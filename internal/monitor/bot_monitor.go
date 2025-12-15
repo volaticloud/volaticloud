@@ -219,7 +219,7 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 
 	// Fetch and update bot metrics if bot is running and healthy
 	if botStatus == enum.BotStatusRunning && healthy {
-		if err := m.fetchAndUpdateBotMetrics(ctx, b, status); err != nil {
+		if err := m.fetchAndUpdateBotMetrics(ctx, b, status, botRunner.Config); err != nil {
 			// Log error but don't fail the status check
 			log.Printf("Bot %s (%s) failed to fetch metrics: %v", b.Name, b.ID, err)
 		}
@@ -252,7 +252,7 @@ func (m *BotMonitor) updateBotStatus(ctx context.Context, botID uuid.UUID, statu
 }
 
 // fetchAndUpdateBotMetrics fetches metrics from Freqtrade API and updates BotMetrics entity
-func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, status *runner.BotStatus) error {
+func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, status *runner.BotStatus, runnerConfig map[string]interface{}) error {
 	// Extract API credentials from secure_config
 	secureConfig := b.SecureConfig
 	if secureConfig == nil {
@@ -282,7 +282,7 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 
 	// Try to fetch metrics with fallback:
 	// 1. Try container IP first (works when server is in same Docker network)
-	// 2. Fallback to localhost:hostPort (works when server is on host machine)
+	// 2. Fallback to runner host:hostPort (works for remote Docker hosts)
 	var profit *freqtrade.Profit
 	var err error
 
@@ -299,21 +299,27 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 			goto processMetrics
 		}
 		// Log the container IP failure but continue to fallback
-		log.Printf("Bot %s: container IP (%s) failed, trying localhost fallback: %v", b.Name, status.IPAddress, err)
+		log.Printf("Bot %s: container IP (%s) failed, trying runner host fallback: %v", b.Name, status.IPAddress, err)
 	}
 
-	// Fallback to localhost:hostPort
+	// Fallback to runner host:hostPort
+	// Extract Docker host from runner config (handles tcp://hostname:2376 -> hostname)
 	if status.HostPort > 0 {
-		localhostURL := fmt.Sprintf("http://localhost:%d", status.HostPort)
-		client := freqtrade.NewBotClient(localhostURL, username, password)
+		dockerHost := runner.ExtractDockerHostFromConfig(runnerConfig)
+		if dockerHost == "" {
+			dockerHost = "localhost" // Default to localhost if we can't determine host
+		}
+
+		hostURL := fmt.Sprintf("http://%s:%d", dockerHost, status.HostPort)
+		client := freqtrade.NewBotClient(hostURL, username, password)
 		profit, err = client.GetProfit(ctx)
 
 		if err == nil {
-			// Success with localhost
-			log.Printf("Bot %s: successfully connected via localhost:%d", b.Name, status.HostPort)
+			// Success with runner host
+			log.Printf("Bot %s: successfully connected via %s:%d", b.Name, dockerHost, status.HostPort)
 			goto processMetrics
 		}
-		return fmt.Errorf("failed to fetch profit from both container IP and localhost: %w", err)
+		return fmt.Errorf("failed to fetch profit from both container IP and runner host (%s): %w", dockerHost, err)
 	}
 
 	return fmt.Errorf("no accessible endpoint: container IP=%s, hostPort=%d", status.IPAddress, status.HostPort)

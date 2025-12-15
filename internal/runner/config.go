@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // DockerConfig holds configuration for Docker runner
@@ -116,4 +117,62 @@ func (c *DockerConfig) ToMap() (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+// ExtractDockerHost extracts the hostname from a Docker host URL.
+// Handles formats like "tcp://hostname:2376" or "unix:///var/run/docker.sock"
+func (c *DockerConfig) ExtractDockerHost() string {
+	return extractDockerHostFromURL(c.Host)
+}
+
+// ExtractDockerHostFromConfig extracts the hostname from Docker runner config map.
+// This is useful when working with raw config maps stored in the database.
+func ExtractDockerHostFromConfig(config map[string]interface{}) string {
+	if config == nil {
+		return ""
+	}
+
+	// Try to get host from config
+	hostVal, ok := config["host"]
+	if !ok {
+		// Check for nested docker config
+		if dockerConfig, ok := config["docker"].(map[string]interface{}); ok {
+			hostVal, ok = dockerConfig["host"]
+			if !ok {
+				return ""
+			}
+		} else {
+			return ""
+		}
+	}
+
+	hostStr, ok := hostVal.(string)
+	if !ok {
+		return ""
+	}
+
+	return extractDockerHostFromURL(hostStr)
+}
+
+// extractDockerHostFromURL parses Docker host URL and extracts the hostname.
+// tcp://hostname:2376 -> hostname
+// unix:///var/run/docker.sock -> localhost
+func extractDockerHostFromURL(hostURL string) string {
+	// Parse the Docker host URL
+	if strings.HasPrefix(hostURL, "tcp://") {
+		hostStr := strings.TrimPrefix(hostURL, "tcp://")
+		// Remove port if present
+		if idx := strings.LastIndex(hostStr, ":"); idx > 0 {
+			hostStr = hostStr[:idx]
+		}
+		return hostStr
+	}
+
+	if strings.HasPrefix(hostURL, "unix://") {
+		// Local Docker socket - use localhost
+		return "localhost"
+	}
+
+	// Default: return as-is (might be just a hostname)
+	return hostURL
 }
