@@ -13,6 +13,7 @@ import (
 	"time"
 	"volaticloud/internal/auth"
 	backtest1 "volaticloud/internal/backtest"
+	bot1 "volaticloud/internal/bot"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
@@ -165,7 +166,7 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 
 	// Step 4: Generate secure_config and update the bot
 	// This config contains system-forced settings that users cannot override
-	secureConfig, err := generateSecureConfig()
+	secureConfig, err := bot1.GenerateSecureConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate secure config: %w", err)
 	}
@@ -276,7 +277,32 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 	// Check if container exists, if not create it
 	containerID := b.ContainerID
 	if containerID == "" {
-		// Build BotSpec from bot data
+		// Regenerate secure_config on every start for fresh credentials
+		secureConfig, err := bot1.GenerateSecureConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate secure config: %w", err)
+		}
+
+		// Update bot with new secure_config
+		_, err = r.client.Bot.UpdateOneID(b.ID).
+			SetSecureConfig(secureConfig).
+			Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update bot secure config: %w", err)
+		}
+
+		// Reload bot with edges since Update().Save() doesn't include them
+		b, err = r.client.Bot.Query().
+			Where(bot.ID(b.ID)).
+			WithRunner().
+			WithExchange().
+			WithStrategy().
+			Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reload bot with edges: %w", err)
+		}
+
+		// Build BotSpec from bot data (now with fresh secure_config)
 		spec, err := buildBotSpec(b)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build bot spec: %w", err)
@@ -380,9 +406,19 @@ func (r *mutationResolver) StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot,
 		return nil, fmt.Errorf("failed to stop bot in runner: %w", err)
 	}
 
-	// Update bot status
+	// Delete the container to ensure fresh configs on next start
+	// This enables config reload when bot is updated and restarted
+	if err := rt.DeleteBot(ctx, containerID); err != nil {
+		// Log but don't fail - container is stopped, deletion is best-effort
+		// If deletion fails, next start will fail to start old container
+		// and the error handler will clear containerID, allowing recreation
+		fmt.Printf("Warning: failed to delete stopped container %s: %v\n", containerID, err)
+	}
+
+	// Update bot status and clear containerID so next start recreates container
 	b, err = r.client.Bot.UpdateOneID(id).
 		SetStatus(enum.BotStatusStopped).
+		ClearContainerID().
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update bot status: %w", err)
@@ -392,83 +428,17 @@ func (r *mutationResolver) StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot,
 }
 
 func (r *mutationResolver) RestartBot(ctx context.Context, id uuid.UUID) (*ent.Bot, error) {
-	// Load the bot with its runner, exchange, and strategy
-	b, err := r.client.Bot.Query().
-		Where(bot.ID(id)).
-		WithRunner().
-		WithExchange().
-		WithStrategy().
-		Only(ctx)
+	// RestartBot performs a full stop + start cycle to ensure config files are reloaded
+	// This is important when bot config, strategy, or exchange has been updated
+
+	// Step 1: Stop the bot (this also deletes container and clears containerID)
+	_, err := r.StopBot(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load bot: %w", err)
+		return nil, fmt.Errorf("failed to stop bot during restart: %w", err)
 	}
 
-	// Get the runner
-	botRunner := b.Edges.Runner
-	if botRunner == nil {
-		return nil, fmt.Errorf("bot has no runner configuration")
-	}
-
-	// Create runner client
-	factory := runner.NewFactory()
-	rt, err := factory.Create(ctx, botRunner.Type, botRunner.Config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create runner client: %w", err)
-	}
-	defer rt.Close()
-
-	// Check if container exists, if not create it
-	containerID := b.ContainerID
-	if containerID == "" {
-		// Build BotSpec from bot data
-		spec, err := buildBotSpec(b)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build bot spec: %w", err)
-		}
-
-		// Create the container
-		containerID, err = rt.CreateBot(ctx, *spec)
-		if err != nil {
-			// Update bot status to error
-			r.client.Bot.UpdateOneID(b.ID).
-				SetStatus(enum.BotStatusError).
-				SetErrorMessage(fmt.Sprintf("Failed to create container: %v", err)).
-				Save(ctx)
-			return nil, fmt.Errorf("failed to create bot container: %w", err)
-		}
-
-		// Update bot with container_id
-		b, err = r.client.Bot.UpdateOneID(b.ID).
-			SetContainerID(containerID).
-			ClearErrorMessage().
-			Save(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update bot with container ID: %w", err)
-		}
-	}
-
-	// Restart the bot in the runtime
-	if err := rt.RestartBot(ctx, containerID); err != nil {
-		// If container not found, clear container ID and return error
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "No such container") {
-			r.client.Bot.UpdateOneID(id).
-				ClearContainerID().
-				SetStatus(enum.BotStatusStopped).
-				Save(ctx)
-			return nil, fmt.Errorf("container was deleted manually - please try restarting again")
-		}
-		return nil, fmt.Errorf("failed to restart bot in runner: %w", err)
-	}
-
-	// Update bot status
-	b, err = r.client.Bot.UpdateOneID(id).
-		SetStatus(enum.BotStatusRunning).
-		Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update bot status: %w", err)
-	}
-
-	return b, nil
+	// Step 2: Start the bot (this creates a fresh container with current configs)
+	return r.StartBot(ctx, id)
 }
 
 func (r *mutationResolver) CreateBotRunner(ctx context.Context, input ent.CreateBotRunnerInput) (*ent.BotRunner, error) {
