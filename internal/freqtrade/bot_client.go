@@ -121,3 +121,23 @@ func (c *BotClient) Ping(ctx context.Context) error {
 
 	return nil
 }
+
+// Login authenticates with the bot and returns access/refresh tokens
+func (c *BotClient) Login(ctx context.Context) (*AccessAndRefreshToken, error) {
+	ctx = c.contextWithAuth(ctx)
+
+	tokens, resp, err := c.client.FreqtradeAPI.TokenLoginApiV1TokenLoginPost(ctx).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to login: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return tokens, nil
+}
+
+// GetUsername returns the username used for authentication
+func (c *BotClient) GetUsername() string {
+	return c.username
+}

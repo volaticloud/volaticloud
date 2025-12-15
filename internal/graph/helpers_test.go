@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"volaticloud/internal/bot"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/runner"
@@ -334,9 +335,10 @@ func TestGenerateSecureConfig(t *testing.T) {
 	configs := make([]map[string]interface{}, 10)
 	usernames := make(map[string]bool)
 	passwords := make(map[string]bool)
+	jwtSecrets := make(map[string]bool)
 
 	for i := 0; i < 10; i++ {
-		config, err := generateSecureConfig()
+		config, err := bot.GenerateSecureConfig()
 		assert.NoError(t, err, "Should not error when generating secure config")
 		assert.NotNil(t, config, "Config should not be nil")
 
@@ -372,6 +374,18 @@ func TestGenerateSecureConfig(t *testing.T) {
 		assert.NotEmpty(t, password, "password should not be empty")
 		assert.Equal(t, 32, len(password), "password should be 32 characters")
 		passwords[password] = true
+
+		// Verify jwt_secret_key
+		jwtSecret, ok := apiServer["jwt_secret_key"].(string)
+		assert.True(t, ok, "jwt_secret_key should be a string")
+		assert.NotEmpty(t, jwtSecret, "jwt_secret_key should not be empty")
+		assert.Equal(t, 43, len(jwtSecret), "jwt_secret_key should be 43 characters (32 bytes base64 URL encoded)")
+		jwtSecrets[jwtSecret] = true
+
+		// Verify CORS_origins
+		corsOrigins, ok := apiServer["CORS_origins"].([]string)
+		assert.True(t, ok, "CORS_origins should be a string array")
+		assert.Contains(t, corsOrigins, "https://frequi.volaticloud.com", "CORS_origins should contain frequi URL")
 	}
 
 	// Verify all usernames are unique
@@ -379,6 +393,9 @@ func TestGenerateSecureConfig(t *testing.T) {
 
 	// Verify all passwords are unique
 	assert.Equal(t, 10, len(passwords), "All passwords should be unique")
+
+	// Verify all jwt_secrets are unique
+	assert.Equal(t, 10, len(jwtSecrets), "All jwt_secret_keys should be unique")
 }
 
 // TestBuildBotSpec tests the bot spec building function

@@ -32,7 +32,7 @@ func NewBotProxy(client *ent.Client) *BotProxy {
 }
 
 // Handler returns an http.Handler that proxies requests to bot containers.
-// URL pattern: /bot/{id}/* where {id} is the bot UUID
+// URL pattern: /gateway/v1/bot/{id}/* where {id} is the bot UUID
 // All requests are forwarded to the bot's Freqtrade API.
 func (p *BotProxy) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,14 +59,14 @@ func (p *BotProxy) Handler() http.Handler {
 		// Create reverse proxy
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-		// Customize the director to strip the /bot/{id} prefix
+		// Customize the director to strip the /gateway/v1/bot/{id} prefix
 		originalDirector := proxy.Director
 		proxy.Director = func(req *http.Request) {
 			originalDirector(req)
 
-			// Strip /bot/{id} prefix from path
-			// e.g., /bot/123/api/v1/status -> /api/v1/status
-			prefix := "/bot/" + botIDStr
+			// Strip /gateway/v1/bot/{id} prefix from path
+			// e.g., /gateway/v1/bot/123/api/v1/status -> /api/v1/status
+			prefix := "/gateway/v1/bot/" + botIDStr
 			if strings.HasPrefix(req.URL.Path, prefix) {
 				req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
 				if req.URL.Path == "" {

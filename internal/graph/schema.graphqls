@@ -199,6 +199,27 @@ type ConnectionTestResult {
   version: String
 }
 
+# Freqtrade API token for FreqUI authentication
+# Used to pre-authenticate FreqUI iframe without exposing credentials
+type FreqtradeToken {
+  """
+  The bot API URL to connect to
+  """
+  apiUrl: String!
+  """
+  Username for the bot API
+  """
+  username: String!
+  """
+  JWT access token for bot API authentication
+  """
+  accessToken: String!
+  """
+  JWT refresh token for renewing access
+  """
+  refreshToken: String!
+}
+
 # Query extensions
 # Note: ENT-generated list queries (exchanges, strategies, bots, botRunners, backtests) are defined in ent.graphql
 # Those queries already have @isAuthenticated checks in resolvers and require ownerID in where clause for authorization
@@ -280,4 +301,12 @@ type Mutation {
   Only the owner can change visibility
   """
   setRunnerVisibility(id: ID!, public: Boolean!): BotRunner! @hasScope(resource: "id", scope: "edit")
+
+  # FreqUI integration
+  """
+  Get Freqtrade API token for a bot (for FreqUI authentication)
+  Backend authenticates with bot API and returns JWT tokens
+  This avoids exposing bot credentials to the frontend
+  """
+  getFreqtradeToken(botId: ID!): FreqtradeToken! @hasScope(resource: "botId", scope: "freqtrade-api")
 }

@@ -246,22 +246,22 @@ func runServer(c *cli.Context) error {
 	// Setup Chi router
 	router := chi.NewRouter()
 
-	// Middleware
+	// Global middleware (applies to ALL routes)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Compress(5))
 
-	// CORS middleware for dashboard
-	router.Use(cors.Handler(cors.Options{
+	// CORS middleware for dashboard routes (used with With() for specific routes)
+	corsMiddleware := cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
-	}))
+	})
 
 	// Middleware to inject ENT and UMA clients into context for GraphQL directives and ENT hooks
 	injectClientsMiddleware := func(next http.Handler) http.Handler {
@@ -277,26 +277,29 @@ func runServer(c *cli.Context) error {
 		})
 	}
 
-	// GraphQL routes - Keycloak authentication required for all requests
-	// Playground with optional auth (for development convenience)
-	router.With(auth.OptionalAuth(keycloakClient), injectClientsMiddleware).Handle("/", playground.Handler("GraphQL Playground", "/query"))
-
-	// GraphQL API with required authentication
-	router.With(auth.RequireAuth(keycloakClient), injectClientsMiddleware).Handle("/query", srv)
-
-	// Health check endpoint
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	// Bot proxy endpoint - forwards requests to running bot containers
-	// URL pattern: /bot/{id}/* -> proxied to bot's Freqtrade API
-	// No Keycloak auth - bots have their own Freqtrade API authentication
+	// Bot proxy handler (created once, used in gateway routes)
 	botProxy := proxy.NewBotProxy(client)
-	router.Route("/bot/{id}", func(r chi.Router) {
-		r.Handle("/*", botProxy.Handler())
-		r.Handle("/", botProxy.Handler())
+
+	// All API routes under /gateway/v1 prefix
+	router.Route("/gateway/v1", func(gw chi.Router) {
+		// GraphQL Playground with optional auth (for development convenience)
+		gw.With(corsMiddleware, auth.OptionalAuth(keycloakClient), injectClientsMiddleware).Handle("/", playground.Handler("GraphQL Playground", "/gateway/v1/query"))
+
+		// GraphQL API with required authentication
+		gw.With(corsMiddleware, auth.RequireAuth(keycloakClient), injectClientsMiddleware).Handle("/query", srv)
+
+		// Health check endpoint - with CORS
+		gw.With(corsMiddleware).Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
+		})
+
+		// Bot proxy endpoint - NO CORS middleware
+		// CORS is delegated to the target Freqtrade bot which handles its own CORS_origins
+		gw.Route("/bot/{id}", func(r chi.Router) {
+			r.Handle("/*", botProxy.Handler())
+			r.Handle("/", botProxy.Handler())
+		})
 	})
 
 	// HTTP server
@@ -313,9 +316,10 @@ func runServer(c *cli.Context) error {
 	log.Println("======================")
 	log.Printf("✓ Database: %s (%s)\n", driver, dsn)
 	log.Println("✓ Schema migrated")
-	log.Printf("✓ GraphQL endpoint: http://%s/query\n", addr)
-	log.Printf("✓ GraphQL playground: http://%s/\n", addr)
-	log.Printf("✓ Health check: http://%s/health\n", addr)
+	log.Printf("✓ GraphQL endpoint: http://%s/gateway/v1/query\n", addr)
+	log.Printf("✓ GraphQL playground: http://%s/gateway/v1/\n", addr)
+	log.Printf("✓ Health check: http://%s/gateway/v1/health\n", addr)
+	log.Printf("✓ Bot proxy: http://%s/gateway/v1/bot/{id}/*\n", addr)
 	log.Println("")
 
 	// Display monitor status

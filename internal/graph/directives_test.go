@@ -313,9 +313,9 @@ func TestContextHelpers(t *testing.T) {
 // Scopes are now defined in the authz package
 func TestEntityScopes(t *testing.T) {
 	t.Run("BotScopes contains expected values", func(t *testing.T) {
-		expected := []string{"view", "view-secrets", "run", "stop", "delete", "edit"}
+		expected := []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api"}
 		assert.Equal(t, expected, authz.BotScopes, "BotScopes should contain the expected values")
-		assert.Len(t, authz.BotScopes, 6, "BotScopes should have 6 scopes")
+		assert.Len(t, authz.BotScopes, 7, "BotScopes should have 7 scopes")
 	})
 
 	t.Run("ExchangeScopes contains expected values", func(t *testing.T) {

@@ -246,6 +246,13 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	FreqtradeToken struct {
+		APIURL       func(childComplexity int) int
+		AccessToken  func(childComplexity int) int
+		RefreshToken func(childComplexity int) int
+		Username     func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateBacktest        func(childComplexity int, input ent.CreateBacktestInput) int
 		CreateBot             func(childComplexity int, input ent.CreateBotInput) int
@@ -259,6 +266,7 @@ type ComplexityRoot struct {
 		DeleteExchange        func(childComplexity int, id uuid.UUID) int
 		DeleteStrategy        func(childComplexity int, id uuid.UUID) int
 		DeleteTrade           func(childComplexity int, id uuid.UUID) int
+		GetFreqtradeToken     func(childComplexity int, botID uuid.UUID) int
 		RefreshRunnerData     func(childComplexity int, id uuid.UUID) int
 		RestartBot            func(childComplexity int, id uuid.UUID) int
 		RunBacktest           func(childComplexity int, id uuid.UUID) int
@@ -392,6 +400,7 @@ type MutationResolver interface {
 	SetStrategyVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.Strategy, error)
 	SetBotVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.Bot, error)
 	SetRunnerVisibility(ctx context.Context, id uuid.UUID, public bool) (*ent.BotRunner, error)
+	GetFreqtradeToken(ctx context.Context, botID uuid.UUID) (*model.FreqtradeToken, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id uuid.UUID) (ent.Noder, error)
@@ -1296,6 +1305,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ExchangeEdge.Node(childComplexity), true
 
+	case "FreqtradeToken.apiUrl":
+		if e.complexity.FreqtradeToken.APIURL == nil {
+			break
+		}
+
+		return e.complexity.FreqtradeToken.APIURL(childComplexity), true
+	case "FreqtradeToken.accessToken":
+		if e.complexity.FreqtradeToken.AccessToken == nil {
+			break
+		}
+
+		return e.complexity.FreqtradeToken.AccessToken(childComplexity), true
+	case "FreqtradeToken.refreshToken":
+		if e.complexity.FreqtradeToken.RefreshToken == nil {
+			break
+		}
+
+		return e.complexity.FreqtradeToken.RefreshToken(childComplexity), true
+	case "FreqtradeToken.username":
+		if e.complexity.FreqtradeToken.Username == nil {
+			break
+		}
+
+		return e.complexity.FreqtradeToken.Username(childComplexity), true
+
 	case "Mutation.createBacktest":
 		if e.complexity.Mutation.CreateBacktest == nil {
 			break
@@ -1428,6 +1462,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteTrade(childComplexity, args["id"].(uuid.UUID)), true
+	case "Mutation.getFreqtradeToken":
+		if e.complexity.Mutation.GetFreqtradeToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_getFreqtradeToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GetFreqtradeToken(childComplexity, args["botId"].(uuid.UUID)), true
 	case "Mutation.refreshRunnerData":
 		if e.complexity.Mutation.RefreshRunnerData == nil {
 			break
@@ -2460,6 +2505,17 @@ func (ec *executionContext) field_Mutation_deleteTrade_args(ctx context.Context,
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_getFreqtradeToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "botId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["botId"] = arg0
 	return args, nil
 }
 
@@ -7728,6 +7784,122 @@ func (ec *executionContext) fieldContext_ExchangeEdge_cursor(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _FreqtradeToken_apiUrl(ctx context.Context, field graphql.CollectedField, obj *model.FreqtradeToken) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FreqtradeToken_apiUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.APIURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FreqtradeToken_apiUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FreqtradeToken",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FreqtradeToken_username(ctx context.Context, field graphql.CollectedField, obj *model.FreqtradeToken) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FreqtradeToken_username,
+		func(ctx context.Context) (any, error) {
+			return obj.Username, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FreqtradeToken_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FreqtradeToken",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FreqtradeToken_accessToken(ctx context.Context, field graphql.CollectedField, obj *model.FreqtradeToken) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FreqtradeToken_accessToken,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessToken, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FreqtradeToken_accessToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FreqtradeToken",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FreqtradeToken_refreshToken(ctx context.Context, field graphql.CollectedField, obj *model.FreqtradeToken) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_FreqtradeToken_refreshToken,
+		func(ctx context.Context) (any, error) {
+			return obj.RefreshToken, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_FreqtradeToken_refreshToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FreqtradeToken",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10112,6 +10284,80 @@ func (ec *executionContext) fieldContext_Mutation_setRunnerVisibility(ctx contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_setRunnerVisibility_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_getFreqtradeToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_getFreqtradeToken,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().GetFreqtradeToken(ctx, fc.Args["botId"].(uuid.UUID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "botId")
+				if err != nil {
+					var zeroVal *model.FreqtradeToken
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "freqtrade-api")
+				if err != nil {
+					var zeroVal *model.FreqtradeToken
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *model.FreqtradeToken
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNFreqtradeToken2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐFreqtradeToken,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_getFreqtradeToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "apiUrl":
+				return ec.fieldContext_FreqtradeToken_apiUrl(ctx, field)
+			case "username":
+				return ec.fieldContext_FreqtradeToken_username(ctx, field)
+			case "accessToken":
+				return ec.fieldContext_FreqtradeToken_accessToken(ctx, field)
+			case "refreshToken":
+				return ec.fieldContext_FreqtradeToken_refreshToken(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type FreqtradeToken", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_getFreqtradeToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -24525,6 +24771,60 @@ func (ec *executionContext) _ExchangeEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var freqtradeTokenImplementors = []string{"FreqtradeToken"}
+
+func (ec *executionContext) _FreqtradeToken(ctx context.Context, sel ast.SelectionSet, obj *model.FreqtradeToken) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, freqtradeTokenImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FreqtradeToken")
+		case "apiUrl":
+			out.Values[i] = ec._FreqtradeToken_apiUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "username":
+			out.Values[i] = ec._FreqtradeToken_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "accessToken":
+			out.Values[i] = ec._FreqtradeToken_accessToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "refreshToken":
+			out.Values[i] = ec._FreqtradeToken_refreshToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -24729,6 +25029,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "setRunnerVisibility":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setRunnerVisibility(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "getFreqtradeToken":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_getFreqtradeToken(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -26312,6 +26619,20 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) marshalNFreqtradeToken2volaticloudᚋinternalᚋgraphᚋmodelᚐFreqtradeToken(ctx context.Context, sel ast.SelectionSet, v model.FreqtradeToken) graphql.Marshaler {
+	return ec._FreqtradeToken(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFreqtradeToken2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐFreqtradeToken(ctx context.Context, sel ast.SelectionSet, v *model.FreqtradeToken) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FreqtradeToken(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v any) (uuid.UUID, error) {

@@ -90,6 +90,11 @@ func GenerateSecureConfig() (map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to generate password: %w", err)
 	}
 
+	jwtSecret, err := utils.GenerateSecureToken(32)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate jwt secret: %w", err)
+	}
+
 	secureConfig := map[string]interface{}{
 		"initial_state": "running",
 		"api_server": map[string]interface{}{
@@ -98,7 +103,9 @@ func GenerateSecureConfig() (map[string]interface{}, error) {
 			"listen_port":       8080,
 			"username":          username,
 			"password":          password,
+			"jwt_secret_key":    jwtSecret,
 			"enable_openapi":    true,
+			"CORS_origins":      []string{"https://frequi.volaticloud.com", "http://localhost:8181"},
 		},
 	}
 

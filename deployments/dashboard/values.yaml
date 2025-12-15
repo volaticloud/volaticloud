@@ -32,8 +32,10 @@ deployments:
             value: "https://console.volaticloud.com"
           - name: VOLATICLOUD__KEYCLOAK_POST_LOGOUT_REDIRECT_URI
             value: "https://console.volaticloud.com"
-          - name: VOLATICLOUD__GRAPHQL_URL
-            value: "/query"
+          - name: VOLATICLOUD__GATEWAY_URL
+            value: "/gateway/v1"
+          - name: VOLATICLOUD__FREQUI_URL
+            value: "/frequi/"
 
         livenessProbe:
           httpGet:

@@ -2,12 +2,28 @@
 	# Enable gzip compression
 	encode gzip
 
-	# Reverse proxy /query to backend GraphQL endpoint
-	handle /query {
+	# Reverse proxy /gateway/* to backend (GraphQL, bot proxy, health)
+	handle /gateway/* {
 		reverse_proxy http://volaticloud-backend-volaticloud-backend:8080
 	}
 
-	# Serve static files and SPA
+	# Serve FreqUI static files at /frequi/*
+	# FreqUI is built with base path /frequi/ so assets already have correct prefix
+	handle /frequi/* {
+		root * /srv
+
+		# SPA fallback - serve frequi/index.html for all frequi routes
+		@frequi_spa {
+			path /frequi/*
+			not path /frequi/assets/*
+			not path /frequi/favicon.ico
+		}
+		rewrite @frequi_spa /frequi/index.html
+
+		file_server
+	}
+
+	# Serve dashboard static files at root
 	handle {
 		root * /srv
 
@@ -19,8 +35,8 @@
 
 	# Security headers
 	header {
-		# Prevent clickjacking
-		X-Frame-Options "DENY"
+		# Prevent clickjacking (dashboard only, not frequi iframe)
+		# X-Frame-Options is handled per-path below
 
 		# Prevent MIME type sniffing
 		X-Content-Type-Options "nosniff"
@@ -34,6 +50,13 @@
 		# Remove server header
 		-Server
 	}
+
+	# Allow FreqUI to be embedded in iframe (same-origin)
+	# Don't set X-Frame-Options for /frequi/* paths
+	@not_frequi {
+		not path /frequi/*
+	}
+	header @not_frequi X-Frame-Options "DENY"
 
 	# Cache static assets
 	@static {

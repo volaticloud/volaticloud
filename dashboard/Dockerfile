@@ -1,6 +1,5 @@
-# Stage 1: Build the React application
-# Trigger rebuild and redeploy - 2025-11-17 12:52 UTC
-FROM node:20-alpine AS builder
+# Stage 1: Build the React dashboard
+FROM node:20-alpine AS dashboard-builder
 
 WORKDIR /app
 
@@ -16,14 +15,35 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Stage 2: Serve with Caddy
+# Stage 2: Build FreqUI with custom base path
+FROM node:24-alpine AS frequi-builder
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Clone FreqUI source
+RUN apk add --no-cache git && \
+    git clone --depth 1 https://github.com/freqtrade/frequi.git .
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build with custom base path /frequi/
+RUN ./node_modules/.bin/vite build --base=/frequi/
+
+# Stage 3: Serve with Caddy
 FROM caddy:2-alpine
 
 # Install jq for JSON processing
 RUN apk add --no-cache jq
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist /srv
+# Copy dashboard build to /srv (root)
+COPY --from=dashboard-builder /app/dist /srv
+
+# Copy FreqUI build to /srv/frequi
+COPY --from=frequi-builder /app/dist /srv/frequi
 
 # Copy Caddyfile
 COPY Caddyfile /etc/caddy/Caddyfile

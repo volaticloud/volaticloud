@@ -20,16 +20,17 @@ import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
-  const graphqlUrl = useConfigValue('VOLATICLOUD__GRAPHQL_URL');
+  const gatewayUrl = useConfigValue('VOLATICLOUD__GATEWAY_URL');
   const auth = useAuth();
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
 
   // Create Apollo client with auth token
+  // GraphQL endpoint is at {gatewayUrl}/query
   const apolloClient = useMemo(() => {
     const getAccessToken = () => auth.user?.access_token;
-    return createApolloClient(graphqlUrl, getAccessToken);
-  }, [graphqlUrl, auth.user?.access_token]);
+    return createApolloClient(`${gatewayUrl}/query`, getAccessToken);
+  }, [gatewayUrl, auth.user?.access_token]);
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => !prev);

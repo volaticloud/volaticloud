@@ -1,1 +1,0 @@
-FROM freqtradeorg/frequi:latest

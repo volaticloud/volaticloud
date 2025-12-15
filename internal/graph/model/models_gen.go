@@ -58,6 +58,17 @@ type ExchangeConfigInput struct {
 	Bitfinex  *BitfinexConfigInput           `json:"bitfinex,omitempty"`
 }
 
+type FreqtradeToken struct {
+	// The bot API URL to connect to
+	APIURL string `json:"apiUrl"`
+	// Username for the bot API
+	Username string `json:"username"`
+	// JWT access token for bot API authentication
+	AccessToken string `json:"accessToken"`
+	// JWT refresh token for renewing access
+	RefreshToken string `json:"refreshToken"`
+}
+
 type KrakenConfigInput struct {
 	APIKey    string `json:"apiKey"`
 	APISecret string `json:"apiSecret"`

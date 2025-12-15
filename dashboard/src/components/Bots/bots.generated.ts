@@ -77,6 +77,13 @@ export type SetBotVisibilityMutationVariables = Types.Exact<{
 
 export type SetBotVisibilityMutation = { __typename?: 'Mutation', setBotVisibility: { __typename?: 'Bot', id: string, name: string, public: boolean } };
 
+export type GetFreqtradeTokenMutationVariables = Types.Exact<{
+  botId: Types.Scalars['ID']['input'];
+}>;
+
+
+export type GetFreqtradeTokenMutation = { __typename?: 'Mutation', getFreqtradeToken: { __typename?: 'FreqtradeToken', apiUrl: string, username: string, accessToken: string, refreshToken: string } };
+
 
 export const GetBotsDocument = gql`
     query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
@@ -560,3 +567,39 @@ export function useSetBotVisibilityMutation(baseOptions?: Apollo.MutationHookOpt
 export type SetBotVisibilityMutationHookResult = ReturnType<typeof useSetBotVisibilityMutation>;
 export type SetBotVisibilityMutationResult = Apollo.MutationResult<SetBotVisibilityMutation>;
 export type SetBotVisibilityMutationOptions = Apollo.BaseMutationOptions<SetBotVisibilityMutation, SetBotVisibilityMutationVariables>;
+export const GetFreqtradeTokenDocument = gql`
+    mutation GetFreqtradeToken($botId: ID!) {
+  getFreqtradeToken(botId: $botId) {
+    apiUrl
+    username
+    accessToken
+    refreshToken
+  }
+}
+    `;
+export type GetFreqtradeTokenMutationFn = Apollo.MutationFunction<GetFreqtradeTokenMutation, GetFreqtradeTokenMutationVariables>;
+
+/**
+ * __useGetFreqtradeTokenMutation__
+ *
+ * To run a mutation, you first call `useGetFreqtradeTokenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGetFreqtradeTokenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [getFreqtradeTokenMutation, { data, loading, error }] = useGetFreqtradeTokenMutation({
+ *   variables: {
+ *      botId: // value for 'botId'
+ *   },
+ * });
+ */
+export function useGetFreqtradeTokenMutation(baseOptions?: Apollo.MutationHookOptions<GetFreqtradeTokenMutation, GetFreqtradeTokenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GetFreqtradeTokenMutation, GetFreqtradeTokenMutationVariables>(GetFreqtradeTokenDocument, options);
+      }
+export type GetFreqtradeTokenMutationHookResult = ReturnType<typeof useGetFreqtradeTokenMutation>;
+export type GetFreqtradeTokenMutationResult = Apollo.MutationResult<GetFreqtradeTokenMutation>;
+export type GetFreqtradeTokenMutationOptions = Apollo.BaseMutationOptions<GetFreqtradeTokenMutation, GetFreqtradeTokenMutationVariables>;

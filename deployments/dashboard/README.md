@@ -6,20 +6,24 @@ Kubernetes deployment configuration for the VolatiCloud dashboard using Caddy.
 
 - **Runtime Configuration**: Environment variables with `VOLATICLOUD__` prefix automatically map to `/config.json`
 - **Multi-stage Build**: Node.js for building + Caddy for serving
-- **SPA Routing**: Proper handling for React Router
+- **Bundled FreqUI**: FreqUI (Freqtrade's web UI) is built and served at `/frequi/`
+- **SPA Routing**: Proper handling for React Router (both dashboard and FreqUI)
 - **Security Headers**: X-Frame-Options, X-Content-Type-Options, etc.
+- **Gateway Proxy**: Routes `/gateway/*` to the backend service
 - **Auto-scaling**: HPA configured for 2-10 replicas based on CPU/memory
 - **High Availability**: Pod anti-affinity and PDB for resilience
 
-## URL
+## URLs
 
-- Production: https://console.volaticloud.com
+- Dashboard: https://console.volaticloud.com
+- FreqUI: https://console.volaticloud.com/frequi/
+- Gateway: https://console.volaticloud.com/gateway/
 
 ## Environment Variables
 
 Set in `deployments/dashboard/values.yaml`:
 
-- `VOLATICLOUD__GRAPHQL_URL`: GraphQL API endpoint (default: https://api.volaticloud.com/query)
+- `VOLATICLOUD__GATEWAY_URL`: Gateway API base URL (e.g., /gateway/v1 or https://api.volaticloud.com/gateway/v1)
 
 ## Local Development
 
