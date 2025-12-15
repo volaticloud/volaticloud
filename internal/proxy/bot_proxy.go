@@ -9,12 +9,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/runner"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 // BotProxy handles reverse proxy requests to bot containers.
@@ -136,7 +136,7 @@ func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.U
 
 	// Extract Docker host from runner config
 	// Config format: {"host": "tcp://hostname:2376", ...}
-	dockerHost := extractDockerHost(botRunner.Config)
+	dockerHost := runner.ExtractDockerHostFromConfig(botRunner.Config)
 	if dockerHost == "" {
 		return nil, fmt.Errorf("could not determine Docker host from runner config")
 	}
@@ -147,47 +147,4 @@ func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.U
 	}
 
 	return targetURL, nil
-}
-
-// extractDockerHost extracts the hostname from Docker runner config.
-// Handles formats like "tcp://hostname:2376" or "unix:///var/run/docker.sock"
-func extractDockerHost(config map[string]interface{}) string {
-	// Try to get host from config
-	hostVal, ok := config["host"]
-	if !ok {
-		// Check for nested docker config
-		if dockerConfig, ok := config["docker"].(map[string]interface{}); ok {
-			hostVal, ok = dockerConfig["host"]
-			if !ok {
-				return ""
-			}
-		} else {
-			return ""
-		}
-	}
-
-	hostStr, ok := hostVal.(string)
-	if !ok {
-		return ""
-	}
-
-	// Parse the Docker host URL
-	// tcp://hostname:2376 -> hostname
-	// unix:///var/run/docker.sock -> localhost
-	if strings.HasPrefix(hostStr, "tcp://") {
-		hostStr = strings.TrimPrefix(hostStr, "tcp://")
-		// Remove port if present
-		if idx := strings.LastIndex(hostStr, ":"); idx > 0 {
-			hostStr = hostStr[:idx]
-		}
-		return hostStr
-	}
-
-	if strings.HasPrefix(hostStr, "unix://") {
-		// Local Docker socket - use localhost
-		return "localhost"
-	}
-
-	// Default: return as-is (might be just a hostname)
-	return hostStr
 }
