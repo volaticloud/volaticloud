@@ -24,7 +24,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.etcd.io/etcd/client/v3 v3.6.5
-	golang.org/x/oauth2 v0.33.0
+	golang.org/x/oauth2 v0.34.0
 )
 
 require (
