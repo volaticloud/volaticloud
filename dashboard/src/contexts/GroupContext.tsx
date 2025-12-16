@@ -7,12 +7,20 @@ import { useAuth } from './AuthContext';
 
 interface JwtPayload {
   groups?: string[];
-  [key: string]: any;
+  organization_titles?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+interface Organization {
+  id: string;
+  title: string;
 }
 
 interface GroupContextValue {
   activeGroupId: string | null;
+  activeOrganization: Organization | null;
   availableGroups: string[];
+  organizations: Organization[];
   setActiveGroup: (groupId: string) => void;
 }
 
@@ -49,6 +57,32 @@ function extractGroupsFromToken(token: string | null | undefined): string[] {
   }
 }
 
+/**
+ * Extracts organizations with their titles from JWT token.
+ * Uses organization_titles claim for human-readable names.
+ */
+function extractOrganizationsFromToken(
+  token: string | null | undefined,
+  groupIds: string[]
+): Organization[] {
+  if (!token || groupIds.length === 0) {
+    return [];
+  }
+
+  try {
+    const decoded = jwtDecode<JwtPayload>(token);
+    const organizationTitles = decoded.organization_titles || {};
+
+    return groupIds.map((id) => ({
+      id,
+      title: organizationTitles[id] || id, // Fallback to UUID if no title
+    }));
+  } catch (error) {
+    console.error('Failed to extract organization titles:', error);
+    return groupIds.map((id) => ({ id, title: id }));
+  }
+}
+
 interface GroupProviderProps {
   children: React.ReactNode;
 }
@@ -65,6 +99,12 @@ export function GroupProvider({ children }: GroupProviderProps) {
     [auth.user?.access_token]
   );
 
+  // Extract organizations with titles from token
+  const organizations = useMemo(
+    () => extractOrganizationsFromToken(auth.user?.access_token, availableGroups),
+    [auth.user?.access_token, availableGroups]
+  );
+
   // Get groupId from URL parameter
   const groupIdFromUrl = searchParams.get('groupId');
 
@@ -78,6 +118,12 @@ export function GroupProvider({ children }: GroupProviderProps) {
     // Otherwise, use the first available group as default
     return availableGroups.length > 0 ? availableGroups[0] : null;
   }, [groupIdFromUrl, availableGroups]);
+
+  // Get active organization with title
+  const activeOrganization = useMemo(() => {
+    if (!activeGroupId) return null;
+    return organizations.find((org) => org.id === activeGroupId) || null;
+  }, [activeGroupId, organizations]);
 
   // Sync URL with active group
   useEffect(() => {
@@ -116,7 +162,9 @@ export function GroupProvider({ children }: GroupProviderProps) {
 
   const value: GroupContextValue = {
     activeGroupId,
+    activeOrganization,
     availableGroups,
+    organizations,
     setActiveGroup,
   };
 

@@ -13,7 +13,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 
 export function GroupSwitcher() {
   const navigate = useNavigate();
-  const { activeGroupId, availableGroups, setActiveGroup } = useActiveGroup();
+  const { activeGroupId, activeOrganization, organizations, setActiveGroup } = useActiveGroup();
 
   const handleChange = (event: SelectChangeEvent) => {
     const newGroupId = event.target.value;
@@ -22,18 +22,18 @@ export function GroupSwitcher() {
     navigate(`/?groupId=${newGroupId}`);
   };
 
-  // Don't render if no groups available
-  if (availableGroups.length === 0) {
+  // Don't render if no organizations available
+  if (organizations.length === 0) {
     return null;
   }
 
-  // Don't render switcher if only one group
-  if (availableGroups.length === 1) {
+  // Don't render switcher if only one organization
+  if (organizations.length === 1) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2 }}>
         <BusinessIcon fontSize="small" color="action" />
         <Typography variant="body2" color="text.secondary">
-          {activeGroupId}
+          {activeOrganization?.title || activeGroupId}
         </Typography>
       </Box>
     );
@@ -50,9 +50,9 @@ export function GroupSwitcher() {
         onChange={handleChange}
         startAdornment={<BusinessIcon fontSize="small" sx={{ mr: 1 }} />}
       >
-        {availableGroups.map((groupId) => (
-          <MenuItem key={groupId} value={groupId}>
-            {groupId}
+        {organizations.map((org) => (
+          <MenuItem key={org.id} value={org.id}>
+            {org.title}
           </MenuItem>
         ))}
       </Select>
