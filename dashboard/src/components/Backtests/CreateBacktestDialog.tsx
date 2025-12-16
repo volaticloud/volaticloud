@@ -31,12 +31,13 @@ interface CreateBacktestDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (newStrategyId?: string) => void;
+  onBacktestCreated?: (backtestId: string) => void;
   preSelectedStrategyId?: string;
 }
 
 type DatePreset = '1week' | '1month' | '3months' | '6months' | '1year' | 'custom';
 
-export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStrategyId }: CreateBacktestDialogProps) => {
+export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreated, preSelectedStrategyId }: CreateBacktestDialogProps) => {
   const [strategyID, setStrategyID] = useState('');
   const [runnerID, setRunnerID] = useState('');
   const [datePreset, setDatePreset] = useState<DatePreset>('1month');
@@ -118,6 +119,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
 
       // Only close and reset if mutation was successful
       if (result.data?.createBacktest) {
+        const backtestId = result.data.createBacktest.id;
         const newStrategyId = result.data.createBacktest.strategy?.id;
 
         // Reset form
@@ -126,6 +128,11 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, preSelectedStra
         setDatePreset('1month');
         setStartDate(dayjs().subtract(1, 'month'));
         setEndDate(dayjs());
+
+        // Call the new callback if provided (for staying in place and tracking)
+        if (onBacktestCreated) {
+          onBacktestCreated(backtestId);
+        }
 
         onSuccess(newStrategyId);
         onClose();

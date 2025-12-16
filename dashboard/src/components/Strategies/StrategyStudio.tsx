@@ -11,18 +11,27 @@ import {
   Paper,
   Divider,
   FormHelperText,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack,
   Save,
   Restore,
+  ExitToApp,
+  PlayArrow,
+  Assessment,
+  CheckCircle,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation } from './strategies.generated';
+import { useGetBacktestQuery } from '../Backtests/backtests.generated';
 import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
+import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
+import { BacktestResultsDialog } from '../Backtests/BacktestResultsDialog';
 import { useGroupNavigate } from '../../contexts/GroupContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 
@@ -36,6 +45,9 @@ const StrategyStudio = () => {
   const [code, setCode] = useState('');
   const [config, setConfig] = useState<object | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
+  const [activeBacktestId, setActiveBacktestId] = useState<string | null>(null);
+  const [backtestResultsDialogOpen, setBacktestResultsDialogOpen] = useState(false);
 
   const { data, loading, error } = useGetStrategyForStudioQuery({
     variables: { id: id! },
@@ -45,6 +57,18 @@ const StrategyStudio = () => {
   const [updateStrategy, { loading: saving, error: saveError }] = useUpdateStrategyMutation();
 
   const strategy = data?.strategies?.edges?.[0]?.node;
+
+  // Poll for active backtest status
+  const { data: backtestData } = useGetBacktestQuery({
+    variables: { id: activeBacktestId! },
+    skip: !activeBacktestId,
+    pollInterval: activeBacktestId ? 3000 : 0,
+  });
+
+  const activeBacktest = backtestData?.backtests?.edges?.[0]?.node;
+  const isBacktestRunning = activeBacktest?.status === 'running' || activeBacktest?.status === 'pending';
+  const isBacktestCompleted = activeBacktest?.status === 'completed';
+  const isBacktestFailed = activeBacktest?.status === 'failed';
 
   // Auto-collapse sidebar on mount, restore on unmount
   useEffect(() => {
@@ -72,7 +96,7 @@ const StrategyStudio = () => {
     setHasChanges(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (closeAfterSave = false) => {
     if (!name || !code || !strategy) {
       return;
     }
@@ -92,7 +116,13 @@ const StrategyStudio = () => {
 
       if (result.data?.updateStrategy) {
         const newStrategyId = result.data.updateStrategy.id;
-        navigate(`/strategies/${newStrategyId}`);
+        if (closeAfterSave) {
+          navigate(`/strategies/${newStrategyId}`);
+        } else {
+          // Stay on the page but navigate to the new version
+          navigate(`/strategies/${newStrategyId}/edit`, { replace: true });
+          setHasChanges(false);
+        }
       }
     } catch (err) {
       console.error('Failed to update strategy:', err);
@@ -171,16 +201,83 @@ const StrategyStudio = () => {
             )}
           </Box>
         </Box>
+        {/* Backtest Status Indicator */}
+        {activeBacktestId && (
+          <>
+            {isBacktestRunning && (
+              <Tooltip title="Backtest in progress">
+                <Chip
+                  icon={<CircularProgress size={14} />}
+                  label="Backtest Running"
+                  color="info"
+                  size="small"
+                />
+              </Tooltip>
+            )}
+            {isBacktestCompleted && (
+              <Tooltip title="Click to view results">
+                <Chip
+                  icon={<CheckCircle />}
+                  label="Backtest Complete"
+                  color="success"
+                  size="small"
+                  onClick={() => setBacktestResultsDialogOpen(true)}
+                  sx={{ cursor: 'pointer' }}
+                />
+              </Tooltip>
+            )}
+            {isBacktestFailed && (
+              <Tooltip title="Click to view details">
+                <Chip
+                  icon={<ErrorIcon />}
+                  label="Backtest Failed"
+                  color="error"
+                  size="small"
+                  onClick={() => setBacktestResultsDialogOpen(true)}
+                  sx={{ cursor: 'pointer' }}
+                />
+              </Tooltip>
+            )}
+            {(isBacktestCompleted || isBacktestFailed) && (
+              <Button
+                variant="outlined"
+                color={isBacktestCompleted ? 'success' : 'error'}
+                startIcon={<Assessment />}
+                onClick={() => setBacktestResultsDialogOpen(true)}
+                size="small"
+              >
+                View Results
+              </Button>
+            )}
+          </>
+        )}
+        <Button
+          variant="outlined"
+          color="secondary"
+          startIcon={<PlayArrow />}
+          onClick={() => setBacktestDialogOpen(true)}
+          disabled={hasChanges || isBacktestRunning}
+        >
+          {isBacktestRunning ? 'Running...' : 'Run Backtest'}
+        </Button>
         <Button variant="outlined" onClick={handleCancel}>
           Cancel
         </Button>
         <Button
-          variant="contained"
+          variant="outlined"
           startIcon={<Save />}
-          onClick={handleSave}
+          onClick={() => handleSave(false)}
           disabled={saving || !name || !code || !hasChanges}
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? 'Saving...' : 'Save'}
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<ExitToApp />}
+          onClick={() => handleSave(true)}
+          disabled={saving || !name || !code || !hasChanges}
+        >
+          {saving ? 'Saving...' : 'Save & Close'}
         </Button>
       </Paper>
 
@@ -293,6 +390,27 @@ const StrategyStudio = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Backtest Dialog */}
+      <CreateBacktestDialog
+        open={backtestDialogOpen}
+        onClose={() => setBacktestDialogOpen(false)}
+        onSuccess={() => {
+          // Don't navigate away - stay in studio
+        }}
+        onBacktestCreated={(backtestId) => {
+          setActiveBacktestId(backtestId);
+        }}
+        preSelectedStrategyId={strategy.id}
+      />
+
+      {/* Backtest Results Dialog */}
+      <BacktestResultsDialog
+        open={backtestResultsDialogOpen}
+        onClose={() => setBacktestResultsDialogOpen(false)}
+        backtestId={activeBacktestId}
+        polling={isBacktestRunning}
+      />
     </Box>
   );
 };
