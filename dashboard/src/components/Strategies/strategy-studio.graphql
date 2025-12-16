@@ -1,0 +1,28 @@
+query GetStrategyForStudio($id: ID!) {
+  strategies(where: { id: $id }, first: 1) {
+    edges {
+      node {
+        id
+        name
+        description
+        code
+        versionNumber
+        isLatest
+        config
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}
+
+query GetStrategyVersionsForStudio($name: String!) {
+  strategyVersions(name: $name) {
+    id
+    name
+    versionNumber
+    isLatest
+    code
+    createdAt
+  }
+}

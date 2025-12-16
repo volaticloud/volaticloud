@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
+  MenuOpen as MenuOpenIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
   Notifications as NotificationsIcon,
@@ -23,15 +24,24 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../shared/Logo';
 import { GroupSwitcher } from '../shared/GroupSwitcher';
-import { drawerWidth } from './Sidebar';
 
 interface HeaderProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onToggleMobileMenu: () => void;
+  onToggleSidebar: () => void;
+  sidebarCollapsed: boolean;
+  currentDrawerWidth: number;
 }
 
-export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: HeaderProps) => {
+export const Header = ({
+  darkMode,
+  onToggleDarkMode,
+  onToggleMobileMenu,
+  onToggleSidebar,
+  sidebarCollapsed,
+  currentDrawerWidth,
+}: HeaderProps) => {
   const auth = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -57,10 +67,11 @@ export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: Heade
     <AppBar
       position="fixed"
       sx={{
-        width: { sm: `calc(100% - ${drawerWidth}px)` },
-        ml: { sm: `${drawerWidth}px` },
+        width: { sm: `calc(100% - ${currentDrawerWidth}px)` },
+        ml: { sm: `${currentDrawerWidth}px` },
         backgroundColor: (theme) =>
           darkMode ? theme.palette.background.paper : theme.palette.primary.main,
+        transition: 'width 0.2s ease-in-out, margin-left 0.2s ease-in-out',
       }}
     >
       <Toolbar>
@@ -73,6 +84,18 @@ export const Header = ({ darkMode, onToggleDarkMode, onToggleMobileMenu }: Heade
         >
           <MenuIcon />
         </IconButton>
+
+        {/* Desktop sidebar toggle button */}
+        <Tooltip title={sidebarCollapsed ? 'Expand menu' : 'Collapse menu'}>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={onToggleSidebar}
+            sx={{ mr: 2, display: { xs: 'none', sm: 'flex' } }}
+          >
+            {sidebarCollapsed ? <MenuIcon /> : <MenuOpenIcon />}
+          </IconButton>
+        </Tooltip>
 
         {/* Mobile logo (only show on small screens) */}
         <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexGrow: 1 }}>
