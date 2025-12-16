@@ -26,21 +26,21 @@ export const createApolloClient = (graphqlUrl: string, getAccessToken?: () => st
             // Strategies use relay-style pagination
             strategies: {
               keyArgs: ['where', 'orderBy'],
-              merge(existing, incoming) {
+              merge(_existing, incoming) {
                 return incoming;
               },
             },
             // Bots use relay-style pagination
             bots: {
               keyArgs: ['where', 'orderBy'],
-              merge(existing, incoming) {
+              merge(_existing, incoming) {
                 return incoming;
               },
             },
             // Backtests use relay-style pagination
             backtests: {
               keyArgs: ['where', 'orderBy'],
-              merge(existing, incoming) {
+              merge(_existing, incoming) {
                 return incoming;
               },
             },
