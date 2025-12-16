@@ -39,6 +39,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
     private static final String ROLE_ADMIN = "role:admin";
     private static final String ROLE_VIEWER = "role:viewer";
     private static final String GROUP_TYPE_ATTRIBUTE = "GROUP_TYPE";
+    private static final String GROUP_TITLE_ATTRIBUTE = "GROUP_TITLE";
     private static final String GROUP_TYPE_ORGANIZATION = "organization";
     private static final String GROUP_TYPE_NONE = "none";
     private static final String RESOURCE_TYPE_TENANT = "urn:volaticloud:resources:tenant";
@@ -188,6 +189,11 @@ public class TenantSystemEventListener implements EventListenerProvider {
             return;
         }
 
+        // Step 4: Set GROUP_TITLE attribute based on user's name or email
+        String organizationTitle = generateOrganizationTitle(user);
+        userGroup.setSingleAttribute(GROUP_TITLE_ATTRIBUTE, organizationTitle);
+        log.infof("Set GROUP_TITLE=%s for organization group: %s", organizationTitle, userId);
+
         GroupModel adminRole = session.groups().getGroupByName(realm, userGroup, ROLE_ADMIN);
         if (adminRole != null) {
             user.joinGroup(adminRole);
@@ -197,6 +203,30 @@ public class TenantSystemEventListener implements EventListenerProvider {
         }
 
         log.infof("Successfully created tenant structure (resource + groups) for user: %s", userId);
+    }
+
+    /**
+     * Generates organization title based on user's first name or email.
+     * Format: "{Name}'s Organization"
+     * If firstName is available, uses it. Otherwise extracts username from email.
+     */
+    private String generateOrganizationTitle(UserModel user) {
+        String name = user.getFirstName();
+
+        // If no firstName, extract username from email
+        if (name == null || name.trim().isEmpty()) {
+            String email = user.getEmail();
+            if (email != null && email.contains("@")) {
+                name = email.substring(0, email.indexOf("@"));
+            }
+        }
+
+        // Fallback to "User" if still empty
+        if (name == null || name.trim().isEmpty()) {
+            name = "User";
+        }
+
+        return name + "'s Organization";
     }
 
     /**
