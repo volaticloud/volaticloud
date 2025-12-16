@@ -24,7 +24,7 @@ export const PythonCodeEditor = ({
   };
 
   return (
-    <Box>
+    <Box sx={{ height: height === '100%' ? '100%' : 'auto', display: 'flex', flexDirection: 'column' }}>
       {label && (
         <Typography
           variant="body2"
@@ -40,6 +40,8 @@ export const PythonCodeEditor = ({
           borderColor: 'divider',
           borderRadius: 1,
           overflow: 'hidden',
+          flex: height === '100%' ? 1 : 'none',
+          height: height === '100%' ? '100%' : 'auto',
         }}
       >
         <Editor

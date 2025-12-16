@@ -8,6 +8,7 @@ import {
   Toolbar,
   Box,
   Divider,
+  Tooltip,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -23,6 +24,7 @@ import { Logo } from '../shared/Logo';
 import { useGroupNavigate } from '../../contexts/GroupContext';
 
 export const drawerWidth = 260;
+export const collapsedDrawerWidth = 72;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
@@ -37,9 +39,10 @@ const menuItems = [
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  collapsed?: boolean;
 }
 
-export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
+export const Sidebar = ({ mobileOpen, onMobileClose, collapsed = false }: SidebarProps) => {
   const navigate = useGroupNavigate();
   const location = useLocation();
 
@@ -48,19 +51,24 @@ export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
     onMobileClose(); // Close drawer on mobile after navigation
   };
 
-  const drawerContent = (
+  const currentWidth = collapsed ? collapsedDrawerWidth : drawerWidth;
+
+  const drawerContent = (isCollapsed: boolean) => (
     <>
-      <Toolbar>
-        <Logo onClick={() => handleNavigate('/')} />
+      <Toolbar sx={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
+        <Logo onClick={() => handleNavigate('/')} variant={isCollapsed ? 'icon' : 'full'} />
       </Toolbar>
       <Divider />
       <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
+        {menuItems.map((item) => {
+          const listItemButton = (
             <ListItemButton
               selected={location.pathname === item.path}
               onClick={() => handleNavigate(item.path)}
               sx={{
+                minHeight: 48,
+                justifyContent: isCollapsed ? 'center' : 'initial',
+                px: isCollapsed ? 2 : 2.5,
                 '&.Mui-selected': {
                   backgroundColor: 'primary.main',
                   color: 'primary.contrastText',
@@ -73,19 +81,45 @@ export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
                 },
               }}
             >
-              <ListItemIcon sx={{ color: 'inherit' }}>
+              <ListItemIcon
+                sx={{
+                  color: 'inherit',
+                  minWidth: isCollapsed ? 0 : 40,
+                  mr: isCollapsed ? 0 : 2,
+                  justifyContent: 'center',
+                }}
+              >
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={item.text} />
+              {!isCollapsed && <ListItemText primary={item.text} />}
             </ListItemButton>
-          </ListItem>
-        ))}
+          );
+
+          return (
+            <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+              {isCollapsed ? (
+                <Tooltip title={item.text} placement="right" arrow>
+                  {listItemButton}
+                </Tooltip>
+              ) : (
+                listItemButton
+              )}
+            </ListItem>
+          );
+        })}
       </List>
     </>
   );
 
   return (
-    <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+    <Box
+      component="nav"
+      sx={{
+        width: { sm: currentWidth },
+        flexShrink: { sm: 0 },
+        transition: 'width 0.2s ease-in-out',
+      }}
+    >
       {/* Mobile drawer */}
       <Drawer
         variant="temporary"
@@ -102,7 +136,7 @@ export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
           },
         }}
       >
-        {drawerContent}
+        {drawerContent(false)}
       </Drawer>
 
       {/* Desktop drawer */}
@@ -111,13 +145,15 @@ export const Sidebar = ({ mobileOpen, onMobileClose }: SidebarProps) => {
         sx={{
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: currentWidth,
             boxSizing: 'border-box',
+            transition: 'width 0.2s ease-in-out',
+            overflowX: 'hidden',
           },
         }}
         open
       >
-        {drawerContent}
+        {drawerContent(collapsed)}
       </Drawer>
     </Box>
   );

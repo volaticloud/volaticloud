@@ -7,6 +7,7 @@ import { createApolloClient } from './graphql/client';
 import { useConfigValue } from './contexts/ConfigContext';
 import { useAuth } from './contexts/AuthContext';
 import { GroupProvider } from './contexts/GroupContext';
+import { SidebarProvider } from './contexts/SidebarContext';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { BotsPage } from './pages/Bots/BotsPage';
@@ -14,6 +15,7 @@ import { BotDetailPage } from './pages/Bots/BotDetailPage';
 import { ExchangesPage } from './pages/Exchanges/ExchangesPage';
 import { StrategiesPage } from './pages/Strategies/StrategiesPage';
 import { StrategyDetailPage } from './pages/Strategies/StrategyDetailPage';
+import { StrategyStudioPage } from './pages/Strategies/StrategyStudioPage';
 import { RunnersPage } from './pages/Runners/RunnersPage';
 import { BacktestsPage } from './pages/BacktestsPage';
 import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
@@ -48,7 +50,8 @@ function App() {
         />
         <BrowserRouter>
           <GroupProvider>
-            <Routes>
+            <SidebarProvider>
+              <Routes>
               <Route
                 path="/"
                 element={<DashboardLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
@@ -59,12 +62,14 @@ function App() {
                 <Route path="exchanges" element={<ExchangesPage />} />
                 <Route path="strategies" element={<StrategiesPage />} />
                 <Route path="strategies/:id" element={<StrategyDetailPage />} />
+                <Route path="strategies/:id/edit" element={<StrategyStudioPage />} />
                 <Route path="backtests" element={<BacktestsPage />} />
                 <Route path="backtests/:id" element={<BacktestDetailPage />} />
                 <Route path="trades" element={<div>Trades (Coming Soon)</div>} />
                 <Route path="runners" element={<RunnersPage />} />
               </Route>
-            </Routes>
+              </Routes>
+            </SidebarProvider>
           </GroupProvider>
         </BrowserRouter>
       </ThemeProvider>

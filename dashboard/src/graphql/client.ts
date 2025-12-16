@@ -19,14 +19,42 @@ export const createApolloClient = (graphqlUrl: string, getAccessToken?: () => st
 
   return new ApolloClient({
     link: ApolloLink.from([authLink, httpLink]),
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            // Strategies use relay-style pagination
+            strategies: {
+              keyArgs: ['where', 'orderBy'],
+              merge(_existing, incoming) {
+                return incoming;
+              },
+            },
+            // Bots use relay-style pagination
+            bots: {
+              keyArgs: ['where', 'orderBy'],
+              merge(_existing, incoming) {
+                return incoming;
+              },
+            },
+            // Backtests use relay-style pagination
+            backtests: {
+              keyArgs: ['where', 'orderBy'],
+              merge(_existing, incoming) {
+                return incoming;
+              },
+            },
+          },
+        },
+      },
+    }),
     defaultOptions: {
       watchQuery: {
-        fetchPolicy: 'no-cache',
+        fetchPolicy: 'cache-and-network',
         errorPolicy: 'all',
       },
       query: {
-        fetchPolicy: 'no-cache',
+        fetchPolicy: 'cache-first',
         errorPolicy: 'all',
       },
       mutate: {

@@ -18,7 +18,6 @@ import {
 import { useState } from 'react';
 import { useGetStrategyDetailQuery, useGetStrategyVersionsQuery } from './strategy-detail.generated';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
-import { EditStrategyDialog } from './EditStrategyDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
@@ -29,7 +28,6 @@ const StrategyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useGroupNavigate();
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data, loading, error, refetch } = useGetStrategyDetailQuery({
@@ -104,14 +102,14 @@ const StrategyDetail = () => {
           Run Backtest
         </Button>
         {strategy.isLatest ? (
-          <IconButton onClick={() => setEditDialogOpen(true)}>
+          <IconButton onClick={() => navigate(`/strategies/${strategy.id}/edit`)}>
             <Edit />
           </IconButton>
         ) : (
           <Button
             variant="outlined"
             startIcon={<Restore />}
-            onClick={() => setEditDialogOpen(true)}
+            onClick={() => navigate(`/strategies/${strategy.id}/edit`)}
           >
             Restore to this version
           </Button>
@@ -168,16 +166,6 @@ const StrategyDetail = () => {
           }
         }}
         preSelectedStrategyId={strategy.id}
-      />
-
-      <EditStrategyDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        onSuccess={(newStrategyId) => {
-          setEditDialogOpen(false);
-          navigate(`/strategies/${newStrategyId}`);
-        }}
-        strategy={strategy}
       />
 
       <DeleteStrategyDialog
