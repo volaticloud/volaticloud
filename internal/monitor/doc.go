@@ -112,7 +112,7 @@ For production deployments with multiple servers and load distribution:
 
 The BotMonitor performs the following checks every 30 seconds:
 
-1. Query database for bots in active states (Running, Unhealthy, Stopped, Creating)
+1. Query database for bots in active states (Running, Unhealthy, Stopped, Creating, Error)
 2. Filter bots assigned to this instance via coordinator
 3. For each assigned bot:
   - Get container status from runtime (Docker/Kubernetes)
@@ -299,10 +299,12 @@ Metrics use upsert pattern (update existing or create new):
 	  - Clear error message
 	  - Only log on status change (not every check)
 
-	Container Error State:
+	Container/Network Error:
 	  - Mark bot as "error" status
 	  - Store error message
-	  - Continue monitoring (may recover)
+	  - Continue monitoring for automatic recovery
+	  - Only log on status change (avoid spam during persistent issues)
+	  - Log recovery when bot returns to running state
 
 	Metrics Fetch Failed:
 	  - Log error but don't fail status check

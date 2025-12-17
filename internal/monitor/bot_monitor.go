@@ -96,6 +96,7 @@ func (m *BotMonitor) monitorLoop(ctx context.Context) {
 // checkAllBots checks status of all bots assigned to this instance
 func (m *BotMonitor) checkAllBots(ctx context.Context) {
 	// Query all bots from database
+	// Include Error status so bots can recover from transient network failures
 	bots, err := m.dbClient.Bot.Query().
 		WithRunner().
 		Where(bot.StatusIn(
@@ -103,6 +104,7 @@ func (m *BotMonitor) checkAllBots(ctx context.Context) {
 			enum.BotStatusUnhealthy,
 			enum.BotStatusStopped,
 			enum.BotStatusCreating,
+			enum.BotStatusError,
 		)).
 		All(ctx)
 	if err != nil {
@@ -200,9 +202,17 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 			}
 			return m.updateBotStatus(ctx, b.ID, enum.BotStatusStopped, false, nil, "Container not found")
 		}
-		// For other errors, mark as error status
-		log.Printf("Bot %s (%s) error checking status: %v", b.Name, b.ID, err)
+		// For other errors (network issues, etc.), mark as error status
+		// Only log if status is changing to avoid log spam during persistent issues
+		if b.Status != enum.BotStatusError {
+			log.Printf("Bot %s (%s) error checking status (will retry): %v", b.Name, b.ID, err)
+		}
 		return m.updateBotStatus(ctx, b.ID, enum.BotStatusError, false, nil, err.Error())
+	}
+
+	// If bot was in error state and successfully recovered, log it
+	if b.Status == enum.BotStatusError {
+		log.Printf("Bot %s (%s) recovered from error state", b.Name, b.ID)
 	}
 
 	// Map runner status to enum status
