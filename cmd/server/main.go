@@ -24,6 +24,7 @@ import (
 
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
+	_ "volaticloud/internal/docker" // Register Docker runtime creator
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/migrate"
 	_ "volaticloud/internal/ent/runtime"

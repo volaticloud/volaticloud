@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/enum"
@@ -209,7 +210,7 @@ func (m *RunnerMonitor) isDownloadStuck(ctx context.Context, r *ent.BotRunner) b
 		}
 	}()
 
-	dockerRT, ok := rt.(*runner.DockerRuntime)
+	dockerRT, ok := rt.(*docker.Runtime)
 	if !ok {
 		return false
 	}

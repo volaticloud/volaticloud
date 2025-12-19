@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 
+	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/runner"
@@ -136,7 +137,7 @@ func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.U
 
 	// Extract Docker host from runner config
 	// Config format: {"host": "tcp://hostname:2376", ...}
-	dockerHost := runner.ExtractDockerHostFromConfig(botRunner.Config)
+	dockerHost := docker.ExtractDockerHostFromConfig(botRunner.Config)
 	if dockerHost == "" {
 		return nil, fmt.Errorf("could not determine Docker host from runner config")
 	}

@@ -1,4 +1,4 @@
-package runner
+package docker
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// DockerConfig holds configuration for Docker runner
-type DockerConfig struct {
+// Config holds configuration for Docker runner
+type Config struct {
 	// Host is the Docker daemon host (e.g., "unix:///var/run/docker.sock" or "tcp://localhost:2375")
 	Host string `json:"host" validate:"required"`
 
@@ -45,8 +45,8 @@ type RegistryAuth struct {
 	ServerAddress string `json:"serverAddress,omitempty"`
 }
 
-// ValidateDockerConfig validates Docker-specific configuration
-func ValidateDockerConfig(config *DockerConfig) error {
+// ValidateConfig validates Docker-specific configuration
+func ValidateConfig(config *Config) error {
 	if config == nil {
 		return fmt.Errorf("Docker config cannot be nil")
 	}
@@ -81,8 +81,8 @@ func ValidateDockerConfig(config *DockerConfig) error {
 	return nil
 }
 
-// ParseDockerConfig parses and validates Docker config from a map
-func ParseDockerConfig(configData map[string]interface{}) (*DockerConfig, error) {
+// ParseConfig parses and validates Docker config from a map
+func ParseConfig(configData map[string]interface{}) (*Config, error) {
 	if configData == nil {
 		return nil, fmt.Errorf("config data cannot be nil")
 	}
@@ -92,23 +92,23 @@ func ParseDockerConfig(configData map[string]interface{}) (*DockerConfig, error)
 		return nil, fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	var config DockerConfig
+	var config Config
 	if err := json.Unmarshal(configJSON, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
 	}
 
-	if err := ValidateDockerConfig(&config); err != nil {
+	if err := ValidateConfig(&config); err != nil {
 		return nil, fmt.Errorf("Docker config validation failed: %w", err)
 	}
 
 	return &config, nil
 }
 
-// ToMap converts DockerConfig to a map for storage
-func (c *DockerConfig) ToMap() (map[string]interface{}, error) {
+// ToMap converts Config to a map for storage
+func (c *Config) ToMap() (map[string]interface{}, error) {
 	data, err := json.Marshal(c)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal DockerConfig: %w", err)
+		return nil, fmt.Errorf("failed to marshal Config: %w", err)
 	}
 
 	var result map[string]interface{}
@@ -121,7 +121,7 @@ func (c *DockerConfig) ToMap() (map[string]interface{}, error) {
 
 // ExtractDockerHost extracts the hostname from a Docker host URL.
 // Handles formats like "tcp://hostname:2376" or "unix:///var/run/docker.sock"
-func (c *DockerConfig) ExtractDockerHost() string {
+func (c *Config) ExtractDockerHost() string {
 	return extractDockerHostFromURL(c.Host)
 }
 

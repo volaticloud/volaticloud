@@ -17,10 +17,17 @@ func NewFactory() *Factory {
 
 // Create creates a Runtime instance based on the given type and configuration
 func (f *Factory) Create(ctx context.Context, runnerType enum.RunnerType, configData map[string]interface{}) (Runtime, error) {
-	switch runnerType {
-	case enum.RunnerDocker:
-		return f.createDockerRuntime(ctx, configData)
+	// Extract runner-type-specific config
+	typeConfig := ExtractRunnerConfig(configData, runnerType)
 
+	// Try to get registered creator first
+	creator, err := GetRuntimeCreator(runnerType)
+	if err == nil {
+		return creator(ctx, typeConfig)
+	}
+
+	// Fallback to built-in stubs
+	switch runnerType {
 	case enum.RunnerKubernetes:
 		return f.createKubernetesRuntime(ctx, configData)
 
@@ -34,10 +41,17 @@ func (f *Factory) Create(ctx context.Context, runnerType enum.RunnerType, config
 
 // CreateBacktestRunner creates a BacktestRunner instance based on the given type and configuration
 func (f *Factory) CreateBacktestRunner(ctx context.Context, runnerType enum.RunnerType, configData map[string]interface{}) (BacktestRunner, error) {
-	switch runnerType {
-	case enum.RunnerDocker:
-		return f.createDockerBacktestRunner(ctx, configData)
+	// Extract runner-type-specific config
+	typeConfig := ExtractRunnerConfig(configData, runnerType)
 
+	// Try to get registered creator first
+	creator, err := GetBacktestRunnerCreator(runnerType)
+	if err == nil {
+		return creator(ctx, typeConfig)
+	}
+
+	// Fallback to built-in stubs
+	switch runnerType {
 	case enum.RunnerKubernetes:
 		return f.createKubernetesBacktestRunner(ctx, configData)
 
@@ -47,32 +61,6 @@ func (f *Factory) CreateBacktestRunner(ctx context.Context, runnerType enum.Runn
 	default:
 		return nil, fmt.Errorf("unsupported runner type: %s", runnerType)
 	}
-}
-
-// createDockerRuntime creates a Docker runtime instance
-func (f *Factory) createDockerRuntime(ctx context.Context, configData map[string]interface{}) (Runtime, error) {
-	// Extract Docker-specific config from the runner config
-	dockerConfig := ExtractRunnerConfig(configData, enum.RunnerDocker)
-
-	// Parse and validate Docker configuration
-	config, err := ParseDockerConfig(dockerConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
-	}
-
-	// Create Docker runtime with configuration
-	runtime, err := NewDockerRuntime(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker runtime: %w", err)
-	}
-
-	// Verify connection
-	if err := runtime.HealthCheck(ctx); err != nil {
-		runtime.Close()
-		return nil, fmt.Errorf("Docker runtime health check failed: %w", err)
-	}
-
-	return runtime, nil
 }
 
 // createKubernetesRuntime creates a Kubernetes runtime instance
@@ -87,32 +75,6 @@ func (f *Factory) createLocalRuntime(ctx context.Context, configData map[string]
 	// For now, Local is not implemented
 	runtime := NewLocalRuntime()
 	return runtime, nil
-}
-
-// createDockerBacktestRunner creates a Docker backtest runner instance
-func (f *Factory) createDockerBacktestRunner(ctx context.Context, configData map[string]interface{}) (BacktestRunner, error) {
-	// Extract Docker-specific config from the runner config
-	dockerConfig := ExtractRunnerConfig(configData, enum.RunnerDocker)
-
-	// Parse and validate Docker configuration
-	config, err := ParseDockerConfig(dockerConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
-	}
-
-	// Create Docker backtest runner with configuration
-	runner, err := NewDockerBacktestRunner(ctx, *config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker backtest runner: %w", err)
-	}
-
-	// Verify connection
-	if err := runner.HealthCheck(ctx); err != nil {
-		runner.Close()
-		return nil, fmt.Errorf("Docker backtest runner health check failed: %w", err)
-	}
-
-	return runner, nil
 }
 
 // createKubernetesBacktestRunner creates a Kubernetes backtest runner instance

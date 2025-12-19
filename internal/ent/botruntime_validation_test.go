@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	_ "volaticloud/internal/docker" // Register Docker runtime creator
 	"volaticloud/internal/ent/enttest"
 	"volaticloud/internal/enum"
 

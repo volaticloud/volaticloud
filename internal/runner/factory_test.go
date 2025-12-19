@@ -1,17 +1,19 @@
-package runner
+package runner_test
 
 import (
 	"context"
 	"testing"
 
+	_ "volaticloud/internal/docker" // Register Docker runtime creator
 	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestFactory(t *testing.T) {
-	factory := NewFactory()
+	factory := runner.NewFactory()
 	ctx := context.Background()
 
 	t.Run("CreateDockerRuntime_ValidConfig_DirectFormat", func(t *testing.T) {
@@ -126,7 +128,7 @@ func TestFactory(t *testing.T) {
 }
 
 func TestCreateBacktestRunner(t *testing.T) {
-	factory := NewFactory()
+	factory := runner.NewFactory()
 	ctx := context.Background()
 
 	t.Run("CreateDockerBacktestRunner_ValidConfig_DirectFormat", func(t *testing.T) {
@@ -233,6 +235,6 @@ func TestCreateBacktestRunner(t *testing.T) {
 }
 
 func TestNewFactory(t *testing.T) {
-	factory := NewFactory()
+	factory := runner.NewFactory()
 	assert.NotNil(t, factory)
 }

@@ -1,4 +1,4 @@
-package runner
+package docker
 
 import (
 	"testing"
@@ -7,39 +7,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateDockerConfig(t *testing.T) {
+func TestValidateConfig(t *testing.T) {
 	t.Run("ValidMinimalConfig", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host: "unix:///var/run/docker.sock",
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.NoError(t, err)
 	})
 
 	t.Run("ValidTCPConfig", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host:       "tcp://localhost:2375",
 			Network:    "bridge",
 			APIVersion: "1.41",
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.NoError(t, err)
 	})
 
 	t.Run("ValidTLSConfig", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
 			CertPEM:   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 			KeyPEM:    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
 			CAPEM:     "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.NoError(t, err)
 	})
 
 	t.Run("ValidRegistryAuthConfig", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host: "unix:///var/run/docker.sock",
 			RegistryAuth: &RegistryAuth{
 				Username:      "user",
@@ -47,82 +47,82 @@ func TestValidateDockerConfig(t *testing.T) {
 				ServerAddress: "https://index.docker.io/v1/",
 			},
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.NoError(t, err)
 	})
 
 	t.Run("ErrorNilConfig", func(t *testing.T) {
-		err := ValidateDockerConfig(nil)
+		err := ValidateConfig(nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot be nil")
 	})
 
 	t.Run("ErrorMissingHost", func(t *testing.T) {
-		config := &DockerConfig{}
-		err := ValidateDockerConfig(config)
+		config := &Config{}
+		err := ValidateConfig(config)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "host is required")
 	})
 
 	t.Run("ErrorTLSWithoutCert", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cert_pem is required")
 	})
 
 	t.Run("ErrorTLSWithoutKey", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
 			CertPEM:   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "key_pem is required")
 	})
 
 	t.Run("ErrorTLSWithoutCA", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
 			CertPEM:   "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
 			KeyPEM:    "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "ca_pem is required")
 	})
 
 	t.Run("ErrorRegistryAuthWithoutUsername", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host: "unix:///var/run/docker.sock",
 			RegistryAuth: &RegistryAuth{
 				Password: "pass",
 			},
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "username is required")
 	})
 
 	t.Run("ErrorRegistryAuthWithoutPassword", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host: "unix:///var/run/docker.sock",
 			RegistryAuth: &RegistryAuth{
 				Username: "user",
 			},
 		}
-		err := ValidateDockerConfig(config)
+		err := ValidateConfig(config)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "password is required")
 	})
 }
 
-func TestParseDockerConfig(t *testing.T) {
+func TestParseConfig(t *testing.T) {
 	t.Run("ValidConfig", func(t *testing.T) {
 		configData := map[string]interface{}{
 			"host":       "unix:///var/run/docker.sock",
@@ -130,7 +130,7 @@ func TestParseDockerConfig(t *testing.T) {
 			"network":    "bridge",
 		}
 
-		config, err := ParseDockerConfig(configData)
+		config, err := ParseConfig(configData)
 		require.NoError(t, err)
 		assert.NotNil(t, config)
 		assert.Equal(t, "unix:///var/run/docker.sock", config.Host)
@@ -151,7 +151,7 @@ func TestParseDockerConfig(t *testing.T) {
 			"caPEM":     caPEM,
 		}
 
-		config, err := ParseDockerConfig(configData)
+		config, err := ParseConfig(configData)
 		require.NoError(t, err)
 		assert.NotNil(t, config)
 		assert.True(t, config.TLSVerify)
@@ -170,7 +170,7 @@ func TestParseDockerConfig(t *testing.T) {
 			},
 		}
 
-		config, err := ParseDockerConfig(configData)
+		config, err := ParseConfig(configData)
 		require.NoError(t, err)
 		assert.NotNil(t, config)
 		assert.NotNil(t, config.RegistryAuth)
@@ -180,7 +180,7 @@ func TestParseDockerConfig(t *testing.T) {
 	})
 
 	t.Run("ErrorNilData", func(t *testing.T) {
-		_, err := ParseDockerConfig(nil)
+		_, err := ParseConfig(nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot be nil")
 	})
@@ -190,7 +190,7 @@ func TestParseDockerConfig(t *testing.T) {
 			"host": 12345, // Should be string
 		}
 
-		_, err := ParseDockerConfig(configData)
+		_, err := ParseConfig(configData)
 		assert.Error(t, err)
 	})
 
@@ -199,15 +199,15 @@ func TestParseDockerConfig(t *testing.T) {
 			"network": "bridge",
 		}
 
-		_, err := ParseDockerConfig(configData)
+		_, err := ParseConfig(configData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "host is required")
 	})
 }
 
-func TestDockerConfigToMap(t *testing.T) {
+func TestConfigToMap(t *testing.T) {
 	t.Run("BasicConfig", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host:       "unix:///var/run/docker.sock",
 			APIVersion: "1.41",
 			Network:    "bridge",
@@ -226,7 +226,7 @@ func TestDockerConfigToMap(t *testing.T) {
 		keyPEM := "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
 		caPEM := "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
 
-		config := &DockerConfig{
+		config := &Config{
 			Host:      "tcp://docker.example.com:2376",
 			TLSVerify: true,
 			CertPEM:   certPEM,
@@ -244,7 +244,7 @@ func TestDockerConfigToMap(t *testing.T) {
 	})
 
 	t.Run("WithRegistryAuth", func(t *testing.T) {
-		config := &DockerConfig{
+		config := &Config{
 			Host: "unix:///var/run/docker.sock",
 			RegistryAuth: &RegistryAuth{
 				Username:      "user",
@@ -265,7 +265,7 @@ func TestDockerConfigToMap(t *testing.T) {
 	})
 
 	t.Run("RoundTrip", func(t *testing.T) {
-		original := &DockerConfig{
+		original := &Config{
 			Host:       "tcp://localhost:2375",
 			APIVersion: "1.41",
 			Network:    "custom_network",
@@ -276,7 +276,7 @@ func TestDockerConfigToMap(t *testing.T) {
 		require.NoError(t, err)
 
 		// Parse back from map
-		parsed, err := ParseDockerConfig(configMap)
+		parsed, err := ParseConfig(configMap)
 		require.NoError(t, err)
 
 		// Should match original

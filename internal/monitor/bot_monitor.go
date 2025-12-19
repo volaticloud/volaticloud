@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -338,7 +339,7 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 	// Fallback to runner host:hostPort
 	// Extract Docker host from runner config (handles tcp://hostname:2376 -> hostname)
 	if status.HostPort > 0 {
-		dockerHost := runner.ExtractDockerHostFromConfig(runnerConfig)
+		dockerHost := docker.ExtractDockerHostFromConfig(runnerConfig)
 		if dockerHost == "" {
 			dockerHost = "localhost" // Default to localhost if we can't determine host
 		}
