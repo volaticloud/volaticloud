@@ -12,13 +12,15 @@ import (
 	entbacktest "volaticloud/internal/ent/backtest"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/runner"
+	"volaticloud/internal/usage"
 )
 
 // BacktestMonitor monitors running backtests and updates their status
 type BacktestMonitor struct {
-	client   *ent.Client
-	interval time.Duration
-	stopChan chan struct{}
+	client         *ent.Client
+	usageCollector usage.Collector
+	interval       time.Duration
+	stopChan       chan struct{}
 }
 
 // NewBacktestMonitor creates a new backtest monitor
@@ -28,9 +30,10 @@ func NewBacktestMonitor(client *ent.Client, interval time.Duration) *BacktestMon
 	}
 
 	return &BacktestMonitor{
-		client:   client,
-		interval: interval,
-		stopChan: make(chan struct{}),
+		client:         client,
+		usageCollector: usage.NewCollector(client),
+		interval:       interval,
+		stopChan:       make(chan struct{}),
 	}
 }
 
@@ -119,6 +122,27 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 	if err != nil {
 		log.Printf("Failed to get backtest status for %s: %v", bt.ID, err)
 		return
+	}
+
+	// Record usage sample if billing is enabled and backtest is running
+	// OwnerID is from the strategy (backtest belongs to strategy which has owner_id)
+	if bt.Edges.Runner.BillingEnabled && status.Status == enum.TaskStatusRunning && bt.Edges.Strategy != nil {
+		if err := m.usageCollector.RecordSample(ctx, usage.UsageSample{
+			ResourceType:    enum.ResourceTypeBacktest,
+			ResourceID:      bt.ID,
+			OwnerID:         bt.Edges.Strategy.OwnerID,
+			RunnerID:        bt.Edges.Runner.ID,
+			CPUPercent:      status.CPUUsage,
+			MemoryBytes:     status.MemoryUsage,
+			NetworkRxBytes:  status.NetworkRxBytes,
+			NetworkTxBytes:  status.NetworkTxBytes,
+			BlockReadBytes:  status.BlockReadBytes,
+			BlockWriteBytes: status.BlockWriteBytes,
+			SampledAt:       time.Now(),
+		}); err != nil {
+			// Log error but don't fail the status check
+			log.Printf("Backtest %s failed to record usage sample: %v", bt.ID, err)
+		}
 	}
 
 	// Check if status changed

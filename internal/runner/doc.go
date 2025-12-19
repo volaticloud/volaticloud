@@ -334,6 +334,23 @@ BotStatus represents runtime state:
 		StoppedAt *time.Time
 	}
 
+## CPU Usage Calculation (cgroups v1 vs v2):
+
+CPU percentage is calculated from Docker stats API response.
+The formula differs based on the cgroup version:
+
+	cgroups v1:
+	  - Uses PercpuUsage slice length for CPU count
+	  - cpuPercent = (cpuDelta / systemDelta) * len(PercpuUsage) * 100
+
+	cgroups v2 (modern Linux):
+	  - PercpuUsage is empty (not populated)
+	  - Falls back to OnlineCPUs field
+	  - cpuPercent = (cpuDelta / systemDelta) * OnlineCPUs * 100
+
+	Fallback:
+	  - If both are empty/zero, assumes 1 CPU
+
 ## Status States:
 
 	Creating:

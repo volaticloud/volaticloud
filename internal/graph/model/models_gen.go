@@ -101,3 +101,20 @@ type RunnerConfigInput struct {
 	Kubernetes *KubernetesConfigInput `json:"kubernetes,omitempty"`
 	Local      *LocalConfigInput      `json:"local,omitempty"`
 }
+
+// Estimated cost breakdown for resource usage
+// Uses runner-specific pricing rates
+type UsageCost struct {
+	// Cost for CPU usage (core-hours * rate)
+	CPUCost float64 `json:"cpuCost"`
+	// Cost for memory usage (GB-hours * rate)
+	MemoryCost float64 `json:"memoryCost"`
+	// Cost for network transfer (GB * rate)
+	NetworkCost float64 `json:"networkCost"`
+	// Cost for disk I/O (GB * rate)
+	StorageCost float64 `json:"storageCost"`
+	// Total estimated cost
+	TotalCost float64 `json:"totalCost"`
+	// Currency for the cost
+	Currency string `json:"currency"`
+}

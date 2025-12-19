@@ -22,6 +22,10 @@ type Tx struct {
 	BotRunner *BotRunnerClient
 	// Exchange is the client for interacting with the Exchange builders.
 	Exchange *ExchangeClient
+	// ResourceUsageAggregation is the client for interacting with the ResourceUsageAggregation builders.
+	ResourceUsageAggregation *ResourceUsageAggregationClient
+	// ResourceUsageSample is the client for interacting with the ResourceUsageSample builders.
+	ResourceUsageSample *ResourceUsageSampleClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
 	// Trade is the client for interacting with the Trade builders.
@@ -162,6 +166,8 @@ func (tx *Tx) init() {
 	tx.BotMetrics = NewBotMetricsClient(tx.config)
 	tx.BotRunner = NewBotRunnerClient(tx.config)
 	tx.Exchange = NewExchangeClient(tx.config)
+	tx.ResourceUsageAggregation = NewResourceUsageAggregationClient(tx.config)
+	tx.ResourceUsageSample = NewResourceUsageSampleClient(tx.config)
 	tx.Strategy = NewStrategyClient(tx.config)
 	tx.Trade = NewTradeClient(tx.config)
 }

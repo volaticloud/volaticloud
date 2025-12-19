@@ -96,6 +96,14 @@ type BacktestStatus struct {
 	CPUUsage    float64
 	MemoryUsage int64
 
+	// Network I/O (for billing)
+	NetworkRxBytes int64
+	NetworkTxBytes int64
+
+	// Disk I/O (for billing)
+	BlockReadBytes  int64
+	BlockWriteBytes int64
+
 	// Error Info
 	ErrorMessage string
 	ExitCode     int

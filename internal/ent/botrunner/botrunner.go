@@ -43,6 +43,16 @@ const (
 	FieldDataDownloadConfig = "data_download_config"
 	// FieldOwnerID holds the string denoting the owner_id field in the database.
 	FieldOwnerID = "owner_id"
+	// FieldBillingEnabled holds the string denoting the billing_enabled field in the database.
+	FieldBillingEnabled = "billing_enabled"
+	// FieldCPUPricePerCoreHour holds the string denoting the cpu_price_per_core_hour field in the database.
+	FieldCPUPricePerCoreHour = "cpu_price_per_core_hour"
+	// FieldMemoryPricePerGBHour holds the string denoting the memory_price_per_gb_hour field in the database.
+	FieldMemoryPricePerGBHour = "memory_price_per_gb_hour"
+	// FieldNetworkPricePerGB holds the string denoting the network_price_per_gb field in the database.
+	FieldNetworkPricePerGB = "network_price_per_gb"
+	// FieldStoragePricePerGB holds the string denoting the storage_price_per_gb field in the database.
+	FieldStoragePricePerGB = "storage_price_per_gb"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -51,6 +61,10 @@ const (
 	EdgeBots = "bots"
 	// EdgeBacktests holds the string denoting the backtests edge name in mutations.
 	EdgeBacktests = "backtests"
+	// EdgeUsageSamples holds the string denoting the usage_samples edge name in mutations.
+	EdgeUsageSamples = "usage_samples"
+	// EdgeUsageAggregations holds the string denoting the usage_aggregations edge name in mutations.
+	EdgeUsageAggregations = "usage_aggregations"
 	// Table holds the table name of the botrunner in the database.
 	Table = "bot_runners"
 	// BotsTable is the table that holds the bots relation/edge.
@@ -67,6 +81,20 @@ const (
 	BacktestsInverseTable = "backtests"
 	// BacktestsColumn is the table column denoting the backtests relation/edge.
 	BacktestsColumn = "runner_id"
+	// UsageSamplesTable is the table that holds the usage_samples relation/edge.
+	UsageSamplesTable = "resource_usage_samples"
+	// UsageSamplesInverseTable is the table name for the ResourceUsageSample entity.
+	// It exists in this package in order to avoid circular dependency with the "resourceusagesample" package.
+	UsageSamplesInverseTable = "resource_usage_samples"
+	// UsageSamplesColumn is the table column denoting the usage_samples relation/edge.
+	UsageSamplesColumn = "runner_id"
+	// UsageAggregationsTable is the table that holds the usage_aggregations relation/edge.
+	UsageAggregationsTable = "resource_usage_aggregations"
+	// UsageAggregationsInverseTable is the table name for the ResourceUsageAggregation entity.
+	// It exists in this package in order to avoid circular dependency with the "resourceusageaggregation" package.
+	UsageAggregationsInverseTable = "resource_usage_aggregations"
+	// UsageAggregationsColumn is the table column denoting the usage_aggregations relation/edge.
+	UsageAggregationsColumn = "runner_id"
 )
 
 // Columns holds all SQL columns for botrunner fields.
@@ -84,6 +112,11 @@ var Columns = []string{
 	FieldDataErrorMessage,
 	FieldDataDownloadConfig,
 	FieldOwnerID,
+	FieldBillingEnabled,
+	FieldCPUPricePerCoreHour,
+	FieldMemoryPricePerGBHour,
+	FieldNetworkPricePerGB,
+	FieldStoragePricePerGB,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -113,6 +146,8 @@ var (
 	DefaultDataIsReady bool
 	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	OwnerIDValidator func(string) error
+	// DefaultBillingEnabled holds the default value on creation for the "billing_enabled" field.
+	DefaultBillingEnabled bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -200,6 +235,31 @@ func ByOwnerID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOwnerID, opts...).ToFunc()
 }
 
+// ByBillingEnabled orders the results by the billing_enabled field.
+func ByBillingEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBillingEnabled, opts...).ToFunc()
+}
+
+// ByCPUPricePerCoreHour orders the results by the cpu_price_per_core_hour field.
+func ByCPUPricePerCoreHour(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCPUPricePerCoreHour, opts...).ToFunc()
+}
+
+// ByMemoryPricePerGBHour orders the results by the memory_price_per_gb_hour field.
+func ByMemoryPricePerGBHour(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMemoryPricePerGBHour, opts...).ToFunc()
+}
+
+// ByNetworkPricePerGB orders the results by the network_price_per_gb field.
+func ByNetworkPricePerGB(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNetworkPricePerGB, opts...).ToFunc()
+}
+
+// ByStoragePricePerGB orders the results by the storage_price_per_gb field.
+func ByStoragePricePerGB(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStoragePricePerGB, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -237,6 +297,34 @@ func ByBacktests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBacktestsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByUsageSamplesCount orders the results by usage_samples count.
+func ByUsageSamplesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUsageSamplesStep(), opts...)
+	}
+}
+
+// ByUsageSamples orders the results by usage_samples terms.
+func ByUsageSamples(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUsageSamplesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByUsageAggregationsCount orders the results by usage_aggregations count.
+func ByUsageAggregationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUsageAggregationsStep(), opts...)
+	}
+}
+
+// ByUsageAggregations orders the results by usage_aggregations terms.
+func ByUsageAggregations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUsageAggregationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBotsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -249,6 +337,20 @@ func newBacktestsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BacktestsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BacktestsTable, BacktestsColumn),
+	)
+}
+func newUsageSamplesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UsageSamplesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UsageSamplesTable, UsageSamplesColumn),
+	)
+}
+func newUsageAggregationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UsageAggregationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UsageAggregationsTable, UsageAggregationsColumn),
 	)
 }
 

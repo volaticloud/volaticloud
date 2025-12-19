@@ -1,7 +1,7 @@
 # Custom GraphQL schema
 
 # Scalar declarations
-# These must be declared here (not in ent.graphql) because ENT uses them before defining them
+# These must be declared here because ENT uses them before defining them in ent.graphql
 # See: https://github.com/ent/ent/issues/2518
 scalar Time
 scalar Map
@@ -309,4 +309,73 @@ type Mutation {
   This avoids exposing bot credentials to the frontend
   """
   getFreqtradeToken(botId: ID!): FreqtradeToken! @hasScope(resource: "botId", scope: "freqtrade-api")
+}
+
+# Resource Usage Extensions
+# Note: Base types (ResourceUsageSample, ResourceUsageAggregation) and list queries
+# (resourceUsageSamples, resourceUsageAggregations) are ENT-generated in ent.graphql
+
+"""
+Estimated cost breakdown for resource usage
+Uses runner-specific pricing rates
+"""
+type UsageCost {
+  """
+  Cost for CPU usage (core-hours * rate)
+  """
+  cpuCost: Float!
+  """
+  Cost for memory usage (GB-hours * rate)
+  """
+  memoryCost: Float!
+  """
+  Cost for network transfer (GB * rate)
+  """
+  networkCost: Float!
+  """
+  Cost for disk I/O (GB * rate)
+  """
+  storageCost: Float!
+  """
+  Total estimated cost
+  """
+  totalCost: Float!
+  """
+  Currency for the cost
+  """
+  currency: String!
+}
+
+# Extend Bot with usage convenience fields
+extend type Bot {
+  """
+  Usage summary for the last 24 hours
+  Aggregated from ResourceUsageAggregation if available, or calculated from samples
+  Only populated if the bot runs on a runner with billing enabled
+  """
+  recentUsage: ResourceUsageAggregation
+}
+
+# Extend Backtest with usage convenience field
+extend type Backtest {
+  """
+  Total resource usage for this backtest execution
+  Only populated if the backtest ran on a runner with billing enabled
+  """
+  resourceUsage: ResourceUsageAggregation
+}
+
+# Usage query extensions
+extend type Query {
+  """
+  Get total usage for an organization over a time range
+  Aggregates all resources (bots and backtests) owned by the organization
+  """
+  organizationUsage(ownerID: String!, start: Time!, end: Time!): ResourceUsageAggregation @isAuthenticated
+
+  """
+  Calculate estimated cost for usage over a time range
+  Uses runner-specific pricing rates
+  """
+  estimatedCost(ownerID: String!, start: Time!, end: Time!): UsageCost! @isAuthenticated
 }

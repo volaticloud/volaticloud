@@ -10,6 +10,8 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 
@@ -1342,6 +1344,504 @@ func (_m *Exchange) ToEdge(order *ExchangeOrder) *ExchangeEdge {
 		order = DefaultExchangeOrder
 	}
 	return &ExchangeEdge{
+		Node:   _m,
+		Cursor: order.Field.toCursor(_m),
+	}
+}
+
+// ResourceUsageAggregationEdge is the edge representation of ResourceUsageAggregation.
+type ResourceUsageAggregationEdge struct {
+	Node   *ResourceUsageAggregation `json:"node"`
+	Cursor Cursor                    `json:"cursor"`
+}
+
+// ResourceUsageAggregationConnection is the connection containing edges to ResourceUsageAggregation.
+type ResourceUsageAggregationConnection struct {
+	Edges      []*ResourceUsageAggregationEdge `json:"edges"`
+	PageInfo   PageInfo                        `json:"pageInfo"`
+	TotalCount int                             `json:"totalCount"`
+}
+
+func (c *ResourceUsageAggregationConnection) build(nodes []*ResourceUsageAggregation, pager *resourceusageaggregationPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *ResourceUsageAggregation
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *ResourceUsageAggregation {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *ResourceUsageAggregation {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*ResourceUsageAggregationEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &ResourceUsageAggregationEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// ResourceUsageAggregationPaginateOption enables pagination customization.
+type ResourceUsageAggregationPaginateOption func(*resourceusageaggregationPager) error
+
+// WithResourceUsageAggregationOrder configures pagination ordering.
+func WithResourceUsageAggregationOrder(order *ResourceUsageAggregationOrder) ResourceUsageAggregationPaginateOption {
+	if order == nil {
+		order = DefaultResourceUsageAggregationOrder
+	}
+	o := *order
+	return func(pager *resourceusageaggregationPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultResourceUsageAggregationOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithResourceUsageAggregationFilter configures pagination filter.
+func WithResourceUsageAggregationFilter(filter func(*ResourceUsageAggregationQuery) (*ResourceUsageAggregationQuery, error)) ResourceUsageAggregationPaginateOption {
+	return func(pager *resourceusageaggregationPager) error {
+		if filter == nil {
+			return errors.New("ResourceUsageAggregationQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type resourceusageaggregationPager struct {
+	reverse bool
+	order   *ResourceUsageAggregationOrder
+	filter  func(*ResourceUsageAggregationQuery) (*ResourceUsageAggregationQuery, error)
+}
+
+func newResourceUsageAggregationPager(opts []ResourceUsageAggregationPaginateOption, reverse bool) (*resourceusageaggregationPager, error) {
+	pager := &resourceusageaggregationPager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultResourceUsageAggregationOrder
+	}
+	return pager, nil
+}
+
+func (p *resourceusageaggregationPager) applyFilter(query *ResourceUsageAggregationQuery) (*ResourceUsageAggregationQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *resourceusageaggregationPager) toCursor(_m *ResourceUsageAggregation) Cursor {
+	return p.order.Field.toCursor(_m)
+}
+
+func (p *resourceusageaggregationPager) applyCursors(query *ResourceUsageAggregationQuery, after, before *Cursor) (*ResourceUsageAggregationQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultResourceUsageAggregationOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *resourceusageaggregationPager) applyOrder(query *ResourceUsageAggregationQuery) *ResourceUsageAggregationQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultResourceUsageAggregationOrder.Field {
+		query = query.Order(DefaultResourceUsageAggregationOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return query
+}
+
+func (p *resourceusageaggregationPager) orderExpr(query *ResourceUsageAggregationQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultResourceUsageAggregationOrder.Field {
+			b.Comma().Ident(DefaultResourceUsageAggregationOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to ResourceUsageAggregation.
+func (_m *ResourceUsageAggregationQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ResourceUsageAggregationPaginateOption,
+) (*ResourceUsageAggregationConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newResourceUsageAggregationPager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if _m, err = pager.applyFilter(_m); err != nil {
+		return nil, err
+	}
+	conn := &ResourceUsageAggregationConnection{Edges: []*ResourceUsageAggregationEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			c := _m.Clone()
+			c.ctx.Fields = nil
+			if conn.TotalCount, err = c.Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+	if _m, err = pager.applyCursors(_m, after, before); err != nil {
+		return nil, err
+	}
+	limit := paginateLimit(first, last)
+	if limit != 0 {
+		_m.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := _m.collectField(ctx, limit == 1, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+	_m = pager.applyOrder(_m)
+	nodes, err := _m.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// ResourceUsageAggregationOrderField defines the ordering field of ResourceUsageAggregation.
+type ResourceUsageAggregationOrderField struct {
+	// Value extracts the ordering value from the given ResourceUsageAggregation.
+	Value    func(*ResourceUsageAggregation) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) resourceusageaggregation.OrderOption
+	toCursor func(*ResourceUsageAggregation) Cursor
+}
+
+// ResourceUsageAggregationOrder defines the ordering of ResourceUsageAggregation.
+type ResourceUsageAggregationOrder struct {
+	Direction OrderDirection                      `json:"direction"`
+	Field     *ResourceUsageAggregationOrderField `json:"field"`
+}
+
+// DefaultResourceUsageAggregationOrder is the default ordering of ResourceUsageAggregation.
+var DefaultResourceUsageAggregationOrder = &ResourceUsageAggregationOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &ResourceUsageAggregationOrderField{
+		Value: func(_m *ResourceUsageAggregation) (ent.Value, error) {
+			return _m.ID, nil
+		},
+		column: resourceusageaggregation.FieldID,
+		toTerm: resourceusageaggregation.ByID,
+		toCursor: func(_m *ResourceUsageAggregation) Cursor {
+			return Cursor{ID: _m.ID}
+		},
+	},
+}
+
+// ToEdge converts ResourceUsageAggregation into ResourceUsageAggregationEdge.
+func (_m *ResourceUsageAggregation) ToEdge(order *ResourceUsageAggregationOrder) *ResourceUsageAggregationEdge {
+	if order == nil {
+		order = DefaultResourceUsageAggregationOrder
+	}
+	return &ResourceUsageAggregationEdge{
+		Node:   _m,
+		Cursor: order.Field.toCursor(_m),
+	}
+}
+
+// ResourceUsageSampleEdge is the edge representation of ResourceUsageSample.
+type ResourceUsageSampleEdge struct {
+	Node   *ResourceUsageSample `json:"node"`
+	Cursor Cursor               `json:"cursor"`
+}
+
+// ResourceUsageSampleConnection is the connection containing edges to ResourceUsageSample.
+type ResourceUsageSampleConnection struct {
+	Edges      []*ResourceUsageSampleEdge `json:"edges"`
+	PageInfo   PageInfo                   `json:"pageInfo"`
+	TotalCount int                        `json:"totalCount"`
+}
+
+func (c *ResourceUsageSampleConnection) build(nodes []*ResourceUsageSample, pager *resourceusagesamplePager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *ResourceUsageSample
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *ResourceUsageSample {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *ResourceUsageSample {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*ResourceUsageSampleEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &ResourceUsageSampleEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// ResourceUsageSamplePaginateOption enables pagination customization.
+type ResourceUsageSamplePaginateOption func(*resourceusagesamplePager) error
+
+// WithResourceUsageSampleOrder configures pagination ordering.
+func WithResourceUsageSampleOrder(order *ResourceUsageSampleOrder) ResourceUsageSamplePaginateOption {
+	if order == nil {
+		order = DefaultResourceUsageSampleOrder
+	}
+	o := *order
+	return func(pager *resourceusagesamplePager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultResourceUsageSampleOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithResourceUsageSampleFilter configures pagination filter.
+func WithResourceUsageSampleFilter(filter func(*ResourceUsageSampleQuery) (*ResourceUsageSampleQuery, error)) ResourceUsageSamplePaginateOption {
+	return func(pager *resourceusagesamplePager) error {
+		if filter == nil {
+			return errors.New("ResourceUsageSampleQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type resourceusagesamplePager struct {
+	reverse bool
+	order   *ResourceUsageSampleOrder
+	filter  func(*ResourceUsageSampleQuery) (*ResourceUsageSampleQuery, error)
+}
+
+func newResourceUsageSamplePager(opts []ResourceUsageSamplePaginateOption, reverse bool) (*resourceusagesamplePager, error) {
+	pager := &resourceusagesamplePager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultResourceUsageSampleOrder
+	}
+	return pager, nil
+}
+
+func (p *resourceusagesamplePager) applyFilter(query *ResourceUsageSampleQuery) (*ResourceUsageSampleQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *resourceusagesamplePager) toCursor(_m *ResourceUsageSample) Cursor {
+	return p.order.Field.toCursor(_m)
+}
+
+func (p *resourceusagesamplePager) applyCursors(query *ResourceUsageSampleQuery, after, before *Cursor) (*ResourceUsageSampleQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultResourceUsageSampleOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *resourceusagesamplePager) applyOrder(query *ResourceUsageSampleQuery) *ResourceUsageSampleQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultResourceUsageSampleOrder.Field {
+		query = query.Order(DefaultResourceUsageSampleOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return query
+}
+
+func (p *resourceusagesamplePager) orderExpr(query *ResourceUsageSampleQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultResourceUsageSampleOrder.Field {
+			b.Comma().Ident(DefaultResourceUsageSampleOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to ResourceUsageSample.
+func (_m *ResourceUsageSampleQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ResourceUsageSamplePaginateOption,
+) (*ResourceUsageSampleConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newResourceUsageSamplePager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if _m, err = pager.applyFilter(_m); err != nil {
+		return nil, err
+	}
+	conn := &ResourceUsageSampleConnection{Edges: []*ResourceUsageSampleEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			c := _m.Clone()
+			c.ctx.Fields = nil
+			if conn.TotalCount, err = c.Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+	if _m, err = pager.applyCursors(_m, after, before); err != nil {
+		return nil, err
+	}
+	limit := paginateLimit(first, last)
+	if limit != 0 {
+		_m.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := _m.collectField(ctx, limit == 1, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+	_m = pager.applyOrder(_m)
+	nodes, err := _m.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// ResourceUsageSampleOrderField defines the ordering field of ResourceUsageSample.
+type ResourceUsageSampleOrderField struct {
+	// Value extracts the ordering value from the given ResourceUsageSample.
+	Value    func(*ResourceUsageSample) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) resourceusagesample.OrderOption
+	toCursor func(*ResourceUsageSample) Cursor
+}
+
+// ResourceUsageSampleOrder defines the ordering of ResourceUsageSample.
+type ResourceUsageSampleOrder struct {
+	Direction OrderDirection                 `json:"direction"`
+	Field     *ResourceUsageSampleOrderField `json:"field"`
+}
+
+// DefaultResourceUsageSampleOrder is the default ordering of ResourceUsageSample.
+var DefaultResourceUsageSampleOrder = &ResourceUsageSampleOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &ResourceUsageSampleOrderField{
+		Value: func(_m *ResourceUsageSample) (ent.Value, error) {
+			return _m.ID, nil
+		},
+		column: resourceusagesample.FieldID,
+		toTerm: resourceusagesample.ByID,
+		toCursor: func(_m *ResourceUsageSample) Cursor {
+			return Cursor{ID: _m.ID}
+		},
+	},
+}
+
+// ToEdge converts ResourceUsageSample into ResourceUsageSampleEdge.
+func (_m *ResourceUsageSample) ToEdge(order *ResourceUsageSampleOrder) *ResourceUsageSampleEdge {
+	if order == nil {
+		order = DefaultResourceUsageSampleOrder
+	}
+	return &ResourceUsageSampleEdge{
 		Node:   _m,
 		Cursor: order.Field.toCursor(_m),
 	}

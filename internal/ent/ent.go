@@ -13,6 +13,8 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 
@@ -79,13 +81,15 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			backtest.Table:   backtest.ValidColumn,
-			bot.Table:        bot.ValidColumn,
-			botmetrics.Table: botmetrics.ValidColumn,
-			botrunner.Table:  botrunner.ValidColumn,
-			exchange.Table:   exchange.ValidColumn,
-			strategy.Table:   strategy.ValidColumn,
-			trade.Table:      trade.ValidColumn,
+			backtest.Table:                 backtest.ValidColumn,
+			bot.Table:                      bot.ValidColumn,
+			botmetrics.Table:               botmetrics.ValidColumn,
+			botrunner.Table:                botrunner.ValidColumn,
+			exchange.Table:                 exchange.ValidColumn,
+			resourceusageaggregation.Table: resourceusageaggregation.ValidColumn,
+			resourceusagesample.Table:      resourceusagesample.ValidColumn,
+			strategy.Table:                 strategy.ValidColumn,
+			trade.Table:                    trade.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

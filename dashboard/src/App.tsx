@@ -19,6 +19,7 @@ import { StrategyStudioPage } from './pages/Strategies/StrategyStudioPage';
 import { RunnersPage } from './pages/Runners/RunnersPage';
 import { BacktestsPage } from './pages/BacktestsPage';
 import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
+import { UsagePage } from './pages/Usage/UsagePage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -67,6 +68,7 @@ function App() {
                 <Route path="backtests/:id" element={<BacktestDetailPage />} />
                 <Route path="trades" element={<div>Trades (Coming Soon)</div>} />
                 <Route path="runners" element={<RunnersPage />} />
+                <Route path="usage" element={<UsagePage />} />
               </Route>
               </Routes>
             </SidebarProvider>

@@ -13,6 +13,7 @@ import (
 	"volaticloud/internal/enum"
 	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/runner"
+	"volaticloud/internal/usage"
 
 	"github.com/google/uuid"
 )
@@ -27,9 +28,10 @@ const (
 
 // BotMonitor periodically checks bot status and updates the database
 type BotMonitor struct {
-	dbClient    *ent.Client
-	coordinator *Coordinator
-	interval    time.Duration
+	dbClient       *ent.Client
+	coordinator    *Coordinator
+	usageCollector usage.Collector
+	interval       time.Duration
 
 	stopChan chan struct{}
 	doneChan chan struct{}
@@ -38,11 +40,12 @@ type BotMonitor struct {
 // NewBotMonitor creates a new bot monitoring worker
 func NewBotMonitor(dbClient *ent.Client, coordinator *Coordinator) *BotMonitor {
 	return &BotMonitor{
-		dbClient:    dbClient,
-		coordinator: coordinator,
-		interval:    DefaultMonitorInterval,
-		stopChan:    make(chan struct{}),
-		doneChan:    make(chan struct{}),
+		dbClient:       dbClient,
+		coordinator:    coordinator,
+		usageCollector: usage.NewCollector(dbClient),
+		interval:       DefaultMonitorInterval,
+		stopChan:       make(chan struct{}),
+		doneChan:       make(chan struct{}),
 	}
 }
 
@@ -232,6 +235,26 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 		if err := m.fetchAndUpdateBotMetrics(ctx, b, status, botRunner.Config); err != nil {
 			// Log error but don't fail the status check
 			log.Printf("Bot %s (%s) failed to fetch metrics: %v", b.Name, b.ID, err)
+		}
+	}
+
+	// Record usage sample if billing is enabled for this runner
+	if botRunner.BillingEnabled && botStatus == enum.BotStatusRunning {
+		if err := m.usageCollector.RecordSample(ctx, usage.UsageSample{
+			ResourceType:    enum.ResourceTypeBot,
+			ResourceID:      b.ID,
+			OwnerID:         b.OwnerID,
+			RunnerID:        botRunner.ID,
+			CPUPercent:      status.CPUUsage,
+			MemoryBytes:     status.MemoryUsage,
+			NetworkRxBytes:  status.NetworkRxBytes,
+			NetworkTxBytes:  status.NetworkTxBytes,
+			BlockReadBytes:  status.BlockReadBytes,
+			BlockWriteBytes: status.BlockWriteBytes,
+			SampledAt:       time.Now(),
+		}); err != nil {
+			// Log error but don't fail the status check
+			log.Printf("Bot %s (%s) failed to record usage sample: %v", b.Name, b.ID, err)
 		}
 	}
 

@@ -118,6 +118,32 @@ func (r *queryResolver) Exchanges(ctx context.Context, after *entgql.Cursor[uuid
 	return query.Paginate(ctx, after, first, before, last)
 }
 
+// ResourceUsageAggregations returns all usage aggregations.
+// This is typically filtered by the client using where clauses.
+func (r *queryResolver) ResourceUsageAggregations(ctx context.Context) ([]*ent.ResourceUsageAggregation, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return all aggregations - the client should filter by ownerID
+	return r.client.ResourceUsageAggregation.Query().All(ctx)
+}
+
+// ResourceUsageSamples returns all usage samples.
+// This is typically filtered by the client using where clauses.
+func (r *queryResolver) ResourceUsageSamples(ctx context.Context) ([]*ent.ResourceUsageSample, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return all samples - the client should filter by ownerID
+	return r.client.ResourceUsageSample.Query().All(ctx)
+}
+
 // Strategies resolver
 // Note: This query does NOT filter by owner_id automatically.
 // Authorization should be handled by UMA/Keycloak, or the client should pass
@@ -159,7 +185,10 @@ func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UU
 
 func (r *Resolver) Backtest() BacktestResolver { return &backtestResolver{r} }
 
+func (r *Resolver) Bot() BotResolver { return &botResolver{r} }
+
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type backtestResolver struct{ *Resolver }
+type botResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

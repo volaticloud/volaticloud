@@ -70,6 +70,28 @@ func (BotRunner) Fields() []ent.Field {
 		field.String("owner_id").
 			NotEmpty().
 			Comment("Group ID (organization) that owns this bot runner"),
+
+		// Billing fields
+		field.Bool("billing_enabled").
+			Default(false).
+			Comment("Whether usage tracking and billing is enabled for this runner"),
+		field.Float("cpu_price_per_core_hour").
+			Optional().
+			Nillable().
+			Comment("Price per core-hour in USD (only used if billing_enabled)"),
+		field.Float("memory_price_per_gb_hour").
+			Optional().
+			Nillable().
+			Comment("Price per GB-hour in USD (only used if billing_enabled)"),
+		field.Float("network_price_per_gb").
+			Optional().
+			Nillable().
+			Comment("Price per GB of network transfer in USD (only used if billing_enabled)"),
+		field.Float("storage_price_per_gb").
+			Optional().
+			Nillable().
+			Comment("Price per GB of disk I/O in USD (only used if billing_enabled)"),
+
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -86,6 +108,10 @@ func (BotRunner) Edges() []ent.Edge {
 			Annotations(entgql.RelayConnection()),
 		edge.To("backtests", Backtest.Type).
 			Annotations(entgql.RelayConnection()),
+		edge.To("usage_samples", ResourceUsageSample.Type).
+			Annotations(entgql.Skip()),
+		edge.To("usage_aggregations", ResourceUsageAggregation.Type).
+			Annotations(entgql.Skip()),
 	}
 }
 

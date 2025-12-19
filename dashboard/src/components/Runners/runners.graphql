@@ -14,6 +14,7 @@ query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
         dataDownloadStatus
         dataDownloadProgress
         dataErrorMessage
+        billingEnabled
         bots {
           totalCount
         }
@@ -45,6 +46,11 @@ query GetRunnerWithSecrets($id: ID!) {
         dataDownloadProgress
         dataDownloadConfig
         dataErrorMessage
+        billingEnabled
+        cpuPricePerCoreHour
+        memoryPricePerGBHour
+        networkPricePerGB
+        storagePricePerGB
         bots {
           totalCount
         }
@@ -60,6 +66,11 @@ mutation CreateRunner($input: CreateBotRunnerInput!) {
     type
     config
     dataDownloadConfig
+    billingEnabled
+    cpuPricePerCoreHour
+    memoryPricePerGBHour
+    networkPricePerGB
+    storagePricePerGB
   }
 }
 
@@ -70,6 +81,11 @@ mutation UpdateRunner($id: ID!, $input: UpdateBotRunnerInput!) {
     type
     config
     dataDownloadConfig
+    billingEnabled
+    cpuPricePerCoreHour
+    memoryPricePerGBHour
+    networkPricePerGB
+    storagePricePerGB
   }
 }
 

@@ -10,6 +10,8 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 
@@ -48,6 +50,16 @@ var exchangeImplementors = []string{"Exchange", "Node"}
 
 // IsNode implements the Node interface check for GQLGen.
 func (*Exchange) IsNode() {}
+
+var resourceusageaggregationImplementors = []string{"ResourceUsageAggregation", "Node"}
+
+// IsNode implements the Node interface check for GQLGen.
+func (*ResourceUsageAggregation) IsNode() {}
+
+var resourceusagesampleImplementors = []string{"ResourceUsageSample", "Node"}
+
+// IsNode implements the Node interface check for GQLGen.
+func (*ResourceUsageSample) IsNode() {}
 
 var strategyImplementors = []string{"Strategy", "Node"}
 
@@ -158,6 +170,24 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			Where(exchange.ID(id))
 		if fc := graphql.GetFieldContext(ctx); fc != nil {
 			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, exchangeImplementors...); err != nil {
+				return nil, err
+			}
+		}
+		return query.Only(ctx)
+	case resourceusageaggregation.Table:
+		query := c.ResourceUsageAggregation.Query().
+			Where(resourceusageaggregation.ID(id))
+		if fc := graphql.GetFieldContext(ctx); fc != nil {
+			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, resourceusageaggregationImplementors...); err != nil {
+				return nil, err
+			}
+		}
+		return query.Only(ctx)
+	case resourceusagesample.Table:
+		query := c.ResourceUsageSample.Query().
+			Where(resourceusagesample.ID(id))
+		if fc := graphql.GetFieldContext(ctx); fc != nil {
+			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, resourceusagesampleImplementors...); err != nil {
 				return nil, err
 			}
 		}
@@ -321,6 +351,38 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		query := c.Exchange.Query().
 			Where(exchange.IDIn(ids...))
 		query, err := query.CollectFields(ctx, exchangeImplementors...)
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case resourceusageaggregation.Table:
+		query := c.ResourceUsageAggregation.Query().
+			Where(resourceusageaggregation.IDIn(ids...))
+		query, err := query.CollectFields(ctx, resourceusageaggregationImplementors...)
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case resourceusagesample.Table:
+		query := c.ResourceUsageSample.Query().
+			Where(resourceusagesample.IDIn(ids...))
+		query, err := query.CollectFields(ctx, resourceusagesampleImplementors...)
 		if err != nil {
 			return nil, err
 		}

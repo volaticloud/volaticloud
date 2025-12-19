@@ -228,10 +228,34 @@ func (d *DockerBacktestRunner) GetBacktestStatus(ctx context.Context, backtestID
 					cpuDelta := float64(statsData.CPUStats.CPUUsage.TotalUsage - statsData.PreCPUStats.CPUUsage.TotalUsage)
 					systemDelta := float64(statsData.CPUStats.SystemUsage - statsData.PreCPUStats.SystemUsage)
 					if systemDelta > 0 {
-						status.CPUUsage = (cpuDelta / systemDelta) * float64(len(statsData.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+						// Use PercpuUsage length for cgroups v1, OnlineCPUs for cgroups v2
+						numCPUs := len(statsData.CPUStats.CPUUsage.PercpuUsage)
+						if numCPUs == 0 {
+							numCPUs = int(statsData.CPUStats.OnlineCPUs)
+						}
+						if numCPUs == 0 {
+							numCPUs = 1 // fallback to 1 CPU
+						}
+						status.CPUUsage = (cpuDelta / systemDelta) * float64(numCPUs) * 100.0
 					}
 				}
 				status.MemoryUsage = int64(statsData.MemoryStats.Usage)
+
+				// Extract network I/O stats (cumulative bytes across all interfaces)
+				for _, netStats := range statsData.Networks {
+					status.NetworkRxBytes += int64(netStats.RxBytes)
+					status.NetworkTxBytes += int64(netStats.TxBytes)
+				}
+
+				// Extract disk I/O stats from blkio
+				for _, entry := range statsData.BlkioStats.IoServiceBytesRecursive {
+					switch entry.Op {
+					case "read", "Read":
+						status.BlockReadBytes += int64(entry.Value)
+					case "write", "Write":
+						status.BlockWriteBytes += int64(entry.Value)
+					}
+				}
 			}
 		}
 	}

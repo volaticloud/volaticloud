@@ -68,6 +68,30 @@ func (f ExchangeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExchangeMutation", m)
 }
 
+// The ResourceUsageAggregationFunc type is an adapter to allow the use of ordinary
+// function as ResourceUsageAggregation mutator.
+type ResourceUsageAggregationFunc func(context.Context, *ent.ResourceUsageAggregationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ResourceUsageAggregationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ResourceUsageAggregationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceUsageAggregationMutation", m)
+}
+
+// The ResourceUsageSampleFunc type is an adapter to allow the use of ordinary
+// function as ResourceUsageSample mutator.
+type ResourceUsageSampleFunc func(context.Context, *ent.ResourceUsageSampleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ResourceUsageSampleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ResourceUsageSampleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ResourceUsageSampleMutation", m)
+}
+
 // The StrategyFunc type is an adapter to allow the use of ordinary
 // function as Strategy mutator.
 type StrategyFunc func(context.Context, *ent.StrategyMutation) (ent.Value, error)

@@ -537,6 +537,11 @@ type CreateBotRunnerInput struct {
 	DataErrorMessage      *string
 	DataDownloadConfig    map[string]interface{}
 	OwnerID               string
+	BillingEnabled        *bool
+	CPUPricePerCoreHour   *float64
+	MemoryPricePerGBHour  *float64
+	NetworkPricePerGB     *float64
+	StoragePricePerGB     *float64
 	CreatedAt             *time.Time
 	UpdatedAt             *time.Time
 	BotIDs                []uuid.UUID
@@ -577,6 +582,21 @@ func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 		m.SetDataDownloadConfig(v)
 	}
 	m.SetOwnerID(i.OwnerID)
+	if v := i.BillingEnabled; v != nil {
+		m.SetBillingEnabled(*v)
+	}
+	if v := i.CPUPricePerCoreHour; v != nil {
+		m.SetCPUPricePerCoreHour(*v)
+	}
+	if v := i.MemoryPricePerGBHour; v != nil {
+		m.SetMemoryPricePerGBHour(*v)
+	}
+	if v := i.NetworkPricePerGB; v != nil {
+		m.SetNetworkPricePerGB(*v)
+	}
+	if v := i.StoragePricePerGB; v != nil {
+		m.SetStoragePricePerGB(*v)
+	}
 	if v := i.CreatedAt; v != nil {
 		m.SetCreatedAt(*v)
 	}
@@ -617,6 +637,15 @@ type UpdateBotRunnerInput struct {
 	ClearDataDownloadConfig    bool
 	DataDownloadConfig         map[string]interface{}
 	OwnerID                    *string
+	BillingEnabled             *bool
+	ClearCPUPricePerCoreHour   bool
+	CPUPricePerCoreHour        *float64
+	ClearMemoryPricePerGBHour  bool
+	MemoryPricePerGBHour       *float64
+	ClearNetworkPricePerGB     bool
+	NetworkPricePerGB          *float64
+	ClearStoragePricePerGB     bool
+	StoragePricePerGB          *float64
 	UpdatedAt                  *time.Time
 	ClearBots                  bool
 	AddBotIDs                  []uuid.UUID
@@ -681,6 +710,33 @@ func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.OwnerID; v != nil {
 		m.SetOwnerID(*v)
+	}
+	if v := i.BillingEnabled; v != nil {
+		m.SetBillingEnabled(*v)
+	}
+	if i.ClearCPUPricePerCoreHour {
+		m.ClearCPUPricePerCoreHour()
+	}
+	if v := i.CPUPricePerCoreHour; v != nil {
+		m.SetCPUPricePerCoreHour(*v)
+	}
+	if i.ClearMemoryPricePerGBHour {
+		m.ClearMemoryPricePerGBHour()
+	}
+	if v := i.MemoryPricePerGBHour; v != nil {
+		m.SetMemoryPricePerGBHour(*v)
+	}
+	if i.ClearNetworkPricePerGB {
+		m.ClearNetworkPricePerGB()
+	}
+	if v := i.NetworkPricePerGB; v != nil {
+		m.SetNetworkPricePerGB(*v)
+	}
+	if i.ClearStoragePricePerGB {
+		m.ClearStoragePricePerGB()
+	}
+	if v := i.StoragePricePerGB; v != nil {
+		m.SetStoragePricePerGB(*v)
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)

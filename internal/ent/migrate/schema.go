@@ -152,6 +152,11 @@ var (
 		{Name: "data_error_message", Type: field.TypeString, Nullable: true},
 		{Name: "data_download_config", Type: field.TypeJSON, Nullable: true},
 		{Name: "owner_id", Type: field.TypeString},
+		{Name: "billing_enabled", Type: field.TypeBool, Default: false},
+		{Name: "cpu_price_per_core_hour", Type: field.TypeFloat64, Nullable: true},
+		{Name: "memory_price_per_gb_hour", Type: field.TypeFloat64, Nullable: true},
+		{Name: "network_price_per_gb", Type: field.TypeFloat64, Nullable: true},
+		{Name: "storage_price_per_gb", Type: field.TypeFloat64, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -187,6 +192,117 @@ var (
 				Name:    "exchange_owner_id",
 				Unique:  false,
 				Columns: []*schema.Column{ExchangesColumns[3]},
+			},
+		},
+	}
+	// ResourceUsageAggregationsColumns holds the columns for the "resource_usage_aggregations" table.
+	ResourceUsageAggregationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"bot", "backtest"}},
+		{Name: "resource_id", Type: field.TypeUUID},
+		{Name: "owner_id", Type: field.TypeString},
+		{Name: "granularity", Type: field.TypeEnum, Enums: []string{"hourly", "daily"}},
+		{Name: "bucket_start", Type: field.TypeTime},
+		{Name: "bucket_end", Type: field.TypeTime},
+		{Name: "cpu_core_seconds", Type: field.TypeFloat64, Default: 0},
+		{Name: "cpu_avg_percent", Type: field.TypeFloat64, Default: 0},
+		{Name: "cpu_max_percent", Type: field.TypeFloat64, Default: 0},
+		{Name: "memory_gb_seconds", Type: field.TypeFloat64, Default: 0},
+		{Name: "memory_avg_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "memory_max_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "network_rx_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "network_tx_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "block_read_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "block_write_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "sample_count", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "runner_id", Type: field.TypeUUID},
+	}
+	// ResourceUsageAggregationsTable holds the schema information for the "resource_usage_aggregations" table.
+	ResourceUsageAggregationsTable = &schema.Table{
+		Name:       "resource_usage_aggregations",
+		Columns:    ResourceUsageAggregationsColumns,
+		PrimaryKey: []*schema.Column{ResourceUsageAggregationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "resource_usage_aggregations_bot_runners_usage_aggregations",
+				Columns:    []*schema.Column{ResourceUsageAggregationsColumns[19]},
+				RefColumns: []*schema.Column{BotRunnersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "resourceusageaggregation_resource_type_resource_id_granularity_bucket_start",
+				Unique:  true,
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[1], ResourceUsageAggregationsColumns[2], ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5]},
+			},
+			{
+				Name:    "resourceusageaggregation_owner_id_granularity_bucket_start",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[3], ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5]},
+			},
+			{
+				Name:    "resourceusageaggregation_runner_id_granularity_bucket_start",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[19], ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5]},
+			},
+			{
+				Name:    "resourceusageaggregation_resource_id_bucket_start",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[2], ResourceUsageAggregationsColumns[5]},
+			},
+		},
+	}
+	// ResourceUsageSamplesColumns holds the columns for the "resource_usage_samples" table.
+	ResourceUsageSamplesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"bot", "backtest"}},
+		{Name: "resource_id", Type: field.TypeUUID},
+		{Name: "owner_id", Type: field.TypeString},
+		{Name: "cpu_percent", Type: field.TypeFloat64},
+		{Name: "memory_bytes", Type: field.TypeInt64},
+		{Name: "network_rx_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "network_tx_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "block_read_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "block_write_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "sampled_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "runner_id", Type: field.TypeUUID},
+	}
+	// ResourceUsageSamplesTable holds the schema information for the "resource_usage_samples" table.
+	ResourceUsageSamplesTable = &schema.Table{
+		Name:       "resource_usage_samples",
+		Columns:    ResourceUsageSamplesColumns,
+		PrimaryKey: []*schema.Column{ResourceUsageSamplesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "resource_usage_samples_bot_runners_usage_samples",
+				Columns:    []*schema.Column{ResourceUsageSamplesColumns[12]},
+				RefColumns: []*schema.Column{BotRunnersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "resourceusagesample_resource_type_resource_id_sampled_at",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[1], ResourceUsageSamplesColumns[2], ResourceUsageSamplesColumns[10]},
+			},
+			{
+				Name:    "resourceusagesample_owner_id_sampled_at",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[3], ResourceUsageSamplesColumns[10]},
+			},
+			{
+				Name:    "resourceusagesample_runner_id_sampled_at",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[12], ResourceUsageSamplesColumns[10]},
+			},
+			{
+				Name:    "resourceusagesample_sampled_at",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[10]},
 			},
 		},
 	}
@@ -305,6 +421,8 @@ var (
 		BotMetricsTable,
 		BotRunnersTable,
 		ExchangesTable,
+		ResourceUsageAggregationsTable,
+		ResourceUsageSamplesTable,
 		StrategiesTable,
 		TradesTable,
 	}
@@ -317,6 +435,8 @@ func init() {
 	BotsTable.ForeignKeys[1].RefTable = ExchangesTable
 	BotsTable.ForeignKeys[2].RefTable = StrategiesTable
 	BotMetricsTable.ForeignKeys[0].RefTable = BotsTable
+	ResourceUsageAggregationsTable.ForeignKeys[0].RefTable = BotRunnersTable
+	ResourceUsageSamplesTable.ForeignKeys[0].RefTable = BotRunnersTable
 	StrategiesTable.ForeignKeys[0].RefTable = StrategiesTable
 	TradesTable.ForeignKeys[0].RefTable = BotsTable
 }

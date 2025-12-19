@@ -12,6 +12,8 @@ import (
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
 	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 	"volaticloud/internal/enum"
@@ -2467,6 +2469,58 @@ type BotRunnerWhereInput struct {
 	OwnerIDEqualFold    *string  `json:"ownerIDEqualFold,omitempty"`
 	OwnerIDContainsFold *string  `json:"ownerIDContainsFold,omitempty"`
 
+	// "billing_enabled" field predicates.
+	BillingEnabled    *bool `json:"billingEnabled,omitempty"`
+	BillingEnabledNEQ *bool `json:"billingEnabledNEQ,omitempty"`
+
+	// "cpu_price_per_core_hour" field predicates.
+	CPUPricePerCoreHour       *float64  `json:"cpuPricePerCoreHour,omitempty"`
+	CPUPricePerCoreHourNEQ    *float64  `json:"cpuPricePerCoreHourNEQ,omitempty"`
+	CPUPricePerCoreHourIn     []float64 `json:"cpuPricePerCoreHourIn,omitempty"`
+	CPUPricePerCoreHourNotIn  []float64 `json:"cpuPricePerCoreHourNotIn,omitempty"`
+	CPUPricePerCoreHourGT     *float64  `json:"cpuPricePerCoreHourGT,omitempty"`
+	CPUPricePerCoreHourGTE    *float64  `json:"cpuPricePerCoreHourGTE,omitempty"`
+	CPUPricePerCoreHourLT     *float64  `json:"cpuPricePerCoreHourLT,omitempty"`
+	CPUPricePerCoreHourLTE    *float64  `json:"cpuPricePerCoreHourLTE,omitempty"`
+	CPUPricePerCoreHourIsNil  bool      `json:"cpuPricePerCoreHourIsNil,omitempty"`
+	CPUPricePerCoreHourNotNil bool      `json:"cpuPricePerCoreHourNotNil,omitempty"`
+
+	// "memory_price_per_gb_hour" field predicates.
+	MemoryPricePerGBHour       *float64  `json:"memoryPricePerGBHour,omitempty"`
+	MemoryPricePerGBHourNEQ    *float64  `json:"memoryPricePerGBHourNEQ,omitempty"`
+	MemoryPricePerGBHourIn     []float64 `json:"memoryPricePerGBHourIn,omitempty"`
+	MemoryPricePerGBHourNotIn  []float64 `json:"memoryPricePerGBHourNotIn,omitempty"`
+	MemoryPricePerGBHourGT     *float64  `json:"memoryPricePerGBHourGT,omitempty"`
+	MemoryPricePerGBHourGTE    *float64  `json:"memoryPricePerGBHourGTE,omitempty"`
+	MemoryPricePerGBHourLT     *float64  `json:"memoryPricePerGBHourLT,omitempty"`
+	MemoryPricePerGBHourLTE    *float64  `json:"memoryPricePerGBHourLTE,omitempty"`
+	MemoryPricePerGBHourIsNil  bool      `json:"memoryPricePerGBHourIsNil,omitempty"`
+	MemoryPricePerGBHourNotNil bool      `json:"memoryPricePerGBHourNotNil,omitempty"`
+
+	// "network_price_per_gb" field predicates.
+	NetworkPricePerGB       *float64  `json:"networkPricePerGB,omitempty"`
+	NetworkPricePerGBNEQ    *float64  `json:"networkPricePerGBNEQ,omitempty"`
+	NetworkPricePerGBIn     []float64 `json:"networkPricePerGBIn,omitempty"`
+	NetworkPricePerGBNotIn  []float64 `json:"networkPricePerGBNotIn,omitempty"`
+	NetworkPricePerGBGT     *float64  `json:"networkPricePerGBGT,omitempty"`
+	NetworkPricePerGBGTE    *float64  `json:"networkPricePerGBGTE,omitempty"`
+	NetworkPricePerGBLT     *float64  `json:"networkPricePerGBLT,omitempty"`
+	NetworkPricePerGBLTE    *float64  `json:"networkPricePerGBLTE,omitempty"`
+	NetworkPricePerGBIsNil  bool      `json:"networkPricePerGBIsNil,omitempty"`
+	NetworkPricePerGBNotNil bool      `json:"networkPricePerGBNotNil,omitempty"`
+
+	// "storage_price_per_gb" field predicates.
+	StoragePricePerGB       *float64  `json:"storagePricePerGB,omitempty"`
+	StoragePricePerGBNEQ    *float64  `json:"storagePricePerGBNEQ,omitempty"`
+	StoragePricePerGBIn     []float64 `json:"storagePricePerGBIn,omitempty"`
+	StoragePricePerGBNotIn  []float64 `json:"storagePricePerGBNotIn,omitempty"`
+	StoragePricePerGBGT     *float64  `json:"storagePricePerGBGT,omitempty"`
+	StoragePricePerGBGTE    *float64  `json:"storagePricePerGBGTE,omitempty"`
+	StoragePricePerGBLT     *float64  `json:"storagePricePerGBLT,omitempty"`
+	StoragePricePerGBLTE    *float64  `json:"storagePricePerGBLTE,omitempty"`
+	StoragePricePerGBIsNil  bool      `json:"storagePricePerGBIsNil,omitempty"`
+	StoragePricePerGBNotNil bool      `json:"storagePricePerGBNotNil,omitempty"`
+
 	// "created_at" field predicates.
 	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
 	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
@@ -2809,6 +2863,132 @@ func (i *BotRunnerWhereInput) P() (predicate.BotRunner, error) {
 	}
 	if i.OwnerIDContainsFold != nil {
 		predicates = append(predicates, botrunner.OwnerIDContainsFold(*i.OwnerIDContainsFold))
+	}
+	if i.BillingEnabled != nil {
+		predicates = append(predicates, botrunner.BillingEnabledEQ(*i.BillingEnabled))
+	}
+	if i.BillingEnabledNEQ != nil {
+		predicates = append(predicates, botrunner.BillingEnabledNEQ(*i.BillingEnabledNEQ))
+	}
+	if i.CPUPricePerCoreHour != nil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourEQ(*i.CPUPricePerCoreHour))
+	}
+	if i.CPUPricePerCoreHourNEQ != nil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourNEQ(*i.CPUPricePerCoreHourNEQ))
+	}
+	if len(i.CPUPricePerCoreHourIn) > 0 {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourIn(i.CPUPricePerCoreHourIn...))
+	}
+	if len(i.CPUPricePerCoreHourNotIn) > 0 {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourNotIn(i.CPUPricePerCoreHourNotIn...))
+	}
+	if i.CPUPricePerCoreHourGT != nil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourGT(*i.CPUPricePerCoreHourGT))
+	}
+	if i.CPUPricePerCoreHourGTE != nil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourGTE(*i.CPUPricePerCoreHourGTE))
+	}
+	if i.CPUPricePerCoreHourLT != nil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourLT(*i.CPUPricePerCoreHourLT))
+	}
+	if i.CPUPricePerCoreHourLTE != nil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourLTE(*i.CPUPricePerCoreHourLTE))
+	}
+	if i.CPUPricePerCoreHourIsNil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourIsNil())
+	}
+	if i.CPUPricePerCoreHourNotNil {
+		predicates = append(predicates, botrunner.CPUPricePerCoreHourNotNil())
+	}
+	if i.MemoryPricePerGBHour != nil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourEQ(*i.MemoryPricePerGBHour))
+	}
+	if i.MemoryPricePerGBHourNEQ != nil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourNEQ(*i.MemoryPricePerGBHourNEQ))
+	}
+	if len(i.MemoryPricePerGBHourIn) > 0 {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourIn(i.MemoryPricePerGBHourIn...))
+	}
+	if len(i.MemoryPricePerGBHourNotIn) > 0 {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourNotIn(i.MemoryPricePerGBHourNotIn...))
+	}
+	if i.MemoryPricePerGBHourGT != nil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourGT(*i.MemoryPricePerGBHourGT))
+	}
+	if i.MemoryPricePerGBHourGTE != nil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourGTE(*i.MemoryPricePerGBHourGTE))
+	}
+	if i.MemoryPricePerGBHourLT != nil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourLT(*i.MemoryPricePerGBHourLT))
+	}
+	if i.MemoryPricePerGBHourLTE != nil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourLTE(*i.MemoryPricePerGBHourLTE))
+	}
+	if i.MemoryPricePerGBHourIsNil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourIsNil())
+	}
+	if i.MemoryPricePerGBHourNotNil {
+		predicates = append(predicates, botrunner.MemoryPricePerGBHourNotNil())
+	}
+	if i.NetworkPricePerGB != nil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBEQ(*i.NetworkPricePerGB))
+	}
+	if i.NetworkPricePerGBNEQ != nil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBNEQ(*i.NetworkPricePerGBNEQ))
+	}
+	if len(i.NetworkPricePerGBIn) > 0 {
+		predicates = append(predicates, botrunner.NetworkPricePerGBIn(i.NetworkPricePerGBIn...))
+	}
+	if len(i.NetworkPricePerGBNotIn) > 0 {
+		predicates = append(predicates, botrunner.NetworkPricePerGBNotIn(i.NetworkPricePerGBNotIn...))
+	}
+	if i.NetworkPricePerGBGT != nil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBGT(*i.NetworkPricePerGBGT))
+	}
+	if i.NetworkPricePerGBGTE != nil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBGTE(*i.NetworkPricePerGBGTE))
+	}
+	if i.NetworkPricePerGBLT != nil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBLT(*i.NetworkPricePerGBLT))
+	}
+	if i.NetworkPricePerGBLTE != nil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBLTE(*i.NetworkPricePerGBLTE))
+	}
+	if i.NetworkPricePerGBIsNil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBIsNil())
+	}
+	if i.NetworkPricePerGBNotNil {
+		predicates = append(predicates, botrunner.NetworkPricePerGBNotNil())
+	}
+	if i.StoragePricePerGB != nil {
+		predicates = append(predicates, botrunner.StoragePricePerGBEQ(*i.StoragePricePerGB))
+	}
+	if i.StoragePricePerGBNEQ != nil {
+		predicates = append(predicates, botrunner.StoragePricePerGBNEQ(*i.StoragePricePerGBNEQ))
+	}
+	if len(i.StoragePricePerGBIn) > 0 {
+		predicates = append(predicates, botrunner.StoragePricePerGBIn(i.StoragePricePerGBIn...))
+	}
+	if len(i.StoragePricePerGBNotIn) > 0 {
+		predicates = append(predicates, botrunner.StoragePricePerGBNotIn(i.StoragePricePerGBNotIn...))
+	}
+	if i.StoragePricePerGBGT != nil {
+		predicates = append(predicates, botrunner.StoragePricePerGBGT(*i.StoragePricePerGBGT))
+	}
+	if i.StoragePricePerGBGTE != nil {
+		predicates = append(predicates, botrunner.StoragePricePerGBGTE(*i.StoragePricePerGBGTE))
+	}
+	if i.StoragePricePerGBLT != nil {
+		predicates = append(predicates, botrunner.StoragePricePerGBLT(*i.StoragePricePerGBLT))
+	}
+	if i.StoragePricePerGBLTE != nil {
+		predicates = append(predicates, botrunner.StoragePricePerGBLTE(*i.StoragePricePerGBLTE))
+	}
+	if i.StoragePricePerGBIsNil {
+		predicates = append(predicates, botrunner.StoragePricePerGBIsNil())
+	}
+	if i.StoragePricePerGBNotNil {
+		predicates = append(predicates, botrunner.StoragePricePerGBNotNil())
 	}
 	if i.CreatedAt != nil {
 		predicates = append(predicates, botrunner.CreatedAtEQ(*i.CreatedAt))
@@ -3224,6 +3404,1312 @@ func (i *ExchangeWhereInput) P() (predicate.Exchange, error) {
 		return predicates[0], nil
 	default:
 		return exchange.And(predicates...), nil
+	}
+}
+
+// ResourceUsageAggregationWhereInput represents a where input for filtering ResourceUsageAggregation queries.
+type ResourceUsageAggregationWhereInput struct {
+	Predicates []predicate.ResourceUsageAggregation  `json:"-"`
+	Not        *ResourceUsageAggregationWhereInput   `json:"not,omitempty"`
+	Or         []*ResourceUsageAggregationWhereInput `json:"or,omitempty"`
+	And        []*ResourceUsageAggregationWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "resource_type" field predicates.
+	ResourceType      *enum.ResourceType  `json:"resourceType,omitempty"`
+	ResourceTypeNEQ   *enum.ResourceType  `json:"resourceTypeNEQ,omitempty"`
+	ResourceTypeIn    []enum.ResourceType `json:"resourceTypeIn,omitempty"`
+	ResourceTypeNotIn []enum.ResourceType `json:"resourceTypeNotIn,omitempty"`
+
+	// "resource_id" field predicates.
+	ResourceID      *uuid.UUID  `json:"resourceID,omitempty"`
+	ResourceIDNEQ   *uuid.UUID  `json:"resourceIDNEQ,omitempty"`
+	ResourceIDIn    []uuid.UUID `json:"resourceIDIn,omitempty"`
+	ResourceIDNotIn []uuid.UUID `json:"resourceIDNotIn,omitempty"`
+	ResourceIDGT    *uuid.UUID  `json:"resourceIDGT,omitempty"`
+	ResourceIDGTE   *uuid.UUID  `json:"resourceIDGTE,omitempty"`
+	ResourceIDLT    *uuid.UUID  `json:"resourceIDLT,omitempty"`
+	ResourceIDLTE   *uuid.UUID  `json:"resourceIDLTE,omitempty"`
+
+	// "owner_id" field predicates.
+	OwnerID             *string  `json:"ownerID,omitempty"`
+	OwnerIDNEQ          *string  `json:"ownerIDNEQ,omitempty"`
+	OwnerIDIn           []string `json:"ownerIDIn,omitempty"`
+	OwnerIDNotIn        []string `json:"ownerIDNotIn,omitempty"`
+	OwnerIDGT           *string  `json:"ownerIDGT,omitempty"`
+	OwnerIDGTE          *string  `json:"ownerIDGTE,omitempty"`
+	OwnerIDLT           *string  `json:"ownerIDLT,omitempty"`
+	OwnerIDLTE          *string  `json:"ownerIDLTE,omitempty"`
+	OwnerIDContains     *string  `json:"ownerIDContains,omitempty"`
+	OwnerIDHasPrefix    *string  `json:"ownerIDHasPrefix,omitempty"`
+	OwnerIDHasSuffix    *string  `json:"ownerIDHasSuffix,omitempty"`
+	OwnerIDEqualFold    *string  `json:"ownerIDEqualFold,omitempty"`
+	OwnerIDContainsFold *string  `json:"ownerIDContainsFold,omitempty"`
+
+	// "runner_id" field predicates.
+	RunnerID      *uuid.UUID  `json:"runnerID,omitempty"`
+	RunnerIDNEQ   *uuid.UUID  `json:"runnerIDNEQ,omitempty"`
+	RunnerIDIn    []uuid.UUID `json:"runnerIDIn,omitempty"`
+	RunnerIDNotIn []uuid.UUID `json:"runnerIDNotIn,omitempty"`
+
+	// "granularity" field predicates.
+	Granularity      *enum.AggregationGranularity  `json:"granularity,omitempty"`
+	GranularityNEQ   *enum.AggregationGranularity  `json:"granularityNEQ,omitempty"`
+	GranularityIn    []enum.AggregationGranularity `json:"granularityIn,omitempty"`
+	GranularityNotIn []enum.AggregationGranularity `json:"granularityNotIn,omitempty"`
+
+	// "bucket_start" field predicates.
+	BucketStart      *time.Time  `json:"bucketStart,omitempty"`
+	BucketStartNEQ   *time.Time  `json:"bucketStartNEQ,omitempty"`
+	BucketStartIn    []time.Time `json:"bucketStartIn,omitempty"`
+	BucketStartNotIn []time.Time `json:"bucketStartNotIn,omitempty"`
+	BucketStartGT    *time.Time  `json:"bucketStartGT,omitempty"`
+	BucketStartGTE   *time.Time  `json:"bucketStartGTE,omitempty"`
+	BucketStartLT    *time.Time  `json:"bucketStartLT,omitempty"`
+	BucketStartLTE   *time.Time  `json:"bucketStartLTE,omitempty"`
+
+	// "bucket_end" field predicates.
+	BucketEnd      *time.Time  `json:"bucketEnd,omitempty"`
+	BucketEndNEQ   *time.Time  `json:"bucketEndNEQ,omitempty"`
+	BucketEndIn    []time.Time `json:"bucketEndIn,omitempty"`
+	BucketEndNotIn []time.Time `json:"bucketEndNotIn,omitempty"`
+	BucketEndGT    *time.Time  `json:"bucketEndGT,omitempty"`
+	BucketEndGTE   *time.Time  `json:"bucketEndGTE,omitempty"`
+	BucketEndLT    *time.Time  `json:"bucketEndLT,omitempty"`
+	BucketEndLTE   *time.Time  `json:"bucketEndLTE,omitempty"`
+
+	// "cpu_core_seconds" field predicates.
+	CPUCoreSeconds      *float64  `json:"cpuCoreSeconds,omitempty"`
+	CPUCoreSecondsNEQ   *float64  `json:"cpuCoreSecondsNEQ,omitempty"`
+	CPUCoreSecondsIn    []float64 `json:"cpuCoreSecondsIn,omitempty"`
+	CPUCoreSecondsNotIn []float64 `json:"cpuCoreSecondsNotIn,omitempty"`
+	CPUCoreSecondsGT    *float64  `json:"cpuCoreSecondsGT,omitempty"`
+	CPUCoreSecondsGTE   *float64  `json:"cpuCoreSecondsGTE,omitempty"`
+	CPUCoreSecondsLT    *float64  `json:"cpuCoreSecondsLT,omitempty"`
+	CPUCoreSecondsLTE   *float64  `json:"cpuCoreSecondsLTE,omitempty"`
+
+	// "cpu_avg_percent" field predicates.
+	CPUAvgPercent      *float64  `json:"cpuAvgPercent,omitempty"`
+	CPUAvgPercentNEQ   *float64  `json:"cpuAvgPercentNEQ,omitempty"`
+	CPUAvgPercentIn    []float64 `json:"cpuAvgPercentIn,omitempty"`
+	CPUAvgPercentNotIn []float64 `json:"cpuAvgPercentNotIn,omitempty"`
+	CPUAvgPercentGT    *float64  `json:"cpuAvgPercentGT,omitempty"`
+	CPUAvgPercentGTE   *float64  `json:"cpuAvgPercentGTE,omitempty"`
+	CPUAvgPercentLT    *float64  `json:"cpuAvgPercentLT,omitempty"`
+	CPUAvgPercentLTE   *float64  `json:"cpuAvgPercentLTE,omitempty"`
+
+	// "cpu_max_percent" field predicates.
+	CPUMaxPercent      *float64  `json:"cpuMaxPercent,omitempty"`
+	CPUMaxPercentNEQ   *float64  `json:"cpuMaxPercentNEQ,omitempty"`
+	CPUMaxPercentIn    []float64 `json:"cpuMaxPercentIn,omitempty"`
+	CPUMaxPercentNotIn []float64 `json:"cpuMaxPercentNotIn,omitempty"`
+	CPUMaxPercentGT    *float64  `json:"cpuMaxPercentGT,omitempty"`
+	CPUMaxPercentGTE   *float64  `json:"cpuMaxPercentGTE,omitempty"`
+	CPUMaxPercentLT    *float64  `json:"cpuMaxPercentLT,omitempty"`
+	CPUMaxPercentLTE   *float64  `json:"cpuMaxPercentLTE,omitempty"`
+
+	// "memory_gb_seconds" field predicates.
+	MemoryGBSeconds      *float64  `json:"memoryGBSeconds,omitempty"`
+	MemoryGBSecondsNEQ   *float64  `json:"memoryGBSecondsNEQ,omitempty"`
+	MemoryGBSecondsIn    []float64 `json:"memoryGBSecondsIn,omitempty"`
+	MemoryGBSecondsNotIn []float64 `json:"memoryGBSecondsNotIn,omitempty"`
+	MemoryGBSecondsGT    *float64  `json:"memoryGBSecondsGT,omitempty"`
+	MemoryGBSecondsGTE   *float64  `json:"memoryGBSecondsGTE,omitempty"`
+	MemoryGBSecondsLT    *float64  `json:"memoryGBSecondsLT,omitempty"`
+	MemoryGBSecondsLTE   *float64  `json:"memoryGBSecondsLTE,omitempty"`
+
+	// "memory_avg_bytes" field predicates.
+	MemoryAvgBytes      *int64  `json:"memoryAvgBytes,omitempty"`
+	MemoryAvgBytesNEQ   *int64  `json:"memoryAvgBytesNEQ,omitempty"`
+	MemoryAvgBytesIn    []int64 `json:"memoryAvgBytesIn,omitempty"`
+	MemoryAvgBytesNotIn []int64 `json:"memoryAvgBytesNotIn,omitempty"`
+	MemoryAvgBytesGT    *int64  `json:"memoryAvgBytesGT,omitempty"`
+	MemoryAvgBytesGTE   *int64  `json:"memoryAvgBytesGTE,omitempty"`
+	MemoryAvgBytesLT    *int64  `json:"memoryAvgBytesLT,omitempty"`
+	MemoryAvgBytesLTE   *int64  `json:"memoryAvgBytesLTE,omitempty"`
+
+	// "memory_max_bytes" field predicates.
+	MemoryMaxBytes      *int64  `json:"memoryMaxBytes,omitempty"`
+	MemoryMaxBytesNEQ   *int64  `json:"memoryMaxBytesNEQ,omitempty"`
+	MemoryMaxBytesIn    []int64 `json:"memoryMaxBytesIn,omitempty"`
+	MemoryMaxBytesNotIn []int64 `json:"memoryMaxBytesNotIn,omitempty"`
+	MemoryMaxBytesGT    *int64  `json:"memoryMaxBytesGT,omitempty"`
+	MemoryMaxBytesGTE   *int64  `json:"memoryMaxBytesGTE,omitempty"`
+	MemoryMaxBytesLT    *int64  `json:"memoryMaxBytesLT,omitempty"`
+	MemoryMaxBytesLTE   *int64  `json:"memoryMaxBytesLTE,omitempty"`
+
+	// "network_rx_bytes" field predicates.
+	NetworkRxBytes      *int64  `json:"networkRxBytes,omitempty"`
+	NetworkRxBytesNEQ   *int64  `json:"networkRxBytesNEQ,omitempty"`
+	NetworkRxBytesIn    []int64 `json:"networkRxBytesIn,omitempty"`
+	NetworkRxBytesNotIn []int64 `json:"networkRxBytesNotIn,omitempty"`
+	NetworkRxBytesGT    *int64  `json:"networkRxBytesGT,omitempty"`
+	NetworkRxBytesGTE   *int64  `json:"networkRxBytesGTE,omitempty"`
+	NetworkRxBytesLT    *int64  `json:"networkRxBytesLT,omitempty"`
+	NetworkRxBytesLTE   *int64  `json:"networkRxBytesLTE,omitempty"`
+
+	// "network_tx_bytes" field predicates.
+	NetworkTxBytes      *int64  `json:"networkTxBytes,omitempty"`
+	NetworkTxBytesNEQ   *int64  `json:"networkTxBytesNEQ,omitempty"`
+	NetworkTxBytesIn    []int64 `json:"networkTxBytesIn,omitempty"`
+	NetworkTxBytesNotIn []int64 `json:"networkTxBytesNotIn,omitempty"`
+	NetworkTxBytesGT    *int64  `json:"networkTxBytesGT,omitempty"`
+	NetworkTxBytesGTE   *int64  `json:"networkTxBytesGTE,omitempty"`
+	NetworkTxBytesLT    *int64  `json:"networkTxBytesLT,omitempty"`
+	NetworkTxBytesLTE   *int64  `json:"networkTxBytesLTE,omitempty"`
+
+	// "block_read_bytes" field predicates.
+	BlockReadBytes      *int64  `json:"blockReadBytes,omitempty"`
+	BlockReadBytesNEQ   *int64  `json:"blockReadBytesNEQ,omitempty"`
+	BlockReadBytesIn    []int64 `json:"blockReadBytesIn,omitempty"`
+	BlockReadBytesNotIn []int64 `json:"blockReadBytesNotIn,omitempty"`
+	BlockReadBytesGT    *int64  `json:"blockReadBytesGT,omitempty"`
+	BlockReadBytesGTE   *int64  `json:"blockReadBytesGTE,omitempty"`
+	BlockReadBytesLT    *int64  `json:"blockReadBytesLT,omitempty"`
+	BlockReadBytesLTE   *int64  `json:"blockReadBytesLTE,omitempty"`
+
+	// "block_write_bytes" field predicates.
+	BlockWriteBytes      *int64  `json:"blockWriteBytes,omitempty"`
+	BlockWriteBytesNEQ   *int64  `json:"blockWriteBytesNEQ,omitempty"`
+	BlockWriteBytesIn    []int64 `json:"blockWriteBytesIn,omitempty"`
+	BlockWriteBytesNotIn []int64 `json:"blockWriteBytesNotIn,omitempty"`
+	BlockWriteBytesGT    *int64  `json:"blockWriteBytesGT,omitempty"`
+	BlockWriteBytesGTE   *int64  `json:"blockWriteBytesGTE,omitempty"`
+	BlockWriteBytesLT    *int64  `json:"blockWriteBytesLT,omitempty"`
+	BlockWriteBytesLTE   *int64  `json:"blockWriteBytesLTE,omitempty"`
+
+	// "sample_count" field predicates.
+	SampleCount      *int  `json:"sampleCount,omitempty"`
+	SampleCountNEQ   *int  `json:"sampleCountNEQ,omitempty"`
+	SampleCountIn    []int `json:"sampleCountIn,omitempty"`
+	SampleCountNotIn []int `json:"sampleCountNotIn,omitempty"`
+	SampleCountGT    *int  `json:"sampleCountGT,omitempty"`
+	SampleCountGTE   *int  `json:"sampleCountGTE,omitempty"`
+	SampleCountLT    *int  `json:"sampleCountLT,omitempty"`
+	SampleCountLTE   *int  `json:"sampleCountLTE,omitempty"`
+
+	// "created_at" field predicates.
+	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
+	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
+	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
+	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
+	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
+	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
+	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
+	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "runner" edge predicates.
+	HasRunner     *bool                  `json:"hasRunner,omitempty"`
+	HasRunnerWith []*BotRunnerWhereInput `json:"hasRunnerWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *ResourceUsageAggregationWhereInput) AddPredicates(predicates ...predicate.ResourceUsageAggregation) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the ResourceUsageAggregationWhereInput filter on the ResourceUsageAggregationQuery builder.
+func (i *ResourceUsageAggregationWhereInput) Filter(q *ResourceUsageAggregationQuery) (*ResourceUsageAggregationQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyResourceUsageAggregationWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyResourceUsageAggregationWhereInput is returned in case the ResourceUsageAggregationWhereInput is empty.
+var ErrEmptyResourceUsageAggregationWhereInput = errors.New("ent: empty predicate ResourceUsageAggregationWhereInput")
+
+// P returns a predicate for filtering resourceusageaggregations.
+// An error is returned if the input is empty or invalid.
+func (i *ResourceUsageAggregationWhereInput) P() (predicate.ResourceUsageAggregation, error) {
+	var predicates []predicate.ResourceUsageAggregation
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, resourceusageaggregation.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.ResourceUsageAggregation, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, resourceusageaggregation.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.ResourceUsageAggregation, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, resourceusageaggregation.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, resourceusageaggregation.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, resourceusageaggregation.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, resourceusageaggregation.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.IDLTE(*i.IDLTE))
+	}
+	if i.ResourceType != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceTypeEQ(*i.ResourceType))
+	}
+	if i.ResourceTypeNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceTypeNEQ(*i.ResourceTypeNEQ))
+	}
+	if len(i.ResourceTypeIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.ResourceTypeIn(i.ResourceTypeIn...))
+	}
+	if len(i.ResourceTypeNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.ResourceTypeNotIn(i.ResourceTypeNotIn...))
+	}
+	if i.ResourceID != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDEQ(*i.ResourceID))
+	}
+	if i.ResourceIDNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDNEQ(*i.ResourceIDNEQ))
+	}
+	if len(i.ResourceIDIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDIn(i.ResourceIDIn...))
+	}
+	if len(i.ResourceIDNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDNotIn(i.ResourceIDNotIn...))
+	}
+	if i.ResourceIDGT != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDGT(*i.ResourceIDGT))
+	}
+	if i.ResourceIDGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDGTE(*i.ResourceIDGTE))
+	}
+	if i.ResourceIDLT != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDLT(*i.ResourceIDLT))
+	}
+	if i.ResourceIDLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.ResourceIDLTE(*i.ResourceIDLTE))
+	}
+	if i.OwnerID != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDEQ(*i.OwnerID))
+	}
+	if i.OwnerIDNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDNEQ(*i.OwnerIDNEQ))
+	}
+	if len(i.OwnerIDIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDIn(i.OwnerIDIn...))
+	}
+	if len(i.OwnerIDNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDNotIn(i.OwnerIDNotIn...))
+	}
+	if i.OwnerIDGT != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDGT(*i.OwnerIDGT))
+	}
+	if i.OwnerIDGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDGTE(*i.OwnerIDGTE))
+	}
+	if i.OwnerIDLT != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDLT(*i.OwnerIDLT))
+	}
+	if i.OwnerIDLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDLTE(*i.OwnerIDLTE))
+	}
+	if i.OwnerIDContains != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDContains(*i.OwnerIDContains))
+	}
+	if i.OwnerIDHasPrefix != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDHasPrefix(*i.OwnerIDHasPrefix))
+	}
+	if i.OwnerIDHasSuffix != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDHasSuffix(*i.OwnerIDHasSuffix))
+	}
+	if i.OwnerIDEqualFold != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDEqualFold(*i.OwnerIDEqualFold))
+	}
+	if i.OwnerIDContainsFold != nil {
+		predicates = append(predicates, resourceusageaggregation.OwnerIDContainsFold(*i.OwnerIDContainsFold))
+	}
+	if i.RunnerID != nil {
+		predicates = append(predicates, resourceusageaggregation.RunnerIDEQ(*i.RunnerID))
+	}
+	if i.RunnerIDNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.RunnerIDNEQ(*i.RunnerIDNEQ))
+	}
+	if len(i.RunnerIDIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.RunnerIDIn(i.RunnerIDIn...))
+	}
+	if len(i.RunnerIDNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.RunnerIDNotIn(i.RunnerIDNotIn...))
+	}
+	if i.Granularity != nil {
+		predicates = append(predicates, resourceusageaggregation.GranularityEQ(*i.Granularity))
+	}
+	if i.GranularityNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.GranularityNEQ(*i.GranularityNEQ))
+	}
+	if len(i.GranularityIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.GranularityIn(i.GranularityIn...))
+	}
+	if len(i.GranularityNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.GranularityNotIn(i.GranularityNotIn...))
+	}
+	if i.BucketStart != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketStartEQ(*i.BucketStart))
+	}
+	if i.BucketStartNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketStartNEQ(*i.BucketStartNEQ))
+	}
+	if len(i.BucketStartIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BucketStartIn(i.BucketStartIn...))
+	}
+	if len(i.BucketStartNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BucketStartNotIn(i.BucketStartNotIn...))
+	}
+	if i.BucketStartGT != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketStartGT(*i.BucketStartGT))
+	}
+	if i.BucketStartGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketStartGTE(*i.BucketStartGTE))
+	}
+	if i.BucketStartLT != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketStartLT(*i.BucketStartLT))
+	}
+	if i.BucketStartLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketStartLTE(*i.BucketStartLTE))
+	}
+	if i.BucketEnd != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketEndEQ(*i.BucketEnd))
+	}
+	if i.BucketEndNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketEndNEQ(*i.BucketEndNEQ))
+	}
+	if len(i.BucketEndIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BucketEndIn(i.BucketEndIn...))
+	}
+	if len(i.BucketEndNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BucketEndNotIn(i.BucketEndNotIn...))
+	}
+	if i.BucketEndGT != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketEndGT(*i.BucketEndGT))
+	}
+	if i.BucketEndGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketEndGTE(*i.BucketEndGTE))
+	}
+	if i.BucketEndLT != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketEndLT(*i.BucketEndLT))
+	}
+	if i.BucketEndLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BucketEndLTE(*i.BucketEndLTE))
+	}
+	if i.CPUCoreSeconds != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsEQ(*i.CPUCoreSeconds))
+	}
+	if i.CPUCoreSecondsNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsNEQ(*i.CPUCoreSecondsNEQ))
+	}
+	if len(i.CPUCoreSecondsIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsIn(i.CPUCoreSecondsIn...))
+	}
+	if len(i.CPUCoreSecondsNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsNotIn(i.CPUCoreSecondsNotIn...))
+	}
+	if i.CPUCoreSecondsGT != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsGT(*i.CPUCoreSecondsGT))
+	}
+	if i.CPUCoreSecondsGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsGTE(*i.CPUCoreSecondsGTE))
+	}
+	if i.CPUCoreSecondsLT != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsLT(*i.CPUCoreSecondsLT))
+	}
+	if i.CPUCoreSecondsLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUCoreSecondsLTE(*i.CPUCoreSecondsLTE))
+	}
+	if i.CPUAvgPercent != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentEQ(*i.CPUAvgPercent))
+	}
+	if i.CPUAvgPercentNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentNEQ(*i.CPUAvgPercentNEQ))
+	}
+	if len(i.CPUAvgPercentIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentIn(i.CPUAvgPercentIn...))
+	}
+	if len(i.CPUAvgPercentNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentNotIn(i.CPUAvgPercentNotIn...))
+	}
+	if i.CPUAvgPercentGT != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentGT(*i.CPUAvgPercentGT))
+	}
+	if i.CPUAvgPercentGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentGTE(*i.CPUAvgPercentGTE))
+	}
+	if i.CPUAvgPercentLT != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentLT(*i.CPUAvgPercentLT))
+	}
+	if i.CPUAvgPercentLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUAvgPercentLTE(*i.CPUAvgPercentLTE))
+	}
+	if i.CPUMaxPercent != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentEQ(*i.CPUMaxPercent))
+	}
+	if i.CPUMaxPercentNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentNEQ(*i.CPUMaxPercentNEQ))
+	}
+	if len(i.CPUMaxPercentIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentIn(i.CPUMaxPercentIn...))
+	}
+	if len(i.CPUMaxPercentNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentNotIn(i.CPUMaxPercentNotIn...))
+	}
+	if i.CPUMaxPercentGT != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentGT(*i.CPUMaxPercentGT))
+	}
+	if i.CPUMaxPercentGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentGTE(*i.CPUMaxPercentGTE))
+	}
+	if i.CPUMaxPercentLT != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentLT(*i.CPUMaxPercentLT))
+	}
+	if i.CPUMaxPercentLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CPUMaxPercentLTE(*i.CPUMaxPercentLTE))
+	}
+	if i.MemoryGBSeconds != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsEQ(*i.MemoryGBSeconds))
+	}
+	if i.MemoryGBSecondsNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsNEQ(*i.MemoryGBSecondsNEQ))
+	}
+	if len(i.MemoryGBSecondsIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsIn(i.MemoryGBSecondsIn...))
+	}
+	if len(i.MemoryGBSecondsNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsNotIn(i.MemoryGBSecondsNotIn...))
+	}
+	if i.MemoryGBSecondsGT != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsGT(*i.MemoryGBSecondsGT))
+	}
+	if i.MemoryGBSecondsGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsGTE(*i.MemoryGBSecondsGTE))
+	}
+	if i.MemoryGBSecondsLT != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsLT(*i.MemoryGBSecondsLT))
+	}
+	if i.MemoryGBSecondsLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryGBSecondsLTE(*i.MemoryGBSecondsLTE))
+	}
+	if i.MemoryAvgBytes != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesEQ(*i.MemoryAvgBytes))
+	}
+	if i.MemoryAvgBytesNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesNEQ(*i.MemoryAvgBytesNEQ))
+	}
+	if len(i.MemoryAvgBytesIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesIn(i.MemoryAvgBytesIn...))
+	}
+	if len(i.MemoryAvgBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesNotIn(i.MemoryAvgBytesNotIn...))
+	}
+	if i.MemoryAvgBytesGT != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesGT(*i.MemoryAvgBytesGT))
+	}
+	if i.MemoryAvgBytesGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesGTE(*i.MemoryAvgBytesGTE))
+	}
+	if i.MemoryAvgBytesLT != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesLT(*i.MemoryAvgBytesLT))
+	}
+	if i.MemoryAvgBytesLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryAvgBytesLTE(*i.MemoryAvgBytesLTE))
+	}
+	if i.MemoryMaxBytes != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesEQ(*i.MemoryMaxBytes))
+	}
+	if i.MemoryMaxBytesNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesNEQ(*i.MemoryMaxBytesNEQ))
+	}
+	if len(i.MemoryMaxBytesIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesIn(i.MemoryMaxBytesIn...))
+	}
+	if len(i.MemoryMaxBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesNotIn(i.MemoryMaxBytesNotIn...))
+	}
+	if i.MemoryMaxBytesGT != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesGT(*i.MemoryMaxBytesGT))
+	}
+	if i.MemoryMaxBytesGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesGTE(*i.MemoryMaxBytesGTE))
+	}
+	if i.MemoryMaxBytesLT != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesLT(*i.MemoryMaxBytesLT))
+	}
+	if i.MemoryMaxBytesLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.MemoryMaxBytesLTE(*i.MemoryMaxBytesLTE))
+	}
+	if i.NetworkRxBytes != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesEQ(*i.NetworkRxBytes))
+	}
+	if i.NetworkRxBytesNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesNEQ(*i.NetworkRxBytesNEQ))
+	}
+	if len(i.NetworkRxBytesIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesIn(i.NetworkRxBytesIn...))
+	}
+	if len(i.NetworkRxBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesNotIn(i.NetworkRxBytesNotIn...))
+	}
+	if i.NetworkRxBytesGT != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesGT(*i.NetworkRxBytesGT))
+	}
+	if i.NetworkRxBytesGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesGTE(*i.NetworkRxBytesGTE))
+	}
+	if i.NetworkRxBytesLT != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesLT(*i.NetworkRxBytesLT))
+	}
+	if i.NetworkRxBytesLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkRxBytesLTE(*i.NetworkRxBytesLTE))
+	}
+	if i.NetworkTxBytes != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesEQ(*i.NetworkTxBytes))
+	}
+	if i.NetworkTxBytesNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesNEQ(*i.NetworkTxBytesNEQ))
+	}
+	if len(i.NetworkTxBytesIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesIn(i.NetworkTxBytesIn...))
+	}
+	if len(i.NetworkTxBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesNotIn(i.NetworkTxBytesNotIn...))
+	}
+	if i.NetworkTxBytesGT != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesGT(*i.NetworkTxBytesGT))
+	}
+	if i.NetworkTxBytesGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesGTE(*i.NetworkTxBytesGTE))
+	}
+	if i.NetworkTxBytesLT != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesLT(*i.NetworkTxBytesLT))
+	}
+	if i.NetworkTxBytesLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.NetworkTxBytesLTE(*i.NetworkTxBytesLTE))
+	}
+	if i.BlockReadBytes != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesEQ(*i.BlockReadBytes))
+	}
+	if i.BlockReadBytesNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesNEQ(*i.BlockReadBytesNEQ))
+	}
+	if len(i.BlockReadBytesIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesIn(i.BlockReadBytesIn...))
+	}
+	if len(i.BlockReadBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesNotIn(i.BlockReadBytesNotIn...))
+	}
+	if i.BlockReadBytesGT != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesGT(*i.BlockReadBytesGT))
+	}
+	if i.BlockReadBytesGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesGTE(*i.BlockReadBytesGTE))
+	}
+	if i.BlockReadBytesLT != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesLT(*i.BlockReadBytesLT))
+	}
+	if i.BlockReadBytesLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockReadBytesLTE(*i.BlockReadBytesLTE))
+	}
+	if i.BlockWriteBytes != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesEQ(*i.BlockWriteBytes))
+	}
+	if i.BlockWriteBytesNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesNEQ(*i.BlockWriteBytesNEQ))
+	}
+	if len(i.BlockWriteBytesIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesIn(i.BlockWriteBytesIn...))
+	}
+	if len(i.BlockWriteBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesNotIn(i.BlockWriteBytesNotIn...))
+	}
+	if i.BlockWriteBytesGT != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesGT(*i.BlockWriteBytesGT))
+	}
+	if i.BlockWriteBytesGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesGTE(*i.BlockWriteBytesGTE))
+	}
+	if i.BlockWriteBytesLT != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesLT(*i.BlockWriteBytesLT))
+	}
+	if i.BlockWriteBytesLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.BlockWriteBytesLTE(*i.BlockWriteBytesLTE))
+	}
+	if i.SampleCount != nil {
+		predicates = append(predicates, resourceusageaggregation.SampleCountEQ(*i.SampleCount))
+	}
+	if i.SampleCountNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.SampleCountNEQ(*i.SampleCountNEQ))
+	}
+	if len(i.SampleCountIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.SampleCountIn(i.SampleCountIn...))
+	}
+	if len(i.SampleCountNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.SampleCountNotIn(i.SampleCountNotIn...))
+	}
+	if i.SampleCountGT != nil {
+		predicates = append(predicates, resourceusageaggregation.SampleCountGT(*i.SampleCountGT))
+	}
+	if i.SampleCountGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.SampleCountGTE(*i.SampleCountGTE))
+	}
+	if i.SampleCountLT != nil {
+		predicates = append(predicates, resourceusageaggregation.SampleCountLT(*i.SampleCountLT))
+	}
+	if i.SampleCountLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.SampleCountLTE(*i.SampleCountLTE))
+	}
+	if i.CreatedAt != nil {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtEQ(*i.CreatedAt))
+	}
+	if i.CreatedAtNEQ != nil {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtNEQ(*i.CreatedAtNEQ))
+	}
+	if len(i.CreatedAtIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtIn(i.CreatedAtIn...))
+	}
+	if len(i.CreatedAtNotIn) > 0 {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtNotIn(i.CreatedAtNotIn...))
+	}
+	if i.CreatedAtGT != nil {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtGT(*i.CreatedAtGT))
+	}
+	if i.CreatedAtGTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtGTE(*i.CreatedAtGTE))
+	}
+	if i.CreatedAtLT != nil {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtLT(*i.CreatedAtLT))
+	}
+	if i.CreatedAtLTE != nil {
+		predicates = append(predicates, resourceusageaggregation.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+
+	if i.HasRunner != nil {
+		p := resourceusageaggregation.HasRunner()
+		if !*i.HasRunner {
+			p = resourceusageaggregation.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasRunnerWith) > 0 {
+		with := make([]predicate.BotRunner, 0, len(i.HasRunnerWith))
+		for _, w := range i.HasRunnerWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasRunnerWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, resourceusageaggregation.HasRunnerWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyResourceUsageAggregationWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return resourceusageaggregation.And(predicates...), nil
+	}
+}
+
+// ResourceUsageSampleWhereInput represents a where input for filtering ResourceUsageSample queries.
+type ResourceUsageSampleWhereInput struct {
+	Predicates []predicate.ResourceUsageSample  `json:"-"`
+	Not        *ResourceUsageSampleWhereInput   `json:"not,omitempty"`
+	Or         []*ResourceUsageSampleWhereInput `json:"or,omitempty"`
+	And        []*ResourceUsageSampleWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "resource_type" field predicates.
+	ResourceType      *enum.ResourceType  `json:"resourceType,omitempty"`
+	ResourceTypeNEQ   *enum.ResourceType  `json:"resourceTypeNEQ,omitempty"`
+	ResourceTypeIn    []enum.ResourceType `json:"resourceTypeIn,omitempty"`
+	ResourceTypeNotIn []enum.ResourceType `json:"resourceTypeNotIn,omitempty"`
+
+	// "resource_id" field predicates.
+	ResourceID      *uuid.UUID  `json:"resourceID,omitempty"`
+	ResourceIDNEQ   *uuid.UUID  `json:"resourceIDNEQ,omitempty"`
+	ResourceIDIn    []uuid.UUID `json:"resourceIDIn,omitempty"`
+	ResourceIDNotIn []uuid.UUID `json:"resourceIDNotIn,omitempty"`
+	ResourceIDGT    *uuid.UUID  `json:"resourceIDGT,omitempty"`
+	ResourceIDGTE   *uuid.UUID  `json:"resourceIDGTE,omitempty"`
+	ResourceIDLT    *uuid.UUID  `json:"resourceIDLT,omitempty"`
+	ResourceIDLTE   *uuid.UUID  `json:"resourceIDLTE,omitempty"`
+
+	// "owner_id" field predicates.
+	OwnerID             *string  `json:"ownerID,omitempty"`
+	OwnerIDNEQ          *string  `json:"ownerIDNEQ,omitempty"`
+	OwnerIDIn           []string `json:"ownerIDIn,omitempty"`
+	OwnerIDNotIn        []string `json:"ownerIDNotIn,omitempty"`
+	OwnerIDGT           *string  `json:"ownerIDGT,omitempty"`
+	OwnerIDGTE          *string  `json:"ownerIDGTE,omitempty"`
+	OwnerIDLT           *string  `json:"ownerIDLT,omitempty"`
+	OwnerIDLTE          *string  `json:"ownerIDLTE,omitempty"`
+	OwnerIDContains     *string  `json:"ownerIDContains,omitempty"`
+	OwnerIDHasPrefix    *string  `json:"ownerIDHasPrefix,omitempty"`
+	OwnerIDHasSuffix    *string  `json:"ownerIDHasSuffix,omitempty"`
+	OwnerIDEqualFold    *string  `json:"ownerIDEqualFold,omitempty"`
+	OwnerIDContainsFold *string  `json:"ownerIDContainsFold,omitempty"`
+
+	// "runner_id" field predicates.
+	RunnerID      *uuid.UUID  `json:"runnerID,omitempty"`
+	RunnerIDNEQ   *uuid.UUID  `json:"runnerIDNEQ,omitempty"`
+	RunnerIDIn    []uuid.UUID `json:"runnerIDIn,omitempty"`
+	RunnerIDNotIn []uuid.UUID `json:"runnerIDNotIn,omitempty"`
+
+	// "cpu_percent" field predicates.
+	CPUPercent      *float64  `json:"cpuPercent,omitempty"`
+	CPUPercentNEQ   *float64  `json:"cpuPercentNEQ,omitempty"`
+	CPUPercentIn    []float64 `json:"cpuPercentIn,omitempty"`
+	CPUPercentNotIn []float64 `json:"cpuPercentNotIn,omitempty"`
+	CPUPercentGT    *float64  `json:"cpuPercentGT,omitempty"`
+	CPUPercentGTE   *float64  `json:"cpuPercentGTE,omitempty"`
+	CPUPercentLT    *float64  `json:"cpuPercentLT,omitempty"`
+	CPUPercentLTE   *float64  `json:"cpuPercentLTE,omitempty"`
+
+	// "memory_bytes" field predicates.
+	MemoryBytes      *int64  `json:"memoryBytes,omitempty"`
+	MemoryBytesNEQ   *int64  `json:"memoryBytesNEQ,omitempty"`
+	MemoryBytesIn    []int64 `json:"memoryBytesIn,omitempty"`
+	MemoryBytesNotIn []int64 `json:"memoryBytesNotIn,omitempty"`
+	MemoryBytesGT    *int64  `json:"memoryBytesGT,omitempty"`
+	MemoryBytesGTE   *int64  `json:"memoryBytesGTE,omitempty"`
+	MemoryBytesLT    *int64  `json:"memoryBytesLT,omitempty"`
+	MemoryBytesLTE   *int64  `json:"memoryBytesLTE,omitempty"`
+
+	// "network_rx_bytes" field predicates.
+	NetworkRxBytes      *int64  `json:"networkRxBytes,omitempty"`
+	NetworkRxBytesNEQ   *int64  `json:"networkRxBytesNEQ,omitempty"`
+	NetworkRxBytesIn    []int64 `json:"networkRxBytesIn,omitempty"`
+	NetworkRxBytesNotIn []int64 `json:"networkRxBytesNotIn,omitempty"`
+	NetworkRxBytesGT    *int64  `json:"networkRxBytesGT,omitempty"`
+	NetworkRxBytesGTE   *int64  `json:"networkRxBytesGTE,omitempty"`
+	NetworkRxBytesLT    *int64  `json:"networkRxBytesLT,omitempty"`
+	NetworkRxBytesLTE   *int64  `json:"networkRxBytesLTE,omitempty"`
+
+	// "network_tx_bytes" field predicates.
+	NetworkTxBytes      *int64  `json:"networkTxBytes,omitempty"`
+	NetworkTxBytesNEQ   *int64  `json:"networkTxBytesNEQ,omitempty"`
+	NetworkTxBytesIn    []int64 `json:"networkTxBytesIn,omitempty"`
+	NetworkTxBytesNotIn []int64 `json:"networkTxBytesNotIn,omitempty"`
+	NetworkTxBytesGT    *int64  `json:"networkTxBytesGT,omitempty"`
+	NetworkTxBytesGTE   *int64  `json:"networkTxBytesGTE,omitempty"`
+	NetworkTxBytesLT    *int64  `json:"networkTxBytesLT,omitempty"`
+	NetworkTxBytesLTE   *int64  `json:"networkTxBytesLTE,omitempty"`
+
+	// "block_read_bytes" field predicates.
+	BlockReadBytes      *int64  `json:"blockReadBytes,omitempty"`
+	BlockReadBytesNEQ   *int64  `json:"blockReadBytesNEQ,omitempty"`
+	BlockReadBytesIn    []int64 `json:"blockReadBytesIn,omitempty"`
+	BlockReadBytesNotIn []int64 `json:"blockReadBytesNotIn,omitempty"`
+	BlockReadBytesGT    *int64  `json:"blockReadBytesGT,omitempty"`
+	BlockReadBytesGTE   *int64  `json:"blockReadBytesGTE,omitempty"`
+	BlockReadBytesLT    *int64  `json:"blockReadBytesLT,omitempty"`
+	BlockReadBytesLTE   *int64  `json:"blockReadBytesLTE,omitempty"`
+
+	// "block_write_bytes" field predicates.
+	BlockWriteBytes      *int64  `json:"blockWriteBytes,omitempty"`
+	BlockWriteBytesNEQ   *int64  `json:"blockWriteBytesNEQ,omitempty"`
+	BlockWriteBytesIn    []int64 `json:"blockWriteBytesIn,omitempty"`
+	BlockWriteBytesNotIn []int64 `json:"blockWriteBytesNotIn,omitempty"`
+	BlockWriteBytesGT    *int64  `json:"blockWriteBytesGT,omitempty"`
+	BlockWriteBytesGTE   *int64  `json:"blockWriteBytesGTE,omitempty"`
+	BlockWriteBytesLT    *int64  `json:"blockWriteBytesLT,omitempty"`
+	BlockWriteBytesLTE   *int64  `json:"blockWriteBytesLTE,omitempty"`
+
+	// "sampled_at" field predicates.
+	SampledAt      *time.Time  `json:"sampledAt,omitempty"`
+	SampledAtNEQ   *time.Time  `json:"sampledAtNEQ,omitempty"`
+	SampledAtIn    []time.Time `json:"sampledAtIn,omitempty"`
+	SampledAtNotIn []time.Time `json:"sampledAtNotIn,omitempty"`
+	SampledAtGT    *time.Time  `json:"sampledAtGT,omitempty"`
+	SampledAtGTE   *time.Time  `json:"sampledAtGTE,omitempty"`
+	SampledAtLT    *time.Time  `json:"sampledAtLT,omitempty"`
+	SampledAtLTE   *time.Time  `json:"sampledAtLTE,omitempty"`
+
+	// "created_at" field predicates.
+	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
+	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
+	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
+	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
+	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
+	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
+	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
+	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "runner" edge predicates.
+	HasRunner     *bool                  `json:"hasRunner,omitempty"`
+	HasRunnerWith []*BotRunnerWhereInput `json:"hasRunnerWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *ResourceUsageSampleWhereInput) AddPredicates(predicates ...predicate.ResourceUsageSample) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the ResourceUsageSampleWhereInput filter on the ResourceUsageSampleQuery builder.
+func (i *ResourceUsageSampleWhereInput) Filter(q *ResourceUsageSampleQuery) (*ResourceUsageSampleQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyResourceUsageSampleWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyResourceUsageSampleWhereInput is returned in case the ResourceUsageSampleWhereInput is empty.
+var ErrEmptyResourceUsageSampleWhereInput = errors.New("ent: empty predicate ResourceUsageSampleWhereInput")
+
+// P returns a predicate for filtering resourceusagesamples.
+// An error is returned if the input is empty or invalid.
+func (i *ResourceUsageSampleWhereInput) P() (predicate.ResourceUsageSample, error) {
+	var predicates []predicate.ResourceUsageSample
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, resourceusagesample.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.ResourceUsageSample, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, resourceusagesample.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.ResourceUsageSample, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, resourceusagesample.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, resourceusagesample.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, resourceusagesample.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, resourceusagesample.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, resourceusagesample.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, resourceusagesample.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, resourceusagesample.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, resourceusagesample.IDLTE(*i.IDLTE))
+	}
+	if i.ResourceType != nil {
+		predicates = append(predicates, resourceusagesample.ResourceTypeEQ(*i.ResourceType))
+	}
+	if i.ResourceTypeNEQ != nil {
+		predicates = append(predicates, resourceusagesample.ResourceTypeNEQ(*i.ResourceTypeNEQ))
+	}
+	if len(i.ResourceTypeIn) > 0 {
+		predicates = append(predicates, resourceusagesample.ResourceTypeIn(i.ResourceTypeIn...))
+	}
+	if len(i.ResourceTypeNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.ResourceTypeNotIn(i.ResourceTypeNotIn...))
+	}
+	if i.ResourceID != nil {
+		predicates = append(predicates, resourceusagesample.ResourceIDEQ(*i.ResourceID))
+	}
+	if i.ResourceIDNEQ != nil {
+		predicates = append(predicates, resourceusagesample.ResourceIDNEQ(*i.ResourceIDNEQ))
+	}
+	if len(i.ResourceIDIn) > 0 {
+		predicates = append(predicates, resourceusagesample.ResourceIDIn(i.ResourceIDIn...))
+	}
+	if len(i.ResourceIDNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.ResourceIDNotIn(i.ResourceIDNotIn...))
+	}
+	if i.ResourceIDGT != nil {
+		predicates = append(predicates, resourceusagesample.ResourceIDGT(*i.ResourceIDGT))
+	}
+	if i.ResourceIDGTE != nil {
+		predicates = append(predicates, resourceusagesample.ResourceIDGTE(*i.ResourceIDGTE))
+	}
+	if i.ResourceIDLT != nil {
+		predicates = append(predicates, resourceusagesample.ResourceIDLT(*i.ResourceIDLT))
+	}
+	if i.ResourceIDLTE != nil {
+		predicates = append(predicates, resourceusagesample.ResourceIDLTE(*i.ResourceIDLTE))
+	}
+	if i.OwnerID != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDEQ(*i.OwnerID))
+	}
+	if i.OwnerIDNEQ != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDNEQ(*i.OwnerIDNEQ))
+	}
+	if len(i.OwnerIDIn) > 0 {
+		predicates = append(predicates, resourceusagesample.OwnerIDIn(i.OwnerIDIn...))
+	}
+	if len(i.OwnerIDNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.OwnerIDNotIn(i.OwnerIDNotIn...))
+	}
+	if i.OwnerIDGT != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDGT(*i.OwnerIDGT))
+	}
+	if i.OwnerIDGTE != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDGTE(*i.OwnerIDGTE))
+	}
+	if i.OwnerIDLT != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDLT(*i.OwnerIDLT))
+	}
+	if i.OwnerIDLTE != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDLTE(*i.OwnerIDLTE))
+	}
+	if i.OwnerIDContains != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDContains(*i.OwnerIDContains))
+	}
+	if i.OwnerIDHasPrefix != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDHasPrefix(*i.OwnerIDHasPrefix))
+	}
+	if i.OwnerIDHasSuffix != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDHasSuffix(*i.OwnerIDHasSuffix))
+	}
+	if i.OwnerIDEqualFold != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDEqualFold(*i.OwnerIDEqualFold))
+	}
+	if i.OwnerIDContainsFold != nil {
+		predicates = append(predicates, resourceusagesample.OwnerIDContainsFold(*i.OwnerIDContainsFold))
+	}
+	if i.RunnerID != nil {
+		predicates = append(predicates, resourceusagesample.RunnerIDEQ(*i.RunnerID))
+	}
+	if i.RunnerIDNEQ != nil {
+		predicates = append(predicates, resourceusagesample.RunnerIDNEQ(*i.RunnerIDNEQ))
+	}
+	if len(i.RunnerIDIn) > 0 {
+		predicates = append(predicates, resourceusagesample.RunnerIDIn(i.RunnerIDIn...))
+	}
+	if len(i.RunnerIDNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.RunnerIDNotIn(i.RunnerIDNotIn...))
+	}
+	if i.CPUPercent != nil {
+		predicates = append(predicates, resourceusagesample.CPUPercentEQ(*i.CPUPercent))
+	}
+	if i.CPUPercentNEQ != nil {
+		predicates = append(predicates, resourceusagesample.CPUPercentNEQ(*i.CPUPercentNEQ))
+	}
+	if len(i.CPUPercentIn) > 0 {
+		predicates = append(predicates, resourceusagesample.CPUPercentIn(i.CPUPercentIn...))
+	}
+	if len(i.CPUPercentNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.CPUPercentNotIn(i.CPUPercentNotIn...))
+	}
+	if i.CPUPercentGT != nil {
+		predicates = append(predicates, resourceusagesample.CPUPercentGT(*i.CPUPercentGT))
+	}
+	if i.CPUPercentGTE != nil {
+		predicates = append(predicates, resourceusagesample.CPUPercentGTE(*i.CPUPercentGTE))
+	}
+	if i.CPUPercentLT != nil {
+		predicates = append(predicates, resourceusagesample.CPUPercentLT(*i.CPUPercentLT))
+	}
+	if i.CPUPercentLTE != nil {
+		predicates = append(predicates, resourceusagesample.CPUPercentLTE(*i.CPUPercentLTE))
+	}
+	if i.MemoryBytes != nil {
+		predicates = append(predicates, resourceusagesample.MemoryBytesEQ(*i.MemoryBytes))
+	}
+	if i.MemoryBytesNEQ != nil {
+		predicates = append(predicates, resourceusagesample.MemoryBytesNEQ(*i.MemoryBytesNEQ))
+	}
+	if len(i.MemoryBytesIn) > 0 {
+		predicates = append(predicates, resourceusagesample.MemoryBytesIn(i.MemoryBytesIn...))
+	}
+	if len(i.MemoryBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.MemoryBytesNotIn(i.MemoryBytesNotIn...))
+	}
+	if i.MemoryBytesGT != nil {
+		predicates = append(predicates, resourceusagesample.MemoryBytesGT(*i.MemoryBytesGT))
+	}
+	if i.MemoryBytesGTE != nil {
+		predicates = append(predicates, resourceusagesample.MemoryBytesGTE(*i.MemoryBytesGTE))
+	}
+	if i.MemoryBytesLT != nil {
+		predicates = append(predicates, resourceusagesample.MemoryBytesLT(*i.MemoryBytesLT))
+	}
+	if i.MemoryBytesLTE != nil {
+		predicates = append(predicates, resourceusagesample.MemoryBytesLTE(*i.MemoryBytesLTE))
+	}
+	if i.NetworkRxBytes != nil {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesEQ(*i.NetworkRxBytes))
+	}
+	if i.NetworkRxBytesNEQ != nil {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesNEQ(*i.NetworkRxBytesNEQ))
+	}
+	if len(i.NetworkRxBytesIn) > 0 {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesIn(i.NetworkRxBytesIn...))
+	}
+	if len(i.NetworkRxBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesNotIn(i.NetworkRxBytesNotIn...))
+	}
+	if i.NetworkRxBytesGT != nil {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesGT(*i.NetworkRxBytesGT))
+	}
+	if i.NetworkRxBytesGTE != nil {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesGTE(*i.NetworkRxBytesGTE))
+	}
+	if i.NetworkRxBytesLT != nil {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesLT(*i.NetworkRxBytesLT))
+	}
+	if i.NetworkRxBytesLTE != nil {
+		predicates = append(predicates, resourceusagesample.NetworkRxBytesLTE(*i.NetworkRxBytesLTE))
+	}
+	if i.NetworkTxBytes != nil {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesEQ(*i.NetworkTxBytes))
+	}
+	if i.NetworkTxBytesNEQ != nil {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesNEQ(*i.NetworkTxBytesNEQ))
+	}
+	if len(i.NetworkTxBytesIn) > 0 {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesIn(i.NetworkTxBytesIn...))
+	}
+	if len(i.NetworkTxBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesNotIn(i.NetworkTxBytesNotIn...))
+	}
+	if i.NetworkTxBytesGT != nil {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesGT(*i.NetworkTxBytesGT))
+	}
+	if i.NetworkTxBytesGTE != nil {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesGTE(*i.NetworkTxBytesGTE))
+	}
+	if i.NetworkTxBytesLT != nil {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesLT(*i.NetworkTxBytesLT))
+	}
+	if i.NetworkTxBytesLTE != nil {
+		predicates = append(predicates, resourceusagesample.NetworkTxBytesLTE(*i.NetworkTxBytesLTE))
+	}
+	if i.BlockReadBytes != nil {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesEQ(*i.BlockReadBytes))
+	}
+	if i.BlockReadBytesNEQ != nil {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesNEQ(*i.BlockReadBytesNEQ))
+	}
+	if len(i.BlockReadBytesIn) > 0 {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesIn(i.BlockReadBytesIn...))
+	}
+	if len(i.BlockReadBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesNotIn(i.BlockReadBytesNotIn...))
+	}
+	if i.BlockReadBytesGT != nil {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesGT(*i.BlockReadBytesGT))
+	}
+	if i.BlockReadBytesGTE != nil {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesGTE(*i.BlockReadBytesGTE))
+	}
+	if i.BlockReadBytesLT != nil {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesLT(*i.BlockReadBytesLT))
+	}
+	if i.BlockReadBytesLTE != nil {
+		predicates = append(predicates, resourceusagesample.BlockReadBytesLTE(*i.BlockReadBytesLTE))
+	}
+	if i.BlockWriteBytes != nil {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesEQ(*i.BlockWriteBytes))
+	}
+	if i.BlockWriteBytesNEQ != nil {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesNEQ(*i.BlockWriteBytesNEQ))
+	}
+	if len(i.BlockWriteBytesIn) > 0 {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesIn(i.BlockWriteBytesIn...))
+	}
+	if len(i.BlockWriteBytesNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesNotIn(i.BlockWriteBytesNotIn...))
+	}
+	if i.BlockWriteBytesGT != nil {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesGT(*i.BlockWriteBytesGT))
+	}
+	if i.BlockWriteBytesGTE != nil {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesGTE(*i.BlockWriteBytesGTE))
+	}
+	if i.BlockWriteBytesLT != nil {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesLT(*i.BlockWriteBytesLT))
+	}
+	if i.BlockWriteBytesLTE != nil {
+		predicates = append(predicates, resourceusagesample.BlockWriteBytesLTE(*i.BlockWriteBytesLTE))
+	}
+	if i.SampledAt != nil {
+		predicates = append(predicates, resourceusagesample.SampledAtEQ(*i.SampledAt))
+	}
+	if i.SampledAtNEQ != nil {
+		predicates = append(predicates, resourceusagesample.SampledAtNEQ(*i.SampledAtNEQ))
+	}
+	if len(i.SampledAtIn) > 0 {
+		predicates = append(predicates, resourceusagesample.SampledAtIn(i.SampledAtIn...))
+	}
+	if len(i.SampledAtNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.SampledAtNotIn(i.SampledAtNotIn...))
+	}
+	if i.SampledAtGT != nil {
+		predicates = append(predicates, resourceusagesample.SampledAtGT(*i.SampledAtGT))
+	}
+	if i.SampledAtGTE != nil {
+		predicates = append(predicates, resourceusagesample.SampledAtGTE(*i.SampledAtGTE))
+	}
+	if i.SampledAtLT != nil {
+		predicates = append(predicates, resourceusagesample.SampledAtLT(*i.SampledAtLT))
+	}
+	if i.SampledAtLTE != nil {
+		predicates = append(predicates, resourceusagesample.SampledAtLTE(*i.SampledAtLTE))
+	}
+	if i.CreatedAt != nil {
+		predicates = append(predicates, resourceusagesample.CreatedAtEQ(*i.CreatedAt))
+	}
+	if i.CreatedAtNEQ != nil {
+		predicates = append(predicates, resourceusagesample.CreatedAtNEQ(*i.CreatedAtNEQ))
+	}
+	if len(i.CreatedAtIn) > 0 {
+		predicates = append(predicates, resourceusagesample.CreatedAtIn(i.CreatedAtIn...))
+	}
+	if len(i.CreatedAtNotIn) > 0 {
+		predicates = append(predicates, resourceusagesample.CreatedAtNotIn(i.CreatedAtNotIn...))
+	}
+	if i.CreatedAtGT != nil {
+		predicates = append(predicates, resourceusagesample.CreatedAtGT(*i.CreatedAtGT))
+	}
+	if i.CreatedAtGTE != nil {
+		predicates = append(predicates, resourceusagesample.CreatedAtGTE(*i.CreatedAtGTE))
+	}
+	if i.CreatedAtLT != nil {
+		predicates = append(predicates, resourceusagesample.CreatedAtLT(*i.CreatedAtLT))
+	}
+	if i.CreatedAtLTE != nil {
+		predicates = append(predicates, resourceusagesample.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+
+	if i.HasRunner != nil {
+		p := resourceusagesample.HasRunner()
+		if !*i.HasRunner {
+			p = resourceusagesample.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasRunnerWith) > 0 {
+		with := make([]predicate.BotRunner, 0, len(i.HasRunnerWith))
+		for _, w := range i.HasRunnerWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasRunnerWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, resourceusagesample.HasRunnerWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyResourceUsageSampleWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return resourceusagesample.And(predicates...), nil
 	}
 }
 

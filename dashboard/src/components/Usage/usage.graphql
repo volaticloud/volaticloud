@@ -1,0 +1,64 @@
+# Usage dashboard queries
+
+query GetOrganizationUsage($ownerID: String!, $start: Time!, $end: Time!) {
+  organizationUsage(ownerID: $ownerID, start: $start, end: $end) {
+    id
+    resourceType
+    resourceID
+    ownerID
+    runnerID
+    granularity
+    bucketStart
+    bucketEnd
+    cpuCoreSeconds
+    cpuAvgPercent
+    cpuMaxPercent
+    memoryGBSeconds
+    memoryAvgBytes
+    memoryMaxBytes
+    networkRxBytes
+    networkTxBytes
+    blockReadBytes
+    blockWriteBytes
+    sampleCount
+  }
+}
+
+query GetEstimatedCost($ownerID: String!, $start: Time!, $end: Time!) {
+  estimatedCost(ownerID: $ownerID, start: $start, end: $end) {
+    cpuCost
+    memoryCost
+    networkCost
+    storageCost
+    totalCost
+    currency
+  }
+}
+
+# Combined query for usage dashboard
+query GetUsageDashboard($ownerID: String!, $start: Time!, $end: Time!) {
+  organizationUsage(ownerID: $ownerID, start: $start, end: $end) {
+    id
+    cpuCoreSeconds
+    cpuAvgPercent
+    cpuMaxPercent
+    memoryGBSeconds
+    memoryAvgBytes
+    memoryMaxBytes
+    networkRxBytes
+    networkTxBytes
+    blockReadBytes
+    blockWriteBytes
+    sampleCount
+    bucketStart
+    bucketEnd
+  }
+  estimatedCost(ownerID: $ownerID, start: $start, end: $end) {
+    cpuCost
+    memoryCost
+    networkCost
+    storageCost
+    totalCost
+    currency
+  }
+}

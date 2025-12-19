@@ -9,6 +9,8 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/schema"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
@@ -111,12 +113,16 @@ func init() {
 	botrunnerDescOwnerID := botrunnerFields[11].Descriptor()
 	// botrunner.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	botrunner.OwnerIDValidator = botrunnerDescOwnerID.Validators[0].(func(string) error)
+	// botrunnerDescBillingEnabled is the schema descriptor for billing_enabled field.
+	botrunnerDescBillingEnabled := botrunnerFields[12].Descriptor()
+	// botrunner.DefaultBillingEnabled holds the default value on creation for the billing_enabled field.
+	botrunner.DefaultBillingEnabled = botrunnerDescBillingEnabled.Default.(bool)
 	// botrunnerDescCreatedAt is the schema descriptor for created_at field.
-	botrunnerDescCreatedAt := botrunnerFields[12].Descriptor()
+	botrunnerDescCreatedAt := botrunnerFields[17].Descriptor()
 	// botrunner.DefaultCreatedAt holds the default value on creation for the created_at field.
 	botrunner.DefaultCreatedAt = botrunnerDescCreatedAt.Default.(func() time.Time)
 	// botrunnerDescUpdatedAt is the schema descriptor for updated_at field.
-	botrunnerDescUpdatedAt := botrunnerFields[13].Descriptor()
+	botrunnerDescUpdatedAt := botrunnerFields[18].Descriptor()
 	// botrunner.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	botrunner.DefaultUpdatedAt = botrunnerDescUpdatedAt.Default.(func() time.Time)
 	// botrunner.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -151,6 +157,94 @@ func init() {
 	exchangeDescID := exchangeFields[0].Descriptor()
 	// exchange.DefaultID holds the default value on creation for the id field.
 	exchange.DefaultID = exchangeDescID.Default.(func() uuid.UUID)
+	resourceusageaggregationFields := schema.ResourceUsageAggregation{}.Fields()
+	_ = resourceusageaggregationFields
+	// resourceusageaggregationDescOwnerID is the schema descriptor for owner_id field.
+	resourceusageaggregationDescOwnerID := resourceusageaggregationFields[3].Descriptor()
+	// resourceusageaggregation.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	resourceusageaggregation.OwnerIDValidator = resourceusageaggregationDescOwnerID.Validators[0].(func(string) error)
+	// resourceusageaggregationDescCPUCoreSeconds is the schema descriptor for cpu_core_seconds field.
+	resourceusageaggregationDescCPUCoreSeconds := resourceusageaggregationFields[8].Descriptor()
+	// resourceusageaggregation.DefaultCPUCoreSeconds holds the default value on creation for the cpu_core_seconds field.
+	resourceusageaggregation.DefaultCPUCoreSeconds = resourceusageaggregationDescCPUCoreSeconds.Default.(float64)
+	// resourceusageaggregationDescCPUAvgPercent is the schema descriptor for cpu_avg_percent field.
+	resourceusageaggregationDescCPUAvgPercent := resourceusageaggregationFields[9].Descriptor()
+	// resourceusageaggregation.DefaultCPUAvgPercent holds the default value on creation for the cpu_avg_percent field.
+	resourceusageaggregation.DefaultCPUAvgPercent = resourceusageaggregationDescCPUAvgPercent.Default.(float64)
+	// resourceusageaggregationDescCPUMaxPercent is the schema descriptor for cpu_max_percent field.
+	resourceusageaggregationDescCPUMaxPercent := resourceusageaggregationFields[10].Descriptor()
+	// resourceusageaggregation.DefaultCPUMaxPercent holds the default value on creation for the cpu_max_percent field.
+	resourceusageaggregation.DefaultCPUMaxPercent = resourceusageaggregationDescCPUMaxPercent.Default.(float64)
+	// resourceusageaggregationDescMemoryGBSeconds is the schema descriptor for memory_gb_seconds field.
+	resourceusageaggregationDescMemoryGBSeconds := resourceusageaggregationFields[11].Descriptor()
+	// resourceusageaggregation.DefaultMemoryGBSeconds holds the default value on creation for the memory_gb_seconds field.
+	resourceusageaggregation.DefaultMemoryGBSeconds = resourceusageaggregationDescMemoryGBSeconds.Default.(float64)
+	// resourceusageaggregationDescMemoryAvgBytes is the schema descriptor for memory_avg_bytes field.
+	resourceusageaggregationDescMemoryAvgBytes := resourceusageaggregationFields[12].Descriptor()
+	// resourceusageaggregation.DefaultMemoryAvgBytes holds the default value on creation for the memory_avg_bytes field.
+	resourceusageaggregation.DefaultMemoryAvgBytes = resourceusageaggregationDescMemoryAvgBytes.Default.(int64)
+	// resourceusageaggregationDescMemoryMaxBytes is the schema descriptor for memory_max_bytes field.
+	resourceusageaggregationDescMemoryMaxBytes := resourceusageaggregationFields[13].Descriptor()
+	// resourceusageaggregation.DefaultMemoryMaxBytes holds the default value on creation for the memory_max_bytes field.
+	resourceusageaggregation.DefaultMemoryMaxBytes = resourceusageaggregationDescMemoryMaxBytes.Default.(int64)
+	// resourceusageaggregationDescNetworkRxBytes is the schema descriptor for network_rx_bytes field.
+	resourceusageaggregationDescNetworkRxBytes := resourceusageaggregationFields[14].Descriptor()
+	// resourceusageaggregation.DefaultNetworkRxBytes holds the default value on creation for the network_rx_bytes field.
+	resourceusageaggregation.DefaultNetworkRxBytes = resourceusageaggregationDescNetworkRxBytes.Default.(int64)
+	// resourceusageaggregationDescNetworkTxBytes is the schema descriptor for network_tx_bytes field.
+	resourceusageaggregationDescNetworkTxBytes := resourceusageaggregationFields[15].Descriptor()
+	// resourceusageaggregation.DefaultNetworkTxBytes holds the default value on creation for the network_tx_bytes field.
+	resourceusageaggregation.DefaultNetworkTxBytes = resourceusageaggregationDescNetworkTxBytes.Default.(int64)
+	// resourceusageaggregationDescBlockReadBytes is the schema descriptor for block_read_bytes field.
+	resourceusageaggregationDescBlockReadBytes := resourceusageaggregationFields[16].Descriptor()
+	// resourceusageaggregation.DefaultBlockReadBytes holds the default value on creation for the block_read_bytes field.
+	resourceusageaggregation.DefaultBlockReadBytes = resourceusageaggregationDescBlockReadBytes.Default.(int64)
+	// resourceusageaggregationDescBlockWriteBytes is the schema descriptor for block_write_bytes field.
+	resourceusageaggregationDescBlockWriteBytes := resourceusageaggregationFields[17].Descriptor()
+	// resourceusageaggregation.DefaultBlockWriteBytes holds the default value on creation for the block_write_bytes field.
+	resourceusageaggregation.DefaultBlockWriteBytes = resourceusageaggregationDescBlockWriteBytes.Default.(int64)
+	// resourceusageaggregationDescSampleCount is the schema descriptor for sample_count field.
+	resourceusageaggregationDescSampleCount := resourceusageaggregationFields[18].Descriptor()
+	// resourceusageaggregation.DefaultSampleCount holds the default value on creation for the sample_count field.
+	resourceusageaggregation.DefaultSampleCount = resourceusageaggregationDescSampleCount.Default.(int)
+	// resourceusageaggregationDescCreatedAt is the schema descriptor for created_at field.
+	resourceusageaggregationDescCreatedAt := resourceusageaggregationFields[19].Descriptor()
+	// resourceusageaggregation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	resourceusageaggregation.DefaultCreatedAt = resourceusageaggregationDescCreatedAt.Default.(func() time.Time)
+	// resourceusageaggregationDescID is the schema descriptor for id field.
+	resourceusageaggregationDescID := resourceusageaggregationFields[0].Descriptor()
+	// resourceusageaggregation.DefaultID holds the default value on creation for the id field.
+	resourceusageaggregation.DefaultID = resourceusageaggregationDescID.Default.(func() uuid.UUID)
+	resourceusagesampleFields := schema.ResourceUsageSample{}.Fields()
+	_ = resourceusagesampleFields
+	// resourceusagesampleDescOwnerID is the schema descriptor for owner_id field.
+	resourceusagesampleDescOwnerID := resourceusagesampleFields[3].Descriptor()
+	// resourceusagesample.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	resourceusagesample.OwnerIDValidator = resourceusagesampleDescOwnerID.Validators[0].(func(string) error)
+	// resourceusagesampleDescNetworkRxBytes is the schema descriptor for network_rx_bytes field.
+	resourceusagesampleDescNetworkRxBytes := resourceusagesampleFields[7].Descriptor()
+	// resourceusagesample.DefaultNetworkRxBytes holds the default value on creation for the network_rx_bytes field.
+	resourceusagesample.DefaultNetworkRxBytes = resourceusagesampleDescNetworkRxBytes.Default.(int64)
+	// resourceusagesampleDescNetworkTxBytes is the schema descriptor for network_tx_bytes field.
+	resourceusagesampleDescNetworkTxBytes := resourceusagesampleFields[8].Descriptor()
+	// resourceusagesample.DefaultNetworkTxBytes holds the default value on creation for the network_tx_bytes field.
+	resourceusagesample.DefaultNetworkTxBytes = resourceusagesampleDescNetworkTxBytes.Default.(int64)
+	// resourceusagesampleDescBlockReadBytes is the schema descriptor for block_read_bytes field.
+	resourceusagesampleDescBlockReadBytes := resourceusagesampleFields[9].Descriptor()
+	// resourceusagesample.DefaultBlockReadBytes holds the default value on creation for the block_read_bytes field.
+	resourceusagesample.DefaultBlockReadBytes = resourceusagesampleDescBlockReadBytes.Default.(int64)
+	// resourceusagesampleDescBlockWriteBytes is the schema descriptor for block_write_bytes field.
+	resourceusagesampleDescBlockWriteBytes := resourceusagesampleFields[10].Descriptor()
+	// resourceusagesample.DefaultBlockWriteBytes holds the default value on creation for the block_write_bytes field.
+	resourceusagesample.DefaultBlockWriteBytes = resourceusagesampleDescBlockWriteBytes.Default.(int64)
+	// resourceusagesampleDescCreatedAt is the schema descriptor for created_at field.
+	resourceusagesampleDescCreatedAt := resourceusagesampleFields[12].Descriptor()
+	// resourceusagesample.DefaultCreatedAt holds the default value on creation for the created_at field.
+	resourceusagesample.DefaultCreatedAt = resourceusagesampleDescCreatedAt.Default.(func() time.Time)
+	// resourceusagesampleDescID is the schema descriptor for id field.
+	resourceusagesampleDescID := resourceusagesampleFields[0].Descriptor()
+	// resourceusagesample.DefaultID holds the default value on creation for the id field.
+	resourceusagesample.DefaultID = resourceusagesampleDescID.Default.(func() uuid.UUID)
 	strategyMixin := schema.Strategy{}.Mixin()
 	strategyHooks := schema.Strategy{}.Hooks()
 	strategy.Hooks[0] = strategyHooks[0]

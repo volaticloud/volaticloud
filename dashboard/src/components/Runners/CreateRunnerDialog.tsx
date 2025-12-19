@@ -17,12 +17,22 @@ import {
   Checkbox,
   Alert,
   CircularProgress,
+  InputAdornment,
+  Collapse,
 } from '@mui/material';
 import { useState } from 'react';
 import { useCreateRunnerMutation, useTestRunnerConnectionMutation } from './runners.generated';
 import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 import { useActiveGroup } from '../../contexts/GroupContext';
+
+interface BillingConfig {
+  billingEnabled: boolean;
+  cpuPricePerCoreHour: number | null;
+  memoryPricePerGBHour: number | null;
+  networkPricePerGB: number | null;
+  storagePricePerGB: number | null;
+}
 
 interface CreateRunnerDialogProps {
   open: boolean;
@@ -48,6 +58,15 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
 
   // Data download config state
   const [dataDownloadConfig, setDataDownloadConfig] = useState<DataDownloadConfigInput | null>(null);
+
+  // Billing config state
+  const [billingConfig, setBillingConfig] = useState<BillingConfig>({
+    billingEnabled: false,
+    cpuPricePerCoreHour: null,
+    memoryPricePerGBHour: null,
+    networkPricePerGB: null,
+    storagePricePerGB: null,
+  });
 
   // Test connection state
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -112,6 +131,11 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             config,
             dataDownloadConfig,
             ownerID: activeGroupId,
+            billingEnabled: billingConfig.billingEnabled,
+            cpuPricePerCoreHour: billingConfig.billingEnabled ? billingConfig.cpuPricePerCoreHour : null,
+            memoryPricePerGBHour: billingConfig.billingEnabled ? billingConfig.memoryPricePerGBHour : null,
+            networkPricePerGB: billingConfig.billingEnabled ? billingConfig.networkPricePerGB : null,
+            storagePricePerGB: billingConfig.billingEnabled ? billingConfig.storagePricePerGB : null,
           },
         },
       });
@@ -125,6 +149,13 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         setKubernetesConfig({});
         setLocalConfig({});
         setDataDownloadConfig(null);
+        setBillingConfig({
+          billingEnabled: false,
+          cpuPricePerCoreHour: null,
+          memoryPricePerGBHour: null,
+          networkPricePerGB: null,
+          storagePricePerGB: null,
+        });
 
         onSuccess();
         onClose();
@@ -303,6 +334,102 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             value={dataDownloadConfig}
             onChange={setDataDownloadConfig}
           />
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Billing Configuration */}
+          <Typography variant="subtitle2" color="text.secondary">
+            Billing Configuration
+          </Typography>
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={billingConfig.billingEnabled}
+                onChange={(e) => setBillingConfig({ ...billingConfig, billingEnabled: e.target.checked })}
+              />
+            }
+            label="Enable usage tracking and billing"
+          />
+          <FormHelperText sx={{ mt: -1, ml: 4 }}>
+            When enabled, resource usage (CPU, memory, network, storage) will be tracked for billing purposes
+          </FormHelperText>
+
+          <Collapse in={billingConfig.billingEnabled}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Set pricing rates for this runner. Leave empty to use default rates.
+              </Typography>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="CPU Price"
+                  type="number"
+                  value={billingConfig.cpuPricePerCoreHour ?? ''}
+                  onChange={(e) => setBillingConfig({
+                    ...billingConfig,
+                    cpuPricePerCoreHour: e.target.value ? parseFloat(e.target.value) : null,
+                  })}
+                  fullWidth
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    endAdornment: <InputAdornment position="end">/core-hour</InputAdornment>,
+                  }}
+                  inputProps={{ step: '0.001', min: '0' }}
+                />
+
+                <TextField
+                  label="Memory Price"
+                  type="number"
+                  value={billingConfig.memoryPricePerGBHour ?? ''}
+                  onChange={(e) => setBillingConfig({
+                    ...billingConfig,
+                    memoryPricePerGBHour: e.target.value ? parseFloat(e.target.value) : null,
+                  })}
+                  fullWidth
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    endAdornment: <InputAdornment position="end">/GB-hour</InputAdornment>,
+                  }}
+                  inputProps={{ step: '0.001', min: '0' }}
+                />
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="Network Price"
+                  type="number"
+                  value={billingConfig.networkPricePerGB ?? ''}
+                  onChange={(e) => setBillingConfig({
+                    ...billingConfig,
+                    networkPricePerGB: e.target.value ? parseFloat(e.target.value) : null,
+                  })}
+                  fullWidth
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    endAdornment: <InputAdornment position="end">/GB</InputAdornment>,
+                  }}
+                  inputProps={{ step: '0.001', min: '0' }}
+                />
+
+                <TextField
+                  label="Storage I/O Price"
+                  type="number"
+                  value={billingConfig.storagePricePerGB ?? ''}
+                  onChange={(e) => setBillingConfig({
+                    ...billingConfig,
+                    storagePricePerGB: e.target.value ? parseFloat(e.target.value) : null,
+                  })}
+                  fullWidth
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    endAdornment: <InputAdornment position="end">/GB</InputAdornment>,
+                  }}
+                  inputProps={{ step: '0.001', min: '0' }}
+                />
+              </Box>
+            </Box>
+          </Collapse>
 
           {/* Test Connection Result */}
           {testResult && (
