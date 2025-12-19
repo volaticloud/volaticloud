@@ -37,11 +37,14 @@ func ValidateConfig(runnerType enum.RunnerType, configData map[string]interface{
 	// Extract runner-type-specific config (handle both nested and direct formats)
 	typeConfig := ExtractRunnerConfig(configData, runnerType)
 
-	switch runnerType {
-	case enum.RunnerDocker:
-		_, err := ParseDockerConfig(typeConfig)
-		return err
+	// Try to get registered validator first
+	validator, err := GetConfigValidator(runnerType)
+	if err == nil {
+		return validator(typeConfig)
+	}
 
+	// Fallback for unsupported types
+	switch runnerType {
 	case enum.RunnerKubernetes:
 		return fmt.Errorf("Kubernetes runner is not yet supported")
 

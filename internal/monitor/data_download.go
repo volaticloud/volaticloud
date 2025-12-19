@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 
+	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/runner"
@@ -134,7 +135,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	}()
 
 	// Get Docker client from runtime (already configured with remote host)
-	dockerRT, ok := rt.(*runner.DockerRuntime)
+	dockerRT, ok := rt.(*docker.Runtime)
 	if !ok {
 		return fmt.Errorf("runtime is not a Docker runtime")
 	}

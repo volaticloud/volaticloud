@@ -1,4 +1,4 @@
-package runner
+package docker
 
 import (
 	"testing"
@@ -58,7 +58,7 @@ func TestCalculateCPUPercent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Simulate the CPU calculation logic from docker_runner.go
+			// Simulate the CPU calculation logic from runner.go
 			numCPUs := tt.percpuUsageLen
 			if numCPUs == 0 {
 				numCPUs = int(tt.onlineCPUs)

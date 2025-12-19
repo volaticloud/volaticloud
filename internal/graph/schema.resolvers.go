@@ -15,6 +15,7 @@ import (
 	"volaticloud/internal/auth"
 	backtest1 "volaticloud/internal/backtest"
 	bot1 "volaticloud/internal/bot"
+	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
@@ -899,7 +900,7 @@ func (r *mutationResolver) GetFreqtradeToken(ctx context.Context, botID uuid.UUI
 	// Parse runner config to get Docker host
 	// Config may be nested under runner type key (e.g., {"docker": {...}})
 	typeConfig := runner.ExtractRunnerConfig(botRunner.Config, botRunner.Type)
-	dockerConfig, err := runner.ParseDockerConfig(typeConfig)
+	dockerConfig, err := docker.ParseConfig(typeConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse runner config: %w", err)
 	}

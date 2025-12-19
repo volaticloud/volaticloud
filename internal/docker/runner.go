@@ -1,4 +1,4 @@
-package runner
+package docker
 
 import (
 	"context"
@@ -23,6 +23,7 @@ import (
 	"github.com/docker/go-connections/nat"
 
 	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 const (
@@ -41,15 +42,15 @@ const (
 	defaultStopTimeout = 30 * time.Second
 )
 
-// DockerRuntime implements Runtime for Docker environments
-type DockerRuntime struct {
+// Runtime implements runner.Runtime for Docker environments
+type Runtime struct {
 	client       *client.Client
-	config       *DockerConfig
-	volumeHelper *DockerVolumeHelper
+	config       *Config
+	volumeHelper *VolumeHelper
 }
 
-// NewDockerRuntime creates a new Docker runtime instance
-func NewDockerRuntime(ctx context.Context, config *DockerConfig) (*DockerRuntime, error) {
+// NewRuntime creates a new Docker runtime instance
+func NewRuntime(ctx context.Context, config *Config) (*Runtime, error) {
 	if config == nil {
 		return nil, fmt.Errorf("Docker config cannot be nil")
 	}
@@ -88,32 +89,32 @@ func NewDockerRuntime(ctx context.Context, config *DockerConfig) (*DockerRuntime
 		return nil, fmt.Errorf("failed to create Docker client: %w", err)
 	}
 
-	return &DockerRuntime{
+	return &Runtime{
 		client:       cli,
 		config:       config,
-		volumeHelper: NewDockerVolumeHelper(cli),
+		volumeHelper: NewVolumeHelper(cli),
 	}, nil
 }
 
-// Ensure DockerRuntime implements Runtime interface
-var _ Runtime = (*DockerRuntime)(nil)
+// Ensure Runtime implements runner.Runtime interface
+var _ runner.Runtime = (*Runtime)(nil)
 
 // CreateBot deploys a new bot container
-func (d *DockerRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, error) {
+func (d *Runtime) CreateBot(ctx context.Context, spec runner.BotSpec) (string, error) {
 	// Ensure network exists
 	if err := d.ensureNetwork(ctx); err != nil {
-		return "", NewRunnerError("CreateBot", spec.ID, err, true)
+		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Pull image if needed
 	if err := d.pullImage(ctx, spec.Image); err != nil {
-		return "", NewRunnerError("CreateBot", spec.ID, err, true)
+		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Create temporary config files
 	configPaths, err := d.createConfigFiles(spec)
 	if err != nil {
-		return "", NewRunnerError("CreateBot", spec.ID, err, true)
+		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Build container configuration with config file paths
@@ -134,7 +135,7 @@ func (d *DockerRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, er
 	if err != nil {
 		// Clean up config files if container creation fails
 		d.cleanupConfigFiles(spec.ID)
-		return "", NewRunnerError("CreateBot", spec.ID, err, true)
+		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Start container
@@ -142,17 +143,17 @@ func (d *DockerRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, er
 		// Clean up container and config files if start fails
 		d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
 		d.cleanupConfigFiles(spec.ID)
-		return "", NewRunnerError("CreateBot", spec.ID, err, true)
+		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	return resp.ID, nil
 }
 
 // DeleteBot removes a bot container
-func (d *DockerRuntime) DeleteBot(ctx context.Context, botID string) error {
+func (d *Runtime) DeleteBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRunnerError("DeleteBot", botID, err, false)
+		return runner.NewRunnerError("DeleteBot", botID, err, false)
 	}
 
 	// Remove container (force=true to remove even if running)
@@ -161,7 +162,7 @@ func (d *DockerRuntime) DeleteBot(ctx context.Context, botID string) error {
 		RemoveVolumes: true,
 	})
 	if err != nil {
-		return NewRunnerError("DeleteBot", botID, err, true)
+		return runner.NewRunnerError("DeleteBot", botID, err, true)
 	}
 
 	// Clean up config files
@@ -171,63 +172,63 @@ func (d *DockerRuntime) DeleteBot(ctx context.Context, botID string) error {
 }
 
 // StartBot starts a stopped container
-func (d *DockerRuntime) StartBot(ctx context.Context, botID string) error {
+func (d *Runtime) StartBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRunnerError("StartBot", botID, err, false)
+		return runner.NewRunnerError("StartBot", botID, err, false)
 	}
 
 	err = d.client.ContainerStart(ctx, containerID, container.StartOptions{})
 	if err != nil {
-		return NewRunnerError("StartBot", botID, err, true)
+		return runner.NewRunnerError("StartBot", botID, err, true)
 	}
 
 	return nil
 }
 
 // StopBot stops a running container
-func (d *DockerRuntime) StopBot(ctx context.Context, botID string) error {
+func (d *Runtime) StopBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRunnerError("StopBot", botID, err, false)
+		return runner.NewRunnerError("StopBot", botID, err, false)
 	}
 
 	timeout := int(defaultStopTimeout.Seconds())
 	err = d.client.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeout})
 	if err != nil {
-		return NewRunnerError("StopBot", botID, err, true)
+		return runner.NewRunnerError("StopBot", botID, err, true)
 	}
 
 	return nil
 }
 
 // RestartBot restarts a container
-func (d *DockerRuntime) RestartBot(ctx context.Context, botID string) error {
+func (d *Runtime) RestartBot(ctx context.Context, botID string) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRunnerError("RestartBot", botID, err, false)
+		return runner.NewRunnerError("RestartBot", botID, err, false)
 	}
 
 	timeout := int(defaultStopTimeout.Seconds())
 	err = d.client.ContainerRestart(ctx, containerID, container.StopOptions{Timeout: &timeout})
 	if err != nil {
-		return NewRunnerError("RestartBot", botID, err, true)
+		return runner.NewRunnerError("RestartBot", botID, err, true)
 	}
 
 	return nil
 }
 
 // GetBotStatus retrieves the status of a bot
-func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotStatus, error) {
+func (d *Runtime) GetBotStatus(ctx context.Context, botID string) (*runner.BotStatus, error) {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return nil, NewRunnerError("GetBotStatus", botID, err, false)
+		return nil, runner.NewRunnerError("GetBotStatus", botID, err, false)
 	}
 
 	// Inspect container
 	inspect, err := d.client.ContainerInspect(ctx, containerID)
 	if err != nil {
-		return nil, NewRunnerError("GetBotStatus", botID, err, true)
+		return nil, runner.NewRunnerError("GetBotStatus", botID, err, true)
 	}
 
 	// Get container stats for resource usage
@@ -241,7 +242,7 @@ func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotSta
 	healthy := inspect.State.Running && (inspect.State.Health == nil || inspect.State.Health.Status == "healthy")
 
 	// Build status
-	status := &BotStatus{
+	status := &runner.BotStatus{
 		BotID:       botID,
 		ContainerID: containerID,
 		Status:      d.mapDockerState(inspect.State, healthy),
@@ -332,11 +333,11 @@ func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotSta
 }
 
 // GetContainerIP retrieves the container's IP address
-func (d *DockerRuntime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
+func (d *Runtime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
 	// Inspect container directly by container ID
 	inspect, err := d.client.ContainerInspect(ctx, containerID)
 	if err != nil {
-		return "", NewRunnerError("GetContainerIP", containerID, err, true)
+		return "", runner.NewRunnerError("GetContainerIP", containerID, err, true)
 	}
 
 	// Extract IP address from network settings
@@ -349,15 +350,15 @@ func (d *DockerRuntime) GetContainerIP(ctx context.Context, containerID string) 
 	}
 
 	// No IP address found
-	return "", NewRunnerError("GetContainerIP", containerID,
+	return "", runner.NewRunnerError("GetContainerIP", containerID,
 		fmt.Errorf("container has no network IP address"), false)
 }
 
 // GetBotLogs retrieves logs from a bot container
-func (d *DockerRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {
+func (d *Runtime) GetBotLogs(ctx context.Context, botID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return nil, NewRunnerError("GetBotLogs", botID, err, false)
+		return nil, runner.NewRunnerError("GetBotLogs", botID, err, false)
 	}
 
 	// Build log options
@@ -384,19 +385,19 @@ func (d *DockerRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOp
 	// Get logs
 	logs, err := d.client.ContainerLogs(ctx, containerID, logOpts)
 	if err != nil {
-		return nil, NewRunnerError("GetBotLogs", botID, err, true)
+		return nil, runner.NewRunnerError("GetBotLogs", botID, err, true)
 	}
 
-	return &LogReader{
+	return &runner.LogReader{
 		ReadCloser: logs,
 	}, nil
 }
 
 // UpdateBot updates a bot container (limited support - mainly for resource limits)
-func (d *DockerRuntime) UpdateBot(ctx context.Context, botID string, spec UpdateBotSpec) error {
+func (d *Runtime) UpdateBot(ctx context.Context, botID string, spec runner.UpdateBotSpec) error {
 	containerID, err := d.findContainer(ctx, botID)
 	if err != nil {
-		return NewRunnerError("UpdateBot", botID, err, false)
+		return runner.NewRunnerError("UpdateBot", botID, err, false)
 	}
 
 	// Build update config
@@ -419,12 +420,12 @@ func (d *DockerRuntime) UpdateBot(ctx context.Context, botID string, spec Update
 	// Update container
 	_, err = d.client.ContainerUpdate(ctx, containerID, updateConfig)
 	if err != nil {
-		return NewRunnerError("UpdateBot", botID, err, true)
+		return runner.NewRunnerError("UpdateBot", botID, err, true)
 	}
 
 	// Note: Image updates require recreation - not supported here
 	if spec.Image != nil {
-		return NewRunnerError("UpdateBot", botID,
+		return runner.NewRunnerError("UpdateBot", botID,
 			fmt.Errorf("image updates not supported - please recreate the bot"), false)
 	}
 
@@ -432,7 +433,7 @@ func (d *DockerRuntime) UpdateBot(ctx context.Context, botID string, spec Update
 }
 
 // ListBots returns all managed bot containers
-func (d *DockerRuntime) ListBots(ctx context.Context) ([]BotStatus, error) {
+func (d *Runtime) ListBots(ctx context.Context) ([]runner.BotStatus, error) {
 	// Filter for managed containers
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("label", labelManaged+"=true")
@@ -442,11 +443,11 @@ func (d *DockerRuntime) ListBots(ctx context.Context) ([]BotStatus, error) {
 		Filters: filterArgs,
 	})
 	if err != nil {
-		return nil, NewRunnerError("ListBots", "", err, true)
+		return nil, runner.NewRunnerError("ListBots", "", err, true)
 	}
 
 	// Convert to BotStatus
-	statuses := make([]BotStatus, 0, len(containers))
+	statuses := make([]runner.BotStatus, 0, len(containers))
 	for _, c := range containers {
 		botID, ok := c.Labels[labelBotID]
 		if !ok {
@@ -465,21 +466,21 @@ func (d *DockerRuntime) ListBots(ctx context.Context) ([]BotStatus, error) {
 }
 
 // HealthCheck verifies Docker daemon is accessible
-func (d *DockerRuntime) HealthCheck(ctx context.Context) error {
+func (d *Runtime) HealthCheck(ctx context.Context) error {
 	_, err := d.client.Ping(ctx)
 	if err != nil {
-		return NewRunnerError("HealthCheck", "", err, true)
+		return runner.NewRunnerError("HealthCheck", "", err, true)
 	}
 	return nil
 }
 
 // GetClient returns the Docker client for direct API access
-func (d *DockerRuntime) GetClient() *client.Client {
+func (d *Runtime) GetClient() *client.Client {
 	return d.client
 }
 
 // Close closes the Docker client
-func (d *DockerRuntime) Close() error {
+func (d *Runtime) Close() error {
 	if d.client != nil {
 		return d.client.Close()
 	}
@@ -487,13 +488,13 @@ func (d *DockerRuntime) Close() error {
 }
 
 // Type returns the runtime type
-func (d *DockerRuntime) Type() string {
+func (d *Runtime) Type() string {
 	return "docker"
 }
 
 // Helper methods
 
-func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFilePaths) *container.Config {
+func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configFilePaths) *container.Config {
 	// Build environment variables (minimal - only metadata)
 	env := []string{
 		"FREQTRADE_VERSION=" + spec.FreqtradeVersion,
@@ -554,7 +555,7 @@ func (d *DockerRuntime) buildContainerConfig(spec BotSpec, configPaths *configFi
 	}
 }
 
-func (d *DockerRuntime) buildHostConfig(spec BotSpec, configPaths *configFilePaths) *container.HostConfig {
+func (d *Runtime) buildHostConfig(spec runner.BotSpec, configPaths *configFilePaths) *container.HostConfig {
 	hostConfig := &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
 			Name: "unless-stopped",
@@ -600,7 +601,7 @@ func (d *DockerRuntime) buildHostConfig(spec BotSpec, configPaths *configFilePat
 	return hostConfig
 }
 
-func (d *DockerRuntime) buildNetworkConfig(spec BotSpec) *network.NetworkingConfig {
+func (d *Runtime) buildNetworkConfig(spec runner.BotSpec) *network.NetworkingConfig {
 	networkMode := spec.NetworkMode
 	if networkMode == "" {
 		networkMode = defaultNetwork
@@ -613,7 +614,7 @@ func (d *DockerRuntime) buildNetworkConfig(spec BotSpec) *network.NetworkingConf
 	}
 }
 
-func (d *DockerRuntime) ensureNetwork(ctx context.Context) error {
+func (d *Runtime) ensureNetwork(ctx context.Context) error {
 	networkName := d.config.Network
 	if networkName == "" {
 		networkName = defaultNetwork
@@ -641,7 +642,7 @@ func (d *DockerRuntime) ensureNetwork(ctx context.Context) error {
 	return err
 }
 
-func (d *DockerRuntime) pullImage(ctx context.Context, imageName string) error {
+func (d *Runtime) pullImage(ctx context.Context, imageName string) error {
 	// Build auth config if registry auth is configured
 	var authStr string
 	if d.config.RegistryAuth != nil {
@@ -671,7 +672,7 @@ func (d *DockerRuntime) pullImage(ctx context.Context, imageName string) error {
 	return err
 }
 
-func (d *DockerRuntime) findContainer(ctx context.Context, botID string) (string, error) {
+func (d *Runtime) findContainer(ctx context.Context, botID string) (string, error) {
 	// Try by name first (most efficient)
 	containerName := getContainerName(botID)
 	inspect, err := d.client.ContainerInspect(ctx, containerName)
@@ -698,13 +699,13 @@ func (d *DockerRuntime) findContainer(ctx context.Context, botID string) (string
 	}
 
 	if len(containers) == 0 {
-		return "", ErrBotNotFound
+		return "", runner.ErrBotNotFound
 	}
 
 	return containers[0].ID, nil
 }
 
-func (d *DockerRuntime) getContainerStats(ctx context.Context, containerID string) (*container.StatsResponse, error) {
+func (d *Runtime) getContainerStats(ctx context.Context, containerID string) (*container.StatsResponse, error) {
 	stats, err := d.client.ContainerStats(ctx, containerID, false)
 	if err != nil {
 		return nil, err
@@ -719,7 +720,7 @@ func (d *DockerRuntime) getContainerStats(ctx context.Context, containerID strin
 	return &v, nil
 }
 
-func (d *DockerRuntime) mapDockerState(state *container.State, healthy bool) enum.BotStatus {
+func (d *Runtime) mapDockerState(state *container.State, healthy bool) enum.BotStatus {
 	if state == nil {
 		return enum.BotStatusError
 	}
@@ -752,7 +753,7 @@ func getContainerName(botID string) string {
 	return containerNamePrefix + botID
 }
 
-func loadTLSConfig(config *DockerConfig) (*tls.Config, error) {
+func loadTLSConfig(config *Config) (*tls.Config, error) {
 	tlsConfig := &tls.Config{}
 
 	// Load client certificate from PEM-encoded strings
@@ -801,7 +802,7 @@ type configFilePaths struct {
 
 // createConfigFiles creates config files in Docker volume for the bot
 // Uses Docker volumes instead of bind mounts for remote Docker daemon compatibility
-func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error) {
+func (d *Runtime) createConfigFiles(spec runner.BotSpec) (*configFilePaths, error) {
 	ctx := context.Background()
 
 	paths := &configFilePaths{
@@ -889,7 +890,7 @@ func (d *DockerRuntime) createConfigFiles(spec BotSpec) (*configFilePaths, error
 }
 
 // cleanupConfigFiles removes the config files for a bot from Docker volume
-func (d *DockerRuntime) cleanupConfigFiles(botID string) {
+func (d *Runtime) cleanupConfigFiles(botID string) {
 	ctx := context.Background()
 	// Remove bot's directory from the shared volume
 	if err := d.volumeHelper.RemoveDirectory(ctx, BotConfigVolume, botID); err != nil {

@@ -1,4 +1,4 @@
-package runner
+package docker
 
 import (
 	"bytes"
@@ -26,20 +26,20 @@ const (
 	alpineImage = "alpine:latest"
 )
 
-// DockerVolumeHelper provides utilities for managing files in Docker volumes.
+// VolumeHelper provides utilities for managing files in Docker volumes.
 // This is useful when working with remote Docker daemons where local filesystem
 // paths are not accessible.
-type DockerVolumeHelper struct {
+type VolumeHelper struct {
 	client *client.Client
 }
 
-// NewDockerVolumeHelper creates a new volume helper using the provided Docker client
-func NewDockerVolumeHelper(cli *client.Client) *DockerVolumeHelper {
-	return &DockerVolumeHelper{client: cli}
+// NewVolumeHelper creates a new volume helper using the provided Docker client
+func NewVolumeHelper(cli *client.Client) *VolumeHelper {
+	return &VolumeHelper{client: cli}
 }
 
 // EnsureAlpineImage ensures the alpine image is available for volume operations
-func (h *DockerVolumeHelper) EnsureAlpineImage(ctx context.Context) error {
+func (h *VolumeHelper) EnsureAlpineImage(ctx context.Context) error {
 	// Check if image exists locally
 	_, err := h.client.ImageInspect(ctx, alpineImage)
 	if err == nil {
@@ -60,7 +60,7 @@ func (h *DockerVolumeHelper) EnsureAlpineImage(ctx context.Context) error {
 
 // WriteFile writes a file to a Docker volume using a temporary container.
 // The filePath is relative to the volume root.
-func (h *DockerVolumeHelper) WriteFile(ctx context.Context, volumeName string, filePath string, content []byte) error {
+func (h *VolumeHelper) WriteFile(ctx context.Context, volumeName string, filePath string, content []byte) error {
 	// Ensure alpine image exists
 	if err := h.EnsureAlpineImage(ctx); err != nil {
 		return err
@@ -94,7 +94,7 @@ func (h *DockerVolumeHelper) WriteFile(ctx context.Context, volumeName string, f
 
 // ReadFile reads a file from a Docker volume using a temporary container.
 // The filePath is relative to the volume root.
-func (h *DockerVolumeHelper) ReadFile(ctx context.Context, volumeName string, filePath string) ([]byte, error) {
+func (h *VolumeHelper) ReadFile(ctx context.Context, volumeName string, filePath string) ([]byte, error) {
 	// Ensure alpine image exists
 	if err := h.EnsureAlpineImage(ctx); err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (h *DockerVolumeHelper) ReadFile(ctx context.Context, volumeName string, fi
 
 // ReadFileFromZip reads a specific file from a zip archive in a Docker volume.
 // Requires unzip to be available in the alpine image.
-func (h *DockerVolumeHelper) ReadFileFromZip(ctx context.Context, volumeName string, zipPath string, fileInZip string) ([]byte, error) {
+func (h *VolumeHelper) ReadFileFromZip(ctx context.Context, volumeName string, zipPath string, fileInZip string) ([]byte, error) {
 	// Ensure alpine image exists
 	if err := h.EnsureAlpineImage(ctx); err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (h *DockerVolumeHelper) ReadFileFromZip(ctx context.Context, volumeName str
 
 // RemoveDirectory removes a directory from a Docker volume.
 // The dirPath is relative to the volume root.
-func (h *DockerVolumeHelper) RemoveDirectory(ctx context.Context, volumeName string, dirPath string) error {
+func (h *VolumeHelper) RemoveDirectory(ctx context.Context, volumeName string, dirPath string) error {
 	// Ensure alpine image exists
 	if err := h.EnsureAlpineImage(ctx); err != nil {
 		return err
@@ -176,7 +176,7 @@ func (h *DockerVolumeHelper) RemoveDirectory(ctx context.Context, volumeName str
 }
 
 // runTempContainer runs a temporary container and waits for completion
-func (h *DockerVolumeHelper) runTempContainer(ctx context.Context, containerConfig *container.Config, hostConfig *container.HostConfig) error {
+func (h *VolumeHelper) runTempContainer(ctx context.Context, containerConfig *container.Config, hostConfig *container.HostConfig) error {
 	// Create container
 	resp, err := h.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
 	if err != nil {
@@ -213,7 +213,7 @@ func (h *DockerVolumeHelper) runTempContainer(ctx context.Context, containerConf
 }
 
 // runTempContainerWithOutput runs a temporary container and returns its stdout
-func (h *DockerVolumeHelper) runTempContainerWithOutput(ctx context.Context, containerConfig *container.Config, hostConfig *container.HostConfig) ([]byte, error) {
+func (h *VolumeHelper) runTempContainerWithOutput(ctx context.Context, containerConfig *container.Config, hostConfig *container.HostConfig) ([]byte, error) {
 	// Create container
 	resp, err := h.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
 	if err != nil {
@@ -256,7 +256,7 @@ func (h *DockerVolumeHelper) runTempContainerWithOutput(ctx context.Context, con
 }
 
 // getContainerOutput reads container stdout/stderr and strips Docker log framing
-func (h *DockerVolumeHelper) getContainerOutput(ctx context.Context, containerID string) string {
+func (h *VolumeHelper) getContainerOutput(ctx context.Context, containerID string) string {
 	reader, err := h.client.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,

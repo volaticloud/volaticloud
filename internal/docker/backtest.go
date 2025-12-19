@@ -1,4 +1,4 @@
-package runner
+package docker
 
 import (
 	"bytes"
@@ -20,6 +20,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 
 	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
 )
 
 const (
@@ -33,15 +34,15 @@ const (
 	defaultFreqtradeImage = "freqtradeorg/freqtrade:stable"
 )
 
-// DockerBacktestRunner implements BacktestRunner for Docker environments
-type DockerBacktestRunner struct {
+// BacktestRunner implements runner.BacktestRunner for Docker environments
+type BacktestRunner struct {
 	client  *client.Client
-	config  DockerConfig
+	config  Config
 	network string
 }
 
-// NewDockerBacktestRunner creates a new Docker backtest runner
-func NewDockerBacktestRunner(ctx context.Context, config DockerConfig) (*DockerBacktestRunner, error) {
+// NewBacktestRunner creates a new Docker backtest runner
+func NewBacktestRunner(ctx context.Context, config Config) (*BacktestRunner, error) {
 	opts := []client.Opt{
 		client.WithHost(config.Host),
 	}
@@ -84,7 +85,7 @@ func NewDockerBacktestRunner(ctx context.Context, config DockerConfig) (*DockerB
 		network = "bridge"
 	}
 
-	return &DockerBacktestRunner{
+	return &BacktestRunner{
 		client:  cli,
 		config:  config,
 		network: network,
@@ -92,7 +93,7 @@ func NewDockerBacktestRunner(ctx context.Context, config DockerConfig) (*DockerB
 }
 
 // RunBacktest starts a new backtest task
-func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpec) (string, error) {
+func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSpec) (string, error) {
 	imageName := d.getImageName(spec.FreqtradeVersion)
 
 	// Pull image if needed
@@ -174,7 +175,7 @@ func (d *DockerBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpe
 }
 
 // GetBacktestStatus retrieves the current status of a backtest
-func (d *DockerBacktestRunner) GetBacktestStatus(ctx context.Context, backtestID string) (*BacktestStatus, error) {
+func (d *BacktestRunner) GetBacktestStatus(ctx context.Context, backtestID string) (*runner.BacktestStatus, error) {
 	containerID, err := d.findContainer(ctx, backtestID, taskTypeBacktest)
 	if err != nil {
 		return nil, err
@@ -185,7 +186,7 @@ func (d *DockerBacktestRunner) GetBacktestStatus(ctx context.Context, backtestID
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
 
-	status := &BacktestStatus{
+	status := &runner.BacktestStatus{
 		BacktestID:  backtestID,
 		ContainerID: containerID,
 	}
@@ -264,7 +265,7 @@ func (d *DockerBacktestRunner) GetBacktestStatus(ctx context.Context, backtestID
 }
 
 // GetBacktestResult retrieves the final results of a completed backtest
-func (d *DockerBacktestRunner) GetBacktestResult(ctx context.Context, backtestID string) (*BacktestResult, error) {
+func (d *BacktestRunner) GetBacktestResult(ctx context.Context, backtestID string) (*runner.BacktestResult, error) {
 	status, err := d.GetBacktestStatus(ctx, backtestID)
 	if err != nil {
 		return nil, err
@@ -274,7 +275,7 @@ func (d *DockerBacktestRunner) GetBacktestResult(ctx context.Context, backtestID
 		return nil, fmt.Errorf("backtest is not completed (status: %s)", status.Status)
 	}
 
-	result := &BacktestResult{
+	result := &runner.BacktestResult{
 		BacktestID:   backtestID,
 		Status:       status.Status,
 		ContainerID:  status.ContainerID,
@@ -303,7 +304,7 @@ func (d *DockerBacktestRunner) GetBacktestResult(ctx context.Context, backtestID
 }
 
 // GetBacktestLogs retrieves logs from a backtest
-func (d *DockerBacktestRunner) GetBacktestLogs(ctx context.Context, backtestID string, opts LogOptions) (*LogReader, error) {
+func (d *BacktestRunner) GetBacktestLogs(ctx context.Context, backtestID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	containerID, err := d.findContainer(ctx, backtestID, taskTypeBacktest)
 	if err != nil {
 		return nil, err
@@ -313,7 +314,7 @@ func (d *DockerBacktestRunner) GetBacktestLogs(ctx context.Context, backtestID s
 }
 
 // StopBacktest stops a running backtest
-func (d *DockerBacktestRunner) StopBacktest(ctx context.Context, backtestID string) error {
+func (d *BacktestRunner) StopBacktest(ctx context.Context, backtestID string) error {
 	containerID, err := d.findContainer(ctx, backtestID, taskTypeBacktest)
 	if err != nil {
 		return err
@@ -324,10 +325,10 @@ func (d *DockerBacktestRunner) StopBacktest(ctx context.Context, backtestID stri
 }
 
 // DeleteBacktest removes a backtest task and cleans up resources
-func (d *DockerBacktestRunner) DeleteBacktest(ctx context.Context, backtestID string) error {
+func (d *BacktestRunner) DeleteBacktest(ctx context.Context, backtestID string) error {
 	containerID, err := d.findContainer(ctx, backtestID, taskTypeBacktest)
 	if err != nil {
-		if err == ErrBacktestNotFound {
+		if err == runner.ErrBacktestNotFound {
 			// Still cleanup config files if they exist
 			d.cleanupBacktestConfigFiles(backtestID)
 			return nil // Already deleted
@@ -347,12 +348,12 @@ func (d *DockerBacktestRunner) DeleteBacktest(ctx context.Context, backtestID st
 }
 
 // ListBacktests returns all backtest tasks
-func (d *DockerBacktestRunner) ListBacktests(ctx context.Context) ([]BacktestStatus, error) {
+func (d *BacktestRunner) ListBacktests(ctx context.Context) ([]runner.BacktestStatus, error) {
 	return d.listTasks(ctx, taskTypeBacktest)
 }
 
 // RunHyperOpt starts a new hyperparameter optimization task
-func (d *DockerBacktestRunner) RunHyperOpt(ctx context.Context, spec HyperOptSpec) (string, error) {
+func (d *BacktestRunner) RunHyperOpt(ctx context.Context, spec runner.HyperOptSpec) (string, error) {
 	imageName := d.getImageName(spec.FreqtradeVersion)
 
 	if err := d.ensureImage(ctx, imageName); err != nil {
@@ -395,7 +396,7 @@ func (d *DockerBacktestRunner) RunHyperOpt(ctx context.Context, spec HyperOptSpe
 }
 
 // GetHyperOptStatus retrieves the current status of a hyperopt
-func (d *DockerBacktestRunner) GetHyperOptStatus(ctx context.Context, hyperOptID string) (*HyperOptStatus, error) {
+func (d *BacktestRunner) GetHyperOptStatus(ctx context.Context, hyperOptID string) (*runner.HyperOptStatus, error) {
 	containerID, err := d.findContainer(ctx, hyperOptID, taskTypeHyperOpt)
 	if err != nil {
 		return nil, err
@@ -406,7 +407,7 @@ func (d *DockerBacktestRunner) GetHyperOptStatus(ctx context.Context, hyperOptID
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
 
-	status := &HyperOptStatus{
+	status := &runner.HyperOptStatus{
 		HyperOptID:  hyperOptID,
 		ContainerID: containerID,
 	}
@@ -440,7 +441,7 @@ func (d *DockerBacktestRunner) GetHyperOptStatus(ctx context.Context, hyperOptID
 }
 
 // GetHyperOptResult retrieves the final results of a completed hyperopt
-func (d *DockerBacktestRunner) GetHyperOptResult(ctx context.Context, hyperOptID string) (*HyperOptResult, error) {
+func (d *BacktestRunner) GetHyperOptResult(ctx context.Context, hyperOptID string) (*runner.HyperOptResult, error) {
 	status, err := d.GetHyperOptStatus(ctx, hyperOptID)
 	if err != nil {
 		return nil, err
@@ -450,7 +451,7 @@ func (d *DockerBacktestRunner) GetHyperOptResult(ctx context.Context, hyperOptID
 		return nil, fmt.Errorf("hyperopt is not completed (status: %s)", status.Status)
 	}
 
-	result := &HyperOptResult{
+	result := &runner.HyperOptResult{
 		HyperOptID:   hyperOptID,
 		Status:       status.Status,
 		ContainerID:  status.ContainerID,
@@ -477,7 +478,7 @@ func (d *DockerBacktestRunner) GetHyperOptResult(ctx context.Context, hyperOptID
 }
 
 // GetHyperOptLogs retrieves logs from a hyperopt
-func (d *DockerBacktestRunner) GetHyperOptLogs(ctx context.Context, hyperOptID string, opts LogOptions) (*LogReader, error) {
+func (d *BacktestRunner) GetHyperOptLogs(ctx context.Context, hyperOptID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	containerID, err := d.findContainer(ctx, hyperOptID, taskTypeHyperOpt)
 	if err != nil {
 		return nil, err
@@ -487,7 +488,7 @@ func (d *DockerBacktestRunner) GetHyperOptLogs(ctx context.Context, hyperOptID s
 }
 
 // StopHyperOpt stops a running hyperopt
-func (d *DockerBacktestRunner) StopHyperOpt(ctx context.Context, hyperOptID string) error {
+func (d *BacktestRunner) StopHyperOpt(ctx context.Context, hyperOptID string) error {
 	containerID, err := d.findContainer(ctx, hyperOptID, taskTypeHyperOpt)
 	if err != nil {
 		return err
@@ -498,10 +499,10 @@ func (d *DockerBacktestRunner) StopHyperOpt(ctx context.Context, hyperOptID stri
 }
 
 // DeleteHyperOpt removes a hyperopt task
-func (d *DockerBacktestRunner) DeleteHyperOpt(ctx context.Context, hyperOptID string) error {
+func (d *BacktestRunner) DeleteHyperOpt(ctx context.Context, hyperOptID string) error {
 	containerID, err := d.findContainer(ctx, hyperOptID, taskTypeHyperOpt)
 	if err != nil {
-		if err == ErrHyperOptNotFound {
+		if err == runner.ErrHyperOptNotFound {
 			return nil
 		}
 		return err
@@ -514,36 +515,36 @@ func (d *DockerBacktestRunner) DeleteHyperOpt(ctx context.Context, hyperOptID st
 }
 
 // ListHyperOpts returns all hyperopt tasks
-func (d *DockerBacktestRunner) ListHyperOpts(ctx context.Context) ([]HyperOptStatus, error) {
+func (d *BacktestRunner) ListHyperOpts(ctx context.Context) ([]runner.HyperOptStatus, error) {
 	return d.listHyperOptTasks(ctx, taskTypeHyperOpt)
 }
 
 // HealthCheck verifies Docker daemon is accessible
-func (d *DockerBacktestRunner) HealthCheck(ctx context.Context) error {
+func (d *BacktestRunner) HealthCheck(ctx context.Context) error {
 	_, err := d.client.Ping(ctx)
 	return err
 }
 
 // Close cleans up Docker client
-func (d *DockerBacktestRunner) Close() error {
+func (d *BacktestRunner) Close() error {
 	return d.client.Close()
 }
 
 // Type returns "docker"
-func (d *DockerBacktestRunner) Type() string {
+func (d *BacktestRunner) Type() string {
 	return "docker"
 }
 
 // Helper functions
 
-func (d *DockerBacktestRunner) getImageName(version string) string {
+func (d *BacktestRunner) getImageName(version string) string {
 	if version == "" {
 		return defaultFreqtradeImage
 	}
 	return fmt.Sprintf("freqtradeorg/freqtrade:%s", version)
 }
 
-func (d *DockerBacktestRunner) ensureImage(ctx context.Context, imageName string) error {
+func (d *BacktestRunner) ensureImage(ctx context.Context, imageName string) error {
 	// Check if image exists locally
 	_, err := d.client.ImageInspect(ctx, imageName)
 	if err == nil {
@@ -562,7 +563,7 @@ func (d *DockerBacktestRunner) ensureImage(ctx context.Context, imageName string
 	return err
 }
 
-func (d *DockerBacktestRunner) buildBacktestCommand(spec BacktestSpec) []string {
+func (d *BacktestRunner) buildBacktestCommand(spec runner.BacktestSpec) []string {
 	// Backtests use JSON config only (like bots), no command-line parameters
 	// Only pass strategy name as it's required
 	cmd := []string{"backtesting"}
@@ -584,7 +585,7 @@ func (d *DockerBacktestRunner) buildBacktestCommand(spec BacktestSpec) []string 
 	return cmd
 }
 
-func (d *DockerBacktestRunner) buildHyperOptCommand(spec HyperOptSpec) []string {
+func (d *BacktestRunner) buildHyperOptCommand(spec runner.HyperOptSpec) []string {
 	cmd := []string{"hyperopt"}
 
 	if spec.StrategyName != "" {
@@ -606,7 +607,7 @@ func (d *DockerBacktestRunner) buildHyperOptCommand(spec HyperOptSpec) []string 
 	return cmd
 }
 
-func (d *DockerBacktestRunner) buildEnvironment(env map[string]string) []string {
+func (d *BacktestRunner) buildEnvironment(env map[string]string) []string {
 	result := make([]string, 0, len(env))
 	for k, v := range env {
 		result = append(result, fmt.Sprintf("%s=%s", k, v))
@@ -614,7 +615,7 @@ func (d *DockerBacktestRunner) buildEnvironment(env map[string]string) []string 
 	return result
 }
 
-func (d *DockerBacktestRunner) applyResourceLimits(hostConfig *container.HostConfig, limits *ResourceLimits) {
+func (d *BacktestRunner) applyResourceLimits(hostConfig *container.HostConfig, limits *runner.ResourceLimits) {
 	if limits.CPUQuota > 0 {
 		hostConfig.NanoCPUs = int64(limits.CPUQuota * 1e9)
 	}
@@ -623,7 +624,7 @@ func (d *DockerBacktestRunner) applyResourceLimits(hostConfig *container.HostCon
 	}
 }
 
-func (d *DockerBacktestRunner) findContainer(ctx context.Context, taskID string, taskType string) (string, error) {
+func (d *BacktestRunner) findContainer(ctx context.Context, taskID string, taskType string) (string, error) {
 	// Try by name first
 	var containerName string
 	if taskType == taskTypeBacktest {
@@ -658,15 +659,15 @@ func (d *DockerBacktestRunner) findContainer(ctx context.Context, taskID string,
 
 	if len(containers) == 0 {
 		if taskType == taskTypeBacktest {
-			return "", ErrBacktestNotFound
+			return "", runner.ErrBacktestNotFound
 		}
-		return "", ErrHyperOptNotFound
+		return "", runner.ErrHyperOptNotFound
 	}
 
 	return containers[0].ID, nil
 }
 
-func (d *DockerBacktestRunner) getContainerLogs(ctx context.Context, containerID string) (string, error) {
+func (d *BacktestRunner) getContainerLogs(ctx context.Context, containerID string) (string, error) {
 	reader, err := d.client.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -697,7 +698,7 @@ func (d *DockerBacktestRunner) getContainerLogs(ctx context.Context, containerID
 	return combinedLogs, nil
 }
 
-func (d *DockerBacktestRunner) getLogsReader(ctx context.Context, containerID string, opts LogOptions) (*LogReader, error) {
+func (d *BacktestRunner) getLogsReader(ctx context.Context, containerID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	// Convert Tail to string
 	tail := "all"
 	if opts.Tail > 0 {
@@ -721,12 +722,12 @@ func (d *DockerBacktestRunner) getLogsReader(ctx context.Context, containerID st
 		return nil, err
 	}
 
-	return &LogReader{
+	return &runner.LogReader{
 		ReadCloser: reader,
 	}, nil
 }
 
-func (d *DockerBacktestRunner) listTasks(ctx context.Context, taskType string) ([]BacktestStatus, error) {
+func (d *BacktestRunner) listTasks(ctx context.Context, taskType string) ([]runner.BacktestStatus, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("label", labelTaskType+"="+taskType)
 
@@ -738,7 +739,7 @@ func (d *DockerBacktestRunner) listTasks(ctx context.Context, taskType string) (
 		return nil, err
 	}
 
-	results := make([]BacktestStatus, 0, len(containers))
+	results := make([]runner.BacktestStatus, 0, len(containers))
 	for _, c := range containers {
 		backtestID := c.Labels[labelBacktestID]
 		status, err := d.GetBacktestStatus(ctx, backtestID)
@@ -750,7 +751,7 @@ func (d *DockerBacktestRunner) listTasks(ctx context.Context, taskType string) (
 	return results, nil
 }
 
-func (d *DockerBacktestRunner) listHyperOptTasks(ctx context.Context, taskType string) ([]HyperOptStatus, error) {
+func (d *BacktestRunner) listHyperOptTasks(ctx context.Context, taskType string) ([]runner.HyperOptStatus, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("label", labelTaskType+"="+taskType)
 
@@ -762,7 +763,7 @@ func (d *DockerBacktestRunner) listHyperOptTasks(ctx context.Context, taskType s
 		return nil, err
 	}
 
-	results := make([]HyperOptStatus, 0, len(containers))
+	results := make([]runner.HyperOptStatus, 0, len(containers))
 	for _, c := range containers {
 		hyperOptID := c.Labels[labelBacktestID]
 		status, err := d.GetHyperOptStatus(ctx, hyperOptID)
@@ -774,7 +775,7 @@ func (d *DockerBacktestRunner) listHyperOptTasks(ctx context.Context, taskType s
 	return results, nil
 }
 
-func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
+func (d *BacktestRunner) parseBacktestResults(result *runner.BacktestResult) {
 	// Read backtest results from the Docker volume
 	// Results are now in backtest-specific subdirectory: {backtestID}/backtest_results/
 	ctx := context.Background()
@@ -842,7 +843,7 @@ func (d *DockerBacktestRunner) parseBacktestResults(result *BacktestResult) {
 	result.RawResult = backtestData
 }
 
-func (d *DockerBacktestRunner) parseHyperOptResults(result *HyperOptResult) {
+func (d *BacktestRunner) parseHyperOptResults(result *runner.HyperOptResult) {
 	// TODO: Parse freqtrade hyperopt JSON output from logs
 	result.RawResult = map[string]interface{}{
 		"logs": result.Logs,
@@ -867,7 +868,7 @@ type backtestConfigPaths struct {
 }
 
 // createBacktestConfigFiles creates config files in Docker volume for the backtest
-func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*backtestConfigPaths, error) {
+func (d *BacktestRunner) createBacktestConfigFiles(spec runner.BacktestSpec) (*backtestConfigPaths, error) {
 	ctx := context.Background()
 
 	paths := &backtestConfigPaths{
@@ -923,7 +924,7 @@ func (d *DockerBacktestRunner) createBacktestConfigFiles(spec BacktestSpec) (*ba
 
 // cleanupBacktestConfigFiles removes backtest directory from Docker volume
 // This cleans up config, strategy, and result files but preserves shared data
-func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
+func (d *BacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
 	ctx := context.Background()
 
 	// Use a temporary alpine container to remove the backtest directory
@@ -935,7 +936,7 @@ func (d *DockerBacktestRunner) cleanupBacktestConfigFiles(backtestID string) {
 }
 
 // writeFileToVolume writes a file to a Docker volume using a temporary container
-func (d *DockerBacktestRunner) writeFileToVolume(ctx context.Context, volumeName string, filePath string, content []byte) error {
+func (d *BacktestRunner) writeFileToVolume(ctx context.Context, volumeName string, filePath string, content []byte) error {
 	// Ensure alpine image exists
 	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
 		return fmt.Errorf("failed to ensure alpine image: %w", err)
@@ -994,7 +995,7 @@ func (d *DockerBacktestRunner) writeFileToVolume(ctx context.Context, volumeName
 }
 
 // readFileFromVolume reads a file from a Docker volume using a temporary container
-func (d *DockerBacktestRunner) readFileFromVolume(ctx context.Context, volumeName string, filePath string) ([]byte, error) {
+func (d *BacktestRunner) readFileFromVolume(ctx context.Context, volumeName string, filePath string) ([]byte, error) {
 	// Ensure alpine image exists
 	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
 		return nil, fmt.Errorf("failed to ensure alpine image: %w", err)
@@ -1057,7 +1058,7 @@ func (d *DockerBacktestRunner) readFileFromVolume(ctx context.Context, volumeNam
 }
 
 // getRawContainerOutput reads container stdout/stderr and strips Docker log framing
-func (d *DockerBacktestRunner) getRawContainerOutput(ctx context.Context, containerID string) string {
+func (d *BacktestRunner) getRawContainerOutput(ctx context.Context, containerID string) string {
 	reader, err := d.client.ContainerLogs(ctx, containerID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -1080,7 +1081,7 @@ func (d *DockerBacktestRunner) getRawContainerOutput(ctx context.Context, contai
 
 // removeDirectoryFromVolume removes a directory from a Docker volume using a temporary container
 // This preserves the shared data directory (/data/data/) while removing backtest-specific files
-func (d *DockerBacktestRunner) removeDirectoryFromVolume(ctx context.Context, volumeName string, dirPath string) error {
+func (d *BacktestRunner) removeDirectoryFromVolume(ctx context.Context, volumeName string, dirPath string) error {
 	// Ensure alpine image exists
 	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
 		return fmt.Errorf("failed to ensure alpine image: %w", err)
@@ -1136,7 +1137,7 @@ func (d *DockerBacktestRunner) removeDirectoryFromVolume(ctx context.Context, vo
 }
 
 // readFileFromZipInVolume reads a specific file from a zip archive in a Docker volume
-func (d *DockerBacktestRunner) readFileFromZipInVolume(ctx context.Context, volumeName string, zipPath string, fileInZip string) ([]byte, error) {
+func (d *BacktestRunner) readFileFromZipInVolume(ctx context.Context, volumeName string, zipPath string, fileInZip string) ([]byte, error) {
 	// Ensure alpine image exists
 	if err := d.ensureImage(ctx, "alpine:latest"); err != nil {
 		return nil, fmt.Errorf("failed to ensure alpine image: %w", err)

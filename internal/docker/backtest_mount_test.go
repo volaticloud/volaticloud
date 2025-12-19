@@ -1,10 +1,12 @@
-package runner
+package docker
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"volaticloud/internal/runner"
 )
 
 // TestBacktestVolumeMountStrategy tests the volume mount configuration
@@ -32,16 +34,16 @@ func TestBacktestVolumeMountStrategy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			spec := BacktestSpec{
+			spec := runner.BacktestSpec{
 				ID:           tt.backtestID,
 				StrategyName: "TestStrategy",
 			}
 
 			// Create runner (without Docker client for unit test)
-			runner := &DockerBacktestRunner{}
+			btRunner := &BacktestRunner{}
 
 			// Build command
-			cmd := runner.buildBacktestCommand(spec)
+			cmd := btRunner.buildBacktestCommand(spec)
 
 			// Verify --userdir argument
 			assert.Contains(t, cmd, "--userdir", "Command must include --userdir flag")
@@ -68,13 +70,13 @@ func TestBacktestVolumeMountStrategy(t *testing.T) {
 
 // TestBacktestCommandStructure tests the backtest command structure
 func TestBacktestCommandStructure(t *testing.T) {
-	spec := BacktestSpec{
+	spec := runner.BacktestSpec{
 		ID:           "test-backtest-id",
 		StrategyName: "TestStrategy",
 	}
 
-	runner := &DockerBacktestRunner{}
-	cmd := runner.buildBacktestCommand(spec)
+	btRunner := &BacktestRunner{}
+	cmd := btRunner.buildBacktestCommand(spec)
 
 	// Verify command structure
 	assert.NotEmpty(t, cmd, "Command must not be empty")
@@ -129,15 +131,15 @@ func TestVolumeMountPathAlignment(t *testing.T) {
 
 // TestParallelBacktestIsolation tests that parallel backtests have isolated paths
 func TestParallelBacktestIsolation(t *testing.T) {
-	backtest1 := BacktestSpec{ID: "backtest-1", StrategyName: "Strategy1"}
-	backtest2 := BacktestSpec{ID: "backtest-2", StrategyName: "Strategy2"}
-	backtest3 := BacktestSpec{ID: "backtest-3", StrategyName: "Strategy3"}
+	backtest1 := runner.BacktestSpec{ID: "backtest-1", StrategyName: "Strategy1"}
+	backtest2 := runner.BacktestSpec{ID: "backtest-2", StrategyName: "Strategy2"}
+	backtest3 := runner.BacktestSpec{ID: "backtest-3", StrategyName: "Strategy3"}
 
-	runner := &DockerBacktestRunner{}
+	btRunner := &BacktestRunner{}
 
-	cmd1 := runner.buildBacktestCommand(backtest1)
-	cmd2 := runner.buildBacktestCommand(backtest2)
-	cmd3 := runner.buildBacktestCommand(backtest3)
+	cmd1 := btRunner.buildBacktestCommand(backtest1)
+	cmd2 := btRunner.buildBacktestCommand(backtest2)
+	cmd3 := btRunner.buildBacktestCommand(backtest3)
 
 	// Extract userdir values
 	getUserdir := func(cmd []string) string {
@@ -166,13 +168,13 @@ func TestParallelBacktestIsolation(t *testing.T) {
 
 // TestDataFormatExplicit tests that data format is explicitly set to JSON
 func TestDataFormatExplicit(t *testing.T) {
-	spec := BacktestSpec{
+	spec := runner.BacktestSpec{
 		ID:           "test-id",
 		StrategyName: "TestStrategy",
 	}
 
-	runner := &DockerBacktestRunner{}
-	cmd := runner.buildBacktestCommand(spec)
+	btRunner := &BacktestRunner{}
+	cmd := btRunner.buildBacktestCommand(spec)
 
 	// Find data format value
 	var dataFormat string
@@ -190,13 +192,13 @@ func TestDataFormatExplicit(t *testing.T) {
 
 // TestBacktestCommandNoDatadir tests that --datadir is not used
 func TestBacktestCommandNoDatadir(t *testing.T) {
-	spec := BacktestSpec{
+	spec := runner.BacktestSpec{
 		ID:           "test-id",
 		StrategyName: "TestStrategy",
 	}
 
-	runner := &DockerBacktestRunner{}
-	cmd := runner.buildBacktestCommand(spec)
+	btRunner := &BacktestRunner{}
+	cmd := btRunner.buildBacktestCommand(spec)
 
 	// Verify --datadir is NOT present
 	assert.NotContains(t, cmd, "--datadir",
