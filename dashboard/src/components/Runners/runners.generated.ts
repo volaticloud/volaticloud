@@ -17,7 +17,7 @@ export type GetRunnerWithSecretsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRunnerWithSecretsQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, billingEnabled: boolean, cpuPricePerCoreHour?: number | null, memoryPricePerGBHour?: number | null, networkPricePerGB?: number | null, storagePricePerGB?: number | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null } };
+export type GetRunnerWithSecretsQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, s3Config?: Record<string, any> | null, s3DataKey?: string | null, s3DataUploadedAt?: string | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, billingEnabled: boolean, cpuPricePerCoreHour?: number | null, memoryPricePerGBHour?: number | null, networkPricePerGB?: number | null, storagePricePerGB?: number | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null } };
 
 export type CreateRunnerMutationVariables = Types.Exact<{
   input: Types.CreateBotRunnerInput;
@@ -63,6 +63,13 @@ export type SetRunnerVisibilityMutationVariables = Types.Exact<{
 
 
 export type SetRunnerVisibilityMutation = { __typename?: 'Mutation', setRunnerVisibility: { __typename?: 'BotRunner', id: string, name: string, public: boolean } };
+
+export type TestS3ConnectionMutationVariables = Types.Exact<{
+  config: Types.S3ConfigInput;
+}>;
+
+
+export type TestS3ConnectionMutation = { __typename?: 'Mutation', testS3Connection: { __typename?: 'ConnectionTestResult', success: boolean, message: string } };
 
 
 export const GetRunnersDocument = gql`
@@ -141,6 +148,9 @@ export const GetRunnerWithSecretsDocument = gql`
         name
         type
         config
+        s3Config
+        s3DataKey
+        s3DataUploadedAt
         createdAt
         dataIsReady
         dataLastUpdated
@@ -422,3 +432,37 @@ export function useSetRunnerVisibilityMutation(baseOptions?: Apollo.MutationHook
 export type SetRunnerVisibilityMutationHookResult = ReturnType<typeof useSetRunnerVisibilityMutation>;
 export type SetRunnerVisibilityMutationResult = Apollo.MutationResult<SetRunnerVisibilityMutation>;
 export type SetRunnerVisibilityMutationOptions = Apollo.BaseMutationOptions<SetRunnerVisibilityMutation, SetRunnerVisibilityMutationVariables>;
+export const TestS3ConnectionDocument = gql`
+    mutation TestS3Connection($config: S3ConfigInput!) {
+  testS3Connection(config: $config) {
+    success
+    message
+  }
+}
+    `;
+export type TestS3ConnectionMutationFn = Apollo.MutationFunction<TestS3ConnectionMutation, TestS3ConnectionMutationVariables>;
+
+/**
+ * __useTestS3ConnectionMutation__
+ *
+ * To run a mutation, you first call `useTestS3ConnectionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useTestS3ConnectionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [testS3ConnectionMutation, { data, loading, error }] = useTestS3ConnectionMutation({
+ *   variables: {
+ *      config: // value for 'config'
+ *   },
+ * });
+ */
+export function useTestS3ConnectionMutation(baseOptions?: Apollo.MutationHookOptions<TestS3ConnectionMutation, TestS3ConnectionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<TestS3ConnectionMutation, TestS3ConnectionMutationVariables>(TestS3ConnectionDocument, options);
+      }
+export type TestS3ConnectionMutationHookResult = ReturnType<typeof useTestS3ConnectionMutation>;
+export type TestS3ConnectionMutationResult = Apollo.MutationResult<TestS3ConnectionMutation>;
+export type TestS3ConnectionMutationOptions = Apollo.BaseMutationOptions<TestS3ConnectionMutation, TestS3ConnectionMutationVariables>;

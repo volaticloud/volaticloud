@@ -23,7 +23,7 @@ func init() {
 
 		if err := runtime.HealthCheck(ctx); err != nil {
 			runtime.Close()
-			return nil, fmt.Errorf("Docker runtime health check failed: %w", err)
+			return nil, fmt.Errorf("docker runtime health check failed: %w", err)
 		}
 
 		return runtime, nil
@@ -43,7 +43,7 @@ func init() {
 
 		if err := btRunner.HealthCheck(ctx); err != nil {
 			btRunner.Close()
-			return nil, fmt.Errorf("Docker backtest runner health check failed: %w", err)
+			return nil, fmt.Errorf("docker backtest runner health check failed: %w", err)
 		}
 
 		return btRunner, nil

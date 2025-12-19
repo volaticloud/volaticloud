@@ -14,7 +14,6 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
 		{Name: "result", Type: field.TypeJSON, Nullable: true},
 		{Name: "summary", Type: field.TypeJSON, Nullable: true},
-		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true},
 		{Name: "logs", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
@@ -33,13 +32,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_bot_runners_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[12]},
+				Columns:    []*schema.Column{BacktestsColumns[11]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "backtests_strategies_backtest",
-				Columns:    []*schema.Column{BacktestsColumns[13]},
+				Columns:    []*schema.Column{BacktestsColumns[12]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -52,7 +51,6 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "unhealthy", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
-		{Name: "container_id", Type: field.TypeString, Nullable: true},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "secure_config", Type: field.TypeJSON, Nullable: true},
 		{Name: "freqtrade_version", Type: field.TypeString, Default: "2025.10"},
@@ -73,19 +71,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bots_bot_runners_bots",
-				Columns:    []*schema.Column{BotsColumns[14]},
+				Columns:    []*schema.Column{BotsColumns[13]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_exchanges_bots",
-				Columns:    []*schema.Column{BotsColumns[15]},
+				Columns:    []*schema.Column{BotsColumns[14]},
 				RefColumns: []*schema.Column{ExchangesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_strategies_bots",
-				Columns:    []*schema.Column{BotsColumns[16]},
+				Columns:    []*schema.Column{BotsColumns[15]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -94,7 +92,7 @@ var (
 			{
 				Name:    "bot_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotsColumns[11]},
+				Columns: []*schema.Column{BotsColumns[10]},
 			},
 		},
 	}
@@ -151,6 +149,9 @@ var (
 		{Name: "data_download_progress", Type: field.TypeJSON, Nullable: true},
 		{Name: "data_error_message", Type: field.TypeString, Nullable: true},
 		{Name: "data_download_config", Type: field.TypeJSON, Nullable: true},
+		{Name: "s3_config", Type: field.TypeJSON, Nullable: true},
+		{Name: "s3_data_key", Type: field.TypeString, Nullable: true},
+		{Name: "s3_data_uploaded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "owner_id", Type: field.TypeString},
 		{Name: "billing_enabled", Type: field.TypeBool, Default: false},
 		{Name: "cpu_price_per_core_hour", Type: field.TypeFloat64, Nullable: true},
@@ -169,7 +170,7 @@ var (
 			{
 				Name:    "botrunner_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotRunnersColumns[12]},
+				Columns: []*schema.Column{BotRunnersColumns[15]},
 			},
 		},
 	}

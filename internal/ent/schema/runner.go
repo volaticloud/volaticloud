@@ -67,6 +67,23 @@ func (BotRunner) Fields() []ent.Field {
 				RequiresPermission("view"),
 			).
 			Comment("Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}"),
+
+		// S3 storage fields for data distribution
+		field.JSON("s3_config", map[string]interface{}{}).
+			Optional().
+			Annotations(
+				entgql.Type("Map"),
+				RequiresPermission("view-secrets"),
+			).
+			Comment("S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL}"),
+		field.String("s3_data_key").
+			Optional().
+			Comment("S3 object key: runners/data/{runnerId}.zip"),
+		field.Time("s3_data_uploaded_at").
+			Optional().
+			Nillable().
+			Comment("When data was last uploaded to S3"),
+
 		field.String("owner_id").
 			NotEmpty().
 			Comment("Group ID (organization) that owns this bot runner"),

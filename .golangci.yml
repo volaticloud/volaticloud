@@ -1,109 +1,97 @@
+version: "2"
 run:
-  timeout: 5m
   tests: false
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-    # Exclude common patterns that are safe to ignore
-    exclude-functions:
-      - io.Copy
-      - (*database/sql.Rows).Close
-      - (*database/sql.Stmt).Close
-      - (*os.File).Close
-      - (io.Closer).Close
-
-  govet:
-    enable-all: true
-    disable:
-      - shadow # Too many false positives
-      - fieldalignment # Struct optimization - not critical
-
-  gocyclo:
-    min-complexity: 15
-
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-
-  misspell:
-    locale: US
-
-  lll:
-    line-length: 140
-
-  goimports:
-    local-prefixes: volaticloud
-
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-
-  funlen:
-    lines: 100
-    statements: 50
-
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: "io/ioutil"
-            desc: "Use os or io package instead of deprecated io/ioutil"
-
 linters:
-  enable-all: false
-  disable-all: false
-  # Use default recommended linters
-  # Additional linters can be enabled manually
-  # fieldalignment is disabled via govet.disable (it's a govet analyzer, not a standalone linter)
-
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: io/ioutil
+              desc: Use os or io package instead of deprecated io/ioutil
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
+      exclude-functions:
+        - io.Copy
+        - (*database/sql.Rows).Close
+        - (*database/sql.Stmt).Close
+        - (*os.File).Close
+        - (io.Closer).Close
+    funlen:
+      lines: 100
+      statements: 50
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    govet:
+      disable:
+        - shadow
+        - fieldalignment
+      enable-all: true
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - all
+        path: internal/ent/
+      - linters:
+          - all
+        path: internal/graph/generated\.go
+      - linters:
+          - all
+        path: internal/graph/model/
+      - linters:
+          - all
+        path: internal/graph/ent\.resolvers\.go
+      - linters:
+          - gosec
+        text: 'G404: Use of weak random number generator'
+      - linters:
+          - staticcheck
+        text: 'S1009:'
+      - linters:
+          - errcheck
+        text: Error return value.*not checked
+        source: w\.Write|io\.WriteString|d\.client\.ContainerRemove
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-rules:
-    # Exclude all linters from generated ENT code
-    - path: internal/ent/
-      linters:
-        - all
-
-    # Exclude all linters from generated GraphQL code
-    - path: internal/graph/generated\.go
-      linters:
-        - all
-
-    # Exclude all linters from GraphQL models
-    - path: internal/graph/model/
-      linters:
-        - all
-
-    # Exclude all linters from ENT resolvers (partially generated)
-    - path: internal/graph/ent\.resolvers\.go
-      linters:
-        - all
-
-    # Exclude known false positives
-    - text: "G404: Use of weak random number generator"
-      linters:
-        - gosec
-
-    # Exclude S1009 (nil check before len()) - it's more readable with the check
-    - text: "S1009:"
-      linters:
-        - gosimple
-
-    # Exclude specific unchecked errors that are safe
-    - text: "Error return value.*not checked"
-      linters:
-        - errcheck
-      source: "w\\.Write|io\\.WriteString|d\\.client\\.ContainerRemove"
-
   max-issues-per-linter: 0
   max-same-issues: 0
+formatters:
+  settings:
+    goimports:
+      local-prefixes:
+        - volaticloud
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

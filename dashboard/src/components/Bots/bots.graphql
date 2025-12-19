@@ -6,7 +6,6 @@ query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
         name
         status
         mode
-        containerID
         freqtradeVersion
         lastSeenAt
         errorMessage
@@ -47,7 +46,6 @@ query GetBot($id: ID!) {
       name
       status
       mode
-      containerID
       freqtradeVersion
       lastSeenAt
       errorMessage
@@ -114,7 +112,6 @@ query GetBotRunnerStatus($id: ID!) {
   getBotRunnerStatus(id: $id) {
     botID
     status
-    containerID
     healthy
     lastSeenAt
     cpuUsage

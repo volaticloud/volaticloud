@@ -7,10 +7,10 @@ import (
 // Runtime defines the interface for managing bot lifecycles across different runtime environments
 type Runtime interface {
 	// CreateBot deploys a new bot instance in the runtime environment
-	// Returns the container/pod ID and any error
-	CreateBot(ctx context.Context, spec BotSpec) (containerID string, err error)
+	// Container/deployment name is derived from spec.ID (the bot UUID)
+	CreateBot(ctx context.Context, spec BotSpec) error
 
-	// DeleteBot removes a bot instance from the runtime environment
+	// DeleteBot removes a bot instance and all its resources from the runtime environment
 	// This is a destructive operation and cannot be undone
 	DeleteBot(ctx context.Context, botID string) error
 
@@ -29,10 +29,10 @@ type Runtime interface {
 	// Returns BotNotFound error if the bot doesn't exist
 	GetBotStatus(ctx context.Context, botID string) (*BotStatus, error)
 
-	// GetContainerIP retrieves the container's IP address
-	// Returns the IP address for accessing the bot's Freqtrade API
+	// GetContainerIP retrieves the container's IP address for accessing the bot's Freqtrade API
+	// Container name is derived from botID
 	// Returns error if the container doesn't exist or network info unavailable
-	GetContainerIP(ctx context.Context, containerID string) (string, error)
+	GetContainerIP(ctx context.Context, botID string) (string, error)
 
 	// GetBotLogs retrieves or streams logs from a bot
 	// Use LogOptions to configure filtering, tailing, and streaming
@@ -61,13 +61,13 @@ type Runtime interface {
 
 // MockRuntime is a no-op implementation for testing
 type MockRuntime struct {
-	CreateBotFunc      func(ctx context.Context, spec BotSpec) (string, error)
+	CreateBotFunc      func(ctx context.Context, spec BotSpec) error
 	DeleteBotFunc      func(ctx context.Context, botID string) error
 	StartBotFunc       func(ctx context.Context, botID string) error
 	StopBotFunc        func(ctx context.Context, botID string) error
 	RestartBotFunc     func(ctx context.Context, botID string) error
 	GetBotStatusFunc   func(ctx context.Context, botID string) (*BotStatus, error)
-	GetContainerIPFunc func(ctx context.Context, containerID string) (string, error)
+	GetContainerIPFunc func(ctx context.Context, botID string) (string, error)
 	GetBotLogsFunc     func(ctx context.Context, botID string, opts LogOptions) (*LogReader, error)
 	UpdateBotFunc      func(ctx context.Context, botID string, spec UpdateBotSpec) error
 	ListBotsFunc       func(ctx context.Context) ([]BotStatus, error)
@@ -79,11 +79,11 @@ type MockRuntime struct {
 // Ensure MockRuntime implements Runtime interface
 var _ Runtime = (*MockRuntime)(nil)
 
-func (m *MockRuntime) CreateBot(ctx context.Context, spec BotSpec) (string, error) {
+func (m *MockRuntime) CreateBot(ctx context.Context, spec BotSpec) error {
 	if m.CreateBotFunc != nil {
 		return m.CreateBotFunc(ctx, spec)
 	}
-	return "mock-container-id", nil
+	return nil
 }
 
 func (m *MockRuntime) DeleteBot(ctx context.Context, botID string) error {
@@ -121,9 +121,9 @@ func (m *MockRuntime) GetBotStatus(ctx context.Context, botID string) (*BotStatu
 	return &BotStatus{BotID: botID}, nil
 }
 
-func (m *MockRuntime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
+func (m *MockRuntime) GetContainerIP(ctx context.Context, botID string) (string, error) {
 	if m.GetContainerIPFunc != nil {
-		return m.GetContainerIPFunc(ctx, containerID)
+		return m.GetContainerIPFunc(ctx, botID)
 	}
 	return "127.0.0.1", nil
 }

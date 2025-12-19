@@ -6,11 +6,9 @@ import (
 	"log"
 	"time"
 
-	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/enum"
-	"volaticloud/internal/runner"
 )
 
 const (
@@ -168,72 +166,42 @@ func (m *RunnerMonitor) checkRunner(ctx context.Context, runner *ent.BotRunner) 
 	}
 }
 
-// isDownloadStuck checks if a download process is stuck by verifying container status
+// isDownloadStuck checks if a download process is stuck by checking time since last progress update.
+// With S3 downloads, we run locally on the control plane, so we check based on time elapsed.
 func (m *RunnerMonitor) isDownloadStuck(ctx context.Context, r *ent.BotRunner) bool {
-	// If no start time recorded, consider it stuck (legacy case)
+	// If no start time recorded, consider it stuck
 	if r.DataDownloadStartedAt == nil {
 		log.Printf("Runner %s: no download start time recorded, assuming stuck", r.Name)
 		return true
 	}
 
-	// Get the current exchange being downloaded from progress
-	progress := r.DataDownloadProgress
-	currentExchange := ""
-	if progress != nil {
-		if ce, ok := progress["current_pair"].(string); ok {
-			currentExchange = ce
-		}
-	}
+	timeSinceStart := time.Since(*r.DataDownloadStartedAt)
 
-	// If no exchange info yet, the download just started - give it some time
-	// Only consider stuck if started more than 5 minutes ago without exchange info
-	if currentExchange == "" {
-		timeSinceStart := time.Since(*r.DataDownloadStartedAt)
-		if timeSinceStart < 5*time.Minute {
-			// Just started, not stuck yet
-			return false
-		}
-		log.Printf("Runner %s: download started %v ago but no exchange info in progress", r.Name, timeSinceStart.Round(time.Second))
+	// Downloads taking more than 2 hours are likely stuck
+	if timeSinceStart > 2*time.Hour {
+		log.Printf("Runner %s: download started %v ago, assuming stuck", r.Name, timeSinceStart.Round(time.Second))
 		return true
 	}
 
-	// Create Docker client to check container status
-	factory := runner.NewFactory()
-	rt, err := factory.Create(ctx, r.Type, r.Config)
-	if err != nil {
-		log.Printf("Runner %s: failed to create runtime for status check: %v", r.Name, err)
-		return false // Can't determine, don't mark as stuck
-	}
-	defer func() {
-		if err := rt.Close(); err != nil {
-			log.Printf("Warning: failed to close runtime: %v", err)
+	// Get the current phase from progress
+	progress := r.DataDownloadProgress
+	if progress == nil {
+		// No progress yet - give it 5 minutes to start
+		if timeSinceStart > 5*time.Minute {
+			log.Printf("Runner %s: download started %v ago but no progress info", r.Name, timeSinceStart.Round(time.Second))
+			return true
 		}
-	}()
-
-	dockerRT, ok := rt.(*docker.Runtime)
-	if !ok {
 		return false
 	}
 
-	cli := dockerRT.GetClient()
-	containerName := GetDataDownloadContainerName(r.ID.String(), currentExchange)
-
-	running, exists, err := CheckDownloadContainerStatus(ctx, cli, containerName)
-	if err != nil {
-		log.Printf("Runner %s: failed to check container status: %v", r.Name, err)
-		return false
-	}
-
-	// If container is running, download is in progress
-	if running {
-		return false
-	}
-
-	// Container doesn't exist or stopped - check if it's been too long since download started
-	if !exists {
-		// Container was auto-removed (completed or failed) but status not updated
-		// This means the goroutine handling the download crashed or DB update failed
-		log.Printf("Runner %s: container %s not found but status is downloading", r.Name, containerName)
+	// Check if percent complete has changed recently
+	// If downloading/packaging/uploading for more than 30 minutes, likely stuck
+	if timeSinceStart > 30*time.Minute {
+		currentPhase := ""
+		if phase, ok := progress["current_pair"].(string); ok {
+			currentPhase = phase
+		}
+		log.Printf("Runner %s: download at phase '%s' for %v, checking if stuck", r.Name, currentPhase, timeSinceStart.Round(time.Second))
 		return true
 	}
 

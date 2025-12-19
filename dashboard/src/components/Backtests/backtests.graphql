@@ -5,7 +5,6 @@ query GetBacktests($first: Int, $after: Cursor, $where: BacktestWhereInput) {
         id
         status
         result
-        containerID
         errorMessage
         createdAt
         updatedAt
@@ -40,7 +39,6 @@ query GetBacktest($id: ID!) {
         status
         result
         logs
-        containerID
         errorMessage
         createdAt
         updatedAt
@@ -103,7 +101,6 @@ mutation RunBacktest($id: ID!) {
   runBacktest(id: $id) {
     id
     status
-    containerID
   }
 }
 

@@ -93,36 +93,70 @@ func NewBacktestRunner(ctx context.Context, config Config) (*BacktestRunner, err
 }
 
 // RunBacktest starts a new backtest task
-func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSpec) (string, error) {
+// Container name is derived from spec.ID (the backtest UUID)
+func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSpec) error {
 	imageName := d.getImageName(spec.FreqtradeVersion)
 
 	// Pull image if needed
 	if err := d.ensureImage(ctx, imageName); err != nil {
-		return "", fmt.Errorf("failed to ensure image: %w", err)
+		return fmt.Errorf("failed to ensure image: %w", err)
 	}
 
 	// Create config files
 	configPaths, err := d.createBacktestConfigFiles(spec)
 	if err != nil {
-		return "", fmt.Errorf("failed to create config files: %w", err)
+		return fmt.Errorf("failed to create config files: %w", err)
 	}
 
-	// Build freqtrade command
-	cmd := d.buildBacktestCommand(spec)
+	// Build freqtrade command arguments
+	freqtradeArgs := d.buildBacktestCommand(spec)
+
+	// Add config file argument
+	freqtradeArgs = append(freqtradeArgs, "--config", fmt.Sprintf("/freqtrade/user_data/%s/config.json", spec.ID))
+
+	// Build environment variables
+	env := d.buildEnvironment(spec.Environment)
+
+	// Add S3 data download URL as environment variable
+	if spec.DataDownloadURL != "" {
+		env = append(env, "DATA_DOWNLOAD_URL="+spec.DataDownloadURL)
+	}
+
+	// Build entrypoint and command
+	var entrypoint []string
+	var cmd []string
+
+	if spec.DataDownloadURL != "" {
+		// Build shell script that downloads data and starts freqtrade
+		dataDir := fmt.Sprintf("/freqtrade/user_data/%s/data", spec.ID)
+		shellScript := fmt.Sprintf(
+			`set -e; mkdir -p %s; wget -q -O /tmp/data.zip "$DATA_DOWNLOAD_URL"; unzip -q -o /tmp/data.zip -d %s; rm /tmp/data.zip; exec freqtrade %s`,
+			dataDir, dataDir, strings.Join(freqtradeArgs, " "),
+		)
+		entrypoint = []string{"/bin/sh", "-c"}
+		cmd = []string{shellScript}
+	} else {
+		// Standard mode without data download
+		cmd = freqtradeArgs
+	}
 
 	// Prepare container config
 	containerConfig := &container.Config{
 		Image: imageName,
 		Cmd:   cmd,
-		Env:   d.buildEnvironment(spec.Environment),
+		Env:   env,
 		Labels: map[string]string{
 			labelBacktestID: spec.ID,
 			labelTaskType:   taskTypeBacktest,
 		},
 	}
 
+	if len(entrypoint) > 0 {
+		containerConfig.Entrypoint = entrypoint
+	}
+
 	// Prepare mounts - use Docker volumes for configs (works with remote daemons)
-	// Each backtest gets isolated workspace in userdir, but shares historical data
+	// Data is downloaded from S3, not mounted from shared volume
 	mounts := []mount.Mount{
 		{
 			Type:     mount.TypeVolume,
@@ -130,19 +164,7 @@ func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSp
 			Target:   "/freqtrade/user_data",
 			ReadOnly: false, // Must be writable for results
 		},
-		{
-			Type:   mount.TypeVolume,
-			Source: "volaticloud-freqtrade-data",
-			// Mount shared data to backtest-specific data directory
-			// When using --userdir, Freqtrade looks for data at {userdir}/data/
-			Target: fmt.Sprintf("/freqtrade/user_data/%s/data", spec.ID),
-		},
 	}
-
-	// Use --config flag to specify backtest-specific config
-	// Config will set user_data_dir and datadir to avoid conflicts
-	cmd = append(cmd, "--config", fmt.Sprintf("/freqtrade/user_data/%s/config.json", spec.ID))
-	containerConfig.Cmd = cmd
 
 	hostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode(d.network),
@@ -161,17 +183,17 @@ func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSp
 	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)
 	if err != nil {
 		d.cleanupBacktestConfigFiles(spec.ID)
-		return "", fmt.Errorf("failed to create backtest container: %w", err)
+		return fmt.Errorf("failed to create backtest container: %w", err)
 	}
 
 	// Start container
 	if err := d.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
 		d.cleanupBacktestConfigFiles(spec.ID)
-		return "", fmt.Errorf("failed to start backtest container: %w", err)
+		return fmt.Errorf("failed to start backtest container: %w", err)
 	}
 
-	return resp.ID, nil
+	return nil
 }
 
 // GetBacktestStatus retrieves the current status of a backtest

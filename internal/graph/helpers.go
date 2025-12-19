@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
@@ -12,6 +13,7 @@ import (
 	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/graph/model"
 	"volaticloud/internal/runner"
+	"volaticloud/internal/s3"
 )
 
 // buildBotSpec builds a BotSpec from a Bot entity
@@ -65,6 +67,28 @@ func buildBotSpec(b *ent.Bot) (*runner.BotSpec, error) {
 	}
 
 	return spec, nil
+}
+
+// getPresignedDataURL generates a presigned S3 URL for data download if the runner has S3 config
+// Returns empty string if S3 is not configured or data is not ready
+func getPresignedDataURL(ctx context.Context, r *ent.BotRunner) (string, error) {
+	if r.S3Config == nil || !r.DataIsReady || r.S3DataKey == "" {
+		return "", nil
+	}
+	s3Cfg, err := s3.ParseConfig(r.S3Config)
+	if err != nil {
+		return "", fmt.Errorf("invalid S3 config: %w", err)
+	}
+	s3Client, err := s3.NewClient(s3Cfg)
+	if err != nil {
+		return "", fmt.Errorf("failed to create S3 client: %w", err)
+	}
+	// Generate presigned URL with 24-hour expiry
+	presignedURL, err := s3Client.GetPresignedURL(ctx, r.ID.String(), 24*time.Hour)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+	return presignedURL, nil
 }
 
 // validateExchangeConfig validates exchange config using Freqtrade JSON schema
@@ -167,16 +191,6 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		freqtradeVersion = fv
 	}
 
-	dataSource := "download"
-	if ds, ok := strategy.Config["data_source"].(string); ok {
-		dataSource = ds
-	}
-
-	dataPath := ""
-	if dp, ok := strategy.Config["data_path"].(string); ok {
-		dataPath = dp
-	}
-
 	// Create a copy of the config to avoid mutating the original
 	config := make(map[string]interface{})
 	for k, v := range strategy.Config {
@@ -196,6 +210,7 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	}
 
 	// Build BacktestSpec - config contains everything (pairs, timeframe, stake_amount, etc.)
+	// DataDownloadURL is set by the caller when executing the backtest (from runner's S3 config)
 	spec := &runner.BacktestSpec{
 		ID:               bt.ID.String(),
 		StrategyName:     strategy.Name,
@@ -203,8 +218,6 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		Config:           config,
 		FreqtradeVersion: freqtradeVersion,
 		Environment:      make(map[string]string),
-		DataSource:       dataSource,
-		DataPath:         dataPath,
 	}
 
 	return spec, nil
@@ -285,9 +298,15 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 		return nil, fmt.Errorf("failed to build backtest spec: %w", err)
 	}
 
-	// Run the backtest
-	containerID, err := backtestRunner.RunBacktest(ctx, *spec)
+	// Generate presigned URL for S3 data download
+	presignedURL, err := getPresignedDataURL(ctx, btRunner)
 	if err != nil {
+		return nil, fmt.Errorf("failed to get presigned URL: %w", err)
+	}
+	spec.DataDownloadURL = presignedURL
+
+	// Run the backtest (container name is derived from spec.ID)
+	if err := backtestRunner.RunBacktest(ctx, *spec); err != nil {
 		// Update backtest status to error (best effort, ignore save errors)
 		//nolint:errcheck // Best-effort status update before returning error
 		r.client.Backtest.UpdateOneID(bt.ID).
@@ -297,14 +316,13 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 		return nil, fmt.Errorf("failed to run backtest: %w", err)
 	}
 
-	// Update backtest with container_id and set status to running
+	// Update backtest status to running
 	bt, err = r.client.Backtest.UpdateOneID(bt.ID).
-		SetContainerID(containerID).
 		SetStatus(enum.TaskStatusRunning).
 		ClearErrorMessage().
 		Save(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update backtest with container ID: %w", err)
+		return nil, fmt.Errorf("failed to update backtest status: %w", err)
 	}
 
 	return bt, nil

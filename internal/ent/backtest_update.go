@@ -70,26 +70,6 @@ func (_u *BacktestUpdate) ClearSummary() *BacktestUpdate {
 	return _u
 }
 
-// SetContainerID sets the "container_id" field.
-func (_u *BacktestUpdate) SetContainerID(v string) *BacktestUpdate {
-	_u.mutation.SetContainerID(v)
-	return _u
-}
-
-// SetNillableContainerID sets the "container_id" field if the given value is not nil.
-func (_u *BacktestUpdate) SetNillableContainerID(v *string) *BacktestUpdate {
-	if v != nil {
-		_u.SetContainerID(*v)
-	}
-	return _u
-}
-
-// ClearContainerID clears the value of the "container_id" field.
-func (_u *BacktestUpdate) ClearContainerID() *BacktestUpdate {
-	_u.mutation.ClearContainerID()
-	return _u
-}
-
 // SetErrorMessage sets the "error_message" field.
 func (_u *BacktestUpdate) SetErrorMessage(v string) *BacktestUpdate {
 	_u.mutation.SetErrorMessage(v)
@@ -330,12 +310,6 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.SummaryCleared() {
 		_spec.ClearField(backtest.FieldSummary, field.TypeJSON)
 	}
-	if value, ok := _u.mutation.ContainerID(); ok {
-		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
-	}
-	if _u.mutation.ContainerIDCleared() {
-		_spec.ClearField(backtest.FieldContainerID, field.TypeString)
-	}
 	if value, ok := _u.mutation.ErrorMessage(); ok {
 		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)
 	}
@@ -482,26 +456,6 @@ func (_u *BacktestUpdateOne) SetSummary(v map[string]interface{}) *BacktestUpdat
 // ClearSummary clears the value of the "summary" field.
 func (_u *BacktestUpdateOne) ClearSummary() *BacktestUpdateOne {
 	_u.mutation.ClearSummary()
-	return _u
-}
-
-// SetContainerID sets the "container_id" field.
-func (_u *BacktestUpdateOne) SetContainerID(v string) *BacktestUpdateOne {
-	_u.mutation.SetContainerID(v)
-	return _u
-}
-
-// SetNillableContainerID sets the "container_id" field if the given value is not nil.
-func (_u *BacktestUpdateOne) SetNillableContainerID(v *string) *BacktestUpdateOne {
-	if v != nil {
-		_u.SetContainerID(*v)
-	}
-	return _u
-}
-
-// ClearContainerID clears the value of the "container_id" field.
-func (_u *BacktestUpdateOne) ClearContainerID() *BacktestUpdateOne {
-	_u.mutation.ClearContainerID()
 	return _u
 }
 
@@ -774,12 +728,6 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	}
 	if _u.mutation.SummaryCleared() {
 		_spec.ClearField(backtest.FieldSummary, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.ContainerID(); ok {
-		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
-	}
-	if _u.mutation.ContainerIDCleared() {
-		_spec.ClearField(backtest.FieldContainerID, field.TypeString)
 	}
 	if value, ok := _u.mutation.ErrorMessage(); ok {
 		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)

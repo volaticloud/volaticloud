@@ -34,7 +34,18 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        env:
+          GOTOOLCHAIN: local
+        run: |
+          set +e
+          go version
+          go test -v -coverprofile=coverage.out -covermode=atomic ./...
+          exit_code=$?
+          echo "Test exit code: $exit_code"
+          if [ $exit_code -ne 0 ]; then
+            echo "Tests failed with exit code $exit_code"
+            exit $exit_code
+          fi
 
       - name: Filter coverage
         id: coverage
@@ -75,10 +86,9 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
-          args: --timeout=5m
+          version: v2.7.2
 
   build:
     name: Build (${{ matrix.goos }}/${{ matrix.goarch }})

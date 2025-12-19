@@ -44,23 +44,6 @@ type BacktestWhereInput struct {
 	StatusIn    []enum.TaskStatus `json:"statusIn,omitempty"`
 	StatusNotIn []enum.TaskStatus `json:"statusNotIn,omitempty"`
 
-	// "container_id" field predicates.
-	ContainerID             *string  `json:"containerID,omitempty"`
-	ContainerIDNEQ          *string  `json:"containerIDNEQ,omitempty"`
-	ContainerIDIn           []string `json:"containerIDIn,omitempty"`
-	ContainerIDNotIn        []string `json:"containerIDNotIn,omitempty"`
-	ContainerIDGT           *string  `json:"containerIDGT,omitempty"`
-	ContainerIDGTE          *string  `json:"containerIDGTE,omitempty"`
-	ContainerIDLT           *string  `json:"containerIDLT,omitempty"`
-	ContainerIDLTE          *string  `json:"containerIDLTE,omitempty"`
-	ContainerIDContains     *string  `json:"containerIDContains,omitempty"`
-	ContainerIDHasPrefix    *string  `json:"containerIDHasPrefix,omitempty"`
-	ContainerIDHasSuffix    *string  `json:"containerIDHasSuffix,omitempty"`
-	ContainerIDIsNil        bool     `json:"containerIDIsNil,omitempty"`
-	ContainerIDNotNil       bool     `json:"containerIDNotNil,omitempty"`
-	ContainerIDEqualFold    *string  `json:"containerIDEqualFold,omitempty"`
-	ContainerIDContainsFold *string  `json:"containerIDContainsFold,omitempty"`
-
 	// "error_message" field predicates.
 	ErrorMessage             *string  `json:"errorMessage,omitempty"`
 	ErrorMessageNEQ          *string  `json:"errorMessageNEQ,omitempty"`
@@ -278,51 +261,6 @@ func (i *BacktestWhereInput) P() (predicate.Backtest, error) {
 	}
 	if len(i.StatusNotIn) > 0 {
 		predicates = append(predicates, backtest.StatusNotIn(i.StatusNotIn...))
-	}
-	if i.ContainerID != nil {
-		predicates = append(predicates, backtest.ContainerIDEQ(*i.ContainerID))
-	}
-	if i.ContainerIDNEQ != nil {
-		predicates = append(predicates, backtest.ContainerIDNEQ(*i.ContainerIDNEQ))
-	}
-	if len(i.ContainerIDIn) > 0 {
-		predicates = append(predicates, backtest.ContainerIDIn(i.ContainerIDIn...))
-	}
-	if len(i.ContainerIDNotIn) > 0 {
-		predicates = append(predicates, backtest.ContainerIDNotIn(i.ContainerIDNotIn...))
-	}
-	if i.ContainerIDGT != nil {
-		predicates = append(predicates, backtest.ContainerIDGT(*i.ContainerIDGT))
-	}
-	if i.ContainerIDGTE != nil {
-		predicates = append(predicates, backtest.ContainerIDGTE(*i.ContainerIDGTE))
-	}
-	if i.ContainerIDLT != nil {
-		predicates = append(predicates, backtest.ContainerIDLT(*i.ContainerIDLT))
-	}
-	if i.ContainerIDLTE != nil {
-		predicates = append(predicates, backtest.ContainerIDLTE(*i.ContainerIDLTE))
-	}
-	if i.ContainerIDContains != nil {
-		predicates = append(predicates, backtest.ContainerIDContains(*i.ContainerIDContains))
-	}
-	if i.ContainerIDHasPrefix != nil {
-		predicates = append(predicates, backtest.ContainerIDHasPrefix(*i.ContainerIDHasPrefix))
-	}
-	if i.ContainerIDHasSuffix != nil {
-		predicates = append(predicates, backtest.ContainerIDHasSuffix(*i.ContainerIDHasSuffix))
-	}
-	if i.ContainerIDIsNil {
-		predicates = append(predicates, backtest.ContainerIDIsNil())
-	}
-	if i.ContainerIDNotNil {
-		predicates = append(predicates, backtest.ContainerIDNotNil())
-	}
-	if i.ContainerIDEqualFold != nil {
-		predicates = append(predicates, backtest.ContainerIDEqualFold(*i.ContainerIDEqualFold))
-	}
-	if i.ContainerIDContainsFold != nil {
-		predicates = append(predicates, backtest.ContainerIDContainsFold(*i.ContainerIDContainsFold))
 	}
 	if i.ErrorMessage != nil {
 		predicates = append(predicates, backtest.ErrorMessageEQ(*i.ErrorMessage))
@@ -671,23 +609,6 @@ type BotWhereInput struct {
 	ModeIn    []enum.BotMode `json:"modeIn,omitempty"`
 	ModeNotIn []enum.BotMode `json:"modeNotIn,omitempty"`
 
-	// "container_id" field predicates.
-	ContainerID             *string  `json:"containerID,omitempty"`
-	ContainerIDNEQ          *string  `json:"containerIDNEQ,omitempty"`
-	ContainerIDIn           []string `json:"containerIDIn,omitempty"`
-	ContainerIDNotIn        []string `json:"containerIDNotIn,omitempty"`
-	ContainerIDGT           *string  `json:"containerIDGT,omitempty"`
-	ContainerIDGTE          *string  `json:"containerIDGTE,omitempty"`
-	ContainerIDLT           *string  `json:"containerIDLT,omitempty"`
-	ContainerIDLTE          *string  `json:"containerIDLTE,omitempty"`
-	ContainerIDContains     *string  `json:"containerIDContains,omitempty"`
-	ContainerIDHasPrefix    *string  `json:"containerIDHasPrefix,omitempty"`
-	ContainerIDHasSuffix    *string  `json:"containerIDHasSuffix,omitempty"`
-	ContainerIDIsNil        bool     `json:"containerIDIsNil,omitempty"`
-	ContainerIDNotNil       bool     `json:"containerIDNotNil,omitempty"`
-	ContainerIDEqualFold    *string  `json:"containerIDEqualFold,omitempty"`
-	ContainerIDContainsFold *string  `json:"containerIDContainsFold,omitempty"`
-
 	// "freqtrade_version" field predicates.
 	FreqtradeVersion             *string  `json:"freqtradeVersion,omitempty"`
 	FreqtradeVersionNEQ          *string  `json:"freqtradeVersionNEQ,omitempty"`
@@ -969,51 +890,6 @@ func (i *BotWhereInput) P() (predicate.Bot, error) {
 	}
 	if len(i.ModeNotIn) > 0 {
 		predicates = append(predicates, bot.ModeNotIn(i.ModeNotIn...))
-	}
-	if i.ContainerID != nil {
-		predicates = append(predicates, bot.ContainerIDEQ(*i.ContainerID))
-	}
-	if i.ContainerIDNEQ != nil {
-		predicates = append(predicates, bot.ContainerIDNEQ(*i.ContainerIDNEQ))
-	}
-	if len(i.ContainerIDIn) > 0 {
-		predicates = append(predicates, bot.ContainerIDIn(i.ContainerIDIn...))
-	}
-	if len(i.ContainerIDNotIn) > 0 {
-		predicates = append(predicates, bot.ContainerIDNotIn(i.ContainerIDNotIn...))
-	}
-	if i.ContainerIDGT != nil {
-		predicates = append(predicates, bot.ContainerIDGT(*i.ContainerIDGT))
-	}
-	if i.ContainerIDGTE != nil {
-		predicates = append(predicates, bot.ContainerIDGTE(*i.ContainerIDGTE))
-	}
-	if i.ContainerIDLT != nil {
-		predicates = append(predicates, bot.ContainerIDLT(*i.ContainerIDLT))
-	}
-	if i.ContainerIDLTE != nil {
-		predicates = append(predicates, bot.ContainerIDLTE(*i.ContainerIDLTE))
-	}
-	if i.ContainerIDContains != nil {
-		predicates = append(predicates, bot.ContainerIDContains(*i.ContainerIDContains))
-	}
-	if i.ContainerIDHasPrefix != nil {
-		predicates = append(predicates, bot.ContainerIDHasPrefix(*i.ContainerIDHasPrefix))
-	}
-	if i.ContainerIDHasSuffix != nil {
-		predicates = append(predicates, bot.ContainerIDHasSuffix(*i.ContainerIDHasSuffix))
-	}
-	if i.ContainerIDIsNil {
-		predicates = append(predicates, bot.ContainerIDIsNil())
-	}
-	if i.ContainerIDNotNil {
-		predicates = append(predicates, bot.ContainerIDNotNil())
-	}
-	if i.ContainerIDEqualFold != nil {
-		predicates = append(predicates, bot.ContainerIDEqualFold(*i.ContainerIDEqualFold))
-	}
-	if i.ContainerIDContainsFold != nil {
-		predicates = append(predicates, bot.ContainerIDContainsFold(*i.ContainerIDContainsFold))
 	}
 	if i.FreqtradeVersion != nil {
 		predicates = append(predicates, bot.FreqtradeVersionEQ(*i.FreqtradeVersion))
@@ -2454,6 +2330,35 @@ type BotRunnerWhereInput struct {
 	DataErrorMessageEqualFold    *string  `json:"dataErrorMessageEqualFold,omitempty"`
 	DataErrorMessageContainsFold *string  `json:"dataErrorMessageContainsFold,omitempty"`
 
+	// "s3_data_key" field predicates.
+	S3DataKey             *string  `json:"s3DataKey,omitempty"`
+	S3DataKeyNEQ          *string  `json:"s3DataKeyNEQ,omitempty"`
+	S3DataKeyIn           []string `json:"s3DataKeyIn,omitempty"`
+	S3DataKeyNotIn        []string `json:"s3DataKeyNotIn,omitempty"`
+	S3DataKeyGT           *string  `json:"s3DataKeyGT,omitempty"`
+	S3DataKeyGTE          *string  `json:"s3DataKeyGTE,omitempty"`
+	S3DataKeyLT           *string  `json:"s3DataKeyLT,omitempty"`
+	S3DataKeyLTE          *string  `json:"s3DataKeyLTE,omitempty"`
+	S3DataKeyContains     *string  `json:"s3DataKeyContains,omitempty"`
+	S3DataKeyHasPrefix    *string  `json:"s3DataKeyHasPrefix,omitempty"`
+	S3DataKeyHasSuffix    *string  `json:"s3DataKeyHasSuffix,omitempty"`
+	S3DataKeyIsNil        bool     `json:"s3DataKeyIsNil,omitempty"`
+	S3DataKeyNotNil       bool     `json:"s3DataKeyNotNil,omitempty"`
+	S3DataKeyEqualFold    *string  `json:"s3DataKeyEqualFold,omitempty"`
+	S3DataKeyContainsFold *string  `json:"s3DataKeyContainsFold,omitempty"`
+
+	// "s3_data_uploaded_at" field predicates.
+	S3DataUploadedAt       *time.Time  `json:"s3DataUploadedAt,omitempty"`
+	S3DataUploadedAtNEQ    *time.Time  `json:"s3DataUploadedAtNEQ,omitempty"`
+	S3DataUploadedAtIn     []time.Time `json:"s3DataUploadedAtIn,omitempty"`
+	S3DataUploadedAtNotIn  []time.Time `json:"s3DataUploadedAtNotIn,omitempty"`
+	S3DataUploadedAtGT     *time.Time  `json:"s3DataUploadedAtGT,omitempty"`
+	S3DataUploadedAtGTE    *time.Time  `json:"s3DataUploadedAtGTE,omitempty"`
+	S3DataUploadedAtLT     *time.Time  `json:"s3DataUploadedAtLT,omitempty"`
+	S3DataUploadedAtLTE    *time.Time  `json:"s3DataUploadedAtLTE,omitempty"`
+	S3DataUploadedAtIsNil  bool        `json:"s3DataUploadedAtIsNil,omitempty"`
+	S3DataUploadedAtNotNil bool        `json:"s3DataUploadedAtNotNil,omitempty"`
+
 	// "owner_id" field predicates.
 	OwnerID             *string  `json:"ownerID,omitempty"`
 	OwnerIDNEQ          *string  `json:"ownerIDNEQ,omitempty"`
@@ -2824,6 +2729,81 @@ func (i *BotRunnerWhereInput) P() (predicate.BotRunner, error) {
 	}
 	if i.DataErrorMessageContainsFold != nil {
 		predicates = append(predicates, botrunner.DataErrorMessageContainsFold(*i.DataErrorMessageContainsFold))
+	}
+	if i.S3DataKey != nil {
+		predicates = append(predicates, botrunner.S3DataKeyEQ(*i.S3DataKey))
+	}
+	if i.S3DataKeyNEQ != nil {
+		predicates = append(predicates, botrunner.S3DataKeyNEQ(*i.S3DataKeyNEQ))
+	}
+	if len(i.S3DataKeyIn) > 0 {
+		predicates = append(predicates, botrunner.S3DataKeyIn(i.S3DataKeyIn...))
+	}
+	if len(i.S3DataKeyNotIn) > 0 {
+		predicates = append(predicates, botrunner.S3DataKeyNotIn(i.S3DataKeyNotIn...))
+	}
+	if i.S3DataKeyGT != nil {
+		predicates = append(predicates, botrunner.S3DataKeyGT(*i.S3DataKeyGT))
+	}
+	if i.S3DataKeyGTE != nil {
+		predicates = append(predicates, botrunner.S3DataKeyGTE(*i.S3DataKeyGTE))
+	}
+	if i.S3DataKeyLT != nil {
+		predicates = append(predicates, botrunner.S3DataKeyLT(*i.S3DataKeyLT))
+	}
+	if i.S3DataKeyLTE != nil {
+		predicates = append(predicates, botrunner.S3DataKeyLTE(*i.S3DataKeyLTE))
+	}
+	if i.S3DataKeyContains != nil {
+		predicates = append(predicates, botrunner.S3DataKeyContains(*i.S3DataKeyContains))
+	}
+	if i.S3DataKeyHasPrefix != nil {
+		predicates = append(predicates, botrunner.S3DataKeyHasPrefix(*i.S3DataKeyHasPrefix))
+	}
+	if i.S3DataKeyHasSuffix != nil {
+		predicates = append(predicates, botrunner.S3DataKeyHasSuffix(*i.S3DataKeyHasSuffix))
+	}
+	if i.S3DataKeyIsNil {
+		predicates = append(predicates, botrunner.S3DataKeyIsNil())
+	}
+	if i.S3DataKeyNotNil {
+		predicates = append(predicates, botrunner.S3DataKeyNotNil())
+	}
+	if i.S3DataKeyEqualFold != nil {
+		predicates = append(predicates, botrunner.S3DataKeyEqualFold(*i.S3DataKeyEqualFold))
+	}
+	if i.S3DataKeyContainsFold != nil {
+		predicates = append(predicates, botrunner.S3DataKeyContainsFold(*i.S3DataKeyContainsFold))
+	}
+	if i.S3DataUploadedAt != nil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtEQ(*i.S3DataUploadedAt))
+	}
+	if i.S3DataUploadedAtNEQ != nil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtNEQ(*i.S3DataUploadedAtNEQ))
+	}
+	if len(i.S3DataUploadedAtIn) > 0 {
+		predicates = append(predicates, botrunner.S3DataUploadedAtIn(i.S3DataUploadedAtIn...))
+	}
+	if len(i.S3DataUploadedAtNotIn) > 0 {
+		predicates = append(predicates, botrunner.S3DataUploadedAtNotIn(i.S3DataUploadedAtNotIn...))
+	}
+	if i.S3DataUploadedAtGT != nil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtGT(*i.S3DataUploadedAtGT))
+	}
+	if i.S3DataUploadedAtGTE != nil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtGTE(*i.S3DataUploadedAtGTE))
+	}
+	if i.S3DataUploadedAtLT != nil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtLT(*i.S3DataUploadedAtLT))
+	}
+	if i.S3DataUploadedAtLTE != nil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtLTE(*i.S3DataUploadedAtLTE))
+	}
+	if i.S3DataUploadedAtIsNil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtIsNil())
+	}
+	if i.S3DataUploadedAtNotNil {
+		predicates = append(predicates, botrunner.S3DataUploadedAtNotNil())
 	}
 	if i.OwnerID != nil {
 		predicates = append(predicates, botrunner.OwnerIDEQ(*i.OwnerID))

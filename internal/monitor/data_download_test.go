@@ -156,11 +156,8 @@ func TestDataFormatIsJSON(t *testing.T) {
 			"JSON format allows easy inspection of downloaded historical data.")
 }
 
-func TestVolumeConstants(t *testing.T) {
-	// Verify the Docker volume configuration
-	assert.Equal(t, "volaticloud-freqtrade-data", FreqtradeDataVolume,
-		"Docker volume name must match the volume used in backtesting")
-
+func TestFreqtradeImageConstant(t *testing.T) {
+	// Verify the Freqtrade image constant
 	assert.Equal(t, "freqtradeorg/freqtrade:stable", FreqtradeImage,
 		"Freqtrade image must be the stable version")
 }

@@ -24,9 +24,8 @@ type BacktestSpec struct {
 	Environment      map[string]string // Additional environment variables
 	ResourceLimits   *ResourceLimits   // CPU/Memory limits
 
-	// Data Source
-	DataSource string // "download" or "local"
-	DataPath   string // Path to local data if using local source
+	// S3 Data Configuration
+	DataDownloadURL string // Presigned S3 URL for downloading OHLCV data
 }
 
 // BacktestResult represents the results of a completed backtest
@@ -136,9 +135,8 @@ type HyperOptSpec struct {
 	Environment      map[string]string
 	ResourceLimits   *ResourceLimits
 
-	// Data Source
-	DataSource string
-	DataPath   string
+	// S3 Data Configuration
+	DataDownloadURL string // Presigned S3 URL for downloading OHLCV data
 }
 
 // HyperOptResult represents the results of a completed hyperopt run

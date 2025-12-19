@@ -265,14 +265,6 @@ const BotDetail = () => {
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
                 <Typography variant="body2" color="textSecondary">
-                  Container ID
-                </Typography>
-                <Typography variant="body1" sx={{ wordBreak: 'break-all' }}>
-                  {bot.containerID || 'N/A'}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
                   Freqtrade Version
                 </Typography>
                 <Typography variant="body1">{bot.freqtradeVersion}</Typography>

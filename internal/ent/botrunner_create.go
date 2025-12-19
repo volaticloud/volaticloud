@@ -148,6 +148,40 @@ func (_c *BotRunnerCreate) SetDataDownloadConfig(v map[string]interface{}) *BotR
 	return _c
 }
 
+// SetS3Config sets the "s3_config" field.
+func (_c *BotRunnerCreate) SetS3Config(v map[string]interface{}) *BotRunnerCreate {
+	_c.mutation.SetS3Config(v)
+	return _c
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (_c *BotRunnerCreate) SetS3DataKey(v string) *BotRunnerCreate {
+	_c.mutation.SetS3DataKey(v)
+	return _c
+}
+
+// SetNillableS3DataKey sets the "s3_data_key" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableS3DataKey(v *string) *BotRunnerCreate {
+	if v != nil {
+		_c.SetS3DataKey(*v)
+	}
+	return _c
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (_c *BotRunnerCreate) SetS3DataUploadedAt(v time.Time) *BotRunnerCreate {
+	_c.mutation.SetS3DataUploadedAt(v)
+	return _c
+}
+
+// SetNillableS3DataUploadedAt sets the "s3_data_uploaded_at" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableS3DataUploadedAt(v *time.Time) *BotRunnerCreate {
+	if v != nil {
+		_c.SetS3DataUploadedAt(*v)
+	}
+	return _c
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_c *BotRunnerCreate) SetOwnerID(v string) *BotRunnerCreate {
 	_c.mutation.SetOwnerID(v)
@@ -534,6 +568,18 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DataDownloadConfig(); ok {
 		_spec.SetField(botrunner.FieldDataDownloadConfig, field.TypeJSON, value)
 		_node.DataDownloadConfig = value
+	}
+	if value, ok := _c.mutation.S3Config(); ok {
+		_spec.SetField(botrunner.FieldS3Config, field.TypeJSON, value)
+		_node.S3Config = value
+	}
+	if value, ok := _c.mutation.S3DataKey(); ok {
+		_spec.SetField(botrunner.FieldS3DataKey, field.TypeString, value)
+		_node.S3DataKey = value
+	}
+	if value, ok := _c.mutation.S3DataUploadedAt(); ok {
+		_spec.SetField(botrunner.FieldS3DataUploadedAt, field.TypeTime, value)
+		_node.S3DataUploadedAt = &value
 	}
 	if value, ok := _c.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)

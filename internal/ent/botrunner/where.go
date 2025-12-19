@@ -87,6 +87,16 @@ func DataErrorMessage(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldDataErrorMessage, v))
 }
 
+// S3DataKey applies equality check predicate on the "s3_data_key" field. It's identical to S3DataKeyEQ.
+func S3DataKey(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldS3DataKey, v))
+}
+
+// S3DataUploadedAt applies equality check predicate on the "s3_data_uploaded_at" field. It's identical to S3DataUploadedAtEQ.
+func S3DataUploadedAt(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldS3DataUploadedAt, v))
+}
+
 // OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
 func OwnerID(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldOwnerID, v))
@@ -475,6 +485,141 @@ func DataDownloadConfigIsNil() predicate.BotRunner {
 // DataDownloadConfigNotNil applies the NotNil predicate on the "data_download_config" field.
 func DataDownloadConfigNotNil() predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldNotNull(FieldDataDownloadConfig))
+}
+
+// S3ConfigIsNil applies the IsNil predicate on the "s3_config" field.
+func S3ConfigIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldS3Config))
+}
+
+// S3ConfigNotNil applies the NotNil predicate on the "s3_config" field.
+func S3ConfigNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldS3Config))
+}
+
+// S3DataKeyEQ applies the EQ predicate on the "s3_data_key" field.
+func S3DataKeyEQ(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldS3DataKey, v))
+}
+
+// S3DataKeyNEQ applies the NEQ predicate on the "s3_data_key" field.
+func S3DataKeyNEQ(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldS3DataKey, v))
+}
+
+// S3DataKeyIn applies the In predicate on the "s3_data_key" field.
+func S3DataKeyIn(vs ...string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldS3DataKey, vs...))
+}
+
+// S3DataKeyNotIn applies the NotIn predicate on the "s3_data_key" field.
+func S3DataKeyNotIn(vs ...string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldS3DataKey, vs...))
+}
+
+// S3DataKeyGT applies the GT predicate on the "s3_data_key" field.
+func S3DataKeyGT(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldS3DataKey, v))
+}
+
+// S3DataKeyGTE applies the GTE predicate on the "s3_data_key" field.
+func S3DataKeyGTE(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldS3DataKey, v))
+}
+
+// S3DataKeyLT applies the LT predicate on the "s3_data_key" field.
+func S3DataKeyLT(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldS3DataKey, v))
+}
+
+// S3DataKeyLTE applies the LTE predicate on the "s3_data_key" field.
+func S3DataKeyLTE(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldS3DataKey, v))
+}
+
+// S3DataKeyContains applies the Contains predicate on the "s3_data_key" field.
+func S3DataKeyContains(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldContains(FieldS3DataKey, v))
+}
+
+// S3DataKeyHasPrefix applies the HasPrefix predicate on the "s3_data_key" field.
+func S3DataKeyHasPrefix(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldHasPrefix(FieldS3DataKey, v))
+}
+
+// S3DataKeyHasSuffix applies the HasSuffix predicate on the "s3_data_key" field.
+func S3DataKeyHasSuffix(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldHasSuffix(FieldS3DataKey, v))
+}
+
+// S3DataKeyIsNil applies the IsNil predicate on the "s3_data_key" field.
+func S3DataKeyIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldS3DataKey))
+}
+
+// S3DataKeyNotNil applies the NotNil predicate on the "s3_data_key" field.
+func S3DataKeyNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldS3DataKey))
+}
+
+// S3DataKeyEqualFold applies the EqualFold predicate on the "s3_data_key" field.
+func S3DataKeyEqualFold(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEqualFold(FieldS3DataKey, v))
+}
+
+// S3DataKeyContainsFold applies the ContainsFold predicate on the "s3_data_key" field.
+func S3DataKeyContainsFold(v string) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldContainsFold(FieldS3DataKey, v))
+}
+
+// S3DataUploadedAtEQ applies the EQ predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtEQ(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldS3DataUploadedAt, v))
+}
+
+// S3DataUploadedAtNEQ applies the NEQ predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtNEQ(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldS3DataUploadedAt, v))
+}
+
+// S3DataUploadedAtIn applies the In predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtIn(vs ...time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldS3DataUploadedAt, vs...))
+}
+
+// S3DataUploadedAtNotIn applies the NotIn predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtNotIn(vs ...time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldS3DataUploadedAt, vs...))
+}
+
+// S3DataUploadedAtGT applies the GT predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtGT(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldS3DataUploadedAt, v))
+}
+
+// S3DataUploadedAtGTE applies the GTE predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtGTE(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldS3DataUploadedAt, v))
+}
+
+// S3DataUploadedAtLT applies the LT predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtLT(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldS3DataUploadedAt, v))
+}
+
+// S3DataUploadedAtLTE applies the LTE predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtLTE(v time.Time) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldS3DataUploadedAt, v))
+}
+
+// S3DataUploadedAtIsNil applies the IsNil predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldS3DataUploadedAt))
+}
+
+// S3DataUploadedAtNotNil applies the NotNil predicate on the "s3_data_uploaded_at" field.
+func S3DataUploadedAtNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldS3DataUploadedAt))
 }
 
 // OwnerIDEQ applies the EQ predicate on the "owner_id" field.

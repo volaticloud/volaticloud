@@ -42,6 +42,12 @@ type BotRunner struct {
 	DataErrorMessage string `json:"data_error_message,omitempty"`
 	// Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
 	DataDownloadConfig map[string]interface{} `json:"data_download_config,omitempty"`
+	// S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL}
+	S3Config map[string]interface{} `json:"s3_config,omitempty"`
+	// S3 object key: runners/data/{runnerId}.zip
+	S3DataKey string `json:"s3_data_key,omitempty"`
+	// When data was last uploaded to S3
+	S3DataUploadedAt *time.Time `json:"s3_data_uploaded_at,omitempty"`
 	// Group ID (organization) that owns this bot runner
 	OwnerID string `json:"owner_id,omitempty"`
 	// Whether usage tracking and billing is enabled for this runner
@@ -127,15 +133,15 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig:
+		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig, botrunner.FieldS3Config:
 			values[i] = new([]byte)
 		case botrunner.FieldPublic, botrunner.FieldDataIsReady, botrunner.FieldBillingEnabled:
 			values[i] = new(sql.NullBool)
 		case botrunner.FieldCPUPricePerCoreHour, botrunner.FieldMemoryPricePerGBHour, botrunner.FieldNetworkPricePerGB, botrunner.FieldStoragePricePerGB:
 			values[i] = new(sql.NullFloat64)
-		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage, botrunner.FieldOwnerID:
+		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage, botrunner.FieldS3DataKey, botrunner.FieldOwnerID:
 			values[i] = new(sql.NullString)
-		case botrunner.FieldDataLastUpdated, botrunner.FieldDataDownloadStartedAt, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
+		case botrunner.FieldDataLastUpdated, botrunner.FieldDataDownloadStartedAt, botrunner.FieldS3DataUploadedAt, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case botrunner.FieldID:
 			values[i] = new(uuid.UUID)
@@ -232,6 +238,27 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.DataDownloadConfig); err != nil {
 					return fmt.Errorf("unmarshal field data_download_config: %w", err)
 				}
+			}
+		case botrunner.FieldS3Config:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field s3_config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.S3Config); err != nil {
+					return fmt.Errorf("unmarshal field s3_config: %w", err)
+				}
+			}
+		case botrunner.FieldS3DataKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field s3_data_key", values[i])
+			} else if value.Valid {
+				_m.S3DataKey = value.String
+			}
+		case botrunner.FieldS3DataUploadedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field s3_data_uploaded_at", values[i])
+			} else if value.Valid {
+				_m.S3DataUploadedAt = new(time.Time)
+				*_m.S3DataUploadedAt = value.Time
 			}
 		case botrunner.FieldOwnerID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -375,6 +402,17 @@ func (_m *BotRunner) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("data_download_config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DataDownloadConfig))
+	builder.WriteString(", ")
+	builder.WriteString("s3_config=")
+	builder.WriteString(fmt.Sprintf("%v", _m.S3Config))
+	builder.WriteString(", ")
+	builder.WriteString("s3_data_key=")
+	builder.WriteString(_m.S3DataKey)
+	builder.WriteString(", ")
+	if v := _m.S3DataUploadedAt; v != nil {
+		builder.WriteString("s3_data_uploaded_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("owner_id=")
 	builder.WriteString(_m.OwnerID)

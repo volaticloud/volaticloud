@@ -28,8 +28,6 @@ type Backtest struct {
 	Result map[string]interface{} `json:"result,omitempty"`
 	// Typed summary of key backtest metrics
 	Summary map[string]interface{} `json:"summary,omitempty"`
-	// Docker container ID for running backtest
-	ContainerID string `json:"container_id,omitempty"`
 	// Error message if backtest failed
 	ErrorMessage string `json:"error_message,omitempty"`
 	// Container logs from backtest execution
@@ -96,7 +94,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case backtest.FieldResult, backtest.FieldSummary:
 			values[i] = new([]byte)
-		case backtest.FieldStatus, backtest.FieldContainerID, backtest.FieldErrorMessage, backtest.FieldLogs:
+		case backtest.FieldStatus, backtest.FieldErrorMessage, backtest.FieldLogs:
 			values[i] = new(sql.NullString)
 		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt, backtest.FieldStartDate, backtest.FieldEndDate:
 			values[i] = new(sql.NullTime)
@@ -144,12 +142,6 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Summary); err != nil {
 					return fmt.Errorf("unmarshal field summary: %w", err)
 				}
-			}
-		case backtest.FieldContainerID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field container_id", values[i])
-			} else if value.Valid {
-				_m.ContainerID = value.String
 			}
 		case backtest.FieldErrorMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -259,9 +251,6 @@ func (_m *Backtest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("summary=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Summary))
-	builder.WriteString(", ")
-	builder.WriteString("container_id=")
-	builder.WriteString(_m.ContainerID)
 	builder.WriteString(", ")
 	builder.WriteString("error_message=")
 	builder.WriteString(_m.ErrorMessage)

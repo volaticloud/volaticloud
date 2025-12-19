@@ -30,6 +30,7 @@ import (
 	_ "volaticloud/internal/ent/runtime"
 	"volaticloud/internal/graph"
 	"volaticloud/internal/keycloak"
+	_ "volaticloud/internal/kubernetes" // Register Kubernetes runtime creator
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/proxy"
 )
@@ -213,7 +214,7 @@ func runServer(c *cli.Context) error {
 
 	// Validate that Keycloak is configured
 	if keycloakConfig.URL == "" || keycloakConfig.ClientID == "" || keycloakConfig.ClientSecret == "" {
-		return fmt.Errorf("Keycloak configuration is required (URL, ClientID, ClientSecret must be set)")
+		return fmt.Errorf("keycloak configuration is required (URL, ClientID, ClientSecret must be set)")
 	}
 
 	keycloakClient, err := auth.InitKeycloak(ctx, keycloakConfig)

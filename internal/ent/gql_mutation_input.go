@@ -13,7 +13,6 @@ import (
 type CreateBacktestInput struct {
 	Status       *enum.TaskStatus
 	Result       map[string]interface{}
-	ContainerID  *string
 	ErrorMessage *string
 	Logs         *string
 	CreatedAt    *time.Time
@@ -32,9 +31,6 @@ func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
 	}
 	if v := i.Result; v != nil {
 		m.SetResult(v)
-	}
-	if v := i.ContainerID; v != nil {
-		m.SetContainerID(*v)
 	}
 	if v := i.ErrorMessage; v != nil {
 		m.SetErrorMessage(*v)
@@ -73,7 +69,6 @@ type CreateBotInput struct {
 	Name             string
 	Status           *enum.BotStatus
 	Mode             *enum.BotMode
-	ContainerID      *string
 	Config           map[string]interface{}
 	FreqtradeVersion *string
 	LastSeenAt       *time.Time
@@ -99,9 +94,6 @@ func (i *CreateBotInput) Mutate(m *BotMutation) {
 	}
 	if v := i.Mode; v != nil {
 		m.SetMode(*v)
-	}
-	if v := i.ContainerID; v != nil {
-		m.SetContainerID(*v)
 	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
@@ -145,8 +137,6 @@ type UpdateBotInput struct {
 	Name              *string
 	Status            *enum.BotStatus
 	Mode              *enum.BotMode
-	ClearContainerID  bool
-	ContainerID       *string
 	ClearConfig       bool
 	Config            map[string]interface{}
 	FreqtradeVersion  *string
@@ -179,12 +169,6 @@ func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	}
 	if v := i.Mode; v != nil {
 		m.SetMode(*v)
-	}
-	if i.ClearContainerID {
-		m.ClearContainerID()
-	}
-	if v := i.ContainerID; v != nil {
-		m.SetContainerID(*v)
 	}
 	if i.ClearConfig {
 		m.ClearConfig()
@@ -536,6 +520,9 @@ type CreateBotRunnerInput struct {
 	DataDownloadProgress  map[string]interface{}
 	DataErrorMessage      *string
 	DataDownloadConfig    map[string]interface{}
+	S3Config              map[string]interface{}
+	S3DataKey             *string
+	S3DataUploadedAt      *time.Time
 	OwnerID               string
 	BillingEnabled        *bool
 	CPUPricePerCoreHour   *float64
@@ -580,6 +567,15 @@ func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.DataDownloadConfig; v != nil {
 		m.SetDataDownloadConfig(v)
+	}
+	if v := i.S3Config; v != nil {
+		m.SetS3Config(v)
+	}
+	if v := i.S3DataKey; v != nil {
+		m.SetS3DataKey(*v)
+	}
+	if v := i.S3DataUploadedAt; v != nil {
+		m.SetS3DataUploadedAt(*v)
 	}
 	m.SetOwnerID(i.OwnerID)
 	if v := i.BillingEnabled; v != nil {
@@ -636,6 +632,12 @@ type UpdateBotRunnerInput struct {
 	DataErrorMessage           *string
 	ClearDataDownloadConfig    bool
 	DataDownloadConfig         map[string]interface{}
+	ClearS3Config              bool
+	S3Config                   map[string]interface{}
+	ClearS3DataKey             bool
+	S3DataKey                  *string
+	ClearS3DataUploadedAt      bool
+	S3DataUploadedAt           *time.Time
 	OwnerID                    *string
 	BillingEnabled             *bool
 	ClearCPUPricePerCoreHour   bool
@@ -707,6 +709,24 @@ func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.DataDownloadConfig; v != nil {
 		m.SetDataDownloadConfig(v)
+	}
+	if i.ClearS3Config {
+		m.ClearS3Config()
+	}
+	if v := i.S3Config; v != nil {
+		m.SetS3Config(v)
+	}
+	if i.ClearS3DataKey {
+		m.ClearS3DataKey()
+	}
+	if v := i.S3DataKey; v != nil {
+		m.SetS3DataKey(*v)
+	}
+	if i.ClearS3DataUploadedAt {
+		m.ClearS3DataUploadedAt()
+	}
+	if v := i.S3DataUploadedAt; v != nil {
+		m.SetS3DataUploadedAt(*v)
 	}
 	if v := i.OwnerID; v != nil {
 		m.SetOwnerID(*v)

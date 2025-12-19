@@ -50,20 +50,6 @@ func (_c *BacktestCreate) SetSummary(v map[string]interface{}) *BacktestCreate {
 	return _c
 }
 
-// SetContainerID sets the "container_id" field.
-func (_c *BacktestCreate) SetContainerID(v string) *BacktestCreate {
-	_c.mutation.SetContainerID(v)
-	return _c
-}
-
-// SetNillableContainerID sets the "container_id" field if the given value is not nil.
-func (_c *BacktestCreate) SetNillableContainerID(v *string) *BacktestCreate {
-	if v != nil {
-		_c.SetContainerID(*v)
-	}
-	return _c
-}
-
 // SetErrorMessage sets the "error_message" field.
 func (_c *BacktestCreate) SetErrorMessage(v string) *BacktestCreate {
 	_c.mutation.SetErrorMessage(v)
@@ -325,10 +311,6 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Summary(); ok {
 		_spec.SetField(backtest.FieldSummary, field.TypeJSON, value)
 		_node.Summary = value
-	}
-	if value, ok := _c.mutation.ContainerID(); ok {
-		_spec.SetField(backtest.FieldContainerID, field.TypeString, value)
-		_node.ContainerID = value
 	}
 	if value, ok := _c.mutation.ErrorMessage(); ok {
 		_spec.SetField(backtest.FieldErrorMessage, field.TypeString, value)

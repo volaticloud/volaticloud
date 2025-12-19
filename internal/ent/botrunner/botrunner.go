@@ -41,6 +41,12 @@ const (
 	FieldDataErrorMessage = "data_error_message"
 	// FieldDataDownloadConfig holds the string denoting the data_download_config field in the database.
 	FieldDataDownloadConfig = "data_download_config"
+	// FieldS3Config holds the string denoting the s3_config field in the database.
+	FieldS3Config = "s3_config"
+	// FieldS3DataKey holds the string denoting the s3_data_key field in the database.
+	FieldS3DataKey = "s3_data_key"
+	// FieldS3DataUploadedAt holds the string denoting the s3_data_uploaded_at field in the database.
+	FieldS3DataUploadedAt = "s3_data_uploaded_at"
 	// FieldOwnerID holds the string denoting the owner_id field in the database.
 	FieldOwnerID = "owner_id"
 	// FieldBillingEnabled holds the string denoting the billing_enabled field in the database.
@@ -111,6 +117,9 @@ var Columns = []string{
 	FieldDataDownloadProgress,
 	FieldDataErrorMessage,
 	FieldDataDownloadConfig,
+	FieldS3Config,
+	FieldS3DataKey,
+	FieldS3DataUploadedAt,
 	FieldOwnerID,
 	FieldBillingEnabled,
 	FieldCPUPricePerCoreHour,
@@ -228,6 +237,16 @@ func ByDataDownloadStartedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByDataErrorMessage orders the results by the data_error_message field.
 func ByDataErrorMessage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDataErrorMessage, opts...).ToFunc()
+}
+
+// ByS3DataKey orders the results by the s3_data_key field.
+func ByS3DataKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldS3DataKey, opts...).ToFunc()
+}
+
+// ByS3DataUploadedAt orders the results by the s3_data_uploaded_at field.
+func ByS3DataUploadedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldS3DataUploadedAt, opts...).ToFunc()
 }
 
 // ByOwnerID orders the results by the owner_id field.

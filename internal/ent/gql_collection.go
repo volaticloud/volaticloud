@@ -83,11 +83,6 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldResult)
 				fieldSeen[backtest.FieldResult] = struct{}{}
 			}
-		case "containerID":
-			if _, ok := fieldSeen[backtest.FieldContainerID]; !ok {
-				selectedFields = append(selectedFields, backtest.FieldContainerID)
-				fieldSeen[backtest.FieldContainerID] = struct{}{}
-			}
 		case "errorMessage":
 			if _, ok := fieldSeen[backtest.FieldErrorMessage]; !ok {
 				selectedFields = append(selectedFields, backtest.FieldErrorMessage)
@@ -359,11 +354,6 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 			if _, ok := fieldSeen[bot.FieldMode]; !ok {
 				selectedFields = append(selectedFields, bot.FieldMode)
 				fieldSeen[bot.FieldMode] = struct{}{}
-			}
-		case "containerID":
-			if _, ok := fieldSeen[bot.FieldContainerID]; !ok {
-				selectedFields = append(selectedFields, bot.FieldContainerID)
-				fieldSeen[bot.FieldContainerID] = struct{}{}
 			}
 		case "config":
 			if _, ok := fieldSeen[bot.FieldConfig]; !ok {
@@ -891,6 +881,21 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 			if _, ok := fieldSeen[botrunner.FieldDataDownloadConfig]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldDataDownloadConfig)
 				fieldSeen[botrunner.FieldDataDownloadConfig] = struct{}{}
+			}
+		case "s3Config":
+			if _, ok := fieldSeen[botrunner.FieldS3Config]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldS3Config)
+				fieldSeen[botrunner.FieldS3Config] = struct{}{}
+			}
+		case "s3DataKey":
+			if _, ok := fieldSeen[botrunner.FieldS3DataKey]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldS3DataKey)
+				fieldSeen[botrunner.FieldS3DataKey] = struct{}{}
+			}
+		case "s3DataUploadedAt":
+			if _, ok := fieldSeen[botrunner.FieldS3DataUploadedAt]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldS3DataUploadedAt)
+				fieldSeen[botrunner.FieldS3DataUploadedAt] = struct{}{}
 			}
 		case "ownerID":
 			if _, ok := fieldSeen[botrunner.FieldOwnerID]; !ok {

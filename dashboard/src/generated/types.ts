@@ -25,8 +25,6 @@ export type Backtest = Node & {
   __typename?: 'Backtest';
   /** Completion timestamp */
   completedAt?: Maybe<Scalars['Time']['output']>;
-  /** Docker container ID for running backtest */
-  containerID?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Time']['output'];
   /** Backtest end date (end of time range) */
   endDate?: Maybe<Scalars['Time']['output']>;
@@ -125,22 +123,6 @@ export type BacktestWhereInput = {
   completedAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   completedAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
   completedAtNotNil?: InputMaybe<Scalars['Boolean']['input']>;
-  /** container_id field predicates */
-  containerID?: InputMaybe<Scalars['String']['input']>;
-  containerIDContains?: InputMaybe<Scalars['String']['input']>;
-  containerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
-  containerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
-  containerIDGT?: InputMaybe<Scalars['String']['input']>;
-  containerIDGTE?: InputMaybe<Scalars['String']['input']>;
-  containerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
-  containerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
-  containerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
-  containerIDIsNil?: InputMaybe<Scalars['Boolean']['input']>;
-  containerIDLT?: InputMaybe<Scalars['String']['input']>;
-  containerIDLTE?: InputMaybe<Scalars['String']['input']>;
-  containerIDNEQ?: InputMaybe<Scalars['String']['input']>;
-  containerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
-  containerIDNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** created_at field predicates */
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   createdAtGT?: InputMaybe<Scalars['Time']['input']>;
@@ -261,8 +243,6 @@ export type Bot = Node & {
   __typename?: 'Bot';
   /** Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.) */
   config?: Maybe<Scalars['Map']['output']>;
-  /** Runner-specific identifier (container ID, pod name, etc.) */
-  containerID?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Time']['output'];
   /** Last error message if status is error */
   errorMessage?: Maybe<Scalars['String']['output']>;
@@ -678,6 +658,12 @@ export type BotRunner = Node & {
   ownerID: Scalars['String']['output'];
   /** Whether this resource is publicly visible to all authenticated users */
   public: Scalars['Boolean']['output'];
+  /** S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL} */
+  s3Config?: Maybe<Scalars['Map']['output']>;
+  /** S3 object key: runners/data/{runnerId}.zip */
+  s3DataKey?: Maybe<Scalars['String']['output']>;
+  /** When data was last uploaded to S3 */
+  s3DataUploadedAt?: Maybe<Scalars['Time']['output']>;
   /** Price per GB of disk I/O in USD (only used if billing_enabled) */
   storagePricePerGB?: Maybe<Scalars['Float']['output']>;
   /** Runner environment type (docker, kubernetes, local) */
@@ -883,6 +869,33 @@ export type BotRunnerWhereInput = {
   /** public field predicates */
   public?: InputMaybe<Scalars['Boolean']['input']>;
   publicNEQ?: InputMaybe<Scalars['Boolean']['input']>;
+  /** s3_data_key field predicates */
+  s3DataKey?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyContains?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyContainsFold?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyEqualFold?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyGT?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyGTE?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  s3DataKeyIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  s3DataKeyLT?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyLTE?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyNEQ?: InputMaybe<Scalars['String']['input']>;
+  s3DataKeyNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  s3DataKeyNotNil?: InputMaybe<Scalars['Boolean']['input']>;
+  /** s3_data_uploaded_at field predicates */
+  s3DataUploadedAt?: InputMaybe<Scalars['Time']['input']>;
+  s3DataUploadedAtGT?: InputMaybe<Scalars['Time']['input']>;
+  s3DataUploadedAtGTE?: InputMaybe<Scalars['Time']['input']>;
+  s3DataUploadedAtIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  s3DataUploadedAtIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  s3DataUploadedAtLT?: InputMaybe<Scalars['Time']['input']>;
+  s3DataUploadedAtLTE?: InputMaybe<Scalars['Time']['input']>;
+  s3DataUploadedAtNEQ?: InputMaybe<Scalars['Time']['input']>;
+  s3DataUploadedAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  s3DataUploadedAtNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** storage_price_per_gb field predicates */
   storagePricePerGB?: InputMaybe<Scalars['Float']['input']>;
   storagePricePerGBGT?: InputMaybe<Scalars['Float']['input']>;
@@ -913,7 +926,6 @@ export type BotRunnerWhereInput = {
 export type BotStatus = {
   __typename?: 'BotStatus';
   botID: Scalars['String']['output'];
-  containerID: Scalars['String']['output'];
   cpuUsage: Scalars['Float']['output'];
   createdAt: Scalars['Time']['output'];
   errorMessage: Scalars['String']['output'];
@@ -933,22 +945,6 @@ export type BotStatus = {
  */
 export type BotWhereInput = {
   and?: InputMaybe<Array<BotWhereInput>>;
-  /** container_id field predicates */
-  containerID?: InputMaybe<Scalars['String']['input']>;
-  containerIDContains?: InputMaybe<Scalars['String']['input']>;
-  containerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
-  containerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
-  containerIDGT?: InputMaybe<Scalars['String']['input']>;
-  containerIDGTE?: InputMaybe<Scalars['String']['input']>;
-  containerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
-  containerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
-  containerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
-  containerIDIsNil?: InputMaybe<Scalars['Boolean']['input']>;
-  containerIDLT?: InputMaybe<Scalars['String']['input']>;
-  containerIDLTE?: InputMaybe<Scalars['String']['input']>;
-  containerIDNEQ?: InputMaybe<Scalars['String']['input']>;
-  containerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
-  containerIDNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** created_at field predicates */
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   createdAtGT?: InputMaybe<Scalars['Time']['input']>;
@@ -1111,8 +1107,6 @@ export type ConnectionTestResult = {
 export type CreateBacktestInput = {
   /** Completion timestamp */
   completedAt?: InputMaybe<Scalars['Time']['input']>;
-  /** Docker container ID for running backtest */
-  containerID?: InputMaybe<Scalars['String']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Backtest end date (end of time range) */
   endDate?: InputMaybe<Scalars['Time']['input']>;
@@ -1138,8 +1132,6 @@ export type CreateBacktestInput = {
 export type CreateBotInput = {
   /** Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.) */
   config?: InputMaybe<Scalars['Map']['input']>;
-  /** Runner-specific identifier (container ID, pod name, etc.) */
-  containerID?: InputMaybe<Scalars['String']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Last error message if status is error */
   errorMessage?: InputMaybe<Scalars['String']['input']>;
@@ -1250,6 +1242,12 @@ export type CreateBotRunnerInput = {
   ownerID: Scalars['String']['input'];
   /** Whether this resource is publicly visible to all authenticated users */
   public?: InputMaybe<Scalars['Boolean']['input']>;
+  /** S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL} */
+  s3Config?: InputMaybe<Scalars['Map']['input']>;
+  /** S3 object key: runners/data/{runnerId}.zip */
+  s3DataKey?: InputMaybe<Scalars['String']['input']>;
+  /** When data was last uploaded to S3 */
+  s3DataUploadedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Price per GB of disk I/O in USD (only used if billing_enabled) */
   storagePricePerGB?: InputMaybe<Scalars['Float']['input']>;
   /** Runner environment type (docker, kubernetes, local) */
@@ -1505,8 +1503,12 @@ export type KrakenConfigInput = {
 
 export type KubernetesConfigInput = {
   context?: InputMaybe<Scalars['String']['input']>;
-  kubeconfigPath?: InputMaybe<Scalars['String']['input']>;
-  namespace?: InputMaybe<Scalars['String']['input']>;
+  freqtradeImage?: InputMaybe<Scalars['String']['input']>;
+  kubeconfig?: InputMaybe<Scalars['String']['input']>;
+  namespace: Scalars['String']['input'];
+  prometheusUrl?: InputMaybe<Scalars['String']['input']>;
+  sharedDataPVC?: InputMaybe<Scalars['String']['input']>;
+  storageClassName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type LocalConfigInput = {
@@ -1555,6 +1557,11 @@ export type Mutation = {
   stopBacktest: Backtest;
   stopBot: Bot;
   testRunnerConnection: ConnectionTestResult;
+  /**
+   * Test S3 storage connection
+   * Verifies endpoint accessibility and bucket existence
+   */
+  testS3Connection: ConnectionTestResult;
   updateBot: Bot;
   updateBotRunner: BotRunner;
   updateExchange: Exchange;
@@ -1679,6 +1686,11 @@ export type MutationStopBotArgs = {
 export type MutationTestRunnerConnectionArgs = {
   config: RunnerConfigInput;
   type: BotRunnerRunnerType;
+};
+
+
+export type MutationTestS3ConnectionArgs = {
+  config: S3ConfigInput;
 };
 
 
@@ -2281,6 +2293,32 @@ export type RunnerConfigInput = {
   docker?: InputMaybe<DockerConfigInput>;
   kubernetes?: InputMaybe<KubernetesConfigInput>;
   local?: InputMaybe<LocalConfigInput>;
+  s3?: InputMaybe<S3ConfigInput>;
+};
+
+/**
+ * S3 storage configuration for runner data distribution
+ * Supports AWS S3, MinIO, Backblaze B2, and other S3-compatible storage
+ */
+export type S3ConfigInput = {
+  /** AWS/S3 access key ID */
+  accessKeyId: Scalars['String']['input'];
+  /** S3 bucket name */
+  bucket: Scalars['String']['input'];
+  /** S3 endpoint URL (e.g., "s3.amazonaws.com" or "minio.local:9000") */
+  endpoint: Scalars['String']['input'];
+  /**
+   * Force path-style addressing (required for MinIO, optional for AWS)
+   * When true: http://endpoint/bucket/key
+   * When false: http://bucket.endpoint/key
+   */
+  forcePathStyle?: InputMaybe<Scalars['Boolean']['input']>;
+  /** AWS region (default: us-east-1) */
+  region?: InputMaybe<Scalars['String']['input']>;
+  /** AWS/S3 secret access key */
+  secretAccessKey: Scalars['String']['input'];
+  /** Enable HTTPS connections (default: true) */
+  useSSL?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type Strategy = Node & {
@@ -2732,15 +2770,12 @@ export type TradeWhereInput = {
 export type UpdateBotInput = {
   addTradeIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   clearConfig?: InputMaybe<Scalars['Boolean']['input']>;
-  clearContainerID?: InputMaybe<Scalars['Boolean']['input']>;
   clearErrorMessage?: InputMaybe<Scalars['Boolean']['input']>;
   clearLastSeenAt?: InputMaybe<Scalars['Boolean']['input']>;
   clearMetrics?: InputMaybe<Scalars['Boolean']['input']>;
   clearTrades?: InputMaybe<Scalars['Boolean']['input']>;
   /** Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.) */
   config?: InputMaybe<Scalars['Map']['input']>;
-  /** Runner-specific identifier (container ID, pod name, etc.) */
-  containerID?: InputMaybe<Scalars['String']['input']>;
   /** Last error message if status is error */
   errorMessage?: InputMaybe<Scalars['String']['input']>;
   exchangeID?: InputMaybe<Scalars['ID']['input']>;
@@ -2850,6 +2885,9 @@ export type UpdateBotRunnerInput = {
   clearDataLastUpdated?: InputMaybe<Scalars['Boolean']['input']>;
   clearMemoryPricePerGBHour?: InputMaybe<Scalars['Boolean']['input']>;
   clearNetworkPricePerGB?: InputMaybe<Scalars['Boolean']['input']>;
+  clearS3Config?: InputMaybe<Scalars['Boolean']['input']>;
+  clearS3DataKey?: InputMaybe<Scalars['Boolean']['input']>;
+  clearS3DataUploadedAt?: InputMaybe<Scalars['Boolean']['input']>;
   clearStoragePricePerGB?: InputMaybe<Scalars['Boolean']['input']>;
   /** Runner connection configuration (host, port, credentials, etc.) */
   config?: InputMaybe<Scalars['Map']['input']>;
@@ -2881,6 +2919,12 @@ export type UpdateBotRunnerInput = {
   public?: InputMaybe<Scalars['Boolean']['input']>;
   removeBacktestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL} */
+  s3Config?: InputMaybe<Scalars['Map']['input']>;
+  /** S3 object key: runners/data/{runnerId}.zip */
+  s3DataKey?: InputMaybe<Scalars['String']['input']>;
+  /** When data was last uploaded to S3 */
+  s3DataUploadedAt?: InputMaybe<Scalars['Time']['input']>;
   /** Price per GB of disk I/O in USD (only used if billing_enabled) */
   storagePricePerGB?: InputMaybe<Scalars['Float']['input']>;
   /** Runner environment type (docker, kubernetes, local) */
