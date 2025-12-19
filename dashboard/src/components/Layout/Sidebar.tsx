@@ -18,6 +18,7 @@ import {
   Science as BacktestIcon,
   ShowChart as TradeIcon,
   Storage as RuntimeIcon,
+  DataUsage as UsageIcon,
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
@@ -34,6 +35,7 @@ const menuItems = [
   { text: 'Backtests', icon: <BacktestIcon />, path: '/backtests' },
   { text: 'Trades', icon: <TradeIcon />, path: '/trades' },
   { text: 'Runners', icon: <RuntimeIcon />, path: '/runners' },
+  { text: 'Usage', icon: <UsageIcon />, path: '/usage' },
 ];
 
 interface SidebarProps {

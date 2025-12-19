@@ -23,6 +23,8 @@ export type GetExchangeQuery = { __typename?: 'Query', node?:
     | { __typename?: 'BotMetrics' }
     | { __typename?: 'BotRunner' }
     | { __typename?: 'Exchange', id: string, name: string, config?: Record<string, any> | null, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus } | null } | null> | null } }
+    | { __typename?: 'ResourceUsageAggregation' }
+    | { __typename?: 'ResourceUsageSample' }
     | { __typename?: 'Strategy' }
     | { __typename?: 'Trade' }
    | null };

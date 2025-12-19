@@ -11,6 +11,8 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 
@@ -895,6 +897,31 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				selectedFields = append(selectedFields, botrunner.FieldOwnerID)
 				fieldSeen[botrunner.FieldOwnerID] = struct{}{}
 			}
+		case "billingEnabled":
+			if _, ok := fieldSeen[botrunner.FieldBillingEnabled]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldBillingEnabled)
+				fieldSeen[botrunner.FieldBillingEnabled] = struct{}{}
+			}
+		case "cpuPricePerCoreHour":
+			if _, ok := fieldSeen[botrunner.FieldCPUPricePerCoreHour]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldCPUPricePerCoreHour)
+				fieldSeen[botrunner.FieldCPUPricePerCoreHour] = struct{}{}
+			}
+		case "memoryPricePerGBHour":
+			if _, ok := fieldSeen[botrunner.FieldMemoryPricePerGBHour]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldMemoryPricePerGBHour)
+				fieldSeen[botrunner.FieldMemoryPricePerGBHour] = struct{}{}
+			}
+		case "networkPricePerGB":
+			if _, ok := fieldSeen[botrunner.FieldNetworkPricePerGB]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldNetworkPricePerGB)
+				fieldSeen[botrunner.FieldNetworkPricePerGB] = struct{}{}
+			}
+		case "storagePricePerGB":
+			if _, ok := fieldSeen[botrunner.FieldStoragePricePerGB]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldStoragePricePerGB)
+				fieldSeen[botrunner.FieldStoragePricePerGB] = struct{}{}
+			}
 		case "createdAt":
 			if _, ok := fieldSeen[botrunner.FieldCreatedAt]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldCreatedAt)
@@ -1118,6 +1145,315 @@ func newExchangePaginateArgs(rv map[string]any) *exchangePaginateArgs {
 	}
 	if v, ok := rv[whereField].(*ExchangeWhereInput); ok {
 		args.opts = append(args.opts, WithExchangeFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (_q *ResourceUsageAggregationQuery) CollectFields(ctx context.Context, satisfies ...string) (*ResourceUsageAggregationQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return _q, nil
+	}
+	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return _q, nil
+}
+
+func (_q *ResourceUsageAggregationQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(resourceusageaggregation.Columns))
+		selectedFields = []string{resourceusageaggregation.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+
+		case "runner":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BotRunnerClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botrunnerImplementors)...); err != nil {
+				return err
+			}
+			_q.withRunner = query
+			if _, ok := fieldSeen[resourceusageaggregation.FieldRunnerID]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldRunnerID)
+				fieldSeen[resourceusageaggregation.FieldRunnerID] = struct{}{}
+			}
+		case "resourceType":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldResourceType]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldResourceType)
+				fieldSeen[resourceusageaggregation.FieldResourceType] = struct{}{}
+			}
+		case "resourceID":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldResourceID]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldResourceID)
+				fieldSeen[resourceusageaggregation.FieldResourceID] = struct{}{}
+			}
+		case "ownerID":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldOwnerID)
+				fieldSeen[resourceusageaggregation.FieldOwnerID] = struct{}{}
+			}
+		case "runnerID":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldRunnerID]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldRunnerID)
+				fieldSeen[resourceusageaggregation.FieldRunnerID] = struct{}{}
+			}
+		case "granularity":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldGranularity]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldGranularity)
+				fieldSeen[resourceusageaggregation.FieldGranularity] = struct{}{}
+			}
+		case "bucketStart":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldBucketStart]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldBucketStart)
+				fieldSeen[resourceusageaggregation.FieldBucketStart] = struct{}{}
+			}
+		case "bucketEnd":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldBucketEnd]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldBucketEnd)
+				fieldSeen[resourceusageaggregation.FieldBucketEnd] = struct{}{}
+			}
+		case "cpuCoreSeconds":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldCPUCoreSeconds]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldCPUCoreSeconds)
+				fieldSeen[resourceusageaggregation.FieldCPUCoreSeconds] = struct{}{}
+			}
+		case "cpuAvgPercent":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldCPUAvgPercent]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldCPUAvgPercent)
+				fieldSeen[resourceusageaggregation.FieldCPUAvgPercent] = struct{}{}
+			}
+		case "cpuMaxPercent":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldCPUMaxPercent]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldCPUMaxPercent)
+				fieldSeen[resourceusageaggregation.FieldCPUMaxPercent] = struct{}{}
+			}
+		case "memoryGBSeconds":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldMemoryGBSeconds]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldMemoryGBSeconds)
+				fieldSeen[resourceusageaggregation.FieldMemoryGBSeconds] = struct{}{}
+			}
+		case "memoryAvgBytes":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldMemoryAvgBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldMemoryAvgBytes)
+				fieldSeen[resourceusageaggregation.FieldMemoryAvgBytes] = struct{}{}
+			}
+		case "memoryMaxBytes":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldMemoryMaxBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldMemoryMaxBytes)
+				fieldSeen[resourceusageaggregation.FieldMemoryMaxBytes] = struct{}{}
+			}
+		case "networkRxBytes":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldNetworkRxBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldNetworkRxBytes)
+				fieldSeen[resourceusageaggregation.FieldNetworkRxBytes] = struct{}{}
+			}
+		case "networkTxBytes":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldNetworkTxBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldNetworkTxBytes)
+				fieldSeen[resourceusageaggregation.FieldNetworkTxBytes] = struct{}{}
+			}
+		case "blockReadBytes":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldBlockReadBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldBlockReadBytes)
+				fieldSeen[resourceusageaggregation.FieldBlockReadBytes] = struct{}{}
+			}
+		case "blockWriteBytes":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldBlockWriteBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldBlockWriteBytes)
+				fieldSeen[resourceusageaggregation.FieldBlockWriteBytes] = struct{}{}
+			}
+		case "sampleCount":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldSampleCount]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldSampleCount)
+				fieldSeen[resourceusageaggregation.FieldSampleCount] = struct{}{}
+			}
+		case "createdAt":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldCreatedAt]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldCreatedAt)
+				fieldSeen[resourceusageaggregation.FieldCreatedAt] = struct{}{}
+			}
+		case "id":
+		case "__typename":
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		_q.Select(selectedFields...)
+	}
+	return nil
+}
+
+type resourceusageaggregationPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []ResourceUsageAggregationPaginateOption
+}
+
+func newResourceUsageAggregationPaginateArgs(rv map[string]any) *resourceusageaggregationPaginateArgs {
+	args := &resourceusageaggregationPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*ResourceUsageAggregationWhereInput); ok {
+		args.opts = append(args.opts, WithResourceUsageAggregationFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (_q *ResourceUsageSampleQuery) CollectFields(ctx context.Context, satisfies ...string) (*ResourceUsageSampleQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return _q, nil
+	}
+	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return _q, nil
+}
+
+func (_q *ResourceUsageSampleQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(resourceusagesample.Columns))
+		selectedFields = []string{resourceusagesample.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+
+		case "runner":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&BotRunnerClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, botrunnerImplementors)...); err != nil {
+				return err
+			}
+			_q.withRunner = query
+			if _, ok := fieldSeen[resourceusagesample.FieldRunnerID]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldRunnerID)
+				fieldSeen[resourceusagesample.FieldRunnerID] = struct{}{}
+			}
+		case "resourceType":
+			if _, ok := fieldSeen[resourceusagesample.FieldResourceType]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldResourceType)
+				fieldSeen[resourceusagesample.FieldResourceType] = struct{}{}
+			}
+		case "resourceID":
+			if _, ok := fieldSeen[resourceusagesample.FieldResourceID]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldResourceID)
+				fieldSeen[resourceusagesample.FieldResourceID] = struct{}{}
+			}
+		case "ownerID":
+			if _, ok := fieldSeen[resourceusagesample.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldOwnerID)
+				fieldSeen[resourceusagesample.FieldOwnerID] = struct{}{}
+			}
+		case "runnerID":
+			if _, ok := fieldSeen[resourceusagesample.FieldRunnerID]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldRunnerID)
+				fieldSeen[resourceusagesample.FieldRunnerID] = struct{}{}
+			}
+		case "cpuPercent":
+			if _, ok := fieldSeen[resourceusagesample.FieldCPUPercent]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldCPUPercent)
+				fieldSeen[resourceusagesample.FieldCPUPercent] = struct{}{}
+			}
+		case "memoryBytes":
+			if _, ok := fieldSeen[resourceusagesample.FieldMemoryBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldMemoryBytes)
+				fieldSeen[resourceusagesample.FieldMemoryBytes] = struct{}{}
+			}
+		case "networkRxBytes":
+			if _, ok := fieldSeen[resourceusagesample.FieldNetworkRxBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldNetworkRxBytes)
+				fieldSeen[resourceusagesample.FieldNetworkRxBytes] = struct{}{}
+			}
+		case "networkTxBytes":
+			if _, ok := fieldSeen[resourceusagesample.FieldNetworkTxBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldNetworkTxBytes)
+				fieldSeen[resourceusagesample.FieldNetworkTxBytes] = struct{}{}
+			}
+		case "blockReadBytes":
+			if _, ok := fieldSeen[resourceusagesample.FieldBlockReadBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldBlockReadBytes)
+				fieldSeen[resourceusagesample.FieldBlockReadBytes] = struct{}{}
+			}
+		case "blockWriteBytes":
+			if _, ok := fieldSeen[resourceusagesample.FieldBlockWriteBytes]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldBlockWriteBytes)
+				fieldSeen[resourceusagesample.FieldBlockWriteBytes] = struct{}{}
+			}
+		case "sampledAt":
+			if _, ok := fieldSeen[resourceusagesample.FieldSampledAt]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldSampledAt)
+				fieldSeen[resourceusagesample.FieldSampledAt] = struct{}{}
+			}
+		case "createdAt":
+			if _, ok := fieldSeen[resourceusagesample.FieldCreatedAt]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldCreatedAt)
+				fieldSeen[resourceusagesample.FieldCreatedAt] = struct{}{}
+			}
+		case "id":
+		case "__typename":
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		_q.Select(selectedFields...)
+	}
+	return nil
+}
+
+type resourceusagesamplePaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []ResourceUsageSamplePaginateOption
+}
+
+func newResourceUsageSamplePaginateArgs(rv map[string]any) *resourceusagesamplePaginateArgs {
+	args := &resourceusagesamplePaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*ResourceUsageSampleWhereInput); ok {
+		args.opts = append(args.opts, WithResourceUsageSampleFilter(v.Filter))
 	}
 	return args
 }

@@ -11,6 +11,8 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -22,16 +24,20 @@ import (
 // BotRunnerQuery is the builder for querying BotRunner entities.
 type BotRunnerQuery struct {
 	config
-	ctx                *QueryContext
-	order              []botrunner.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.BotRunner
-	withBots           *BotQuery
-	withBacktests      *BacktestQuery
-	modifiers          []func(*sql.Selector)
-	loadTotal          []func(context.Context, []*BotRunner) error
-	withNamedBots      map[string]*BotQuery
-	withNamedBacktests map[string]*BacktestQuery
+	ctx                        *QueryContext
+	order                      []botrunner.OrderOption
+	inters                     []Interceptor
+	predicates                 []predicate.BotRunner
+	withBots                   *BotQuery
+	withBacktests              *BacktestQuery
+	withUsageSamples           *ResourceUsageSampleQuery
+	withUsageAggregations      *ResourceUsageAggregationQuery
+	modifiers                  []func(*sql.Selector)
+	loadTotal                  []func(context.Context, []*BotRunner) error
+	withNamedBots              map[string]*BotQuery
+	withNamedBacktests         map[string]*BacktestQuery
+	withNamedUsageSamples      map[string]*ResourceUsageSampleQuery
+	withNamedUsageAggregations map[string]*ResourceUsageAggregationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -105,6 +111,50 @@ func (_q *BotRunnerQuery) QueryBacktests() *BacktestQuery {
 			sqlgraph.From(botrunner.Table, botrunner.FieldID, selector),
 			sqlgraph.To(backtest.Table, backtest.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.BacktestsTable, botrunner.BacktestsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUsageSamples chains the current query on the "usage_samples" edge.
+func (_q *BotRunnerQuery) QueryUsageSamples() *ResourceUsageSampleQuery {
+	query := (&ResourceUsageSampleClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, selector),
+			sqlgraph.To(resourceusagesample.Table, resourceusagesample.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.UsageSamplesTable, botrunner.UsageSamplesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUsageAggregations chains the current query on the "usage_aggregations" edge.
+func (_q *BotRunnerQuery) QueryUsageAggregations() *ResourceUsageAggregationQuery {
+	query := (&ResourceUsageAggregationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, selector),
+			sqlgraph.To(resourceusageaggregation.Table, resourceusageaggregation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.UsageAggregationsTable, botrunner.UsageAggregationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -299,13 +349,15 @@ func (_q *BotRunnerQuery) Clone() *BotRunnerQuery {
 		return nil
 	}
 	return &BotRunnerQuery{
-		config:        _q.config,
-		ctx:           _q.ctx.Clone(),
-		order:         append([]botrunner.OrderOption{}, _q.order...),
-		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.BotRunner{}, _q.predicates...),
-		withBots:      _q.withBots.Clone(),
-		withBacktests: _q.withBacktests.Clone(),
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]botrunner.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.BotRunner{}, _q.predicates...),
+		withBots:              _q.withBots.Clone(),
+		withBacktests:         _q.withBacktests.Clone(),
+		withUsageSamples:      _q.withUsageSamples.Clone(),
+		withUsageAggregations: _q.withUsageAggregations.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -331,6 +383,28 @@ func (_q *BotRunnerQuery) WithBacktests(opts ...func(*BacktestQuery)) *BotRunner
 		opt(query)
 	}
 	_q.withBacktests = query
+	return _q
+}
+
+// WithUsageSamples tells the query-builder to eager-load the nodes that are connected to
+// the "usage_samples" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotRunnerQuery) WithUsageSamples(opts ...func(*ResourceUsageSampleQuery)) *BotRunnerQuery {
+	query := (&ResourceUsageSampleClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withUsageSamples = query
+	return _q
+}
+
+// WithUsageAggregations tells the query-builder to eager-load the nodes that are connected to
+// the "usage_aggregations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotRunnerQuery) WithUsageAggregations(opts ...func(*ResourceUsageAggregationQuery)) *BotRunnerQuery {
+	query := (&ResourceUsageAggregationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withUsageAggregations = query
 	return _q
 }
 
@@ -412,9 +486,11 @@ func (_q *BotRunnerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bo
 	var (
 		nodes       = []*BotRunner{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [4]bool{
 			_q.withBots != nil,
 			_q.withBacktests != nil,
+			_q.withUsageSamples != nil,
+			_q.withUsageAggregations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -452,6 +528,22 @@ func (_q *BotRunnerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bo
 			return nil, err
 		}
 	}
+	if query := _q.withUsageSamples; query != nil {
+		if err := _q.loadUsageSamples(ctx, query, nodes,
+			func(n *BotRunner) { n.Edges.UsageSamples = []*ResourceUsageSample{} },
+			func(n *BotRunner, e *ResourceUsageSample) { n.Edges.UsageSamples = append(n.Edges.UsageSamples, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withUsageAggregations; query != nil {
+		if err := _q.loadUsageAggregations(ctx, query, nodes,
+			func(n *BotRunner) { n.Edges.UsageAggregations = []*ResourceUsageAggregation{} },
+			func(n *BotRunner, e *ResourceUsageAggregation) {
+				n.Edges.UsageAggregations = append(n.Edges.UsageAggregations, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range _q.withNamedBots {
 		if err := _q.loadBots(ctx, query, nodes,
 			func(n *BotRunner) { n.appendNamedBots(name) },
@@ -463,6 +555,20 @@ func (_q *BotRunnerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Bo
 		if err := _q.loadBacktests(ctx, query, nodes,
 			func(n *BotRunner) { n.appendNamedBacktests(name) },
 			func(n *BotRunner, e *Backtest) { n.appendNamedBacktests(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range _q.withNamedUsageSamples {
+		if err := _q.loadUsageSamples(ctx, query, nodes,
+			func(n *BotRunner) { n.appendNamedUsageSamples(name) },
+			func(n *BotRunner, e *ResourceUsageSample) { n.appendNamedUsageSamples(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range _q.withNamedUsageAggregations {
+		if err := _q.loadUsageAggregations(ctx, query, nodes,
+			func(n *BotRunner) { n.appendNamedUsageAggregations(name) },
+			func(n *BotRunner, e *ResourceUsageAggregation) { n.appendNamedUsageAggregations(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -519,6 +625,66 @@ func (_q *BotRunnerQuery) loadBacktests(ctx context.Context, query *BacktestQuer
 	}
 	query.Where(predicate.Backtest(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(botrunner.BacktestsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.RunnerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "runner_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *BotRunnerQuery) loadUsageSamples(ctx context.Context, query *ResourceUsageSampleQuery, nodes []*BotRunner, init func(*BotRunner), assign func(*BotRunner, *ResourceUsageSample)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*BotRunner)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(resourceusagesample.FieldRunnerID)
+	}
+	query.Where(predicate.ResourceUsageSample(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(botrunner.UsageSamplesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.RunnerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "runner_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *BotRunnerQuery) loadUsageAggregations(ctx context.Context, query *ResourceUsageAggregationQuery, nodes []*BotRunner, init func(*BotRunner), assign func(*BotRunner, *ResourceUsageAggregation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*BotRunner)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(resourceusageaggregation.FieldRunnerID)
+	}
+	query.Where(predicate.ResourceUsageAggregation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(botrunner.UsageAggregationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -644,6 +810,34 @@ func (_q *BotRunnerQuery) WithNamedBacktests(name string, opts ...func(*Backtest
 		_q.withNamedBacktests = make(map[string]*BacktestQuery)
 	}
 	_q.withNamedBacktests[name] = query
+	return _q
+}
+
+// WithNamedUsageSamples tells the query-builder to eager-load the nodes that are connected to the "usage_samples"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotRunnerQuery) WithNamedUsageSamples(name string, opts ...func(*ResourceUsageSampleQuery)) *BotRunnerQuery {
+	query := (&ResourceUsageSampleClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if _q.withNamedUsageSamples == nil {
+		_q.withNamedUsageSamples = make(map[string]*ResourceUsageSampleQuery)
+	}
+	_q.withNamedUsageSamples[name] = query
+	return _q
+}
+
+// WithNamedUsageAggregations tells the query-builder to eager-load the nodes that are connected to the "usage_aggregations"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (_q *BotRunnerQuery) WithNamedUsageAggregations(name string, opts ...func(*ResourceUsageAggregationQuery)) *BotRunnerQuery {
+	query := (&ResourceUsageAggregationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if _q.withNamedUsageAggregations == nil {
+		_q.withNamedUsageAggregations = make(map[string]*ResourceUsageAggregationQuery)
+	}
+	_q.withNamedUsageAggregations[name] = query
 	return _q
 }
 

@@ -16,6 +16,8 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 
@@ -41,6 +43,10 @@ type Client struct {
 	BotRunner *BotRunnerClient
 	// Exchange is the client for interacting with the Exchange builders.
 	Exchange *ExchangeClient
+	// ResourceUsageAggregation is the client for interacting with the ResourceUsageAggregation builders.
+	ResourceUsageAggregation *ResourceUsageAggregationClient
+	// ResourceUsageSample is the client for interacting with the ResourceUsageSample builders.
+	ResourceUsageSample *ResourceUsageSampleClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
 	// Trade is the client for interacting with the Trade builders.
@@ -61,6 +67,8 @@ func (c *Client) init() {
 	c.BotMetrics = NewBotMetricsClient(c.config)
 	c.BotRunner = NewBotRunnerClient(c.config)
 	c.Exchange = NewExchangeClient(c.config)
+	c.ResourceUsageAggregation = NewResourceUsageAggregationClient(c.config)
+	c.ResourceUsageSample = NewResourceUsageSampleClient(c.config)
 	c.Strategy = NewStrategyClient(c.config)
 	c.Trade = NewTradeClient(c.config)
 }
@@ -153,15 +161,17 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Backtest:   NewBacktestClient(cfg),
-		Bot:        NewBotClient(cfg),
-		BotMetrics: NewBotMetricsClient(cfg),
-		BotRunner:  NewBotRunnerClient(cfg),
-		Exchange:   NewExchangeClient(cfg),
-		Strategy:   NewStrategyClient(cfg),
-		Trade:      NewTradeClient(cfg),
+		ctx:                      ctx,
+		config:                   cfg,
+		Backtest:                 NewBacktestClient(cfg),
+		Bot:                      NewBotClient(cfg),
+		BotMetrics:               NewBotMetricsClient(cfg),
+		BotRunner:                NewBotRunnerClient(cfg),
+		Exchange:                 NewExchangeClient(cfg),
+		ResourceUsageAggregation: NewResourceUsageAggregationClient(cfg),
+		ResourceUsageSample:      NewResourceUsageSampleClient(cfg),
+		Strategy:                 NewStrategyClient(cfg),
+		Trade:                    NewTradeClient(cfg),
 	}, nil
 }
 
@@ -179,15 +189,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Backtest:   NewBacktestClient(cfg),
-		Bot:        NewBotClient(cfg),
-		BotMetrics: NewBotMetricsClient(cfg),
-		BotRunner:  NewBotRunnerClient(cfg),
-		Exchange:   NewExchangeClient(cfg),
-		Strategy:   NewStrategyClient(cfg),
-		Trade:      NewTradeClient(cfg),
+		ctx:                      ctx,
+		config:                   cfg,
+		Backtest:                 NewBacktestClient(cfg),
+		Bot:                      NewBotClient(cfg),
+		BotMetrics:               NewBotMetricsClient(cfg),
+		BotRunner:                NewBotRunnerClient(cfg),
+		Exchange:                 NewExchangeClient(cfg),
+		ResourceUsageAggregation: NewResourceUsageAggregationClient(cfg),
+		ResourceUsageSample:      NewResourceUsageSampleClient(cfg),
+		Strategy:                 NewStrategyClient(cfg),
+		Trade:                    NewTradeClient(cfg),
 	}, nil
 }
 
@@ -217,7 +229,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Backtest, c.Bot, c.BotMetrics, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
+		c.Backtest, c.Bot, c.BotMetrics, c.BotRunner, c.Exchange,
+		c.ResourceUsageAggregation, c.ResourceUsageSample, c.Strategy, c.Trade,
 	} {
 		n.Use(hooks...)
 	}
@@ -227,7 +240,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Backtest, c.Bot, c.BotMetrics, c.BotRunner, c.Exchange, c.Strategy, c.Trade,
+		c.Backtest, c.Bot, c.BotMetrics, c.BotRunner, c.Exchange,
+		c.ResourceUsageAggregation, c.ResourceUsageSample, c.Strategy, c.Trade,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -246,6 +260,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BotRunner.mutate(ctx, m)
 	case *ExchangeMutation:
 		return c.Exchange.mutate(ctx, m)
+	case *ResourceUsageAggregationMutation:
+		return c.ResourceUsageAggregation.mutate(ctx, m)
+	case *ResourceUsageSampleMutation:
+		return c.ResourceUsageSample.mutate(ctx, m)
 	case *StrategyMutation:
 		return c.Strategy.mutate(ctx, m)
 	case *TradeMutation:
@@ -922,6 +940,38 @@ func (c *BotRunnerClient) QueryBacktests(_m *BotRunner) *BacktestQuery {
 	return query
 }
 
+// QueryUsageSamples queries the usage_samples edge of a BotRunner.
+func (c *BotRunnerClient) QueryUsageSamples(_m *BotRunner) *ResourceUsageSampleQuery {
+	query := (&ResourceUsageSampleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, id),
+			sqlgraph.To(resourceusagesample.Table, resourceusagesample.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.UsageSamplesTable, botrunner.UsageSamplesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUsageAggregations queries the usage_aggregations edge of a BotRunner.
+func (c *BotRunnerClient) QueryUsageAggregations(_m *BotRunner) *ResourceUsageAggregationQuery {
+	query := (&ResourceUsageAggregationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(botrunner.Table, botrunner.FieldID, id),
+			sqlgraph.To(resourceusageaggregation.Table, resourceusageaggregation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, botrunner.UsageAggregationsTable, botrunner.UsageAggregationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *BotRunnerClient) Hooks() []Hook {
 	hooks := c.hooks.BotRunner
@@ -1095,6 +1145,304 @@ func (c *ExchangeClient) mutate(ctx context.Context, m *ExchangeMutation) (Value
 		return (&ExchangeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Exchange mutation op: %q", m.Op())
+	}
+}
+
+// ResourceUsageAggregationClient is a client for the ResourceUsageAggregation schema.
+type ResourceUsageAggregationClient struct {
+	config
+}
+
+// NewResourceUsageAggregationClient returns a client for the ResourceUsageAggregation from the given config.
+func NewResourceUsageAggregationClient(c config) *ResourceUsageAggregationClient {
+	return &ResourceUsageAggregationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `resourceusageaggregation.Hooks(f(g(h())))`.
+func (c *ResourceUsageAggregationClient) Use(hooks ...Hook) {
+	c.hooks.ResourceUsageAggregation = append(c.hooks.ResourceUsageAggregation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `resourceusageaggregation.Intercept(f(g(h())))`.
+func (c *ResourceUsageAggregationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ResourceUsageAggregation = append(c.inters.ResourceUsageAggregation, interceptors...)
+}
+
+// Create returns a builder for creating a ResourceUsageAggregation entity.
+func (c *ResourceUsageAggregationClient) Create() *ResourceUsageAggregationCreate {
+	mutation := newResourceUsageAggregationMutation(c.config, OpCreate)
+	return &ResourceUsageAggregationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ResourceUsageAggregation entities.
+func (c *ResourceUsageAggregationClient) CreateBulk(builders ...*ResourceUsageAggregationCreate) *ResourceUsageAggregationCreateBulk {
+	return &ResourceUsageAggregationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ResourceUsageAggregationClient) MapCreateBulk(slice any, setFunc func(*ResourceUsageAggregationCreate, int)) *ResourceUsageAggregationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ResourceUsageAggregationCreateBulk{err: fmt.Errorf("calling to ResourceUsageAggregationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ResourceUsageAggregationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ResourceUsageAggregationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ResourceUsageAggregation.
+func (c *ResourceUsageAggregationClient) Update() *ResourceUsageAggregationUpdate {
+	mutation := newResourceUsageAggregationMutation(c.config, OpUpdate)
+	return &ResourceUsageAggregationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ResourceUsageAggregationClient) UpdateOne(_m *ResourceUsageAggregation) *ResourceUsageAggregationUpdateOne {
+	mutation := newResourceUsageAggregationMutation(c.config, OpUpdateOne, withResourceUsageAggregation(_m))
+	return &ResourceUsageAggregationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ResourceUsageAggregationClient) UpdateOneID(id uuid.UUID) *ResourceUsageAggregationUpdateOne {
+	mutation := newResourceUsageAggregationMutation(c.config, OpUpdateOne, withResourceUsageAggregationID(id))
+	return &ResourceUsageAggregationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ResourceUsageAggregation.
+func (c *ResourceUsageAggregationClient) Delete() *ResourceUsageAggregationDelete {
+	mutation := newResourceUsageAggregationMutation(c.config, OpDelete)
+	return &ResourceUsageAggregationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ResourceUsageAggregationClient) DeleteOne(_m *ResourceUsageAggregation) *ResourceUsageAggregationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ResourceUsageAggregationClient) DeleteOneID(id uuid.UUID) *ResourceUsageAggregationDeleteOne {
+	builder := c.Delete().Where(resourceusageaggregation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ResourceUsageAggregationDeleteOne{builder}
+}
+
+// Query returns a query builder for ResourceUsageAggregation.
+func (c *ResourceUsageAggregationClient) Query() *ResourceUsageAggregationQuery {
+	return &ResourceUsageAggregationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeResourceUsageAggregation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ResourceUsageAggregation entity by its id.
+func (c *ResourceUsageAggregationClient) Get(ctx context.Context, id uuid.UUID) (*ResourceUsageAggregation, error) {
+	return c.Query().Where(resourceusageaggregation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ResourceUsageAggregationClient) GetX(ctx context.Context, id uuid.UUID) *ResourceUsageAggregation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRunner queries the runner edge of a ResourceUsageAggregation.
+func (c *ResourceUsageAggregationClient) QueryRunner(_m *ResourceUsageAggregation) *BotRunnerQuery {
+	query := (&BotRunnerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(resourceusageaggregation.Table, resourceusageaggregation.FieldID, id),
+			sqlgraph.To(botrunner.Table, botrunner.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, resourceusageaggregation.RunnerTable, resourceusageaggregation.RunnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ResourceUsageAggregationClient) Hooks() []Hook {
+	return c.hooks.ResourceUsageAggregation
+}
+
+// Interceptors returns the client interceptors.
+func (c *ResourceUsageAggregationClient) Interceptors() []Interceptor {
+	return c.inters.ResourceUsageAggregation
+}
+
+func (c *ResourceUsageAggregationClient) mutate(ctx context.Context, m *ResourceUsageAggregationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ResourceUsageAggregationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ResourceUsageAggregationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ResourceUsageAggregationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ResourceUsageAggregationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ResourceUsageAggregation mutation op: %q", m.Op())
+	}
+}
+
+// ResourceUsageSampleClient is a client for the ResourceUsageSample schema.
+type ResourceUsageSampleClient struct {
+	config
+}
+
+// NewResourceUsageSampleClient returns a client for the ResourceUsageSample from the given config.
+func NewResourceUsageSampleClient(c config) *ResourceUsageSampleClient {
+	return &ResourceUsageSampleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `resourceusagesample.Hooks(f(g(h())))`.
+func (c *ResourceUsageSampleClient) Use(hooks ...Hook) {
+	c.hooks.ResourceUsageSample = append(c.hooks.ResourceUsageSample, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `resourceusagesample.Intercept(f(g(h())))`.
+func (c *ResourceUsageSampleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ResourceUsageSample = append(c.inters.ResourceUsageSample, interceptors...)
+}
+
+// Create returns a builder for creating a ResourceUsageSample entity.
+func (c *ResourceUsageSampleClient) Create() *ResourceUsageSampleCreate {
+	mutation := newResourceUsageSampleMutation(c.config, OpCreate)
+	return &ResourceUsageSampleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ResourceUsageSample entities.
+func (c *ResourceUsageSampleClient) CreateBulk(builders ...*ResourceUsageSampleCreate) *ResourceUsageSampleCreateBulk {
+	return &ResourceUsageSampleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ResourceUsageSampleClient) MapCreateBulk(slice any, setFunc func(*ResourceUsageSampleCreate, int)) *ResourceUsageSampleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ResourceUsageSampleCreateBulk{err: fmt.Errorf("calling to ResourceUsageSampleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ResourceUsageSampleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ResourceUsageSampleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ResourceUsageSample.
+func (c *ResourceUsageSampleClient) Update() *ResourceUsageSampleUpdate {
+	mutation := newResourceUsageSampleMutation(c.config, OpUpdate)
+	return &ResourceUsageSampleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ResourceUsageSampleClient) UpdateOne(_m *ResourceUsageSample) *ResourceUsageSampleUpdateOne {
+	mutation := newResourceUsageSampleMutation(c.config, OpUpdateOne, withResourceUsageSample(_m))
+	return &ResourceUsageSampleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ResourceUsageSampleClient) UpdateOneID(id uuid.UUID) *ResourceUsageSampleUpdateOne {
+	mutation := newResourceUsageSampleMutation(c.config, OpUpdateOne, withResourceUsageSampleID(id))
+	return &ResourceUsageSampleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ResourceUsageSample.
+func (c *ResourceUsageSampleClient) Delete() *ResourceUsageSampleDelete {
+	mutation := newResourceUsageSampleMutation(c.config, OpDelete)
+	return &ResourceUsageSampleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ResourceUsageSampleClient) DeleteOne(_m *ResourceUsageSample) *ResourceUsageSampleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ResourceUsageSampleClient) DeleteOneID(id uuid.UUID) *ResourceUsageSampleDeleteOne {
+	builder := c.Delete().Where(resourceusagesample.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ResourceUsageSampleDeleteOne{builder}
+}
+
+// Query returns a query builder for ResourceUsageSample.
+func (c *ResourceUsageSampleClient) Query() *ResourceUsageSampleQuery {
+	return &ResourceUsageSampleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeResourceUsageSample},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ResourceUsageSample entity by its id.
+func (c *ResourceUsageSampleClient) Get(ctx context.Context, id uuid.UUID) (*ResourceUsageSample, error) {
+	return c.Query().Where(resourceusagesample.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ResourceUsageSampleClient) GetX(ctx context.Context, id uuid.UUID) *ResourceUsageSample {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRunner queries the runner edge of a ResourceUsageSample.
+func (c *ResourceUsageSampleClient) QueryRunner(_m *ResourceUsageSample) *BotRunnerQuery {
+	query := (&BotRunnerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(resourceusagesample.Table, resourceusagesample.FieldID, id),
+			sqlgraph.To(botrunner.Table, botrunner.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, resourceusagesample.RunnerTable, resourceusagesample.RunnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ResourceUsageSampleClient) Hooks() []Hook {
+	return c.hooks.ResourceUsageSample
+}
+
+// Interceptors returns the client interceptors.
+func (c *ResourceUsageSampleClient) Interceptors() []Interceptor {
+	return c.inters.ResourceUsageSample
+}
+
+func (c *ResourceUsageSampleClient) mutate(ctx context.Context, m *ResourceUsageSampleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ResourceUsageSampleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ResourceUsageSampleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ResourceUsageSampleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ResourceUsageSampleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ResourceUsageSample mutation op: %q", m.Op())
 	}
 }
 
@@ -1448,10 +1796,11 @@ func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Backtest, Bot, BotMetrics, BotRunner, Exchange, Strategy, Trade []ent.Hook
+		Backtest, Bot, BotMetrics, BotRunner, Exchange, ResourceUsageAggregation,
+		ResourceUsageSample, Strategy, Trade []ent.Hook
 	}
 	inters struct {
-		Backtest, Bot, BotMetrics, BotRunner, Exchange, Strategy,
-		Trade []ent.Interceptor
+		Backtest, Bot, BotMetrics, BotRunner, Exchange, ResourceUsageAggregation,
+		ResourceUsageSample, Strategy, Trade []ent.Interceptor
 	}
 )

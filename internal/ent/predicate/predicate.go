@@ -21,6 +21,12 @@ type BotRunner func(*sql.Selector)
 // Exchange is the predicate function for exchange builders.
 type Exchange func(*sql.Selector)
 
+// ResourceUsageAggregation is the predicate function for resourceusageaggregation builders.
+type ResourceUsageAggregation func(*sql.Selector)
+
+// ResourceUsageSample is the predicate function for resourceusagesample builders.
+type ResourceUsageSample func(*sql.Selector)
+
 // Strategy is the predicate function for strategy builders.
 type Strategy func(*sql.Selector)
 

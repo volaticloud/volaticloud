@@ -92,6 +92,31 @@ func OwnerID(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldOwnerID, v))
 }
 
+// BillingEnabled applies equality check predicate on the "billing_enabled" field. It's identical to BillingEnabledEQ.
+func BillingEnabled(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldBillingEnabled, v))
+}
+
+// CPUPricePerCoreHour applies equality check predicate on the "cpu_price_per_core_hour" field. It's identical to CPUPricePerCoreHourEQ.
+func CPUPricePerCoreHour(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldCPUPricePerCoreHour, v))
+}
+
+// MemoryPricePerGBHour applies equality check predicate on the "memory_price_per_gb_hour" field. It's identical to MemoryPricePerGBHourEQ.
+func MemoryPricePerGBHour(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldMemoryPricePerGBHour, v))
+}
+
+// NetworkPricePerGB applies equality check predicate on the "network_price_per_gb" field. It's identical to NetworkPricePerGBEQ.
+func NetworkPricePerGB(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldNetworkPricePerGB, v))
+}
+
+// StoragePricePerGB applies equality check predicate on the "storage_price_per_gb" field. It's identical to StoragePricePerGBEQ.
+func StoragePricePerGB(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldStoragePricePerGB, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldCreatedAt, v))
@@ -517,6 +542,216 @@ func OwnerIDContainsFold(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldContainsFold(FieldOwnerID, v))
 }
 
+// BillingEnabledEQ applies the EQ predicate on the "billing_enabled" field.
+func BillingEnabledEQ(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldBillingEnabled, v))
+}
+
+// BillingEnabledNEQ applies the NEQ predicate on the "billing_enabled" field.
+func BillingEnabledNEQ(v bool) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldBillingEnabled, v))
+}
+
+// CPUPricePerCoreHourEQ applies the EQ predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldCPUPricePerCoreHour, v))
+}
+
+// CPUPricePerCoreHourNEQ applies the NEQ predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourNEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldCPUPricePerCoreHour, v))
+}
+
+// CPUPricePerCoreHourIn applies the In predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldCPUPricePerCoreHour, vs...))
+}
+
+// CPUPricePerCoreHourNotIn applies the NotIn predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourNotIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldCPUPricePerCoreHour, vs...))
+}
+
+// CPUPricePerCoreHourGT applies the GT predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourGT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldCPUPricePerCoreHour, v))
+}
+
+// CPUPricePerCoreHourGTE applies the GTE predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourGTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldCPUPricePerCoreHour, v))
+}
+
+// CPUPricePerCoreHourLT applies the LT predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourLT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldCPUPricePerCoreHour, v))
+}
+
+// CPUPricePerCoreHourLTE applies the LTE predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourLTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldCPUPricePerCoreHour, v))
+}
+
+// CPUPricePerCoreHourIsNil applies the IsNil predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldCPUPricePerCoreHour))
+}
+
+// CPUPricePerCoreHourNotNil applies the NotNil predicate on the "cpu_price_per_core_hour" field.
+func CPUPricePerCoreHourNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldCPUPricePerCoreHour))
+}
+
+// MemoryPricePerGBHourEQ applies the EQ predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldMemoryPricePerGBHour, v))
+}
+
+// MemoryPricePerGBHourNEQ applies the NEQ predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourNEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldMemoryPricePerGBHour, v))
+}
+
+// MemoryPricePerGBHourIn applies the In predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldMemoryPricePerGBHour, vs...))
+}
+
+// MemoryPricePerGBHourNotIn applies the NotIn predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourNotIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldMemoryPricePerGBHour, vs...))
+}
+
+// MemoryPricePerGBHourGT applies the GT predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourGT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldMemoryPricePerGBHour, v))
+}
+
+// MemoryPricePerGBHourGTE applies the GTE predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourGTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldMemoryPricePerGBHour, v))
+}
+
+// MemoryPricePerGBHourLT applies the LT predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourLT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldMemoryPricePerGBHour, v))
+}
+
+// MemoryPricePerGBHourLTE applies the LTE predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourLTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldMemoryPricePerGBHour, v))
+}
+
+// MemoryPricePerGBHourIsNil applies the IsNil predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldMemoryPricePerGBHour))
+}
+
+// MemoryPricePerGBHourNotNil applies the NotNil predicate on the "memory_price_per_gb_hour" field.
+func MemoryPricePerGBHourNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldMemoryPricePerGBHour))
+}
+
+// NetworkPricePerGBEQ applies the EQ predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldNetworkPricePerGB, v))
+}
+
+// NetworkPricePerGBNEQ applies the NEQ predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBNEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldNetworkPricePerGB, v))
+}
+
+// NetworkPricePerGBIn applies the In predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldNetworkPricePerGB, vs...))
+}
+
+// NetworkPricePerGBNotIn applies the NotIn predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBNotIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldNetworkPricePerGB, vs...))
+}
+
+// NetworkPricePerGBGT applies the GT predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBGT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldNetworkPricePerGB, v))
+}
+
+// NetworkPricePerGBGTE applies the GTE predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBGTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldNetworkPricePerGB, v))
+}
+
+// NetworkPricePerGBLT applies the LT predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBLT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldNetworkPricePerGB, v))
+}
+
+// NetworkPricePerGBLTE applies the LTE predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBLTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldNetworkPricePerGB, v))
+}
+
+// NetworkPricePerGBIsNil applies the IsNil predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldNetworkPricePerGB))
+}
+
+// NetworkPricePerGBNotNil applies the NotNil predicate on the "network_price_per_gb" field.
+func NetworkPricePerGBNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldNetworkPricePerGB))
+}
+
+// StoragePricePerGBEQ applies the EQ predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldEQ(FieldStoragePricePerGB, v))
+}
+
+// StoragePricePerGBNEQ applies the NEQ predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBNEQ(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNEQ(FieldStoragePricePerGB, v))
+}
+
+// StoragePricePerGBIn applies the In predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIn(FieldStoragePricePerGB, vs...))
+}
+
+// StoragePricePerGBNotIn applies the NotIn predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBNotIn(vs ...float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotIn(FieldStoragePricePerGB, vs...))
+}
+
+// StoragePricePerGBGT applies the GT predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBGT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGT(FieldStoragePricePerGB, v))
+}
+
+// StoragePricePerGBGTE applies the GTE predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBGTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldGTE(FieldStoragePricePerGB, v))
+}
+
+// StoragePricePerGBLT applies the LT predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBLT(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLT(FieldStoragePricePerGB, v))
+}
+
+// StoragePricePerGBLTE applies the LTE predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBLTE(v float64) predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldLTE(FieldStoragePricePerGB, v))
+}
+
+// StoragePricePerGBIsNil applies the IsNil predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldStoragePricePerGB))
+}
+
+// StoragePricePerGBNotNil applies the NotNil predicate on the "storage_price_per_gb" field.
+func StoragePricePerGBNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldStoragePricePerGB))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldCreatedAt, v))
@@ -635,6 +870,52 @@ func HasBacktests() predicate.BotRunner {
 func HasBacktestsWith(preds ...predicate.Backtest) predicate.BotRunner {
 	return predicate.BotRunner(func(s *sql.Selector) {
 		step := newBacktestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasUsageSamples applies the HasEdge predicate on the "usage_samples" edge.
+func HasUsageSamples() predicate.BotRunner {
+	return predicate.BotRunner(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UsageSamplesTable, UsageSamplesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUsageSamplesWith applies the HasEdge predicate on the "usage_samples" edge with a given conditions (other predicates).
+func HasUsageSamplesWith(preds ...predicate.ResourceUsageSample) predicate.BotRunner {
+	return predicate.BotRunner(func(s *sql.Selector) {
+		step := newUsageSamplesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasUsageAggregations applies the HasEdge predicate on the "usage_aggregations" edge.
+func HasUsageAggregations() predicate.BotRunner {
+	return predicate.BotRunner(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UsageAggregationsTable, UsageAggregationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUsageAggregationsWith applies the HasEdge predicate on the "usage_aggregations" edge with a given conditions (other predicates).
+func HasUsageAggregationsWith(preds ...predicate.ResourceUsageAggregation) predicate.BotRunner {
+	return predicate.BotRunner(func(s *sql.Selector) {
+		step := newUsageAggregationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

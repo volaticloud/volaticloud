@@ -144,6 +144,22 @@ func (_m *Exchange) Bots(
 	return _m.QueryBots().Paginate(ctx, after, first, before, last, opts...)
 }
 
+func (_m *ResourceUsageAggregation) Runner(ctx context.Context) (*BotRunner, error) {
+	result, err := _m.Edges.RunnerOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryRunner().Only(ctx)
+	}
+	return result, err
+}
+
+func (_m *ResourceUsageSample) Runner(ctx context.Context) (*BotRunner, error) {
+	result, err := _m.Edges.RunnerOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryRunner().Only(ctx)
+	}
+	return result, err
+}
+
 func (_m *Strategy) Bots(
 	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *BotWhereInput,
 ) (*BotConnection, error) {

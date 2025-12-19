@@ -300,7 +300,31 @@ func (d *DockerRuntime) GetBotStatus(ctx context.Context, botID string) (*BotSta
 		cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage - stats.PreCPUStats.CPUUsage.TotalUsage)
 		systemDelta := float64(stats.CPUStats.SystemUsage - stats.PreCPUStats.SystemUsage)
 		if systemDelta > 0 {
-			status.CPUUsage = (cpuDelta / systemDelta) * float64(len(stats.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+			// Use PercpuUsage length for cgroups v1, OnlineCPUs for cgroups v2
+			numCPUs := len(stats.CPUStats.CPUUsage.PercpuUsage)
+			if numCPUs == 0 {
+				numCPUs = int(stats.CPUStats.OnlineCPUs)
+			}
+			if numCPUs == 0 {
+				numCPUs = 1 // fallback to 1 CPU
+			}
+			status.CPUUsage = (cpuDelta / systemDelta) * float64(numCPUs) * 100.0
+		}
+	}
+
+	// Extract network I/O stats (cumulative bytes across all interfaces)
+	for _, netStats := range stats.Networks {
+		status.NetworkRxBytes += int64(netStats.RxBytes)
+		status.NetworkTxBytes += int64(netStats.TxBytes)
+	}
+
+	// Extract disk I/O stats from blkio
+	for _, entry := range stats.BlkioStats.IoServiceBytesRecursive {
+		switch entry.Op {
+		case "read", "Read":
+			status.BlockReadBytes += int64(entry.Value)
+		case "write", "Write":
+			status.BlockWriteBytes += int64(entry.Value)
 		}
 	}
 

@@ -44,6 +44,16 @@ type BotRunner struct {
 	DataDownloadConfig map[string]interface{} `json:"data_download_config,omitempty"`
 	// Group ID (organization) that owns this bot runner
 	OwnerID string `json:"owner_id,omitempty"`
+	// Whether usage tracking and billing is enabled for this runner
+	BillingEnabled bool `json:"billing_enabled,omitempty"`
+	// Price per core-hour in USD (only used if billing_enabled)
+	CPUPricePerCoreHour *float64 `json:"cpu_price_per_core_hour,omitempty"`
+	// Price per GB-hour in USD (only used if billing_enabled)
+	MemoryPricePerGBHour *float64 `json:"memory_price_per_gb_hour,omitempty"`
+	// Price per GB of network transfer in USD (only used if billing_enabled)
+	NetworkPricePerGB *float64 `json:"network_price_per_gb,omitempty"`
+	// Price per GB of disk I/O in USD (only used if billing_enabled)
+	StoragePricePerGB *float64 `json:"storage_price_per_gb,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -60,14 +70,20 @@ type BotRunnerEdges struct {
 	Bots []*Bot `json:"bots,omitempty"`
 	// Backtests holds the value of the backtests edge.
 	Backtests []*Backtest `json:"backtests,omitempty"`
+	// UsageSamples holds the value of the usage_samples edge.
+	UsageSamples []*ResourceUsageSample `json:"usage_samples,omitempty"`
+	// UsageAggregations holds the value of the usage_aggregations edge.
+	UsageAggregations []*ResourceUsageAggregation `json:"usage_aggregations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
 	totalCount [2]map[string]int
 
-	namedBots      map[string][]*Bot
-	namedBacktests map[string][]*Backtest
+	namedBots              map[string][]*Bot
+	namedBacktests         map[string][]*Backtest
+	namedUsageSamples      map[string][]*ResourceUsageSample
+	namedUsageAggregations map[string][]*ResourceUsageAggregation
 }
 
 // BotsOrErr returns the Bots value or an error if the edge
@@ -88,6 +104,24 @@ func (e BotRunnerEdges) BacktestsOrErr() ([]*Backtest, error) {
 	return nil, &NotLoadedError{edge: "backtests"}
 }
 
+// UsageSamplesOrErr returns the UsageSamples value or an error if the edge
+// was not loaded in eager-loading.
+func (e BotRunnerEdges) UsageSamplesOrErr() ([]*ResourceUsageSample, error) {
+	if e.loadedTypes[2] {
+		return e.UsageSamples, nil
+	}
+	return nil, &NotLoadedError{edge: "usage_samples"}
+}
+
+// UsageAggregationsOrErr returns the UsageAggregations value or an error if the edge
+// was not loaded in eager-loading.
+func (e BotRunnerEdges) UsageAggregationsOrErr() ([]*ResourceUsageAggregation, error) {
+	if e.loadedTypes[3] {
+		return e.UsageAggregations, nil
+	}
+	return nil, &NotLoadedError{edge: "usage_aggregations"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*BotRunner) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -95,8 +129,10 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig:
 			values[i] = new([]byte)
-		case botrunner.FieldPublic, botrunner.FieldDataIsReady:
+		case botrunner.FieldPublic, botrunner.FieldDataIsReady, botrunner.FieldBillingEnabled:
 			values[i] = new(sql.NullBool)
+		case botrunner.FieldCPUPricePerCoreHour, botrunner.FieldMemoryPricePerGBHour, botrunner.FieldNetworkPricePerGB, botrunner.FieldStoragePricePerGB:
+			values[i] = new(sql.NullFloat64)
 		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage, botrunner.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case botrunner.FieldDataLastUpdated, botrunner.FieldDataDownloadStartedAt, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
@@ -203,6 +239,40 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.OwnerID = value.String
 			}
+		case botrunner.FieldBillingEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field billing_enabled", values[i])
+			} else if value.Valid {
+				_m.BillingEnabled = value.Bool
+			}
+		case botrunner.FieldCPUPricePerCoreHour:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field cpu_price_per_core_hour", values[i])
+			} else if value.Valid {
+				_m.CPUPricePerCoreHour = new(float64)
+				*_m.CPUPricePerCoreHour = value.Float64
+			}
+		case botrunner.FieldMemoryPricePerGBHour:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field memory_price_per_gb_hour", values[i])
+			} else if value.Valid {
+				_m.MemoryPricePerGBHour = new(float64)
+				*_m.MemoryPricePerGBHour = value.Float64
+			}
+		case botrunner.FieldNetworkPricePerGB:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field network_price_per_gb", values[i])
+			} else if value.Valid {
+				_m.NetworkPricePerGB = new(float64)
+				*_m.NetworkPricePerGB = value.Float64
+			}
+		case botrunner.FieldStoragePricePerGB:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field storage_price_per_gb", values[i])
+			} else if value.Valid {
+				_m.StoragePricePerGB = new(float64)
+				*_m.StoragePricePerGB = value.Float64
+			}
 		case botrunner.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -236,6 +306,16 @@ func (_m *BotRunner) QueryBots() *BotQuery {
 // QueryBacktests queries the "backtests" edge of the BotRunner entity.
 func (_m *BotRunner) QueryBacktests() *BacktestQuery {
 	return NewBotRunnerClient(_m.config).QueryBacktests(_m)
+}
+
+// QueryUsageSamples queries the "usage_samples" edge of the BotRunner entity.
+func (_m *BotRunner) QueryUsageSamples() *ResourceUsageSampleQuery {
+	return NewBotRunnerClient(_m.config).QueryUsageSamples(_m)
+}
+
+// QueryUsageAggregations queries the "usage_aggregations" edge of the BotRunner entity.
+func (_m *BotRunner) QueryUsageAggregations() *ResourceUsageAggregationQuery {
+	return NewBotRunnerClient(_m.config).QueryUsageAggregations(_m)
 }
 
 // Update returns a builder for updating this BotRunner.
@@ -299,6 +379,29 @@ func (_m *BotRunner) String() string {
 	builder.WriteString("owner_id=")
 	builder.WriteString(_m.OwnerID)
 	builder.WriteString(", ")
+	builder.WriteString("billing_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.BillingEnabled))
+	builder.WriteString(", ")
+	if v := _m.CPUPricePerCoreHour; v != nil {
+		builder.WriteString("cpu_price_per_core_hour=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.MemoryPricePerGBHour; v != nil {
+		builder.WriteString("memory_price_per_gb_hour=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.NetworkPricePerGB; v != nil {
+		builder.WriteString("network_price_per_gb=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.StoragePricePerGB; v != nil {
+		builder.WriteString("storage_price_per_gb=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
@@ -353,6 +456,54 @@ func (_m *BotRunner) appendNamedBacktests(name string, edges ...*Backtest) {
 		_m.Edges.namedBacktests[name] = []*Backtest{}
 	} else {
 		_m.Edges.namedBacktests[name] = append(_m.Edges.namedBacktests[name], edges...)
+	}
+}
+
+// NamedUsageSamples returns the UsageSamples named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (_m *BotRunner) NamedUsageSamples(name string) ([]*ResourceUsageSample, error) {
+	if _m.Edges.namedUsageSamples == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := _m.Edges.namedUsageSamples[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (_m *BotRunner) appendNamedUsageSamples(name string, edges ...*ResourceUsageSample) {
+	if _m.Edges.namedUsageSamples == nil {
+		_m.Edges.namedUsageSamples = make(map[string][]*ResourceUsageSample)
+	}
+	if len(edges) == 0 {
+		_m.Edges.namedUsageSamples[name] = []*ResourceUsageSample{}
+	} else {
+		_m.Edges.namedUsageSamples[name] = append(_m.Edges.namedUsageSamples[name], edges...)
+	}
+}
+
+// NamedUsageAggregations returns the UsageAggregations named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (_m *BotRunner) NamedUsageAggregations(name string) ([]*ResourceUsageAggregation, error) {
+	if _m.Edges.namedUsageAggregations == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := _m.Edges.namedUsageAggregations[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (_m *BotRunner) appendNamedUsageAggregations(name string, edges ...*ResourceUsageAggregation) {
+	if _m.Edges.namedUsageAggregations == nil {
+		_m.Edges.namedUsageAggregations = make(map[string][]*ResourceUsageAggregation)
+	}
+	if len(edges) == 0 {
+		_m.Edges.namedUsageAggregations[name] = []*ResourceUsageAggregation{}
+	} else {
+		_m.Edges.namedUsageAggregations[name] = append(_m.Edges.namedUsageAggregations[name], edges...)
 	}
 }
 

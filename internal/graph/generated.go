@@ -48,6 +48,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Backtest() BacktestResolver
+	Bot() BotResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -60,22 +61,23 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Backtest struct {
-		CompletedAt  func(childComplexity int) int
-		ContainerID  func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		EndDate      func(childComplexity int) int
-		ErrorMessage func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Logs         func(childComplexity int) int
-		Result       func(childComplexity int) int
-		Runner       func(childComplexity int) int
-		RunnerID     func(childComplexity int) int
-		StartDate    func(childComplexity int) int
-		Status       func(childComplexity int) int
-		Strategy     func(childComplexity int) int
-		StrategyID   func(childComplexity int) int
-		Summary      func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
+		CompletedAt   func(childComplexity int) int
+		ContainerID   func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		EndDate       func(childComplexity int) int
+		ErrorMessage  func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Logs          func(childComplexity int) int
+		ResourceUsage func(childComplexity int) int
+		Result        func(childComplexity int) int
+		Runner        func(childComplexity int) int
+		RunnerID      func(childComplexity int) int
+		StartDate     func(childComplexity int) int
+		Status        func(childComplexity int) int
+		Strategy      func(childComplexity int) int
+		StrategyID    func(childComplexity int) int
+		Summary       func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
 	}
 
 	BacktestConnection struct {
@@ -126,6 +128,7 @@ type ComplexityRoot struct {
 		Name             func(childComplexity int) int
 		OwnerID          func(childComplexity int) int
 		Public           func(childComplexity int) int
+		RecentUsage      func(childComplexity int) int
 		Runner           func(childComplexity int) int
 		RunnerID         func(childComplexity int) int
 		Status           func(childComplexity int) int
@@ -174,7 +177,9 @@ type ComplexityRoot struct {
 
 	BotRunner struct {
 		Backtests             func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
+		BillingEnabled        func(childComplexity int) int
 		Bots                  func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
+		CPUPricePerCoreHour   func(childComplexity int) int
 		Config                func(childComplexity int) int
 		CreatedAt             func(childComplexity int) int
 		DataDownloadConfig    func(childComplexity int) int
@@ -185,9 +190,12 @@ type ComplexityRoot struct {
 		DataIsReady           func(childComplexity int) int
 		DataLastUpdated       func(childComplexity int) int
 		ID                    func(childComplexity int) int
+		MemoryPricePerGBHour  func(childComplexity int) int
 		Name                  func(childComplexity int) int
+		NetworkPricePerGB     func(childComplexity int) int
 		OwnerID               func(childComplexity int) int
 		Public                func(childComplexity int) int
+		StoragePricePerGB     func(childComplexity int) int
 		Type                  func(childComplexity int) int
 		UpdatedAt             func(childComplexity int) int
 	}
@@ -292,17 +300,62 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Backtests          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
-		BotMetricsSlice    func(childComplexity int) int
-		BotRunners         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) int
-		Bots               func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
-		Exchanges          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) int
-		GetBotRunnerStatus func(childComplexity int, id uuid.UUID) int
-		Node               func(childComplexity int, id uuid.UUID) int
-		Nodes              func(childComplexity int, ids []uuid.UUID) int
-		Strategies         func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) int
-		StrategyVersions   func(childComplexity int, name string) int
-		Trades             func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
+		Backtests                 func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BacktestWhereInput) int
+		BotMetricsSlice           func(childComplexity int) int
+		BotRunners                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) int
+		Bots                      func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
+		EstimatedCost             func(childComplexity int, ownerID string, start time.Time, end time.Time) int
+		Exchanges                 func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) int
+		GetBotRunnerStatus        func(childComplexity int, id uuid.UUID) int
+		Node                      func(childComplexity int, id uuid.UUID) int
+		Nodes                     func(childComplexity int, ids []uuid.UUID) int
+		OrganizationUsage         func(childComplexity int, ownerID string, start time.Time, end time.Time) int
+		ResourceUsageAggregations func(childComplexity int) int
+		ResourceUsageSamples      func(childComplexity int) int
+		Strategies                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) int
+		StrategyVersions          func(childComplexity int, name string) int
+		Trades                    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
+	}
+
+	ResourceUsageAggregation struct {
+		BlockReadBytes  func(childComplexity int) int
+		BlockWriteBytes func(childComplexity int) int
+		BucketEnd       func(childComplexity int) int
+		BucketStart     func(childComplexity int) int
+		CPUAvgPercent   func(childComplexity int) int
+		CPUCoreSeconds  func(childComplexity int) int
+		CPUMaxPercent   func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Granularity     func(childComplexity int) int
+		ID              func(childComplexity int) int
+		MemoryAvgBytes  func(childComplexity int) int
+		MemoryGBSeconds func(childComplexity int) int
+		MemoryMaxBytes  func(childComplexity int) int
+		NetworkRxBytes  func(childComplexity int) int
+		NetworkTxBytes  func(childComplexity int) int
+		OwnerID         func(childComplexity int) int
+		ResourceID      func(childComplexity int) int
+		ResourceType    func(childComplexity int) int
+		Runner          func(childComplexity int) int
+		RunnerID        func(childComplexity int) int
+		SampleCount     func(childComplexity int) int
+	}
+
+	ResourceUsageSample struct {
+		BlockReadBytes  func(childComplexity int) int
+		BlockWriteBytes func(childComplexity int) int
+		CPUPercent      func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		ID              func(childComplexity int) int
+		MemoryBytes     func(childComplexity int) int
+		NetworkRxBytes  func(childComplexity int) int
+		NetworkTxBytes  func(childComplexity int) int
+		OwnerID         func(childComplexity int) int
+		ResourceID      func(childComplexity int) int
+		ResourceType    func(childComplexity int) int
+		Runner          func(childComplexity int) int
+		RunnerID        func(childComplexity int) int
+		SampledAt       func(childComplexity int) int
 	}
 
 	Strategy struct {
@@ -367,10 +420,23 @@ type ComplexityRoot struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
+
+	UsageCost struct {
+		CPUCost     func(childComplexity int) int
+		Currency    func(childComplexity int) int
+		MemoryCost  func(childComplexity int) int
+		NetworkCost func(childComplexity int) int
+		StorageCost func(childComplexity int) int
+		TotalCost   func(childComplexity int) int
+	}
 }
 
 type BacktestResolver interface {
 	Summary(ctx context.Context, obj *ent.Backtest) (*backtest.BacktestSummary, error)
+	ResourceUsage(ctx context.Context, obj *ent.Backtest) (*ent.ResourceUsageAggregation, error)
+}
+type BotResolver interface {
+	RecentUsage(ctx context.Context, obj *ent.Bot) (*ent.ResourceUsageAggregation, error)
 }
 type MutationResolver interface {
 	CreateExchange(ctx context.Context, input ent.CreateExchangeInput) (*ent.Exchange, error)
@@ -410,10 +476,14 @@ type QueryResolver interface {
 	BotMetricsSlice(ctx context.Context) ([]*ent.BotMetrics, error)
 	BotRunners(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotRunnerWhereInput) (*ent.BotRunnerConnection, error)
 	Exchanges(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) (*ent.ExchangeConnection, error)
+	ResourceUsageAggregations(ctx context.Context) ([]*ent.ResourceUsageAggregation, error)
+	ResourceUsageSamples(ctx context.Context) ([]*ent.ResourceUsageSample, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
 	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
 	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
 	StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error)
+	OrganizationUsage(ctx context.Context, ownerID string, start time.Time, end time.Time) (*ent.ResourceUsageAggregation, error)
+	EstimatedCost(ctx context.Context, ownerID string, start time.Time, end time.Time) (*model.UsageCost, error)
 }
 
 type executableSchema struct {
@@ -477,6 +547,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.Logs(childComplexity), true
+	case "Backtest.resourceUsage":
+		if e.complexity.Backtest.ResourceUsage == nil {
+			break
+		}
+
+		return e.complexity.Backtest.ResourceUsage(childComplexity), true
 	case "Backtest.result":
 		if e.complexity.Backtest.Result == nil {
 			break
@@ -763,6 +839,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bot.Public(childComplexity), true
+	case "Bot.recentUsage":
+		if e.complexity.Bot.RecentUsage == nil {
+			break
+		}
+
+		return e.complexity.Bot.RecentUsage(childComplexity), true
 	case "Bot.runner":
 		if e.complexity.Bot.Runner == nil {
 			break
@@ -993,6 +1075,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.Backtests(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BacktestWhereInput)), true
+	case "BotRunner.billingEnabled":
+		if e.complexity.BotRunner.BillingEnabled == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.BillingEnabled(childComplexity), true
 	case "BotRunner.bots":
 		if e.complexity.BotRunner.Bots == nil {
 			break
@@ -1004,6 +1092,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BotWhereInput)), true
+	case "BotRunner.cpuPricePerCoreHour":
+		if e.complexity.BotRunner.CPUPricePerCoreHour == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.CPUPricePerCoreHour(childComplexity), true
 	case "BotRunner.config":
 		if e.complexity.BotRunner.Config == nil {
 			break
@@ -1064,12 +1158,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.ID(childComplexity), true
+	case "BotRunner.memoryPricePerGBHour":
+		if e.complexity.BotRunner.MemoryPricePerGBHour == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.MemoryPricePerGBHour(childComplexity), true
 	case "BotRunner.name":
 		if e.complexity.BotRunner.Name == nil {
 			break
 		}
 
 		return e.complexity.BotRunner.Name(childComplexity), true
+	case "BotRunner.networkPricePerGB":
+		if e.complexity.BotRunner.NetworkPricePerGB == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.NetworkPricePerGB(childComplexity), true
 	case "BotRunner.ownerID":
 		if e.complexity.BotRunner.OwnerID == nil {
 			break
@@ -1082,6 +1188,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.Public(childComplexity), true
+	case "BotRunner.storagePricePerGB":
+		if e.complexity.BotRunner.StoragePricePerGB == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.StoragePricePerGB(childComplexity), true
 	case "BotRunner.type":
 		if e.complexity.BotRunner.Type == nil {
 			break
@@ -1703,6 +1815,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BotWhereInput)), true
+	case "Query.estimatedCost":
+		if e.complexity.Query.EstimatedCost == nil {
+			break
+		}
+
+		args, err := ec.field_Query_estimatedCost_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.EstimatedCost(childComplexity, args["ownerID"].(string), args["start"].(time.Time), args["end"].(time.Time)), true
 	case "Query.exchanges":
 		if e.complexity.Query.Exchanges == nil {
 			break
@@ -1747,6 +1870,29 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Nodes(childComplexity, args["ids"].([]uuid.UUID)), true
+	case "Query.organizationUsage":
+		if e.complexity.Query.OrganizationUsage == nil {
+			break
+		}
+
+		args, err := ec.field_Query_organizationUsage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OrganizationUsage(childComplexity, args["ownerID"].(string), args["start"].(time.Time), args["end"].(time.Time)), true
+	case "Query.resourceUsageAggregations":
+		if e.complexity.Query.ResourceUsageAggregations == nil {
+			break
+		}
+
+		return e.complexity.Query.ResourceUsageAggregations(childComplexity), true
+	case "Query.resourceUsageSamples":
+		if e.complexity.Query.ResourceUsageSamples == nil {
+			break
+		}
+
+		return e.complexity.Query.ResourceUsageSamples(childComplexity), true
 	case "Query.strategies":
 		if e.complexity.Query.Strategies == nil {
 			break
@@ -1780,6 +1926,218 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.TradeWhereInput)), true
+
+	case "ResourceUsageAggregation.blockReadBytes":
+		if e.complexity.ResourceUsageAggregation.BlockReadBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.BlockReadBytes(childComplexity), true
+	case "ResourceUsageAggregation.blockWriteBytes":
+		if e.complexity.ResourceUsageAggregation.BlockWriteBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.BlockWriteBytes(childComplexity), true
+	case "ResourceUsageAggregation.bucketEnd":
+		if e.complexity.ResourceUsageAggregation.BucketEnd == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.BucketEnd(childComplexity), true
+	case "ResourceUsageAggregation.bucketStart":
+		if e.complexity.ResourceUsageAggregation.BucketStart == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.BucketStart(childComplexity), true
+	case "ResourceUsageAggregation.cpuAvgPercent":
+		if e.complexity.ResourceUsageAggregation.CPUAvgPercent == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.CPUAvgPercent(childComplexity), true
+	case "ResourceUsageAggregation.cpuCoreSeconds":
+		if e.complexity.ResourceUsageAggregation.CPUCoreSeconds == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.CPUCoreSeconds(childComplexity), true
+	case "ResourceUsageAggregation.cpuMaxPercent":
+		if e.complexity.ResourceUsageAggregation.CPUMaxPercent == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.CPUMaxPercent(childComplexity), true
+	case "ResourceUsageAggregation.createdAt":
+		if e.complexity.ResourceUsageAggregation.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.CreatedAt(childComplexity), true
+	case "ResourceUsageAggregation.granularity":
+		if e.complexity.ResourceUsageAggregation.Granularity == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.Granularity(childComplexity), true
+	case "ResourceUsageAggregation.id":
+		if e.complexity.ResourceUsageAggregation.ID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.ID(childComplexity), true
+	case "ResourceUsageAggregation.memoryAvgBytes":
+		if e.complexity.ResourceUsageAggregation.MemoryAvgBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.MemoryAvgBytes(childComplexity), true
+	case "ResourceUsageAggregation.memoryGBSeconds":
+		if e.complexity.ResourceUsageAggregation.MemoryGBSeconds == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.MemoryGBSeconds(childComplexity), true
+	case "ResourceUsageAggregation.memoryMaxBytes":
+		if e.complexity.ResourceUsageAggregation.MemoryMaxBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.MemoryMaxBytes(childComplexity), true
+	case "ResourceUsageAggregation.networkRxBytes":
+		if e.complexity.ResourceUsageAggregation.NetworkRxBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.NetworkRxBytes(childComplexity), true
+	case "ResourceUsageAggregation.networkTxBytes":
+		if e.complexity.ResourceUsageAggregation.NetworkTxBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.NetworkTxBytes(childComplexity), true
+	case "ResourceUsageAggregation.ownerID":
+		if e.complexity.ResourceUsageAggregation.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.OwnerID(childComplexity), true
+	case "ResourceUsageAggregation.resourceID":
+		if e.complexity.ResourceUsageAggregation.ResourceID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.ResourceID(childComplexity), true
+	case "ResourceUsageAggregation.resourceType":
+		if e.complexity.ResourceUsageAggregation.ResourceType == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.ResourceType(childComplexity), true
+	case "ResourceUsageAggregation.runner":
+		if e.complexity.ResourceUsageAggregation.Runner == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.Runner(childComplexity), true
+	case "ResourceUsageAggregation.runnerID":
+		if e.complexity.ResourceUsageAggregation.RunnerID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.RunnerID(childComplexity), true
+	case "ResourceUsageAggregation.sampleCount":
+		if e.complexity.ResourceUsageAggregation.SampleCount == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageAggregation.SampleCount(childComplexity), true
+
+	case "ResourceUsageSample.blockReadBytes":
+		if e.complexity.ResourceUsageSample.BlockReadBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.BlockReadBytes(childComplexity), true
+	case "ResourceUsageSample.blockWriteBytes":
+		if e.complexity.ResourceUsageSample.BlockWriteBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.BlockWriteBytes(childComplexity), true
+	case "ResourceUsageSample.cpuPercent":
+		if e.complexity.ResourceUsageSample.CPUPercent == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.CPUPercent(childComplexity), true
+	case "ResourceUsageSample.createdAt":
+		if e.complexity.ResourceUsageSample.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.CreatedAt(childComplexity), true
+	case "ResourceUsageSample.id":
+		if e.complexity.ResourceUsageSample.ID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.ID(childComplexity), true
+	case "ResourceUsageSample.memoryBytes":
+		if e.complexity.ResourceUsageSample.MemoryBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.MemoryBytes(childComplexity), true
+	case "ResourceUsageSample.networkRxBytes":
+		if e.complexity.ResourceUsageSample.NetworkRxBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.NetworkRxBytes(childComplexity), true
+	case "ResourceUsageSample.networkTxBytes":
+		if e.complexity.ResourceUsageSample.NetworkTxBytes == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.NetworkTxBytes(childComplexity), true
+	case "ResourceUsageSample.ownerID":
+		if e.complexity.ResourceUsageSample.OwnerID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.OwnerID(childComplexity), true
+	case "ResourceUsageSample.resourceID":
+		if e.complexity.ResourceUsageSample.ResourceID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.ResourceID(childComplexity), true
+	case "ResourceUsageSample.resourceType":
+		if e.complexity.ResourceUsageSample.ResourceType == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.ResourceType(childComplexity), true
+	case "ResourceUsageSample.runner":
+		if e.complexity.ResourceUsageSample.Runner == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.Runner(childComplexity), true
+	case "ResourceUsageSample.runnerID":
+		if e.complexity.ResourceUsageSample.RunnerID == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.RunnerID(childComplexity), true
+	case "ResourceUsageSample.sampledAt":
+		if e.complexity.ResourceUsageSample.SampledAt == nil {
+			break
+		}
+
+		return e.complexity.ResourceUsageSample.SampledAt(childComplexity), true
 
 	case "Strategy.backtest":
 		if e.complexity.Strategy.Backtest == nil {
@@ -2062,6 +2420,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TradeEdge.Node(childComplexity), true
 
+	case "UsageCost.cpuCost":
+		if e.complexity.UsageCost.CPUCost == nil {
+			break
+		}
+
+		return e.complexity.UsageCost.CPUCost(childComplexity), true
+	case "UsageCost.currency":
+		if e.complexity.UsageCost.Currency == nil {
+			break
+		}
+
+		return e.complexity.UsageCost.Currency(childComplexity), true
+	case "UsageCost.memoryCost":
+		if e.complexity.UsageCost.MemoryCost == nil {
+			break
+		}
+
+		return e.complexity.UsageCost.MemoryCost(childComplexity), true
+	case "UsageCost.networkCost":
+		if e.complexity.UsageCost.NetworkCost == nil {
+			break
+		}
+
+		return e.complexity.UsageCost.NetworkCost(childComplexity), true
+	case "UsageCost.storageCost":
+		if e.complexity.UsageCost.StorageCost == nil {
+			break
+		}
+
+		return e.complexity.UsageCost.StorageCost(childComplexity), true
+	case "UsageCost.totalCost":
+		if e.complexity.UsageCost.TotalCost == nil {
+			break
+		}
+
+		return e.complexity.UsageCost.TotalCost(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -2094,6 +2489,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputLocalConfigInput,
 		ec.unmarshalInputPassphraseExchangeConfigInput,
 		ec.unmarshalInputRegistryAuthInput,
+		ec.unmarshalInputResourceUsageAggregationWhereInput,
+		ec.unmarshalInputResourceUsageSampleWhereInput,
 		ec.unmarshalInputRunnerConfigInput,
 		ec.unmarshalInputStrategyWhereInput,
 		ec.unmarshalInputTradeWhereInput,
@@ -2833,6 +3230,27 @@ func (ec *executionContext) field_Query_bots_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_estimatedCost_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "start", ec.unmarshalNTime2timeᚐTime)
+	if err != nil {
+		return nil, err
+	}
+	args["start"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "end", ec.unmarshalNTime2timeᚐTime)
+	if err != nil {
+		return nil, err
+	}
+	args["end"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_exchanges_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2894,6 +3312,27 @@ func (ec *executionContext) field_Query_nodes_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["ids"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_organizationUsage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerID", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerID"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "start", ec.unmarshalNTime2timeᚐTime)
+	if err != nil {
+		return nil, err
+	}
+	args["start"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "end", ec.unmarshalNTime2timeᚐTime)
+	if err != nil {
+		return nil, err
+	}
+	args["end"] = arg2
 	return args, nil
 }
 
@@ -3589,6 +4028,16 @@ func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, fiel
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -3668,6 +4117,79 @@ func (ec *executionContext) fieldContext_Backtest_summary(_ context.Context, fie
 				return ec.fieldContext_BacktestSummary_backtestDays(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BacktestSummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Backtest_resourceUsage(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_resourceUsage,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Backtest().ResourceUsage(ctx, obj)
+		},
+		nil,
+		ec.marshalOResourceUsageAggregation2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregation,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_resourceUsage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ResourceUsageAggregation_id(ctx, field)
+			case "resourceType":
+				return ec.fieldContext_ResourceUsageAggregation_resourceType(ctx, field)
+			case "resourceID":
+				return ec.fieldContext_ResourceUsageAggregation_resourceID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_ResourceUsageAggregation_ownerID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_ResourceUsageAggregation_runnerID(ctx, field)
+			case "granularity":
+				return ec.fieldContext_ResourceUsageAggregation_granularity(ctx, field)
+			case "bucketStart":
+				return ec.fieldContext_ResourceUsageAggregation_bucketStart(ctx, field)
+			case "bucketEnd":
+				return ec.fieldContext_ResourceUsageAggregation_bucketEnd(ctx, field)
+			case "cpuCoreSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_cpuCoreSeconds(ctx, field)
+			case "cpuAvgPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuAvgPercent(ctx, field)
+			case "cpuMaxPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuMaxPercent(ctx, field)
+			case "memoryGBSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_memoryGBSeconds(ctx, field)
+			case "memoryAvgBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryAvgBytes(ctx, field)
+			case "memoryMaxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryMaxBytes(ctx, field)
+			case "networkRxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkRxBytes(ctx, field)
+			case "networkTxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkTxBytes(ctx, field)
+			case "blockReadBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockReadBytes(ctx, field)
+			case "blockWriteBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockWriteBytes(ctx, field)
+			case "sampleCount":
+				return ec.fieldContext_ResourceUsageAggregation_sampleCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ResourceUsageAggregation_createdAt(ctx, field)
+			case "runner":
+				return ec.fieldContext_ResourceUsageAggregation_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUsageAggregation", field.Name)
 		},
 	}
 	return fc, nil
@@ -3832,6 +4354,8 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_runner(ctx, field)
 			case "summary":
 				return ec.fieldContext_Backtest_summary(ctx, field)
+			case "resourceUsage":
+				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -5064,6 +5588,16 @@ func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field gra
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -5200,6 +5734,79 @@ func (ec *executionContext) fieldContext_Bot_metrics(_ context.Context, field gr
 				return ec.fieldContext_BotMetrics_bot(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BotMetrics", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bot_recentUsage(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Bot_recentUsage,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Bot().RecentUsage(ctx, obj)
+		},
+		nil,
+		ec.marshalOResourceUsageAggregation2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregation,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Bot_recentUsage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bot",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ResourceUsageAggregation_id(ctx, field)
+			case "resourceType":
+				return ec.fieldContext_ResourceUsageAggregation_resourceType(ctx, field)
+			case "resourceID":
+				return ec.fieldContext_ResourceUsageAggregation_resourceID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_ResourceUsageAggregation_ownerID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_ResourceUsageAggregation_runnerID(ctx, field)
+			case "granularity":
+				return ec.fieldContext_ResourceUsageAggregation_granularity(ctx, field)
+			case "bucketStart":
+				return ec.fieldContext_ResourceUsageAggregation_bucketStart(ctx, field)
+			case "bucketEnd":
+				return ec.fieldContext_ResourceUsageAggregation_bucketEnd(ctx, field)
+			case "cpuCoreSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_cpuCoreSeconds(ctx, field)
+			case "cpuAvgPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuAvgPercent(ctx, field)
+			case "cpuMaxPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuMaxPercent(ctx, field)
+			case "memoryGBSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_memoryGBSeconds(ctx, field)
+			case "memoryAvgBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryAvgBytes(ctx, field)
+			case "memoryMaxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryMaxBytes(ctx, field)
+			case "networkRxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkRxBytes(ctx, field)
+			case "networkTxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkTxBytes(ctx, field)
+			case "blockReadBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockReadBytes(ctx, field)
+			case "blockWriteBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockWriteBytes(ctx, field)
+			case "sampleCount":
+				return ec.fieldContext_ResourceUsageAggregation_sampleCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ResourceUsageAggregation_createdAt(ctx, field)
+			case "runner":
+				return ec.fieldContext_ResourceUsageAggregation_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUsageAggregation", field.Name)
 		},
 	}
 	return fc, nil
@@ -5374,6 +5981,8 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -6114,6 +6723,8 @@ func (ec *executionContext) fieldContext_BotMetrics_bot(_ context.Context, field
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -6544,6 +7155,151 @@ func (ec *executionContext) fieldContext_BotRunner_ownerID(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _BotRunner_billingEnabled(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_billingEnabled,
+		func(ctx context.Context) (any, error) {
+			return obj.BillingEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_billingEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_cpuPricePerCoreHour(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_cpuPricePerCoreHour,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUPricePerCoreHour, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_cpuPricePerCoreHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_memoryPricePerGBHour(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_memoryPricePerGBHour,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryPricePerGBHour, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_memoryPricePerGBHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_networkPricePerGB(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_networkPricePerGB,
+		func(ctx context.Context) (any, error) {
+			return obj.NetworkPricePerGB, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_networkPricePerGB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_storagePricePerGB(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_storagePricePerGB,
+		func(ctx context.Context) (any, error) {
+			return obj.StoragePricePerGB, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_storagePricePerGB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BotRunner_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6853,6 +7609,16 @@ func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, f
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -8444,6 +9210,8 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -8552,6 +9320,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -8724,6 +9494,8 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -8832,6 +9604,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -8940,6 +9714,8 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -9022,6 +9798,16 @@ func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -9122,6 +9908,16 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -9286,6 +10082,16 @@ func (ec *executionContext) fieldContext_Mutation_refreshRunnerData(ctx context.
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -9444,6 +10250,8 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_runner(ctx, field)
 			case "summary":
 				return ec.fieldContext_Backtest_summary(ctx, field)
+			case "resourceUsage":
+				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -9606,6 +10414,8 @@ func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Contex
 				return ec.fieldContext_Backtest_runner(ctx, field)
 			case "summary":
 				return ec.fieldContext_Backtest_summary(ctx, field)
+			case "resourceUsage":
+				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -9704,6 +10514,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 				return ec.fieldContext_Backtest_runner(ctx, field)
 			case "summary":
 				return ec.fieldContext_Backtest_summary(ctx, field)
+			case "resourceUsage":
+				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -10172,6 +10984,8 @@ func (ec *executionContext) fieldContext_Mutation_setBotVisibility(ctx context.C
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -10264,6 +11078,16 @@ func (ec *executionContext) fieldContext_Mutation_setRunnerVisibility(ctx contex
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_BotRunner_createdAt(ctx, field)
 			case "updatedAt":
@@ -10835,6 +11659,138 @@ func (ec *executionContext) fieldContext_Query_exchanges(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_resourceUsageAggregations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_resourceUsageAggregations,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().ResourceUsageAggregations(ctx)
+		},
+		nil,
+		ec.marshalNResourceUsageAggregation2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_resourceUsageAggregations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ResourceUsageAggregation_id(ctx, field)
+			case "resourceType":
+				return ec.fieldContext_ResourceUsageAggregation_resourceType(ctx, field)
+			case "resourceID":
+				return ec.fieldContext_ResourceUsageAggregation_resourceID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_ResourceUsageAggregation_ownerID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_ResourceUsageAggregation_runnerID(ctx, field)
+			case "granularity":
+				return ec.fieldContext_ResourceUsageAggregation_granularity(ctx, field)
+			case "bucketStart":
+				return ec.fieldContext_ResourceUsageAggregation_bucketStart(ctx, field)
+			case "bucketEnd":
+				return ec.fieldContext_ResourceUsageAggregation_bucketEnd(ctx, field)
+			case "cpuCoreSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_cpuCoreSeconds(ctx, field)
+			case "cpuAvgPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuAvgPercent(ctx, field)
+			case "cpuMaxPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuMaxPercent(ctx, field)
+			case "memoryGBSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_memoryGBSeconds(ctx, field)
+			case "memoryAvgBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryAvgBytes(ctx, field)
+			case "memoryMaxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryMaxBytes(ctx, field)
+			case "networkRxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkRxBytes(ctx, field)
+			case "networkTxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkTxBytes(ctx, field)
+			case "blockReadBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockReadBytes(ctx, field)
+			case "blockWriteBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockWriteBytes(ctx, field)
+			case "sampleCount":
+				return ec.fieldContext_ResourceUsageAggregation_sampleCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ResourceUsageAggregation_createdAt(ctx, field)
+			case "runner":
+				return ec.fieldContext_ResourceUsageAggregation_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUsageAggregation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_resourceUsageSamples(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_resourceUsageSamples,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().ResourceUsageSamples(ctx)
+		},
+		nil,
+		ec.marshalNResourceUsageSample2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_resourceUsageSamples(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ResourceUsageSample_id(ctx, field)
+			case "resourceType":
+				return ec.fieldContext_ResourceUsageSample_resourceType(ctx, field)
+			case "resourceID":
+				return ec.fieldContext_ResourceUsageSample_resourceID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_ResourceUsageSample_ownerID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_ResourceUsageSample_runnerID(ctx, field)
+			case "cpuPercent":
+				return ec.fieldContext_ResourceUsageSample_cpuPercent(ctx, field)
+			case "memoryBytes":
+				return ec.fieldContext_ResourceUsageSample_memoryBytes(ctx, field)
+			case "networkRxBytes":
+				return ec.fieldContext_ResourceUsageSample_networkRxBytes(ctx, field)
+			case "networkTxBytes":
+				return ec.fieldContext_ResourceUsageSample_networkTxBytes(ctx, field)
+			case "blockReadBytes":
+				return ec.fieldContext_ResourceUsageSample_blockReadBytes(ctx, field)
+			case "blockWriteBytes":
+				return ec.fieldContext_ResourceUsageSample_blockWriteBytes(ctx, field)
+			case "sampledAt":
+				return ec.fieldContext_ResourceUsageSample_sampledAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ResourceUsageSample_createdAt(ctx, field)
+			case "runner":
+				return ec.fieldContext_ResourceUsageSample_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUsageSample", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_strategies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11113,6 +12069,172 @@ func (ec *executionContext) fieldContext_Query_strategyVersions(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_organizationUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_organizationUsage,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().OrganizationUsage(ctx, fc.Args["ownerID"].(string), fc.Args["start"].(time.Time), fc.Args["end"].(time.Time))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *ent.ResourceUsageAggregation
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOResourceUsageAggregation2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregation,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_organizationUsage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ResourceUsageAggregation_id(ctx, field)
+			case "resourceType":
+				return ec.fieldContext_ResourceUsageAggregation_resourceType(ctx, field)
+			case "resourceID":
+				return ec.fieldContext_ResourceUsageAggregation_resourceID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_ResourceUsageAggregation_ownerID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_ResourceUsageAggregation_runnerID(ctx, field)
+			case "granularity":
+				return ec.fieldContext_ResourceUsageAggregation_granularity(ctx, field)
+			case "bucketStart":
+				return ec.fieldContext_ResourceUsageAggregation_bucketStart(ctx, field)
+			case "bucketEnd":
+				return ec.fieldContext_ResourceUsageAggregation_bucketEnd(ctx, field)
+			case "cpuCoreSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_cpuCoreSeconds(ctx, field)
+			case "cpuAvgPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuAvgPercent(ctx, field)
+			case "cpuMaxPercent":
+				return ec.fieldContext_ResourceUsageAggregation_cpuMaxPercent(ctx, field)
+			case "memoryGBSeconds":
+				return ec.fieldContext_ResourceUsageAggregation_memoryGBSeconds(ctx, field)
+			case "memoryAvgBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryAvgBytes(ctx, field)
+			case "memoryMaxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_memoryMaxBytes(ctx, field)
+			case "networkRxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkRxBytes(ctx, field)
+			case "networkTxBytes":
+				return ec.fieldContext_ResourceUsageAggregation_networkTxBytes(ctx, field)
+			case "blockReadBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockReadBytes(ctx, field)
+			case "blockWriteBytes":
+				return ec.fieldContext_ResourceUsageAggregation_blockWriteBytes(ctx, field)
+			case "sampleCount":
+				return ec.fieldContext_ResourceUsageAggregation_sampleCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ResourceUsageAggregation_createdAt(ctx, field)
+			case "runner":
+				return ec.fieldContext_ResourceUsageAggregation_runner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUsageAggregation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_organizationUsage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_estimatedCost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_estimatedCost,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().EstimatedCost(ctx, fc.Args["ownerID"].(string), fc.Args["start"].(time.Time), fc.Args["end"].(time.Time))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *model.UsageCost
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNUsageCost2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐUsageCost,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_estimatedCost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cpuCost":
+				return ec.fieldContext_UsageCost_cpuCost(ctx, field)
+			case "memoryCost":
+				return ec.fieldContext_UsageCost_memoryCost(ctx, field)
+			case "networkCost":
+				return ec.fieldContext_UsageCost_networkCost(ctx, field)
+			case "storageCost":
+				return ec.fieldContext_UsageCost_storageCost(ctx, field)
+			case "totalCost":
+				return ec.fieldContext_UsageCost_totalCost(ctx, field)
+			case "currency":
+				return ec.fieldContext_UsageCost_currency(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UsageCost", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_estimatedCost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11216,6 +12338,1113 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_id(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_resourceType(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_resourceType,
+		func(ctx context.Context) (any, error) {
+			return obj.ResourceType, nil
+		},
+		nil,
+		ec.marshalNResourceUsageAggregationResourceType2volaticloudᚋinternalᚋenumᚐResourceType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_resourceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ResourceUsageAggregationResourceType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_resourceID(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_resourceID,
+		func(ctx context.Context) (any, error) {
+			return obj.ResourceID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_resourceID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_runnerID(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_runnerID,
+		func(ctx context.Context) (any, error) {
+			return obj.RunnerID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_runnerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_granularity(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_granularity,
+		func(ctx context.Context) (any, error) {
+			return obj.Granularity, nil
+		},
+		nil,
+		ec.marshalNResourceUsageAggregationAggregationGranularity2volaticloudᚋinternalᚋenumᚐAggregationGranularity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_granularity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ResourceUsageAggregationAggregationGranularity does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_bucketStart(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_bucketStart,
+		func(ctx context.Context) (any, error) {
+			return obj.BucketStart, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_bucketStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_bucketEnd(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_bucketEnd,
+		func(ctx context.Context) (any, error) {
+			return obj.BucketEnd, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_bucketEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_cpuCoreSeconds(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_cpuCoreSeconds,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUCoreSeconds, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_cpuCoreSeconds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_cpuAvgPercent(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_cpuAvgPercent,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUAvgPercent, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_cpuAvgPercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_cpuMaxPercent(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_cpuMaxPercent,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUMaxPercent, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_cpuMaxPercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_memoryGBSeconds(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_memoryGBSeconds,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryGBSeconds, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_memoryGBSeconds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_memoryAvgBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_memoryAvgBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryAvgBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_memoryAvgBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_memoryMaxBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_memoryMaxBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryMaxBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_memoryMaxBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_networkRxBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_networkRxBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.NetworkRxBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_networkRxBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_networkTxBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_networkTxBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.NetworkTxBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_networkTxBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_blockReadBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_blockReadBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.BlockReadBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_blockReadBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_blockWriteBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_blockWriteBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.BlockWriteBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_blockWriteBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_sampleCount(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_sampleCount,
+		func(ctx context.Context) (any, error) {
+			return obj.SampleCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_sampleCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageAggregation_runner(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageAggregation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageAggregation_runner,
+		func(ctx context.Context) (any, error) {
+			return obj.Runner(ctx)
+		},
+		nil,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageAggregation_runner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageAggregation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BotRunner_id(ctx, field)
+			case "public":
+				return ec.fieldContext_BotRunner_public(ctx, field)
+			case "name":
+				return ec.fieldContext_BotRunner_name(ctx, field)
+			case "type":
+				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadStartedAt":
+				return ec.fieldContext_BotRunner_dataDownloadStartedAt(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_id(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_resourceType(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_resourceType,
+		func(ctx context.Context) (any, error) {
+			return obj.ResourceType, nil
+		},
+		nil,
+		ec.marshalNResourceUsageSampleResourceType2volaticloudᚋinternalᚋenumᚐResourceType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_resourceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ResourceUsageSampleResourceType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_resourceID(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_resourceID,
+		func(ctx context.Context) (any, error) {
+			return obj.ResourceID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_resourceID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_ownerID,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_ownerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_runnerID(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_runnerID,
+		func(ctx context.Context) (any, error) {
+			return obj.RunnerID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_runnerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_cpuPercent(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_cpuPercent,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUPercent, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_cpuPercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_memoryBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_memoryBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_memoryBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_networkRxBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_networkRxBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.NetworkRxBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_networkRxBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_networkTxBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_networkTxBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.NetworkTxBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_networkTxBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_blockReadBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_blockReadBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.BlockReadBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_blockReadBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_blockWriteBytes(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_blockWriteBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.BlockWriteBytes, nil
+		},
+		nil,
+		ec.marshalNInt2int64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_blockWriteBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_sampledAt(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_sampledAt,
+		func(ctx context.Context) (any, error) {
+			return obj.SampledAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_sampledAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_createdAt(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUsageSample_runner(ctx context.Context, field graphql.CollectedField, obj *ent.ResourceUsageSample) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceUsageSample_runner,
+		func(ctx context.Context) (any, error) {
+			return obj.Runner(ctx)
+		},
+		nil,
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceUsageSample_runner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUsageSample",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BotRunner_id(ctx, field)
+			case "public":
+				return ec.fieldContext_BotRunner_public(ctx, field)
+			case "name":
+				return ec.fieldContext_BotRunner_name(ctx, field)
+			case "type":
+				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadStartedAt":
+				return ec.fieldContext_BotRunner_dataDownloadStartedAt(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
 		},
 	}
 	return fc, nil
@@ -11720,6 +13949,8 @@ func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, fi
 				return ec.fieldContext_Backtest_runner(ctx, field)
 			case "summary":
 				return ec.fieldContext_Backtest_summary(ctx, field)
+			case "resourceUsage":
+				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
 		},
@@ -12636,6 +14867,8 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_trades(ctx, field)
 			case "metrics":
 				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
 		},
@@ -12839,6 +15072,180 @@ func (ec *executionContext) fieldContext_TradeEdge_cursor(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageCost_cpuCost(ctx context.Context, field graphql.CollectedField, obj *model.UsageCost) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageCost_cpuCost,
+		func(ctx context.Context) (any, error) {
+			return obj.CPUCost, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageCost_cpuCost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageCost_memoryCost(ctx context.Context, field graphql.CollectedField, obj *model.UsageCost) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageCost_memoryCost,
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryCost, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageCost_memoryCost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageCost_networkCost(ctx context.Context, field graphql.CollectedField, obj *model.UsageCost) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageCost_networkCost,
+		func(ctx context.Context) (any, error) {
+			return obj.NetworkCost, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageCost_networkCost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageCost_storageCost(ctx context.Context, field graphql.CollectedField, obj *model.UsageCost) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageCost_storageCost,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageCost, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageCost_storageCost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageCost_totalCost(ctx context.Context, field graphql.CollectedField, obj *model.UsageCost) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageCost_totalCost,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCost, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageCost_totalCost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageCost_currency(ctx context.Context, field graphql.CollectedField, obj *model.UsageCost) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageCost_currency,
+		func(ctx context.Context) (any, error) {
+			return obj.Currency, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageCost_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16757,7 +19164,7 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataDownloadStartedAt", "dataDownloadStartedAtNEQ", "dataDownloadStartedAtIn", "dataDownloadStartedAtNotIn", "dataDownloadStartedAtGT", "dataDownloadStartedAtGTE", "dataDownloadStartedAtLT", "dataDownloadStartedAtLTE", "dataDownloadStartedAtIsNil", "dataDownloadStartedAtNotNil", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataDownloadStartedAt", "dataDownloadStartedAtNEQ", "dataDownloadStartedAtIn", "dataDownloadStartedAtNotIn", "dataDownloadStartedAtGT", "dataDownloadStartedAtGTE", "dataDownloadStartedAtLT", "dataDownloadStartedAtLTE", "dataDownloadStartedAtIsNil", "dataDownloadStartedAtNotNil", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "billingEnabled", "billingEnabledNEQ", "cpuPricePerCoreHour", "cpuPricePerCoreHourNEQ", "cpuPricePerCoreHourIn", "cpuPricePerCoreHourNotIn", "cpuPricePerCoreHourGT", "cpuPricePerCoreHourGTE", "cpuPricePerCoreHourLT", "cpuPricePerCoreHourLTE", "cpuPricePerCoreHourIsNil", "cpuPricePerCoreHourNotNil", "memoryPricePerGBHour", "memoryPricePerGBHourNEQ", "memoryPricePerGBHourIn", "memoryPricePerGBHourNotIn", "memoryPricePerGBHourGT", "memoryPricePerGBHourGTE", "memoryPricePerGBHourLT", "memoryPricePerGBHourLTE", "memoryPricePerGBHourIsNil", "memoryPricePerGBHourNotNil", "networkPricePerGB", "networkPricePerGBNEQ", "networkPricePerGBIn", "networkPricePerGBNotIn", "networkPricePerGBGT", "networkPricePerGBGTE", "networkPricePerGBLT", "networkPricePerGBLTE", "networkPricePerGBIsNil", "networkPricePerGBNotNil", "storagePricePerGB", "storagePricePerGBNEQ", "storagePricePerGBIn", "storagePricePerGBNotIn", "storagePricePerGBGT", "storagePricePerGBGTE", "storagePricePerGBLT", "storagePricePerGBLTE", "storagePricePerGBIsNil", "storagePricePerGBNotNil", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17352,6 +19759,300 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 				return it, err
 			}
 			it.OwnerIDContainsFold = data
+		case "billingEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingEnabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingEnabled = data
+		case "billingEnabledNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingEnabledNEQ"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingEnabledNEQ = data
+		case "cpuPricePerCoreHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHour"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHour = data
+		case "cpuPricePerCoreHourNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourNEQ = data
+		case "cpuPricePerCoreHourIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourIn = data
+		case "cpuPricePerCoreHourNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourNotIn = data
+		case "cpuPricePerCoreHourGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourGT = data
+		case "cpuPricePerCoreHourGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourGTE = data
+		case "cpuPricePerCoreHourLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourLT = data
+		case "cpuPricePerCoreHourLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourLTE = data
+		case "cpuPricePerCoreHourIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourIsNil = data
+		case "cpuPricePerCoreHourNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHourNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHourNotNil = data
+		case "memoryPricePerGBHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHour"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHour = data
+		case "memoryPricePerGBHourNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourNEQ = data
+		case "memoryPricePerGBHourIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourIn = data
+		case "memoryPricePerGBHourNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourNotIn = data
+		case "memoryPricePerGBHourGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourGT = data
+		case "memoryPricePerGBHourGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourGTE = data
+		case "memoryPricePerGBHourLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourLT = data
+		case "memoryPricePerGBHourLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourLTE = data
+		case "memoryPricePerGBHourIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourIsNil = data
+		case "memoryPricePerGBHourNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHourNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHourNotNil = data
+		case "networkPricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGB"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGB = data
+		case "networkPricePerGBNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBNEQ = data
+		case "networkPricePerGBIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBIn = data
+		case "networkPricePerGBNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBNotIn = data
+		case "networkPricePerGBGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBGT = data
+		case "networkPricePerGBGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBGTE = data
+		case "networkPricePerGBLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBLT = data
+		case "networkPricePerGBLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBLTE = data
+		case "networkPricePerGBIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBIsNil = data
+		case "networkPricePerGBNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGBNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGBNotNil = data
+		case "storagePricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGB"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGB = data
+		case "storagePricePerGBNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBNEQ = data
+		case "storagePricePerGBIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBIn = data
+		case "storagePricePerGBNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBNotIn = data
+		case "storagePricePerGBGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBGT = data
+		case "storagePricePerGBGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBGTE = data
+		case "storagePricePerGBLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBLT = data
+		case "storagePricePerGBLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBLTE = data
+		case "storagePricePerGBIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBIsNil = data
+		case "storagePricePerGBNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGBNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGBNotNil = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -18935,7 +21636,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "ownerID", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"public", "name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "memoryPricePerGBHour", "networkPricePerGB", "storagePricePerGB", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19026,6 +21727,41 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.OwnerID = data
+		case "billingEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingEnabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingEnabled = data
+		case "cpuPricePerCoreHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHour"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHour = data
+		case "memoryPricePerGBHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHour"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHour = data
+		case "networkPricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGB"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGB = data
+		case "storagePricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGB"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGB = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -20203,6 +22939,1894 @@ func (ec *executionContext) unmarshalInputRegistryAuthInput(ctx context.Context,
 				return it, err
 			}
 			it.ServerAddress = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputResourceUsageAggregationWhereInput(ctx context.Context, obj any) (ent.ResourceUsageAggregationWhereInput, error) {
+	var it ent.ResourceUsageAggregationWhereInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "resourceType", "resourceTypeNEQ", "resourceTypeIn", "resourceTypeNotIn", "resourceID", "resourceIDNEQ", "resourceIDIn", "resourceIDNotIn", "resourceIDGT", "resourceIDGTE", "resourceIDLT", "resourceIDLTE", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "granularity", "granularityNEQ", "granularityIn", "granularityNotIn", "bucketStart", "bucketStartNEQ", "bucketStartIn", "bucketStartNotIn", "bucketStartGT", "bucketStartGTE", "bucketStartLT", "bucketStartLTE", "bucketEnd", "bucketEndNEQ", "bucketEndIn", "bucketEndNotIn", "bucketEndGT", "bucketEndGTE", "bucketEndLT", "bucketEndLTE", "cpuCoreSeconds", "cpuCoreSecondsNEQ", "cpuCoreSecondsIn", "cpuCoreSecondsNotIn", "cpuCoreSecondsGT", "cpuCoreSecondsGTE", "cpuCoreSecondsLT", "cpuCoreSecondsLTE", "cpuAvgPercent", "cpuAvgPercentNEQ", "cpuAvgPercentIn", "cpuAvgPercentNotIn", "cpuAvgPercentGT", "cpuAvgPercentGTE", "cpuAvgPercentLT", "cpuAvgPercentLTE", "cpuMaxPercent", "cpuMaxPercentNEQ", "cpuMaxPercentIn", "cpuMaxPercentNotIn", "cpuMaxPercentGT", "cpuMaxPercentGTE", "cpuMaxPercentLT", "cpuMaxPercentLTE", "memoryGBSeconds", "memoryGBSecondsNEQ", "memoryGBSecondsIn", "memoryGBSecondsNotIn", "memoryGBSecondsGT", "memoryGBSecondsGTE", "memoryGBSecondsLT", "memoryGBSecondsLTE", "memoryAvgBytes", "memoryAvgBytesNEQ", "memoryAvgBytesIn", "memoryAvgBytesNotIn", "memoryAvgBytesGT", "memoryAvgBytesGTE", "memoryAvgBytesLT", "memoryAvgBytesLTE", "memoryMaxBytes", "memoryMaxBytesNEQ", "memoryMaxBytesIn", "memoryMaxBytesNotIn", "memoryMaxBytesGT", "memoryMaxBytesGTE", "memoryMaxBytesLT", "memoryMaxBytesLTE", "networkRxBytes", "networkRxBytesNEQ", "networkRxBytesIn", "networkRxBytesNotIn", "networkRxBytesGT", "networkRxBytesGTE", "networkRxBytesLT", "networkRxBytesLTE", "networkTxBytes", "networkTxBytesNEQ", "networkTxBytesIn", "networkTxBytesNotIn", "networkTxBytesGT", "networkTxBytesGTE", "networkTxBytesLT", "networkTxBytesLTE", "blockReadBytes", "blockReadBytesNEQ", "blockReadBytesIn", "blockReadBytesNotIn", "blockReadBytesGT", "blockReadBytesGTE", "blockReadBytesLT", "blockReadBytesLTE", "blockWriteBytes", "blockWriteBytesNEQ", "blockWriteBytesIn", "blockWriteBytesNotIn", "blockWriteBytesGT", "blockWriteBytesGTE", "blockWriteBytesLT", "blockWriteBytesLTE", "sampleCount", "sampleCountNEQ", "sampleCountIn", "sampleCountNotIn", "sampleCountGT", "sampleCountGTE", "sampleCountLT", "sampleCountLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "hasRunner", "hasRunnerWith"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "not":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
+			data, err := ec.unmarshalOResourceUsageAggregationWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Not = data
+		case "and":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
+			data, err := ec.unmarshalOResourceUsageAggregationWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.And = data
+		case "or":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
+			data, err := ec.unmarshalOResourceUsageAggregationWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Or = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "idNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDNEQ = data
+		case "idIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDIn = data
+		case "idNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDNotIn = data
+		case "idGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDGT = data
+		case "idGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDGTE = data
+		case "idLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDLT = data
+		case "idLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDLTE = data
+		case "resourceType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceType"))
+			data, err := ec.unmarshalOResourceUsageAggregationResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceType = data
+		case "resourceTypeNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTypeNEQ"))
+			data, err := ec.unmarshalOResourceUsageAggregationResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceTypeNEQ = data
+		case "resourceTypeIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTypeIn"))
+			data, err := ec.unmarshalOResourceUsageAggregationResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceTypeIn = data
+		case "resourceTypeNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTypeNotIn"))
+			data, err := ec.unmarshalOResourceUsageAggregationResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceTypeNotIn = data
+		case "resourceID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceID = data
+		case "resourceIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDNEQ = data
+		case "resourceIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDIn = data
+		case "resourceIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDNotIn = data
+		case "resourceIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDGT = data
+		case "resourceIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDGTE = data
+		case "resourceIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDLT = data
+		case "resourceIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDLTE = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
+		case "runnerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerID = data
+		case "runnerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerIDNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerIDNEQ = data
+		case "runnerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerIDIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerIDIn = data
+		case "runnerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerIDNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerIDNotIn = data
+		case "granularity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("granularity"))
+			data, err := ec.unmarshalOResourceUsageAggregationAggregationGranularity2ᚖvolaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Granularity = data
+		case "granularityNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("granularityNEQ"))
+			data, err := ec.unmarshalOResourceUsageAggregationAggregationGranularity2ᚖvolaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GranularityNEQ = data
+		case "granularityIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("granularityIn"))
+			data, err := ec.unmarshalOResourceUsageAggregationAggregationGranularity2ᚕvolaticloudᚋinternalᚋenumᚐAggregationGranularityᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GranularityIn = data
+		case "granularityNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("granularityNotIn"))
+			data, err := ec.unmarshalOResourceUsageAggregationAggregationGranularity2ᚕvolaticloudᚋinternalᚋenumᚐAggregationGranularityᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GranularityNotIn = data
+		case "bucketStart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStart"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStart = data
+		case "bucketStartNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartNEQ = data
+		case "bucketStartIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartIn = data
+		case "bucketStartNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartNotIn = data
+		case "bucketStartGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartGT = data
+		case "bucketStartGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartGTE = data
+		case "bucketStartLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartLT = data
+		case "bucketStartLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketStartLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketStartLTE = data
+		case "bucketEnd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEnd"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEnd = data
+		case "bucketEndNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndNEQ = data
+		case "bucketEndIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndIn = data
+		case "bucketEndNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndNotIn = data
+		case "bucketEndGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndGT = data
+		case "bucketEndGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndGTE = data
+		case "bucketEndLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndLT = data
+		case "bucketEndLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketEndLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketEndLTE = data
+		case "cpuCoreSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSeconds"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSeconds = data
+		case "cpuCoreSecondsNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsNEQ = data
+		case "cpuCoreSecondsIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsIn = data
+		case "cpuCoreSecondsNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsNotIn = data
+		case "cpuCoreSecondsGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsGT = data
+		case "cpuCoreSecondsGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsGTE = data
+		case "cpuCoreSecondsLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsLT = data
+		case "cpuCoreSecondsLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuCoreSecondsLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUCoreSecondsLTE = data
+		case "cpuAvgPercent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercent"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercent = data
+		case "cpuAvgPercentNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentNEQ = data
+		case "cpuAvgPercentIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentIn = data
+		case "cpuAvgPercentNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentNotIn = data
+		case "cpuAvgPercentGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentGT = data
+		case "cpuAvgPercentGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentGTE = data
+		case "cpuAvgPercentLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentLT = data
+		case "cpuAvgPercentLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuAvgPercentLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUAvgPercentLTE = data
+		case "cpuMaxPercent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercent"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercent = data
+		case "cpuMaxPercentNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentNEQ = data
+		case "cpuMaxPercentIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentIn = data
+		case "cpuMaxPercentNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentNotIn = data
+		case "cpuMaxPercentGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentGT = data
+		case "cpuMaxPercentGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentGTE = data
+		case "cpuMaxPercentLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentLT = data
+		case "cpuMaxPercentLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMaxPercentLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUMaxPercentLTE = data
+		case "memoryGBSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSeconds"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSeconds = data
+		case "memoryGBSecondsNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsNEQ = data
+		case "memoryGBSecondsIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsIn = data
+		case "memoryGBSecondsNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsNotIn = data
+		case "memoryGBSecondsGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsGT = data
+		case "memoryGBSecondsGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsGTE = data
+		case "memoryGBSecondsLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsLT = data
+		case "memoryGBSecondsLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryGBSecondsLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryGBSecondsLTE = data
+		case "memoryAvgBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytes = data
+		case "memoryAvgBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesNEQ = data
+		case "memoryAvgBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesIn = data
+		case "memoryAvgBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesNotIn = data
+		case "memoryAvgBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesGT = data
+		case "memoryAvgBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesGTE = data
+		case "memoryAvgBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesLT = data
+		case "memoryAvgBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryAvgBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryAvgBytesLTE = data
+		case "memoryMaxBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytes = data
+		case "memoryMaxBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesNEQ = data
+		case "memoryMaxBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesIn = data
+		case "memoryMaxBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesNotIn = data
+		case "memoryMaxBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesGT = data
+		case "memoryMaxBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesGTE = data
+		case "memoryMaxBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesLT = data
+		case "memoryMaxBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryMaxBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryMaxBytesLTE = data
+		case "networkRxBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytes = data
+		case "networkRxBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesNEQ = data
+		case "networkRxBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesIn = data
+		case "networkRxBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesNotIn = data
+		case "networkRxBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesGT = data
+		case "networkRxBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesGTE = data
+		case "networkRxBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesLT = data
+		case "networkRxBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesLTE = data
+		case "networkTxBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytes = data
+		case "networkTxBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesNEQ = data
+		case "networkTxBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesIn = data
+		case "networkTxBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesNotIn = data
+		case "networkTxBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesGT = data
+		case "networkTxBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesGTE = data
+		case "networkTxBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesLT = data
+		case "networkTxBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesLTE = data
+		case "blockReadBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytes = data
+		case "blockReadBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesNEQ = data
+		case "blockReadBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesIn = data
+		case "blockReadBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesNotIn = data
+		case "blockReadBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesGT = data
+		case "blockReadBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesGTE = data
+		case "blockReadBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesLT = data
+		case "blockReadBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesLTE = data
+		case "blockWriteBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytes = data
+		case "blockWriteBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesNEQ = data
+		case "blockWriteBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesIn = data
+		case "blockWriteBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesNotIn = data
+		case "blockWriteBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesGT = data
+		case "blockWriteBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesGTE = data
+		case "blockWriteBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesLT = data
+		case "blockWriteBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesLTE = data
+		case "sampleCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCount"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCount = data
+		case "sampleCountNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountNEQ = data
+		case "sampleCountIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountIn"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountIn = data
+		case "sampleCountNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountNotIn"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountNotIn = data
+		case "sampleCountGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountGT"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountGT = data
+		case "sampleCountGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountGTE"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountGTE = data
+		case "sampleCountLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountLT"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountLT = data
+		case "sampleCountLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampleCountLTE"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampleCountLTE = data
+		case "createdAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAt = data
+		case "createdAtNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtNEQ = data
+		case "createdAtIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtIn = data
+		case "createdAtNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtNotIn = data
+		case "createdAtGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtGT = data
+		case "createdAtGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtGTE = data
+		case "createdAtLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtLT = data
+		case "createdAtLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtLTE = data
+		case "hasRunner":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRunner"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasRunner = data
+		case "hasRunnerWith":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRunnerWith"))
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasRunnerWith = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputResourceUsageSampleWhereInput(ctx context.Context, obj any) (ent.ResourceUsageSampleWhereInput, error) {
+	var it ent.ResourceUsageSampleWhereInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "resourceType", "resourceTypeNEQ", "resourceTypeIn", "resourceTypeNotIn", "resourceID", "resourceIDNEQ", "resourceIDIn", "resourceIDNotIn", "resourceIDGT", "resourceIDGTE", "resourceIDLT", "resourceIDLTE", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "cpuPercent", "cpuPercentNEQ", "cpuPercentIn", "cpuPercentNotIn", "cpuPercentGT", "cpuPercentGTE", "cpuPercentLT", "cpuPercentLTE", "memoryBytes", "memoryBytesNEQ", "memoryBytesIn", "memoryBytesNotIn", "memoryBytesGT", "memoryBytesGTE", "memoryBytesLT", "memoryBytesLTE", "networkRxBytes", "networkRxBytesNEQ", "networkRxBytesIn", "networkRxBytesNotIn", "networkRxBytesGT", "networkRxBytesGTE", "networkRxBytesLT", "networkRxBytesLTE", "networkTxBytes", "networkTxBytesNEQ", "networkTxBytesIn", "networkTxBytesNotIn", "networkTxBytesGT", "networkTxBytesGTE", "networkTxBytesLT", "networkTxBytesLTE", "blockReadBytes", "blockReadBytesNEQ", "blockReadBytesIn", "blockReadBytesNotIn", "blockReadBytesGT", "blockReadBytesGTE", "blockReadBytesLT", "blockReadBytesLTE", "blockWriteBytes", "blockWriteBytesNEQ", "blockWriteBytesIn", "blockWriteBytesNotIn", "blockWriteBytesGT", "blockWriteBytesGTE", "blockWriteBytesLT", "blockWriteBytesLTE", "sampledAt", "sampledAtNEQ", "sampledAtIn", "sampledAtNotIn", "sampledAtGT", "sampledAtGTE", "sampledAtLT", "sampledAtLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "hasRunner", "hasRunnerWith"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "not":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("not"))
+			data, err := ec.unmarshalOResourceUsageSampleWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Not = data
+		case "and":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
+			data, err := ec.unmarshalOResourceUsageSampleWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.And = data
+		case "or":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("or"))
+			data, err := ec.unmarshalOResourceUsageSampleWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Or = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "idNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDNEQ = data
+		case "idIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDIn = data
+		case "idNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDNotIn = data
+		case "idGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDGT = data
+		case "idGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idGTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDGTE = data
+		case "idLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDLT = data
+		case "idLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idLTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IDLTE = data
+		case "resourceType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceType"))
+			data, err := ec.unmarshalOResourceUsageSampleResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceType = data
+		case "resourceTypeNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTypeNEQ"))
+			data, err := ec.unmarshalOResourceUsageSampleResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceTypeNEQ = data
+		case "resourceTypeIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTypeIn"))
+			data, err := ec.unmarshalOResourceUsageSampleResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceTypeIn = data
+		case "resourceTypeNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTypeNotIn"))
+			data, err := ec.unmarshalOResourceUsageSampleResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceTypeNotIn = data
+		case "resourceID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceID = data
+		case "resourceIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDNEQ = data
+		case "resourceIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDIn = data
+		case "resourceIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDNotIn = data
+		case "resourceIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDGT = data
+		case "resourceIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDGTE = data
+		case "resourceIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLT"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDLT = data
+		case "resourceIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLTE"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDLTE = data
+		case "ownerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "ownerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNEQ = data
+		case "ownerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDIn = data
+		case "ownerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDNotIn = data
+		case "ownerIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGT = data
+		case "ownerIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDGTE = data
+		case "ownerIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLT = data
+		case "ownerIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDLTE = data
+		case "ownerIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContains = data
+		case "ownerIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasPrefix = data
+		case "ownerIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDHasSuffix = data
+		case "ownerIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDEqualFold = data
+		case "ownerIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerIDContainsFold = data
+		case "runnerID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerID"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerID = data
+		case "runnerIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerIDNEQ"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerIDNEQ = data
+		case "runnerIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerIDIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerIDIn = data
+		case "runnerIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("runnerIDNotIn"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RunnerIDNotIn = data
+		case "cpuPercent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercent"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercent = data
+		case "cpuPercentNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentNEQ"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentNEQ = data
+		case "cpuPercentIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentIn = data
+		case "cpuPercentNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentNotIn"))
+			data, err := ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentNotIn = data
+		case "cpuPercentGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentGT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentGT = data
+		case "cpuPercentGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentGTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentGTE = data
+		case "cpuPercentLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentLT"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentLT = data
+		case "cpuPercentLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPercentLTE"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPercentLTE = data
+		case "memoryBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytes = data
+		case "memoryBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesNEQ = data
+		case "memoryBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesIn = data
+		case "memoryBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesNotIn = data
+		case "memoryBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesGT = data
+		case "memoryBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesGTE = data
+		case "memoryBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesLT = data
+		case "memoryBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryBytesLTE = data
+		case "networkRxBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytes = data
+		case "networkRxBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesNEQ = data
+		case "networkRxBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesIn = data
+		case "networkRxBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesNotIn = data
+		case "networkRxBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesGT = data
+		case "networkRxBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesGTE = data
+		case "networkRxBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesLT = data
+		case "networkRxBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkRxBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkRxBytesLTE = data
+		case "networkTxBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytes = data
+		case "networkTxBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesNEQ = data
+		case "networkTxBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesIn = data
+		case "networkTxBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesNotIn = data
+		case "networkTxBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesGT = data
+		case "networkTxBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesGTE = data
+		case "networkTxBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesLT = data
+		case "networkTxBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkTxBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkTxBytesLTE = data
+		case "blockReadBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytes = data
+		case "blockReadBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesNEQ = data
+		case "blockReadBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesIn = data
+		case "blockReadBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesNotIn = data
+		case "blockReadBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesGT = data
+		case "blockReadBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesGTE = data
+		case "blockReadBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesLT = data
+		case "blockReadBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockReadBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockReadBytesLTE = data
+		case "blockWriteBytes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytes"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytes = data
+		case "blockWriteBytesNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesNEQ = data
+		case "blockWriteBytesIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesIn = data
+		case "blockWriteBytesNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesNotIn"))
+			data, err := ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesNotIn = data
+		case "blockWriteBytesGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesGT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesGT = data
+		case "blockWriteBytesGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesGTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesGTE = data
+		case "blockWriteBytesLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesLT"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesLT = data
+		case "blockWriteBytesLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blockWriteBytesLTE"))
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlockWriteBytesLTE = data
+		case "sampledAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAt = data
+		case "sampledAtNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtNEQ = data
+		case "sampledAtIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtIn = data
+		case "sampledAtNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtNotIn = data
+		case "sampledAtGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtGT = data
+		case "sampledAtGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtGTE = data
+		case "sampledAtLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtLT = data
+		case "sampledAtLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sampledAtLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SampledAtLTE = data
+		case "createdAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAt = data
+		case "createdAtNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtNEQ = data
+		case "createdAtIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtIn = data
+		case "createdAtNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtNotIn = data
+		case "createdAtGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtGT = data
+		case "createdAtGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtGTE = data
+		case "createdAtLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtLT = data
+		case "createdAtLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAtLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAtLTE = data
+		case "hasRunner":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRunner"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasRunner = data
+		case "hasRunnerWith":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRunnerWith"))
+			data, err := ec.unmarshalOBotRunnerWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐBotRunnerWhereInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasRunnerWith = data
 		}
 	}
 
@@ -22703,7 +27327,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "clearDataDownloadStartedAt", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"public", "name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "clearDataDownloadStartedAt", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "clearCPUPricePerCoreHour", "memoryPricePerGBHour", "clearMemoryPricePerGBHour", "networkPricePerGB", "clearNetworkPricePerGB", "storagePricePerGB", "clearStoragePricePerGB", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22836,6 +27460,69 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.OwnerID = data
+		case "billingEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingEnabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingEnabled = data
+		case "cpuPricePerCoreHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuPricePerCoreHour"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CPUPricePerCoreHour = data
+		case "clearCPUPricePerCoreHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCPUPricePerCoreHour"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearCPUPricePerCoreHour = data
+		case "memoryPricePerGBHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPricePerGBHour"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryPricePerGBHour = data
+		case "clearMemoryPricePerGBHour":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearMemoryPricePerGBHour"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearMemoryPricePerGBHour = data
+		case "networkPricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkPricePerGB"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NetworkPricePerGB = data
+		case "clearNetworkPricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearNetworkPricePerGB"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearNetworkPricePerGB = data
+		case "storagePricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePricePerGB"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePricePerGB = data
+		case "clearStoragePricePerGB":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearStoragePricePerGB"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearStoragePricePerGB = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
 			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
@@ -23312,6 +27999,16 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Strategy(ctx, sel, obj)
+	case *ent.ResourceUsageSample:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ResourceUsageSample(ctx, sel, obj)
+	case *ent.ResourceUsageAggregation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ResourceUsageAggregation(ctx, sel, obj)
 	case *ent.Exchange:
 		if obj == nil {
 			return graphql.Null
@@ -23483,6 +28180,39 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Backtest_summary(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "resourceUsage":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Backtest_resourceUsage(ctx, field, obj)
 				return res
 			}
 
@@ -23965,6 +28695,39 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "recentUsage":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Bot_recentUsage(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24259,6 +29022,19 @@ func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "billingEnabled":
+			out.Values[i] = ec._BotRunner_billingEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cpuPricePerCoreHour":
+			out.Values[i] = ec._BotRunner_cpuPricePerCoreHour(ctx, field, obj)
+		case "memoryPricePerGBHour":
+			out.Values[i] = ec._BotRunner_memoryPricePerGBHour(ctx, field, obj)
+		case "networkPricePerGB":
+			out.Values[i] = ec._BotRunner_networkPricePerGB(ctx, field, obj)
+		case "storagePricePerGB":
+			out.Values[i] = ec._BotRunner_storagePricePerGB(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._BotRunner_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -25281,6 +30057,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "resourceUsageAggregations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resourceUsageAggregations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "resourceUsageSamples":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resourceUsageSamples(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "strategies":
 			field := field
 
@@ -25366,6 +30186,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "organizationUsage":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_organizationUsage(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "estimatedCost":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_estimatedCost(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -25374,6 +30235,311 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceUsageAggregationImplementors = []string{"ResourceUsageAggregation", "Node"}
+
+func (ec *executionContext) _ResourceUsageAggregation(ctx context.Context, sel ast.SelectionSet, obj *ent.ResourceUsageAggregation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceUsageAggregationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceUsageAggregation")
+		case "id":
+			out.Values[i] = ec._ResourceUsageAggregation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "resourceType":
+			out.Values[i] = ec._ResourceUsageAggregation_resourceType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "resourceID":
+			out.Values[i] = ec._ResourceUsageAggregation_resourceID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ownerID":
+			out.Values[i] = ec._ResourceUsageAggregation_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "runnerID":
+			out.Values[i] = ec._ResourceUsageAggregation_runnerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "granularity":
+			out.Values[i] = ec._ResourceUsageAggregation_granularity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "bucketStart":
+			out.Values[i] = ec._ResourceUsageAggregation_bucketStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "bucketEnd":
+			out.Values[i] = ec._ResourceUsageAggregation_bucketEnd(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cpuCoreSeconds":
+			out.Values[i] = ec._ResourceUsageAggregation_cpuCoreSeconds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cpuAvgPercent":
+			out.Values[i] = ec._ResourceUsageAggregation_cpuAvgPercent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cpuMaxPercent":
+			out.Values[i] = ec._ResourceUsageAggregation_cpuMaxPercent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "memoryGBSeconds":
+			out.Values[i] = ec._ResourceUsageAggregation_memoryGBSeconds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "memoryAvgBytes":
+			out.Values[i] = ec._ResourceUsageAggregation_memoryAvgBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "memoryMaxBytes":
+			out.Values[i] = ec._ResourceUsageAggregation_memoryMaxBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "networkRxBytes":
+			out.Values[i] = ec._ResourceUsageAggregation_networkRxBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "networkTxBytes":
+			out.Values[i] = ec._ResourceUsageAggregation_networkTxBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "blockReadBytes":
+			out.Values[i] = ec._ResourceUsageAggregation_blockReadBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "blockWriteBytes":
+			out.Values[i] = ec._ResourceUsageAggregation_blockWriteBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sampleCount":
+			out.Values[i] = ec._ResourceUsageAggregation_sampleCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._ResourceUsageAggregation_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "runner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ResourceUsageAggregation_runner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceUsageSampleImplementors = []string{"ResourceUsageSample", "Node"}
+
+func (ec *executionContext) _ResourceUsageSample(ctx context.Context, sel ast.SelectionSet, obj *ent.ResourceUsageSample) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceUsageSampleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceUsageSample")
+		case "id":
+			out.Values[i] = ec._ResourceUsageSample_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "resourceType":
+			out.Values[i] = ec._ResourceUsageSample_resourceType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "resourceID":
+			out.Values[i] = ec._ResourceUsageSample_resourceID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ownerID":
+			out.Values[i] = ec._ResourceUsageSample_ownerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "runnerID":
+			out.Values[i] = ec._ResourceUsageSample_runnerID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cpuPercent":
+			out.Values[i] = ec._ResourceUsageSample_cpuPercent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "memoryBytes":
+			out.Values[i] = ec._ResourceUsageSample_memoryBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "networkRxBytes":
+			out.Values[i] = ec._ResourceUsageSample_networkRxBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "networkTxBytes":
+			out.Values[i] = ec._ResourceUsageSample_networkTxBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "blockReadBytes":
+			out.Values[i] = ec._ResourceUsageSample_blockReadBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "blockWriteBytes":
+			out.Values[i] = ec._ResourceUsageSample_blockWriteBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sampledAt":
+			out.Values[i] = ec._ResourceUsageSample_sampledAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._ResourceUsageSample_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "runner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ResourceUsageSample_runner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -25913,6 +31079,70 @@ func (ec *executionContext) _TradeEdge(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._TradeEdge_node(ctx, field, obj)
 		case "cursor":
 			out.Values[i] = ec._TradeEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var usageCostImplementors = []string{"UsageCost"}
+
+func (ec *executionContext) _UsageCost(ctx context.Context, sel ast.SelectionSet, obj *model.UsageCost) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, usageCostImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UsageCost")
+		case "cpuCost":
+			out.Values[i] = ec._UsageCost_cpuCost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memoryCost":
+			out.Values[i] = ec._UsageCost_memoryCost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "networkCost":
+			out.Values[i] = ec._UsageCost_networkCost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storageCost":
+			out.Values[i] = ec._UsageCost_storageCost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCost":
+			out.Values[i] = ec._UsageCost_totalCost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._UsageCost_currency(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -26777,6 +32007,154 @@ func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPag
 	return ec._PageInfo(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNResourceUsageAggregation2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.ResourceUsageAggregation) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceUsageAggregation2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNResourceUsageAggregation2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregation(ctx context.Context, sel ast.SelectionSet, v *ent.ResourceUsageAggregation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceUsageAggregation(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNResourceUsageAggregationAggregationGranularity2volaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx context.Context, v any) (enum.AggregationGranularity, error) {
+	var res enum.AggregationGranularity
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNResourceUsageAggregationAggregationGranularity2volaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx context.Context, sel ast.SelectionSet, v enum.AggregationGranularity) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNResourceUsageAggregationResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, v any) (enum.ResourceType, error) {
+	var res enum.ResourceType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNResourceUsageAggregationResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, sel ast.SelectionSet, v enum.ResourceType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNResourceUsageAggregationWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInput(ctx context.Context, v any) (*ent.ResourceUsageAggregationWhereInput, error) {
+	res, err := ec.unmarshalInputResourceUsageAggregationWhereInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNResourceUsageSample2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.ResourceUsageSample) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceUsageSample2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSample(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNResourceUsageSample2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSample(ctx context.Context, sel ast.SelectionSet, v *ent.ResourceUsageSample) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceUsageSample(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNResourceUsageSampleResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, v any) (enum.ResourceType, error) {
+	var res enum.ResourceType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNResourceUsageSampleResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, sel ast.SelectionSet, v enum.ResourceType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNResourceUsageSampleWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInput(ctx context.Context, v any) (*ent.ResourceUsageSampleWhereInput, error) {
+	res, err := ec.unmarshalInputResourceUsageSampleWhereInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNRunnerConfigInput2volaticloudᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx context.Context, v any) (model.RunnerConfigInput, error) {
 	res, err := ec.unmarshalInputRunnerConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -26947,6 +32325,20 @@ func (ec *executionContext) unmarshalNUpdateStrategyInput2volaticloudᚋinternal
 func (ec *executionContext) unmarshalNUpdateTradeInput2volaticloudᚋinternalᚋentᚐUpdateTradeInput(ctx context.Context, v any) (ent.UpdateTradeInput, error) {
 	res, err := ec.unmarshalInputUpdateTradeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUsageCost2volaticloudᚋinternalᚋgraphᚋmodelᚐUsageCost(ctx context.Context, sel ast.SelectionSet, v model.UsageCost) graphql.Marshaler {
+	return ec._UsageCost(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUsageCost2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐUsageCost(ctx context.Context, sel ast.SelectionSet, v *model.UsageCost) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UsageCost(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -28186,6 +33578,42 @@ func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2ᚕint64ᚄ(ctx context.Context, v any) ([]int64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]int64, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int64(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOInt2ᚕint64ᚄ(ctx context.Context, sel ast.SelectionSet, v []int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int64(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v any) ([]int, error) {
 	if v == nil {
 		return nil, nil
@@ -28237,6 +33665,24 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint64(ctx context.Context, v any) (*int64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt64(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt64(*v)
 	return res
 }
 
@@ -28302,6 +33748,308 @@ func (ec *executionContext) unmarshalORegistryAuthInput2ᚖvolaticloudᚋinterna
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputRegistryAuthInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOResourceUsageAggregation2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregation(ctx context.Context, sel ast.SelectionSet, v *ent.ResourceUsageAggregation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ResourceUsageAggregation(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOResourceUsageAggregationAggregationGranularity2ᚕvolaticloudᚋinternalᚋenumᚐAggregationGranularityᚄ(ctx context.Context, v any) ([]enum.AggregationGranularity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]enum.AggregationGranularity, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNResourceUsageAggregationAggregationGranularity2volaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOResourceUsageAggregationAggregationGranularity2ᚕvolaticloudᚋinternalᚋenumᚐAggregationGranularityᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.AggregationGranularity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceUsageAggregationAggregationGranularity2volaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOResourceUsageAggregationAggregationGranularity2ᚖvolaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx context.Context, v any) (*enum.AggregationGranularity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(enum.AggregationGranularity)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOResourceUsageAggregationAggregationGranularity2ᚖvolaticloudᚋinternalᚋenumᚐAggregationGranularity(ctx context.Context, sel ast.SelectionSet, v *enum.AggregationGranularity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOResourceUsageAggregationResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx context.Context, v any) ([]enum.ResourceType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]enum.ResourceType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNResourceUsageAggregationResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOResourceUsageAggregationResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.ResourceType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceUsageAggregationResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOResourceUsageAggregationResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, v any) (*enum.ResourceType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(enum.ResourceType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOResourceUsageAggregationResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, sel ast.SelectionSet, v *enum.ResourceType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOResourceUsageAggregationWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInputᚄ(ctx context.Context, v any) ([]*ent.ResourceUsageAggregationWhereInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*ent.ResourceUsageAggregationWhereInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNResourceUsageAggregationWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOResourceUsageAggregationWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationWhereInput(ctx context.Context, v any) (*ent.ResourceUsageAggregationWhereInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputResourceUsageAggregationWhereInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOResourceUsageSampleResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx context.Context, v any) ([]enum.ResourceType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]enum.ResourceType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNResourceUsageSampleResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOResourceUsageSampleResourceType2ᚕvolaticloudᚋinternalᚋenumᚐResourceTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.ResourceType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceUsageSampleResourceType2volaticloudᚋinternalᚋenumᚐResourceType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOResourceUsageSampleResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, v any) (*enum.ResourceType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(enum.ResourceType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOResourceUsageSampleResourceType2ᚖvolaticloudᚋinternalᚋenumᚐResourceType(ctx context.Context, sel ast.SelectionSet, v *enum.ResourceType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOResourceUsageSampleWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInputᚄ(ctx context.Context, v any) ([]*ent.ResourceUsageSampleWhereInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*ent.ResourceUsageSampleWhereInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNResourceUsageSampleWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOResourceUsageSampleWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInput(ctx context.Context, v any) (*ent.ResourceUsageSampleWhereInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputResourceUsageSampleWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

@@ -816,6 +816,26 @@ type BotRunner implements Node {
   Group ID (organization) that owns this bot runner
   """
   ownerID: String!
+  """
+  Whether usage tracking and billing is enabled for this runner
+  """
+  billingEnabled: Boolean!
+  """
+  Price per core-hour in USD (only used if billing_enabled)
+  """
+  cpuPricePerCoreHour: Float
+  """
+  Price per GB-hour in USD (only used if billing_enabled)
+  """
+  memoryPricePerGBHour: Float @goField(name: "MemoryPricePerGBHour", forceResolver: false)
+  """
+  Price per GB of network transfer in USD (only used if billing_enabled)
+  """
+  networkPricePerGB: Float
+  """
+  Price per GB of disk I/O in USD (only used if billing_enabled)
+  """
+  storagePricePerGB: Float
   createdAt: Time!
   updatedAt: Time!
   bots(
@@ -1037,6 +1057,63 @@ input BotRunnerWhereInput {
   ownerIDHasSuffix: String
   ownerIDEqualFold: String
   ownerIDContainsFold: String
+  """
+  billing_enabled field predicates
+  """
+  billingEnabled: Boolean
+  billingEnabledNEQ: Boolean
+  """
+  cpu_price_per_core_hour field predicates
+  """
+  cpuPricePerCoreHour: Float
+  cpuPricePerCoreHourNEQ: Float
+  cpuPricePerCoreHourIn: [Float!]
+  cpuPricePerCoreHourNotIn: [Float!]
+  cpuPricePerCoreHourGT: Float
+  cpuPricePerCoreHourGTE: Float
+  cpuPricePerCoreHourLT: Float
+  cpuPricePerCoreHourLTE: Float
+  cpuPricePerCoreHourIsNil: Boolean
+  cpuPricePerCoreHourNotNil: Boolean
+  """
+  memory_price_per_gb_hour field predicates
+  """
+  memoryPricePerGBHour: Float
+  memoryPricePerGBHourNEQ: Float
+  memoryPricePerGBHourIn: [Float!]
+  memoryPricePerGBHourNotIn: [Float!]
+  memoryPricePerGBHourGT: Float
+  memoryPricePerGBHourGTE: Float
+  memoryPricePerGBHourLT: Float
+  memoryPricePerGBHourLTE: Float
+  memoryPricePerGBHourIsNil: Boolean
+  memoryPricePerGBHourNotNil: Boolean
+  """
+  network_price_per_gb field predicates
+  """
+  networkPricePerGB: Float
+  networkPricePerGBNEQ: Float
+  networkPricePerGBIn: [Float!]
+  networkPricePerGBNotIn: [Float!]
+  networkPricePerGBGT: Float
+  networkPricePerGBGTE: Float
+  networkPricePerGBLT: Float
+  networkPricePerGBLTE: Float
+  networkPricePerGBIsNil: Boolean
+  networkPricePerGBNotNil: Boolean
+  """
+  storage_price_per_gb field predicates
+  """
+  storagePricePerGB: Float
+  storagePricePerGBNEQ: Float
+  storagePricePerGBIn: [Float!]
+  storagePricePerGBNotIn: [Float!]
+  storagePricePerGBGT: Float
+  storagePricePerGBGTE: Float
+  storagePricePerGBLT: Float
+  storagePricePerGBLTE: Float
+  storagePricePerGBIsNil: Boolean
+  storagePricePerGBNotNil: Boolean
   """
   created_at field predicates
   """
@@ -1506,6 +1583,26 @@ input CreateBotRunnerInput {
   Group ID (organization) that owns this bot runner
   """
   ownerID: String!
+  """
+  Whether usage tracking and billing is enabled for this runner
+  """
+  billingEnabled: Boolean
+  """
+  Price per core-hour in USD (only used if billing_enabled)
+  """
+  cpuPricePerCoreHour: Float
+  """
+  Price per GB-hour in USD (only used if billing_enabled)
+  """
+  memoryPricePerGBHour: Float
+  """
+  Price per GB of network transfer in USD (only used if billing_enabled)
+  """
+  networkPricePerGB: Float
+  """
+  Price per GB of disk I/O in USD (only used if billing_enabled)
+  """
+  storagePricePerGB: Float
   createdAt: Time
   updatedAt: Time
   botIDs: [ID!]
@@ -1967,6 +2064,8 @@ type Query {
     """
     where: ExchangeWhereInput
   ): ExchangeConnection!
+  resourceUsageAggregations: [ResourceUsageAggregation!]!
+  resourceUsageSamples: [ResourceUsageSample!]!
   strategies(
     """
     Returns the elements in the list that come after the specified cursor.
@@ -2019,6 +2118,534 @@ type Query {
     """
     where: TradeWhereInput
   ): TradeConnection!
+}
+type ResourceUsageAggregation implements Node {
+  id: ID!
+  """
+  Type of resource: bot or backtest
+  """
+  resourceType: ResourceUsageAggregationResourceType!
+  """
+  ID of the bot or backtest
+  """
+  resourceID: ID!
+  """
+  Organization ID for billing
+  """
+  ownerID: String!
+  """
+  Runner ID for rate lookup
+  """
+  runnerID: ID!
+  """
+  Aggregation level: hourly or daily
+  """
+  granularity: ResourceUsageAggregationAggregationGranularity!
+  """
+  Start of the time bucket
+  """
+  bucketStart: Time!
+  """
+  End of the time bucket
+  """
+  bucketEnd: Time!
+  """
+  Total CPU consumption in core-seconds
+  """
+  cpuCoreSeconds: Float!
+  """
+  Average CPU percentage during bucket
+  """
+  cpuAvgPercent: Float!
+  """
+  Maximum CPU percentage during bucket
+  """
+  cpuMaxPercent: Float!
+  """
+  Total memory consumption in GB-seconds
+  """
+  memoryGBSeconds: Float! @goField(name: "MemoryGBSeconds", forceResolver: false)
+  """
+  Average memory usage in bytes
+  """
+  memoryAvgBytes: Int!
+  """
+  Maximum memory usage in bytes
+  """
+  memoryMaxBytes: Int!
+  """
+  Total network bytes received
+  """
+  networkRxBytes: Int!
+  """
+  Total network bytes transmitted
+  """
+  networkTxBytes: Int!
+  """
+  Total disk bytes read
+  """
+  blockReadBytes: Int!
+  """
+  Total disk bytes written
+  """
+  blockWriteBytes: Int!
+  """
+  Number of samples in this aggregation
+  """
+  sampleCount: Int!
+  createdAt: Time!
+  runner: BotRunner!
+}
+"""
+ResourceUsageAggregationAggregationGranularity is enum for the field granularity
+"""
+enum ResourceUsageAggregationAggregationGranularity @goModel(model: "volaticloud/internal/enum.AggregationGranularity") {
+  hourly
+  daily
+}
+"""
+ResourceUsageAggregationResourceType is enum for the field resource_type
+"""
+enum ResourceUsageAggregationResourceType @goModel(model: "volaticloud/internal/enum.ResourceType") {
+  bot
+  backtest
+}
+"""
+ResourceUsageAggregationWhereInput is used for filtering ResourceUsageAggregation objects.
+Input was generated by ent.
+"""
+input ResourceUsageAggregationWhereInput {
+  not: ResourceUsageAggregationWhereInput
+  and: [ResourceUsageAggregationWhereInput!]
+  or: [ResourceUsageAggregationWhereInput!]
+  """
+  id field predicates
+  """
+  id: ID
+  idNEQ: ID
+  idIn: [ID!]
+  idNotIn: [ID!]
+  idGT: ID
+  idGTE: ID
+  idLT: ID
+  idLTE: ID
+  """
+  resource_type field predicates
+  """
+  resourceType: ResourceUsageAggregationResourceType
+  resourceTypeNEQ: ResourceUsageAggregationResourceType
+  resourceTypeIn: [ResourceUsageAggregationResourceType!]
+  resourceTypeNotIn: [ResourceUsageAggregationResourceType!]
+  """
+  resource_id field predicates
+  """
+  resourceID: ID
+  resourceIDNEQ: ID
+  resourceIDIn: [ID!]
+  resourceIDNotIn: [ID!]
+  resourceIDGT: ID
+  resourceIDGTE: ID
+  resourceIDLT: ID
+  resourceIDLTE: ID
+  """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
+  """
+  runner_id field predicates
+  """
+  runnerID: ID
+  runnerIDNEQ: ID
+  runnerIDIn: [ID!]
+  runnerIDNotIn: [ID!]
+  """
+  granularity field predicates
+  """
+  granularity: ResourceUsageAggregationAggregationGranularity
+  granularityNEQ: ResourceUsageAggregationAggregationGranularity
+  granularityIn: [ResourceUsageAggregationAggregationGranularity!]
+  granularityNotIn: [ResourceUsageAggregationAggregationGranularity!]
+  """
+  bucket_start field predicates
+  """
+  bucketStart: Time
+  bucketStartNEQ: Time
+  bucketStartIn: [Time!]
+  bucketStartNotIn: [Time!]
+  bucketStartGT: Time
+  bucketStartGTE: Time
+  bucketStartLT: Time
+  bucketStartLTE: Time
+  """
+  bucket_end field predicates
+  """
+  bucketEnd: Time
+  bucketEndNEQ: Time
+  bucketEndIn: [Time!]
+  bucketEndNotIn: [Time!]
+  bucketEndGT: Time
+  bucketEndGTE: Time
+  bucketEndLT: Time
+  bucketEndLTE: Time
+  """
+  cpu_core_seconds field predicates
+  """
+  cpuCoreSeconds: Float
+  cpuCoreSecondsNEQ: Float
+  cpuCoreSecondsIn: [Float!]
+  cpuCoreSecondsNotIn: [Float!]
+  cpuCoreSecondsGT: Float
+  cpuCoreSecondsGTE: Float
+  cpuCoreSecondsLT: Float
+  cpuCoreSecondsLTE: Float
+  """
+  cpu_avg_percent field predicates
+  """
+  cpuAvgPercent: Float
+  cpuAvgPercentNEQ: Float
+  cpuAvgPercentIn: [Float!]
+  cpuAvgPercentNotIn: [Float!]
+  cpuAvgPercentGT: Float
+  cpuAvgPercentGTE: Float
+  cpuAvgPercentLT: Float
+  cpuAvgPercentLTE: Float
+  """
+  cpu_max_percent field predicates
+  """
+  cpuMaxPercent: Float
+  cpuMaxPercentNEQ: Float
+  cpuMaxPercentIn: [Float!]
+  cpuMaxPercentNotIn: [Float!]
+  cpuMaxPercentGT: Float
+  cpuMaxPercentGTE: Float
+  cpuMaxPercentLT: Float
+  cpuMaxPercentLTE: Float
+  """
+  memory_gb_seconds field predicates
+  """
+  memoryGBSeconds: Float
+  memoryGBSecondsNEQ: Float
+  memoryGBSecondsIn: [Float!]
+  memoryGBSecondsNotIn: [Float!]
+  memoryGBSecondsGT: Float
+  memoryGBSecondsGTE: Float
+  memoryGBSecondsLT: Float
+  memoryGBSecondsLTE: Float
+  """
+  memory_avg_bytes field predicates
+  """
+  memoryAvgBytes: Int
+  memoryAvgBytesNEQ: Int
+  memoryAvgBytesIn: [Int!]
+  memoryAvgBytesNotIn: [Int!]
+  memoryAvgBytesGT: Int
+  memoryAvgBytesGTE: Int
+  memoryAvgBytesLT: Int
+  memoryAvgBytesLTE: Int
+  """
+  memory_max_bytes field predicates
+  """
+  memoryMaxBytes: Int
+  memoryMaxBytesNEQ: Int
+  memoryMaxBytesIn: [Int!]
+  memoryMaxBytesNotIn: [Int!]
+  memoryMaxBytesGT: Int
+  memoryMaxBytesGTE: Int
+  memoryMaxBytesLT: Int
+  memoryMaxBytesLTE: Int
+  """
+  network_rx_bytes field predicates
+  """
+  networkRxBytes: Int
+  networkRxBytesNEQ: Int
+  networkRxBytesIn: [Int!]
+  networkRxBytesNotIn: [Int!]
+  networkRxBytesGT: Int
+  networkRxBytesGTE: Int
+  networkRxBytesLT: Int
+  networkRxBytesLTE: Int
+  """
+  network_tx_bytes field predicates
+  """
+  networkTxBytes: Int
+  networkTxBytesNEQ: Int
+  networkTxBytesIn: [Int!]
+  networkTxBytesNotIn: [Int!]
+  networkTxBytesGT: Int
+  networkTxBytesGTE: Int
+  networkTxBytesLT: Int
+  networkTxBytesLTE: Int
+  """
+  block_read_bytes field predicates
+  """
+  blockReadBytes: Int
+  blockReadBytesNEQ: Int
+  blockReadBytesIn: [Int!]
+  blockReadBytesNotIn: [Int!]
+  blockReadBytesGT: Int
+  blockReadBytesGTE: Int
+  blockReadBytesLT: Int
+  blockReadBytesLTE: Int
+  """
+  block_write_bytes field predicates
+  """
+  blockWriteBytes: Int
+  blockWriteBytesNEQ: Int
+  blockWriteBytesIn: [Int!]
+  blockWriteBytesNotIn: [Int!]
+  blockWriteBytesGT: Int
+  blockWriteBytesGTE: Int
+  blockWriteBytesLT: Int
+  blockWriteBytesLTE: Int
+  """
+  sample_count field predicates
+  """
+  sampleCount: Int
+  sampleCountNEQ: Int
+  sampleCountIn: [Int!]
+  sampleCountNotIn: [Int!]
+  sampleCountGT: Int
+  sampleCountGTE: Int
+  sampleCountLT: Int
+  sampleCountLTE: Int
+  """
+  created_at field predicates
+  """
+  createdAt: Time
+  createdAtNEQ: Time
+  createdAtIn: [Time!]
+  createdAtNotIn: [Time!]
+  createdAtGT: Time
+  createdAtGTE: Time
+  createdAtLT: Time
+  createdAtLTE: Time
+  """
+  runner edge predicates
+  """
+  hasRunner: Boolean
+  hasRunnerWith: [BotRunnerWhereInput!]
+}
+type ResourceUsageSample implements Node {
+  id: ID!
+  """
+  Type of resource: bot or backtest
+  """
+  resourceType: ResourceUsageSampleResourceType!
+  """
+  ID of the bot or backtest
+  """
+  resourceID: ID!
+  """
+  Organization ID for billing
+  """
+  ownerID: String!
+  """
+  Runner ID for rate lookup
+  """
+  runnerID: ID!
+  """
+  CPU usage as percentage (0-100 per core)
+  """
+  cpuPercent: Float!
+  """
+  Memory usage in bytes
+  """
+  memoryBytes: Int!
+  """
+  Network bytes received
+  """
+  networkRxBytes: Int!
+  """
+  Network bytes transmitted
+  """
+  networkTxBytes: Int!
+  """
+  Disk bytes read
+  """
+  blockReadBytes: Int!
+  """
+  Disk bytes written
+  """
+  blockWriteBytes: Int!
+  """
+  When this sample was collected
+  """
+  sampledAt: Time!
+  createdAt: Time!
+  runner: BotRunner!
+}
+"""
+ResourceUsageSampleResourceType is enum for the field resource_type
+"""
+enum ResourceUsageSampleResourceType @goModel(model: "volaticloud/internal/enum.ResourceType") {
+  bot
+  backtest
+}
+"""
+ResourceUsageSampleWhereInput is used for filtering ResourceUsageSample objects.
+Input was generated by ent.
+"""
+input ResourceUsageSampleWhereInput {
+  not: ResourceUsageSampleWhereInput
+  and: [ResourceUsageSampleWhereInput!]
+  or: [ResourceUsageSampleWhereInput!]
+  """
+  id field predicates
+  """
+  id: ID
+  idNEQ: ID
+  idIn: [ID!]
+  idNotIn: [ID!]
+  idGT: ID
+  idGTE: ID
+  idLT: ID
+  idLTE: ID
+  """
+  resource_type field predicates
+  """
+  resourceType: ResourceUsageSampleResourceType
+  resourceTypeNEQ: ResourceUsageSampleResourceType
+  resourceTypeIn: [ResourceUsageSampleResourceType!]
+  resourceTypeNotIn: [ResourceUsageSampleResourceType!]
+  """
+  resource_id field predicates
+  """
+  resourceID: ID
+  resourceIDNEQ: ID
+  resourceIDIn: [ID!]
+  resourceIDNotIn: [ID!]
+  resourceIDGT: ID
+  resourceIDGTE: ID
+  resourceIDLT: ID
+  resourceIDLTE: ID
+  """
+  owner_id field predicates
+  """
+  ownerID: String
+  ownerIDNEQ: String
+  ownerIDIn: [String!]
+  ownerIDNotIn: [String!]
+  ownerIDGT: String
+  ownerIDGTE: String
+  ownerIDLT: String
+  ownerIDLTE: String
+  ownerIDContains: String
+  ownerIDHasPrefix: String
+  ownerIDHasSuffix: String
+  ownerIDEqualFold: String
+  ownerIDContainsFold: String
+  """
+  runner_id field predicates
+  """
+  runnerID: ID
+  runnerIDNEQ: ID
+  runnerIDIn: [ID!]
+  runnerIDNotIn: [ID!]
+  """
+  cpu_percent field predicates
+  """
+  cpuPercent: Float
+  cpuPercentNEQ: Float
+  cpuPercentIn: [Float!]
+  cpuPercentNotIn: [Float!]
+  cpuPercentGT: Float
+  cpuPercentGTE: Float
+  cpuPercentLT: Float
+  cpuPercentLTE: Float
+  """
+  memory_bytes field predicates
+  """
+  memoryBytes: Int
+  memoryBytesNEQ: Int
+  memoryBytesIn: [Int!]
+  memoryBytesNotIn: [Int!]
+  memoryBytesGT: Int
+  memoryBytesGTE: Int
+  memoryBytesLT: Int
+  memoryBytesLTE: Int
+  """
+  network_rx_bytes field predicates
+  """
+  networkRxBytes: Int
+  networkRxBytesNEQ: Int
+  networkRxBytesIn: [Int!]
+  networkRxBytesNotIn: [Int!]
+  networkRxBytesGT: Int
+  networkRxBytesGTE: Int
+  networkRxBytesLT: Int
+  networkRxBytesLTE: Int
+  """
+  network_tx_bytes field predicates
+  """
+  networkTxBytes: Int
+  networkTxBytesNEQ: Int
+  networkTxBytesIn: [Int!]
+  networkTxBytesNotIn: [Int!]
+  networkTxBytesGT: Int
+  networkTxBytesGTE: Int
+  networkTxBytesLT: Int
+  networkTxBytesLTE: Int
+  """
+  block_read_bytes field predicates
+  """
+  blockReadBytes: Int
+  blockReadBytesNEQ: Int
+  blockReadBytesIn: [Int!]
+  blockReadBytesNotIn: [Int!]
+  blockReadBytesGT: Int
+  blockReadBytesGTE: Int
+  blockReadBytesLT: Int
+  blockReadBytesLTE: Int
+  """
+  block_write_bytes field predicates
+  """
+  blockWriteBytes: Int
+  blockWriteBytesNEQ: Int
+  blockWriteBytesIn: [Int!]
+  blockWriteBytesNotIn: [Int!]
+  blockWriteBytesGT: Int
+  blockWriteBytesGTE: Int
+  blockWriteBytesLT: Int
+  blockWriteBytesLTE: Int
+  """
+  sampled_at field predicates
+  """
+  sampledAt: Time
+  sampledAtNEQ: Time
+  sampledAtIn: [Time!]
+  sampledAtNotIn: [Time!]
+  sampledAtGT: Time
+  sampledAtGTE: Time
+  sampledAtLT: Time
+  sampledAtLTE: Time
+  """
+  created_at field predicates
+  """
+  createdAt: Time
+  createdAtNEQ: Time
+  createdAtIn: [Time!]
+  createdAtNotIn: [Time!]
+  createdAtGT: Time
+  createdAtGTE: Time
+  createdAtLT: Time
+  createdAtLTE: Time
+  """
+  runner edge predicates
+  """
+  hasRunner: Boolean
+  hasRunnerWith: [BotRunnerWhereInput!]
 }
 type Strategy implements Node {
   id: ID!
@@ -2832,6 +3459,30 @@ input UpdateBotRunnerInput {
   Group ID (organization) that owns this bot runner
   """
   ownerID: String
+  """
+  Whether usage tracking and billing is enabled for this runner
+  """
+  billingEnabled: Boolean
+  """
+  Price per core-hour in USD (only used if billing_enabled)
+  """
+  cpuPricePerCoreHour: Float
+  clearCPUPricePerCoreHour: Boolean
+  """
+  Price per GB-hour in USD (only used if billing_enabled)
+  """
+  memoryPricePerGBHour: Float
+  clearMemoryPricePerGBHour: Boolean
+  """
+  Price per GB of network transfer in USD (only used if billing_enabled)
+  """
+  networkPricePerGB: Float
+  clearNetworkPricePerGB: Boolean
+  """
+  Price per GB of disk I/O in USD (only used if billing_enabled)
+  """
+  storagePricePerGB: Float
+  clearStoragePricePerGB: Boolean
   updatedAt: Time
   addBotIDs: [ID!]
   removeBotIDs: [ID!]

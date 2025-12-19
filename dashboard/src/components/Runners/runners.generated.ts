@@ -10,21 +10,21 @@ export type GetRunnersQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, ownerID: string, public: boolean, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetRunnersQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', totalCount: number, edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, ownerID: string, public: boolean, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataErrorMessage?: string | null, billingEnabled: boolean, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetRunnerWithSecretsQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetRunnerWithSecretsQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null } };
+export type GetRunnerWithSecretsQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, createdAt: string, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, dataErrorMessage?: string | null, billingEnabled: boolean, cpuPricePerCoreHour?: number | null, memoryPricePerGBHour?: number | null, networkPricePerGB?: number | null, storagePricePerGB?: number | null, bots: { __typename?: 'BotConnection', totalCount: number } } | null } | null> | null } };
 
 export type CreateRunnerMutationVariables = Types.Exact<{
   input: Types.CreateBotRunnerInput;
 }>;
 
 
-export type CreateRunnerMutation = { __typename?: 'Mutation', createBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null } };
+export type CreateRunnerMutation = { __typename?: 'Mutation', createBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, billingEnabled: boolean, cpuPricePerCoreHour?: number | null, memoryPricePerGBHour?: number | null, networkPricePerGB?: number | null, storagePricePerGB?: number | null } };
 
 export type UpdateRunnerMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -32,7 +32,7 @@ export type UpdateRunnerMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRunnerMutation = { __typename?: 'Mutation', updateBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null } };
+export type UpdateRunnerMutation = { __typename?: 'Mutation', updateBotRunner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, config?: Record<string, any> | null, dataDownloadConfig?: Record<string, any> | null, billingEnabled: boolean, cpuPricePerCoreHour?: number | null, memoryPricePerGBHour?: number | null, networkPricePerGB?: number | null, storagePricePerGB?: number | null } };
 
 export type DeleteRunnerMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -81,6 +81,7 @@ export const GetRunnersDocument = gql`
         dataDownloadStatus
         dataDownloadProgress
         dataErrorMessage
+        billingEnabled
         bots {
           totalCount
         }
@@ -147,6 +148,11 @@ export const GetRunnerWithSecretsDocument = gql`
         dataDownloadProgress
         dataDownloadConfig
         dataErrorMessage
+        billingEnabled
+        cpuPricePerCoreHour
+        memoryPricePerGBHour
+        networkPricePerGB
+        storagePricePerGB
         bots {
           totalCount
         }
@@ -196,6 +202,11 @@ export const CreateRunnerDocument = gql`
     type
     config
     dataDownloadConfig
+    billingEnabled
+    cpuPricePerCoreHour
+    memoryPricePerGBHour
+    networkPricePerGB
+    storagePricePerGB
   }
 }
     `;
@@ -233,6 +244,11 @@ export const UpdateRunnerDocument = gql`
     type
     config
     dataDownloadConfig
+    billingEnabled
+    cpuPricePerCoreHour
+    memoryPricePerGBHour
+    networkPricePerGB
+    storagePricePerGB
   }
 }
     `;

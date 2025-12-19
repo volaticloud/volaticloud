@@ -73,6 +73,14 @@ type BotStatus struct {
 	CPUUsage    float64 // CPU usage percentage
 	MemoryUsage int64   // Memory usage in bytes
 
+	// Network I/O (for billing)
+	NetworkRxBytes int64 // Network bytes received
+	NetworkTxBytes int64 // Network bytes transmitted
+
+	// Disk I/O (for billing)
+	BlockReadBytes  int64 // Disk bytes read
+	BlockWriteBytes int64 // Disk bytes written
+
 	// Network information
 	IPAddress string
 	HostPort  int // Mapped host port for API

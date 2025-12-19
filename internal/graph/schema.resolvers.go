@@ -18,12 +18,14 @@ import (
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/graph/model"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
+	"volaticloud/internal/usage"
 
 	"github.com/google/uuid"
 )
@@ -50,6 +52,74 @@ func (r *backtestResolver) Summary(ctx context.Context, obj *ent.Backtest) (*bac
 	}
 
 	return summary, nil
+}
+
+// ResourceUsage returns the total usage for a backtest execution.
+func (r *backtestResolver) ResourceUsage(ctx context.Context, obj *ent.Backtest) (*ent.ResourceUsageAggregation, error) {
+	// Query all aggregations for this backtest
+	aggs, err := r.client.ResourceUsageAggregation.Query().
+		Where(
+			resourceusageaggregation.ResourceTypeEQ(enum.ResourceTypeBacktest),
+			resourceusageaggregation.ResourceID(obj.ID),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(aggs) == 0 {
+		return nil, nil
+	}
+
+	if len(aggs) == 1 {
+		return aggs[0], nil
+	}
+
+	// Combine all aggregations for this backtest
+	var minStart, maxEnd time.Time
+	for i, agg := range aggs {
+		if i == 0 || agg.BucketStart.Before(minStart) {
+			minStart = agg.BucketStart
+		}
+		if i == 0 || agg.BucketEnd.After(maxEnd) {
+			maxEnd = agg.BucketEnd
+		}
+	}
+
+	return usage.CombineAggregationsToEntity(aggs, minStart, maxEnd), nil
+}
+
+// RecentUsage returns the last 24 hours of usage for a bot.
+func (r *botResolver) RecentUsage(ctx context.Context, obj *ent.Bot) (*ent.ResourceUsageAggregation, error) {
+	// Query the most recent daily aggregation for this bot
+	end := time.Now()
+	start := end.Add(-24 * time.Hour)
+
+	// Query aggregations for the past 24 hours
+	aggs, err := r.client.ResourceUsageAggregation.Query().
+		Where(
+			resourceusageaggregation.ResourceTypeEQ(enum.ResourceTypeBot),
+			resourceusageaggregation.ResourceID(obj.ID),
+			resourceusageaggregation.BucketStartGTE(start),
+			resourceusageaggregation.BucketStartLT(end),
+		).
+		Order(ent.Desc(resourceusageaggregation.FieldBucketStart)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(aggs) == 0 {
+		return nil, nil
+	}
+
+	// If we have multiple aggregations, combine them
+	if len(aggs) == 1 {
+		return aggs[0], nil
+	}
+
+	// Combine aggregations for the time period
+	return usage.CombineAggregationsToEntity(aggs, start, end), nil
 }
 
 func (r *mutationResolver) CreateExchange(ctx context.Context, input ent.CreateExchangeInput) (*ent.Exchange, error) {
@@ -924,6 +994,90 @@ func (r *queryResolver) StrategyVersions(ctx context.Context, name string) ([]*e
 		Where(strategy.Name(name)).
 		Order(ent.Asc(strategy.FieldVersionNumber)).
 		All(ctx)
+}
+
+// OrganizationUsage returns total usage for an organization over a time range.
+func (r *queryResolver) OrganizationUsage(ctx context.Context, ownerID string, start time.Time, end time.Time) (*ent.ResourceUsageAggregation, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the calculator to get organization usage
+	calc := usage.NewCalculator(r.client)
+	summary, err := calc.GetOrganizationUsage(ctx, ownerID, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	if summary == nil {
+		return nil, nil
+	}
+
+	// Convert UsageSummary to ResourceUsageAggregation for GraphQL response
+	// Note: This is a synthetic aggregation, not stored in the database
+	return &ent.ResourceUsageAggregation{
+		ResourceType:    summary.ResourceType,
+		ResourceID:      summary.ResourceID,
+		OwnerID:         summary.OwnerID,
+		RunnerID:        summary.RunnerID,
+		Granularity:     enum.AggregationGranularityDaily, // Synthetic aggregation
+		BucketStart:     summary.PeriodStart,
+		BucketEnd:       summary.PeriodEnd,
+		CPUCoreSeconds:  summary.CPUCoreSeconds,
+		CPUAvgPercent:   summary.CPUAvgPercent,
+		CPUMaxPercent:   summary.CPUMaxPercent,
+		MemoryGBSeconds: summary.MemoryGBSeconds,
+		MemoryAvgBytes:  summary.MemoryAvgBytes,
+		MemoryMaxBytes:  summary.MemoryMaxBytes,
+		NetworkRxBytes:  summary.NetworkRxBytes,
+		NetworkTxBytes:  summary.NetworkTxBytes,
+		BlockReadBytes:  summary.BlockReadBytes,
+		BlockWriteBytes: summary.BlockWriteBytes,
+		SampleCount:     summary.SampleCount,
+	}, nil
+}
+
+// EstimatedCost calculates the estimated cost for usage over a time range.
+func (r *queryResolver) EstimatedCost(ctx context.Context, ownerID string, start time.Time, end time.Time) (*model.UsageCost, error) {
+	// Verify user is authenticated
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	calc := usage.NewCalculator(r.client)
+
+	// Get usage breakdown by resource to calculate costs per-runner
+	breakdown, err := calc.GetUsageBreakdown(ctx, ownerID, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	// Aggregate costs across all resources
+	totalCost := &model.UsageCost{Currency: "USD"}
+
+	for _, summary := range breakdown {
+		// Get runner rates
+		rates, err := calc.GetRunnerRates(ctx, summary.RunnerID)
+		if err != nil {
+			// Skip if runner not found (may have been deleted)
+			continue
+		}
+
+		// Calculate cost for this resource
+		cost := calc.CalculateCost(&summary, rates)
+		if cost != nil {
+			totalCost.CPUCost += cost.CPUCost
+			totalCost.MemoryCost += cost.MemoryCost
+			totalCost.NetworkCost += cost.NetworkCost
+			totalCost.StorageCost += cost.StorageCost
+			totalCost.TotalCost += cost.TotalCost
+		}
+	}
+
+	return totalCost, nil
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

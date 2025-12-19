@@ -35,6 +35,11 @@ export type Backtest = Node & {
   id: Scalars['ID']['output'];
   /** Container logs from backtest execution */
   logs?: Maybe<Scalars['String']['output']>;
+  /**
+   * Total resource usage for this backtest execution
+   * Only populated if the backtest ran on a runner with billing enabled
+   */
+  resourceUsage?: Maybe<ResourceUsageAggregation>;
   /** Backtest result data (metrics, logs, trades, etc.) */
   result?: Maybe<Scalars['Map']['output']>;
   runner: BotRunner;
@@ -278,6 +283,12 @@ export type Bot = Node & {
   ownerID: Scalars['String']['output'];
   /** Whether this resource is publicly visible to all authenticated users */
   public: Scalars['Boolean']['output'];
+  /**
+   * Usage summary for the last 24 hours
+   * Aggregated from ResourceUsageAggregation if available, or calculated from samples
+   * Only populated if the bot runs on a runner with billing enabled
+   */
+  recentUsage?: Maybe<ResourceUsageAggregation>;
   runner: BotRunner;
   /** Foreign key to runner (provides execution environment) */
   runnerID: Scalars['ID']['output'];
@@ -634,9 +645,13 @@ export type BotMetricsWhereInput = {
 export type BotRunner = Node & {
   __typename?: 'BotRunner';
   backtests: BacktestConnection;
+  /** Whether usage tracking and billing is enabled for this runner */
+  billingEnabled: Scalars['Boolean']['output'];
   bots: BotConnection;
   /** Runner connection configuration (host, port, credentials, etc.) */
   config?: Maybe<Scalars['Map']['output']>;
+  /** Price per core-hour in USD (only used if billing_enabled) */
+  cpuPricePerCoreHour?: Maybe<Scalars['Float']['output']>;
   createdAt: Scalars['Time']['output'];
   /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
   dataDownloadConfig?: Maybe<Scalars['Map']['output']>;
@@ -653,12 +668,18 @@ export type BotRunner = Node & {
   /** When data was last refreshed */
   dataLastUpdated?: Maybe<Scalars['Time']['output']>;
   id: Scalars['ID']['output'];
+  /** Price per GB-hour in USD (only used if billing_enabled) */
+  memoryPricePerGBHour?: Maybe<Scalars['Float']['output']>;
   /** Runner display name */
   name: Scalars['String']['output'];
+  /** Price per GB of network transfer in USD (only used if billing_enabled) */
+  networkPricePerGB?: Maybe<Scalars['Float']['output']>;
   /** Group ID (organization) that owns this bot runner */
   ownerID: Scalars['String']['output'];
   /** Whether this resource is publicly visible to all authenticated users */
   public: Scalars['Boolean']['output'];
+  /** Price per GB of disk I/O in USD (only used if billing_enabled) */
+  storagePricePerGB?: Maybe<Scalars['Float']['output']>;
   /** Runner environment type (docker, kubernetes, local) */
   type: BotRunnerRunnerType;
   updatedAt: Scalars['Time']['output'];
@@ -723,6 +744,20 @@ export enum BotRunnerRunnerType {
  */
 export type BotRunnerWhereInput = {
   and?: InputMaybe<Array<BotRunnerWhereInput>>;
+  /** billing_enabled field predicates */
+  billingEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  billingEnabledNEQ?: InputMaybe<Scalars['Boolean']['input']>;
+  /** cpu_price_per_core_hour field predicates */
+  cpuPricePerCoreHour?: InputMaybe<Scalars['Float']['input']>;
+  cpuPricePerCoreHourGT?: InputMaybe<Scalars['Float']['input']>;
+  cpuPricePerCoreHourGTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuPricePerCoreHourIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  cpuPricePerCoreHourIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  cpuPricePerCoreHourLT?: InputMaybe<Scalars['Float']['input']>;
+  cpuPricePerCoreHourLTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuPricePerCoreHourNEQ?: InputMaybe<Scalars['Float']['input']>;
+  cpuPricePerCoreHourNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  cpuPricePerCoreHourNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** created_at field predicates */
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   createdAtGT?: InputMaybe<Scalars['Time']['input']>;
@@ -793,6 +828,17 @@ export type BotRunnerWhereInput = {
   idLTE?: InputMaybe<Scalars['ID']['input']>;
   idNEQ?: InputMaybe<Scalars['ID']['input']>;
   idNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** memory_price_per_gb_hour field predicates */
+  memoryPricePerGBHour?: InputMaybe<Scalars['Float']['input']>;
+  memoryPricePerGBHourGT?: InputMaybe<Scalars['Float']['input']>;
+  memoryPricePerGBHourGTE?: InputMaybe<Scalars['Float']['input']>;
+  memoryPricePerGBHourIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  memoryPricePerGBHourIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  memoryPricePerGBHourLT?: InputMaybe<Scalars['Float']['input']>;
+  memoryPricePerGBHourLTE?: InputMaybe<Scalars['Float']['input']>;
+  memoryPricePerGBHourNEQ?: InputMaybe<Scalars['Float']['input']>;
+  memoryPricePerGBHourNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  memoryPricePerGBHourNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** name field predicates */
   name?: InputMaybe<Scalars['String']['input']>;
   nameContains?: InputMaybe<Scalars['String']['input']>;
@@ -807,6 +853,17 @@ export type BotRunnerWhereInput = {
   nameLTE?: InputMaybe<Scalars['String']['input']>;
   nameNEQ?: InputMaybe<Scalars['String']['input']>;
   nameNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** network_price_per_gb field predicates */
+  networkPricePerGB?: InputMaybe<Scalars['Float']['input']>;
+  networkPricePerGBGT?: InputMaybe<Scalars['Float']['input']>;
+  networkPricePerGBGTE?: InputMaybe<Scalars['Float']['input']>;
+  networkPricePerGBIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  networkPricePerGBIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  networkPricePerGBLT?: InputMaybe<Scalars['Float']['input']>;
+  networkPricePerGBLTE?: InputMaybe<Scalars['Float']['input']>;
+  networkPricePerGBNEQ?: InputMaybe<Scalars['Float']['input']>;
+  networkPricePerGBNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  networkPricePerGBNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   not?: InputMaybe<BotRunnerWhereInput>;
   or?: InputMaybe<Array<BotRunnerWhereInput>>;
   /** owner_id field predicates */
@@ -826,6 +883,17 @@ export type BotRunnerWhereInput = {
   /** public field predicates */
   public?: InputMaybe<Scalars['Boolean']['input']>;
   publicNEQ?: InputMaybe<Scalars['Boolean']['input']>;
+  /** storage_price_per_gb field predicates */
+  storagePricePerGB?: InputMaybe<Scalars['Float']['input']>;
+  storagePricePerGBGT?: InputMaybe<Scalars['Float']['input']>;
+  storagePricePerGBGTE?: InputMaybe<Scalars['Float']['input']>;
+  storagePricePerGBIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  storagePricePerGBIsNil?: InputMaybe<Scalars['Boolean']['input']>;
+  storagePricePerGBLT?: InputMaybe<Scalars['Float']['input']>;
+  storagePricePerGBLTE?: InputMaybe<Scalars['Float']['input']>;
+  storagePricePerGBNEQ?: InputMaybe<Scalars['Float']['input']>;
+  storagePricePerGBNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  storagePricePerGBNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** type field predicates */
   type?: InputMaybe<BotRunnerRunnerType>;
   typeIn?: InputMaybe<Array<BotRunnerRunnerType>>;
@@ -1150,9 +1218,13 @@ export type CreateBotMetricsInput = {
  */
 export type CreateBotRunnerInput = {
   backtestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Whether usage tracking and billing is enabled for this runner */
+  billingEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   botIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Runner connection configuration (host, port, credentials, etc.) */
   config?: InputMaybe<Scalars['Map']['input']>;
+  /** Price per core-hour in USD (only used if billing_enabled) */
+  cpuPricePerCoreHour?: InputMaybe<Scalars['Float']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
   dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
@@ -1168,12 +1240,18 @@ export type CreateBotRunnerInput = {
   dataIsReady?: InputMaybe<Scalars['Boolean']['input']>;
   /** When data was last refreshed */
   dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
+  /** Price per GB-hour in USD (only used if billing_enabled) */
+  memoryPricePerGBHour?: InputMaybe<Scalars['Float']['input']>;
   /** Runner display name */
   name: Scalars['String']['input'];
+  /** Price per GB of network transfer in USD (only used if billing_enabled) */
+  networkPricePerGB?: InputMaybe<Scalars['Float']['input']>;
   /** Group ID (organization) that owns this bot runner */
   ownerID: Scalars['String']['input'];
   /** Whether this resource is publicly visible to all authenticated users */
   public?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Price per GB of disk I/O in USD (only used if billing_enabled) */
+  storagePricePerGB?: InputMaybe<Scalars['Float']['input']>;
   /** Runner environment type (docker, kubernetes, local) */
   type?: InputMaybe<BotRunnerRunnerType>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
@@ -1678,12 +1756,24 @@ export type Query = {
   botMetricsSlice: Array<BotMetrics>;
   botRunners: BotRunnerConnection;
   bots: BotConnection;
+  /**
+   * Calculate estimated cost for usage over a time range
+   * Uses runner-specific pricing rates
+   */
+  estimatedCost: UsageCost;
   exchanges: ExchangeConnection;
   getBotRunnerStatus?: Maybe<BotStatus>;
   /** Fetches an object given its ID. */
   node?: Maybe<Node>;
   /** Lookup nodes by a list of IDs. */
   nodes: Array<Maybe<Node>>;
+  /**
+   * Get total usage for an organization over a time range
+   * Aggregates all resources (bots and backtests) owned by the organization
+   */
+  organizationUsage?: Maybe<ResourceUsageAggregation>;
+  resourceUsageAggregations: Array<ResourceUsageAggregation>;
+  resourceUsageSamples: Array<ResourceUsageSample>;
   strategies: StrategyConnection;
   /** Get all versions of a strategy by name (for version history view) */
   strategyVersions: Array<Strategy>;
@@ -1718,6 +1808,13 @@ export type QueryBotsArgs = {
 };
 
 
+export type QueryEstimatedCostArgs = {
+  end: Scalars['Time']['input'];
+  ownerID: Scalars['String']['input'];
+  start: Scalars['Time']['input'];
+};
+
+
 export type QueryExchangesArgs = {
   after?: InputMaybe<Scalars['Cursor']['input']>;
   before?: InputMaybe<Scalars['Cursor']['input']>;
@@ -1739,6 +1836,13 @@ export type QueryNodeArgs = {
 
 export type QueryNodesArgs = {
   ids: Array<Scalars['ID']['input']>;
+};
+
+
+export type QueryOrganizationUsageArgs = {
+  end: Scalars['Time']['input'];
+  ownerID: Scalars['String']['input'];
+  start: Scalars['Time']['input'];
 };
 
 
@@ -1768,6 +1872,409 @@ export type RegistryAuthInput = {
   password: Scalars['String']['input'];
   serverAddress?: InputMaybe<Scalars['String']['input']>;
   username: Scalars['String']['input'];
+};
+
+export type ResourceUsageAggregation = Node & {
+  __typename?: 'ResourceUsageAggregation';
+  /** Total disk bytes read */
+  blockReadBytes: Scalars['Int']['output'];
+  /** Total disk bytes written */
+  blockWriteBytes: Scalars['Int']['output'];
+  /** End of the time bucket */
+  bucketEnd: Scalars['Time']['output'];
+  /** Start of the time bucket */
+  bucketStart: Scalars['Time']['output'];
+  /** Average CPU percentage during bucket */
+  cpuAvgPercent: Scalars['Float']['output'];
+  /** Total CPU consumption in core-seconds */
+  cpuCoreSeconds: Scalars['Float']['output'];
+  /** Maximum CPU percentage during bucket */
+  cpuMaxPercent: Scalars['Float']['output'];
+  createdAt: Scalars['Time']['output'];
+  /** Aggregation level: hourly or daily */
+  granularity: ResourceUsageAggregationAggregationGranularity;
+  id: Scalars['ID']['output'];
+  /** Average memory usage in bytes */
+  memoryAvgBytes: Scalars['Int']['output'];
+  /** Total memory consumption in GB-seconds */
+  memoryGBSeconds: Scalars['Float']['output'];
+  /** Maximum memory usage in bytes */
+  memoryMaxBytes: Scalars['Int']['output'];
+  /** Total network bytes received */
+  networkRxBytes: Scalars['Int']['output'];
+  /** Total network bytes transmitted */
+  networkTxBytes: Scalars['Int']['output'];
+  /** Organization ID for billing */
+  ownerID: Scalars['String']['output'];
+  /** ID of the bot or backtest */
+  resourceID: Scalars['ID']['output'];
+  /** Type of resource: bot or backtest */
+  resourceType: ResourceUsageAggregationResourceType;
+  runner: BotRunner;
+  /** Runner ID for rate lookup */
+  runnerID: Scalars['ID']['output'];
+  /** Number of samples in this aggregation */
+  sampleCount: Scalars['Int']['output'];
+};
+
+/** ResourceUsageAggregationAggregationGranularity is enum for the field granularity */
+export enum ResourceUsageAggregationAggregationGranularity {
+  Daily = 'daily',
+  Hourly = 'hourly'
+}
+
+/** ResourceUsageAggregationResourceType is enum for the field resource_type */
+export enum ResourceUsageAggregationResourceType {
+  Backtest = 'backtest',
+  Bot = 'bot'
+}
+
+/**
+ * ResourceUsageAggregationWhereInput is used for filtering ResourceUsageAggregation objects.
+ * Input was generated by ent.
+ */
+export type ResourceUsageAggregationWhereInput = {
+  and?: InputMaybe<Array<ResourceUsageAggregationWhereInput>>;
+  /** block_read_bytes field predicates */
+  blockReadBytes?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  blockReadBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** block_write_bytes field predicates */
+  blockWriteBytes?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  blockWriteBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** bucket_end field predicates */
+  bucketEnd?: InputMaybe<Scalars['Time']['input']>;
+  bucketEndGT?: InputMaybe<Scalars['Time']['input']>;
+  bucketEndGTE?: InputMaybe<Scalars['Time']['input']>;
+  bucketEndIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  bucketEndLT?: InputMaybe<Scalars['Time']['input']>;
+  bucketEndLTE?: InputMaybe<Scalars['Time']['input']>;
+  bucketEndNEQ?: InputMaybe<Scalars['Time']['input']>;
+  bucketEndNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** bucket_start field predicates */
+  bucketStart?: InputMaybe<Scalars['Time']['input']>;
+  bucketStartGT?: InputMaybe<Scalars['Time']['input']>;
+  bucketStartGTE?: InputMaybe<Scalars['Time']['input']>;
+  bucketStartIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  bucketStartLT?: InputMaybe<Scalars['Time']['input']>;
+  bucketStartLTE?: InputMaybe<Scalars['Time']['input']>;
+  bucketStartNEQ?: InputMaybe<Scalars['Time']['input']>;
+  bucketStartNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** cpu_avg_percent field predicates */
+  cpuAvgPercent?: InputMaybe<Scalars['Float']['input']>;
+  cpuAvgPercentGT?: InputMaybe<Scalars['Float']['input']>;
+  cpuAvgPercentGTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuAvgPercentIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  cpuAvgPercentLT?: InputMaybe<Scalars['Float']['input']>;
+  cpuAvgPercentLTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuAvgPercentNEQ?: InputMaybe<Scalars['Float']['input']>;
+  cpuAvgPercentNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  /** cpu_core_seconds field predicates */
+  cpuCoreSeconds?: InputMaybe<Scalars['Float']['input']>;
+  cpuCoreSecondsGT?: InputMaybe<Scalars['Float']['input']>;
+  cpuCoreSecondsGTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuCoreSecondsIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  cpuCoreSecondsLT?: InputMaybe<Scalars['Float']['input']>;
+  cpuCoreSecondsLTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuCoreSecondsNEQ?: InputMaybe<Scalars['Float']['input']>;
+  cpuCoreSecondsNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  /** cpu_max_percent field predicates */
+  cpuMaxPercent?: InputMaybe<Scalars['Float']['input']>;
+  cpuMaxPercentGT?: InputMaybe<Scalars['Float']['input']>;
+  cpuMaxPercentGTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuMaxPercentIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  cpuMaxPercentLT?: InputMaybe<Scalars['Float']['input']>;
+  cpuMaxPercentLTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuMaxPercentNEQ?: InputMaybe<Scalars['Float']['input']>;
+  cpuMaxPercentNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  /** created_at field predicates */
+  createdAt?: InputMaybe<Scalars['Time']['input']>;
+  createdAtGT?: InputMaybe<Scalars['Time']['input']>;
+  createdAtGTE?: InputMaybe<Scalars['Time']['input']>;
+  createdAtIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  createdAtLT?: InputMaybe<Scalars['Time']['input']>;
+  createdAtLTE?: InputMaybe<Scalars['Time']['input']>;
+  createdAtNEQ?: InputMaybe<Scalars['Time']['input']>;
+  createdAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** granularity field predicates */
+  granularity?: InputMaybe<ResourceUsageAggregationAggregationGranularity>;
+  granularityIn?: InputMaybe<Array<ResourceUsageAggregationAggregationGranularity>>;
+  granularityNEQ?: InputMaybe<ResourceUsageAggregationAggregationGranularity>;
+  granularityNotIn?: InputMaybe<Array<ResourceUsageAggregationAggregationGranularity>>;
+  /** runner edge predicates */
+  hasRunner?: InputMaybe<Scalars['Boolean']['input']>;
+  hasRunnerWith?: InputMaybe<Array<BotRunnerWhereInput>>;
+  /** id field predicates */
+  id?: InputMaybe<Scalars['ID']['input']>;
+  idGT?: InputMaybe<Scalars['ID']['input']>;
+  idGTE?: InputMaybe<Scalars['ID']['input']>;
+  idIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  idLT?: InputMaybe<Scalars['ID']['input']>;
+  idLTE?: InputMaybe<Scalars['ID']['input']>;
+  idNEQ?: InputMaybe<Scalars['ID']['input']>;
+  idNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** memory_avg_bytes field predicates */
+  memoryAvgBytes?: InputMaybe<Scalars['Int']['input']>;
+  memoryAvgBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  memoryAvgBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  memoryAvgBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  memoryAvgBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  memoryAvgBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  memoryAvgBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  memoryAvgBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** memory_gb_seconds field predicates */
+  memoryGBSeconds?: InputMaybe<Scalars['Float']['input']>;
+  memoryGBSecondsGT?: InputMaybe<Scalars['Float']['input']>;
+  memoryGBSecondsGTE?: InputMaybe<Scalars['Float']['input']>;
+  memoryGBSecondsIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  memoryGBSecondsLT?: InputMaybe<Scalars['Float']['input']>;
+  memoryGBSecondsLTE?: InputMaybe<Scalars['Float']['input']>;
+  memoryGBSecondsNEQ?: InputMaybe<Scalars['Float']['input']>;
+  memoryGBSecondsNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  /** memory_max_bytes field predicates */
+  memoryMaxBytes?: InputMaybe<Scalars['Int']['input']>;
+  memoryMaxBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  memoryMaxBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  memoryMaxBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  memoryMaxBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  memoryMaxBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  memoryMaxBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  memoryMaxBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** network_rx_bytes field predicates */
+  networkRxBytes?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  networkRxBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** network_tx_bytes field predicates */
+  networkTxBytes?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  networkTxBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  not?: InputMaybe<ResourceUsageAggregationWhereInput>;
+  or?: InputMaybe<Array<ResourceUsageAggregationWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** resource_id field predicates */
+  resourceID?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDGT?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDGTE?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  resourceIDLT?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDLTE?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDNEQ?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** resource_type field predicates */
+  resourceType?: InputMaybe<ResourceUsageAggregationResourceType>;
+  resourceTypeIn?: InputMaybe<Array<ResourceUsageAggregationResourceType>>;
+  resourceTypeNEQ?: InputMaybe<ResourceUsageAggregationResourceType>;
+  resourceTypeNotIn?: InputMaybe<Array<ResourceUsageAggregationResourceType>>;
+  /** runner_id field predicates */
+  runnerID?: InputMaybe<Scalars['ID']['input']>;
+  runnerIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  runnerIDNEQ?: InputMaybe<Scalars['ID']['input']>;
+  runnerIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** sample_count field predicates */
+  sampleCount?: InputMaybe<Scalars['Int']['input']>;
+  sampleCountGT?: InputMaybe<Scalars['Int']['input']>;
+  sampleCountGTE?: InputMaybe<Scalars['Int']['input']>;
+  sampleCountIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  sampleCountLT?: InputMaybe<Scalars['Int']['input']>;
+  sampleCountLTE?: InputMaybe<Scalars['Int']['input']>;
+  sampleCountNEQ?: InputMaybe<Scalars['Int']['input']>;
+  sampleCountNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
+export type ResourceUsageSample = Node & {
+  __typename?: 'ResourceUsageSample';
+  /** Disk bytes read */
+  blockReadBytes: Scalars['Int']['output'];
+  /** Disk bytes written */
+  blockWriteBytes: Scalars['Int']['output'];
+  /** CPU usage as percentage (0-100 per core) */
+  cpuPercent: Scalars['Float']['output'];
+  createdAt: Scalars['Time']['output'];
+  id: Scalars['ID']['output'];
+  /** Memory usage in bytes */
+  memoryBytes: Scalars['Int']['output'];
+  /** Network bytes received */
+  networkRxBytes: Scalars['Int']['output'];
+  /** Network bytes transmitted */
+  networkTxBytes: Scalars['Int']['output'];
+  /** Organization ID for billing */
+  ownerID: Scalars['String']['output'];
+  /** ID of the bot or backtest */
+  resourceID: Scalars['ID']['output'];
+  /** Type of resource: bot or backtest */
+  resourceType: ResourceUsageSampleResourceType;
+  runner: BotRunner;
+  /** Runner ID for rate lookup */
+  runnerID: Scalars['ID']['output'];
+  /** When this sample was collected */
+  sampledAt: Scalars['Time']['output'];
+};
+
+/** ResourceUsageSampleResourceType is enum for the field resource_type */
+export enum ResourceUsageSampleResourceType {
+  Backtest = 'backtest',
+  Bot = 'bot'
+}
+
+/**
+ * ResourceUsageSampleWhereInput is used for filtering ResourceUsageSample objects.
+ * Input was generated by ent.
+ */
+export type ResourceUsageSampleWhereInput = {
+  and?: InputMaybe<Array<ResourceUsageSampleWhereInput>>;
+  /** block_read_bytes field predicates */
+  blockReadBytes?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  blockReadBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  blockReadBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** block_write_bytes field predicates */
+  blockWriteBytes?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  blockWriteBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  blockWriteBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** cpu_percent field predicates */
+  cpuPercent?: InputMaybe<Scalars['Float']['input']>;
+  cpuPercentGT?: InputMaybe<Scalars['Float']['input']>;
+  cpuPercentGTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuPercentIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  cpuPercentLT?: InputMaybe<Scalars['Float']['input']>;
+  cpuPercentLTE?: InputMaybe<Scalars['Float']['input']>;
+  cpuPercentNEQ?: InputMaybe<Scalars['Float']['input']>;
+  cpuPercentNotIn?: InputMaybe<Array<Scalars['Float']['input']>>;
+  /** created_at field predicates */
+  createdAt?: InputMaybe<Scalars['Time']['input']>;
+  createdAtGT?: InputMaybe<Scalars['Time']['input']>;
+  createdAtGTE?: InputMaybe<Scalars['Time']['input']>;
+  createdAtIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  createdAtLT?: InputMaybe<Scalars['Time']['input']>;
+  createdAtLTE?: InputMaybe<Scalars['Time']['input']>;
+  createdAtNEQ?: InputMaybe<Scalars['Time']['input']>;
+  createdAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  /** runner edge predicates */
+  hasRunner?: InputMaybe<Scalars['Boolean']['input']>;
+  hasRunnerWith?: InputMaybe<Array<BotRunnerWhereInput>>;
+  /** id field predicates */
+  id?: InputMaybe<Scalars['ID']['input']>;
+  idGT?: InputMaybe<Scalars['ID']['input']>;
+  idGTE?: InputMaybe<Scalars['ID']['input']>;
+  idIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  idLT?: InputMaybe<Scalars['ID']['input']>;
+  idLTE?: InputMaybe<Scalars['ID']['input']>;
+  idNEQ?: InputMaybe<Scalars['ID']['input']>;
+  idNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** memory_bytes field predicates */
+  memoryBytes?: InputMaybe<Scalars['Int']['input']>;
+  memoryBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  memoryBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  memoryBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  memoryBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  memoryBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  memoryBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  memoryBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** network_rx_bytes field predicates */
+  networkRxBytes?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  networkRxBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  networkRxBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** network_tx_bytes field predicates */
+  networkTxBytes?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesGT?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesGTE?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  networkTxBytesLT?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesLTE?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesNEQ?: InputMaybe<Scalars['Int']['input']>;
+  networkTxBytesNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
+  not?: InputMaybe<ResourceUsageSampleWhereInput>;
+  or?: InputMaybe<Array<ResourceUsageSampleWhereInput>>;
+  /** owner_id field predicates */
+  ownerID?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContains?: InputMaybe<Scalars['String']['input']>;
+  ownerIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDGTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  ownerIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  ownerIDLT?: InputMaybe<Scalars['String']['input']>;
+  ownerIDLTE?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** resource_id field predicates */
+  resourceID?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDGT?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDGTE?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  resourceIDLT?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDLTE?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDNEQ?: InputMaybe<Scalars['ID']['input']>;
+  resourceIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** resource_type field predicates */
+  resourceType?: InputMaybe<ResourceUsageSampleResourceType>;
+  resourceTypeIn?: InputMaybe<Array<ResourceUsageSampleResourceType>>;
+  resourceTypeNEQ?: InputMaybe<ResourceUsageSampleResourceType>;
+  resourceTypeNotIn?: InputMaybe<Array<ResourceUsageSampleResourceType>>;
+  /** runner_id field predicates */
+  runnerID?: InputMaybe<Scalars['ID']['input']>;
+  runnerIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  runnerIDNEQ?: InputMaybe<Scalars['ID']['input']>;
+  runnerIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** sampled_at field predicates */
+  sampledAt?: InputMaybe<Scalars['Time']['input']>;
+  sampledAtGT?: InputMaybe<Scalars['Time']['input']>;
+  sampledAtGTE?: InputMaybe<Scalars['Time']['input']>;
+  sampledAtIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+  sampledAtLT?: InputMaybe<Scalars['Time']['input']>;
+  sampledAtLTE?: InputMaybe<Scalars['Time']['input']>;
+  sampledAtNEQ?: InputMaybe<Scalars['Time']['input']>;
+  sampledAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
 };
 
 export type RunnerConfigInput = {
@@ -2330,16 +2837,24 @@ export type UpdateBotMetricsInput = {
 export type UpdateBotRunnerInput = {
   addBacktestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   addBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Whether usage tracking and billing is enabled for this runner */
+  billingEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   clearBacktests?: InputMaybe<Scalars['Boolean']['input']>;
   clearBots?: InputMaybe<Scalars['Boolean']['input']>;
+  clearCPUPricePerCoreHour?: InputMaybe<Scalars['Boolean']['input']>;
   clearConfig?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadConfig?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadProgress?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadStartedAt?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataErrorMessage?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataLastUpdated?: InputMaybe<Scalars['Boolean']['input']>;
+  clearMemoryPricePerGBHour?: InputMaybe<Scalars['Boolean']['input']>;
+  clearNetworkPricePerGB?: InputMaybe<Scalars['Boolean']['input']>;
+  clearStoragePricePerGB?: InputMaybe<Scalars['Boolean']['input']>;
   /** Runner connection configuration (host, port, credentials, etc.) */
   config?: InputMaybe<Scalars['Map']['input']>;
+  /** Price per core-hour in USD (only used if billing_enabled) */
+  cpuPricePerCoreHour?: InputMaybe<Scalars['Float']['input']>;
   /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
   dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
@@ -2354,14 +2869,20 @@ export type UpdateBotRunnerInput = {
   dataIsReady?: InputMaybe<Scalars['Boolean']['input']>;
   /** When data was last refreshed */
   dataLastUpdated?: InputMaybe<Scalars['Time']['input']>;
+  /** Price per GB-hour in USD (only used if billing_enabled) */
+  memoryPricePerGBHour?: InputMaybe<Scalars['Float']['input']>;
   /** Runner display name */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Price per GB of network transfer in USD (only used if billing_enabled) */
+  networkPricePerGB?: InputMaybe<Scalars['Float']['input']>;
   /** Group ID (organization) that owns this bot runner */
   ownerID?: InputMaybe<Scalars['String']['input']>;
   /** Whether this resource is publicly visible to all authenticated users */
   public?: InputMaybe<Scalars['Boolean']['input']>;
   removeBacktestIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
   removeBotIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Price per GB of disk I/O in USD (only used if billing_enabled) */
+  storagePricePerGB?: InputMaybe<Scalars['Float']['input']>;
   /** Runner environment type (docker, kubernetes, local) */
   type?: InputMaybe<BotRunnerRunnerType>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
@@ -2460,4 +2981,24 @@ export type UpdateTradeInput = {
   /** Timeframe used */
   timeframe?: InputMaybe<Scalars['String']['input']>;
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
+};
+
+/**
+ * Estimated cost breakdown for resource usage
+ * Uses runner-specific pricing rates
+ */
+export type UsageCost = {
+  __typename?: 'UsageCost';
+  /** Cost for CPU usage (core-hours * rate) */
+  cpuCost: Scalars['Float']['output'];
+  /** Currency for the cost */
+  currency: Scalars['String']['output'];
+  /** Cost for memory usage (GB-hours * rate) */
+  memoryCost: Scalars['Float']['output'];
+  /** Cost for network transfer (GB * rate) */
+  networkCost: Scalars['Float']['output'];
+  /** Cost for disk I/O (GB * rate) */
+  storageCost: Scalars['Float']['output'];
+  /** Total estimated cost */
+  totalCost: Scalars['Float']['output'];
 };

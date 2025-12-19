@@ -14,6 +14,8 @@ import (
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/exchange"
 	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/ent/trade"
 	"volaticloud/internal/enum"
@@ -32,13 +34,15 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeBacktest   = "Backtest"
-	TypeBot        = "Bot"
-	TypeBotMetrics = "BotMetrics"
-	TypeBotRunner  = "BotRunner"
-	TypeExchange   = "Exchange"
-	TypeStrategy   = "Strategy"
-	TypeTrade      = "Trade"
+	TypeBacktest                 = "Backtest"
+	TypeBot                      = "Bot"
+	TypeBotMetrics               = "BotMetrics"
+	TypeBotRunner                = "BotRunner"
+	TypeExchange                 = "Exchange"
+	TypeResourceUsageAggregation = "ResourceUsageAggregation"
+	TypeResourceUsageSample      = "ResourceUsageSample"
+	TypeStrategy                 = "Strategy"
+	TypeTrade                    = "Trade"
 )
 
 // BacktestMutation represents an operation that mutates the Backtest nodes in the graph.
@@ -5133,33 +5137,48 @@ func (m *BotMetricsMutation) ResetEdge(name string) error {
 // BotRunnerMutation represents an operation that mutates the BotRunner nodes in the graph.
 type BotRunnerMutation struct {
 	config
-	op                       Op
-	typ                      string
-	id                       *uuid.UUID
-	public                   *bool
-	name                     *string
-	_type                    *enum.RunnerType
-	_config                  *map[string]interface{}
-	data_is_ready            *bool
-	data_last_updated        *time.Time
-	data_download_status     *enum.DataDownloadStatus
-	data_download_started_at *time.Time
-	data_download_progress   *map[string]interface{}
-	data_error_message       *string
-	data_download_config     *map[string]interface{}
-	owner_id                 *string
-	created_at               *time.Time
-	updated_at               *time.Time
-	clearedFields            map[string]struct{}
-	bots                     map[uuid.UUID]struct{}
-	removedbots              map[uuid.UUID]struct{}
-	clearedbots              bool
-	backtests                map[uuid.UUID]struct{}
-	removedbacktests         map[uuid.UUID]struct{}
-	clearedbacktests         bool
-	done                     bool
-	oldValue                 func(context.Context) (*BotRunner, error)
-	predicates               []predicate.BotRunner
+	op                          Op
+	typ                         string
+	id                          *uuid.UUID
+	public                      *bool
+	name                        *string
+	_type                       *enum.RunnerType
+	_config                     *map[string]interface{}
+	data_is_ready               *bool
+	data_last_updated           *time.Time
+	data_download_status        *enum.DataDownloadStatus
+	data_download_started_at    *time.Time
+	data_download_progress      *map[string]interface{}
+	data_error_message          *string
+	data_download_config        *map[string]interface{}
+	owner_id                    *string
+	billing_enabled             *bool
+	cpu_price_per_core_hour     *float64
+	addcpu_price_per_core_hour  *float64
+	memory_price_per_gb_hour    *float64
+	addmemory_price_per_gb_hour *float64
+	network_price_per_gb        *float64
+	addnetwork_price_per_gb     *float64
+	storage_price_per_gb        *float64
+	addstorage_price_per_gb     *float64
+	created_at                  *time.Time
+	updated_at                  *time.Time
+	clearedFields               map[string]struct{}
+	bots                        map[uuid.UUID]struct{}
+	removedbots                 map[uuid.UUID]struct{}
+	clearedbots                 bool
+	backtests                   map[uuid.UUID]struct{}
+	removedbacktests            map[uuid.UUID]struct{}
+	clearedbacktests            bool
+	usage_samples               map[uuid.UUID]struct{}
+	removedusage_samples        map[uuid.UUID]struct{}
+	clearedusage_samples        bool
+	usage_aggregations          map[uuid.UUID]struct{}
+	removedusage_aggregations   map[uuid.UUID]struct{}
+	clearedusage_aggregations   bool
+	done                        bool
+	oldValue                    func(context.Context) (*BotRunner, error)
+	predicates                  []predicate.BotRunner
 }
 
 var _ ent.Mutation = (*BotRunnerMutation)(nil)
@@ -5776,6 +5795,322 @@ func (m *BotRunnerMutation) ResetOwnerID() {
 	m.owner_id = nil
 }
 
+// SetBillingEnabled sets the "billing_enabled" field.
+func (m *BotRunnerMutation) SetBillingEnabled(b bool) {
+	m.billing_enabled = &b
+}
+
+// BillingEnabled returns the value of the "billing_enabled" field in the mutation.
+func (m *BotRunnerMutation) BillingEnabled() (r bool, exists bool) {
+	v := m.billing_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBillingEnabled returns the old "billing_enabled" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldBillingEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBillingEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBillingEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBillingEnabled: %w", err)
+	}
+	return oldValue.BillingEnabled, nil
+}
+
+// ResetBillingEnabled resets all changes to the "billing_enabled" field.
+func (m *BotRunnerMutation) ResetBillingEnabled() {
+	m.billing_enabled = nil
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (m *BotRunnerMutation) SetCPUPricePerCoreHour(f float64) {
+	m.cpu_price_per_core_hour = &f
+	m.addcpu_price_per_core_hour = nil
+}
+
+// CPUPricePerCoreHour returns the value of the "cpu_price_per_core_hour" field in the mutation.
+func (m *BotRunnerMutation) CPUPricePerCoreHour() (r float64, exists bool) {
+	v := m.cpu_price_per_core_hour
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCPUPricePerCoreHour returns the old "cpu_price_per_core_hour" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldCPUPricePerCoreHour(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCPUPricePerCoreHour is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCPUPricePerCoreHour requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCPUPricePerCoreHour: %w", err)
+	}
+	return oldValue.CPUPricePerCoreHour, nil
+}
+
+// AddCPUPricePerCoreHour adds f to the "cpu_price_per_core_hour" field.
+func (m *BotRunnerMutation) AddCPUPricePerCoreHour(f float64) {
+	if m.addcpu_price_per_core_hour != nil {
+		*m.addcpu_price_per_core_hour += f
+	} else {
+		m.addcpu_price_per_core_hour = &f
+	}
+}
+
+// AddedCPUPricePerCoreHour returns the value that was added to the "cpu_price_per_core_hour" field in this mutation.
+func (m *BotRunnerMutation) AddedCPUPricePerCoreHour() (r float64, exists bool) {
+	v := m.addcpu_price_per_core_hour
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCPUPricePerCoreHour clears the value of the "cpu_price_per_core_hour" field.
+func (m *BotRunnerMutation) ClearCPUPricePerCoreHour() {
+	m.cpu_price_per_core_hour = nil
+	m.addcpu_price_per_core_hour = nil
+	m.clearedFields[botrunner.FieldCPUPricePerCoreHour] = struct{}{}
+}
+
+// CPUPricePerCoreHourCleared returns if the "cpu_price_per_core_hour" field was cleared in this mutation.
+func (m *BotRunnerMutation) CPUPricePerCoreHourCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldCPUPricePerCoreHour]
+	return ok
+}
+
+// ResetCPUPricePerCoreHour resets all changes to the "cpu_price_per_core_hour" field.
+func (m *BotRunnerMutation) ResetCPUPricePerCoreHour() {
+	m.cpu_price_per_core_hour = nil
+	m.addcpu_price_per_core_hour = nil
+	delete(m.clearedFields, botrunner.FieldCPUPricePerCoreHour)
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (m *BotRunnerMutation) SetMemoryPricePerGBHour(f float64) {
+	m.memory_price_per_gb_hour = &f
+	m.addmemory_price_per_gb_hour = nil
+}
+
+// MemoryPricePerGBHour returns the value of the "memory_price_per_gb_hour" field in the mutation.
+func (m *BotRunnerMutation) MemoryPricePerGBHour() (r float64, exists bool) {
+	v := m.memory_price_per_gb_hour
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMemoryPricePerGBHour returns the old "memory_price_per_gb_hour" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldMemoryPricePerGBHour(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMemoryPricePerGBHour is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMemoryPricePerGBHour requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMemoryPricePerGBHour: %w", err)
+	}
+	return oldValue.MemoryPricePerGBHour, nil
+}
+
+// AddMemoryPricePerGBHour adds f to the "memory_price_per_gb_hour" field.
+func (m *BotRunnerMutation) AddMemoryPricePerGBHour(f float64) {
+	if m.addmemory_price_per_gb_hour != nil {
+		*m.addmemory_price_per_gb_hour += f
+	} else {
+		m.addmemory_price_per_gb_hour = &f
+	}
+}
+
+// AddedMemoryPricePerGBHour returns the value that was added to the "memory_price_per_gb_hour" field in this mutation.
+func (m *BotRunnerMutation) AddedMemoryPricePerGBHour() (r float64, exists bool) {
+	v := m.addmemory_price_per_gb_hour
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMemoryPricePerGBHour clears the value of the "memory_price_per_gb_hour" field.
+func (m *BotRunnerMutation) ClearMemoryPricePerGBHour() {
+	m.memory_price_per_gb_hour = nil
+	m.addmemory_price_per_gb_hour = nil
+	m.clearedFields[botrunner.FieldMemoryPricePerGBHour] = struct{}{}
+}
+
+// MemoryPricePerGBHourCleared returns if the "memory_price_per_gb_hour" field was cleared in this mutation.
+func (m *BotRunnerMutation) MemoryPricePerGBHourCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldMemoryPricePerGBHour]
+	return ok
+}
+
+// ResetMemoryPricePerGBHour resets all changes to the "memory_price_per_gb_hour" field.
+func (m *BotRunnerMutation) ResetMemoryPricePerGBHour() {
+	m.memory_price_per_gb_hour = nil
+	m.addmemory_price_per_gb_hour = nil
+	delete(m.clearedFields, botrunner.FieldMemoryPricePerGBHour)
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (m *BotRunnerMutation) SetNetworkPricePerGB(f float64) {
+	m.network_price_per_gb = &f
+	m.addnetwork_price_per_gb = nil
+}
+
+// NetworkPricePerGB returns the value of the "network_price_per_gb" field in the mutation.
+func (m *BotRunnerMutation) NetworkPricePerGB() (r float64, exists bool) {
+	v := m.network_price_per_gb
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNetworkPricePerGB returns the old "network_price_per_gb" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldNetworkPricePerGB(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNetworkPricePerGB is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNetworkPricePerGB requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNetworkPricePerGB: %w", err)
+	}
+	return oldValue.NetworkPricePerGB, nil
+}
+
+// AddNetworkPricePerGB adds f to the "network_price_per_gb" field.
+func (m *BotRunnerMutation) AddNetworkPricePerGB(f float64) {
+	if m.addnetwork_price_per_gb != nil {
+		*m.addnetwork_price_per_gb += f
+	} else {
+		m.addnetwork_price_per_gb = &f
+	}
+}
+
+// AddedNetworkPricePerGB returns the value that was added to the "network_price_per_gb" field in this mutation.
+func (m *BotRunnerMutation) AddedNetworkPricePerGB() (r float64, exists bool) {
+	v := m.addnetwork_price_per_gb
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearNetworkPricePerGB clears the value of the "network_price_per_gb" field.
+func (m *BotRunnerMutation) ClearNetworkPricePerGB() {
+	m.network_price_per_gb = nil
+	m.addnetwork_price_per_gb = nil
+	m.clearedFields[botrunner.FieldNetworkPricePerGB] = struct{}{}
+}
+
+// NetworkPricePerGBCleared returns if the "network_price_per_gb" field was cleared in this mutation.
+func (m *BotRunnerMutation) NetworkPricePerGBCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldNetworkPricePerGB]
+	return ok
+}
+
+// ResetNetworkPricePerGB resets all changes to the "network_price_per_gb" field.
+func (m *BotRunnerMutation) ResetNetworkPricePerGB() {
+	m.network_price_per_gb = nil
+	m.addnetwork_price_per_gb = nil
+	delete(m.clearedFields, botrunner.FieldNetworkPricePerGB)
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (m *BotRunnerMutation) SetStoragePricePerGB(f float64) {
+	m.storage_price_per_gb = &f
+	m.addstorage_price_per_gb = nil
+}
+
+// StoragePricePerGB returns the value of the "storage_price_per_gb" field in the mutation.
+func (m *BotRunnerMutation) StoragePricePerGB() (r float64, exists bool) {
+	v := m.storage_price_per_gb
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStoragePricePerGB returns the old "storage_price_per_gb" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldStoragePricePerGB(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStoragePricePerGB is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStoragePricePerGB requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStoragePricePerGB: %w", err)
+	}
+	return oldValue.StoragePricePerGB, nil
+}
+
+// AddStoragePricePerGB adds f to the "storage_price_per_gb" field.
+func (m *BotRunnerMutation) AddStoragePricePerGB(f float64) {
+	if m.addstorage_price_per_gb != nil {
+		*m.addstorage_price_per_gb += f
+	} else {
+		m.addstorage_price_per_gb = &f
+	}
+}
+
+// AddedStoragePricePerGB returns the value that was added to the "storage_price_per_gb" field in this mutation.
+func (m *BotRunnerMutation) AddedStoragePricePerGB() (r float64, exists bool) {
+	v := m.addstorage_price_per_gb
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearStoragePricePerGB clears the value of the "storage_price_per_gb" field.
+func (m *BotRunnerMutation) ClearStoragePricePerGB() {
+	m.storage_price_per_gb = nil
+	m.addstorage_price_per_gb = nil
+	m.clearedFields[botrunner.FieldStoragePricePerGB] = struct{}{}
+}
+
+// StoragePricePerGBCleared returns if the "storage_price_per_gb" field was cleared in this mutation.
+func (m *BotRunnerMutation) StoragePricePerGBCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldStoragePricePerGB]
+	return ok
+}
+
+// ResetStoragePricePerGB resets all changes to the "storage_price_per_gb" field.
+func (m *BotRunnerMutation) ResetStoragePricePerGB() {
+	m.storage_price_per_gb = nil
+	m.addstorage_price_per_gb = nil
+	delete(m.clearedFields, botrunner.FieldStoragePricePerGB)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *BotRunnerMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -5956,6 +6291,114 @@ func (m *BotRunnerMutation) ResetBacktests() {
 	m.removedbacktests = nil
 }
 
+// AddUsageSampleIDs adds the "usage_samples" edge to the ResourceUsageSample entity by ids.
+func (m *BotRunnerMutation) AddUsageSampleIDs(ids ...uuid.UUID) {
+	if m.usage_samples == nil {
+		m.usage_samples = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.usage_samples[ids[i]] = struct{}{}
+	}
+}
+
+// ClearUsageSamples clears the "usage_samples" edge to the ResourceUsageSample entity.
+func (m *BotRunnerMutation) ClearUsageSamples() {
+	m.clearedusage_samples = true
+}
+
+// UsageSamplesCleared reports if the "usage_samples" edge to the ResourceUsageSample entity was cleared.
+func (m *BotRunnerMutation) UsageSamplesCleared() bool {
+	return m.clearedusage_samples
+}
+
+// RemoveUsageSampleIDs removes the "usage_samples" edge to the ResourceUsageSample entity by IDs.
+func (m *BotRunnerMutation) RemoveUsageSampleIDs(ids ...uuid.UUID) {
+	if m.removedusage_samples == nil {
+		m.removedusage_samples = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.usage_samples, ids[i])
+		m.removedusage_samples[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedUsageSamples returns the removed IDs of the "usage_samples" edge to the ResourceUsageSample entity.
+func (m *BotRunnerMutation) RemovedUsageSamplesIDs() (ids []uuid.UUID) {
+	for id := range m.removedusage_samples {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// UsageSamplesIDs returns the "usage_samples" edge IDs in the mutation.
+func (m *BotRunnerMutation) UsageSamplesIDs() (ids []uuid.UUID) {
+	for id := range m.usage_samples {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetUsageSamples resets all changes to the "usage_samples" edge.
+func (m *BotRunnerMutation) ResetUsageSamples() {
+	m.usage_samples = nil
+	m.clearedusage_samples = false
+	m.removedusage_samples = nil
+}
+
+// AddUsageAggregationIDs adds the "usage_aggregations" edge to the ResourceUsageAggregation entity by ids.
+func (m *BotRunnerMutation) AddUsageAggregationIDs(ids ...uuid.UUID) {
+	if m.usage_aggregations == nil {
+		m.usage_aggregations = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.usage_aggregations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearUsageAggregations clears the "usage_aggregations" edge to the ResourceUsageAggregation entity.
+func (m *BotRunnerMutation) ClearUsageAggregations() {
+	m.clearedusage_aggregations = true
+}
+
+// UsageAggregationsCleared reports if the "usage_aggregations" edge to the ResourceUsageAggregation entity was cleared.
+func (m *BotRunnerMutation) UsageAggregationsCleared() bool {
+	return m.clearedusage_aggregations
+}
+
+// RemoveUsageAggregationIDs removes the "usage_aggregations" edge to the ResourceUsageAggregation entity by IDs.
+func (m *BotRunnerMutation) RemoveUsageAggregationIDs(ids ...uuid.UUID) {
+	if m.removedusage_aggregations == nil {
+		m.removedusage_aggregations = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.usage_aggregations, ids[i])
+		m.removedusage_aggregations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedUsageAggregations returns the removed IDs of the "usage_aggregations" edge to the ResourceUsageAggregation entity.
+func (m *BotRunnerMutation) RemovedUsageAggregationsIDs() (ids []uuid.UUID) {
+	for id := range m.removedusage_aggregations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// UsageAggregationsIDs returns the "usage_aggregations" edge IDs in the mutation.
+func (m *BotRunnerMutation) UsageAggregationsIDs() (ids []uuid.UUID) {
+	for id := range m.usage_aggregations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetUsageAggregations resets all changes to the "usage_aggregations" edge.
+func (m *BotRunnerMutation) ResetUsageAggregations() {
+	m.usage_aggregations = nil
+	m.clearedusage_aggregations = false
+	m.removedusage_aggregations = nil
+}
+
 // Where appends a list predicates to the BotRunnerMutation builder.
 func (m *BotRunnerMutation) Where(ps ...predicate.BotRunner) {
 	m.predicates = append(m.predicates, ps...)
@@ -5990,7 +6433,7 @@ func (m *BotRunnerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotRunnerMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 19)
 	if m.public != nil {
 		fields = append(fields, botrunner.FieldPublic)
 	}
@@ -6026,6 +6469,21 @@ func (m *BotRunnerMutation) Fields() []string {
 	}
 	if m.owner_id != nil {
 		fields = append(fields, botrunner.FieldOwnerID)
+	}
+	if m.billing_enabled != nil {
+		fields = append(fields, botrunner.FieldBillingEnabled)
+	}
+	if m.cpu_price_per_core_hour != nil {
+		fields = append(fields, botrunner.FieldCPUPricePerCoreHour)
+	}
+	if m.memory_price_per_gb_hour != nil {
+		fields = append(fields, botrunner.FieldMemoryPricePerGBHour)
+	}
+	if m.network_price_per_gb != nil {
+		fields = append(fields, botrunner.FieldNetworkPricePerGB)
+	}
+	if m.storage_price_per_gb != nil {
+		fields = append(fields, botrunner.FieldStoragePricePerGB)
 	}
 	if m.created_at != nil {
 		fields = append(fields, botrunner.FieldCreatedAt)
@@ -6065,6 +6523,16 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 		return m.DataDownloadConfig()
 	case botrunner.FieldOwnerID:
 		return m.OwnerID()
+	case botrunner.FieldBillingEnabled:
+		return m.BillingEnabled()
+	case botrunner.FieldCPUPricePerCoreHour:
+		return m.CPUPricePerCoreHour()
+	case botrunner.FieldMemoryPricePerGBHour:
+		return m.MemoryPricePerGBHour()
+	case botrunner.FieldNetworkPricePerGB:
+		return m.NetworkPricePerGB()
+	case botrunner.FieldStoragePricePerGB:
+		return m.StoragePricePerGB()
 	case botrunner.FieldCreatedAt:
 		return m.CreatedAt()
 	case botrunner.FieldUpdatedAt:
@@ -6102,6 +6570,16 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDataDownloadConfig(ctx)
 	case botrunner.FieldOwnerID:
 		return m.OldOwnerID(ctx)
+	case botrunner.FieldBillingEnabled:
+		return m.OldBillingEnabled(ctx)
+	case botrunner.FieldCPUPricePerCoreHour:
+		return m.OldCPUPricePerCoreHour(ctx)
+	case botrunner.FieldMemoryPricePerGBHour:
+		return m.OldMemoryPricePerGBHour(ctx)
+	case botrunner.FieldNetworkPricePerGB:
+		return m.OldNetworkPricePerGB(ctx)
+	case botrunner.FieldStoragePricePerGB:
+		return m.OldStoragePricePerGB(ctx)
 	case botrunner.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case botrunner.FieldUpdatedAt:
@@ -6199,6 +6677,41 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetOwnerID(v)
 		return nil
+	case botrunner.FieldBillingEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBillingEnabled(v)
+		return nil
+	case botrunner.FieldCPUPricePerCoreHour:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCPUPricePerCoreHour(v)
+		return nil
+	case botrunner.FieldMemoryPricePerGBHour:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMemoryPricePerGBHour(v)
+		return nil
+	case botrunner.FieldNetworkPricePerGB:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNetworkPricePerGB(v)
+		return nil
+	case botrunner.FieldStoragePricePerGB:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStoragePricePerGB(v)
+		return nil
 	case botrunner.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -6220,13 +6733,36 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *BotRunnerMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addcpu_price_per_core_hour != nil {
+		fields = append(fields, botrunner.FieldCPUPricePerCoreHour)
+	}
+	if m.addmemory_price_per_gb_hour != nil {
+		fields = append(fields, botrunner.FieldMemoryPricePerGBHour)
+	}
+	if m.addnetwork_price_per_gb != nil {
+		fields = append(fields, botrunner.FieldNetworkPricePerGB)
+	}
+	if m.addstorage_price_per_gb != nil {
+		fields = append(fields, botrunner.FieldStoragePricePerGB)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *BotRunnerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case botrunner.FieldCPUPricePerCoreHour:
+		return m.AddedCPUPricePerCoreHour()
+	case botrunner.FieldMemoryPricePerGBHour:
+		return m.AddedMemoryPricePerGBHour()
+	case botrunner.FieldNetworkPricePerGB:
+		return m.AddedNetworkPricePerGB()
+	case botrunner.FieldStoragePricePerGB:
+		return m.AddedStoragePricePerGB()
+	}
 	return nil, false
 }
 
@@ -6235,6 +6771,34 @@ func (m *BotRunnerMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *BotRunnerMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case botrunner.FieldCPUPricePerCoreHour:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCPUPricePerCoreHour(v)
+		return nil
+	case botrunner.FieldMemoryPricePerGBHour:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMemoryPricePerGBHour(v)
+		return nil
+	case botrunner.FieldNetworkPricePerGB:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNetworkPricePerGB(v)
+		return nil
+	case botrunner.FieldStoragePricePerGB:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStoragePricePerGB(v)
+		return nil
 	}
 	return fmt.Errorf("unknown BotRunner numeric field %s", name)
 }
@@ -6260,6 +6824,18 @@ func (m *BotRunnerMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(botrunner.FieldDataDownloadConfig) {
 		fields = append(fields, botrunner.FieldDataDownloadConfig)
+	}
+	if m.FieldCleared(botrunner.FieldCPUPricePerCoreHour) {
+		fields = append(fields, botrunner.FieldCPUPricePerCoreHour)
+	}
+	if m.FieldCleared(botrunner.FieldMemoryPricePerGBHour) {
+		fields = append(fields, botrunner.FieldMemoryPricePerGBHour)
+	}
+	if m.FieldCleared(botrunner.FieldNetworkPricePerGB) {
+		fields = append(fields, botrunner.FieldNetworkPricePerGB)
+	}
+	if m.FieldCleared(botrunner.FieldStoragePricePerGB) {
+		fields = append(fields, botrunner.FieldStoragePricePerGB)
 	}
 	return fields
 }
@@ -6292,6 +6868,18 @@ func (m *BotRunnerMutation) ClearField(name string) error {
 		return nil
 	case botrunner.FieldDataDownloadConfig:
 		m.ClearDataDownloadConfig()
+		return nil
+	case botrunner.FieldCPUPricePerCoreHour:
+		m.ClearCPUPricePerCoreHour()
+		return nil
+	case botrunner.FieldMemoryPricePerGBHour:
+		m.ClearMemoryPricePerGBHour()
+		return nil
+	case botrunner.FieldNetworkPricePerGB:
+		m.ClearNetworkPricePerGB()
+		return nil
+	case botrunner.FieldStoragePricePerGB:
+		m.ClearStoragePricePerGB()
 		return nil
 	}
 	return fmt.Errorf("unknown BotRunner nullable field %s", name)
@@ -6337,6 +6925,21 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 	case botrunner.FieldOwnerID:
 		m.ResetOwnerID()
 		return nil
+	case botrunner.FieldBillingEnabled:
+		m.ResetBillingEnabled()
+		return nil
+	case botrunner.FieldCPUPricePerCoreHour:
+		m.ResetCPUPricePerCoreHour()
+		return nil
+	case botrunner.FieldMemoryPricePerGBHour:
+		m.ResetMemoryPricePerGBHour()
+		return nil
+	case botrunner.FieldNetworkPricePerGB:
+		m.ResetNetworkPricePerGB()
+		return nil
+	case botrunner.FieldStoragePricePerGB:
+		m.ResetStoragePricePerGB()
+		return nil
 	case botrunner.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -6349,12 +6952,18 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *BotRunnerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 4)
 	if m.bots != nil {
 		edges = append(edges, botrunner.EdgeBots)
 	}
 	if m.backtests != nil {
 		edges = append(edges, botrunner.EdgeBacktests)
+	}
+	if m.usage_samples != nil {
+		edges = append(edges, botrunner.EdgeUsageSamples)
+	}
+	if m.usage_aggregations != nil {
+		edges = append(edges, botrunner.EdgeUsageAggregations)
 	}
 	return edges
 }
@@ -6375,18 +6984,36 @@ func (m *BotRunnerMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case botrunner.EdgeUsageSamples:
+		ids := make([]ent.Value, 0, len(m.usage_samples))
+		for id := range m.usage_samples {
+			ids = append(ids, id)
+		}
+		return ids
+	case botrunner.EdgeUsageAggregations:
+		ids := make([]ent.Value, 0, len(m.usage_aggregations))
+		for id := range m.usage_aggregations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *BotRunnerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 4)
 	if m.removedbots != nil {
 		edges = append(edges, botrunner.EdgeBots)
 	}
 	if m.removedbacktests != nil {
 		edges = append(edges, botrunner.EdgeBacktests)
+	}
+	if m.removedusage_samples != nil {
+		edges = append(edges, botrunner.EdgeUsageSamples)
+	}
+	if m.removedusage_aggregations != nil {
+		edges = append(edges, botrunner.EdgeUsageAggregations)
 	}
 	return edges
 }
@@ -6407,18 +7034,36 @@ func (m *BotRunnerMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case botrunner.EdgeUsageSamples:
+		ids := make([]ent.Value, 0, len(m.removedusage_samples))
+		for id := range m.removedusage_samples {
+			ids = append(ids, id)
+		}
+		return ids
+	case botrunner.EdgeUsageAggregations:
+		ids := make([]ent.Value, 0, len(m.removedusage_aggregations))
+		for id := range m.removedusage_aggregations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *BotRunnerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 4)
 	if m.clearedbots {
 		edges = append(edges, botrunner.EdgeBots)
 	}
 	if m.clearedbacktests {
 		edges = append(edges, botrunner.EdgeBacktests)
+	}
+	if m.clearedusage_samples {
+		edges = append(edges, botrunner.EdgeUsageSamples)
+	}
+	if m.clearedusage_aggregations {
+		edges = append(edges, botrunner.EdgeUsageAggregations)
 	}
 	return edges
 }
@@ -6431,6 +7076,10 @@ func (m *BotRunnerMutation) EdgeCleared(name string) bool {
 		return m.clearedbots
 	case botrunner.EdgeBacktests:
 		return m.clearedbacktests
+	case botrunner.EdgeUsageSamples:
+		return m.clearedusage_samples
+	case botrunner.EdgeUsageAggregations:
+		return m.clearedusage_aggregations
 	}
 	return false
 }
@@ -6452,6 +7101,12 @@ func (m *BotRunnerMutation) ResetEdge(name string) error {
 		return nil
 	case botrunner.EdgeBacktests:
 		m.ResetBacktests()
+		return nil
+	case botrunner.EdgeUsageSamples:
+		m.ResetUsageSamples()
+		return nil
+	case botrunner.EdgeUsageAggregations:
+		m.ResetUsageAggregations()
 		return nil
 	}
 	return fmt.Errorf("unknown BotRunner edge %s", name)
@@ -7118,6 +7773,2911 @@ func (m *ExchangeMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Exchange edge %s", name)
+}
+
+// ResourceUsageAggregationMutation represents an operation that mutates the ResourceUsageAggregation nodes in the graph.
+type ResourceUsageAggregationMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	resource_type        *enum.ResourceType
+	resource_id          *uuid.UUID
+	owner_id             *string
+	granularity          *enum.AggregationGranularity
+	bucket_start         *time.Time
+	bucket_end           *time.Time
+	cpu_core_seconds     *float64
+	addcpu_core_seconds  *float64
+	cpu_avg_percent      *float64
+	addcpu_avg_percent   *float64
+	cpu_max_percent      *float64
+	addcpu_max_percent   *float64
+	memory_gb_seconds    *float64
+	addmemory_gb_seconds *float64
+	memory_avg_bytes     *int64
+	addmemory_avg_bytes  *int64
+	memory_max_bytes     *int64
+	addmemory_max_bytes  *int64
+	network_rx_bytes     *int64
+	addnetwork_rx_bytes  *int64
+	network_tx_bytes     *int64
+	addnetwork_tx_bytes  *int64
+	block_read_bytes     *int64
+	addblock_read_bytes  *int64
+	block_write_bytes    *int64
+	addblock_write_bytes *int64
+	sample_count         *int
+	addsample_count      *int
+	created_at           *time.Time
+	clearedFields        map[string]struct{}
+	runner               *uuid.UUID
+	clearedrunner        bool
+	done                 bool
+	oldValue             func(context.Context) (*ResourceUsageAggregation, error)
+	predicates           []predicate.ResourceUsageAggregation
+}
+
+var _ ent.Mutation = (*ResourceUsageAggregationMutation)(nil)
+
+// resourceusageaggregationOption allows management of the mutation configuration using functional options.
+type resourceusageaggregationOption func(*ResourceUsageAggregationMutation)
+
+// newResourceUsageAggregationMutation creates new mutation for the ResourceUsageAggregation entity.
+func newResourceUsageAggregationMutation(c config, op Op, opts ...resourceusageaggregationOption) *ResourceUsageAggregationMutation {
+	m := &ResourceUsageAggregationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeResourceUsageAggregation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withResourceUsageAggregationID sets the ID field of the mutation.
+func withResourceUsageAggregationID(id uuid.UUID) resourceusageaggregationOption {
+	return func(m *ResourceUsageAggregationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ResourceUsageAggregation
+		)
+		m.oldValue = func(ctx context.Context) (*ResourceUsageAggregation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ResourceUsageAggregation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withResourceUsageAggregation sets the old ResourceUsageAggregation of the mutation.
+func withResourceUsageAggregation(node *ResourceUsageAggregation) resourceusageaggregationOption {
+	return func(m *ResourceUsageAggregationMutation) {
+		m.oldValue = func(context.Context) (*ResourceUsageAggregation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ResourceUsageAggregationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ResourceUsageAggregationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ResourceUsageAggregation entities.
+func (m *ResourceUsageAggregationMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ResourceUsageAggregationMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ResourceUsageAggregationMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ResourceUsageAggregation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetResourceType sets the "resource_type" field.
+func (m *ResourceUsageAggregationMutation) SetResourceType(et enum.ResourceType) {
+	m.resource_type = &et
+}
+
+// ResourceType returns the value of the "resource_type" field in the mutation.
+func (m *ResourceUsageAggregationMutation) ResourceType() (r enum.ResourceType, exists bool) {
+	v := m.resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceType returns the old "resource_type" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldResourceType(ctx context.Context) (v enum.ResourceType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceType: %w", err)
+	}
+	return oldValue.ResourceType, nil
+}
+
+// ResetResourceType resets all changes to the "resource_type" field.
+func (m *ResourceUsageAggregationMutation) ResetResourceType() {
+	m.resource_type = nil
+}
+
+// SetResourceID sets the "resource_id" field.
+func (m *ResourceUsageAggregationMutation) SetResourceID(u uuid.UUID) {
+	m.resource_id = &u
+}
+
+// ResourceID returns the value of the "resource_id" field in the mutation.
+func (m *ResourceUsageAggregationMutation) ResourceID() (r uuid.UUID, exists bool) {
+	v := m.resource_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceID returns the old "resource_id" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldResourceID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceID: %w", err)
+	}
+	return oldValue.ResourceID, nil
+}
+
+// ResetResourceID resets all changes to the "resource_id" field.
+func (m *ResourceUsageAggregationMutation) ResetResourceID() {
+	m.resource_id = nil
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (m *ResourceUsageAggregationMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *ResourceUsageAggregationMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *ResourceUsageAggregationMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (m *ResourceUsageAggregationMutation) SetRunnerID(u uuid.UUID) {
+	m.runner = &u
+}
+
+// RunnerID returns the value of the "runner_id" field in the mutation.
+func (m *ResourceUsageAggregationMutation) RunnerID() (r uuid.UUID, exists bool) {
+	v := m.runner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRunnerID returns the old "runner_id" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldRunnerID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRunnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRunnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRunnerID: %w", err)
+	}
+	return oldValue.RunnerID, nil
+}
+
+// ResetRunnerID resets all changes to the "runner_id" field.
+func (m *ResourceUsageAggregationMutation) ResetRunnerID() {
+	m.runner = nil
+}
+
+// SetGranularity sets the "granularity" field.
+func (m *ResourceUsageAggregationMutation) SetGranularity(eg enum.AggregationGranularity) {
+	m.granularity = &eg
+}
+
+// Granularity returns the value of the "granularity" field in the mutation.
+func (m *ResourceUsageAggregationMutation) Granularity() (r enum.AggregationGranularity, exists bool) {
+	v := m.granularity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGranularity returns the old "granularity" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldGranularity(ctx context.Context) (v enum.AggregationGranularity, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGranularity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGranularity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGranularity: %w", err)
+	}
+	return oldValue.Granularity, nil
+}
+
+// ResetGranularity resets all changes to the "granularity" field.
+func (m *ResourceUsageAggregationMutation) ResetGranularity() {
+	m.granularity = nil
+}
+
+// SetBucketStart sets the "bucket_start" field.
+func (m *ResourceUsageAggregationMutation) SetBucketStart(t time.Time) {
+	m.bucket_start = &t
+}
+
+// BucketStart returns the value of the "bucket_start" field in the mutation.
+func (m *ResourceUsageAggregationMutation) BucketStart() (r time.Time, exists bool) {
+	v := m.bucket_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBucketStart returns the old "bucket_start" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldBucketStart(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBucketStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBucketStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBucketStart: %w", err)
+	}
+	return oldValue.BucketStart, nil
+}
+
+// ResetBucketStart resets all changes to the "bucket_start" field.
+func (m *ResourceUsageAggregationMutation) ResetBucketStart() {
+	m.bucket_start = nil
+}
+
+// SetBucketEnd sets the "bucket_end" field.
+func (m *ResourceUsageAggregationMutation) SetBucketEnd(t time.Time) {
+	m.bucket_end = &t
+}
+
+// BucketEnd returns the value of the "bucket_end" field in the mutation.
+func (m *ResourceUsageAggregationMutation) BucketEnd() (r time.Time, exists bool) {
+	v := m.bucket_end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBucketEnd returns the old "bucket_end" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldBucketEnd(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBucketEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBucketEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBucketEnd: %w", err)
+	}
+	return oldValue.BucketEnd, nil
+}
+
+// ResetBucketEnd resets all changes to the "bucket_end" field.
+func (m *ResourceUsageAggregationMutation) ResetBucketEnd() {
+	m.bucket_end = nil
+}
+
+// SetCPUCoreSeconds sets the "cpu_core_seconds" field.
+func (m *ResourceUsageAggregationMutation) SetCPUCoreSeconds(f float64) {
+	m.cpu_core_seconds = &f
+	m.addcpu_core_seconds = nil
+}
+
+// CPUCoreSeconds returns the value of the "cpu_core_seconds" field in the mutation.
+func (m *ResourceUsageAggregationMutation) CPUCoreSeconds() (r float64, exists bool) {
+	v := m.cpu_core_seconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCPUCoreSeconds returns the old "cpu_core_seconds" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldCPUCoreSeconds(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCPUCoreSeconds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCPUCoreSeconds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCPUCoreSeconds: %w", err)
+	}
+	return oldValue.CPUCoreSeconds, nil
+}
+
+// AddCPUCoreSeconds adds f to the "cpu_core_seconds" field.
+func (m *ResourceUsageAggregationMutation) AddCPUCoreSeconds(f float64) {
+	if m.addcpu_core_seconds != nil {
+		*m.addcpu_core_seconds += f
+	} else {
+		m.addcpu_core_seconds = &f
+	}
+}
+
+// AddedCPUCoreSeconds returns the value that was added to the "cpu_core_seconds" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedCPUCoreSeconds() (r float64, exists bool) {
+	v := m.addcpu_core_seconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCPUCoreSeconds resets all changes to the "cpu_core_seconds" field.
+func (m *ResourceUsageAggregationMutation) ResetCPUCoreSeconds() {
+	m.cpu_core_seconds = nil
+	m.addcpu_core_seconds = nil
+}
+
+// SetCPUAvgPercent sets the "cpu_avg_percent" field.
+func (m *ResourceUsageAggregationMutation) SetCPUAvgPercent(f float64) {
+	m.cpu_avg_percent = &f
+	m.addcpu_avg_percent = nil
+}
+
+// CPUAvgPercent returns the value of the "cpu_avg_percent" field in the mutation.
+func (m *ResourceUsageAggregationMutation) CPUAvgPercent() (r float64, exists bool) {
+	v := m.cpu_avg_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCPUAvgPercent returns the old "cpu_avg_percent" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldCPUAvgPercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCPUAvgPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCPUAvgPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCPUAvgPercent: %w", err)
+	}
+	return oldValue.CPUAvgPercent, nil
+}
+
+// AddCPUAvgPercent adds f to the "cpu_avg_percent" field.
+func (m *ResourceUsageAggregationMutation) AddCPUAvgPercent(f float64) {
+	if m.addcpu_avg_percent != nil {
+		*m.addcpu_avg_percent += f
+	} else {
+		m.addcpu_avg_percent = &f
+	}
+}
+
+// AddedCPUAvgPercent returns the value that was added to the "cpu_avg_percent" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedCPUAvgPercent() (r float64, exists bool) {
+	v := m.addcpu_avg_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCPUAvgPercent resets all changes to the "cpu_avg_percent" field.
+func (m *ResourceUsageAggregationMutation) ResetCPUAvgPercent() {
+	m.cpu_avg_percent = nil
+	m.addcpu_avg_percent = nil
+}
+
+// SetCPUMaxPercent sets the "cpu_max_percent" field.
+func (m *ResourceUsageAggregationMutation) SetCPUMaxPercent(f float64) {
+	m.cpu_max_percent = &f
+	m.addcpu_max_percent = nil
+}
+
+// CPUMaxPercent returns the value of the "cpu_max_percent" field in the mutation.
+func (m *ResourceUsageAggregationMutation) CPUMaxPercent() (r float64, exists bool) {
+	v := m.cpu_max_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCPUMaxPercent returns the old "cpu_max_percent" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldCPUMaxPercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCPUMaxPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCPUMaxPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCPUMaxPercent: %w", err)
+	}
+	return oldValue.CPUMaxPercent, nil
+}
+
+// AddCPUMaxPercent adds f to the "cpu_max_percent" field.
+func (m *ResourceUsageAggregationMutation) AddCPUMaxPercent(f float64) {
+	if m.addcpu_max_percent != nil {
+		*m.addcpu_max_percent += f
+	} else {
+		m.addcpu_max_percent = &f
+	}
+}
+
+// AddedCPUMaxPercent returns the value that was added to the "cpu_max_percent" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedCPUMaxPercent() (r float64, exists bool) {
+	v := m.addcpu_max_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCPUMaxPercent resets all changes to the "cpu_max_percent" field.
+func (m *ResourceUsageAggregationMutation) ResetCPUMaxPercent() {
+	m.cpu_max_percent = nil
+	m.addcpu_max_percent = nil
+}
+
+// SetMemoryGBSeconds sets the "memory_gb_seconds" field.
+func (m *ResourceUsageAggregationMutation) SetMemoryGBSeconds(f float64) {
+	m.memory_gb_seconds = &f
+	m.addmemory_gb_seconds = nil
+}
+
+// MemoryGBSeconds returns the value of the "memory_gb_seconds" field in the mutation.
+func (m *ResourceUsageAggregationMutation) MemoryGBSeconds() (r float64, exists bool) {
+	v := m.memory_gb_seconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMemoryGBSeconds returns the old "memory_gb_seconds" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldMemoryGBSeconds(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMemoryGBSeconds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMemoryGBSeconds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMemoryGBSeconds: %w", err)
+	}
+	return oldValue.MemoryGBSeconds, nil
+}
+
+// AddMemoryGBSeconds adds f to the "memory_gb_seconds" field.
+func (m *ResourceUsageAggregationMutation) AddMemoryGBSeconds(f float64) {
+	if m.addmemory_gb_seconds != nil {
+		*m.addmemory_gb_seconds += f
+	} else {
+		m.addmemory_gb_seconds = &f
+	}
+}
+
+// AddedMemoryGBSeconds returns the value that was added to the "memory_gb_seconds" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedMemoryGBSeconds() (r float64, exists bool) {
+	v := m.addmemory_gb_seconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMemoryGBSeconds resets all changes to the "memory_gb_seconds" field.
+func (m *ResourceUsageAggregationMutation) ResetMemoryGBSeconds() {
+	m.memory_gb_seconds = nil
+	m.addmemory_gb_seconds = nil
+}
+
+// SetMemoryAvgBytes sets the "memory_avg_bytes" field.
+func (m *ResourceUsageAggregationMutation) SetMemoryAvgBytes(i int64) {
+	m.memory_avg_bytes = &i
+	m.addmemory_avg_bytes = nil
+}
+
+// MemoryAvgBytes returns the value of the "memory_avg_bytes" field in the mutation.
+func (m *ResourceUsageAggregationMutation) MemoryAvgBytes() (r int64, exists bool) {
+	v := m.memory_avg_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMemoryAvgBytes returns the old "memory_avg_bytes" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldMemoryAvgBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMemoryAvgBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMemoryAvgBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMemoryAvgBytes: %w", err)
+	}
+	return oldValue.MemoryAvgBytes, nil
+}
+
+// AddMemoryAvgBytes adds i to the "memory_avg_bytes" field.
+func (m *ResourceUsageAggregationMutation) AddMemoryAvgBytes(i int64) {
+	if m.addmemory_avg_bytes != nil {
+		*m.addmemory_avg_bytes += i
+	} else {
+		m.addmemory_avg_bytes = &i
+	}
+}
+
+// AddedMemoryAvgBytes returns the value that was added to the "memory_avg_bytes" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedMemoryAvgBytes() (r int64, exists bool) {
+	v := m.addmemory_avg_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMemoryAvgBytes resets all changes to the "memory_avg_bytes" field.
+func (m *ResourceUsageAggregationMutation) ResetMemoryAvgBytes() {
+	m.memory_avg_bytes = nil
+	m.addmemory_avg_bytes = nil
+}
+
+// SetMemoryMaxBytes sets the "memory_max_bytes" field.
+func (m *ResourceUsageAggregationMutation) SetMemoryMaxBytes(i int64) {
+	m.memory_max_bytes = &i
+	m.addmemory_max_bytes = nil
+}
+
+// MemoryMaxBytes returns the value of the "memory_max_bytes" field in the mutation.
+func (m *ResourceUsageAggregationMutation) MemoryMaxBytes() (r int64, exists bool) {
+	v := m.memory_max_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMemoryMaxBytes returns the old "memory_max_bytes" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldMemoryMaxBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMemoryMaxBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMemoryMaxBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMemoryMaxBytes: %w", err)
+	}
+	return oldValue.MemoryMaxBytes, nil
+}
+
+// AddMemoryMaxBytes adds i to the "memory_max_bytes" field.
+func (m *ResourceUsageAggregationMutation) AddMemoryMaxBytes(i int64) {
+	if m.addmemory_max_bytes != nil {
+		*m.addmemory_max_bytes += i
+	} else {
+		m.addmemory_max_bytes = &i
+	}
+}
+
+// AddedMemoryMaxBytes returns the value that was added to the "memory_max_bytes" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedMemoryMaxBytes() (r int64, exists bool) {
+	v := m.addmemory_max_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMemoryMaxBytes resets all changes to the "memory_max_bytes" field.
+func (m *ResourceUsageAggregationMutation) ResetMemoryMaxBytes() {
+	m.memory_max_bytes = nil
+	m.addmemory_max_bytes = nil
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (m *ResourceUsageAggregationMutation) SetNetworkRxBytes(i int64) {
+	m.network_rx_bytes = &i
+	m.addnetwork_rx_bytes = nil
+}
+
+// NetworkRxBytes returns the value of the "network_rx_bytes" field in the mutation.
+func (m *ResourceUsageAggregationMutation) NetworkRxBytes() (r int64, exists bool) {
+	v := m.network_rx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNetworkRxBytes returns the old "network_rx_bytes" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldNetworkRxBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNetworkRxBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNetworkRxBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNetworkRxBytes: %w", err)
+	}
+	return oldValue.NetworkRxBytes, nil
+}
+
+// AddNetworkRxBytes adds i to the "network_rx_bytes" field.
+func (m *ResourceUsageAggregationMutation) AddNetworkRxBytes(i int64) {
+	if m.addnetwork_rx_bytes != nil {
+		*m.addnetwork_rx_bytes += i
+	} else {
+		m.addnetwork_rx_bytes = &i
+	}
+}
+
+// AddedNetworkRxBytes returns the value that was added to the "network_rx_bytes" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedNetworkRxBytes() (r int64, exists bool) {
+	v := m.addnetwork_rx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNetworkRxBytes resets all changes to the "network_rx_bytes" field.
+func (m *ResourceUsageAggregationMutation) ResetNetworkRxBytes() {
+	m.network_rx_bytes = nil
+	m.addnetwork_rx_bytes = nil
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (m *ResourceUsageAggregationMutation) SetNetworkTxBytes(i int64) {
+	m.network_tx_bytes = &i
+	m.addnetwork_tx_bytes = nil
+}
+
+// NetworkTxBytes returns the value of the "network_tx_bytes" field in the mutation.
+func (m *ResourceUsageAggregationMutation) NetworkTxBytes() (r int64, exists bool) {
+	v := m.network_tx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNetworkTxBytes returns the old "network_tx_bytes" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldNetworkTxBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNetworkTxBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNetworkTxBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNetworkTxBytes: %w", err)
+	}
+	return oldValue.NetworkTxBytes, nil
+}
+
+// AddNetworkTxBytes adds i to the "network_tx_bytes" field.
+func (m *ResourceUsageAggregationMutation) AddNetworkTxBytes(i int64) {
+	if m.addnetwork_tx_bytes != nil {
+		*m.addnetwork_tx_bytes += i
+	} else {
+		m.addnetwork_tx_bytes = &i
+	}
+}
+
+// AddedNetworkTxBytes returns the value that was added to the "network_tx_bytes" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedNetworkTxBytes() (r int64, exists bool) {
+	v := m.addnetwork_tx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNetworkTxBytes resets all changes to the "network_tx_bytes" field.
+func (m *ResourceUsageAggregationMutation) ResetNetworkTxBytes() {
+	m.network_tx_bytes = nil
+	m.addnetwork_tx_bytes = nil
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (m *ResourceUsageAggregationMutation) SetBlockReadBytes(i int64) {
+	m.block_read_bytes = &i
+	m.addblock_read_bytes = nil
+}
+
+// BlockReadBytes returns the value of the "block_read_bytes" field in the mutation.
+func (m *ResourceUsageAggregationMutation) BlockReadBytes() (r int64, exists bool) {
+	v := m.block_read_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBlockReadBytes returns the old "block_read_bytes" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldBlockReadBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBlockReadBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBlockReadBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBlockReadBytes: %w", err)
+	}
+	return oldValue.BlockReadBytes, nil
+}
+
+// AddBlockReadBytes adds i to the "block_read_bytes" field.
+func (m *ResourceUsageAggregationMutation) AddBlockReadBytes(i int64) {
+	if m.addblock_read_bytes != nil {
+		*m.addblock_read_bytes += i
+	} else {
+		m.addblock_read_bytes = &i
+	}
+}
+
+// AddedBlockReadBytes returns the value that was added to the "block_read_bytes" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedBlockReadBytes() (r int64, exists bool) {
+	v := m.addblock_read_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBlockReadBytes resets all changes to the "block_read_bytes" field.
+func (m *ResourceUsageAggregationMutation) ResetBlockReadBytes() {
+	m.block_read_bytes = nil
+	m.addblock_read_bytes = nil
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (m *ResourceUsageAggregationMutation) SetBlockWriteBytes(i int64) {
+	m.block_write_bytes = &i
+	m.addblock_write_bytes = nil
+}
+
+// BlockWriteBytes returns the value of the "block_write_bytes" field in the mutation.
+func (m *ResourceUsageAggregationMutation) BlockWriteBytes() (r int64, exists bool) {
+	v := m.block_write_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBlockWriteBytes returns the old "block_write_bytes" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldBlockWriteBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBlockWriteBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBlockWriteBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBlockWriteBytes: %w", err)
+	}
+	return oldValue.BlockWriteBytes, nil
+}
+
+// AddBlockWriteBytes adds i to the "block_write_bytes" field.
+func (m *ResourceUsageAggregationMutation) AddBlockWriteBytes(i int64) {
+	if m.addblock_write_bytes != nil {
+		*m.addblock_write_bytes += i
+	} else {
+		m.addblock_write_bytes = &i
+	}
+}
+
+// AddedBlockWriteBytes returns the value that was added to the "block_write_bytes" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedBlockWriteBytes() (r int64, exists bool) {
+	v := m.addblock_write_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBlockWriteBytes resets all changes to the "block_write_bytes" field.
+func (m *ResourceUsageAggregationMutation) ResetBlockWriteBytes() {
+	m.block_write_bytes = nil
+	m.addblock_write_bytes = nil
+}
+
+// SetSampleCount sets the "sample_count" field.
+func (m *ResourceUsageAggregationMutation) SetSampleCount(i int) {
+	m.sample_count = &i
+	m.addsample_count = nil
+}
+
+// SampleCount returns the value of the "sample_count" field in the mutation.
+func (m *ResourceUsageAggregationMutation) SampleCount() (r int, exists bool) {
+	v := m.sample_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSampleCount returns the old "sample_count" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldSampleCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSampleCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSampleCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSampleCount: %w", err)
+	}
+	return oldValue.SampleCount, nil
+}
+
+// AddSampleCount adds i to the "sample_count" field.
+func (m *ResourceUsageAggregationMutation) AddSampleCount(i int) {
+	if m.addsample_count != nil {
+		*m.addsample_count += i
+	} else {
+		m.addsample_count = &i
+	}
+}
+
+// AddedSampleCount returns the value that was added to the "sample_count" field in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedSampleCount() (r int, exists bool) {
+	v := m.addsample_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSampleCount resets all changes to the "sample_count" field.
+func (m *ResourceUsageAggregationMutation) ResetSampleCount() {
+	m.sample_count = nil
+	m.addsample_count = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ResourceUsageAggregationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ResourceUsageAggregationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ResourceUsageAggregation entity.
+// If the ResourceUsageAggregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageAggregationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ResourceUsageAggregationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (m *ResourceUsageAggregationMutation) ClearRunner() {
+	m.clearedrunner = true
+	m.clearedFields[resourceusageaggregation.FieldRunnerID] = struct{}{}
+}
+
+// RunnerCleared reports if the "runner" edge to the BotRunner entity was cleared.
+func (m *ResourceUsageAggregationMutation) RunnerCleared() bool {
+	return m.clearedrunner
+}
+
+// RunnerIDs returns the "runner" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RunnerID instead. It exists only for internal usage by the builders.
+func (m *ResourceUsageAggregationMutation) RunnerIDs() (ids []uuid.UUID) {
+	if id := m.runner; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRunner resets all changes to the "runner" edge.
+func (m *ResourceUsageAggregationMutation) ResetRunner() {
+	m.runner = nil
+	m.clearedrunner = false
+}
+
+// Where appends a list predicates to the ResourceUsageAggregationMutation builder.
+func (m *ResourceUsageAggregationMutation) Where(ps ...predicate.ResourceUsageAggregation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ResourceUsageAggregationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ResourceUsageAggregationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ResourceUsageAggregation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ResourceUsageAggregationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ResourceUsageAggregationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ResourceUsageAggregation).
+func (m *ResourceUsageAggregationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ResourceUsageAggregationMutation) Fields() []string {
+	fields := make([]string, 0, 19)
+	if m.resource_type != nil {
+		fields = append(fields, resourceusageaggregation.FieldResourceType)
+	}
+	if m.resource_id != nil {
+		fields = append(fields, resourceusageaggregation.FieldResourceID)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, resourceusageaggregation.FieldOwnerID)
+	}
+	if m.runner != nil {
+		fields = append(fields, resourceusageaggregation.FieldRunnerID)
+	}
+	if m.granularity != nil {
+		fields = append(fields, resourceusageaggregation.FieldGranularity)
+	}
+	if m.bucket_start != nil {
+		fields = append(fields, resourceusageaggregation.FieldBucketStart)
+	}
+	if m.bucket_end != nil {
+		fields = append(fields, resourceusageaggregation.FieldBucketEnd)
+	}
+	if m.cpu_core_seconds != nil {
+		fields = append(fields, resourceusageaggregation.FieldCPUCoreSeconds)
+	}
+	if m.cpu_avg_percent != nil {
+		fields = append(fields, resourceusageaggregation.FieldCPUAvgPercent)
+	}
+	if m.cpu_max_percent != nil {
+		fields = append(fields, resourceusageaggregation.FieldCPUMaxPercent)
+	}
+	if m.memory_gb_seconds != nil {
+		fields = append(fields, resourceusageaggregation.FieldMemoryGBSeconds)
+	}
+	if m.memory_avg_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldMemoryAvgBytes)
+	}
+	if m.memory_max_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldMemoryMaxBytes)
+	}
+	if m.network_rx_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldNetworkRxBytes)
+	}
+	if m.network_tx_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldNetworkTxBytes)
+	}
+	if m.block_read_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldBlockReadBytes)
+	}
+	if m.block_write_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldBlockWriteBytes)
+	}
+	if m.sample_count != nil {
+		fields = append(fields, resourceusageaggregation.FieldSampleCount)
+	}
+	if m.created_at != nil {
+		fields = append(fields, resourceusageaggregation.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ResourceUsageAggregationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case resourceusageaggregation.FieldResourceType:
+		return m.ResourceType()
+	case resourceusageaggregation.FieldResourceID:
+		return m.ResourceID()
+	case resourceusageaggregation.FieldOwnerID:
+		return m.OwnerID()
+	case resourceusageaggregation.FieldRunnerID:
+		return m.RunnerID()
+	case resourceusageaggregation.FieldGranularity:
+		return m.Granularity()
+	case resourceusageaggregation.FieldBucketStart:
+		return m.BucketStart()
+	case resourceusageaggregation.FieldBucketEnd:
+		return m.BucketEnd()
+	case resourceusageaggregation.FieldCPUCoreSeconds:
+		return m.CPUCoreSeconds()
+	case resourceusageaggregation.FieldCPUAvgPercent:
+		return m.CPUAvgPercent()
+	case resourceusageaggregation.FieldCPUMaxPercent:
+		return m.CPUMaxPercent()
+	case resourceusageaggregation.FieldMemoryGBSeconds:
+		return m.MemoryGBSeconds()
+	case resourceusageaggregation.FieldMemoryAvgBytes:
+		return m.MemoryAvgBytes()
+	case resourceusageaggregation.FieldMemoryMaxBytes:
+		return m.MemoryMaxBytes()
+	case resourceusageaggregation.FieldNetworkRxBytes:
+		return m.NetworkRxBytes()
+	case resourceusageaggregation.FieldNetworkTxBytes:
+		return m.NetworkTxBytes()
+	case resourceusageaggregation.FieldBlockReadBytes:
+		return m.BlockReadBytes()
+	case resourceusageaggregation.FieldBlockWriteBytes:
+		return m.BlockWriteBytes()
+	case resourceusageaggregation.FieldSampleCount:
+		return m.SampleCount()
+	case resourceusageaggregation.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ResourceUsageAggregationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case resourceusageaggregation.FieldResourceType:
+		return m.OldResourceType(ctx)
+	case resourceusageaggregation.FieldResourceID:
+		return m.OldResourceID(ctx)
+	case resourceusageaggregation.FieldOwnerID:
+		return m.OldOwnerID(ctx)
+	case resourceusageaggregation.FieldRunnerID:
+		return m.OldRunnerID(ctx)
+	case resourceusageaggregation.FieldGranularity:
+		return m.OldGranularity(ctx)
+	case resourceusageaggregation.FieldBucketStart:
+		return m.OldBucketStart(ctx)
+	case resourceusageaggregation.FieldBucketEnd:
+		return m.OldBucketEnd(ctx)
+	case resourceusageaggregation.FieldCPUCoreSeconds:
+		return m.OldCPUCoreSeconds(ctx)
+	case resourceusageaggregation.FieldCPUAvgPercent:
+		return m.OldCPUAvgPercent(ctx)
+	case resourceusageaggregation.FieldCPUMaxPercent:
+		return m.OldCPUMaxPercent(ctx)
+	case resourceusageaggregation.FieldMemoryGBSeconds:
+		return m.OldMemoryGBSeconds(ctx)
+	case resourceusageaggregation.FieldMemoryAvgBytes:
+		return m.OldMemoryAvgBytes(ctx)
+	case resourceusageaggregation.FieldMemoryMaxBytes:
+		return m.OldMemoryMaxBytes(ctx)
+	case resourceusageaggregation.FieldNetworkRxBytes:
+		return m.OldNetworkRxBytes(ctx)
+	case resourceusageaggregation.FieldNetworkTxBytes:
+		return m.OldNetworkTxBytes(ctx)
+	case resourceusageaggregation.FieldBlockReadBytes:
+		return m.OldBlockReadBytes(ctx)
+	case resourceusageaggregation.FieldBlockWriteBytes:
+		return m.OldBlockWriteBytes(ctx)
+	case resourceusageaggregation.FieldSampleCount:
+		return m.OldSampleCount(ctx)
+	case resourceusageaggregation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown ResourceUsageAggregation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ResourceUsageAggregationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case resourceusageaggregation.FieldResourceType:
+		v, ok := value.(enum.ResourceType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceType(v)
+		return nil
+	case resourceusageaggregation.FieldResourceID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceID(v)
+		return nil
+	case resourceusageaggregation.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
+		return nil
+	case resourceusageaggregation.FieldRunnerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRunnerID(v)
+		return nil
+	case resourceusageaggregation.FieldGranularity:
+		v, ok := value.(enum.AggregationGranularity)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGranularity(v)
+		return nil
+	case resourceusageaggregation.FieldBucketStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBucketStart(v)
+		return nil
+	case resourceusageaggregation.FieldBucketEnd:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBucketEnd(v)
+		return nil
+	case resourceusageaggregation.FieldCPUCoreSeconds:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCPUCoreSeconds(v)
+		return nil
+	case resourceusageaggregation.FieldCPUAvgPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCPUAvgPercent(v)
+		return nil
+	case resourceusageaggregation.FieldCPUMaxPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCPUMaxPercent(v)
+		return nil
+	case resourceusageaggregation.FieldMemoryGBSeconds:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMemoryGBSeconds(v)
+		return nil
+	case resourceusageaggregation.FieldMemoryAvgBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMemoryAvgBytes(v)
+		return nil
+	case resourceusageaggregation.FieldMemoryMaxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMemoryMaxBytes(v)
+		return nil
+	case resourceusageaggregation.FieldNetworkRxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNetworkRxBytes(v)
+		return nil
+	case resourceusageaggregation.FieldNetworkTxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNetworkTxBytes(v)
+		return nil
+	case resourceusageaggregation.FieldBlockReadBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBlockReadBytes(v)
+		return nil
+	case resourceusageaggregation.FieldBlockWriteBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBlockWriteBytes(v)
+		return nil
+	case resourceusageaggregation.FieldSampleCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSampleCount(v)
+		return nil
+	case resourceusageaggregation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageAggregation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ResourceUsageAggregationMutation) AddedFields() []string {
+	var fields []string
+	if m.addcpu_core_seconds != nil {
+		fields = append(fields, resourceusageaggregation.FieldCPUCoreSeconds)
+	}
+	if m.addcpu_avg_percent != nil {
+		fields = append(fields, resourceusageaggregation.FieldCPUAvgPercent)
+	}
+	if m.addcpu_max_percent != nil {
+		fields = append(fields, resourceusageaggregation.FieldCPUMaxPercent)
+	}
+	if m.addmemory_gb_seconds != nil {
+		fields = append(fields, resourceusageaggregation.FieldMemoryGBSeconds)
+	}
+	if m.addmemory_avg_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldMemoryAvgBytes)
+	}
+	if m.addmemory_max_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldMemoryMaxBytes)
+	}
+	if m.addnetwork_rx_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldNetworkRxBytes)
+	}
+	if m.addnetwork_tx_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldNetworkTxBytes)
+	}
+	if m.addblock_read_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldBlockReadBytes)
+	}
+	if m.addblock_write_bytes != nil {
+		fields = append(fields, resourceusageaggregation.FieldBlockWriteBytes)
+	}
+	if m.addsample_count != nil {
+		fields = append(fields, resourceusageaggregation.FieldSampleCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ResourceUsageAggregationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case resourceusageaggregation.FieldCPUCoreSeconds:
+		return m.AddedCPUCoreSeconds()
+	case resourceusageaggregation.FieldCPUAvgPercent:
+		return m.AddedCPUAvgPercent()
+	case resourceusageaggregation.FieldCPUMaxPercent:
+		return m.AddedCPUMaxPercent()
+	case resourceusageaggregation.FieldMemoryGBSeconds:
+		return m.AddedMemoryGBSeconds()
+	case resourceusageaggregation.FieldMemoryAvgBytes:
+		return m.AddedMemoryAvgBytes()
+	case resourceusageaggregation.FieldMemoryMaxBytes:
+		return m.AddedMemoryMaxBytes()
+	case resourceusageaggregation.FieldNetworkRxBytes:
+		return m.AddedNetworkRxBytes()
+	case resourceusageaggregation.FieldNetworkTxBytes:
+		return m.AddedNetworkTxBytes()
+	case resourceusageaggregation.FieldBlockReadBytes:
+		return m.AddedBlockReadBytes()
+	case resourceusageaggregation.FieldBlockWriteBytes:
+		return m.AddedBlockWriteBytes()
+	case resourceusageaggregation.FieldSampleCount:
+		return m.AddedSampleCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ResourceUsageAggregationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case resourceusageaggregation.FieldCPUCoreSeconds:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCPUCoreSeconds(v)
+		return nil
+	case resourceusageaggregation.FieldCPUAvgPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCPUAvgPercent(v)
+		return nil
+	case resourceusageaggregation.FieldCPUMaxPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCPUMaxPercent(v)
+		return nil
+	case resourceusageaggregation.FieldMemoryGBSeconds:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMemoryGBSeconds(v)
+		return nil
+	case resourceusageaggregation.FieldMemoryAvgBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMemoryAvgBytes(v)
+		return nil
+	case resourceusageaggregation.FieldMemoryMaxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMemoryMaxBytes(v)
+		return nil
+	case resourceusageaggregation.FieldNetworkRxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNetworkRxBytes(v)
+		return nil
+	case resourceusageaggregation.FieldNetworkTxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNetworkTxBytes(v)
+		return nil
+	case resourceusageaggregation.FieldBlockReadBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBlockReadBytes(v)
+		return nil
+	case resourceusageaggregation.FieldBlockWriteBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBlockWriteBytes(v)
+		return nil
+	case resourceusageaggregation.FieldSampleCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSampleCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageAggregation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ResourceUsageAggregationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ResourceUsageAggregationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ResourceUsageAggregationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ResourceUsageAggregation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ResourceUsageAggregationMutation) ResetField(name string) error {
+	switch name {
+	case resourceusageaggregation.FieldResourceType:
+		m.ResetResourceType()
+		return nil
+	case resourceusageaggregation.FieldResourceID:
+		m.ResetResourceID()
+		return nil
+	case resourceusageaggregation.FieldOwnerID:
+		m.ResetOwnerID()
+		return nil
+	case resourceusageaggregation.FieldRunnerID:
+		m.ResetRunnerID()
+		return nil
+	case resourceusageaggregation.FieldGranularity:
+		m.ResetGranularity()
+		return nil
+	case resourceusageaggregation.FieldBucketStart:
+		m.ResetBucketStart()
+		return nil
+	case resourceusageaggregation.FieldBucketEnd:
+		m.ResetBucketEnd()
+		return nil
+	case resourceusageaggregation.FieldCPUCoreSeconds:
+		m.ResetCPUCoreSeconds()
+		return nil
+	case resourceusageaggregation.FieldCPUAvgPercent:
+		m.ResetCPUAvgPercent()
+		return nil
+	case resourceusageaggregation.FieldCPUMaxPercent:
+		m.ResetCPUMaxPercent()
+		return nil
+	case resourceusageaggregation.FieldMemoryGBSeconds:
+		m.ResetMemoryGBSeconds()
+		return nil
+	case resourceusageaggregation.FieldMemoryAvgBytes:
+		m.ResetMemoryAvgBytes()
+		return nil
+	case resourceusageaggregation.FieldMemoryMaxBytes:
+		m.ResetMemoryMaxBytes()
+		return nil
+	case resourceusageaggregation.FieldNetworkRxBytes:
+		m.ResetNetworkRxBytes()
+		return nil
+	case resourceusageaggregation.FieldNetworkTxBytes:
+		m.ResetNetworkTxBytes()
+		return nil
+	case resourceusageaggregation.FieldBlockReadBytes:
+		m.ResetBlockReadBytes()
+		return nil
+	case resourceusageaggregation.FieldBlockWriteBytes:
+		m.ResetBlockWriteBytes()
+		return nil
+	case resourceusageaggregation.FieldSampleCount:
+		m.ResetSampleCount()
+		return nil
+	case resourceusageaggregation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageAggregation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.runner != nil {
+		edges = append(edges, resourceusageaggregation.EdgeRunner)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ResourceUsageAggregationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case resourceusageaggregation.EdgeRunner:
+		if id := m.runner; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ResourceUsageAggregationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ResourceUsageAggregationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ResourceUsageAggregationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedrunner {
+		edges = append(edges, resourceusageaggregation.EdgeRunner)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ResourceUsageAggregationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case resourceusageaggregation.EdgeRunner:
+		return m.clearedrunner
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ResourceUsageAggregationMutation) ClearEdge(name string) error {
+	switch name {
+	case resourceusageaggregation.EdgeRunner:
+		m.ClearRunner()
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageAggregation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ResourceUsageAggregationMutation) ResetEdge(name string) error {
+	switch name {
+	case resourceusageaggregation.EdgeRunner:
+		m.ResetRunner()
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageAggregation edge %s", name)
+}
+
+// ResourceUsageSampleMutation represents an operation that mutates the ResourceUsageSample nodes in the graph.
+type ResourceUsageSampleMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	resource_type        *enum.ResourceType
+	resource_id          *uuid.UUID
+	owner_id             *string
+	cpu_percent          *float64
+	addcpu_percent       *float64
+	memory_bytes         *int64
+	addmemory_bytes      *int64
+	network_rx_bytes     *int64
+	addnetwork_rx_bytes  *int64
+	network_tx_bytes     *int64
+	addnetwork_tx_bytes  *int64
+	block_read_bytes     *int64
+	addblock_read_bytes  *int64
+	block_write_bytes    *int64
+	addblock_write_bytes *int64
+	sampled_at           *time.Time
+	created_at           *time.Time
+	clearedFields        map[string]struct{}
+	runner               *uuid.UUID
+	clearedrunner        bool
+	done                 bool
+	oldValue             func(context.Context) (*ResourceUsageSample, error)
+	predicates           []predicate.ResourceUsageSample
+}
+
+var _ ent.Mutation = (*ResourceUsageSampleMutation)(nil)
+
+// resourceusagesampleOption allows management of the mutation configuration using functional options.
+type resourceusagesampleOption func(*ResourceUsageSampleMutation)
+
+// newResourceUsageSampleMutation creates new mutation for the ResourceUsageSample entity.
+func newResourceUsageSampleMutation(c config, op Op, opts ...resourceusagesampleOption) *ResourceUsageSampleMutation {
+	m := &ResourceUsageSampleMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeResourceUsageSample,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withResourceUsageSampleID sets the ID field of the mutation.
+func withResourceUsageSampleID(id uuid.UUID) resourceusagesampleOption {
+	return func(m *ResourceUsageSampleMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ResourceUsageSample
+		)
+		m.oldValue = func(ctx context.Context) (*ResourceUsageSample, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ResourceUsageSample.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withResourceUsageSample sets the old ResourceUsageSample of the mutation.
+func withResourceUsageSample(node *ResourceUsageSample) resourceusagesampleOption {
+	return func(m *ResourceUsageSampleMutation) {
+		m.oldValue = func(context.Context) (*ResourceUsageSample, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ResourceUsageSampleMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ResourceUsageSampleMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ResourceUsageSample entities.
+func (m *ResourceUsageSampleMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ResourceUsageSampleMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ResourceUsageSampleMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ResourceUsageSample.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetResourceType sets the "resource_type" field.
+func (m *ResourceUsageSampleMutation) SetResourceType(et enum.ResourceType) {
+	m.resource_type = &et
+}
+
+// ResourceType returns the value of the "resource_type" field in the mutation.
+func (m *ResourceUsageSampleMutation) ResourceType() (r enum.ResourceType, exists bool) {
+	v := m.resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceType returns the old "resource_type" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldResourceType(ctx context.Context) (v enum.ResourceType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceType: %w", err)
+	}
+	return oldValue.ResourceType, nil
+}
+
+// ResetResourceType resets all changes to the "resource_type" field.
+func (m *ResourceUsageSampleMutation) ResetResourceType() {
+	m.resource_type = nil
+}
+
+// SetResourceID sets the "resource_id" field.
+func (m *ResourceUsageSampleMutation) SetResourceID(u uuid.UUID) {
+	m.resource_id = &u
+}
+
+// ResourceID returns the value of the "resource_id" field in the mutation.
+func (m *ResourceUsageSampleMutation) ResourceID() (r uuid.UUID, exists bool) {
+	v := m.resource_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceID returns the old "resource_id" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldResourceID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceID: %w", err)
+	}
+	return oldValue.ResourceID, nil
+}
+
+// ResetResourceID resets all changes to the "resource_id" field.
+func (m *ResourceUsageSampleMutation) ResetResourceID() {
+	m.resource_id = nil
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (m *ResourceUsageSampleMutation) SetOwnerID(s string) {
+	m.owner_id = &s
+}
+
+// OwnerID returns the value of the "owner_id" field in the mutation.
+func (m *ResourceUsageSampleMutation) OwnerID() (r string, exists bool) {
+	v := m.owner_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwnerID returns the old "owner_id" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldOwnerID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
+	}
+	return oldValue.OwnerID, nil
+}
+
+// ResetOwnerID resets all changes to the "owner_id" field.
+func (m *ResourceUsageSampleMutation) ResetOwnerID() {
+	m.owner_id = nil
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (m *ResourceUsageSampleMutation) SetRunnerID(u uuid.UUID) {
+	m.runner = &u
+}
+
+// RunnerID returns the value of the "runner_id" field in the mutation.
+func (m *ResourceUsageSampleMutation) RunnerID() (r uuid.UUID, exists bool) {
+	v := m.runner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRunnerID returns the old "runner_id" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldRunnerID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRunnerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRunnerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRunnerID: %w", err)
+	}
+	return oldValue.RunnerID, nil
+}
+
+// ResetRunnerID resets all changes to the "runner_id" field.
+func (m *ResourceUsageSampleMutation) ResetRunnerID() {
+	m.runner = nil
+}
+
+// SetCPUPercent sets the "cpu_percent" field.
+func (m *ResourceUsageSampleMutation) SetCPUPercent(f float64) {
+	m.cpu_percent = &f
+	m.addcpu_percent = nil
+}
+
+// CPUPercent returns the value of the "cpu_percent" field in the mutation.
+func (m *ResourceUsageSampleMutation) CPUPercent() (r float64, exists bool) {
+	v := m.cpu_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCPUPercent returns the old "cpu_percent" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldCPUPercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCPUPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCPUPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCPUPercent: %w", err)
+	}
+	return oldValue.CPUPercent, nil
+}
+
+// AddCPUPercent adds f to the "cpu_percent" field.
+func (m *ResourceUsageSampleMutation) AddCPUPercent(f float64) {
+	if m.addcpu_percent != nil {
+		*m.addcpu_percent += f
+	} else {
+		m.addcpu_percent = &f
+	}
+}
+
+// AddedCPUPercent returns the value that was added to the "cpu_percent" field in this mutation.
+func (m *ResourceUsageSampleMutation) AddedCPUPercent() (r float64, exists bool) {
+	v := m.addcpu_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCPUPercent resets all changes to the "cpu_percent" field.
+func (m *ResourceUsageSampleMutation) ResetCPUPercent() {
+	m.cpu_percent = nil
+	m.addcpu_percent = nil
+}
+
+// SetMemoryBytes sets the "memory_bytes" field.
+func (m *ResourceUsageSampleMutation) SetMemoryBytes(i int64) {
+	m.memory_bytes = &i
+	m.addmemory_bytes = nil
+}
+
+// MemoryBytes returns the value of the "memory_bytes" field in the mutation.
+func (m *ResourceUsageSampleMutation) MemoryBytes() (r int64, exists bool) {
+	v := m.memory_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMemoryBytes returns the old "memory_bytes" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldMemoryBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMemoryBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMemoryBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMemoryBytes: %w", err)
+	}
+	return oldValue.MemoryBytes, nil
+}
+
+// AddMemoryBytes adds i to the "memory_bytes" field.
+func (m *ResourceUsageSampleMutation) AddMemoryBytes(i int64) {
+	if m.addmemory_bytes != nil {
+		*m.addmemory_bytes += i
+	} else {
+		m.addmemory_bytes = &i
+	}
+}
+
+// AddedMemoryBytes returns the value that was added to the "memory_bytes" field in this mutation.
+func (m *ResourceUsageSampleMutation) AddedMemoryBytes() (r int64, exists bool) {
+	v := m.addmemory_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMemoryBytes resets all changes to the "memory_bytes" field.
+func (m *ResourceUsageSampleMutation) ResetMemoryBytes() {
+	m.memory_bytes = nil
+	m.addmemory_bytes = nil
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (m *ResourceUsageSampleMutation) SetNetworkRxBytes(i int64) {
+	m.network_rx_bytes = &i
+	m.addnetwork_rx_bytes = nil
+}
+
+// NetworkRxBytes returns the value of the "network_rx_bytes" field in the mutation.
+func (m *ResourceUsageSampleMutation) NetworkRxBytes() (r int64, exists bool) {
+	v := m.network_rx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNetworkRxBytes returns the old "network_rx_bytes" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldNetworkRxBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNetworkRxBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNetworkRxBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNetworkRxBytes: %w", err)
+	}
+	return oldValue.NetworkRxBytes, nil
+}
+
+// AddNetworkRxBytes adds i to the "network_rx_bytes" field.
+func (m *ResourceUsageSampleMutation) AddNetworkRxBytes(i int64) {
+	if m.addnetwork_rx_bytes != nil {
+		*m.addnetwork_rx_bytes += i
+	} else {
+		m.addnetwork_rx_bytes = &i
+	}
+}
+
+// AddedNetworkRxBytes returns the value that was added to the "network_rx_bytes" field in this mutation.
+func (m *ResourceUsageSampleMutation) AddedNetworkRxBytes() (r int64, exists bool) {
+	v := m.addnetwork_rx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNetworkRxBytes resets all changes to the "network_rx_bytes" field.
+func (m *ResourceUsageSampleMutation) ResetNetworkRxBytes() {
+	m.network_rx_bytes = nil
+	m.addnetwork_rx_bytes = nil
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (m *ResourceUsageSampleMutation) SetNetworkTxBytes(i int64) {
+	m.network_tx_bytes = &i
+	m.addnetwork_tx_bytes = nil
+}
+
+// NetworkTxBytes returns the value of the "network_tx_bytes" field in the mutation.
+func (m *ResourceUsageSampleMutation) NetworkTxBytes() (r int64, exists bool) {
+	v := m.network_tx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNetworkTxBytes returns the old "network_tx_bytes" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldNetworkTxBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNetworkTxBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNetworkTxBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNetworkTxBytes: %w", err)
+	}
+	return oldValue.NetworkTxBytes, nil
+}
+
+// AddNetworkTxBytes adds i to the "network_tx_bytes" field.
+func (m *ResourceUsageSampleMutation) AddNetworkTxBytes(i int64) {
+	if m.addnetwork_tx_bytes != nil {
+		*m.addnetwork_tx_bytes += i
+	} else {
+		m.addnetwork_tx_bytes = &i
+	}
+}
+
+// AddedNetworkTxBytes returns the value that was added to the "network_tx_bytes" field in this mutation.
+func (m *ResourceUsageSampleMutation) AddedNetworkTxBytes() (r int64, exists bool) {
+	v := m.addnetwork_tx_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNetworkTxBytes resets all changes to the "network_tx_bytes" field.
+func (m *ResourceUsageSampleMutation) ResetNetworkTxBytes() {
+	m.network_tx_bytes = nil
+	m.addnetwork_tx_bytes = nil
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (m *ResourceUsageSampleMutation) SetBlockReadBytes(i int64) {
+	m.block_read_bytes = &i
+	m.addblock_read_bytes = nil
+}
+
+// BlockReadBytes returns the value of the "block_read_bytes" field in the mutation.
+func (m *ResourceUsageSampleMutation) BlockReadBytes() (r int64, exists bool) {
+	v := m.block_read_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBlockReadBytes returns the old "block_read_bytes" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldBlockReadBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBlockReadBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBlockReadBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBlockReadBytes: %w", err)
+	}
+	return oldValue.BlockReadBytes, nil
+}
+
+// AddBlockReadBytes adds i to the "block_read_bytes" field.
+func (m *ResourceUsageSampleMutation) AddBlockReadBytes(i int64) {
+	if m.addblock_read_bytes != nil {
+		*m.addblock_read_bytes += i
+	} else {
+		m.addblock_read_bytes = &i
+	}
+}
+
+// AddedBlockReadBytes returns the value that was added to the "block_read_bytes" field in this mutation.
+func (m *ResourceUsageSampleMutation) AddedBlockReadBytes() (r int64, exists bool) {
+	v := m.addblock_read_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBlockReadBytes resets all changes to the "block_read_bytes" field.
+func (m *ResourceUsageSampleMutation) ResetBlockReadBytes() {
+	m.block_read_bytes = nil
+	m.addblock_read_bytes = nil
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (m *ResourceUsageSampleMutation) SetBlockWriteBytes(i int64) {
+	m.block_write_bytes = &i
+	m.addblock_write_bytes = nil
+}
+
+// BlockWriteBytes returns the value of the "block_write_bytes" field in the mutation.
+func (m *ResourceUsageSampleMutation) BlockWriteBytes() (r int64, exists bool) {
+	v := m.block_write_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBlockWriteBytes returns the old "block_write_bytes" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldBlockWriteBytes(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBlockWriteBytes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBlockWriteBytes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBlockWriteBytes: %w", err)
+	}
+	return oldValue.BlockWriteBytes, nil
+}
+
+// AddBlockWriteBytes adds i to the "block_write_bytes" field.
+func (m *ResourceUsageSampleMutation) AddBlockWriteBytes(i int64) {
+	if m.addblock_write_bytes != nil {
+		*m.addblock_write_bytes += i
+	} else {
+		m.addblock_write_bytes = &i
+	}
+}
+
+// AddedBlockWriteBytes returns the value that was added to the "block_write_bytes" field in this mutation.
+func (m *ResourceUsageSampleMutation) AddedBlockWriteBytes() (r int64, exists bool) {
+	v := m.addblock_write_bytes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBlockWriteBytes resets all changes to the "block_write_bytes" field.
+func (m *ResourceUsageSampleMutation) ResetBlockWriteBytes() {
+	m.block_write_bytes = nil
+	m.addblock_write_bytes = nil
+}
+
+// SetSampledAt sets the "sampled_at" field.
+func (m *ResourceUsageSampleMutation) SetSampledAt(t time.Time) {
+	m.sampled_at = &t
+}
+
+// SampledAt returns the value of the "sampled_at" field in the mutation.
+func (m *ResourceUsageSampleMutation) SampledAt() (r time.Time, exists bool) {
+	v := m.sampled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSampledAt returns the old "sampled_at" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldSampledAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSampledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSampledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSampledAt: %w", err)
+	}
+	return oldValue.SampledAt, nil
+}
+
+// ResetSampledAt resets all changes to the "sampled_at" field.
+func (m *ResourceUsageSampleMutation) ResetSampledAt() {
+	m.sampled_at = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ResourceUsageSampleMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ResourceUsageSampleMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ResourceUsageSample entity.
+// If the ResourceUsageSample object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ResourceUsageSampleMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ResourceUsageSampleMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearRunner clears the "runner" edge to the BotRunner entity.
+func (m *ResourceUsageSampleMutation) ClearRunner() {
+	m.clearedrunner = true
+	m.clearedFields[resourceusagesample.FieldRunnerID] = struct{}{}
+}
+
+// RunnerCleared reports if the "runner" edge to the BotRunner entity was cleared.
+func (m *ResourceUsageSampleMutation) RunnerCleared() bool {
+	return m.clearedrunner
+}
+
+// RunnerIDs returns the "runner" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RunnerID instead. It exists only for internal usage by the builders.
+func (m *ResourceUsageSampleMutation) RunnerIDs() (ids []uuid.UUID) {
+	if id := m.runner; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRunner resets all changes to the "runner" edge.
+func (m *ResourceUsageSampleMutation) ResetRunner() {
+	m.runner = nil
+	m.clearedrunner = false
+}
+
+// Where appends a list predicates to the ResourceUsageSampleMutation builder.
+func (m *ResourceUsageSampleMutation) Where(ps ...predicate.ResourceUsageSample) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ResourceUsageSampleMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ResourceUsageSampleMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ResourceUsageSample, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ResourceUsageSampleMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ResourceUsageSampleMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ResourceUsageSample).
+func (m *ResourceUsageSampleMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ResourceUsageSampleMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.resource_type != nil {
+		fields = append(fields, resourceusagesample.FieldResourceType)
+	}
+	if m.resource_id != nil {
+		fields = append(fields, resourceusagesample.FieldResourceID)
+	}
+	if m.owner_id != nil {
+		fields = append(fields, resourceusagesample.FieldOwnerID)
+	}
+	if m.runner != nil {
+		fields = append(fields, resourceusagesample.FieldRunnerID)
+	}
+	if m.cpu_percent != nil {
+		fields = append(fields, resourceusagesample.FieldCPUPercent)
+	}
+	if m.memory_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldMemoryBytes)
+	}
+	if m.network_rx_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldNetworkRxBytes)
+	}
+	if m.network_tx_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldNetworkTxBytes)
+	}
+	if m.block_read_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldBlockReadBytes)
+	}
+	if m.block_write_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldBlockWriteBytes)
+	}
+	if m.sampled_at != nil {
+		fields = append(fields, resourceusagesample.FieldSampledAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, resourceusagesample.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ResourceUsageSampleMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case resourceusagesample.FieldResourceType:
+		return m.ResourceType()
+	case resourceusagesample.FieldResourceID:
+		return m.ResourceID()
+	case resourceusagesample.FieldOwnerID:
+		return m.OwnerID()
+	case resourceusagesample.FieldRunnerID:
+		return m.RunnerID()
+	case resourceusagesample.FieldCPUPercent:
+		return m.CPUPercent()
+	case resourceusagesample.FieldMemoryBytes:
+		return m.MemoryBytes()
+	case resourceusagesample.FieldNetworkRxBytes:
+		return m.NetworkRxBytes()
+	case resourceusagesample.FieldNetworkTxBytes:
+		return m.NetworkTxBytes()
+	case resourceusagesample.FieldBlockReadBytes:
+		return m.BlockReadBytes()
+	case resourceusagesample.FieldBlockWriteBytes:
+		return m.BlockWriteBytes()
+	case resourceusagesample.FieldSampledAt:
+		return m.SampledAt()
+	case resourceusagesample.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ResourceUsageSampleMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case resourceusagesample.FieldResourceType:
+		return m.OldResourceType(ctx)
+	case resourceusagesample.FieldResourceID:
+		return m.OldResourceID(ctx)
+	case resourceusagesample.FieldOwnerID:
+		return m.OldOwnerID(ctx)
+	case resourceusagesample.FieldRunnerID:
+		return m.OldRunnerID(ctx)
+	case resourceusagesample.FieldCPUPercent:
+		return m.OldCPUPercent(ctx)
+	case resourceusagesample.FieldMemoryBytes:
+		return m.OldMemoryBytes(ctx)
+	case resourceusagesample.FieldNetworkRxBytes:
+		return m.OldNetworkRxBytes(ctx)
+	case resourceusagesample.FieldNetworkTxBytes:
+		return m.OldNetworkTxBytes(ctx)
+	case resourceusagesample.FieldBlockReadBytes:
+		return m.OldBlockReadBytes(ctx)
+	case resourceusagesample.FieldBlockWriteBytes:
+		return m.OldBlockWriteBytes(ctx)
+	case resourceusagesample.FieldSampledAt:
+		return m.OldSampledAt(ctx)
+	case resourceusagesample.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown ResourceUsageSample field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ResourceUsageSampleMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case resourceusagesample.FieldResourceType:
+		v, ok := value.(enum.ResourceType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceType(v)
+		return nil
+	case resourceusagesample.FieldResourceID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceID(v)
+		return nil
+	case resourceusagesample.FieldOwnerID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwnerID(v)
+		return nil
+	case resourceusagesample.FieldRunnerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRunnerID(v)
+		return nil
+	case resourceusagesample.FieldCPUPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCPUPercent(v)
+		return nil
+	case resourceusagesample.FieldMemoryBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMemoryBytes(v)
+		return nil
+	case resourceusagesample.FieldNetworkRxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNetworkRxBytes(v)
+		return nil
+	case resourceusagesample.FieldNetworkTxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNetworkTxBytes(v)
+		return nil
+	case resourceusagesample.FieldBlockReadBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBlockReadBytes(v)
+		return nil
+	case resourceusagesample.FieldBlockWriteBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBlockWriteBytes(v)
+		return nil
+	case resourceusagesample.FieldSampledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSampledAt(v)
+		return nil
+	case resourceusagesample.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageSample field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ResourceUsageSampleMutation) AddedFields() []string {
+	var fields []string
+	if m.addcpu_percent != nil {
+		fields = append(fields, resourceusagesample.FieldCPUPercent)
+	}
+	if m.addmemory_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldMemoryBytes)
+	}
+	if m.addnetwork_rx_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldNetworkRxBytes)
+	}
+	if m.addnetwork_tx_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldNetworkTxBytes)
+	}
+	if m.addblock_read_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldBlockReadBytes)
+	}
+	if m.addblock_write_bytes != nil {
+		fields = append(fields, resourceusagesample.FieldBlockWriteBytes)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ResourceUsageSampleMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case resourceusagesample.FieldCPUPercent:
+		return m.AddedCPUPercent()
+	case resourceusagesample.FieldMemoryBytes:
+		return m.AddedMemoryBytes()
+	case resourceusagesample.FieldNetworkRxBytes:
+		return m.AddedNetworkRxBytes()
+	case resourceusagesample.FieldNetworkTxBytes:
+		return m.AddedNetworkTxBytes()
+	case resourceusagesample.FieldBlockReadBytes:
+		return m.AddedBlockReadBytes()
+	case resourceusagesample.FieldBlockWriteBytes:
+		return m.AddedBlockWriteBytes()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ResourceUsageSampleMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case resourceusagesample.FieldCPUPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCPUPercent(v)
+		return nil
+	case resourceusagesample.FieldMemoryBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMemoryBytes(v)
+		return nil
+	case resourceusagesample.FieldNetworkRxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNetworkRxBytes(v)
+		return nil
+	case resourceusagesample.FieldNetworkTxBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNetworkTxBytes(v)
+		return nil
+	case resourceusagesample.FieldBlockReadBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBlockReadBytes(v)
+		return nil
+	case resourceusagesample.FieldBlockWriteBytes:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBlockWriteBytes(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageSample numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ResourceUsageSampleMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ResourceUsageSampleMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ResourceUsageSampleMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ResourceUsageSample nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ResourceUsageSampleMutation) ResetField(name string) error {
+	switch name {
+	case resourceusagesample.FieldResourceType:
+		m.ResetResourceType()
+		return nil
+	case resourceusagesample.FieldResourceID:
+		m.ResetResourceID()
+		return nil
+	case resourceusagesample.FieldOwnerID:
+		m.ResetOwnerID()
+		return nil
+	case resourceusagesample.FieldRunnerID:
+		m.ResetRunnerID()
+		return nil
+	case resourceusagesample.FieldCPUPercent:
+		m.ResetCPUPercent()
+		return nil
+	case resourceusagesample.FieldMemoryBytes:
+		m.ResetMemoryBytes()
+		return nil
+	case resourceusagesample.FieldNetworkRxBytes:
+		m.ResetNetworkRxBytes()
+		return nil
+	case resourceusagesample.FieldNetworkTxBytes:
+		m.ResetNetworkTxBytes()
+		return nil
+	case resourceusagesample.FieldBlockReadBytes:
+		m.ResetBlockReadBytes()
+		return nil
+	case resourceusagesample.FieldBlockWriteBytes:
+		m.ResetBlockWriteBytes()
+		return nil
+	case resourceusagesample.FieldSampledAt:
+		m.ResetSampledAt()
+		return nil
+	case resourceusagesample.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageSample field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ResourceUsageSampleMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.runner != nil {
+		edges = append(edges, resourceusagesample.EdgeRunner)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ResourceUsageSampleMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case resourceusagesample.EdgeRunner:
+		if id := m.runner; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ResourceUsageSampleMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ResourceUsageSampleMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ResourceUsageSampleMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedrunner {
+		edges = append(edges, resourceusagesample.EdgeRunner)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ResourceUsageSampleMutation) EdgeCleared(name string) bool {
+	switch name {
+	case resourceusagesample.EdgeRunner:
+		return m.clearedrunner
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ResourceUsageSampleMutation) ClearEdge(name string) error {
+	switch name {
+	case resourceusagesample.EdgeRunner:
+		m.ClearRunner()
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageSample unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ResourceUsageSampleMutation) ResetEdge(name string) error {
+	switch name {
+	case resourceusagesample.EdgeRunner:
+		m.ResetRunner()
+		return nil
+	}
+	return fmt.Errorf("unknown ResourceUsageSample edge %s", name)
 }
 
 // StrategyMutation represents an operation that mutates the Strategy nodes in the graph.

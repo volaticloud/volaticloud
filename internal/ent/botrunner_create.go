@@ -10,6 +10,8 @@ import (
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -152,6 +154,76 @@ func (_c *BotRunnerCreate) SetOwnerID(v string) *BotRunnerCreate {
 	return _c
 }
 
+// SetBillingEnabled sets the "billing_enabled" field.
+func (_c *BotRunnerCreate) SetBillingEnabled(v bool) *BotRunnerCreate {
+	_c.mutation.SetBillingEnabled(v)
+	return _c
+}
+
+// SetNillableBillingEnabled sets the "billing_enabled" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableBillingEnabled(v *bool) *BotRunnerCreate {
+	if v != nil {
+		_c.SetBillingEnabled(*v)
+	}
+	return _c
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (_c *BotRunnerCreate) SetCPUPricePerCoreHour(v float64) *BotRunnerCreate {
+	_c.mutation.SetCPUPricePerCoreHour(v)
+	return _c
+}
+
+// SetNillableCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableCPUPricePerCoreHour(v *float64) *BotRunnerCreate {
+	if v != nil {
+		_c.SetCPUPricePerCoreHour(*v)
+	}
+	return _c
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (_c *BotRunnerCreate) SetMemoryPricePerGBHour(v float64) *BotRunnerCreate {
+	_c.mutation.SetMemoryPricePerGBHour(v)
+	return _c
+}
+
+// SetNillableMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableMemoryPricePerGBHour(v *float64) *BotRunnerCreate {
+	if v != nil {
+		_c.SetMemoryPricePerGBHour(*v)
+	}
+	return _c
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (_c *BotRunnerCreate) SetNetworkPricePerGB(v float64) *BotRunnerCreate {
+	_c.mutation.SetNetworkPricePerGB(v)
+	return _c
+}
+
+// SetNillableNetworkPricePerGB sets the "network_price_per_gb" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableNetworkPricePerGB(v *float64) *BotRunnerCreate {
+	if v != nil {
+		_c.SetNetworkPricePerGB(*v)
+	}
+	return _c
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (_c *BotRunnerCreate) SetStoragePricePerGB(v float64) *BotRunnerCreate {
+	_c.mutation.SetStoragePricePerGB(v)
+	return _c
+}
+
+// SetNillableStoragePricePerGB sets the "storage_price_per_gb" field if the given value is not nil.
+func (_c *BotRunnerCreate) SetNillableStoragePricePerGB(v *float64) *BotRunnerCreate {
+	if v != nil {
+		_c.SetStoragePricePerGB(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *BotRunnerCreate) SetCreatedAt(v time.Time) *BotRunnerCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -224,6 +296,36 @@ func (_c *BotRunnerCreate) AddBacktests(v ...*Backtest) *BotRunnerCreate {
 	return _c.AddBacktestIDs(ids...)
 }
 
+// AddUsageSampleIDs adds the "usage_samples" edge to the ResourceUsageSample entity by IDs.
+func (_c *BotRunnerCreate) AddUsageSampleIDs(ids ...uuid.UUID) *BotRunnerCreate {
+	_c.mutation.AddUsageSampleIDs(ids...)
+	return _c
+}
+
+// AddUsageSamples adds the "usage_samples" edges to the ResourceUsageSample entity.
+func (_c *BotRunnerCreate) AddUsageSamples(v ...*ResourceUsageSample) *BotRunnerCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddUsageSampleIDs(ids...)
+}
+
+// AddUsageAggregationIDs adds the "usage_aggregations" edge to the ResourceUsageAggregation entity by IDs.
+func (_c *BotRunnerCreate) AddUsageAggregationIDs(ids ...uuid.UUID) *BotRunnerCreate {
+	_c.mutation.AddUsageAggregationIDs(ids...)
+	return _c
+}
+
+// AddUsageAggregations adds the "usage_aggregations" edges to the ResourceUsageAggregation entity.
+func (_c *BotRunnerCreate) AddUsageAggregations(v ...*ResourceUsageAggregation) *BotRunnerCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddUsageAggregationIDs(ids...)
+}
+
 // Mutation returns the BotRunnerMutation object of the builder.
 func (_c *BotRunnerCreate) Mutation() *BotRunnerMutation {
 	return _c.mutation
@@ -276,6 +378,10 @@ func (_c *BotRunnerCreate) defaults() error {
 	if _, ok := _c.mutation.DataDownloadStatus(); !ok {
 		v := botrunner.DefaultDataDownloadStatus
 		_c.mutation.SetDataDownloadStatus(v)
+	}
+	if _, ok := _c.mutation.BillingEnabled(); !ok {
+		v := botrunner.DefaultBillingEnabled
+		_c.mutation.SetBillingEnabled(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		if botrunner.DefaultCreatedAt == nil {
@@ -340,6 +446,9 @@ func (_c *BotRunnerCreate) check() error {
 		if err := botrunner.OwnerIDValidator(v); err != nil {
 			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "BotRunner.owner_id": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.BillingEnabled(); !ok {
+		return &ValidationError{Name: "billing_enabled", err: errors.New(`ent: missing required field "BotRunner.billing_enabled"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BotRunner.created_at"`)}
@@ -430,6 +539,26 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 		_node.OwnerID = value
 	}
+	if value, ok := _c.mutation.BillingEnabled(); ok {
+		_spec.SetField(botrunner.FieldBillingEnabled, field.TypeBool, value)
+		_node.BillingEnabled = value
+	}
+	if value, ok := _c.mutation.CPUPricePerCoreHour(); ok {
+		_spec.SetField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64, value)
+		_node.CPUPricePerCoreHour = &value
+	}
+	if value, ok := _c.mutation.MemoryPricePerGBHour(); ok {
+		_spec.SetField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64, value)
+		_node.MemoryPricePerGBHour = &value
+	}
+	if value, ok := _c.mutation.NetworkPricePerGB(); ok {
+		_spec.SetField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64, value)
+		_node.NetworkPricePerGB = &value
+	}
+	if value, ok := _c.mutation.StoragePricePerGB(); ok {
+		_spec.SetField(botrunner.FieldStoragePricePerGB, field.TypeFloat64, value)
+		_node.StoragePricePerGB = &value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(botrunner.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -463,6 +592,38 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.UsageSamplesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.UsageAggregationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

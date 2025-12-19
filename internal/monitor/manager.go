@@ -20,6 +20,7 @@ type Manager struct {
 	botMonitor      *BotMonitor
 	runnerMonitor   *RunnerMonitor
 	backtestMonitor *BacktestMonitor
+	usageAggregator *UsageAggregatorWorker
 
 	instanceID string
 	enabled    bool
@@ -128,6 +129,9 @@ func NewManager(cfg Config) (*Manager, error) {
 	// Create backtest monitor (uses same interval as bot monitor)
 	m.backtestMonitor = NewBacktestMonitor(cfg.DatabaseClient, cfg.MonitorInterval)
 
+	// Create usage aggregator worker
+	m.usageAggregator = NewUsageAggregatorWorker(cfg.DatabaseClient)
+
 	return m, nil
 }
 
@@ -178,6 +182,19 @@ func (m *Manager) Start(ctx context.Context) error {
 	// Start backtest monitor
 	go m.backtestMonitor.Start(ctx)
 
+	// Start usage aggregator worker
+	if err := m.usageAggregator.Start(ctx); err != nil {
+		m.botMonitor.Stop()
+		m.runnerMonitor.Stop()
+		m.backtestMonitor.Stop()
+		if m.enabled {
+			if stopErr := m.registry.Stop(ctx); stopErr != nil {
+				log.Printf("Warning: failed to stop registry after usage aggregator error: %v", stopErr)
+			}
+		}
+		return fmt.Errorf("failed to start usage aggregator: %w", err)
+	}
+
 	log.Println("Monitor manager started successfully")
 	return nil
 }
@@ -194,6 +211,9 @@ func (m *Manager) Stop(ctx context.Context) error {
 
 	// Stop backtest monitor
 	m.backtestMonitor.Stop()
+
+	// Stop usage aggregator
+	m.usageAggregator.Stop()
 
 	// Stop registry if using etcd
 	if m.enabled {

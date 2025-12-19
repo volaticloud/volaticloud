@@ -11,6 +11,8 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/ent/resourceusageaggregation"
+	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql"
@@ -212,6 +214,128 @@ func (_u *BotRunnerUpdate) SetNillableOwnerID(v *string) *BotRunnerUpdate {
 	return _u
 }
 
+// SetBillingEnabled sets the "billing_enabled" field.
+func (_u *BotRunnerUpdate) SetBillingEnabled(v bool) *BotRunnerUpdate {
+	_u.mutation.SetBillingEnabled(v)
+	return _u
+}
+
+// SetNillableBillingEnabled sets the "billing_enabled" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableBillingEnabled(v *bool) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetBillingEnabled(*v)
+	}
+	return _u
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (_u *BotRunnerUpdate) SetCPUPricePerCoreHour(v float64) *BotRunnerUpdate {
+	_u.mutation.ResetCPUPricePerCoreHour()
+	_u.mutation.SetCPUPricePerCoreHour(v)
+	return _u
+}
+
+// SetNillableCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableCPUPricePerCoreHour(v *float64) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetCPUPricePerCoreHour(*v)
+	}
+	return _u
+}
+
+// AddCPUPricePerCoreHour adds value to the "cpu_price_per_core_hour" field.
+func (_u *BotRunnerUpdate) AddCPUPricePerCoreHour(v float64) *BotRunnerUpdate {
+	_u.mutation.AddCPUPricePerCoreHour(v)
+	return _u
+}
+
+// ClearCPUPricePerCoreHour clears the value of the "cpu_price_per_core_hour" field.
+func (_u *BotRunnerUpdate) ClearCPUPricePerCoreHour() *BotRunnerUpdate {
+	_u.mutation.ClearCPUPricePerCoreHour()
+	return _u
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (_u *BotRunnerUpdate) SetMemoryPricePerGBHour(v float64) *BotRunnerUpdate {
+	_u.mutation.ResetMemoryPricePerGBHour()
+	_u.mutation.SetMemoryPricePerGBHour(v)
+	return _u
+}
+
+// SetNillableMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableMemoryPricePerGBHour(v *float64) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetMemoryPricePerGBHour(*v)
+	}
+	return _u
+}
+
+// AddMemoryPricePerGBHour adds value to the "memory_price_per_gb_hour" field.
+func (_u *BotRunnerUpdate) AddMemoryPricePerGBHour(v float64) *BotRunnerUpdate {
+	_u.mutation.AddMemoryPricePerGBHour(v)
+	return _u
+}
+
+// ClearMemoryPricePerGBHour clears the value of the "memory_price_per_gb_hour" field.
+func (_u *BotRunnerUpdate) ClearMemoryPricePerGBHour() *BotRunnerUpdate {
+	_u.mutation.ClearMemoryPricePerGBHour()
+	return _u
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (_u *BotRunnerUpdate) SetNetworkPricePerGB(v float64) *BotRunnerUpdate {
+	_u.mutation.ResetNetworkPricePerGB()
+	_u.mutation.SetNetworkPricePerGB(v)
+	return _u
+}
+
+// SetNillableNetworkPricePerGB sets the "network_price_per_gb" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableNetworkPricePerGB(v *float64) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetNetworkPricePerGB(*v)
+	}
+	return _u
+}
+
+// AddNetworkPricePerGB adds value to the "network_price_per_gb" field.
+func (_u *BotRunnerUpdate) AddNetworkPricePerGB(v float64) *BotRunnerUpdate {
+	_u.mutation.AddNetworkPricePerGB(v)
+	return _u
+}
+
+// ClearNetworkPricePerGB clears the value of the "network_price_per_gb" field.
+func (_u *BotRunnerUpdate) ClearNetworkPricePerGB() *BotRunnerUpdate {
+	_u.mutation.ClearNetworkPricePerGB()
+	return _u
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (_u *BotRunnerUpdate) SetStoragePricePerGB(v float64) *BotRunnerUpdate {
+	_u.mutation.ResetStoragePricePerGB()
+	_u.mutation.SetStoragePricePerGB(v)
+	return _u
+}
+
+// SetNillableStoragePricePerGB sets the "storage_price_per_gb" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableStoragePricePerGB(v *float64) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetStoragePricePerGB(*v)
+	}
+	return _u
+}
+
+// AddStoragePricePerGB adds value to the "storage_price_per_gb" field.
+func (_u *BotRunnerUpdate) AddStoragePricePerGB(v float64) *BotRunnerUpdate {
+	_u.mutation.AddStoragePricePerGB(v)
+	return _u
+}
+
+// ClearStoragePricePerGB clears the value of the "storage_price_per_gb" field.
+func (_u *BotRunnerUpdate) ClearStoragePricePerGB() *BotRunnerUpdate {
+	_u.mutation.ClearStoragePricePerGB()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotRunnerUpdate) SetUpdatedAt(v time.Time) *BotRunnerUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -246,6 +370,36 @@ func (_u *BotRunnerUpdate) AddBacktests(v ...*Backtest) *BotRunnerUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddBacktestIDs(ids...)
+}
+
+// AddUsageSampleIDs adds the "usage_samples" edge to the ResourceUsageSample entity by IDs.
+func (_u *BotRunnerUpdate) AddUsageSampleIDs(ids ...uuid.UUID) *BotRunnerUpdate {
+	_u.mutation.AddUsageSampleIDs(ids...)
+	return _u
+}
+
+// AddUsageSamples adds the "usage_samples" edges to the ResourceUsageSample entity.
+func (_u *BotRunnerUpdate) AddUsageSamples(v ...*ResourceUsageSample) *BotRunnerUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUsageSampleIDs(ids...)
+}
+
+// AddUsageAggregationIDs adds the "usage_aggregations" edge to the ResourceUsageAggregation entity by IDs.
+func (_u *BotRunnerUpdate) AddUsageAggregationIDs(ids ...uuid.UUID) *BotRunnerUpdate {
+	_u.mutation.AddUsageAggregationIDs(ids...)
+	return _u
+}
+
+// AddUsageAggregations adds the "usage_aggregations" edges to the ResourceUsageAggregation entity.
+func (_u *BotRunnerUpdate) AddUsageAggregations(v ...*ResourceUsageAggregation) *BotRunnerUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUsageAggregationIDs(ids...)
 }
 
 // Mutation returns the BotRunnerMutation object of the builder.
@@ -293,6 +447,48 @@ func (_u *BotRunnerUpdate) RemoveBacktests(v ...*Backtest) *BotRunnerUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBacktestIDs(ids...)
+}
+
+// ClearUsageSamples clears all "usage_samples" edges to the ResourceUsageSample entity.
+func (_u *BotRunnerUpdate) ClearUsageSamples() *BotRunnerUpdate {
+	_u.mutation.ClearUsageSamples()
+	return _u
+}
+
+// RemoveUsageSampleIDs removes the "usage_samples" edge to ResourceUsageSample entities by IDs.
+func (_u *BotRunnerUpdate) RemoveUsageSampleIDs(ids ...uuid.UUID) *BotRunnerUpdate {
+	_u.mutation.RemoveUsageSampleIDs(ids...)
+	return _u
+}
+
+// RemoveUsageSamples removes "usage_samples" edges to ResourceUsageSample entities.
+func (_u *BotRunnerUpdate) RemoveUsageSamples(v ...*ResourceUsageSample) *BotRunnerUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUsageSampleIDs(ids...)
+}
+
+// ClearUsageAggregations clears all "usage_aggregations" edges to the ResourceUsageAggregation entity.
+func (_u *BotRunnerUpdate) ClearUsageAggregations() *BotRunnerUpdate {
+	_u.mutation.ClearUsageAggregations()
+	return _u
+}
+
+// RemoveUsageAggregationIDs removes the "usage_aggregations" edge to ResourceUsageAggregation entities by IDs.
+func (_u *BotRunnerUpdate) RemoveUsageAggregationIDs(ids ...uuid.UUID) *BotRunnerUpdate {
+	_u.mutation.RemoveUsageAggregationIDs(ids...)
+	return _u
+}
+
+// RemoveUsageAggregations removes "usage_aggregations" edges to ResourceUsageAggregation entities.
+func (_u *BotRunnerUpdate) RemoveUsageAggregations(v ...*ResourceUsageAggregation) *BotRunnerUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUsageAggregationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -428,6 +624,45 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.BillingEnabled(); ok {
+		_spec.SetField(botrunner.FieldBillingEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.CPUPricePerCoreHour(); ok {
+		_spec.SetField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCPUPricePerCoreHour(); ok {
+		_spec.AddField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64, value)
+	}
+	if _u.mutation.CPUPricePerCoreHourCleared() {
+		_spec.ClearField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.MemoryPricePerGBHour(); ok {
+		_spec.SetField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedMemoryPricePerGBHour(); ok {
+		_spec.AddField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64, value)
+	}
+	if _u.mutation.MemoryPricePerGBHourCleared() {
+		_spec.ClearField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.NetworkPricePerGB(); ok {
+		_spec.SetField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedNetworkPricePerGB(); ok {
+		_spec.AddField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64, value)
+	}
+	if _u.mutation.NetworkPricePerGBCleared() {
+		_spec.ClearField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.StoragePricePerGB(); ok {
+		_spec.SetField(botrunner.FieldStoragePricePerGB, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedStoragePricePerGB(); ok {
+		_spec.AddField(botrunner.FieldStoragePricePerGB, field.TypeFloat64, value)
+	}
+	if _u.mutation.StoragePricePerGBCleared() {
+		_spec.ClearField(botrunner.FieldStoragePricePerGB, field.TypeFloat64)
+	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -514,6 +749,96 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UsageSamplesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUsageSamplesIDs(); len(nodes) > 0 && !_u.mutation.UsageSamplesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UsageSamplesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UsageAggregationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUsageAggregationsIDs(); len(nodes) > 0 && !_u.mutation.UsageAggregationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UsageAggregationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -721,6 +1046,128 @@ func (_u *BotRunnerUpdateOne) SetNillableOwnerID(v *string) *BotRunnerUpdateOne 
 	return _u
 }
 
+// SetBillingEnabled sets the "billing_enabled" field.
+func (_u *BotRunnerUpdateOne) SetBillingEnabled(v bool) *BotRunnerUpdateOne {
+	_u.mutation.SetBillingEnabled(v)
+	return _u
+}
+
+// SetNillableBillingEnabled sets the "billing_enabled" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableBillingEnabled(v *bool) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetBillingEnabled(*v)
+	}
+	return _u
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (_u *BotRunnerUpdateOne) SetCPUPricePerCoreHour(v float64) *BotRunnerUpdateOne {
+	_u.mutation.ResetCPUPricePerCoreHour()
+	_u.mutation.SetCPUPricePerCoreHour(v)
+	return _u
+}
+
+// SetNillableCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableCPUPricePerCoreHour(v *float64) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetCPUPricePerCoreHour(*v)
+	}
+	return _u
+}
+
+// AddCPUPricePerCoreHour adds value to the "cpu_price_per_core_hour" field.
+func (_u *BotRunnerUpdateOne) AddCPUPricePerCoreHour(v float64) *BotRunnerUpdateOne {
+	_u.mutation.AddCPUPricePerCoreHour(v)
+	return _u
+}
+
+// ClearCPUPricePerCoreHour clears the value of the "cpu_price_per_core_hour" field.
+func (_u *BotRunnerUpdateOne) ClearCPUPricePerCoreHour() *BotRunnerUpdateOne {
+	_u.mutation.ClearCPUPricePerCoreHour()
+	return _u
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (_u *BotRunnerUpdateOne) SetMemoryPricePerGBHour(v float64) *BotRunnerUpdateOne {
+	_u.mutation.ResetMemoryPricePerGBHour()
+	_u.mutation.SetMemoryPricePerGBHour(v)
+	return _u
+}
+
+// SetNillableMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableMemoryPricePerGBHour(v *float64) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetMemoryPricePerGBHour(*v)
+	}
+	return _u
+}
+
+// AddMemoryPricePerGBHour adds value to the "memory_price_per_gb_hour" field.
+func (_u *BotRunnerUpdateOne) AddMemoryPricePerGBHour(v float64) *BotRunnerUpdateOne {
+	_u.mutation.AddMemoryPricePerGBHour(v)
+	return _u
+}
+
+// ClearMemoryPricePerGBHour clears the value of the "memory_price_per_gb_hour" field.
+func (_u *BotRunnerUpdateOne) ClearMemoryPricePerGBHour() *BotRunnerUpdateOne {
+	_u.mutation.ClearMemoryPricePerGBHour()
+	return _u
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (_u *BotRunnerUpdateOne) SetNetworkPricePerGB(v float64) *BotRunnerUpdateOne {
+	_u.mutation.ResetNetworkPricePerGB()
+	_u.mutation.SetNetworkPricePerGB(v)
+	return _u
+}
+
+// SetNillableNetworkPricePerGB sets the "network_price_per_gb" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableNetworkPricePerGB(v *float64) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetNetworkPricePerGB(*v)
+	}
+	return _u
+}
+
+// AddNetworkPricePerGB adds value to the "network_price_per_gb" field.
+func (_u *BotRunnerUpdateOne) AddNetworkPricePerGB(v float64) *BotRunnerUpdateOne {
+	_u.mutation.AddNetworkPricePerGB(v)
+	return _u
+}
+
+// ClearNetworkPricePerGB clears the value of the "network_price_per_gb" field.
+func (_u *BotRunnerUpdateOne) ClearNetworkPricePerGB() *BotRunnerUpdateOne {
+	_u.mutation.ClearNetworkPricePerGB()
+	return _u
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (_u *BotRunnerUpdateOne) SetStoragePricePerGB(v float64) *BotRunnerUpdateOne {
+	_u.mutation.ResetStoragePricePerGB()
+	_u.mutation.SetStoragePricePerGB(v)
+	return _u
+}
+
+// SetNillableStoragePricePerGB sets the "storage_price_per_gb" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableStoragePricePerGB(v *float64) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetStoragePricePerGB(*v)
+	}
+	return _u
+}
+
+// AddStoragePricePerGB adds value to the "storage_price_per_gb" field.
+func (_u *BotRunnerUpdateOne) AddStoragePricePerGB(v float64) *BotRunnerUpdateOne {
+	_u.mutation.AddStoragePricePerGB(v)
+	return _u
+}
+
+// ClearStoragePricePerGB clears the value of the "storage_price_per_gb" field.
+func (_u *BotRunnerUpdateOne) ClearStoragePricePerGB() *BotRunnerUpdateOne {
+	_u.mutation.ClearStoragePricePerGB()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BotRunnerUpdateOne) SetUpdatedAt(v time.Time) *BotRunnerUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -755,6 +1202,36 @@ func (_u *BotRunnerUpdateOne) AddBacktests(v ...*Backtest) *BotRunnerUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.AddBacktestIDs(ids...)
+}
+
+// AddUsageSampleIDs adds the "usage_samples" edge to the ResourceUsageSample entity by IDs.
+func (_u *BotRunnerUpdateOne) AddUsageSampleIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
+	_u.mutation.AddUsageSampleIDs(ids...)
+	return _u
+}
+
+// AddUsageSamples adds the "usage_samples" edges to the ResourceUsageSample entity.
+func (_u *BotRunnerUpdateOne) AddUsageSamples(v ...*ResourceUsageSample) *BotRunnerUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUsageSampleIDs(ids...)
+}
+
+// AddUsageAggregationIDs adds the "usage_aggregations" edge to the ResourceUsageAggregation entity by IDs.
+func (_u *BotRunnerUpdateOne) AddUsageAggregationIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
+	_u.mutation.AddUsageAggregationIDs(ids...)
+	return _u
+}
+
+// AddUsageAggregations adds the "usage_aggregations" edges to the ResourceUsageAggregation entity.
+func (_u *BotRunnerUpdateOne) AddUsageAggregations(v ...*ResourceUsageAggregation) *BotRunnerUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUsageAggregationIDs(ids...)
 }
 
 // Mutation returns the BotRunnerMutation object of the builder.
@@ -802,6 +1279,48 @@ func (_u *BotRunnerUpdateOne) RemoveBacktests(v ...*Backtest) *BotRunnerUpdateOn
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBacktestIDs(ids...)
+}
+
+// ClearUsageSamples clears all "usage_samples" edges to the ResourceUsageSample entity.
+func (_u *BotRunnerUpdateOne) ClearUsageSamples() *BotRunnerUpdateOne {
+	_u.mutation.ClearUsageSamples()
+	return _u
+}
+
+// RemoveUsageSampleIDs removes the "usage_samples" edge to ResourceUsageSample entities by IDs.
+func (_u *BotRunnerUpdateOne) RemoveUsageSampleIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
+	_u.mutation.RemoveUsageSampleIDs(ids...)
+	return _u
+}
+
+// RemoveUsageSamples removes "usage_samples" edges to ResourceUsageSample entities.
+func (_u *BotRunnerUpdateOne) RemoveUsageSamples(v ...*ResourceUsageSample) *BotRunnerUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUsageSampleIDs(ids...)
+}
+
+// ClearUsageAggregations clears all "usage_aggregations" edges to the ResourceUsageAggregation entity.
+func (_u *BotRunnerUpdateOne) ClearUsageAggregations() *BotRunnerUpdateOne {
+	_u.mutation.ClearUsageAggregations()
+	return _u
+}
+
+// RemoveUsageAggregationIDs removes the "usage_aggregations" edge to ResourceUsageAggregation entities by IDs.
+func (_u *BotRunnerUpdateOne) RemoveUsageAggregationIDs(ids ...uuid.UUID) *BotRunnerUpdateOne {
+	_u.mutation.RemoveUsageAggregationIDs(ids...)
+	return _u
+}
+
+// RemoveUsageAggregations removes "usage_aggregations" edges to ResourceUsageAggregation entities.
+func (_u *BotRunnerUpdateOne) RemoveUsageAggregations(v ...*ResourceUsageAggregation) *BotRunnerUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUsageAggregationIDs(ids...)
 }
 
 // Where appends a list predicates to the BotRunnerUpdate builder.
@@ -967,6 +1486,45 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.BillingEnabled(); ok {
+		_spec.SetField(botrunner.FieldBillingEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.CPUPricePerCoreHour(); ok {
+		_spec.SetField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedCPUPricePerCoreHour(); ok {
+		_spec.AddField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64, value)
+	}
+	if _u.mutation.CPUPricePerCoreHourCleared() {
+		_spec.ClearField(botrunner.FieldCPUPricePerCoreHour, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.MemoryPricePerGBHour(); ok {
+		_spec.SetField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedMemoryPricePerGBHour(); ok {
+		_spec.AddField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64, value)
+	}
+	if _u.mutation.MemoryPricePerGBHourCleared() {
+		_spec.ClearField(botrunner.FieldMemoryPricePerGBHour, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.NetworkPricePerGB(); ok {
+		_spec.SetField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedNetworkPricePerGB(); ok {
+		_spec.AddField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64, value)
+	}
+	if _u.mutation.NetworkPricePerGBCleared() {
+		_spec.ClearField(botrunner.FieldNetworkPricePerGB, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.StoragePricePerGB(); ok {
+		_spec.SetField(botrunner.FieldStoragePricePerGB, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedStoragePricePerGB(); ok {
+		_spec.AddField(botrunner.FieldStoragePricePerGB, field.TypeFloat64, value)
+	}
+	if _u.mutation.StoragePricePerGBCleared() {
+		_spec.ClearField(botrunner.FieldStoragePricePerGB, field.TypeFloat64)
+	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botrunner.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -1053,6 +1611,96 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UsageSamplesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUsageSamplesIDs(); len(nodes) > 0 && !_u.mutation.UsageSamplesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UsageSamplesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageSamplesTable,
+			Columns: []string{botrunner.UsageSamplesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UsageAggregationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUsageAggregationsIDs(); len(nodes) > 0 && !_u.mutation.UsageAggregationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UsageAggregationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   botrunner.UsageAggregationsTable,
+			Columns: []string{botrunner.UsageAggregationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
