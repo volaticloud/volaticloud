@@ -24,6 +24,14 @@ runs:
         echo "GOCACHE=${GITHUB_WORKSPACE}/.cache/go-build" >> $GITHUB_ENV
         echo "GOMODCACHE=${GITHUB_WORKSPACE}/.cache/go-mod" >> $GITHUB_ENV
 
+        # Fix for Go issue #75031: covdata tool not found with auto-downloaded toolchain
+        # Extract Go version from go.mod and set GOTOOLCHAIN explicitly
+        GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
+        if [ -n "$GO_VERSION" ]; then
+          echo "GOTOOLCHAIN=go${GO_VERSION}+auto" >> $GITHUB_ENV
+          echo "Setting GOTOOLCHAIN=go${GO_VERSION}+auto to fix covdata tool resolution"
+        fi
+
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
