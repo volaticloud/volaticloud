@@ -86,9 +86,11 @@ jobs:
 
       - name: gofmt
         run: |
-          if [ -n "$(gofmt -l .)" ]; then
+          # Exclude cache and vendor directories (third-party code)
+          FILES=$(find . -name '*.go' -not -path './.cache/*' -not -path './vendor/*' | xargs gofmt -l 2>/dev/null || true)
+          if [ -n "$FILES" ]; then
             echo "Files need formatting:"
-            gofmt -l .
+            echo "$FILES"
             exit 1
           fi
 
