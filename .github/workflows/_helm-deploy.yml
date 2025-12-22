@@ -51,7 +51,7 @@ jobs:
     runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Helm
         uses: azure/setup-helm@v4
@@ -76,7 +76,7 @@ jobs:
       url: ${{ inputs.health-url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup kubectl and Helm
         uses: ./.github/actions/setup-kubectl-helm
@@ -135,7 +135,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup kubectl and Helm
         uses: ./.github/actions/setup-kubectl-helm

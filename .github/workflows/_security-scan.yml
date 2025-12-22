@@ -43,7 +43,7 @@ jobs:
       GOMODCACHE: ${{ github.workspace }}/.cache/go-mod
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -63,7 +63,7 @@ jobs:
     if: ${{ inputs.scan-gosec }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run gosec
         uses: securego/gosec@master
@@ -83,7 +83,7 @@ jobs:
     if: ${{ inputs.scan-node }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -100,7 +100,7 @@ jobs:
     if: ${{ inputs.scan-docker && inputs.docker-image != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Trivy
         uses: aquasecurity/trivy-action@master
@@ -118,7 +118,7 @@ jobs:
       image: semgrep/semgrep
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Semgrep
         run: semgrep scan --config auto --error --json --output semgrep-results.json .

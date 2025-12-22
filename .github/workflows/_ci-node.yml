@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -57,7 +57,7 @@ jobs:
     if: ${{ inputs.run-build }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
