@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+// MaxDecompressedSize is the maximum allowed size for decompressed data (1GB).
+// This prevents decompression bomb attacks (zip bombs).
+const MaxDecompressedSize = 1 << 30 // 1GB
+
 // PackData creates a zip archive from a directory.
 // The directory structure is preserved in the archive.
 func PackData(dataDir string, writer io.Writer) error {
@@ -58,6 +62,7 @@ func PackData(dataDir string, writer io.Writer) error {
 		}
 
 		// Copy file content
+		// #nosec G304 -- path comes from filepath.Walk on controlled dataDir
 		file, err := os.Open(path)
 		if err != nil {
 			return fmt.Errorf("failed to open file: %w", err)
@@ -88,22 +93,23 @@ func UnpackData(reader io.ReaderAt, size int64, destDir string) error {
 
 	for _, file := range zipReader.File {
 		// Construct destination path
+		// #nosec G305 -- path traversal check is performed below
 		destPath := filepath.Join(destDir, file.Name)
 
-		// Prevent path traversal attacks
+		// Prevent path traversal attacks (zip slip)
 		if !strings.HasPrefix(destPath, filepath.Clean(destDir)+string(os.PathSeparator)) {
 			return fmt.Errorf("invalid file path: %s", file.Name)
 		}
 
 		if file.FileInfo().IsDir() {
-			if err := os.MkdirAll(destPath, 0755); err != nil {
+			if err := os.MkdirAll(destPath, 0750); err != nil {
 				return fmt.Errorf("failed to create directory: %w", err)
 			}
 			continue
 		}
 
 		// Ensure parent directory exists
-		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(destPath), 0750); err != nil {
 			return fmt.Errorf("failed to create parent directory: %w", err)
 		}
 
@@ -123,15 +129,23 @@ func extractFile(file *zip.File, destPath string) error {
 	}
 	defer src.Close()
 
+	// #nosec G304 -- destPath is validated for path traversal in UnpackData
 	dst, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 	if err != nil {
 		return fmt.Errorf("failed to create destination file: %w", err)
 	}
 	defer dst.Close()
 
-	_, err = io.Copy(dst, src)
+	// Limit decompressed size to prevent decompression bomb attacks
+	limitedReader := io.LimitReader(src, MaxDecompressedSize)
+	written, err := io.Copy(dst, limitedReader)
 	if err != nil {
 		return fmt.Errorf("failed to extract file: %w", err)
+	}
+
+	// Check if we hit the size limit (potential decompression bomb)
+	if written == MaxDecompressedSize {
+		return fmt.Errorf("file %s exceeds maximum decompressed size (%d bytes)", file.Name, MaxDecompressedSize)
 	}
 
 	return nil

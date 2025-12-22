@@ -158,6 +158,7 @@ func (c *Coordinator) getAssignedInstance(botID string) string {
 	hash := h.Sum64()
 
 	// Consistent hashing: hash % instanceCount
+	// #nosec G115 -- result of modulo by len(instances) is always < len(instances), which fits in int
 	index := int(hash % uint64(len(c.instances)))
 	return c.instances[index]
 }

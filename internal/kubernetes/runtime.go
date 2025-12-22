@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"sync"
 
 	"volaticloud/internal/enum"
@@ -19,6 +20,17 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 )
+
+// safeInt32 safely converts an int to int32, clamping to valid port range
+func safeInt32(v int) int32 {
+	if v < 0 {
+		return 0
+	}
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	return int32(v) // #nosec G115 -- bounds checked above
+}
 
 // Compile-time interface compliance check
 var _ runner.Runtime = (*Runtime)(nil)
@@ -782,7 +794,7 @@ ls -la /userdata/strategies/`
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "api",
-									ContainerPort: int32(apiPort),
+									ContainerPort: safeInt32(apiPort),
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
@@ -823,7 +835,7 @@ func (r *Runtime) createBotService(ctx context.Context, spec runner.BotSpec) (*c
 			Ports: []corev1.ServicePort{
 				{
 					Name:     "api",
-					Port:     int32(apiPort),
+					Port:     safeInt32(apiPort),
 					Protocol: corev1.ProtocolTCP,
 				},
 			},

@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"volaticloud/internal/enum"
 	"volaticloud/internal/runner"
@@ -22,7 +23,9 @@ func init() {
 		}
 
 		if err := runtime.HealthCheck(ctx); err != nil {
-			runtime.Close()
+			if closeErr := runtime.Close(); closeErr != nil {
+				log.Printf("Warning: failed to close runtime after health check failure: %v", closeErr)
+			}
 			return nil, fmt.Errorf("kubernetes runtime health check failed: %w", err)
 		}
 
@@ -42,7 +45,9 @@ func init() {
 		}
 
 		if err := btRunner.HealthCheck(ctx); err != nil {
-			btRunner.Close()
+			if closeErr := btRunner.Close(); closeErr != nil {
+				log.Printf("Warning: failed to close backtest runner after health check failure: %v", closeErr)
+			}
 			return nil, fmt.Errorf("kubernetes backtest runner health check failed: %w", err)
 		}
 

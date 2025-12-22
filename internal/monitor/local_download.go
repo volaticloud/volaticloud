@@ -31,7 +31,7 @@ type LocalDataDownloader struct {
 // dockerHost is optional (empty string uses local Docker).
 func NewLocalDataDownloader(workDir string, dockerHost string) (*LocalDataDownloader, error) {
 	// Create work directory if it doesn't exist
-	if err := os.MkdirAll(workDir, 0755); err != nil {
+	if err := os.MkdirAll(workDir, 0750); err != nil {
 		return nil, fmt.Errorf("failed to create work directory: %w", err)
 	}
 
@@ -81,7 +81,7 @@ func (d *LocalDataDownloader) DownloadAndUpload(ctx context.Context, dbClient *e
 
 	// Create temporary directory for this runner's data
 	dataDir := filepath.Join(d.workDir, runnerID, "data")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0750); err != nil {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}
 	defer func() {
@@ -162,6 +162,7 @@ func (d *LocalDataDownloader) DownloadAndUpload(ctx context.Context, dbClient *e
 
 	// Create zip file
 	zipPath := filepath.Join(d.workDir, runnerID, "data.zip")
+	// #nosec G304 -- zipPath is constructed from controlled workDir and validated runnerID
 	zipFile, err := os.Create(zipPath)
 	if err != nil {
 		return fmt.Errorf("failed to create zip file: %w", err)
@@ -169,10 +170,14 @@ func (d *LocalDataDownloader) DownloadAndUpload(ctx context.Context, dbClient *e
 
 	log.Printf("Runner %s: packaging data to zip", runner.Name)
 	if err := PackData(dataDir, zipFile); err != nil {
-		zipFile.Close()
+		if closeErr := zipFile.Close(); closeErr != nil {
+			log.Printf("Warning: failed to close zip file: %v", closeErr)
+		}
 		return fmt.Errorf("failed to pack data: %w", err)
 	}
-	zipFile.Close()
+	if err := zipFile.Close(); err != nil {
+		return fmt.Errorf("failed to close zip file: %w", err)
+	}
 
 	// Get zip file info for upload
 	zipInfo, err := os.Stat(zipPath)
@@ -195,6 +200,7 @@ func (d *LocalDataDownloader) DownloadAndUpload(ctx context.Context, dbClient *e
 
 	// Upload to S3
 	log.Printf("Runner %s: uploading data to S3 (%d bytes)", runner.Name, zipInfo.Size())
+	// #nosec G304 -- zipPath is constructed from controlled workDir and validated runnerID
 	zipReader, err := os.Open(zipPath)
 	if err != nil {
 		return fmt.Errorf("failed to open zip file for upload: %w", err)
