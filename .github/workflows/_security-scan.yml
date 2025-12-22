@@ -35,7 +35,7 @@ on:
 jobs:
   govulncheck:
     name: Go Vulnerabilities
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.scan-go }}
     steps:
       - name: Checkout
@@ -55,7 +55,7 @@ jobs:
 
   gosec:
     name: Go Security (gosec)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.scan-gosec }}
     steps:
       - name: Checkout
@@ -75,7 +75,7 @@ jobs:
 
   npm-audit:
     name: npm Audit
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.scan-node }}
     steps:
       - name: Checkout
@@ -92,7 +92,7 @@ jobs:
 
   trivy:
     name: Container Scan
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.scan-docker && inputs.docker-image != '' }}
     steps:
       - name: Checkout
@@ -108,7 +108,7 @@ jobs:
 
   semgrep:
     name: Semgrep SAST
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.scan-semgrep }}
     container:
       image: semgrep/semgrep
