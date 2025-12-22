@@ -27,7 +27,7 @@ jobs:
       url: https://console.volaticloud.com
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup kubectl and Helm
         uses: ./.github/actions/setup-kubectl-helm
@@ -93,7 +93,7 @@ jobs:
     environment: prod
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup kubectl and Helm
         uses: ./.github/actions/setup-kubectl-helm
