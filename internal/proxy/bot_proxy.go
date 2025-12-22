@@ -106,11 +106,6 @@ func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.U
 		return nil, fmt.Errorf("failed to load bot: %w", err)
 	}
 
-	// Check if bot has a container
-	if b.ContainerID == "" {
-		return nil, fmt.Errorf("bot is not running (no container)")
-	}
-
 	// Get runner
 	botRunner := b.Edges.Runner
 	if botRunner == nil {
@@ -124,8 +119,8 @@ func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.U
 	}
 	defer rt.Close()
 
-	// Get bot status to find the mapped host port
-	status, err := rt.GetBotStatus(ctx, b.ContainerID)
+	// Get bot status to find the mapped host port (container name derived from bot ID)
+	status, err := rt.GetBotStatus(ctx, b.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot status: %w", err)
 	}

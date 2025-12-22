@@ -62,7 +62,6 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Backtest struct {
 		CompletedAt   func(childComplexity int) int
-		ContainerID   func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		EndDate       func(childComplexity int) int
 		ErrorMessage  func(childComplexity int) int
@@ -115,7 +114,6 @@ type ComplexityRoot struct {
 
 	Bot struct {
 		Config           func(childComplexity int) int
-		ContainerID      func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
 		ErrorMessage     func(childComplexity int) int
 		Exchange         func(childComplexity int) int
@@ -195,6 +193,9 @@ type ComplexityRoot struct {
 		NetworkPricePerGB     func(childComplexity int) int
 		OwnerID               func(childComplexity int) int
 		Public                func(childComplexity int) int
+		S3Config              func(childComplexity int) int
+		S3DataKey             func(childComplexity int) int
+		S3DataUploadedAt      func(childComplexity int) int
 		StoragePricePerGB     func(childComplexity int) int
 		Type                  func(childComplexity int) int
 		UpdatedAt             func(childComplexity int) int
@@ -214,7 +215,6 @@ type ComplexityRoot struct {
 	BotStatus struct {
 		BotID        func(childComplexity int) int
 		CPUUsage     func(childComplexity int) int
-		ContainerID  func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		ErrorMessage func(childComplexity int) int
 		Healthy      func(childComplexity int) int
@@ -285,6 +285,7 @@ type ComplexityRoot struct {
 		StopBacktest          func(childComplexity int, id uuid.UUID) int
 		StopBot               func(childComplexity int, id uuid.UUID) int
 		TestRunnerConnection  func(childComplexity int, typeArg enum.RunnerType, config model.RunnerConfigInput) int
+		TestS3Connection      func(childComplexity int, config model.S3ConfigInput) int
 		UpdateBot             func(childComplexity int, id uuid.UUID, input ent.UpdateBotInput) int
 		UpdateBotRunner       func(childComplexity int, id uuid.UUID, input ent.UpdateBotRunnerInput) int
 		UpdateExchange        func(childComplexity int, id uuid.UUID, input ent.UpdateExchangeInput) int
@@ -456,6 +457,7 @@ type MutationResolver interface {
 	DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error)
 	RefreshRunnerData(ctx context.Context, id uuid.UUID) (*ent.BotRunner, error)
 	TestRunnerConnection(ctx context.Context, typeArg enum.RunnerType, config model.RunnerConfigInput) (*model.ConnectionTestResult, error)
+	TestS3Connection(ctx context.Context, config model.S3ConfigInput) (*model.ConnectionTestResult, error)
 	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
 	RunBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
@@ -511,12 +513,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.CompletedAt(childComplexity), true
-	case "Backtest.containerID":
-		if e.complexity.Backtest.ContainerID == nil {
-			break
-		}
-
-		return e.complexity.Backtest.ContainerID(childComplexity), true
 	case "Backtest.createdAt":
 		if e.complexity.Backtest.CreatedAt == nil {
 			break
@@ -761,12 +757,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bot.Config(childComplexity), true
-	case "Bot.containerID":
-		if e.complexity.Bot.ContainerID == nil {
-			break
-		}
-
-		return e.complexity.Bot.ContainerID(childComplexity), true
 	case "Bot.createdAt":
 		if e.complexity.Bot.CreatedAt == nil {
 			break
@@ -1188,6 +1178,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.Public(childComplexity), true
+	case "BotRunner.s3Config":
+		if e.complexity.BotRunner.S3Config == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.S3Config(childComplexity), true
+	case "BotRunner.s3DataKey":
+		if e.complexity.BotRunner.S3DataKey == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.S3DataKey(childComplexity), true
+	case "BotRunner.s3DataUploadedAt":
+		if e.complexity.BotRunner.S3DataUploadedAt == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.S3DataUploadedAt(childComplexity), true
 	case "BotRunner.storagePricePerGB":
 		if e.complexity.BotRunner.StoragePricePerGB == nil {
 			break
@@ -1251,12 +1259,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotStatus.CPUUsage(childComplexity), true
-	case "BotStatus.containerID":
-		if e.complexity.BotStatus.ContainerID == nil {
-			break
-		}
-
-		return e.complexity.BotStatus.ContainerID(childComplexity), true
 	case "BotStatus.createdAt":
 		if e.complexity.BotStatus.CreatedAt == nil {
 			break
@@ -1695,6 +1697,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.TestRunnerConnection(childComplexity, args["type"].(enum.RunnerType), args["config"].(model.RunnerConfigInput)), true
+	case "Mutation.testS3Connection":
+		if e.complexity.Mutation.TestS3Connection == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_testS3Connection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TestS3Connection(childComplexity, args["config"].(model.S3ConfigInput)), true
 	case "Mutation.updateBot":
 		if e.complexity.Mutation.UpdateBot == nil {
 			break
@@ -2492,6 +2505,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputResourceUsageAggregationWhereInput,
 		ec.unmarshalInputResourceUsageSampleWhereInput,
 		ec.unmarshalInputRunnerConfigInput,
+		ec.unmarshalInputS3ConfigInput,
 		ec.unmarshalInputStrategyWhereInput,
 		ec.unmarshalInputTradeWhereInput,
 		ec.unmarshalInputUpdateBotInput,
@@ -3043,6 +3057,17 @@ func (ec *executionContext) field_Mutation_testRunnerConnection_args(ctx context
 		return nil, err
 	}
 	args["config"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_testS3Connection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "config", ec.unmarshalNS3ConfigInput2volaticloudᚋinternalᚋgraphᚋmodelᚐS3ConfigInput)
+	if err != nil {
+		return nil, err
+	}
+	args["config"] = arg0
 	return args, nil
 }
 
@@ -3602,35 +3627,6 @@ func (ec *executionContext) fieldContext_Backtest_result(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Backtest_containerID(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Backtest_containerID,
-		func(ctx context.Context) (any, error) {
-			return obj.ContainerID, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Backtest_containerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Backtest",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Backtest_errorMessage(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4026,6 +4022,12 @@ func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, fiel
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -4328,8 +4330,6 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_status(ctx, field)
 			case "result":
 				return ec.fieldContext_Backtest_result(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "logs":
@@ -5088,35 +5088,6 @@ func (ec *executionContext) fieldContext_Bot_mode(_ context.Context, field graph
 	return fc, nil
 }
 
-func (ec *executionContext) _Bot_containerID(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Bot_containerID,
-		func(ctx context.Context) (any, error) {
-			return obj.ContainerID, nil
-		},
-		nil,
-		ec.marshalOString2string,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Bot_containerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Bot",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Bot_config(ctx context.Context, field graphql.CollectedField, obj *ent.Bot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5586,6 +5557,12 @@ func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field gra
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -5949,8 +5926,6 @@ func (ec *executionContext) fieldContext_BotEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -6691,8 +6666,6 @@ func (ec *executionContext) fieldContext_BotMetrics_bot(_ context.Context, field
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -7121,6 +7094,116 @@ func (ec *executionContext) fieldContext_BotRunner_dataDownloadConfig(_ context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_s3Config(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_s3Config,
+		func(ctx context.Context) (any, error) {
+			return obj.S3Config, nil
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				scope, err := ec.unmarshalNString2string(ctx, "view-secrets")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				idField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal map[string]any
+					return zeroVal, err
+				}
+				if ec.directives.RequiresPermission == nil {
+					var zeroVal map[string]any
+					return zeroVal, errors.New("directive requiresPermission is not implemented")
+				}
+				return ec.directives.RequiresPermission(ctx, obj, directive0, scope, idField)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_s3Config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_s3DataKey(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_s3DataKey,
+		func(ctx context.Context) (any, error) {
+			return obj.S3DataKey, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_s3DataKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotRunner_s3DataUploadedAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_s3DataUploadedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.S3DataUploadedAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_s3DataUploadedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7607,6 +7690,12 @@ func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, f
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -7716,35 +7805,6 @@ func (ec *executionContext) fieldContext_BotStatus_status(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type BotBotStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _BotStatus_containerID(ctx context.Context, field graphql.CollectedField, obj *runner.BotStatus) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_BotStatus_containerID,
-		func(ctx context.Context) (any, error) {
-			return obj.ContainerID, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_BotStatus_containerID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "BotStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9178,8 +9238,6 @@ func (ec *executionContext) fieldContext_Mutation_createBot(ctx context.Context,
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -9288,8 +9346,6 @@ func (ec *executionContext) fieldContext_Mutation_updateBot(ctx context.Context,
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -9462,8 +9518,6 @@ func (ec *executionContext) fieldContext_Mutation_startBot(ctx context.Context, 
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -9572,8 +9626,6 @@ func (ec *executionContext) fieldContext_Mutation_stopBot(ctx context.Context, f
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -9682,8 +9734,6 @@ func (ec *executionContext) fieldContext_Mutation_restartBot(ctx context.Context
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -9796,6 +9846,12 @@ func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -9906,6 +9962,12 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -10080,6 +10142,12 @@ func (ec *executionContext) fieldContext_Mutation_refreshRunnerData(ctx context.
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -10180,6 +10248,68 @@ func (ec *executionContext) fieldContext_Mutation_testRunnerConnection(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_testS3Connection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_testS3Connection,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().TestS3Connection(ctx, fc.Args["config"].(model.S3ConfigInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *model.ConnectionTestResult
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNConnectionTestResult2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐConnectionTestResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_testS3Connection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_ConnectionTestResult_success(ctx, field)
+			case "message":
+				return ec.fieldContext_ConnectionTestResult_message(ctx, field)
+			case "version":
+				return ec.fieldContext_ConnectionTestResult_version(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ConnectionTestResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_testS3Connection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10224,8 +10354,6 @@ func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Con
 				return ec.fieldContext_Backtest_status(ctx, field)
 			case "result":
 				return ec.fieldContext_Backtest_result(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "logs":
@@ -10388,8 +10516,6 @@ func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Contex
 				return ec.fieldContext_Backtest_status(ctx, field)
 			case "result":
 				return ec.fieldContext_Backtest_result(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "logs":
@@ -10488,8 +10614,6 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 				return ec.fieldContext_Backtest_status(ctx, field)
 			case "result":
 				return ec.fieldContext_Backtest_result(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "logs":
@@ -10952,8 +11076,6 @@ func (ec *executionContext) fieldContext_Mutation_setBotVisibility(ctx context.C
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -11076,6 +11198,12 @@ func (ec *executionContext) fieldContext_Mutation_setRunnerVisibility(ctx contex
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -11941,8 +12069,6 @@ func (ec *executionContext) fieldContext_Query_getBotRunnerStatus(ctx context.Co
 				return ec.fieldContext_BotStatus_botID(ctx, field)
 			case "status":
 				return ec.fieldContext_BotStatus_status(ctx, field)
-			case "containerID":
-				return ec.fieldContext_BotStatus_containerID(ctx, field)
 			case "healthy":
 				return ec.fieldContext_BotStatus_healthy(ctx, field)
 			case "lastSeenAt":
@@ -12971,6 +13097,12 @@ func (ec *executionContext) fieldContext_ResourceUsageAggregation_runner(_ conte
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -13423,6 +13555,12 @@ func (ec *executionContext) fieldContext_ResourceUsageSample_runner(_ context.Co
 				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
 			case "dataDownloadConfig":
 				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -13923,8 +14061,6 @@ func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, fi
 				return ec.fieldContext_Backtest_status(ctx, field)
 			case "result":
 				return ec.fieldContext_Backtest_result(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Backtest_containerID(ctx, field)
 			case "errorMessage":
 				return ec.fieldContext_Backtest_errorMessage(ctx, field)
 			case "logs":
@@ -14835,8 +14971,6 @@ func (ec *executionContext) fieldContext_Trade_bot(_ context.Context, field grap
 				return ec.fieldContext_Bot_status(ctx, field)
 			case "mode":
 				return ec.fieldContext_Bot_mode(ctx, field)
-			case "containerID":
-				return ec.fieldContext_Bot_containerID(ctx, field)
 			case "config":
 				return ec.fieldContext_Bot_config(ctx, field)
 			case "freqtradeVersion":
@@ -16704,7 +16838,7 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "status", "statusNEQ", "statusIn", "statusNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "logs", "logsNEQ", "logsIn", "logsNotIn", "logsGT", "logsGTE", "logsLT", "logsLTE", "logsContains", "logsHasPrefix", "logsHasSuffix", "logsIsNil", "logsNotNil", "logsEqualFold", "logsContainsFold", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "completedAt", "completedAtNEQ", "completedAtIn", "completedAtNotIn", "completedAtGT", "completedAtGTE", "completedAtLT", "completedAtLTE", "completedAtIsNil", "completedAtNotNil", "startDate", "startDateNEQ", "startDateIn", "startDateNotIn", "startDateGT", "startDateGTE", "startDateLT", "startDateLTE", "startDateIsNil", "startDateNotNil", "endDate", "endDateNEQ", "endDateIn", "endDateNotIn", "endDateGT", "endDateGTE", "endDateLT", "endDateLTE", "endDateIsNil", "endDateNotNil", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "status", "statusNEQ", "statusIn", "statusNotIn", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "logs", "logsNEQ", "logsIn", "logsNotIn", "logsGT", "logsGTE", "logsLT", "logsLTE", "logsContains", "logsHasPrefix", "logsHasSuffix", "logsIsNil", "logsNotNil", "logsEqualFold", "logsContainsFold", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "completedAt", "completedAtNEQ", "completedAtIn", "completedAtNotIn", "completedAtGT", "completedAtGTE", "completedAtLT", "completedAtLTE", "completedAtIsNil", "completedAtNotNil", "startDate", "startDateNEQ", "startDateIn", "startDateNotIn", "startDateGT", "startDateGTE", "startDateLT", "startDateLTE", "startDateIsNil", "startDateNotNil", "endDate", "endDateNEQ", "endDateIn", "endDateNotIn", "endDateGT", "endDateGTE", "endDateLT", "endDateLTE", "endDateIsNil", "endDateNotNil", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16816,111 +16950,6 @@ func (ec *executionContext) unmarshalInputBacktestWhereInput(ctx context.Context
 				return it, err
 			}
 			it.StatusNotIn = data
-		case "containerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerID = data
-		case "containerIDNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDNEQ"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDNEQ = data
-		case "containerIDIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDIn"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDIn = data
-		case "containerIDNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDNotIn"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDNotIn = data
-		case "containerIDGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDGT"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDGT = data
-		case "containerIDGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDGTE"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDGTE = data
-		case "containerIDLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDLT"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDLT = data
-		case "containerIDLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDLTE"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDLTE = data
-		case "containerIDContains":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDContains"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDContains = data
-		case "containerIDHasPrefix":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDHasPrefix"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDHasPrefix = data
-		case "containerIDHasSuffix":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDHasSuffix"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDHasSuffix = data
-		case "containerIDIsNil":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDIsNil"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDIsNil = data
-		case "containerIDNotNil":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDNotNil"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDNotNil = data
-		case "containerIDEqualFold":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDEqualFold"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDEqualFold = data
-		case "containerIDContainsFold":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDContainsFold"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDContainsFold = data
 		case "errorMessage":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -19164,7 +19193,7 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataDownloadStartedAt", "dataDownloadStartedAtNEQ", "dataDownloadStartedAtIn", "dataDownloadStartedAtNotIn", "dataDownloadStartedAtGT", "dataDownloadStartedAtGTE", "dataDownloadStartedAtLT", "dataDownloadStartedAtLTE", "dataDownloadStartedAtIsNil", "dataDownloadStartedAtNotNil", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "billingEnabled", "billingEnabledNEQ", "cpuPricePerCoreHour", "cpuPricePerCoreHourNEQ", "cpuPricePerCoreHourIn", "cpuPricePerCoreHourNotIn", "cpuPricePerCoreHourGT", "cpuPricePerCoreHourGTE", "cpuPricePerCoreHourLT", "cpuPricePerCoreHourLTE", "cpuPricePerCoreHourIsNil", "cpuPricePerCoreHourNotNil", "memoryPricePerGBHour", "memoryPricePerGBHourNEQ", "memoryPricePerGBHourIn", "memoryPricePerGBHourNotIn", "memoryPricePerGBHourGT", "memoryPricePerGBHourGTE", "memoryPricePerGBHourLT", "memoryPricePerGBHourLTE", "memoryPricePerGBHourIsNil", "memoryPricePerGBHourNotNil", "networkPricePerGB", "networkPricePerGBNEQ", "networkPricePerGBIn", "networkPricePerGBNotIn", "networkPricePerGBGT", "networkPricePerGBGTE", "networkPricePerGBLT", "networkPricePerGBLTE", "networkPricePerGBIsNil", "networkPricePerGBNotNil", "storagePricePerGB", "storagePricePerGBNEQ", "storagePricePerGBIn", "storagePricePerGBNotIn", "storagePricePerGBGT", "storagePricePerGBGTE", "storagePricePerGBLT", "storagePricePerGBLTE", "storagePricePerGBIsNil", "storagePricePerGBNotNil", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "dataIsReady", "dataIsReadyNEQ", "dataLastUpdated", "dataLastUpdatedNEQ", "dataLastUpdatedIn", "dataLastUpdatedNotIn", "dataLastUpdatedGT", "dataLastUpdatedGTE", "dataLastUpdatedLT", "dataLastUpdatedLTE", "dataLastUpdatedIsNil", "dataLastUpdatedNotNil", "dataDownloadStatus", "dataDownloadStatusNEQ", "dataDownloadStatusIn", "dataDownloadStatusNotIn", "dataDownloadStartedAt", "dataDownloadStartedAtNEQ", "dataDownloadStartedAtIn", "dataDownloadStartedAtNotIn", "dataDownloadStartedAtGT", "dataDownloadStartedAtGTE", "dataDownloadStartedAtLT", "dataDownloadStartedAtLTE", "dataDownloadStartedAtIsNil", "dataDownloadStartedAtNotNil", "dataErrorMessage", "dataErrorMessageNEQ", "dataErrorMessageIn", "dataErrorMessageNotIn", "dataErrorMessageGT", "dataErrorMessageGTE", "dataErrorMessageLT", "dataErrorMessageLTE", "dataErrorMessageContains", "dataErrorMessageHasPrefix", "dataErrorMessageHasSuffix", "dataErrorMessageIsNil", "dataErrorMessageNotNil", "dataErrorMessageEqualFold", "dataErrorMessageContainsFold", "s3DataKey", "s3DataKeyNEQ", "s3DataKeyIn", "s3DataKeyNotIn", "s3DataKeyGT", "s3DataKeyGTE", "s3DataKeyLT", "s3DataKeyLTE", "s3DataKeyContains", "s3DataKeyHasPrefix", "s3DataKeyHasSuffix", "s3DataKeyIsNil", "s3DataKeyNotNil", "s3DataKeyEqualFold", "s3DataKeyContainsFold", "s3DataUploadedAt", "s3DataUploadedAtNEQ", "s3DataUploadedAtIn", "s3DataUploadedAtNotIn", "s3DataUploadedAtGT", "s3DataUploadedAtGTE", "s3DataUploadedAtLT", "s3DataUploadedAtLTE", "s3DataUploadedAtIsNil", "s3DataUploadedAtNotNil", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "billingEnabled", "billingEnabledNEQ", "cpuPricePerCoreHour", "cpuPricePerCoreHourNEQ", "cpuPricePerCoreHourIn", "cpuPricePerCoreHourNotIn", "cpuPricePerCoreHourGT", "cpuPricePerCoreHourGTE", "cpuPricePerCoreHourLT", "cpuPricePerCoreHourLTE", "cpuPricePerCoreHourIsNil", "cpuPricePerCoreHourNotNil", "memoryPricePerGBHour", "memoryPricePerGBHourNEQ", "memoryPricePerGBHourIn", "memoryPricePerGBHourNotIn", "memoryPricePerGBHourGT", "memoryPricePerGBHourGTE", "memoryPricePerGBHourLT", "memoryPricePerGBHourLTE", "memoryPricePerGBHourIsNil", "memoryPricePerGBHourNotNil", "networkPricePerGB", "networkPricePerGBNEQ", "networkPricePerGBIn", "networkPricePerGBNotIn", "networkPricePerGBGT", "networkPricePerGBGTE", "networkPricePerGBLT", "networkPricePerGBLTE", "networkPricePerGBIsNil", "networkPricePerGBNotNil", "storagePricePerGB", "storagePricePerGBNEQ", "storagePricePerGBIn", "storagePricePerGBNotIn", "storagePricePerGBGT", "storagePricePerGBGTE", "storagePricePerGBLT", "storagePricePerGBLTE", "storagePricePerGBIsNil", "storagePricePerGBNotNil", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktests", "hasBacktestsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19668,6 +19697,181 @@ func (ec *executionContext) unmarshalInputBotRunnerWhereInput(ctx context.Contex
 				return it, err
 			}
 			it.DataErrorMessageContainsFold = data
+		case "s3DataKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKey"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKey = data
+		case "s3DataKeyNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyNEQ = data
+		case "s3DataKeyIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyIn = data
+		case "s3DataKeyNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyNotIn = data
+		case "s3DataKeyGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyGT = data
+		case "s3DataKeyGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyGTE = data
+		case "s3DataKeyLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyLT = data
+		case "s3DataKeyLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyLTE = data
+		case "s3DataKeyContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyContains = data
+		case "s3DataKeyHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyHasPrefix = data
+		case "s3DataKeyHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyHasSuffix = data
+		case "s3DataKeyIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyIsNil = data
+		case "s3DataKeyNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyNotNil = data
+		case "s3DataKeyEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyEqualFold = data
+		case "s3DataKeyContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKeyContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKeyContainsFold = data
+		case "s3DataUploadedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAt = data
+		case "s3DataUploadedAtNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtNEQ = data
+		case "s3DataUploadedAtIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtIn = data
+		case "s3DataUploadedAtNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtNotIn = data
+		case "s3DataUploadedAtGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtGT = data
+		case "s3DataUploadedAtGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtGTE = data
+		case "s3DataUploadedAtLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtLT = data
+		case "s3DataUploadedAtLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtLTE = data
+		case "s3DataUploadedAtIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtIsNil = data
+		case "s3DataUploadedAtNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAtNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAtNotNil = data
 		case "ownerID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -20206,7 +20410,7 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "mode", "modeNEQ", "modeIn", "modeNotIn", "containerID", "containerIDNEQ", "containerIDIn", "containerIDNotIn", "containerIDGT", "containerIDGTE", "containerIDLT", "containerIDLTE", "containerIDContains", "containerIDHasPrefix", "containerIDHasSuffix", "containerIDIsNil", "containerIDNotNil", "containerIDEqualFold", "containerIDContainsFold", "freqtradeVersion", "freqtradeVersionNEQ", "freqtradeVersionIn", "freqtradeVersionNotIn", "freqtradeVersionGT", "freqtradeVersionGTE", "freqtradeVersionLT", "freqtradeVersionLTE", "freqtradeVersionContains", "freqtradeVersionHasPrefix", "freqtradeVersionHasSuffix", "freqtradeVersionEqualFold", "freqtradeVersionContainsFold", "lastSeenAt", "lastSeenAtNEQ", "lastSeenAtIn", "lastSeenAtNotIn", "lastSeenAtGT", "lastSeenAtGTE", "lastSeenAtLT", "lastSeenAtLTE", "lastSeenAtIsNil", "lastSeenAtNotNil", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "exchangeID", "exchangeIDNEQ", "exchangeIDIn", "exchangeIDNotIn", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasExchange", "hasExchangeWith", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith", "hasTrades", "hasTradesWith", "hasMetrics", "hasMetricsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "mode", "modeNEQ", "modeIn", "modeNotIn", "freqtradeVersion", "freqtradeVersionNEQ", "freqtradeVersionIn", "freqtradeVersionNotIn", "freqtradeVersionGT", "freqtradeVersionGTE", "freqtradeVersionLT", "freqtradeVersionLTE", "freqtradeVersionContains", "freqtradeVersionHasPrefix", "freqtradeVersionHasSuffix", "freqtradeVersionEqualFold", "freqtradeVersionContainsFold", "lastSeenAt", "lastSeenAtNEQ", "lastSeenAtIn", "lastSeenAtNotIn", "lastSeenAtGT", "lastSeenAtGTE", "lastSeenAtLT", "lastSeenAtLTE", "lastSeenAtIsNil", "lastSeenAtNotNil", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "exchangeID", "exchangeIDNEQ", "exchangeIDIn", "exchangeIDNotIn", "strategyID", "strategyIDNEQ", "strategyIDIn", "strategyIDNotIn", "runnerID", "runnerIDNEQ", "runnerIDIn", "runnerIDNotIn", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasExchange", "hasExchangeWith", "hasStrategy", "hasStrategyWith", "hasRunner", "hasRunnerWith", "hasTrades", "hasTradesWith", "hasMetrics", "hasMetricsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20451,111 +20655,6 @@ func (ec *executionContext) unmarshalInputBotWhereInput(ctx context.Context, obj
 				return it, err
 			}
 			it.ModeNotIn = data
-		case "containerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerID = data
-		case "containerIDNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDNEQ"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDNEQ = data
-		case "containerIDIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDIn"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDIn = data
-		case "containerIDNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDNotIn"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDNotIn = data
-		case "containerIDGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDGT"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDGT = data
-		case "containerIDGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDGTE"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDGTE = data
-		case "containerIDLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDLT"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDLT = data
-		case "containerIDLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDLTE"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDLTE = data
-		case "containerIDContains":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDContains"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDContains = data
-		case "containerIDHasPrefix":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDHasPrefix"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDHasPrefix = data
-		case "containerIDHasSuffix":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDHasSuffix"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDHasSuffix = data
-		case "containerIDIsNil":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDIsNil"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDIsNil = data
-		case "containerIDNotNil":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDNotNil"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDNotNil = data
-		case "containerIDEqualFold":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDEqualFold"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDEqualFold = data
-		case "containerIDContainsFold":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerIDContainsFold"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerIDContainsFold = data
 		case "freqtradeVersion":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freqtradeVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -21226,7 +21325,7 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "result", "containerID", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "startDate", "endDate", "strategyID", "runnerID"}
+	fieldsInOrder := [...]string{"status", "result", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "startDate", "endDate", "strategyID", "runnerID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21247,13 +21346,6 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.Result = data
-		case "containerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerID = data
 		case "errorMessage":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("errorMessage"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -21330,7 +21422,7 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "name", "status", "mode", "containerID", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "ownerID", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs", "metricsID"}
+	fieldsInOrder := [...]string{"public", "name", "status", "mode", "config", "freqtradeVersion", "lastSeenAt", "errorMessage", "ownerID", "createdAt", "updatedAt", "exchangeID", "strategyID", "runnerID", "tradeIDs", "metricsID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21365,13 +21457,6 @@ func (ec *executionContext) unmarshalInputCreateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.Mode = data
-		case "containerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerID = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
@@ -21636,7 +21721,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "memoryPricePerGBHour", "networkPricePerGB", "storagePricePerGB", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"public", "name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "s3Config", "s3DataKey", "s3DataUploadedAt", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "memoryPricePerGBHour", "networkPricePerGB", "storagePricePerGB", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21720,6 +21805,27 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.DataDownloadConfig = data
+		case "s3Config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3Config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3Config = data
+		case "s3DataKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKey"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKey = data
+		case "s3DataUploadedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAt = data
 		case "ownerID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -22802,27 +22908,20 @@ func (ec *executionContext) unmarshalInputKubernetesConfigInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"kubeconfigPath", "namespace", "context"}
+	fieldsInOrder := [...]string{"kubeconfig", "context", "namespace", "storageClassName", "sharedDataPVC", "freqtradeImage", "prometheusUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "kubeconfigPath":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubeconfigPath"))
+		case "kubeconfig":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kubeconfig"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.KubeconfigPath = data
-		case "namespace":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Namespace = data
+			it.Kubeconfig = data
 		case "context":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("context"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -22830,6 +22929,41 @@ func (ec *executionContext) unmarshalInputKubernetesConfigInput(ctx context.Cont
 				return it, err
 			}
 			it.Context = data
+		case "namespace":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Namespace = data
+		case "storageClassName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StorageClassName = data
+		case "sharedDataPVC":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sharedDataPVC"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SharedDataPvc = data
+		case "freqtradeImage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freqtradeImage"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreqtradeImage = data
+		case "prometheusUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prometheusUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrometheusURL = data
 		}
 	}
 
@@ -24840,7 +24974,7 @@ func (ec *executionContext) unmarshalInputRunnerConfigInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"docker", "kubernetes", "local"}
+	fieldsInOrder := [...]string{"docker", "kubernetes", "local", "s3"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -24868,6 +25002,82 @@ func (ec *executionContext) unmarshalInputRunnerConfigInput(ctx context.Context,
 				return it, err
 			}
 			it.Local = data
+		case "s3":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3"))
+			data, err := ec.unmarshalOS3ConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐS3ConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3 = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputS3ConfigInput(ctx context.Context, obj any) (model.S3ConfigInput, error) {
+	var it model.S3ConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"endpoint", "bucket", "accessKeyId", "secretAccessKey", "region", "forcePathStyle", "useSSL"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "endpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpoint"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Endpoint = data
+		case "bucket":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucket"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Bucket = data
+		case "accessKeyId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessKeyId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessKeyID = data
+		case "secretAccessKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretAccessKey"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SecretAccessKey = data
+		case "region":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Region = data
+		case "forcePathStyle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("forcePathStyle"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ForcePathStyle = data
+		case "useSSL":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useSSL"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UseSsl = data
 		}
 	}
 
@@ -26853,7 +27063,7 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "name", "status", "mode", "containerID", "clearContainerID", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "ownerID", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades", "metricsID", "clearMetrics"}
+	fieldsInOrder := [...]string{"public", "name", "status", "mode", "config", "clearConfig", "freqtradeVersion", "lastSeenAt", "clearLastSeenAt", "errorMessage", "clearErrorMessage", "ownerID", "updatedAt", "exchangeID", "strategyID", "runnerID", "addTradeIDs", "removeTradeIDs", "clearTrades", "metricsID", "clearMetrics"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -26888,20 +27098,6 @@ func (ec *executionContext) unmarshalInputUpdateBotInput(ctx context.Context, ob
 				return it, err
 			}
 			it.Mode = data
-		case "containerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containerID"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ContainerID = data
-		case "clearContainerID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearContainerID"))
-			data, err := ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClearContainerID = data
 		case "config":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
@@ -27327,7 +27523,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "clearDataDownloadStartedAt", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "clearCPUPricePerCoreHour", "memoryPricePerGBHour", "clearMemoryPricePerGBHour", "networkPricePerGB", "clearNetworkPricePerGB", "storagePricePerGB", "clearStoragePricePerGB", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"public", "name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "clearDataDownloadStartedAt", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "s3Config", "clearS3Config", "s3DataKey", "clearS3DataKey", "s3DataUploadedAt", "clearS3DataUploadedAt", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "clearCPUPricePerCoreHour", "memoryPricePerGBHour", "clearMemoryPricePerGBHour", "networkPricePerGB", "clearNetworkPricePerGB", "storagePricePerGB", "clearStoragePricePerGB", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -27453,6 +27649,48 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.ClearDataDownloadConfig = data
+		case "s3Config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3Config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3Config = data
+		case "clearS3Config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearS3Config"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearS3Config = data
+		case "s3DataKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataKey"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataKey = data
+		case "clearS3DataKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearS3DataKey"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearS3DataKey = data
+		case "s3DataUploadedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3DataUploadedAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3DataUploadedAt = data
+		case "clearS3DataUploadedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearS3DataUploadedAt"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearS3DataUploadedAt = data
 		case "ownerID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -28066,8 +28304,6 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "result":
 			out.Values[i] = ec._Backtest_result(ctx, field, obj)
-		case "containerID":
-			out.Values[i] = ec._Backtest_containerID(ctx, field, obj)
 		case "errorMessage":
 			out.Values[i] = ec._Backtest_errorMessage(ctx, field, obj)
 		case "logs":
@@ -28475,8 +28711,6 @@ func (ec *executionContext) _Bot(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "containerID":
-			out.Values[i] = ec._Bot_containerID(ctx, field, obj)
 		case "config":
 			out.Values[i] = ec._Bot_config(ctx, field, obj)
 		case "freqtradeVersion":
@@ -29017,6 +29251,12 @@ func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._BotRunner_dataErrorMessage(ctx, field, obj)
 		case "dataDownloadConfig":
 			out.Values[i] = ec._BotRunner_dataDownloadConfig(ctx, field, obj)
+		case "s3Config":
+			out.Values[i] = ec._BotRunner_s3Config(ctx, field, obj)
+		case "s3DataKey":
+			out.Values[i] = ec._BotRunner_s3DataKey(ctx, field, obj)
+		case "s3DataUploadedAt":
+			out.Values[i] = ec._BotRunner_s3DataUploadedAt(ctx, field, obj)
 		case "ownerID":
 			out.Values[i] = ec._BotRunner_ownerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -29245,11 +29485,6 @@ func (ec *executionContext) _BotStatus(ctx context.Context, sel ast.SelectionSet
 			}
 		case "status":
 			out.Values[i] = ec._BotStatus_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "containerID":
-			out.Values[i] = ec._BotStatus_containerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -29735,6 +29970,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "testRunnerConnection":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_testRunnerConnection(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "testS3Connection":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_testS3Connection(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -32160,6 +32402,11 @@ func (ec *executionContext) unmarshalNRunnerConfigInput2volaticloudᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNS3ConfigInput2volaticloudᚋinternalᚋgraphᚋmodelᚐS3ConfigInput(ctx context.Context, v any) (model.S3ConfigInput, error) {
+	res, err := ec.unmarshalInputS3ConfigInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNStrategy2volaticloudᚋinternalᚋentᚐStrategy(ctx context.Context, sel ast.SelectionSet, v ent.Strategy) graphql.Marshaler {
 	return ec._Strategy(ctx, sel, &v)
 }
@@ -34050,6 +34297,14 @@ func (ec *executionContext) unmarshalOResourceUsageSampleWhereInput2ᚖvolaticlo
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputResourceUsageSampleWhereInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOS3ConfigInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐS3ConfigInput(ctx context.Context, v any) (*model.S3ConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputS3ConfigInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

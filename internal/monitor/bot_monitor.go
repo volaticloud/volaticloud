@@ -172,11 +172,6 @@ func (m *BotMonitor) checkBotBatch(ctx context.Context, bots []*ent.Bot) {
 
 // checkBot checks a single bot's status and updates the database
 func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
-	// Skip if bot has no container ID (not yet deployed)
-	if b.ContainerID == "" {
-		return nil
-	}
-
 	// Get runner
 	botRunner := b.Edges.Runner
 	if botRunner == nil {
@@ -195,8 +190,8 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 		}
 	}()
 
-	// Get bot status from runner
-	status, err := rt.GetBotStatus(ctx, b.ContainerID)
+	// Get bot status from runner (container name derived from bot ID)
+	status, err := rt.GetBotStatus(ctx, b.ID.String())
 	if err != nil {
 		// Container might not exist anymore - use errors.Is to handle wrapped errors
 		if errors.Is(err, runner.ErrBotNotFound) {

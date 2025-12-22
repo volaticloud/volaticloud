@@ -48,7 +48,7 @@ type RegistryAuth struct {
 // ValidateConfig validates Docker-specific configuration
 func ValidateConfig(config *Config) error {
 	if config == nil {
-		return fmt.Errorf("Docker config cannot be nil")
+		return fmt.Errorf("docker config cannot be nil")
 	}
 
 	if config.Host == "" {
@@ -98,7 +98,7 @@ func ParseConfig(configData map[string]interface{}) (*Config, error) {
 	}
 
 	if err := ValidateConfig(&config); err != nil {
-		return nil, fmt.Errorf("Docker config validation failed: %w", err)
+		return nil, fmt.Errorf("docker config validation failed: %w", err)
 	}
 
 	return &config, nil

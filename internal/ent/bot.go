@@ -32,8 +32,6 @@ type Bot struct {
 	Status enum.BotStatus `json:"status,omitempty"`
 	// Trading mode (dry-run or live)
 	Mode enum.BotMode `json:"mode,omitempty"`
-	// Runner-specific identifier (container ID, pod name, etc.)
-	ContainerID string `json:"container_id,omitempty"`
 	// Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)
 	Config map[string]interface{} `json:"config,omitempty"`
 	// System-forced configuration (api_server, initial_state) - NEVER exposed via GraphQL
@@ -145,7 +143,7 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case bot.FieldPublic:
 			values[i] = new(sql.NullBool)
-		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldContainerID, bot.FieldFreqtradeVersion, bot.FieldErrorMessage, bot.FieldOwnerID:
+		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldFreqtradeVersion, bot.FieldErrorMessage, bot.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -195,12 +193,6 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field mode", values[i])
 			} else if value.Valid {
 				_m.Mode = enum.BotMode(value.String)
-			}
-		case bot.FieldContainerID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field container_id", values[i])
-			} else if value.Valid {
-				_m.ContainerID = value.String
 			}
 		case bot.FieldConfig:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -344,9 +336,6 @@ func (_m *Bot) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("mode=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Mode))
-	builder.WriteString(", ")
-	builder.WriteString("container_id=")
-	builder.WriteString(_m.ContainerID)
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))

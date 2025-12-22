@@ -1,17 +1,20 @@
 # Build stage
-# Trigger rebuild and redeploy - 2025-11-17 12:52 UTC
 FROM golang:1.24-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git make gcc musl-dev
+
+# Enable Go toolchain auto-download for newer versions
+ENV GOTOOLCHAIN=auto
 
 WORKDIR /build
 
 # Copy go mod files first (better caching)
 COPY go.mod go.sum ./
 
-# Download dependencies with cache mount
+# Download dependencies with cache mount (Go will auto-download required toolchain)
 RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
     go mod download
 
 # Copy source code

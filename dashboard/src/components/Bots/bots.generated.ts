@@ -10,21 +10,21 @@ export type GetBotsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBotsQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, containerID?: string | null, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, config?: Record<string, any> | null, ownerID: string, public: boolean, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetBotsQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, config?: Record<string, any> | null, ownerID: string, public: boolean, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetBotQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetBotQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, containerID?: string | null, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, config?: Record<string, any> | null, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType }, metrics?: { __typename?: 'BotMetrics', id: string, profitClosedCoin?: number | null, profitClosedPercent?: number | null, profitAllCoin?: number | null, profitAllPercent?: number | null, tradeCount?: number | null, closedTradeCount?: number | null, openTradeCount?: number | null, winningTrades?: number | null, losingTrades?: number | null, winrate?: number | null, expectancy?: number | null, profitFactor?: number | null, maxDrawdown?: number | null, maxDrawdownAbs?: number | null, bestPair?: string | null, bestRate?: number | null, firstTradeTimestamp?: string | null, latestTradeTimestamp?: string | null, fetchedAt: string, updatedAt: string } | null, trades: { __typename?: 'TradeConnection', totalCount: number, edges?: Array<{ __typename?: 'TradeEdge', node?: { __typename?: 'Trade', id: string, pair: string, isOpen: boolean, openDate: string, closeDate?: string | null, profitAbs: number, profitRatio: number } | null } | null> | null } } | null } | null> | null } };
+export type GetBotQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, freqtradeVersion: string, lastSeenAt?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, config?: Record<string, any> | null, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType }, metrics?: { __typename?: 'BotMetrics', id: string, profitClosedCoin?: number | null, profitClosedPercent?: number | null, profitAllCoin?: number | null, profitAllPercent?: number | null, tradeCount?: number | null, closedTradeCount?: number | null, openTradeCount?: number | null, winningTrades?: number | null, losingTrades?: number | null, winrate?: number | null, expectancy?: number | null, profitFactor?: number | null, maxDrawdown?: number | null, maxDrawdownAbs?: number | null, bestPair?: string | null, bestRate?: number | null, firstTradeTimestamp?: string | null, latestTradeTimestamp?: string | null, fetchedAt: string, updatedAt: string } | null, trades: { __typename?: 'TradeConnection', totalCount: number, edges?: Array<{ __typename?: 'TradeEdge', node?: { __typename?: 'Trade', id: string, pair: string, isOpen: boolean, openDate: string, closeDate?: string | null, profitAbs: number, profitRatio: number } | null } | null> | null } } | null } | null> | null } };
 
 export type GetBotRunnerStatusQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetBotRunnerStatusQuery = { __typename?: 'Query', getBotRunnerStatus?: { __typename?: 'BotStatus', botID: string, status: Types.BotBotStatus, containerID: string, healthy: boolean, lastSeenAt?: string | null, cpuUsage: number, memoryUsage: number, ipAddress: string, hostPort: number, errorMessage: string, createdAt: string, startedAt?: string | null, stoppedAt?: string | null } | null };
+export type GetBotRunnerStatusQuery = { __typename?: 'Query', getBotRunnerStatus?: { __typename?: 'BotStatus', botID: string, status: Types.BotBotStatus, healthy: boolean, lastSeenAt?: string | null, cpuUsage: number, memoryUsage: number, ipAddress: string, hostPort: number, errorMessage: string, createdAt: string, startedAt?: string | null, stoppedAt?: string | null } | null };
 
 export type CreateBotMutationVariables = Types.Exact<{
   input: Types.CreateBotInput;
@@ -94,7 +94,6 @@ export const GetBotsDocument = gql`
         name
         status
         mode
-        containerID
         freqtradeVersion
         lastSeenAt
         errorMessage
@@ -171,7 +170,6 @@ export const GetBotDocument = gql`
         name
         status
         mode
-        containerID
         freqtradeVersion
         lastSeenAt
         errorMessage
@@ -272,7 +270,6 @@ export const GetBotRunnerStatusDocument = gql`
   getBotRunnerStatus(id: $id) {
     botID
     status
-    containerID
     healthy
     lastSeenAt
     cpuUsage

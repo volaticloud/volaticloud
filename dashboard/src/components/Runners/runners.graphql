@@ -39,6 +39,9 @@ query GetRunnerWithSecrets($id: ID!) {
         name
         type
         config
+        s3Config
+        s3DataKey
+        s3DataUploadedAt
         createdAt
         dataIsReady
         dataLastUpdated
@@ -119,5 +122,12 @@ mutation SetRunnerVisibility($id: ID!, $public: Boolean!) {
     id
     name
     public
+  }
+}
+
+mutation TestS3Connection($config: S3ConfigInput!) {
+  testS3Connection(config: $config) {
+    success
+    message
   }
 }

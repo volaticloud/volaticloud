@@ -67,11 +67,6 @@ func Name(v string) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldName, v))
 }
 
-// ContainerID applies equality check predicate on the "container_id" field. It's identical to ContainerIDEQ.
-func ContainerID(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldEQ(FieldContainerID, v))
-}
-
 // FreqtradeVersion applies equality check predicate on the "freqtrade_version" field. It's identical to FreqtradeVersionEQ.
 func FreqtradeVersion(v string) predicate.Bot {
 	return predicate.Bot(sql.FieldEQ(FieldFreqtradeVersion, v))
@@ -250,81 +245,6 @@ func ModeNotIn(vs ...enum.BotMode) predicate.Bot {
 		v[i] = vs[i]
 	}
 	return predicate.Bot(sql.FieldNotIn(FieldMode, v...))
-}
-
-// ContainerIDEQ applies the EQ predicate on the "container_id" field.
-func ContainerIDEQ(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldEQ(FieldContainerID, v))
-}
-
-// ContainerIDNEQ applies the NEQ predicate on the "container_id" field.
-func ContainerIDNEQ(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldNEQ(FieldContainerID, v))
-}
-
-// ContainerIDIn applies the In predicate on the "container_id" field.
-func ContainerIDIn(vs ...string) predicate.Bot {
-	return predicate.Bot(sql.FieldIn(FieldContainerID, vs...))
-}
-
-// ContainerIDNotIn applies the NotIn predicate on the "container_id" field.
-func ContainerIDNotIn(vs ...string) predicate.Bot {
-	return predicate.Bot(sql.FieldNotIn(FieldContainerID, vs...))
-}
-
-// ContainerIDGT applies the GT predicate on the "container_id" field.
-func ContainerIDGT(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldGT(FieldContainerID, v))
-}
-
-// ContainerIDGTE applies the GTE predicate on the "container_id" field.
-func ContainerIDGTE(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldGTE(FieldContainerID, v))
-}
-
-// ContainerIDLT applies the LT predicate on the "container_id" field.
-func ContainerIDLT(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldLT(FieldContainerID, v))
-}
-
-// ContainerIDLTE applies the LTE predicate on the "container_id" field.
-func ContainerIDLTE(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldLTE(FieldContainerID, v))
-}
-
-// ContainerIDContains applies the Contains predicate on the "container_id" field.
-func ContainerIDContains(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldContains(FieldContainerID, v))
-}
-
-// ContainerIDHasPrefix applies the HasPrefix predicate on the "container_id" field.
-func ContainerIDHasPrefix(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldHasPrefix(FieldContainerID, v))
-}
-
-// ContainerIDHasSuffix applies the HasSuffix predicate on the "container_id" field.
-func ContainerIDHasSuffix(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldHasSuffix(FieldContainerID, v))
-}
-
-// ContainerIDIsNil applies the IsNil predicate on the "container_id" field.
-func ContainerIDIsNil() predicate.Bot {
-	return predicate.Bot(sql.FieldIsNull(FieldContainerID))
-}
-
-// ContainerIDNotNil applies the NotNil predicate on the "container_id" field.
-func ContainerIDNotNil() predicate.Bot {
-	return predicate.Bot(sql.FieldNotNull(FieldContainerID))
-}
-
-// ContainerIDEqualFold applies the EqualFold predicate on the "container_id" field.
-func ContainerIDEqualFold(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldEqualFold(FieldContainerID, v))
-}
-
-// ContainerIDContainsFold applies the ContainsFold predicate on the "container_id" field.
-func ContainerIDContainsFold(v string) predicate.Bot {
-	return predicate.Bot(sql.FieldContainsFold(FieldContainerID, v))
 }
 
 // ConfigIsNil applies the IsNil predicate on the "config" field.

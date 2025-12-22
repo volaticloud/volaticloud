@@ -19,10 +19,13 @@ import {
   CircularProgress,
   InputAdornment,
   Collapse,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useState } from 'react';
-import { useCreateRunnerMutation, useTestRunnerConnectionMutation } from './runners.generated';
-import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput } from '../../generated/types';
+import { useCreateRunnerMutation, useTestRunnerConnectionMutation, useTestS3ConnectionMutation } from './runners.generated';
+import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput, S3ConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 import { useActiveGroup } from '../../contexts/GroupContext';
 
@@ -50,14 +53,30 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
     host: 'unix:///var/run/docker.sock',
   });
 
-  // Kubernetes config state
-  const [kubernetesConfig, setKubernetesConfig] = useState<KubernetesConfigInput>({});
+  // Kubernetes config state - namespace is required
+  const [kubernetesConfig, setKubernetesConfig] = useState<KubernetesConfigInput>({
+    namespace: 'volaticloud', // Default namespace
+  });
 
   // Local config state
   const [localConfig, setLocalConfig] = useState<LocalConfigInput>({});
 
   // Data download config state
   const [dataDownloadConfig, setDataDownloadConfig] = useState<DataDownloadConfigInput | null>(null);
+
+  // S3 config state
+  const [s3Enabled, setS3Enabled] = useState(false);
+  const [s3Config, setS3Config] = useState<S3ConfigInput>({
+    endpoint: '',
+    bucket: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+    region: 'us-east-1',
+    forcePathStyle: true,
+    useSSL: true,
+  });
+  const [showSecretKey, setShowSecretKey] = useState(false);
+  const [s3TestResult, setS3TestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Billing config state
   const [billingConfig, setBillingConfig] = useState<BillingConfig>({
@@ -76,6 +95,40 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
   });
 
   const [testConnection, { loading: testLoading }] = useTestRunnerConnectionMutation();
+  const [testS3, { loading: testS3Loading }] = useTestS3ConnectionMutation();
+
+  const handleTestS3Connection = async () => {
+    setS3TestResult(null);
+
+    // Validate required fields
+    if (!s3Config.endpoint || !s3Config.bucket || !s3Config.accessKeyId || !s3Config.secretAccessKey) {
+      setS3TestResult({
+        success: false,
+        message: 'Please fill in all required S3 fields',
+      });
+      return;
+    }
+
+    try {
+      const result = await testS3({
+        variables: {
+          config: s3Config,
+        },
+      });
+
+      if (result.data?.testS3Connection) {
+        setS3TestResult({
+          success: result.data.testS3Connection.success,
+          message: result.data.testS3Connection.message,
+        });
+      }
+    } catch (err: any) {
+      setS3TestResult({
+        success: false,
+        message: err.message || 'Failed to test S3 connection',
+      });
+    }
+  };
 
   const handleTestConnection = async () => {
     // Clear previous test result
@@ -130,6 +183,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             type: type as any,
             config,
             dataDownloadConfig,
+            s3Config: s3Enabled ? s3Config : null,
             ownerID: activeGroupId,
             billingEnabled: billingConfig.billingEnabled,
             cpuPricePerCoreHour: billingConfig.billingEnabled ? billingConfig.cpuPricePerCoreHour : null,
@@ -146,9 +200,20 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         setName('');
         setType('docker');
         setDockerConfig({ host: 'unix:///var/run/docker.sock' });
-        setKubernetesConfig({});
+        setKubernetesConfig({ namespace: 'volaticloud' });
         setLocalConfig({});
         setDataDownloadConfig(null);
+        setS3Enabled(false);
+        setS3Config({
+          endpoint: '',
+          bucket: '',
+          accessKeyId: '',
+          secretAccessKey: '',
+          region: 'us-east-1',
+          forcePathStyle: true,
+          useSSL: true,
+        });
+        setS3TestResult(null);
         setBillingConfig({
           billingEnabled: false,
           cpuPricePerCoreHour: null,
@@ -282,32 +347,48 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
           {type === 'kubernetes' && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label="Kubeconfig Path (optional)"
-                value={kubernetesConfig.kubeconfigPath ?? ''}
-                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, kubeconfigPath: e.target.value || undefined })}
+                label="Namespace"
+                value={kubernetesConfig.namespace}
+                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, namespace: e.target.value })}
+                required
                 fullWidth
-                helperText="Path to kubeconfig file (leave empty for default ~/.kube/config)"
+                helperText="Kubernetes namespace for all resources (required)"
               />
 
               <TextField
-                label="Namespace (optional)"
-                value={kubernetesConfig.namespace ?? ''}
-                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, namespace: e.target.value || undefined })}
+                label="Kubeconfig (YAML)"
+                value={kubernetesConfig.kubeconfig ?? ''}
+                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, kubeconfig: e.target.value || undefined })}
                 fullWidth
-                helperText="Kubernetes namespace (leave empty for 'default')"
+                multiline
+                rows={6}
+                helperText="Paste kubeconfig YAML content (leave empty for in-cluster config)"
+                placeholder="apiVersion: v1&#10;kind: Config&#10;clusters:&#10;- cluster:&#10;    server: https://..."
               />
 
               <TextField
-                label="Context (optional)"
+                label="Context"
                 value={kubernetesConfig.context ?? ''}
                 onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, context: e.target.value || undefined })}
                 fullWidth
-                helperText="Kubernetes context to use"
+                helperText="Kubernetes context to use (leave empty for current context)"
               />
 
-              <FormHelperText sx={{ color: 'warning.main' }}>
-                Note: Kubernetes runner is not yet fully supported
-              </FormHelperText>
+              <TextField
+                label="Freqtrade Image"
+                value={kubernetesConfig.freqtradeImage ?? ''}
+                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, freqtradeImage: e.target.value || undefined })}
+                fullWidth
+                helperText="Default Freqtrade Docker image (default: freqtradeorg/freqtrade:stable)"
+              />
+
+              <TextField
+                label="Prometheus URL"
+                value={kubernetesConfig.prometheusUrl ?? ''}
+                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, prometheusUrl: e.target.value || undefined })}
+                fullWidth
+                helperText="Prometheus URL for network/disk I/O metrics (optional)"
+              />
             </Box>
           )}
 
@@ -334,6 +415,135 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             value={dataDownloadConfig}
             onChange={setDataDownloadConfig}
           />
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* S3 Data Distribution Configuration */}
+          <Typography variant="subtitle2" color="text.secondary">
+            S3 Data Distribution
+          </Typography>
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={s3Enabled}
+                onChange={(e) => setS3Enabled(e.target.checked)}
+              />
+            }
+            label="Enable S3 data distribution"
+          />
+          <FormHelperText sx={{ mt: -1, ml: 4 }}>
+            Store OHLCV data in S3-compatible storage. Data is downloaded at container startup via presigned URLs.
+          </FormHelperText>
+
+          <Collapse in={s3Enabled}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+              <TextField
+                label="S3 Endpoint"
+                value={s3Config.endpoint}
+                onChange={(e) => setS3Config({ ...s3Config, endpoint: e.target.value })}
+                required
+                fullWidth
+                helperText="S3 endpoint URL (e.g., s3.amazonaws.com, minio.example.com:9000)"
+                placeholder="s3.amazonaws.com"
+              />
+
+              <TextField
+                label="Bucket Name"
+                value={s3Config.bucket}
+                onChange={(e) => setS3Config({ ...s3Config, bucket: e.target.value })}
+                required
+                fullWidth
+                helperText="S3 bucket for storing runner data"
+              />
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="Access Key ID"
+                  value={s3Config.accessKeyId}
+                  onChange={(e) => setS3Config({ ...s3Config, accessKeyId: e.target.value })}
+                  required
+                  fullWidth
+                />
+
+                <TextField
+                  label="Secret Access Key"
+                  type={showSecretKey ? 'text' : 'password'}
+                  value={s3Config.secretAccessKey}
+                  onChange={(e) => setS3Config({ ...s3Config, secretAccessKey: e.target.value })}
+                  required
+                  fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip title={showSecretKey ? 'Hide' : 'Show'}>
+                          <IconButton
+                            onClick={() => setShowSecretKey(!showSecretKey)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showSecretKey ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+
+              <TextField
+                label="Region"
+                value={s3Config.region ?? 'us-east-1'}
+                onChange={(e) => setS3Config({ ...s3Config, region: e.target.value || undefined })}
+                fullWidth
+                helperText="AWS region (default: us-east-1)"
+              />
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={s3Config.forcePathStyle ?? true}
+                      onChange={(e) => setS3Config({ ...s3Config, forcePathStyle: e.target.checked })}
+                    />
+                  }
+                  label="Force Path Style"
+                />
+                <FormHelperText sx={{ mt: 1 }}>
+                  Enable for MinIO/non-AWS S3 (http://endpoint/bucket/key)
+                </FormHelperText>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={s3Config.useSSL ?? true}
+                      onChange={(e) => setS3Config({ ...s3Config, useSSL: e.target.checked })}
+                    />
+                  }
+                  label="Use SSL/HTTPS"
+                />
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Button
+                  onClick={handleTestS3Connection}
+                  disabled={testS3Loading || loading}
+                  startIcon={testS3Loading && <CircularProgress size={16} />}
+                  variant="outlined"
+                  size="small"
+                >
+                  {testS3Loading ? 'Testing...' : 'Test S3 Connection'}
+                </Button>
+                {s3TestResult && (
+                  <Alert severity={s3TestResult.success ? 'success' : 'error'} sx={{ flex: 1 }}>
+                    {s3TestResult.message}
+                  </Alert>
+                )}
+              </Box>
+            </Box>
+          </Collapse>
 
           <Divider sx={{ my: 2 }} />
 
@@ -457,7 +667,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || !name}
+          disabled={loading || !name || (type === 'kubernetes' && !kubernetesConfig.namespace)}
         >
           {loading ? 'Creating...' : 'Create Runner'}
         </Button>

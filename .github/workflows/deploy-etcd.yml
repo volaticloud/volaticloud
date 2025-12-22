@@ -25,7 +25,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy etcd Cluster
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: github.ref == 'refs/heads/main'
     environment:
       name: prod
@@ -172,7 +172,7 @@ jobs:
 
   cleanup:
     name: Cleanup on Failure
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: deploy
     if: failure() && github.ref == 'refs/heads/main'
     environment: prod

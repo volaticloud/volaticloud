@@ -54,7 +54,6 @@ type BacktestMutation struct {
 	status          *enum.TaskStatus
 	result          *map[string]interface{}
 	summary         *map[string]interface{}
-	container_id    *string
 	error_message   *string
 	logs            *string
 	created_at      *time.Time
@@ -308,55 +307,6 @@ func (m *BacktestMutation) SummaryCleared() bool {
 func (m *BacktestMutation) ResetSummary() {
 	m.summary = nil
 	delete(m.clearedFields, backtest.FieldSummary)
-}
-
-// SetContainerID sets the "container_id" field.
-func (m *BacktestMutation) SetContainerID(s string) {
-	m.container_id = &s
-}
-
-// ContainerID returns the value of the "container_id" field in the mutation.
-func (m *BacktestMutation) ContainerID() (r string, exists bool) {
-	v := m.container_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldContainerID returns the old "container_id" field's value of the Backtest entity.
-// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BacktestMutation) OldContainerID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldContainerID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldContainerID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldContainerID: %w", err)
-	}
-	return oldValue.ContainerID, nil
-}
-
-// ClearContainerID clears the value of the "container_id" field.
-func (m *BacktestMutation) ClearContainerID() {
-	m.container_id = nil
-	m.clearedFields[backtest.FieldContainerID] = struct{}{}
-}
-
-// ContainerIDCleared returns if the "container_id" field was cleared in this mutation.
-func (m *BacktestMutation) ContainerIDCleared() bool {
-	_, ok := m.clearedFields[backtest.FieldContainerID]
-	return ok
-}
-
-// ResetContainerID resets all changes to the "container_id" field.
-func (m *BacktestMutation) ResetContainerID() {
-	m.container_id = nil
-	delete(m.clearedFields, backtest.FieldContainerID)
 }
 
 // SetErrorMessage sets the "error_message" field.
@@ -836,7 +786,7 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 12)
 	if m.status != nil {
 		fields = append(fields, backtest.FieldStatus)
 	}
@@ -845,9 +795,6 @@ func (m *BacktestMutation) Fields() []string {
 	}
 	if m.summary != nil {
 		fields = append(fields, backtest.FieldSummary)
-	}
-	if m.container_id != nil {
-		fields = append(fields, backtest.FieldContainerID)
 	}
 	if m.error_message != nil {
 		fields = append(fields, backtest.FieldErrorMessage)
@@ -890,8 +837,6 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 		return m.Result()
 	case backtest.FieldSummary:
 		return m.Summary()
-	case backtest.FieldContainerID:
-		return m.ContainerID()
 	case backtest.FieldErrorMessage:
 		return m.ErrorMessage()
 	case backtest.FieldLogs:
@@ -925,8 +870,6 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldResult(ctx)
 	case backtest.FieldSummary:
 		return m.OldSummary(ctx)
-	case backtest.FieldContainerID:
-		return m.OldContainerID(ctx)
 	case backtest.FieldErrorMessage:
 		return m.OldErrorMessage(ctx)
 	case backtest.FieldLogs:
@@ -974,13 +917,6 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSummary(v)
-		return nil
-	case backtest.FieldContainerID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetContainerID(v)
 		return nil
 	case backtest.FieldErrorMessage:
 		v, ok := value.(string)
@@ -1081,9 +1017,6 @@ func (m *BacktestMutation) ClearedFields() []string {
 	if m.FieldCleared(backtest.FieldSummary) {
 		fields = append(fields, backtest.FieldSummary)
 	}
-	if m.FieldCleared(backtest.FieldContainerID) {
-		fields = append(fields, backtest.FieldContainerID)
-	}
 	if m.FieldCleared(backtest.FieldErrorMessage) {
 		fields = append(fields, backtest.FieldErrorMessage)
 	}
@@ -1119,9 +1052,6 @@ func (m *BacktestMutation) ClearField(name string) error {
 	case backtest.FieldSummary:
 		m.ClearSummary()
 		return nil
-	case backtest.FieldContainerID:
-		m.ClearContainerID()
-		return nil
 	case backtest.FieldErrorMessage:
 		m.ClearErrorMessage()
 		return nil
@@ -1153,9 +1083,6 @@ func (m *BacktestMutation) ResetField(name string) error {
 		return nil
 	case backtest.FieldSummary:
 		m.ResetSummary()
-		return nil
-	case backtest.FieldContainerID:
-		m.ResetContainerID()
 		return nil
 	case backtest.FieldErrorMessage:
 		m.ResetErrorMessage()
@@ -1290,7 +1217,6 @@ type BotMutation struct {
 	name              *string
 	status            *enum.BotStatus
 	mode              *enum.BotMode
-	container_id      *string
 	_config           *map[string]interface{}
 	secure_config     *map[string]interface{}
 	freqtrade_version *string
@@ -1562,55 +1488,6 @@ func (m *BotMutation) OldMode(ctx context.Context) (v enum.BotMode, err error) {
 // ResetMode resets all changes to the "mode" field.
 func (m *BotMutation) ResetMode() {
 	m.mode = nil
-}
-
-// SetContainerID sets the "container_id" field.
-func (m *BotMutation) SetContainerID(s string) {
-	m.container_id = &s
-}
-
-// ContainerID returns the value of the "container_id" field in the mutation.
-func (m *BotMutation) ContainerID() (r string, exists bool) {
-	v := m.container_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldContainerID returns the old "container_id" field's value of the Bot entity.
-// If the Bot object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BotMutation) OldContainerID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldContainerID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldContainerID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldContainerID: %w", err)
-	}
-	return oldValue.ContainerID, nil
-}
-
-// ClearContainerID clears the value of the "container_id" field.
-func (m *BotMutation) ClearContainerID() {
-	m.container_id = nil
-	m.clearedFields[bot.FieldContainerID] = struct{}{}
-}
-
-// ContainerIDCleared returns if the "container_id" field was cleared in this mutation.
-func (m *BotMutation) ContainerIDCleared() bool {
-	_, ok := m.clearedFields[bot.FieldContainerID]
-	return ok
-}
-
-// ResetContainerID resets all changes to the "container_id" field.
-func (m *BotMutation) ResetContainerID() {
-	m.container_id = nil
-	delete(m.clearedFields, bot.FieldContainerID)
 }
 
 // SetConfig sets the "config" field.
@@ -2269,7 +2146,7 @@ func (m *BotMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 15)
 	if m.public != nil {
 		fields = append(fields, bot.FieldPublic)
 	}
@@ -2281,9 +2158,6 @@ func (m *BotMutation) Fields() []string {
 	}
 	if m.mode != nil {
 		fields = append(fields, bot.FieldMode)
-	}
-	if m.container_id != nil {
-		fields = append(fields, bot.FieldContainerID)
 	}
 	if m._config != nil {
 		fields = append(fields, bot.FieldConfig)
@@ -2334,8 +2208,6 @@ func (m *BotMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case bot.FieldMode:
 		return m.Mode()
-	case bot.FieldContainerID:
-		return m.ContainerID()
 	case bot.FieldConfig:
 		return m.Config()
 	case bot.FieldSecureConfig:
@@ -2375,8 +2247,6 @@ func (m *BotMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldStatus(ctx)
 	case bot.FieldMode:
 		return m.OldMode(ctx)
-	case bot.FieldContainerID:
-		return m.OldContainerID(ctx)
 	case bot.FieldConfig:
 		return m.OldConfig(ctx)
 	case bot.FieldSecureConfig:
@@ -2435,13 +2305,6 @@ func (m *BotMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMode(v)
-		return nil
-	case bot.FieldContainerID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetContainerID(v)
 		return nil
 	case bot.FieldConfig:
 		v, ok := value.(map[string]interface{})
@@ -2550,9 +2413,6 @@ func (m *BotMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *BotMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(bot.FieldContainerID) {
-		fields = append(fields, bot.FieldContainerID)
-	}
 	if m.FieldCleared(bot.FieldConfig) {
 		fields = append(fields, bot.FieldConfig)
 	}
@@ -2579,9 +2439,6 @@ func (m *BotMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *BotMutation) ClearField(name string) error {
 	switch name {
-	case bot.FieldContainerID:
-		m.ClearContainerID()
-		return nil
 	case bot.FieldConfig:
 		m.ClearConfig()
 		return nil
@@ -2613,9 +2470,6 @@ func (m *BotMutation) ResetField(name string) error {
 		return nil
 	case bot.FieldMode:
 		m.ResetMode()
-		return nil
-	case bot.FieldContainerID:
-		m.ResetContainerID()
 		return nil
 	case bot.FieldConfig:
 		m.ResetConfig()
@@ -5151,6 +5005,9 @@ type BotRunnerMutation struct {
 	data_download_progress      *map[string]interface{}
 	data_error_message          *string
 	data_download_config        *map[string]interface{}
+	s3_config                   *map[string]interface{}
+	s3_data_key                 *string
+	s3_data_uploaded_at         *time.Time
 	owner_id                    *string
 	billing_enabled             *bool
 	cpu_price_per_core_hour     *float64
@@ -5757,6 +5614,153 @@ func (m *BotRunnerMutation) DataDownloadConfigCleared() bool {
 func (m *BotRunnerMutation) ResetDataDownloadConfig() {
 	m.data_download_config = nil
 	delete(m.clearedFields, botrunner.FieldDataDownloadConfig)
+}
+
+// SetS3Config sets the "s3_config" field.
+func (m *BotRunnerMutation) SetS3Config(value map[string]interface{}) {
+	m.s3_config = &value
+}
+
+// S3Config returns the value of the "s3_config" field in the mutation.
+func (m *BotRunnerMutation) S3Config() (r map[string]interface{}, exists bool) {
+	v := m.s3_config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldS3Config returns the old "s3_config" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldS3Config(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldS3Config is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldS3Config requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldS3Config: %w", err)
+	}
+	return oldValue.S3Config, nil
+}
+
+// ClearS3Config clears the value of the "s3_config" field.
+func (m *BotRunnerMutation) ClearS3Config() {
+	m.s3_config = nil
+	m.clearedFields[botrunner.FieldS3Config] = struct{}{}
+}
+
+// S3ConfigCleared returns if the "s3_config" field was cleared in this mutation.
+func (m *BotRunnerMutation) S3ConfigCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldS3Config]
+	return ok
+}
+
+// ResetS3Config resets all changes to the "s3_config" field.
+func (m *BotRunnerMutation) ResetS3Config() {
+	m.s3_config = nil
+	delete(m.clearedFields, botrunner.FieldS3Config)
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (m *BotRunnerMutation) SetS3DataKey(s string) {
+	m.s3_data_key = &s
+}
+
+// S3DataKey returns the value of the "s3_data_key" field in the mutation.
+func (m *BotRunnerMutation) S3DataKey() (r string, exists bool) {
+	v := m.s3_data_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldS3DataKey returns the old "s3_data_key" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldS3DataKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldS3DataKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldS3DataKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldS3DataKey: %w", err)
+	}
+	return oldValue.S3DataKey, nil
+}
+
+// ClearS3DataKey clears the value of the "s3_data_key" field.
+func (m *BotRunnerMutation) ClearS3DataKey() {
+	m.s3_data_key = nil
+	m.clearedFields[botrunner.FieldS3DataKey] = struct{}{}
+}
+
+// S3DataKeyCleared returns if the "s3_data_key" field was cleared in this mutation.
+func (m *BotRunnerMutation) S3DataKeyCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldS3DataKey]
+	return ok
+}
+
+// ResetS3DataKey resets all changes to the "s3_data_key" field.
+func (m *BotRunnerMutation) ResetS3DataKey() {
+	m.s3_data_key = nil
+	delete(m.clearedFields, botrunner.FieldS3DataKey)
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (m *BotRunnerMutation) SetS3DataUploadedAt(t time.Time) {
+	m.s3_data_uploaded_at = &t
+}
+
+// S3DataUploadedAt returns the value of the "s3_data_uploaded_at" field in the mutation.
+func (m *BotRunnerMutation) S3DataUploadedAt() (r time.Time, exists bool) {
+	v := m.s3_data_uploaded_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldS3DataUploadedAt returns the old "s3_data_uploaded_at" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldS3DataUploadedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldS3DataUploadedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldS3DataUploadedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldS3DataUploadedAt: %w", err)
+	}
+	return oldValue.S3DataUploadedAt, nil
+}
+
+// ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
+func (m *BotRunnerMutation) ClearS3DataUploadedAt() {
+	m.s3_data_uploaded_at = nil
+	m.clearedFields[botrunner.FieldS3DataUploadedAt] = struct{}{}
+}
+
+// S3DataUploadedAtCleared returns if the "s3_data_uploaded_at" field was cleared in this mutation.
+func (m *BotRunnerMutation) S3DataUploadedAtCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldS3DataUploadedAt]
+	return ok
+}
+
+// ResetS3DataUploadedAt resets all changes to the "s3_data_uploaded_at" field.
+func (m *BotRunnerMutation) ResetS3DataUploadedAt() {
+	m.s3_data_uploaded_at = nil
+	delete(m.clearedFields, botrunner.FieldS3DataUploadedAt)
 }
 
 // SetOwnerID sets the "owner_id" field.
@@ -6433,7 +6437,7 @@ func (m *BotRunnerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotRunnerMutation) Fields() []string {
-	fields := make([]string, 0, 19)
+	fields := make([]string, 0, 22)
 	if m.public != nil {
 		fields = append(fields, botrunner.FieldPublic)
 	}
@@ -6466,6 +6470,15 @@ func (m *BotRunnerMutation) Fields() []string {
 	}
 	if m.data_download_config != nil {
 		fields = append(fields, botrunner.FieldDataDownloadConfig)
+	}
+	if m.s3_config != nil {
+		fields = append(fields, botrunner.FieldS3Config)
+	}
+	if m.s3_data_key != nil {
+		fields = append(fields, botrunner.FieldS3DataKey)
+	}
+	if m.s3_data_uploaded_at != nil {
+		fields = append(fields, botrunner.FieldS3DataUploadedAt)
 	}
 	if m.owner_id != nil {
 		fields = append(fields, botrunner.FieldOwnerID)
@@ -6521,6 +6534,12 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 		return m.DataErrorMessage()
 	case botrunner.FieldDataDownloadConfig:
 		return m.DataDownloadConfig()
+	case botrunner.FieldS3Config:
+		return m.S3Config()
+	case botrunner.FieldS3DataKey:
+		return m.S3DataKey()
+	case botrunner.FieldS3DataUploadedAt:
+		return m.S3DataUploadedAt()
 	case botrunner.FieldOwnerID:
 		return m.OwnerID()
 	case botrunner.FieldBillingEnabled:
@@ -6568,6 +6587,12 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDataErrorMessage(ctx)
 	case botrunner.FieldDataDownloadConfig:
 		return m.OldDataDownloadConfig(ctx)
+	case botrunner.FieldS3Config:
+		return m.OldS3Config(ctx)
+	case botrunner.FieldS3DataKey:
+		return m.OldS3DataKey(ctx)
+	case botrunner.FieldS3DataUploadedAt:
+		return m.OldS3DataUploadedAt(ctx)
 	case botrunner.FieldOwnerID:
 		return m.OldOwnerID(ctx)
 	case botrunner.FieldBillingEnabled:
@@ -6669,6 +6694,27 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDataDownloadConfig(v)
+		return nil
+	case botrunner.FieldS3Config:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetS3Config(v)
+		return nil
+	case botrunner.FieldS3DataKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetS3DataKey(v)
+		return nil
+	case botrunner.FieldS3DataUploadedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetS3DataUploadedAt(v)
 		return nil
 	case botrunner.FieldOwnerID:
 		v, ok := value.(string)
@@ -6825,6 +6871,15 @@ func (m *BotRunnerMutation) ClearedFields() []string {
 	if m.FieldCleared(botrunner.FieldDataDownloadConfig) {
 		fields = append(fields, botrunner.FieldDataDownloadConfig)
 	}
+	if m.FieldCleared(botrunner.FieldS3Config) {
+		fields = append(fields, botrunner.FieldS3Config)
+	}
+	if m.FieldCleared(botrunner.FieldS3DataKey) {
+		fields = append(fields, botrunner.FieldS3DataKey)
+	}
+	if m.FieldCleared(botrunner.FieldS3DataUploadedAt) {
+		fields = append(fields, botrunner.FieldS3DataUploadedAt)
+	}
 	if m.FieldCleared(botrunner.FieldCPUPricePerCoreHour) {
 		fields = append(fields, botrunner.FieldCPUPricePerCoreHour)
 	}
@@ -6868,6 +6923,15 @@ func (m *BotRunnerMutation) ClearField(name string) error {
 		return nil
 	case botrunner.FieldDataDownloadConfig:
 		m.ClearDataDownloadConfig()
+		return nil
+	case botrunner.FieldS3Config:
+		m.ClearS3Config()
+		return nil
+	case botrunner.FieldS3DataKey:
+		m.ClearS3DataKey()
+		return nil
+	case botrunner.FieldS3DataUploadedAt:
+		m.ClearS3DataUploadedAt()
 		return nil
 	case botrunner.FieldCPUPricePerCoreHour:
 		m.ClearCPUPricePerCoreHour()
@@ -6921,6 +6985,15 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 		return nil
 	case botrunner.FieldDataDownloadConfig:
 		m.ResetDataDownloadConfig()
+		return nil
+	case botrunner.FieldS3Config:
+		m.ResetS3Config()
+		return nil
+	case botrunner.FieldS3DataKey:
+		m.ResetS3DataKey()
+		return nil
+	case botrunner.FieldS3DataUploadedAt:
+		m.ResetS3DataUploadedAt()
 		return nil
 	case botrunner.FieldOwnerID:
 		m.ResetOwnerID()

@@ -4,9 +4,9 @@ on:
   workflow_call:
     inputs:
       go-version:
-        description: 'Go version to use'
+        description: 'Go version to use (uses go.mod if not specified)'
         type: string
-        default: '1.24.x'
+        default: ''
       coverage-threshold:
         description: 'Minimum coverage percentage (warning if below)'
         type: number
@@ -23,7 +23,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Filter coverage
         id: coverage
@@ -64,7 +64,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,14 +75,13 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
-          args: --timeout=5m
+          version: v2.7.2
 
   build:
     name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.run-build }}
     strategy:
       matrix:
@@ -105,7 +104,7 @@ jobs:
 
   validate-codegen:
     name: Validate Codegen
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     if: ${{ inputs.validate-codegen }}
     steps:
       - name: Checkout

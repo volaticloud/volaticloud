@@ -52,7 +52,7 @@ type Runtime struct {
 // NewRuntime creates a new Docker runtime instance
 func NewRuntime(ctx context.Context, config *Config) (*Runtime, error) {
 	if config == nil {
-		return nil, fmt.Errorf("Docker config cannot be nil")
+		return nil, fmt.Errorf("docker config cannot be nil")
 	}
 
 	// Build client options
@@ -100,21 +100,22 @@ func NewRuntime(ctx context.Context, config *Config) (*Runtime, error) {
 var _ runner.Runtime = (*Runtime)(nil)
 
 // CreateBot deploys a new bot container
-func (d *Runtime) CreateBot(ctx context.Context, spec runner.BotSpec) (string, error) {
+// Container name is derived from spec.ID (the bot UUID)
+func (d *Runtime) CreateBot(ctx context.Context, spec runner.BotSpec) error {
 	// Ensure network exists
 	if err := d.ensureNetwork(ctx); err != nil {
-		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
+		return runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Pull image if needed
 	if err := d.pullImage(ctx, spec.Image); err != nil {
-		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
+		return runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Create temporary config files
 	configPaths, err := d.createConfigFiles(spec)
 	if err != nil {
-		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
+		return runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Build container configuration with config file paths
@@ -135,7 +136,7 @@ func (d *Runtime) CreateBot(ctx context.Context, spec runner.BotSpec) (string, e
 	if err != nil {
 		// Clean up config files if container creation fails
 		d.cleanupConfigFiles(spec.ID)
-		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
+		return runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
 	// Start container
@@ -143,10 +144,10 @@ func (d *Runtime) CreateBot(ctx context.Context, spec runner.BotSpec) (string, e
 		// Clean up container and config files if start fails
 		d.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
 		d.cleanupConfigFiles(spec.ID)
-		return "", runner.NewRunnerError("CreateBot", spec.ID, err, true)
+		return runner.NewRunnerError("CreateBot", spec.ID, err, true)
 	}
 
-	return resp.ID, nil
+	return nil
 }
 
 // DeleteBot removes a bot container
@@ -243,10 +244,9 @@ func (d *Runtime) GetBotStatus(ctx context.Context, botID string) (*runner.BotSt
 
 	// Build status
 	status := &runner.BotStatus{
-		BotID:       botID,
-		ContainerID: containerID,
-		Status:      d.mapDockerState(inspect.State, healthy),
-		Healthy:     healthy,
+		BotID:   botID,
+		Status:  d.mapDockerState(inspect.State, healthy),
+		Healthy: healthy,
 	}
 
 	// Set timestamps
@@ -333,11 +333,18 @@ func (d *Runtime) GetBotStatus(ctx context.Context, botID string) (*runner.BotSt
 }
 
 // GetContainerIP retrieves the container's IP address
-func (d *Runtime) GetContainerIP(ctx context.Context, containerID string) (string, error) {
-	// Inspect container directly by container ID
+// Container name is derived from botID
+func (d *Runtime) GetContainerIP(ctx context.Context, botID string) (string, error) {
+	// Find container by botID
+	containerID, err := d.findContainer(ctx, botID)
+	if err != nil {
+		return "", runner.NewRunnerError("GetContainerIP", botID, err, false)
+	}
+
+	// Inspect container
 	inspect, err := d.client.ContainerInspect(ctx, containerID)
 	if err != nil {
-		return "", runner.NewRunnerError("GetContainerIP", containerID, err, true)
+		return "", runner.NewRunnerError("GetContainerIP", botID, err, true)
 	}
 
 	// Extract IP address from network settings
@@ -350,7 +357,7 @@ func (d *Runtime) GetContainerIP(ctx context.Context, containerID string) (strin
 	}
 
 	// No IP address found
-	return "", runner.NewRunnerError("GetContainerIP", containerID,
+	return "", runner.NewRunnerError("GetContainerIP", botID,
 		fmt.Errorf("container has no network IP address"), false)
 }
 
@@ -501,6 +508,11 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 		"STRATEGY_NAME=" + spec.StrategyName,
 	}
 
+	// Add S3 data download URL as environment variable
+	if spec.DataDownloadURL != "" {
+		env = append(env, "DATA_DOWNLOAD_URL="+spec.DataDownloadURL)
+	}
+
 	// Add custom environment variables
 	for key, value := range spec.Environment {
 		env = append(env, key+"="+value)
@@ -514,35 +526,52 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 	}
 	exposedPorts[nat.Port(fmt.Sprintf("%d/tcp", apiPort))] = struct{}{}
 
-	// Build command with config files
-	// Format: trade --config <exchange_config> --config <strategy_config> --config <bot_config> --config <secure_config> --strategy <strategy_name>
-	// Note: The freqtrade image already has "freqtrade" as its entrypoint
+	// Build freqtrade command arguments
 	// Config files are layered - later configs override earlier ones
 	// Secure config is LAST to ensure it has highest priority
-	cmd := []string{"trade"}
+	freqtradeArgs := []string{}
 
 	// Add config file arguments in order: exchange -> strategy -> bot -> secure
 	if configPaths.hasExchangeConfig {
-		cmd = append(cmd, "--config", configPaths.exchangeConfigContainer)
+		freqtradeArgs = append(freqtradeArgs, "--config", configPaths.exchangeConfigContainer)
 	}
 	if configPaths.hasStrategyConfig {
-		cmd = append(cmd, "--config", configPaths.strategyConfigContainer)
+		freqtradeArgs = append(freqtradeArgs, "--config", configPaths.strategyConfigContainer)
 	}
 	if configPaths.hasBotConfig {
-		cmd = append(cmd, "--config", configPaths.botConfigContainer)
+		freqtradeArgs = append(freqtradeArgs, "--config", configPaths.botConfigContainer)
 	}
 	if configPaths.hasSecureConfig {
-		cmd = append(cmd, "--config", configPaths.secureConfigContainer)
+		freqtradeArgs = append(freqtradeArgs, "--config", configPaths.secureConfigContainer)
 	}
 
 	// Add strategy name and userdir for strategy file lookup
 	if spec.StrategyName != "" {
-		cmd = append(cmd, "--strategy", spec.StrategyName)
+		freqtradeArgs = append(freqtradeArgs, "--strategy", spec.StrategyName)
 		// Set userdir so freqtrade can find the strategy file
-		cmd = append(cmd, "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", configPaths.botID))
+		freqtradeArgs = append(freqtradeArgs, "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", configPaths.botID))
 	}
 
-	return &container.Config{
+	// Build entrypoint and command
+	// If DataDownloadURL is provided, use shell entrypoint to download data first
+	var entrypoint []string
+	var cmd []string
+
+	if spec.DataDownloadURL != "" {
+		// Build shell script that downloads data and starts freqtrade
+		dataDir := fmt.Sprintf("/freqtrade/user_data/%s/data", configPaths.botID)
+		shellScript := fmt.Sprintf(
+			`set -e; mkdir -p %s; wget -q -O /tmp/data.zip "$DATA_DOWNLOAD_URL"; unzip -q -o /tmp/data.zip -d %s; rm /tmp/data.zip; exec freqtrade trade %s`,
+			dataDir, dataDir, strings.Join(freqtradeArgs, " "),
+		)
+		entrypoint = []string{"/bin/sh", "-c"}
+		cmd = []string{shellScript}
+	} else {
+		// Standard mode without data download
+		cmd = append([]string{"trade"}, freqtradeArgs...)
+	}
+
+	config := &container.Config{
 		Image:        spec.Image,
 		Cmd:          cmd,
 		Env:          env,
@@ -553,6 +582,12 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 			labelManaged: "true",
 		},
 	}
+
+	if len(entrypoint) > 0 {
+		config.Entrypoint = entrypoint
+	}
+
+	return config
 }
 
 func (d *Runtime) buildHostConfig(spec runner.BotSpec, configPaths *configFilePaths) *container.HostConfig {

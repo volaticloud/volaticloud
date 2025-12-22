@@ -26,8 +26,8 @@ type BacktestRunner interface {
 	// Backtest Operations
 
 	// RunBacktest starts a new backtest task
-	// Returns the container ID and any error
-	RunBacktest(ctx context.Context, spec BacktestSpec) (containerID string, err error)
+	// Container name is derived from spec.ID (the backtest UUID)
+	RunBacktest(ctx context.Context, spec BacktestSpec) error
 
 	// GetBacktestStatus retrieves the current status of a backtest
 	// Returns ErrBacktestNotFound if the backtest doesn't exist
@@ -92,7 +92,7 @@ type BacktestRunner interface {
 
 // MockBacktestRunner is a no-op implementation for testing
 type MockBacktestRunner struct {
-	RunBacktestFunc       func(ctx context.Context, spec BacktestSpec) (string, error)
+	RunBacktestFunc       func(ctx context.Context, spec BacktestSpec) error
 	GetBacktestStatusFunc func(ctx context.Context, backtestID string) (*BacktestStatus, error)
 	GetBacktestResultFunc func(ctx context.Context, backtestID string) (*BacktestResult, error)
 	GetBacktestLogsFunc   func(ctx context.Context, backtestID string, opts LogOptions) (*LogReader, error)
@@ -118,11 +118,11 @@ var _ BacktestRunner = (*MockBacktestRunner)(nil)
 
 // Backtest Operations
 
-func (m *MockBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpec) (string, error) {
+func (m *MockBacktestRunner) RunBacktest(ctx context.Context, spec BacktestSpec) error {
 	if m.RunBacktestFunc != nil {
 		return m.RunBacktestFunc(ctx, spec)
 	}
-	return "mock-backtest-container-id", nil
+	return nil
 }
 
 func (m *MockBacktestRunner) GetBacktestStatus(ctx context.Context, backtestID string) (*BacktestStatus, error) {

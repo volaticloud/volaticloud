@@ -21,7 +21,7 @@ on:
 jobs:
   markdown-lint:
     name: Markdown Linting
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
 
     steps:
       - name: Checkout Code
@@ -39,7 +39,7 @@ jobs:
 
   assess-quality:
     name: Assess Documentation Quality
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: markdown-lint  # Run after linting passes
 
     steps:

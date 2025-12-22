@@ -32,16 +32,6 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		freqtradeVersion = fv
 	}
 
-	dataSource := "download"
-	if ds, ok := strategy.Config["data_source"].(string); ok {
-		dataSource = ds
-	}
-
-	dataPath := ""
-	if dp, ok := strategy.Config["data_path"].(string); ok {
-		dataPath = dp
-	}
-
 	// Create a copy of the config to avoid mutating the original
 	config := make(map[string]interface{})
 	for k, v := range strategy.Config {
@@ -61,6 +51,7 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	}
 
 	// Build BacktestSpec - config contains everything (pairs, timeframe, stake_amount, etc.)
+	// DataDownloadURL is set by the caller when executing the backtest (from runner's S3 config)
 	spec := &runner.BacktestSpec{
 		ID:               bt.ID.String(),
 		StrategyName:     strategy.Name,
@@ -68,8 +59,6 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		Config:           config,
 		FreqtradeVersion: freqtradeVersion,
 		Environment:      make(map[string]string),
-		DataSource:       dataSource,
-		DataPath:         dataPath,
 	}
 
 	return spec, nil

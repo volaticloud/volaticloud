@@ -75,9 +75,13 @@ type KrakenConfigInput struct {
 }
 
 type KubernetesConfigInput struct {
-	KubeconfigPath *string `json:"kubeconfigPath,omitempty"`
-	Namespace      *string `json:"namespace,omitempty"`
-	Context        *string `json:"context,omitempty"`
+	Kubeconfig       *string `json:"kubeconfig,omitempty"`
+	Context          *string `json:"context,omitempty"`
+	Namespace        string  `json:"namespace"`
+	StorageClassName *string `json:"storageClassName,omitempty"`
+	SharedDataPvc    *string `json:"sharedDataPVC,omitempty"`
+	FreqtradeImage   *string `json:"freqtradeImage,omitempty"`
+	PrometheusURL    *string `json:"prometheusUrl,omitempty"`
 }
 
 type LocalConfigInput struct {
@@ -100,6 +104,28 @@ type RunnerConfigInput struct {
 	Docker     *DockerConfigInput     `json:"docker,omitempty"`
 	Kubernetes *KubernetesConfigInput `json:"kubernetes,omitempty"`
 	Local      *LocalConfigInput      `json:"local,omitempty"`
+	S3         *S3ConfigInput         `json:"s3,omitempty"`
+}
+
+// S3 storage configuration for runner data distribution
+// Supports AWS S3, MinIO, Backblaze B2, and other S3-compatible storage
+type S3ConfigInput struct {
+	// S3 endpoint URL (e.g., "s3.amazonaws.com" or "minio.local:9000")
+	Endpoint string `json:"endpoint"`
+	// S3 bucket name
+	Bucket string `json:"bucket"`
+	// AWS/S3 access key ID
+	AccessKeyID string `json:"accessKeyId"`
+	// AWS/S3 secret access key
+	SecretAccessKey string `json:"secretAccessKey"`
+	// AWS region (default: us-east-1)
+	Region *string `json:"region,omitempty"`
+	// Force path-style addressing (required for MinIO, optional for AWS)
+	// When true: http://endpoint/bucket/key
+	// When false: http://bucket.endpoint/key
+	ForcePathStyle *bool `json:"forcePathStyle,omitempty"`
+	// Enable HTTPS connections (default: true)
+	UseSsl *bool `json:"useSSL,omitempty"`
 }
 
 // Estimated cost breakdown for resource usage

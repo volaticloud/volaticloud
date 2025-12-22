@@ -10,14 +10,14 @@ export type GetBacktestsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBacktestsQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, config: Record<string, any> }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetBacktestsQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', totalCount: number, edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, config: Record<string, any> }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetBacktestQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, logs?: string | null, containerID?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
+export type GetBacktestQuery = { __typename?: 'Query', backtests: { __typename?: 'BacktestConnection', edges?: Array<{ __typename?: 'BacktestEdge', node?: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, logs?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string, description?: string | null }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } | null } | null> | null } };
 
 export type GetBacktestOptionsQueryVariables = Types.Exact<{
   ownerID?: Types.InputMaybe<Types.Scalars['String']['input']>;
@@ -45,7 +45,7 @@ export type RunBacktestMutationVariables = Types.Exact<{
 }>;
 
 
-export type RunBacktestMutation = { __typename?: 'Mutation', runBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, containerID?: string | null } };
+export type RunBacktestMutation = { __typename?: 'Mutation', runBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } };
 
 export type StopBacktestMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -63,7 +63,6 @@ export const GetBacktestsDocument = gql`
         id
         status
         result
-        containerID
         errorMessage
         createdAt
         updatedAt
@@ -134,7 +133,6 @@ export const GetBacktestDocument = gql`
         status
         result
         logs
-        containerID
         errorMessage
         createdAt
         updatedAt
@@ -319,7 +317,6 @@ export const RunBacktestDocument = gql`
   runBacktest(id: $id) {
     id
     status
-    containerID
   }
 }
     `;

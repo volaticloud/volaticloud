@@ -26,6 +26,7 @@ import (
 	"volaticloud/internal/graph/model"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
+	"volaticloud/internal/s3"
 	"volaticloud/internal/usage"
 
 	"github.com/google/uuid"
@@ -282,9 +283,15 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 		return nil, fmt.Errorf("failed to build bot spec: %w", err)
 	}
 
-	// Step 5: Create the container
-	containerID, err := rt.CreateBot(ctx, *spec)
+	// Generate presigned URL for S3 data download
+	presignedURL, err := getPresignedDataURL(ctx, botRunner)
 	if err != nil {
+		return nil, fmt.Errorf("failed to get presigned URL: %w", err)
+	}
+	spec.DataDownloadURL = presignedURL
+
+	// Step 5: Create the container (name derived from bot ID)
+	if err := rt.CreateBot(ctx, *spec); err != nil {
 		// Update bot status to error
 		r.client.Bot.UpdateOneID(createdBot.ID).
 			SetStatus(enum.BotStatusError).
@@ -293,14 +300,13 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 		return nil, fmt.Errorf("failed to create bot container: %w", err)
 	}
 
-	// Step 6: Update bot with container_id and set status to stopped
+	// Step 6: Update bot status to stopped (container created successfully)
 	createdBot, err = r.client.Bot.UpdateOneID(createdBot.ID).
-		SetContainerID(containerID).
 		SetStatus(enum.BotStatusStopped).
 		ClearErrorMessage().
 		Save(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update bot with container ID: %w", err)
+		return nil, fmt.Errorf("failed to update bot status: %w", err)
 	}
 
 	return createdBot, nil
@@ -347,9 +353,38 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 	}
 	defer rt.Close()
 
-	// Check if container exists, if not create it
-	containerID := b.ContainerID
-	if containerID == "" {
+	// If bot is in Error status, delete all resources and recreate
+	// This ensures we get a fresh container with updated configs
+	if b.Status == enum.BotStatusError {
+		log.Printf("Bot %s is in Error status, cleaning up resources before recreation", b.ID.String())
+		if err := rt.DeleteBot(ctx, b.ID.String()); err != nil {
+			// Log but don't fail - resources might already be gone
+			log.Printf("Warning: cleanup of failed bot %s returned error (may be ok): %v", b.ID.String(), err)
+		}
+		// Clear error message
+		b, err = r.client.Bot.UpdateOneID(b.ID).
+			ClearErrorMessage().
+			Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to clear error message: %w", err)
+		}
+		// Reload with edges
+		b, err = r.client.Bot.Query().
+			Where(bot.ID(b.ID)).
+			WithRunner().
+			WithExchange().
+			WithStrategy().
+			Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reload bot: %w", err)
+		}
+	}
+
+	// Check if container exists by getting status
+	_, statusErr := rt.GetBotStatus(ctx, b.ID.String())
+	containerExists := statusErr == nil
+
+	if !containerExists {
 		// Regenerate secure_config on every start for fresh credentials
 		secureConfig, err := bot1.GenerateSecureConfig()
 		if err != nil {
@@ -381,9 +416,15 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 			return nil, fmt.Errorf("failed to build bot spec: %w", err)
 		}
 
-		// Create the container
-		containerID, err = rt.CreateBot(ctx, *spec)
+		// Generate presigned URL for S3 data download
+		presignedURL, err := getPresignedDataURL(ctx, botRunner)
 		if err != nil {
+			return nil, fmt.Errorf("failed to get presigned URL: %w", err)
+		}
+		spec.DataDownloadURL = presignedURL
+
+		// Create the container (name derived from bot ID)
+		if err := rt.CreateBot(ctx, *spec); err != nil {
 			// Update bot status to error
 			r.client.Bot.UpdateOneID(b.ID).
 				SetStatus(enum.BotStatusError).
@@ -392,23 +433,22 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 			return nil, fmt.Errorf("failed to create bot container: %w", err)
 		}
 
-		// Update bot with container_id
+		// Clear any error message after successful creation
 		b, err = r.client.Bot.UpdateOneID(b.ID).
-			SetContainerID(containerID).
 			ClearErrorMessage().
 			Save(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update bot with container ID: %w", err)
+			return nil, fmt.Errorf("failed to update bot: %w", err)
 		}
 	}
 
-	// Start the bot in the runtime
-	if err := rt.StartBot(ctx, containerID); err != nil {
-		// If container not found, clear container ID and return error
+	// Start the bot in the runtime (using bot ID)
+	if err := rt.StartBot(ctx, b.ID.String()); err != nil {
+		// If container not found, mark as error and suggest restart
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "No such container") {
 			r.client.Bot.UpdateOneID(id).
-				ClearContainerID().
-				SetStatus(enum.BotStatusStopped).
+				SetStatus(enum.BotStatusError).
+				SetErrorMessage("Container not found - try starting again").
 				Save(ctx)
 			return nil, fmt.Errorf("container was deleted manually - please try starting again")
 		}
@@ -450,26 +490,12 @@ func (r *mutationResolver) StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot,
 	}
 	defer rt.Close()
 
-	// Stop the bot in the runtime
-	containerID := b.ContainerID
-	if containerID == "" {
-		// No container ID means it was never created or already deleted
-		// Just update status to stopped
-		b, err = r.client.Bot.UpdateOneID(id).
-			SetStatus(enum.BotStatusStopped).
-			Save(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update bot status: %w", err)
-		}
-		return b, nil
-	}
-
-	if err := rt.StopBot(ctx, containerID); err != nil {
+	// Stop the bot in the runtime using bot ID
+	if err := rt.StopBot(ctx, b.ID.String()); err != nil {
 		// If container not found, just update status - it was manually deleted
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "No such container") {
 			b, err = r.client.Bot.UpdateOneID(id).
 				SetStatus(enum.BotStatusStopped).
-				ClearContainerID().
 				Save(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to update bot status: %w", err)
@@ -479,19 +505,16 @@ func (r *mutationResolver) StopBot(ctx context.Context, id uuid.UUID) (*ent.Bot,
 		return nil, fmt.Errorf("failed to stop bot in runner: %w", err)
 	}
 
-	// Delete the container to ensure fresh configs on next start
+	// Delete all bot resources to ensure fresh configs on next start
 	// This enables config reload when bot is updated and restarted
-	if err := rt.DeleteBot(ctx, containerID); err != nil {
+	if err := rt.DeleteBot(ctx, id.String()); err != nil {
 		// Log but don't fail - container is stopped, deletion is best-effort
-		// If deletion fails, next start will fail to start old container
-		// and the error handler will clear containerID, allowing recreation
-		fmt.Printf("Warning: failed to delete stopped container %s: %v\n", containerID, err)
+		log.Printf("Warning: failed to delete stopped bot resources %s: %v", id.String(), err)
 	}
 
-	// Update bot status and clear containerID so next start recreates container
+	// Update bot status
 	b, err = r.client.Bot.UpdateOneID(id).
 		SetStatus(enum.BotStatusStopped).
-		ClearContainerID().
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update bot status: %w", err)
@@ -641,6 +664,49 @@ func (r *mutationResolver) TestRunnerConnection(ctx context.Context, typeArg enu
 	}, nil
 }
 
+func (r *mutationResolver) TestS3Connection(ctx context.Context, config model.S3ConfigInput) (*model.ConnectionTestResult, error) {
+	// Convert GraphQL input to S3 config map
+	s3ConfigMap := map[string]interface{}{
+		"endpoint":        config.Endpoint,
+		"bucket":          config.Bucket,
+		"accessKeyId":     config.AccessKeyID,
+		"secretAccessKey": config.SecretAccessKey,
+	}
+
+	// Apply optional fields with defaults
+	if config.Region != nil {
+		s3ConfigMap["region"] = *config.Region
+	}
+	if config.ForcePathStyle != nil {
+		s3ConfigMap["forcePathStyle"] = *config.ForcePathStyle
+	}
+	if config.UseSsl != nil {
+		s3ConfigMap["useSSL"] = *config.UseSsl
+	}
+
+	// Create S3 client
+	client, err := s3.NewClientFromMap(s3ConfigMap)
+	if err != nil {
+		return &model.ConnectionTestResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to create S3 client: %v", err),
+		}, nil
+	}
+
+	// Test connection by checking bucket existence
+	if err := client.TestConnection(ctx); err != nil {
+		return &model.ConnectionTestResult{
+			Success: false,
+			Message: fmt.Sprintf("S3 connection failed: %v", err),
+		}, nil
+	}
+
+	return &model.ConnectionTestResult{
+		Success: true,
+		Message: fmt.Sprintf("Successfully connected to S3 bucket: %s", config.Bucket),
+	}, nil
+}
+
 func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
 	var result *ent.Backtest
 
@@ -771,26 +837,12 @@ func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent
 	}
 	defer backtestRunner.Close()
 
-	// Stop the backtest in the runtime
-	containerID := bt.ContainerID
-	if containerID == "" {
-		// No container ID means it was never started or already deleted
-		// Just update status to stopped
-		bt, err = r.client.Backtest.UpdateOneID(id).
-			SetStatus(enum.TaskStatusCompleted).
-			Save(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update backtest status: %w", err)
-		}
-		return bt, nil
-	}
-
-	if err := backtestRunner.StopBacktest(ctx, containerID); err != nil {
+	// Stop the backtest in the runtime using backtest ID
+	if err := backtestRunner.StopBacktest(ctx, bt.ID.String()); err != nil {
 		// If container not found, just update status - it was manually deleted or completed
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "No such container") {
 			bt, err = r.client.Backtest.UpdateOneID(id).
 				SetStatus(enum.TaskStatusCompleted).
-				ClearContainerID().
 				Save(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to update backtest status: %w", err)
@@ -846,11 +898,6 @@ func (r *mutationResolver) GetFreqtradeToken(ctx context.Context, botID uuid.UUI
 		return nil, fmt.Errorf("failed to load bot: %w", err)
 	}
 
-	// Verify bot has a container (is running or at least created)
-	if b.ContainerID == "" {
-		return nil, fmt.Errorf("bot has no container - please start the bot first")
-	}
-
 	// Get the runner
 	botRunner := b.Edges.Runner
 	if botRunner == nil {
@@ -865,10 +912,10 @@ func (r *mutationResolver) GetFreqtradeToken(ctx context.Context, botID uuid.UUI
 	}
 	defer rt.Close()
 
-	// Get bot status from runner to find the API URL (hostPort)
-	status, err := rt.GetBotStatus(ctx, b.ContainerID)
+	// Get bot status from runner using bot ID
+	status, err := rt.GetBotStatus(ctx, b.ID.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get bot status: %w", err)
+		return nil, fmt.Errorf("failed to get bot status (is the bot running?): %w", err)
 	}
 
 	// Verify bot is running and healthy
@@ -965,13 +1012,8 @@ func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*
 	}
 	defer rt.Close()
 
-	// Get bot status from runner
-	containerID := b.ContainerID
-	if containerID == "" {
-		return nil, fmt.Errorf("bot has no container ID")
-	}
-
-	status, err := rt.GetBotStatus(ctx, containerID)
+	// Get bot status from runner using bot ID
+	status, err := rt.GetBotStatus(ctx, b.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot status from runner: %w", err)
 	}

@@ -23,7 +23,7 @@ concurrency:
 jobs:
   validate:
     name: Validate Manifests
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     # Only deploy if build succeeded (for workflow_run events)
     if: |
       github.event_name == 'workflow_dispatch' ||
@@ -61,7 +61,7 @@ jobs:
 
   install-olm:
     name: Install OLM
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: validate
     if: |
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
@@ -118,7 +118,7 @@ jobs:
 
   deploy-keycloak:
     name: Deploy Keycloak
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: [validate, install-olm]
     if: |
       always() &&

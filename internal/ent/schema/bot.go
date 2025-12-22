@@ -37,9 +37,6 @@ func (Bot) Fields() []ent.Field {
 			GoType(enum.BotMode("")).
 			Default(string(enum.BotModeDryRun)).
 			Comment("Trading mode (dry-run or live)"),
-		field.String("container_id").
-			Optional().
-			Comment("Runner-specific identifier (container ID, pod name, etc.)"),
 		field.JSON("config", map[string]interface{}{}).
 			Optional().
 			Annotations(

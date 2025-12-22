@@ -3,17 +3,40 @@ description: 'Setup Go environment with caching, module download, and verificati
 
 inputs:
   go-version:
-    description: 'Go version to install'
+    description: 'Go version to install (uses go.mod if not specified)'
     required: false
-    default: '1.24.x'
+    default: ''
 
 runs:
   using: 'composite'
   steps:
+    - name: Set cache directories for self-hosted runners
+      shell: bash
+      run: |
+        # Ensure HOME is set for self-hosted runners
+        if [ -z "$HOME" ]; then
+          export HOME="${GITHUB_WORKSPACE}"
+          echo "HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+        fi
+        # Set Go cache directories
+        mkdir -p "${GITHUB_WORKSPACE}/.cache/go-build"
+        mkdir -p "${GITHUB_WORKSPACE}/.cache/go-mod"
+        echo "GOCACHE=${GITHUB_WORKSPACE}/.cache/go-build" >> $GITHUB_ENV
+        echo "GOMODCACHE=${GITHUB_WORKSPACE}/.cache/go-mod" >> $GITHUB_ENV
+
+        # Fix for Go issue #75031: covdata tool not found with auto-downloaded toolchain
+        # Extract Go version from go.mod and set GOTOOLCHAIN explicitly
+        GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
+        if [ -n "$GO_VERSION" ]; then
+          echo "GOTOOLCHAIN=go${GO_VERSION}+auto" >> $GITHUB_ENV
+          echo "Setting GOTOOLCHAIN=go${GO_VERSION}+auto to fix covdata tool resolution"
+        fi
+
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ inputs.go-version }}
+        go-version: ${{ inputs.go-version || '' }}
+        go-version-file: ${{ inputs.go-version == '' && 'go.mod' || '' }}
         cache: true
 
     - name: Download dependencies

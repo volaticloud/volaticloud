@@ -200,6 +200,58 @@ func (_u *BotRunnerUpdate) ClearDataDownloadConfig() *BotRunnerUpdate {
 	return _u
 }
 
+// SetS3Config sets the "s3_config" field.
+func (_u *BotRunnerUpdate) SetS3Config(v map[string]interface{}) *BotRunnerUpdate {
+	_u.mutation.SetS3Config(v)
+	return _u
+}
+
+// ClearS3Config clears the value of the "s3_config" field.
+func (_u *BotRunnerUpdate) ClearS3Config() *BotRunnerUpdate {
+	_u.mutation.ClearS3Config()
+	return _u
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (_u *BotRunnerUpdate) SetS3DataKey(v string) *BotRunnerUpdate {
+	_u.mutation.SetS3DataKey(v)
+	return _u
+}
+
+// SetNillableS3DataKey sets the "s3_data_key" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableS3DataKey(v *string) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetS3DataKey(*v)
+	}
+	return _u
+}
+
+// ClearS3DataKey clears the value of the "s3_data_key" field.
+func (_u *BotRunnerUpdate) ClearS3DataKey() *BotRunnerUpdate {
+	_u.mutation.ClearS3DataKey()
+	return _u
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (_u *BotRunnerUpdate) SetS3DataUploadedAt(v time.Time) *BotRunnerUpdate {
+	_u.mutation.SetS3DataUploadedAt(v)
+	return _u
+}
+
+// SetNillableS3DataUploadedAt sets the "s3_data_uploaded_at" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableS3DataUploadedAt(v *time.Time) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetS3DataUploadedAt(*v)
+	}
+	return _u
+}
+
+// ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
+func (_u *BotRunnerUpdate) ClearS3DataUploadedAt() *BotRunnerUpdate {
+	_u.mutation.ClearS3DataUploadedAt()
+	return _u
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_u *BotRunnerUpdate) SetOwnerID(v string) *BotRunnerUpdate {
 	_u.mutation.SetOwnerID(v)
@@ -621,6 +673,24 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DataDownloadConfigCleared() {
 		_spec.ClearField(botrunner.FieldDataDownloadConfig, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.S3Config(); ok {
+		_spec.SetField(botrunner.FieldS3Config, field.TypeJSON, value)
+	}
+	if _u.mutation.S3ConfigCleared() {
+		_spec.ClearField(botrunner.FieldS3Config, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.S3DataKey(); ok {
+		_spec.SetField(botrunner.FieldS3DataKey, field.TypeString, value)
+	}
+	if _u.mutation.S3DataKeyCleared() {
+		_spec.ClearField(botrunner.FieldS3DataKey, field.TypeString)
+	}
+	if value, ok := _u.mutation.S3DataUploadedAt(); ok {
+		_spec.SetField(botrunner.FieldS3DataUploadedAt, field.TypeTime, value)
+	}
+	if _u.mutation.S3DataUploadedAtCleared() {
+		_spec.ClearField(botrunner.FieldS3DataUploadedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 	}
@@ -1029,6 +1099,58 @@ func (_u *BotRunnerUpdateOne) SetDataDownloadConfig(v map[string]interface{}) *B
 // ClearDataDownloadConfig clears the value of the "data_download_config" field.
 func (_u *BotRunnerUpdateOne) ClearDataDownloadConfig() *BotRunnerUpdateOne {
 	_u.mutation.ClearDataDownloadConfig()
+	return _u
+}
+
+// SetS3Config sets the "s3_config" field.
+func (_u *BotRunnerUpdateOne) SetS3Config(v map[string]interface{}) *BotRunnerUpdateOne {
+	_u.mutation.SetS3Config(v)
+	return _u
+}
+
+// ClearS3Config clears the value of the "s3_config" field.
+func (_u *BotRunnerUpdateOne) ClearS3Config() *BotRunnerUpdateOne {
+	_u.mutation.ClearS3Config()
+	return _u
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (_u *BotRunnerUpdateOne) SetS3DataKey(v string) *BotRunnerUpdateOne {
+	_u.mutation.SetS3DataKey(v)
+	return _u
+}
+
+// SetNillableS3DataKey sets the "s3_data_key" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableS3DataKey(v *string) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetS3DataKey(*v)
+	}
+	return _u
+}
+
+// ClearS3DataKey clears the value of the "s3_data_key" field.
+func (_u *BotRunnerUpdateOne) ClearS3DataKey() *BotRunnerUpdateOne {
+	_u.mutation.ClearS3DataKey()
+	return _u
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (_u *BotRunnerUpdateOne) SetS3DataUploadedAt(v time.Time) *BotRunnerUpdateOne {
+	_u.mutation.SetS3DataUploadedAt(v)
+	return _u
+}
+
+// SetNillableS3DataUploadedAt sets the "s3_data_uploaded_at" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableS3DataUploadedAt(v *time.Time) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetS3DataUploadedAt(*v)
+	}
+	return _u
+}
+
+// ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
+func (_u *BotRunnerUpdateOne) ClearS3DataUploadedAt() *BotRunnerUpdateOne {
+	_u.mutation.ClearS3DataUploadedAt()
 	return _u
 }
 
@@ -1482,6 +1604,24 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	}
 	if _u.mutation.DataDownloadConfigCleared() {
 		_spec.ClearField(botrunner.FieldDataDownloadConfig, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.S3Config(); ok {
+		_spec.SetField(botrunner.FieldS3Config, field.TypeJSON, value)
+	}
+	if _u.mutation.S3ConfigCleared() {
+		_spec.ClearField(botrunner.FieldS3Config, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.S3DataKey(); ok {
+		_spec.SetField(botrunner.FieldS3DataKey, field.TypeString, value)
+	}
+	if _u.mutation.S3DataKeyCleared() {
+		_spec.ClearField(botrunner.FieldS3DataKey, field.TypeString)
+	}
+	if value, ok := _u.mutation.S3DataUploadedAt(); ok {
+		_spec.SetField(botrunner.FieldS3DataUploadedAt, field.TypeTime, value)
+	}
+	if _u.mutation.S3DataUploadedAtCleared() {
+		_spec.ClearField(botrunner.FieldS3DataUploadedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)

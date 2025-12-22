@@ -75,20 +75,6 @@ func (_c *BotCreate) SetNillableMode(v *enum.BotMode) *BotCreate {
 	return _c
 }
 
-// SetContainerID sets the "container_id" field.
-func (_c *BotCreate) SetContainerID(v string) *BotCreate {
-	_c.mutation.SetContainerID(v)
-	return _c
-}
-
-// SetNillableContainerID sets the "container_id" field if the given value is not nil.
-func (_c *BotCreate) SetNillableContainerID(v *string) *BotCreate {
-	if v != nil {
-		_c.SetContainerID(*v)
-	}
-	return _c
-}
-
 // SetConfig sets the "config" field.
 func (_c *BotCreate) SetConfig(v map[string]interface{}) *BotCreate {
 	_c.mutation.SetConfig(v)
@@ -437,10 +423,6 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Mode(); ok {
 		_spec.SetField(bot.FieldMode, field.TypeEnum, value)
 		_node.Mode = value
-	}
-	if value, ok := _c.mutation.ContainerID(); ok {
-		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
-		_node.ContainerID = value
 	}
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)

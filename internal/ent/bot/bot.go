@@ -26,8 +26,6 @@ const (
 	FieldStatus = "status"
 	// FieldMode holds the string denoting the mode field in the database.
 	FieldMode = "mode"
-	// FieldContainerID holds the string denoting the container_id field in the database.
-	FieldContainerID = "container_id"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
 	// FieldSecureConfig holds the string denoting the secure_config field in the database.
@@ -106,7 +104,6 @@ var Columns = []string{
 	FieldName,
 	FieldStatus,
 	FieldMode,
-	FieldContainerID,
 	FieldConfig,
 	FieldSecureConfig,
 	FieldFreqtradeVersion,
@@ -199,11 +196,6 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByMode orders the results by the mode field.
 func ByMode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMode, opts...).ToFunc()
-}
-
-// ByContainerID orders the results by the container_id field.
-func ByContainerID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldContainerID, opts...).ToFunc()
 }
 
 // ByFreqtradeVersion orders the results by the freqtrade_version field.

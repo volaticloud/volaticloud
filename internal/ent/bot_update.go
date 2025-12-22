@@ -91,26 +91,6 @@ func (_u *BotUpdate) SetNillableMode(v *enum.BotMode) *BotUpdate {
 	return _u
 }
 
-// SetContainerID sets the "container_id" field.
-func (_u *BotUpdate) SetContainerID(v string) *BotUpdate {
-	_u.mutation.SetContainerID(v)
-	return _u
-}
-
-// SetNillableContainerID sets the "container_id" field if the given value is not nil.
-func (_u *BotUpdate) SetNillableContainerID(v *string) *BotUpdate {
-	if v != nil {
-		_u.SetContainerID(*v)
-	}
-	return _u
-}
-
-// ClearContainerID clears the value of the "container_id" field.
-func (_u *BotUpdate) ClearContainerID() *BotUpdate {
-	_u.mutation.ClearContainerID()
-	return _u
-}
-
 // SetConfig sets the "config" field.
 func (_u *BotUpdate) SetConfig(v map[string]interface{}) *BotUpdate {
 	_u.mutation.SetConfig(v)
@@ -444,12 +424,6 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Mode(); ok {
 		_spec.SetField(bot.FieldMode, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.ContainerID(); ok {
-		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
-	}
-	if _u.mutation.ContainerIDCleared() {
-		_spec.ClearField(bot.FieldContainerID, field.TypeString)
-	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)
 	}
@@ -717,26 +691,6 @@ func (_u *BotUpdateOne) SetNillableMode(v *enum.BotMode) *BotUpdateOne {
 	if v != nil {
 		_u.SetMode(*v)
 	}
-	return _u
-}
-
-// SetContainerID sets the "container_id" field.
-func (_u *BotUpdateOne) SetContainerID(v string) *BotUpdateOne {
-	_u.mutation.SetContainerID(v)
-	return _u
-}
-
-// SetNillableContainerID sets the "container_id" field if the given value is not nil.
-func (_u *BotUpdateOne) SetNillableContainerID(v *string) *BotUpdateOne {
-	if v != nil {
-		_u.SetContainerID(*v)
-	}
-	return _u
-}
-
-// ClearContainerID clears the value of the "container_id" field.
-func (_u *BotUpdateOne) ClearContainerID() *BotUpdateOne {
-	_u.mutation.ClearContainerID()
 	return _u
 }
 
@@ -1102,12 +1056,6 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	}
 	if value, ok := _u.mutation.Mode(); ok {
 		_spec.SetField(bot.FieldMode, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.ContainerID(); ok {
-		_spec.SetField(bot.FieldContainerID, field.TypeString, value)
-	}
-	if _u.mutation.ContainerIDCleared() {
-		_spec.ClearField(bot.FieldContainerID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(bot.FieldConfig, field.TypeJSON, value)

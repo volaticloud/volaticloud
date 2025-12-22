@@ -66,8 +66,8 @@ generate: generate-freqtrade
 	go generate ./internal/ent
 	@echo "Generating GraphQL resolvers..."
 	go run github.com/99designs/gqlgen generate
-	@echo "Formatting all Go files..."
-	@gofmt -w .
+	@echo "Formatting project Go files..."
+	@find . -name '*.go' -not -path './.cache/*' -not -path './vendor/*' -exec gofmt -w {} +
 	@echo "Code generation complete!"
 
 # Run development server

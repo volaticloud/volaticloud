@@ -92,12 +92,6 @@ func (m *BacktestMonitor) checkBacktests(ctx context.Context) {
 
 // checkBacktest checks a single backtest and updates its status
 func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
-	// Skip if no container ID
-	if bt.ContainerID == "" {
-		log.Printf("Backtest %s has no container ID, skipping", bt.ID)
-		return
-	}
-
 	// Get runner
 	if bt.Edges.Runner == nil {
 		log.Printf("Backtest %s has no runner, skipping", bt.ID)

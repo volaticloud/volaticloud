@@ -42,9 +42,6 @@ func (Backtest) Fields() []ent.Field {
 			Annotations(
 				entgql.Skip(entgql.SkipAll),
 			),
-		field.String("container_id").
-			Optional().
-			Comment("Docker container ID for running backtest"),
 		field.String("error_message").
 			Optional().
 			Comment("Error message if backtest failed"),

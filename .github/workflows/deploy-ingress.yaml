@@ -30,7 +30,7 @@ on:
 jobs:
   validate:
     name: Validate Manifests
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
 
   deploy-ingress:
     name: Deploy Nginx Ingress
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: validate
     if: |
       always() &&
@@ -162,7 +162,7 @@ jobs:
 
   deploy-cert-manager:
     name: Deploy cert-manager
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: [validate, deploy-ingress]
     if: |
       always() &&
@@ -255,7 +255,7 @@ jobs:
 
   update-keycloak-ingress:
     name: Update Keycloak Ingress with TLS
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL }}
     needs: [validate, deploy-ingress, deploy-cert-manager]
     if: |
       always() &&

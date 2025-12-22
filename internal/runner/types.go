@@ -39,6 +39,9 @@ type BotSpec struct {
 	ResourceLimits *ResourceLimits   // CPU/memory limits
 	NetworkMode    string            // Network mode (bridge, host, custom)
 	APIPort        int               // Freqtrade API port (default: 8080)
+
+	// S3 data configuration
+	DataDownloadURL string // Presigned S3 URL for downloading OHLCV data
 }
 
 // ResourceLimits defines resource constraints for a bot
@@ -62,8 +65,7 @@ type BotStatus struct {
 	BotID string
 
 	// Runner status
-	Status      enum.BotStatus // creating, running, stopped, error
-	ContainerID string         // Runner-specific identifier
+	Status enum.BotStatus // creating, running, stopped, error
 
 	// Health information
 	Healthy    bool
