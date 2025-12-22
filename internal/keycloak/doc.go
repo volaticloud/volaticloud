@@ -83,6 +83,9 @@ Supported resource types:
 	backtest:
 	  - Permissions: backtest:view, backtest:update, backtest:delete
 
+	runner:
+	  - Permissions: runner:view, runner:view-secrets, runner:edit, runner:delete
+
 # Authorization Flow
 
 ## 1. Entity Creation (Auto-Register):
