@@ -34,18 +34,7 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run tests
-        env:
-          GOTOOLCHAIN: local
-        run: |
-          set +e
-          go version
-          go test -v -coverprofile=coverage.out -covermode=atomic ./...
-          exit_code=$?
-          echo "Test exit code: $exit_code"
-          if [ $exit_code -ne 0 ]; then
-            echo "Tests failed with exit code $exit_code"
-            exit $exit_code
-          fi
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Filter coverage
         id: coverage
