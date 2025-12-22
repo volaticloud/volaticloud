@@ -32,6 +32,7 @@ COPY --chown=keycloak:root --from=provider-builder /providers/* /opt/keycloak/pr
 
 # Fix file timestamps to avoid provider loading issues (Docker may truncate timestamps)
 # See: https://www.keycloak.org/server/containers
+# Timestamp: 2025-04-01 00:00:00 UTC
 RUN touch -m --date=@1743465600 /opt/keycloak/providers/*
 
 # Build Keycloak with custom providers and PostgreSQL support for --optimized flag
