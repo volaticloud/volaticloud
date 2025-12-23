@@ -22908,7 +22908,7 @@ func (ec *executionContext) unmarshalInputKubernetesConfigInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"kubeconfig", "context", "namespace", "storageClassName", "sharedDataPVC", "freqtradeImage", "prometheusUrl"}
+	fieldsInOrder := [...]string{"kubeconfig", "context", "namespace", "ingressHost", "ingressClass", "ingressTls", "storageClassName", "sharedDataPVC", "freqtradeImage", "prometheusUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22936,6 +22936,27 @@ func (ec *executionContext) unmarshalInputKubernetesConfigInput(ctx context.Cont
 				return it, err
 			}
 			it.Namespace = data
+		case "ingressHost":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressHost"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IngressHost = data
+		case "ingressClass":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressClass"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IngressClass = data
+		case "ingressTls":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressTls"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IngressTLS = data
 		case "storageClassName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

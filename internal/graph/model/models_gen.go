@@ -78,6 +78,9 @@ type KubernetesConfigInput struct {
 	Kubeconfig       *string `json:"kubeconfig,omitempty"`
 	Context          *string `json:"context,omitempty"`
 	Namespace        string  `json:"namespace"`
+	IngressHost      *string `json:"ingressHost,omitempty"`
+	IngressClass     *string `json:"ingressClass,omitempty"`
+	IngressTLS       *bool   `json:"ingressTls,omitempty"`
 	StorageClassName *string `json:"storageClassName,omitempty"`
 	SharedDataPvc    *string `json:"sharedDataPVC,omitempty"`
 	FreqtradeImage   *string `json:"freqtradeImage,omitempty"`

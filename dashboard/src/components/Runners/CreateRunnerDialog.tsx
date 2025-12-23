@@ -355,6 +355,43 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
                 helperText="Kubernetes namespace for all resources (required)"
               />
 
+              <Divider sx={{ my: 1 }}>
+                <Typography variant="caption" color="text.secondary">Ingress Configuration</Typography>
+              </Divider>
+
+              <TextField
+                label="Ingress Host"
+                value={kubernetesConfig.ingressHost ?? ''}
+                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, ingressHost: e.target.value || undefined })}
+                fullWidth
+                helperText="Hostname for Ingress-based bot access with path routing (e.g., bots.example.com). Bot URL: http(s)://host/bot/{botID}/"
+                placeholder="bots.example.com"
+              />
+
+              <TextField
+                label="Ingress Class"
+                value={kubernetesConfig.ingressClass ?? ''}
+                onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, ingressClass: e.target.value || undefined })}
+                fullWidth
+                helperText="Ingress class to use (e.g., nginx, traefik). Leave empty for cluster default."
+                placeholder="nginx"
+              />
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={kubernetesConfig.ingressTls ?? false}
+                    onChange={(e) => setKubernetesConfig({ ...kubernetesConfig, ingressTls: e.target.checked })}
+                  />
+                }
+                label="Enable TLS for Ingress"
+              />
+              <FormHelperText sx={{ mt: -1, ml: 4 }}>
+                Requires cert-manager or pre-created TLS secret named {'{ingressHost}-tls'}
+              </FormHelperText>
+
+              <Divider sx={{ my: 1 }} />
+
               <TextField
                 label="Kubeconfig (YAML)"
                 value={kubernetesConfig.kubeconfig ?? ''}

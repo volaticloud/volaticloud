@@ -361,6 +361,53 @@ func (d *Runtime) GetContainerIP(ctx context.Context, botID string) (string, err
 		fmt.Errorf("container has no network IP address"), false)
 }
 
+// GetBotAPIURL returns the full URL to access the bot's Freqtrade API
+// For Docker, this is http://<docker-host>:<mapped-port>
+func (d *Runtime) GetBotAPIURL(ctx context.Context, botID string) (string, error) {
+	// Find container by botID
+	containerID, err := d.findContainer(ctx, botID)
+	if err != nil {
+		return "", runner.NewRunnerError("GetBotAPIURL", botID, err, false)
+	}
+
+	// Inspect container to get port mappings
+	inspect, err := d.client.ContainerInspect(ctx, containerID)
+	if err != nil {
+		return "", runner.NewRunnerError("GetBotAPIURL", botID, err, true)
+	}
+
+	// Find the mapped host port for the API (usually 8080)
+	var hostPort string
+	for portKey, bindings := range inspect.NetworkSettings.Ports {
+		// Look for the API port (typically 8080/tcp)
+		if strings.HasPrefix(string(portKey), "8080") && len(bindings) > 0 {
+			hostPort = bindings[0].HostPort
+			break
+		}
+	}
+
+	if hostPort == "" {
+		return "", runner.NewRunnerError("GetBotAPIURL", botID,
+			fmt.Errorf("no host port mapping found for API port"), false)
+	}
+
+	// Determine the host to use
+	// For unix:// sockets, use localhost
+	// For tcp:// URLs, extract the hostname
+	apiHost := "localhost"
+	if strings.HasPrefix(d.config.Host, "tcp://") {
+		// Parse tcp://192.168.1.x:2375 -> 192.168.1.x
+		hostURL := strings.TrimPrefix(d.config.Host, "tcp://")
+		if idx := strings.Index(hostURL, ":"); idx > 0 {
+			apiHost = hostURL[:idx]
+		} else {
+			apiHost = hostURL
+		}
+	}
+
+	return fmt.Sprintf("http://%s:%s", apiHost, hostPort), nil
+}
+
 // GetBotLogs retrieves logs from a bot container
 func (d *Runtime) GetBotLogs(ctx context.Context, botID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	containerID, err := d.findContainer(ctx, botID)

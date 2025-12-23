@@ -6,6 +6,7 @@ import (
 
 	_ "volaticloud/internal/docker" // Register Docker runtime creator
 	"volaticloud/internal/enum"
+	_ "volaticloud/internal/kubernetes" // Register Kubernetes runtime creator
 	"volaticloud/internal/runner"
 
 	"github.com/stretchr/testify/assert"
@@ -87,16 +88,19 @@ func TestFactory(t *testing.T) {
 			"namespace": "default",
 		}
 
+		// Kubernetes runtime requires a valid kubeconfig or in-cluster config
+		// In test environment, this will fail at runtime creation or health check
 		rt, err := factory.Create(ctx, enum.RunnerKubernetes, config)
 
-		require.NoError(t, err)
-		require.NotNil(t, rt)
-		assert.Equal(t, "kubernetes", rt.Type())
-
-		// Verify it's not actually supported
-		err = rt.HealthCheck(ctx)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "not yet supported")
+		// We expect an error because we're not running in a K8s cluster
+		// and haven't provided a kubeconfig
+		if err != nil {
+			assert.Contains(t, err.Error(), "Kubernetes")
+		} else {
+			require.NotNil(t, rt)
+			assert.Equal(t, "kubernetes", rt.Type())
+			rt.Close()
+		}
 	})
 
 	t.Run("CreateLocalRuntime", func(t *testing.T) {
@@ -202,12 +206,18 @@ func TestCreateBacktestRunner(t *testing.T) {
 			"namespace": "default",
 		}
 
+		// Kubernetes backtest runner requires a valid kubeconfig or in-cluster config
+		// In test environment, this will fail at runtime creation or health check
 		runner, err := factory.CreateBacktestRunner(ctx, enum.RunnerKubernetes, config)
 
-		require.NoError(t, err)
-		require.NotNil(t, runner)
-		// MockBacktestRunner returns "mock" as type
-		assert.Equal(t, "mock", runner.Type())
+		// We expect an error because we're not running in a K8s cluster
+		if err != nil {
+			assert.Contains(t, err.Error(), "Kubernetes")
+		} else {
+			require.NotNil(t, runner)
+			assert.Equal(t, "kubernetes", runner.Type())
+			runner.Close()
+		}
 	})
 
 	t.Run("CreateLocalBacktestRunner", func(t *testing.T) {
