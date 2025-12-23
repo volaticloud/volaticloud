@@ -1,0 +1,74 @@
+---
+# ServiceMonitor for kubelet/cAdvisor metrics
+# Collects container CPU, memory, network, and disk I/O metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubelet
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kubelet
+    app.kubernetes.io/part-of: volaticloud
+spec:
+  jobLabel: k8s-app
+  # Select kubelets in kube-system namespace
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  selector:
+    matchLabels:
+      k8s-app: kubelet
+  endpoints:
+    # Kubelet metrics endpoint
+    - port: https-metrics
+      scheme: https
+      path: /metrics
+      interval: 30s
+      honorLabels: true
+      tlsConfig:
+        insecureSkipVerify: true
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    # cAdvisor metrics endpoint (container metrics)
+    - port: https-metrics
+      scheme: https
+      path: /metrics/cadvisor
+      interval: 30s
+      honorLabels: true
+      tlsConfig:
+        insecureSkipVerify: true
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    # Resource metrics endpoint
+    - port: https-metrics
+      scheme: https
+      path: /metrics/resource
+      interval: 30s
+      honorLabels: true
+      tlsConfig:
+        insecureSkipVerify: true
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+---
+# PodMonitor for bot pods in volaticloud namespaces
+# Scrapes Freqtrade metrics if exposed
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: freqtrade-bots
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: freqtrade
+    app.kubernetes.io/part-of: volaticloud
+spec:
+  # Match pods across all namespaces with volaticloud label
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/managed-by: volaticloud
+      app.kubernetes.io/component: bot
+  podMetricsEndpoints:
+    - port: api
+      path: /metrics
+      interval: 60s
+      # Skip if endpoint not available (Freqtrade may not expose /metrics)
+      honorLabels: true

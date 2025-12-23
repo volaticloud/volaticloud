@@ -19,6 +19,14 @@ deployments/
 │   ├── keycloak-client.yaml
 │   └── README.md
 │
+├── prometheus/      # Prometheus monitoring stack
+│   ├── namespace.yaml
+│   ├── operator-subscription.yaml
+│   ├── prometheus-instance.yaml
+│   ├── servicemonitors.yaml
+│   ├── prometheus-ingress.yaml
+│   └── README.md
+│
 └── README.md        # This file
 ```
 
@@ -28,7 +36,8 @@ The deployment is structured in layers:
 
 1. **OLM Layer**: Operator Lifecycle Manager for managing Kubernetes operators
 2. **Authentication Layer**: Keycloak for OIDC/OAuth2 authentication
-3. **Application Layer**: VolatiCloud application (Helm chart - coming soon)
+3. **Monitoring Layer**: Prometheus for container metrics collection
+4. **Application Layer**: VolatiCloud application (Helm chart)
 
 ## GitOps Workflow
 
@@ -164,6 +173,21 @@ Configure the following secrets in your GitHub repository settings (**Settings �
 
 **Duration**: ~10-15 minutes (first time), ~3-5 minutes (updates)
 
+### deploy-prometheus.yaml
+
+**Triggers**:
+
+- Push to `main` branch with changes in `deployments/prometheus/**`
+- Manual trigger via `gh workflow run deploy-prometheus.yaml`
+
+**Jobs**:
+
+1. **Validate**: Lint and validate all manifests
+2. **Check OLM**: Verify OLM is installed (required)
+3. **Deploy Prometheus**: Deploy Prometheus operator, instance, and ServiceMonitors
+
+**Duration**: ~5-10 minutes (first time), ~2-3 minutes (updates)
+
 ## Verification
 
 ### Check OLM
@@ -193,6 +217,23 @@ kubectl get svc -n keycloak
 
 # Check Keycloak ingress (if configured)
 kubectl get ingress -n keycloak
+```
+
+### Check Prometheus
+
+```bash
+# Check Prometheus instance
+kubectl get prometheus -n monitoring
+
+# Check Prometheus pods
+kubectl get pods -n monitoring
+
+# Check ServiceMonitors
+kubectl get servicemonitor -n monitoring
+
+# Access Prometheus UI (port-forward)
+kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
+# Open http://localhost:9090
 ```
 
 ### Access Keycloak
@@ -363,19 +404,21 @@ kubectl get all -n keycloak
 
 ## Next Steps
 
-After Keycloak is deployed:
+After infrastructure is deployed:
 
 1. **Create Users**: Access Keycloak admin console and create users
 2. **Assign Roles**: Assign appropriate roles (admin, trader, viewer)
 3. **Test Authentication**: Test OIDC login flow
-4. **Deploy Application**: Deploy VolatiCloud application (coming soon)
-5. **Configure Monitoring**: Set up Prometheus/Grafana (optional)
+4. **Deploy Prometheus**: Deploy monitoring stack for container metrics
+5. **Deploy Application**: Deploy VolatiCloud application
+6. **Configure Runner**: Add Prometheus URL to Kubernetes runner config
 
 ## References
 
 - [VKE Documentation](https://www.vultr.com/docs/vultr-kubernetes-engine/)
 - [OLM Documentation](https://olm.operatorframework.io/)
 - [Keycloak Operator](https://www.keycloak.org/operator/installation)
+- [Prometheus Operator](https://prometheus-operator.dev/)
 - [GitHub Actions](https://docs.github.com/en/actions)
 
 ## Support

@@ -1,0 +1,143 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: volaticloud
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: volaticloud
+spec:
+  # Replica count for high availability
+  replicas: 1
+
+  # Service account for Prometheus to access Kubernetes API
+  serviceAccountName: prometheus-volaticloud
+
+  # Select all ServiceMonitors with matching labels
+  serviceMonitorSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: volaticloud
+
+  # Select all PodMonitors with matching labels
+  podMonitorSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: volaticloud
+
+  # Select all PrometheusRules with matching labels
+  ruleSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: volaticloud
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  # Retention period for metrics (7 days)
+  retention: 7d
+
+  # Storage configuration (optional - uses emptyDir if not specified)
+  # Uncomment for persistent storage
+  # storage:
+  #   volumeClaimTemplate:
+  #     spec:
+  #       accessModes: ["ReadWriteOnce"]
+  #       resources:
+  #         requests:
+  #           storage: 10Gi
+  #       storageClassName: vultr-block-storage
+
+  # Security context
+  securityContext:
+    fsGroup: 65534
+    runAsNonRoot: true
+    runAsUser: 65534
+
+  # Enable admin API for remote write/read
+  enableAdminAPI: false
+
+  # External labels added to all metrics
+  externalLabels:
+    cluster: volaticloud
+    environment: production
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-volaticloud
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: volaticloud
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-volaticloud
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: volaticloud
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+    verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-volaticloud
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: volaticloud
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-volaticloud
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-volaticloud
+    namespace: monitoring
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: volaticloud
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: prometheus
+    prometheus: volaticloud
