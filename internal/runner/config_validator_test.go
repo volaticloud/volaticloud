@@ -138,14 +138,24 @@ func TestValidateConfig(t *testing.T) {
 		assert.Contains(t, err.Error(), "host is required")
 	})
 
-	t.Run("KubernetesNotSupported", func(t *testing.T) {
+	t.Run("KubernetesValidConfig", func(t *testing.T) {
 		configData := map[string]interface{}{
 			"namespace": "default",
 		}
 
+		// Kubernetes is now supported, valid config should pass validation
+		err := ValidateConfig(enum.RunnerKubernetes, configData)
+		assert.NoError(t, err)
+	})
+
+	t.Run("KubernetesInvalidConfig", func(t *testing.T) {
+		configData := map[string]interface{}{
+			// Missing required 'namespace'
+		}
+
 		err := ValidateConfig(enum.RunnerKubernetes, configData)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "not yet supported")
+		assert.Contains(t, err.Error(), "namespace is required")
 	})
 
 	t.Run("LocalNotSupported", func(t *testing.T) {

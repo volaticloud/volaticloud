@@ -20,6 +20,20 @@ type Config struct {
 	// This field is required.
 	Namespace string `json:"namespace"`
 
+	// IngressHost is the hostname for Ingress-based bot access.
+	// When set, an Ingress resource is created for each bot with path-based routing.
+	// Bot URL becomes: http(s)://<ingressHost>/bot/<botID>/
+	// Example: "bots.example.com"
+	IngressHost string `json:"ingressHost,omitempty"`
+
+	// IngressClass is the ingress class to use (e.g., "nginx", "traefik").
+	// If empty, the cluster's default ingress class will be used.
+	IngressClass string `json:"ingressClass,omitempty"`
+
+	// IngressTLS enables TLS for the ingress (uses the ingressHost for the secret name).
+	// Requires cert-manager or pre-created TLS secret.
+	IngressTLS bool `json:"ingressTls,omitempty"`
+
 	// StorageClassName is the storage class for PersistentVolumeClaims.
 	// Must support ReadWriteMany access mode for shared data.
 	// If empty, the default storage class will be used.
@@ -141,6 +155,15 @@ func (c *Config) ToMap() map[string]interface{} {
 	}
 	result["namespace"] = c.Namespace
 
+	if c.IngressHost != "" {
+		result["ingressHost"] = c.IngressHost
+	}
+	if c.IngressClass != "" {
+		result["ingressClass"] = c.IngressClass
+	}
+	if c.IngressTLS {
+		result["ingressTls"] = c.IngressTLS
+	}
 	if c.StorageClassName != "" {
 		result["storageClassName"] = c.StorageClassName
 	}

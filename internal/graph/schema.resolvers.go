@@ -9,13 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"strings"
 	"time"
 	"volaticloud/internal/auth"
 	backtest1 "volaticloud/internal/backtest"
 	bot1 "volaticloud/internal/bot"
-	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
@@ -944,30 +942,12 @@ func (r *mutationResolver) GetFreqtradeToken(ctx context.Context, botID uuid.UUI
 		return nil, fmt.Errorf("secure_config missing api_server.password")
 	}
 
-	// Parse runner config to get Docker host
-	// Config may be nested under runner type key (e.g., {"docker": {...}})
-	typeConfig := runner.ExtractRunnerConfig(botRunner.Config, botRunner.Type)
-	dockerConfig, err := docker.ParseConfig(typeConfig)
+	// Get the direct API URL from the runtime
+	// Each runtime (Docker, Kubernetes) handles this differently
+	directAPIURL, err := rt.GetBotAPIURL(ctx, b.ID.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse runner config: %w", err)
+		return nil, fmt.Errorf("failed to get bot API URL: %w", err)
 	}
-
-	// Extract hostname from Docker host URL for backend-to-bot communication
-	// tcp://192.168.1.x:2375 → 192.168.1.x
-	// unix:///var/run/docker.sock → localhost
-	dockerHostURL := dockerConfig.Host
-	apiHost := "localhost"
-	if strings.HasPrefix(dockerHostURL, "tcp://") {
-		// Parse the TCP URL to extract host
-		parsed, err := url.Parse(dockerHostURL)
-		if err == nil && parsed.Hostname() != "" {
-			apiHost = parsed.Hostname()
-		}
-	}
-
-	// Build the direct API URL for backend-to-bot communication
-	// The hostPort is the exposed port on the Docker host
-	directAPIURL := fmt.Sprintf("http://%s:%d", apiHost, status.HostPort)
 
 	// Create Freqtrade client and login using direct URL
 	ftClient := freqtrade.NewBotClient(directAPIURL, username, password)

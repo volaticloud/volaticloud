@@ -1504,6 +1504,9 @@ export type KrakenConfigInput = {
 export type KubernetesConfigInput = {
   context?: InputMaybe<Scalars['String']['input']>;
   freqtradeImage?: InputMaybe<Scalars['String']['input']>;
+  ingressClass?: InputMaybe<Scalars['String']['input']>;
+  ingressHost?: InputMaybe<Scalars['String']['input']>;
+  ingressTls?: InputMaybe<Scalars['Boolean']['input']>;
   kubeconfig?: InputMaybe<Scalars['String']['input']>;
   namespace: Scalars['String']['input'];
   prometheusUrl?: InputMaybe<Scalars['String']['input']>;

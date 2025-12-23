@@ -13,6 +13,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -170,6 +171,15 @@ func (r *Runtime) CreateBot(ctx context.Context, spec runner.BotSpec) error {
 		return fmt.Errorf("failed to create Service: %w", err)
 	}
 
+	// Create Ingress if ingressHost is configured
+	if r.config.IngressHost != "" {
+		_, err = r.createBotIngress(ctx, spec)
+		if err != nil {
+			_ = r.cleanupBotResources(ctx, spec.ID)
+			return fmt.Errorf("failed to create Ingress: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -314,6 +324,50 @@ func (r *Runtime) GetContainerIP(ctx context.Context, botID string) (string, err
 	return service.Spec.ClusterIP, nil
 }
 
+// GetBotAPIURL returns the full URL to access the bot's Freqtrade API
+// For Kubernetes:
+//   - Inside cluster: http://<service-name>.<namespace>.svc.cluster.local:<port>
+//   - Outside cluster: http(s)://<ingressHost>/bot/<botID>/ (requires ingressHost config)
+func (r *Runtime) GetBotAPIURL(ctx context.Context, botID string) (string, error) {
+	serviceName := r.getServiceName(botID)
+	service, err := r.clientset.CoreV1().Services(r.config.Namespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return "", runner.ErrBotNotFound
+		}
+		return "", fmt.Errorf("failed to get service: %w", err)
+	}
+
+	// Get the service port (default to 8080 if not found)
+	port := int32(8080)
+	if len(service.Spec.Ports) > 0 {
+		port = service.Spec.Ports[0].Port
+	}
+
+	// If running inside K8s cluster, use internal DNS
+	if r.isRunningInCluster() {
+		return fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, r.config.Namespace, port), nil
+	}
+
+	// Running outside K8s cluster - use Ingress URL
+	if r.config.IngressHost != "" {
+		scheme := "http"
+		if r.config.IngressTLS {
+			scheme = "https"
+		}
+		return fmt.Sprintf("%s://%s/bot/%s/", scheme, r.config.IngressHost, botID), nil
+	}
+
+	// No ingressHost configured - cannot access from outside cluster
+	return "", fmt.Errorf("ingressHost is required for external bot access; configure it in the runner settings")
+}
+
+// isRunningInCluster checks if the backend is running inside a K8s cluster
+func (r *Runtime) isRunningInCluster() bool {
+	_, err := rest.InClusterConfig()
+	return err == nil
+}
+
 // GetBotLogs returns logs from the bot pod
 func (r *Runtime) GetBotLogs(ctx context.Context, botID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	// Find the pod
@@ -431,6 +485,10 @@ func (r *Runtime) getSecretName(botID string) string {
 	return fmt.Sprintf("bot-%s-secrets", botID)
 }
 
+func (r *Runtime) getIngressName(botID string) string {
+	return fmt.Sprintf("volaticloud-bot-%s-ingress", botID)
+}
+
 func (r *Runtime) scaleDeployment(ctx context.Context, name string, replicas int32) error {
 	deployment, err := r.clientset.AppsV1().Deployments(r.config.Namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -485,6 +543,13 @@ func (r *Runtime) cleanupBotResources(ctx context.Context, botID string) error {
 	err = r.clientset.CoreV1().Secrets(r.config.Namespace).Delete(ctx, secretName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, fmt.Errorf("failed to delete secret: %w", err))
+	}
+
+	// Delete Ingress (if exists)
+	ingressName := r.getIngressName(botID)
+	err = r.clientset.NetworkingV1().Ingresses(r.config.Namespace).Delete(ctx, ingressName, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, fmt.Errorf("failed to delete ingress: %w", err))
 	}
 
 	if len(errs) > 0 {
@@ -811,7 +876,8 @@ ls -la /userdata/strategies/`
 	return r.clientset.AppsV1().Deployments(r.config.Namespace).Create(ctx, deployment, metav1.CreateOptions{})
 }
 
-// createBotService creates a Service for API access
+// createBotService creates a ClusterIP Service for internal API access
+// External access is provided via Ingress when ingressHost is configured
 func (r *Runtime) createBotService(ctx context.Context, spec runner.BotSpec) (*corev1.Service, error) {
 	apiPort := spec.APIPort
 	if apiPort == 0 {
@@ -844,6 +910,83 @@ func (r *Runtime) createBotService(ctx context.Context, spec runner.BotSpec) (*c
 	}
 
 	return r.clientset.CoreV1().Services(r.config.Namespace).Create(ctx, service, metav1.CreateOptions{})
+}
+
+// createBotIngress creates an Ingress for external bot API access
+// Uses path-based routing: http(s)://<ingressHost>/bot/<botID>/
+func (r *Runtime) createBotIngress(ctx context.Context, spec runner.BotSpec) (*networkingv1.Ingress, error) {
+	apiPort := spec.APIPort
+	if apiPort == 0 {
+		apiPort = 8080
+	}
+
+	pathType := networkingv1.PathTypeImplementationSpecific
+	serviceName := r.getServiceName(spec.ID)
+
+	ingress := &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      r.getIngressName(spec.ID),
+			Namespace: r.config.Namespace,
+			Labels: map[string]string{
+				LabelManaged:   "true",
+				LabelBotID:     spec.ID,
+				LabelComponent: ComponentBot,
+			},
+			Annotations: map[string]string{
+				// nginx ingress annotations for regex path matching
+				"nginx.ingress.kubernetes.io/use-regex":      "true",
+				"nginx.ingress.kubernetes.io/rewrite-target": "/$2",
+				// preserve host header for Freqtrade API
+				"nginx.ingress.kubernetes.io/proxy-body-size": "50m",
+			},
+		},
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				{
+					Host: r.config.IngressHost,
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								{
+									// Match /bot/<botID>/ and /bot/<botID>/<anything>
+									// Capture group for rewrite: /bot/<botID>(/|$)(.*)
+									Path:     fmt.Sprintf("/bot/%s(/|$)(.*)", spec.ID),
+									PathType: &pathType,
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: serviceName,
+											Port: networkingv1.ServiceBackendPort{
+												Number: safeInt32(apiPort),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Set ingress class if configured
+	if r.config.IngressClass != "" {
+		ingress.Spec.IngressClassName = &r.config.IngressClass
+	}
+
+	// Configure TLS if enabled
+	if r.config.IngressTLS {
+		ingress.Spec.TLS = []networkingv1.IngressTLS{
+			{
+				Hosts:      []string{r.config.IngressHost},
+				SecretName: fmt.Sprintf("%s-tls", r.config.IngressHost),
+			},
+		}
+		// Add cert-manager annotation for automatic certificate
+		ingress.Annotations["cert-manager.io/cluster-issuer"] = "letsencrypt-prod"
+	}
+
+	return r.clientset.NetworkingV1().Ingresses(r.config.Namespace).Create(ctx, ingress, metav1.CreateOptions{})
 }
 
 // Ensure LogReader implements io.ReadCloser

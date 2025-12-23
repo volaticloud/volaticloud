@@ -70,6 +70,9 @@ input KubernetesConfigInput {
   kubeconfig: String          # Kubeconfig YAML content (paste full config, empty = in-cluster)
   context: String             # Kubernetes context to use
   namespace: String!          # Kubernetes namespace (required)
+  ingressHost: String         # Ingress hostname for path-based bot access (e.g., "bots.example.com")
+  ingressClass: String        # Ingress class to use (e.g., "nginx", "traefik")
+  ingressTls: Boolean         # Enable TLS for ingress (requires cert-manager or pre-created secret)
   storageClassName: String    # Storage class for PVCs (RWX required for shared data)
   sharedDataPVC: String       # PVC name for shared OHLCV data (default: volaticloud-freqtrade-data)
   freqtradeImage: String      # Default freqtrade image (default: freqtradeorg/freqtrade:stable)

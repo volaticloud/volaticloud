@@ -26,16 +26,13 @@ func (f *Factory) Create(ctx context.Context, runnerType enum.RunnerType, config
 		return creator(ctx, typeConfig)
 	}
 
-	// Fallback to built-in stubs
+	// Fallback to built-in stubs (only local is stubbed)
 	switch runnerType {
-	case enum.RunnerKubernetes:
-		return f.createKubernetesRuntime(ctx, configData)
-
 	case enum.RunnerLocal:
 		return f.createLocalRuntime(ctx, configData)
 
 	default:
-		return nil, fmt.Errorf("unsupported runner type: %s", runnerType)
+		return nil, fmt.Errorf("unsupported runner type: %s (no registered creator found)", runnerType)
 	}
 }
 
@@ -50,41 +47,23 @@ func (f *Factory) CreateBacktestRunner(ctx context.Context, runnerType enum.Runn
 		return creator(ctx, typeConfig)
 	}
 
-	// Fallback to built-in stubs
+	// Fallback to built-in stubs (only local is stubbed)
 	switch runnerType {
-	case enum.RunnerKubernetes:
-		return f.createKubernetesBacktestRunner(ctx, configData)
-
 	case enum.RunnerLocal:
 		return f.createLocalBacktestRunner(ctx, configData)
 
 	default:
-		return nil, fmt.Errorf("unsupported runner type: %s", runnerType)
+		return nil, fmt.Errorf("unsupported runner type: %s (no registered creator found)", runnerType)
 	}
 }
 
-// createKubernetesRuntime creates a Kubernetes runtime instance
-func (f *Factory) createKubernetesRuntime(ctx context.Context, configData map[string]interface{}) (Runtime, error) {
-	// For now, Kubernetes is not implemented
-	runtime := NewKubernetesRuntime()
-	return runtime, nil
-}
-
-// createLocalRuntime creates a Local runtime instance
+// createLocalRuntime creates a Local runtime instance (stub - not yet supported)
 func (f *Factory) createLocalRuntime(ctx context.Context, configData map[string]interface{}) (Runtime, error) {
-	// For now, Local is not implemented
 	runtime := NewLocalRuntime()
 	return runtime, nil
 }
 
-// createKubernetesBacktestRunner creates a Kubernetes backtest runner instance
-func (f *Factory) createKubernetesBacktestRunner(ctx context.Context, configData map[string]interface{}) (BacktestRunner, error) {
-	// For now, Kubernetes is not implemented
-	return &MockBacktestRunner{}, nil
-}
-
-// createLocalBacktestRunner creates a Local backtest runner instance
+// createLocalBacktestRunner creates a Local backtest runner instance (stub - not yet supported)
 func (f *Factory) createLocalBacktestRunner(ctx context.Context, configData map[string]interface{}) (BacktestRunner, error) {
-	// For now, Local is not implemented
 	return &MockBacktestRunner{}, nil
 }
