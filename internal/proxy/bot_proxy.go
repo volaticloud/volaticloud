@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/runner"
@@ -57,26 +56,33 @@ func (p *BotProxy) Handler() http.Handler {
 			return
 		}
 
-		// Create reverse proxy
-		proxy := httputil.NewSingleHostReverseProxy(targetURL)
+		// Strip /gateway/v1/bot/{id} prefix from request path
+		// e.g., /gateway/v1/bot/123/api/v1/status -> /api/v1/status
+		prefix := "/gateway/v1/bot/" + botIDStr
+		strippedPath := strings.TrimPrefix(r.URL.Path, prefix)
+		if strippedPath == "" {
+			strippedPath = "/"
+		}
 
-		// Customize the director to strip the /gateway/v1/bot/{id} prefix
+		// Build full target URL by joining target base path with stripped path
+		// Target URL may have a path (e.g., /bot/{id}/ for K8s ingress)
+		fullPath := strings.TrimSuffix(targetURL.Path, "/") + strippedPath
+
+		// Create reverse proxy with base URL (scheme + host only)
+		baseURL := &url.URL{
+			Scheme: targetURL.Scheme,
+			Host:   targetURL.Host,
+		}
+		proxy := httputil.NewSingleHostReverseProxy(baseURL)
+
+		// Customize the director to set the correct path
 		originalDirector := proxy.Director
 		proxy.Director = func(req *http.Request) {
 			originalDirector(req)
 
-			// Strip /gateway/v1/bot/{id} prefix from path
-			// e.g., /gateway/v1/bot/123/api/v1/status -> /api/v1/status
-			prefix := "/gateway/v1/bot/" + botIDStr
-			if strings.HasPrefix(req.URL.Path, prefix) {
-				req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
-				if req.URL.Path == "" {
-					req.URL.Path = "/"
-				}
-			}
-
-			// Update raw path as well
-			req.URL.RawPath = req.URL.Path
+			// Set the full path (target path + stripped request path)
+			req.URL.Path = fullPath
+			req.URL.RawPath = fullPath
 
 			// Set host header
 			req.Host = targetURL.Host
@@ -93,6 +99,7 @@ func (p *BotProxy) Handler() http.Handler {
 }
 
 // getBotTargetURL retrieves the target URL for a bot's Freqtrade API.
+// Uses the runtime's GetBotAPIURL method which handles Docker, Kubernetes, etc.
 func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.URL, error) {
 	// Load bot with runner
 	b, err := p.client.Bot.Query().
@@ -112,34 +119,22 @@ func (p *BotProxy) getBotTargetURL(ctx context.Context, botID uuid.UUID) (*url.U
 		return nil, fmt.Errorf("bot has no runner configuration")
 	}
 
-	// Create runner client
+	// Create runtime client
 	rt, err := p.factory.Create(ctx, botRunner.Type, botRunner.Config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create runner client: %w", err)
+		return nil, fmt.Errorf("failed to create runtime client: %w", err)
 	}
 	defer rt.Close()
 
-	// Get bot status to find the mapped host port (container name derived from bot ID)
-	status, err := rt.GetBotStatus(ctx, b.ID.String())
+	// Get bot API URL from runtime (handles Docker, Kubernetes, etc.)
+	apiURL, err := rt.GetBotAPIURL(ctx, b.ID.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get bot status: %w", err)
+		return nil, fmt.Errorf("failed to get bot API URL: %w", err)
 	}
 
-	// Check if we have a mapped host port
-	if status.HostPort == 0 {
-		return nil, fmt.Errorf("bot container has no mapped port")
-	}
-
-	// Extract Docker host from runner config
-	// Config format: {"host": "tcp://hostname:2376", ...}
-	dockerHost := docker.ExtractDockerHostFromConfig(botRunner.Config)
-	if dockerHost == "" {
-		return nil, fmt.Errorf("could not determine Docker host from runner config")
-	}
-
-	targetURL, err := url.Parse(fmt.Sprintf("http://%s:%d", dockerHost, status.HostPort))
+	targetURL, err := url.Parse(apiURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build target URL: %w", err)
+		return nil, fmt.Errorf("failed to parse bot API URL: %w", err)
 	}
 
 	return targetURL, nil
