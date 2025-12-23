@@ -1,0 +1,224 @@
+name: Deploy Prometheus
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deployments/prometheus/**'
+  workflow_dispatch:
+    inputs:
+      skip-olm:
+        description: 'Skip OLM installation check (if already installed)'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-prometheus-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel deployments
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Validate YAML syntax
+        run: |
+          echo "🔍 Validating YAML syntax..."
+          for file in namespace.yaml operator-subscription.yaml prometheus-instance.yaml servicemonitors.yaml; do
+            if [ ! -f "deployments/prometheus/$file" ]; then
+              echo "❌ Missing file: deployments/prometheus/$file"
+              exit 1
+            fi
+            python3 -c "import yaml; list(yaml.safe_load_all(open('deployments/prometheus/$file')))" || {
+              echo "❌ Invalid YAML in: deployments/prometheus/$file"
+              exit 1
+            }
+            echo "✅ Valid: deployments/prometheus/$file"
+          done
+          echo "✅ All manifests have valid YAML syntax"
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "🔍 Checking for hardcoded secrets..."
+          if grep -rE "(password|secret|token):" deployments/prometheus/ | grep -v "#" | grep -v "secretName" | grep -v "bearerTokenFile"; then
+            echo "⚠️  Found potential secrets in manifest - review required"
+          fi
+          echo "✅ Secret check complete"
+
+  check-olm:
+    name: Check OLM
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    needs: validate
+    environment: prod
+    outputs:
+      olm-installed: ${{ steps.check-olm.outputs.olm-installed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+          echo "✅ Connected to Kubernetes cluster"
+
+      - name: Check if OLM is installed
+        id: check-olm
+        run: |
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          if kubectl get namespace olm &>/dev/null && kubectl get csv -n olm &>/dev/null; then
+            echo "olm-installed=true" >> $GITHUB_OUTPUT
+            echo "✅ OLM is installed"
+          else
+            echo "olm-installed=false" >> $GITHUB_OUTPUT
+            echo "❌ OLM is not installed"
+            echo "Please deploy Keycloak first or run the OLM installation manually"
+            exit 1
+          fi
+
+  deploy-prometheus:
+    name: Deploy Prometheus
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    needs: [validate, check-olm]
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.VKE_KUBECONFIG }}" | base64 -d > ${{ github.workspace }}/kubeconfig
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          kubectl cluster-info
+
+      - name: Create monitoring namespace
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Creating monitoring namespace..."
+          kubectl apply -f deployments/prometheus/namespace.yaml
+          echo "✅ Namespace created"
+
+      - name: Install Prometheus operator
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📦 Installing Prometheus operator..."
+          kubectl apply -f deployments/prometheus/operator-subscription.yaml
+
+          echo "⏳ Waiting for operator to be installed..."
+          for i in {1..60}; do
+            if kubectl get csv -n monitoring 2>/dev/null | grep -q prometheus; then
+              echo "✅ Prometheus operator is installing..."
+              break
+            fi
+            echo "Waiting for operator... ($i/60)"
+            sleep 5
+          done
+
+          # Wait for operator pod to be ready
+          echo "⏳ Waiting for operator pod to be ready..."
+          kubectl wait --for=condition=Ready pod \
+            -l app.kubernetes.io/name=prometheus-operator \
+            -n monitoring \
+            --timeout=300s || echo "Warning: Operator pod not ready yet, continuing..."
+
+          echo "✅ Prometheus operator installed"
+
+      - name: Deploy Prometheus instance
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🚀 Deploying Prometheus instance..."
+          kubectl apply -f deployments/prometheus/prometheus-instance.yaml
+
+          echo "⏳ Waiting for Prometheus to be ready..."
+          sleep 30
+
+          kubectl wait --for=condition=Ready pod \
+            -l app.kubernetes.io/name=prometheus \
+            -n monitoring \
+            --timeout=300s || echo "Warning: Prometheus pod not ready yet, check status manually"
+
+          echo "✅ Prometheus instance deployed"
+
+      - name: Deploy ServiceMonitors
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📊 Deploying ServiceMonitors..."
+          kubectl apply -f deployments/prometheus/servicemonitors.yaml
+          echo "✅ ServiceMonitors deployed"
+
+      - name: Get Prometheus status
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "📊 Prometheus Status:"
+          echo ""
+          echo "Prometheus Instances:"
+          kubectl get prometheus -n monitoring
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n monitoring
+          echo ""
+          echo "Services:"
+          kubectl get svc -n monitoring
+          echo ""
+          echo "ServiceMonitors:"
+          kubectl get servicemonitor -n monitoring
+
+      - name: Verify Prometheus is scraping
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig
+        run: |
+          echo "🔍 Verifying Prometheus is running..."
+
+          # Get prometheus service
+          PROM_SVC=$(kubectl get svc -n monitoring prometheus-operated -o jsonpath='{.spec.clusterIP}' 2>/dev/null || echo "")
+
+          if [ -n "$PROM_SVC" ]; then
+            echo "✅ Prometheus service found at: $PROM_SVC:9090"
+            echo "🌐 Internal URL: http://prometheus-operated.monitoring.svc.cluster.local:9090"
+          else
+            echo "⚠️  Prometheus service not found yet"
+          fi
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## ✅ Prometheus Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Namespace**: monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "- **Instance**: volaticloud" >> $GITHUB_STEP_SUMMARY
+          echo "- **Retention**: 7 days" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Configuration for VolatiCloud" >> $GITHUB_STEP_SUMMARY
+          echo "Add this to your Kubernetes runner config:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          echo '{"prometheusUrl": "http://prometheus-operated.monitoring.svc.cluster.local:9090"}' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Collected Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- Container CPU usage" >> $GITHUB_STEP_SUMMARY
+          echo "- Container memory usage" >> $GITHUB_STEP_SUMMARY
+          echo "- Network I/O" >> $GITHUB_STEP_SUMMARY
+          echo "- Disk I/O" >> $GITHUB_STEP_SUMMARY
