@@ -75,11 +75,13 @@ sequenceDiagram
 ## Prerequisites
 
 1. **OLM Installed**: Operator Lifecycle Manager must be running
+
    ```bash
    kubectl get pods -n olm
    ```
 
 2. **cert-manager** (optional): For TLS ingress
+
    ```bash
    kubectl get pods -n cert-manager
    ```
@@ -147,12 +149,14 @@ kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
 After deployment, configure the runner with the Prometheus URL:
 
 **In-cluster (recommended):**
-```
+
+```text
 http://prometheus-operated.monitoring.svc.cluster.local:9090
 ```
 
 **Via Ingress (if configured):**
-```
+
+```text
 https://prometheus.volaticloud.com
 ```
 
@@ -207,22 +211,26 @@ Adjust based on cluster size and metric volume.
 ### Example Queries
 
 **CPU usage per container:**
+
 ```promql
 sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod, container)
 ```
 
 **Memory usage per pod:**
+
 ```promql
 sum(container_memory_working_set_bytes{container!=""}) by (pod)
 ```
 
 **Network I/O per pod:**
+
 ```promql
 sum(rate(container_network_receive_bytes_total[5m])) by (pod)
 sum(rate(container_network_transmit_bytes_total[5m])) by (pod)
 ```
 
 **Disk I/O per pod:**
+
 ```promql
 sum(rate(container_fs_reads_bytes_total[5m])) by (pod)
 sum(rate(container_fs_writes_bytes_total[5m])) by (pod)
@@ -265,8 +273,7 @@ When creating a Kubernetes runner, set the Prometheus URL:
 ```json
 {
   "namespace": "volaticloud-public",
-  "prometheusUrl": "http://prometheus-operated.monitoring.svc.cluster.local:9090",
-  ...
+  "prometheusUrl": "http://prometheus-operated.monitoring.svc.cluster.local:9090"
 }
 ```
 
@@ -281,6 +288,7 @@ By default, Prometheus is only accessible within the cluster via ClusterIP servi
 If external access is needed:
 
 1. **Create basic auth secret:**
+
    ```bash
    htpasswd -c auth prometheus
    kubectl create secret generic prometheus-basic-auth \
@@ -291,6 +299,7 @@ If external access is needed:
    Uncomment auth annotations in `prometheus-ingress.yaml`
 
 3. **Apply ingress:**
+
    ```bash
    kubectl apply -f deployments/prometheus/prometheus-ingress.yaml
    ```
