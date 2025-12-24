@@ -84,6 +84,15 @@ export type GetFreqtradeTokenMutationVariables = Types.Exact<{
 
 export type GetFreqtradeTokenMutation = { __typename?: 'Mutation', getFreqtradeToken: { __typename?: 'FreqtradeToken', apiUrl: string, username: string, accessToken: string, refreshToken: string } };
 
+export type GetBotUsageHistoryQueryVariables = Types.Exact<{
+  botID: Types.Scalars['ID']['input'];
+  start: Types.Scalars['Time']['input'];
+  end: Types.Scalars['Time']['input'];
+}>;
+
+
+export type GetBotUsageHistoryQuery = { __typename?: 'Query', botUsageHistory: Array<{ __typename?: 'ResourceUsageAggregation', id: string, resourceType: Types.ResourceUsageAggregationResourceType, resourceID: string, granularity: Types.ResourceUsageAggregationAggregationGranularity, bucketStart: string, bucketEnd: string, cpuCoreSeconds: number, cpuAvgPercent: number, cpuMaxPercent: number, memoryGBSeconds: number, memoryAvgBytes: number, memoryMaxBytes: number, networkRxBytes: number, networkTxBytes: number, blockReadBytes: number, blockWriteBytes: number, sampleCount: number }> };
+
 
 export const GetBotsDocument = gql`
     query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
@@ -600,3 +609,61 @@ export function useGetFreqtradeTokenMutation(baseOptions?: Apollo.MutationHookOp
 export type GetFreqtradeTokenMutationHookResult = ReturnType<typeof useGetFreqtradeTokenMutation>;
 export type GetFreqtradeTokenMutationResult = Apollo.MutationResult<GetFreqtradeTokenMutation>;
 export type GetFreqtradeTokenMutationOptions = Apollo.BaseMutationOptions<GetFreqtradeTokenMutation, GetFreqtradeTokenMutationVariables>;
+export const GetBotUsageHistoryDocument = gql`
+    query GetBotUsageHistory($botID: ID!, $start: Time!, $end: Time!) {
+  botUsageHistory(botID: $botID, start: $start, end: $end) {
+    id
+    resourceType
+    resourceID
+    granularity
+    bucketStart
+    bucketEnd
+    cpuCoreSeconds
+    cpuAvgPercent
+    cpuMaxPercent
+    memoryGBSeconds
+    memoryAvgBytes
+    memoryMaxBytes
+    networkRxBytes
+    networkTxBytes
+    blockReadBytes
+    blockWriteBytes
+    sampleCount
+  }
+}
+    `;
+
+/**
+ * __useGetBotUsageHistoryQuery__
+ *
+ * To run a query within a React component, call `useGetBotUsageHistoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetBotUsageHistoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetBotUsageHistoryQuery({
+ *   variables: {
+ *      botID: // value for 'botID'
+ *      start: // value for 'start'
+ *      end: // value for 'end'
+ *   },
+ * });
+ */
+export function useGetBotUsageHistoryQuery(baseOptions: Apollo.QueryHookOptions<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables> & ({ variables: GetBotUsageHistoryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>(GetBotUsageHistoryDocument, options);
+      }
+export function useGetBotUsageHistoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>(GetBotUsageHistoryDocument, options);
+        }
+export function useGetBotUsageHistorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>(GetBotUsageHistoryDocument, options);
+        }
+export type GetBotUsageHistoryQueryHookResult = ReturnType<typeof useGetBotUsageHistoryQuery>;
+export type GetBotUsageHistoryLazyQueryHookResult = ReturnType<typeof useGetBotUsageHistoryLazyQuery>;
+export type GetBotUsageHistorySuspenseQueryHookResult = ReturnType<typeof useGetBotUsageHistorySuspenseQuery>;
+export type GetBotUsageHistoryQueryResult = Apollo.QueryResult<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>;

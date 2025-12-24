@@ -118,9 +118,12 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 		return
 	}
 
-	// Record usage sample if billing is enabled and backtest is running
+	// Record usage sample if billing is enabled and backtest is running or just completed
 	// OwnerID is from the strategy (backtest belongs to strategy which has owner_id)
-	if bt.Edges.Runner.BillingEnabled && status.Status == enum.TaskStatusRunning && bt.Edges.Strategy != nil {
+	// We record samples for both running AND just-completed backtests to capture final metrics
+	shouldRecordSample := bt.Edges.Runner.BillingEnabled && bt.Edges.Strategy != nil &&
+		(status.Status == enum.TaskStatusRunning || status.Status == enum.TaskStatusCompleted)
+	if shouldRecordSample {
 		if err := m.usageCollector.RecordSample(ctx, usage.UsageSample{
 			ResourceType:    enum.ResourceTypeBacktest,
 			ResourceID:      bt.ID,

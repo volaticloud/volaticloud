@@ -35,6 +35,7 @@ import {
   useDeleteBotMutation,
 } from './bots.generated';
 import BotMetrics from './BotMetrics';
+import BotUsageCharts from './BotUsageCharts';
 import FreqUIDialog from './FreqUIDialog';
 import { useGroupNavigate } from '../../contexts/GroupContext';
 
@@ -334,6 +335,9 @@ const BotDetail = () => {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Resource Usage Charts */}
+      <BotUsageCharts botId={bot.id} />
 
       {/* Recent Trades */}
       {bot.trades?.edges && bot.trades.edges.length > 0 && (

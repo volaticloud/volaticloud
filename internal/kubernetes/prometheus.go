@@ -14,11 +14,13 @@ import (
 	"sync"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
-// PrometheusClient queries Prometheus for container metrics
+// PrometheusClient queries Prometheus for container metrics with Metrics Server fallback
 type PrometheusClient struct {
 	baseURL    string
 	httpClient *http.Client
@@ -31,6 +33,9 @@ type PrometheusClient struct {
 	serviceName       string
 	servicePort       string
 
+	// Metrics Server fallback for real-time metrics (useful for short-lived pods)
+	metricsClient metricsv.Interface
+
 	// Track which method works
 	mu           sync.RWMutex
 	useAPIProxy  bool
@@ -39,8 +44,13 @@ type PrometheusClient struct {
 	directWorks  bool
 }
 
-// ContainerIOMetrics holds network and disk I/O metrics for a container
-type ContainerIOMetrics struct {
+// ContainerMetrics holds all container metrics from Prometheus
+type ContainerMetrics struct {
+	// Resource metrics
+	CPUPercent  float64 // CPU usage as percentage (0-100+)
+	MemoryBytes int64   // Memory usage in bytes
+
+	// I/O metrics
 	NetworkRxBytes int64
 	NetworkTxBytes int64
 	DiskReadBytes  int64
@@ -63,9 +73,22 @@ type prometheusResponse struct {
 // Format: http(s)://{service}.{namespace}.svc.cluster.local:{port}
 var clusterServiceRegex = regexp.MustCompile(`^https?://([^.]+)\.([^.]+)\.svc\.cluster\.local(?::(\d+))?(.*)$`)
 
-// NewPrometheusClient creates a new Prometheus client
+// Minimum resource values for billing when actual metrics cannot be collected.
+// These are conservative estimates for a Python/Freqtrade process.
+const (
+	// MinimumCPUPercent is the minimum CPU usage (5%) for a running Python process.
+	// This accounts for interpreter overhead and basic computation.
+	MinimumCPUPercent = 5.0
+
+	// MinimumMemoryBytes is the minimum memory usage (50MB) for a Python process.
+	// This covers the Python interpreter, loaded libraries, and basic data structures.
+	MinimumMemoryBytes = 50 * 1024 * 1024 // 50 MB
+)
+
+// NewPrometheusClient creates a new Prometheus client with Metrics Server fallback
 // If restConfig is provided and the URL is a cluster-internal service, it will
-// set up API server proxy as a fallback for when direct connection fails
+// set up API server proxy as a fallback for when direct connection fails.
+// It also creates a Metrics Server client for real-time metrics of short-lived pods.
 func NewPrometheusClient(prometheusURL string, restConfig *rest.Config) *PrometheusClient {
 	if prometheusURL == "" {
 		return nil
@@ -105,6 +128,13 @@ func NewPrometheusClient(prometheusURL string, restConfig *rest.Config) *Prometh
 					client.servicePort = port
 				}
 			}
+		}
+
+		// Create Metrics Server client for real-time metrics fallback
+		// This is useful for short-lived pods that may not be scraped by Prometheus
+		metricsClient, err := metricsv.NewForConfig(restConfig)
+		if err == nil {
+			client.metricsClient = metricsClient
 		}
 	}
 
@@ -223,14 +253,55 @@ func (c *PrometheusClient) doAPIProxyRequest(ctx context.Context, path string) (
 	return io.ReadAll(resp.Body)
 }
 
-// GetContainerIOMetrics queries Prometheus for network and disk I/O metrics
-// It uses cAdvisor metrics exposed by kubelet and scraped by Prometheus
-func (c *PrometheusClient) GetContainerIOMetrics(ctx context.Context, namespace, podName, containerName string) (*ContainerIOMetrics, error) {
+// GetContainerMetrics queries Prometheus for all container metrics (CPU, memory, network, disk)
+// It uses cAdvisor metrics exposed by kubelet and scraped by Prometheus.
+// If Prometheus returns empty results for CPU/Memory, it falls back to Metrics Server
+// for real-time metrics (useful for short-lived pods like backtests).
+func (c *PrometheusClient) GetContainerMetrics(ctx context.Context, namespace, podName, containerName string) (*ContainerMetrics, error) {
 	if c == nil {
 		return nil, nil
 	}
 
-	metrics := &ContainerIOMetrics{}
+	metrics := &ContainerMetrics{}
+
+	// Query CPU usage rate (percentage over last 1 minute)
+	// rate() calculates per-second average, multiply by 100 for percentage
+	cpuQuery := fmt.Sprintf(`rate(container_cpu_usage_seconds_total{namespace="%s",pod="%s",container="%s"}[1m]) * 100`, namespace, podName, containerName)
+	cpuRate, err := c.queryMetricFloat(ctx, cpuQuery)
+	if err != nil {
+		log.Printf("Prometheus CPU query failed for %s/%s: %v", podName, containerName, err)
+	} else {
+		metrics.CPUPercent = cpuRate
+	}
+
+	// Query memory usage in bytes
+	memQuery := fmt.Sprintf(`container_memory_usage_bytes{namespace="%s",pod="%s",container="%s"}`, namespace, podName, containerName)
+	memBytes, err := c.queryMetric(ctx, memQuery)
+	if err != nil {
+		log.Printf("Prometheus memory query failed for %s/%s: %v", podName, containerName, err)
+	} else {
+		metrics.MemoryBytes = memBytes
+	}
+
+	// Fall back to Metrics Server for any missing metrics (CPU or Memory)
+	// This is useful for short-lived pods (like backtests) where:
+	// - CPU rate() needs 2+ data points from Prometheus (takes ~1 min)
+	// - Memory might not be scraped yet
+	if (metrics.CPUPercent == 0 || metrics.MemoryBytes == 0) && c.metricsClient != nil {
+		msMetrics, err := c.getMetricsServerMetrics(ctx, namespace, podName, containerName)
+		if err == nil && msMetrics != nil {
+			if metrics.CPUPercent == 0 && msMetrics.CPUPercent > 0 {
+				metrics.CPUPercent = msMetrics.CPUPercent
+				log.Printf("Metrics Server fallback: got CPU=%.2f%% for %s/%s", msMetrics.CPUPercent, podName, containerName)
+			}
+			if metrics.MemoryBytes == 0 && msMetrics.MemoryBytes > 0 {
+				metrics.MemoryBytes = msMetrics.MemoryBytes
+				log.Printf("Metrics Server fallback: got Memory=%d bytes for %s/%s", msMetrics.MemoryBytes, podName, containerName)
+			}
+		} else if err != nil {
+			log.Printf("Metrics Server fallback failed for %s/%s: %v", podName, containerName, err)
+		}
+	}
 
 	// Query network receive bytes
 	networkRx, err := c.queryMetric(ctx,
@@ -263,8 +334,48 @@ func (c *PrometheusClient) GetContainerIOMetrics(ctx context.Context, namespace,
 	return metrics, nil
 }
 
-// queryMetric executes a single PromQL query and returns the value
+// getMetricsServerMetrics gets real-time CPU and Memory metrics from Kubernetes Metrics Server
+// This is used as a fallback when Prometheus doesn't have data for short-lived pods
+func (c *PrometheusClient) getMetricsServerMetrics(ctx context.Context, namespace, podName, containerName string) (*ContainerMetrics, error) {
+	if c.metricsClient == nil {
+		return nil, fmt.Errorf("metrics server client not available")
+	}
+
+	podMetrics, err := c.metricsClient.MetricsV1beta1().PodMetricses(namespace).Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pod metrics: %w", err)
+	}
+
+	metrics := &ContainerMetrics{}
+
+	// Find the specific container's metrics
+	for _, container := range podMetrics.Containers {
+		if container.Name == containerName {
+			// CPU is in nanocores, convert to percentage (1 core = 1000m = 100%)
+			// MilliValue() returns millicores, so divide by 10 to get percentage
+			cpuMillicores := container.Usage.Cpu().MilliValue()
+			metrics.CPUPercent = float64(cpuMillicores) / 10.0 // 1000m = 100%
+
+			// Memory is in bytes
+			metrics.MemoryBytes = container.Usage.Memory().Value()
+			break
+		}
+	}
+
+	return metrics, nil
+}
+
+// queryMetric executes a single PromQL query and returns the value as int64
 func (c *PrometheusClient) queryMetric(ctx context.Context, query string) (int64, error) {
+	value, err := c.queryMetricFloat(ctx, query)
+	if err != nil {
+		return 0, err
+	}
+	return int64(value), nil
+}
+
+// queryMetricFloat executes a single PromQL query and returns the value as float64
+func (c *PrometheusClient) queryMetricFloat(ctx context.Context, query string) (float64, error) {
 	params := url.Values{}
 	params.Set("query", query)
 	path := "/api/v1/query?" + params.Encode()
@@ -285,18 +396,20 @@ func (c *PrometheusClient) queryMetric(ctx context.Context, query string) (int64
 
 	// Get the first result value (we expect only one result for specific pod/container queries)
 	if len(promResp.Data.Result) == 0 {
+		// Log query for debugging empty results
+		log.Printf("Prometheus query returned empty result set for: %s", query)
 		return 0, nil // No data available
 	}
 
-	// Sum all values if multiple interfaces/devices
-	var total int64
+	// Sum all values if multiple results (e.g., multiple CPU cores)
+	var total float64
 	for _, result := range promResp.Data.Result {
 		if len(result.Value) >= 2 {
 			valueStr, ok := result.Value[1].(string)
 			if ok {
 				value, err := strconv.ParseFloat(valueStr, 64)
 				if err == nil {
-					total += int64(value)
+					total += value
 				}
 			}
 		}
@@ -323,4 +436,44 @@ func (c *PrometheusClient) IsUsingAPIProxy() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.useAPIProxy
+}
+
+// ApplyMinimumCPU returns the greater of the actual CPU value or the minimum.
+// This ensures billing captures a reasonable CPU estimate when metrics cannot be collected
+// for short-lived pods (backtests that complete before Prometheus scrapes them).
+func ApplyMinimumCPU(cpuPercent float64) float64 {
+	if cpuPercent < MinimumCPUPercent {
+		return MinimumCPUPercent
+	}
+	return cpuPercent
+}
+
+// ApplyMinimumMemory returns the greater of the actual memory value or the minimum.
+// This ensures billing captures a reasonable memory estimate when metrics cannot be collected
+// for short-lived pods (backtests that complete before Prometheus scrapes them).
+func ApplyMinimumMemory(memoryBytes int64) int64 {
+	if memoryBytes < MinimumMemoryBytes {
+		return MinimumMemoryBytes
+	}
+	return memoryBytes
+}
+
+// ApplyMinimums applies minimum thresholds to CPU and memory metrics.
+// Returns the metrics with minimums applied and a boolean indicating if minimums were used.
+func ApplyMinimums(metrics *ContainerMetrics) (applied bool) {
+	if metrics == nil {
+		return false
+	}
+
+	if metrics.CPUPercent < MinimumCPUPercent {
+		metrics.CPUPercent = MinimumCPUPercent
+		applied = true
+	}
+
+	if metrics.MemoryBytes < MinimumMemoryBytes {
+		metrics.MemoryBytes = MinimumMemoryBytes
+		applied = true
+	}
+
+	return applied
 }

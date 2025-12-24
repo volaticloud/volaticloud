@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -23,7 +24,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/transport"
-	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 // safeInt32 safely converts an int to int32, clamping to valid port range
@@ -54,7 +54,6 @@ const (
 type Runtime struct {
 	config           *Config
 	clientset        kubernetes.Interface
-	metricsClient    metricsv.Interface
 	prometheusClient *PrometheusClient
 
 	// API server proxy for external access
@@ -76,15 +75,13 @@ func NewRuntime(ctx context.Context, config *Config) (*Runtime, error) {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
-	metricsClient, err := metricsv.NewForConfig(restConfig)
-	if err != nil {
-		// Metrics client is optional, log warning but continue
-		metricsClient = nil
-	}
-
 	// Initialize Prometheus client if URL is configured
 	// Pass restConfig for API server proxy fallback when running outside the cluster
+	// Prometheus is used for all container metrics (CPU, memory, network, disk I/O)
 	prometheusClient := NewPrometheusClient(config.PrometheusURL, restConfig)
+	if prometheusClient == nil && config.PrometheusURL == "" {
+		log.Printf("Warning: Prometheus URL not configured - container metrics will not be collected")
+	}
 
 	// Initialize API proxy client for external access to services
 	var apiProxyClient *http.Client
@@ -106,7 +103,6 @@ func NewRuntime(ctx context.Context, config *Config) (*Runtime, error) {
 	return &Runtime{
 		config:           config,
 		clientset:        clientset,
-		metricsClient:    metricsClient,
 		prometheusClient: prometheusClient,
 		apiProxyClient:   apiProxyClient,
 		apiServerURL:     apiServerURL,
@@ -642,33 +638,18 @@ func (r *Runtime) cleanupBotResources(ctx context.Context, botID string) error {
 }
 
 func (r *Runtime) populatePodMetrics(ctx context.Context, pod *corev1.Pod, status *runner.BotStatus) {
-	// Get CPU/memory from Metrics Server
-	if r.metricsClient != nil {
-		podMetrics, err := r.metricsClient.MetricsV1beta1().PodMetricses(r.config.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
-		if err == nil {
-			for _, container := range podMetrics.Containers {
-				if container.Name == "freqtrade" {
-					// CPU is in millicores, convert to percentage
-					cpuMillis := container.Usage.Cpu().MilliValue()
-					status.CPUUsage = float64(cpuMillis) / 10.0 // Convert millicores to percentage
-
-					// Memory in bytes
-					status.MemoryUsage = container.Usage.Memory().Value()
-					break
-				}
-			}
-		}
-	}
-
-	// Get network/disk I/O from Prometheus (cAdvisor metrics)
+	// Get all metrics from Prometheus (CPU, memory, network, disk I/O via cAdvisor)
 	if r.prometheusClient != nil {
-		ioMetrics, err := r.prometheusClient.GetContainerIOMetrics(ctx, r.config.Namespace, pod.Name, "freqtrade")
-		if err == nil && ioMetrics != nil {
-			status.NetworkRxBytes = ioMetrics.NetworkRxBytes
-			status.NetworkTxBytes = ioMetrics.NetworkTxBytes
-			status.BlockReadBytes = ioMetrics.DiskReadBytes
-			status.BlockWriteBytes = ioMetrics.DiskWriteBytes
+		metrics, err := r.prometheusClient.GetContainerMetrics(ctx, r.config.Namespace, pod.Name, "freqtrade")
+		if err == nil && metrics != nil {
+			status.CPUUsage = metrics.CPUPercent
+			status.MemoryUsage = metrics.MemoryBytes
+			status.NetworkRxBytes = metrics.NetworkRxBytes
+			status.NetworkTxBytes = metrics.NetworkTxBytes
+			status.BlockReadBytes = metrics.DiskReadBytes
+			status.BlockWriteBytes = metrics.DiskWriteBytes
 		}
+		// Prometheus errors are already logged in the PrometheusClient
 	}
 }
 
