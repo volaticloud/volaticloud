@@ -91,6 +91,18 @@ func (d *LocalDataDownloader) DownloadAndUpload(ctx context.Context, dbClient *e
 		}
 	}()
 
+	// Try to download existing data from S3 to enable incremental updates
+	// Freqtrade download-data will skip already downloaded candles
+	if runner.S3DataKey != "" {
+		log.Printf("Runner %s: downloading existing data from S3 for incremental update", runner.Name)
+		if err := d.downloadExistingData(ctx, s3Client, runnerID, dataDir); err != nil {
+			// Log warning but continue - we'll just download everything from scratch
+			log.Printf("Runner %s: failed to download existing data (will download from scratch): %v", runner.Name, err)
+		} else {
+			log.Printf("Runner %s: existing data extracted, will download only new candles", runner.Name)
+		}
+	}
+
 	// Parse and validate data download config
 	exchangesRaw, ok := runner.DataDownloadConfig["exchanges"]
 	if !ok {
@@ -376,6 +388,57 @@ func (d *LocalDataDownloader) getContainerLogs(ctx context.Context, containerID 
 	}
 
 	return string(logs), nil
+}
+
+// downloadExistingData downloads and extracts existing data from S3 for incremental updates.
+func (d *LocalDataDownloader) downloadExistingData(ctx context.Context, s3Client *s3.Client, runnerID string, dataDir string) error {
+	// Download zip from S3
+	reader, err := s3Client.DownloadData(ctx, runnerID)
+	if err != nil {
+		return fmt.Errorf("failed to download from S3: %w", err)
+	}
+	defer reader.Close()
+
+	// Save to temporary zip file
+	zipPath := filepath.Join(d.workDir, runnerID, "existing_data.zip")
+	// #nosec G304 -- zipPath is constructed from controlled workDir and validated runnerID
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		return fmt.Errorf("failed to create temp zip file: %w", err)
+	}
+
+	_, err = io.Copy(zipFile, reader)
+	if closeErr := zipFile.Close(); closeErr != nil {
+		log.Printf("Warning: failed to close temp zip file: %v", closeErr)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to write temp zip file: %w", err)
+	}
+
+	// Get file size for zip reader
+	zipInfo, err := os.Stat(zipPath)
+	if err != nil {
+		return fmt.Errorf("failed to stat temp zip file: %w", err)
+	}
+
+	// Extract zip to data directory
+	// #nosec G304 -- zipPath is constructed from controlled workDir and validated runnerID
+	zipReader, err := os.Open(zipPath)
+	if err != nil {
+		return fmt.Errorf("failed to open temp zip file: %w", err)
+	}
+	defer zipReader.Close()
+
+	if err := UnpackData(zipReader, zipInfo.Size(), dataDir); err != nil {
+		return fmt.Errorf("failed to extract data: %w", err)
+	}
+
+	// Clean up temp zip file
+	if err := os.Remove(zipPath); err != nil {
+		log.Printf("Warning: failed to remove temp zip file: %v", err)
+	}
+
+	return nil
 }
 
 // Cleanup removes all temporary files for a specific runner.

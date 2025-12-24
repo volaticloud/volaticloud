@@ -15,12 +15,21 @@ type BotClient struct {
 
 // NewBotClient creates a new authenticated Freqtrade client for a bot
 func NewBotClient(baseURL, username, password string) *BotClient {
+	return NewBotClientWithHTTPClient(baseURL, username, password, nil)
+}
+
+// NewBotClientWithHTTPClient creates a new authenticated Freqtrade client with a custom HTTP client
+// If httpClient is nil, the default http.Client is used
+func NewBotClientWithHTTPClient(baseURL, username, password string, httpClient *http.Client) *BotClient {
 	config := NewConfiguration()
 	config.Servers = ServerConfigurations{
 		{
 			URL:         baseURL,
 			Description: "Freqtrade API Server",
 		},
+	}
+	if httpClient != nil {
+		config.HTTPClient = httpClient
 	}
 
 	return &BotClient{

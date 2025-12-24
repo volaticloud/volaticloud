@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	"volaticloud/internal/docker"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -228,7 +227,7 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 
 	// Fetch and update bot metrics if bot is running and healthy
 	if botStatus == enum.BotStatusRunning && healthy {
-		if err := m.fetchAndUpdateBotMetrics(ctx, b, status, botRunner.Config); err != nil {
+		if err := m.fetchAndUpdateBotMetrics(ctx, b, rt); err != nil {
 			// Log error but don't fail the status check
 			log.Printf("Bot %s (%s) failed to fetch metrics: %v", b.Name, b.ID, err)
 		}
@@ -281,7 +280,11 @@ func (m *BotMonitor) updateBotStatus(ctx context.Context, botID uuid.UUID, statu
 }
 
 // fetchAndUpdateBotMetrics fetches metrics from Freqtrade API and updates BotMetrics entity
-func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, status *runner.BotStatus, runnerConfig map[string]interface{}) error {
+// Uses the runtime's GetBotHTTPClient to handle access across different environments:
+// - Docker: direct connection or mapped port
+// - Kubernetes in-cluster: service DNS
+// - Kubernetes outside cluster: API server proxy
+func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, rt runner.Runtime) error {
 	// Extract API credentials from secure_config
 	secureConfig := b.SecureConfig
 	if secureConfig == nil {
@@ -303,57 +306,23 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, s
 		return fmt.Errorf("api_server has no password")
 	}
 
-	// Get API port from secure_config or use default
-	apiPort := 8080
-	if listenPort, ok := apiServerConfig["listen_port"].(float64); ok {
-		apiPort = int(listenPort)
+	// Get HTTP client and base URL from runtime
+	// This handles Docker, K8s in-cluster, and K8s API server proxy automatically
+	httpClient, baseURL, err := rt.GetBotHTTPClient(ctx, b.ID.String())
+	if err != nil {
+		return fmt.Errorf("failed to get bot HTTP client: %w", err)
 	}
 
-	// Try to fetch metrics with fallback:
-	// 1. Try container IP first (works when server is in same Docker network)
-	// 2. Fallback to runner host:hostPort (works for remote Docker hosts)
-	var profit *freqtrade.Profit
-	var err error
+	// Create Freqtrade client with the runtime-provided HTTP client
+	ftClient := freqtrade.NewBotClientWithHTTPClient(baseURL, username, password, httpClient)
 
-	// Try container IP first with short timeout
-	if status.IPAddress != "" {
-		containerCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-		defer cancel()
-
-		client := freqtrade.NewBotClientFromContainerIP(status.IPAddress, apiPort, username, password)
-		profit, err = client.GetProfit(containerCtx)
-
-		if err == nil {
-			// Success with container IP
-			goto processMetrics
-		}
-		// Log the container IP failure but continue to fallback
-		log.Printf("Bot %s: container IP (%s) failed, trying runner host fallback: %v", b.Name, status.IPAddress, err)
+	// Fetch profit metrics
+	profit, err := ftClient.GetProfit(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch profit from %s: %w", baseURL, err)
 	}
 
-	// Fallback to runner host:hostPort
-	// Extract Docker host from runner config (handles tcp://hostname:2376 -> hostname)
-	if status.HostPort > 0 {
-		dockerHost := docker.ExtractDockerHostFromConfig(runnerConfig)
-		if dockerHost == "" {
-			dockerHost = "localhost" // Default to localhost if we can't determine host
-		}
-
-		hostURL := fmt.Sprintf("http://%s:%d", dockerHost, status.HostPort)
-		client := freqtrade.NewBotClient(hostURL, username, password)
-		profit, err = client.GetProfit(ctx)
-
-		if err == nil {
-			// Success with runner host
-			log.Printf("Bot %s: successfully connected via %s:%d", b.Name, dockerHost, status.HostPort)
-			goto processMetrics
-		}
-		return fmt.Errorf("failed to fetch profit from both container IP and runner host (%s): %w", dockerHost, err)
-	}
-
-	return fmt.Errorf("no accessible endpoint: container IP=%s, hostPort=%d", status.IPAddress, status.HostPort)
-
-processMetrics:
+	// Metrics fetched successfully - no need to log every success
 
 	// Convert timestamps from Unix to time.Time
 	var firstTradeTime, latestTradeTime *time.Time
@@ -375,6 +344,9 @@ processMetrics:
 		return fmt.Errorf("failed to query bot metrics: %w", err)
 	}
 
+	// Calculate open trade count (total trades - closed trades)
+	openTradeCount := int(profit.TradeCount - profit.ClosedTradeCount)
+
 	// Update or create BotMetrics
 	if existingMetrics != nil {
 		// Update existing metrics
@@ -386,6 +358,7 @@ processMetrics:
 			SetProfitAllPercent(float64(profit.ProfitAllPercent)).
 			SetTradeCount(int(profit.TradeCount)).
 			SetClosedTradeCount(int(profit.ClosedTradeCount)).
+			SetOpenTradeCount(openTradeCount).
 			SetWinningTrades(int(profit.WinningTrades)).
 			SetLosingTrades(int(profit.LosingTrades)).
 			SetWinrate(float64(profit.Winrate)).
@@ -410,6 +383,7 @@ processMetrics:
 			SetProfitAllPercent(float64(profit.ProfitAllPercent)).
 			SetTradeCount(int(profit.TradeCount)).
 			SetClosedTradeCount(int(profit.ClosedTradeCount)).
+			SetOpenTradeCount(openTradeCount).
 			SetWinningTrades(int(profit.WinningTrades)).
 			SetLosingTrades(int(profit.LosingTrades)).
 			SetWinrate(float64(profit.Winrate)).
