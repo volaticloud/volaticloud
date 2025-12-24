@@ -1770,6 +1770,11 @@ export type Query = {
   backtests: BacktestConnection;
   botMetricsSlice: Array<BotMetrics>;
   botRunners: BotRunnerConnection;
+  /**
+   * Get usage history for a bot over a time range
+   * Returns time-series data for charts (granularity depends on aggregation settings)
+   */
+  botUsageHistory: Array<ResourceUsageAggregation>;
   bots: BotConnection;
   /**
    * Calculate estimated cost for usage over a time range
@@ -1811,6 +1816,13 @@ export type QueryBotRunnersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   where?: InputMaybe<BotRunnerWhereInput>;
+};
+
+
+export type QueryBotUsageHistoryArgs = {
+  botID: Scalars['ID']['input'];
+  end: Scalars['Time']['input'];
+  start: Scalars['Time']['input'];
 };
 
 

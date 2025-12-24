@@ -1103,6 +1103,37 @@ func (r *queryResolver) EstimatedCost(ctx context.Context, ownerID string, start
 	return totalCost, nil
 }
 
+// BotUsageHistory returns usage history for a bot over a time range.
+// Returns raw aggregation records (not combined) for time-series charting.
+func (r *queryResolver) BotUsageHistory(ctx context.Context, botID uuid.UUID, start time.Time, end time.Time) ([]*ent.ResourceUsageAggregation, error) {
+	// Verify user is authenticated (directive handles scope check)
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert times to local timezone to match how data is stored in SQLite
+	localStart := start.Local()
+	localEnd := end.Local()
+
+	// Query aggregations for the bot within the time range
+	// Return raw records sorted by bucket start for time-series charting
+	aggs, err := r.client.ResourceUsageAggregation.Query().
+		Where(
+			resourceusageaggregation.ResourceID(botID),
+			resourceusageaggregation.ResourceTypeEQ(enum.ResourceTypeBot),
+			resourceusageaggregation.BucketStartGTE(localStart),
+			resourceusageaggregation.BucketStartLT(localEnd),
+		).
+		Order(ent.Asc(resourceusageaggregation.FieldBucketStart)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query bot usage history: %w", err)
+	}
+
+	return aggs, nil
+}
+
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 type mutationResolver struct{ *Resolver }

@@ -190,3 +190,26 @@ mutation GetFreqtradeToken($botId: ID!) {
     refreshToken
   }
 }
+
+# Bot resource usage history query - for usage charts
+query GetBotUsageHistory($botID: ID!, $start: Time!, $end: Time!) {
+  botUsageHistory(botID: $botID, start: $start, end: $end) {
+    id
+    resourceType
+    resourceID
+    granularity
+    bucketStart
+    bucketEnd
+    cpuCoreSeconds
+    cpuAvgPercent
+    cpuMaxPercent
+    memoryGBSeconds
+    memoryAvgBytes
+    memoryMaxBytes
+    networkRxBytes
+    networkTxBytes
+    blockReadBytes
+    blockWriteBytes
+    sampleCount
+  }
+}

@@ -429,4 +429,10 @@ extend type Query {
   Uses runner-specific pricing rates
   """
   estimatedCost(ownerID: String!, start: Time!, end: Time!): UsageCost! @isAuthenticated
+
+  """
+  Get usage history for a bot over a time range
+  Returns time-series data for charts (granularity depends on aggregation settings)
+  """
+  botUsageHistory(botID: ID!, start: Time!, end: Time!): [ResourceUsageAggregation!]! @hasScope(resource: "botID", scope: "view")
 }

@@ -189,8 +189,12 @@ type HyperOptStatus struct {
 	CurrentObjective float64 // Current best objective value
 
 	// Resource Usage
-	CPUUsage    float64
-	MemoryUsage int64
+	CPUUsage        float64
+	MemoryUsage     int64
+	NetworkRxBytes  int64
+	NetworkTxBytes  int64
+	BlockReadBytes  int64
+	BlockWriteBytes int64
 
 	// Error Info
 	ErrorMessage string

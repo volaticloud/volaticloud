@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"sync"
 
@@ -18,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 // Compile-time interface compliance check
@@ -35,14 +35,16 @@ const (
 
 // BacktestRunner implements runner.BacktestRunner for Kubernetes
 type BacktestRunner struct {
-	config        *Config
-	clientset     kubernetes.Interface
-	metricsClient metricsv.Interface
-	mu            sync.RWMutex
+	config           *Config
+	clientset        kubernetes.Interface
+	prometheusClient *PrometheusClient
+	mu               sync.RWMutex
 }
 
 // NewBacktestRunner creates a new Kubernetes backtest runner
 func NewBacktestRunner(ctx context.Context, config *Config) (*BacktestRunner, error) {
+	log.Printf("NewBacktestRunner: creating for namespace=%s, prometheusUrl=%s", config.Namespace, config.PrometheusURL)
+
 	restConfig, err := buildRestConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build REST config: %w", err)
@@ -53,15 +55,19 @@ func NewBacktestRunner(ctx context.Context, config *Config) (*BacktestRunner, er
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
-	metricsClient, err := metricsv.NewForConfig(restConfig)
-	if err != nil {
-		metricsClient = nil
+	// Create Prometheus client for metrics (same as bot Runtime)
+	var prometheusClient *PrometheusClient
+	if config.PrometheusURL != "" {
+		prometheusClient = NewPrometheusClient(config.PrometheusURL, restConfig)
+		log.Printf("NewBacktestRunner: created PrometheusClient for %s, client=%v", config.PrometheusURL, prometheusClient != nil)
+	} else {
+		log.Printf("NewBacktestRunner: no PrometheusURL configured, metrics will not be collected")
 	}
 
 	return &BacktestRunner{
-		config:        config,
-		clientset:     clientset,
-		metricsClient: metricsClient,
+		config:           config,
+		clientset:        clientset,
+		prometheusClient: prometheusClient,
 	}, nil
 }
 
@@ -164,11 +170,14 @@ func (r *BacktestRunner) GetBacktestStatus(ctx context.Context, backtestID strin
 	pods, err := r.clientset.CoreV1().Pods(r.config.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", LabelBacktestID, backtestID),
 	})
-	if err == nil && len(pods.Items) > 0 {
+	if err != nil {
+		log.Printf("Backtest %s: failed to list pods: %v", backtestID, err)
+	} else if len(pods.Items) == 0 {
+		log.Printf("Backtest %s: no pods found", backtestID)
+	} else {
 		pod := pods.Items[0]
-		if r.metricsClient != nil {
-			r.populateBacktestPodMetrics(ctx, &pod, status)
-		}
+		log.Printf("Backtest %s: found pod %s, prometheusClient=%v", backtestID, pod.Name, r.prometheusClient != nil)
+		r.populateBacktestPodMetrics(ctx, &pod, status)
 
 		// Get exit code if completed
 		for _, cs := range pod.Status.ContainerStatuses {
@@ -386,9 +395,7 @@ func (r *BacktestRunner) GetHyperOptStatus(ctx context.Context, hyperOptID strin
 	})
 	if err == nil && len(pods.Items) > 0 {
 		pod := pods.Items[0]
-		if r.metricsClient != nil {
-			r.populateHyperOptPodMetrics(ctx, &pod, status)
-		}
+		r.populateHyperOptPodMetrics(ctx, &pod, status)
 
 		for _, cs := range pod.Status.ContainerStatuses {
 			if cs.Name == "freqtrade" && cs.State.Terminated != nil {
@@ -604,43 +611,81 @@ func (r *BacktestRunner) cleanupHyperOptResources(ctx context.Context, hyperOptI
 	return nil
 }
 
+// populateBacktestPodMetrics fetches metrics from Prometheus for a backtest pod
 func (r *BacktestRunner) populateBacktestPodMetrics(ctx context.Context, pod *corev1.Pod, status *runner.BacktestStatus) {
-	if r.metricsClient == nil {
+	if r.prometheusClient == nil {
+		log.Printf("Backtest pod %s: prometheusClient is nil, using minimum values", pod.Name)
+		// Apply minimum values when no metrics client is available
+		status.CPUUsage = MinimumCPUPercent
+		status.MemoryUsage = MinimumMemoryBytes
+		log.Printf("Backtest pod %s: applied minimums CPU=%.2f%%, Memory=%d bytes", pod.Name, status.CPUUsage, status.MemoryUsage)
 		return
 	}
 
-	podMetrics, err := r.metricsClient.MetricsV1beta1().PodMetricses(r.config.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+	log.Printf("Backtest pod %s: fetching metrics from Prometheus...", pod.Name)
+	metrics, err := r.prometheusClient.GetContainerMetrics(ctx, r.config.Namespace, pod.Name, "freqtrade")
 	if err != nil {
+		log.Printf("Failed to get backtest pod %s metrics from Prometheus: %v", pod.Name, err)
+		// Apply minimum values on error
+		status.CPUUsage = MinimumCPUPercent
+		status.MemoryUsage = MinimumMemoryBytes
+		log.Printf("Backtest pod %s: applied minimums on error CPU=%.2f%%, Memory=%d bytes", pod.Name, status.CPUUsage, status.MemoryUsage)
 		return
 	}
 
-	for _, container := range podMetrics.Containers {
-		if container.Name == "freqtrade" {
-			cpuMillis := container.Usage.Cpu().MilliValue()
-			status.CPUUsage = float64(cpuMillis) / 10.0
-			status.MemoryUsage = container.Usage.Memory().Value()
-			break
+	if metrics != nil {
+		log.Printf("Backtest pod %s: raw metrics CPU=%.2f%%, Memory=%d bytes", pod.Name, metrics.CPUPercent, metrics.MemoryBytes)
+
+		// Apply minimum thresholds for billing (short-lived pods may not have scraped metrics)
+		if applied := ApplyMinimums(metrics); applied {
+			log.Printf("Backtest pod %s: applied minimums, now CPU=%.2f%%, Memory=%d bytes", pod.Name, metrics.CPUPercent, metrics.MemoryBytes)
 		}
+
+		status.CPUUsage = metrics.CPUPercent
+		status.MemoryUsage = metrics.MemoryBytes
+		status.NetworkRxBytes = metrics.NetworkRxBytes
+		status.NetworkTxBytes = metrics.NetworkTxBytes
+		status.BlockReadBytes = metrics.DiskReadBytes
+		status.BlockWriteBytes = metrics.DiskWriteBytes
+	} else {
+		log.Printf("Backtest pod %s: metrics returned nil, using minimums", pod.Name)
+		status.CPUUsage = MinimumCPUPercent
+		status.MemoryUsage = MinimumMemoryBytes
 	}
 }
 
+// populateHyperOptPodMetrics fetches metrics from Prometheus for a hyperopt pod
 func (r *BacktestRunner) populateHyperOptPodMetrics(ctx context.Context, pod *corev1.Pod, status *runner.HyperOptStatus) {
-	if r.metricsClient == nil {
+	if r.prometheusClient == nil {
+		// Apply minimum values when no metrics client is available
+		status.CPUUsage = MinimumCPUPercent
+		status.MemoryUsage = MinimumMemoryBytes
 		return
 	}
 
-	podMetrics, err := r.metricsClient.MetricsV1beta1().PodMetricses(r.config.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+	metrics, err := r.prometheusClient.GetContainerMetrics(ctx, r.config.Namespace, pod.Name, "freqtrade")
 	if err != nil {
+		log.Printf("Failed to get hyperopt pod metrics from Prometheus: %v", err)
+		// Apply minimum values on error
+		status.CPUUsage = MinimumCPUPercent
+		status.MemoryUsage = MinimumMemoryBytes
 		return
 	}
 
-	for _, container := range podMetrics.Containers {
-		if container.Name == "freqtrade" {
-			cpuMillis := container.Usage.Cpu().MilliValue()
-			status.CPUUsage = float64(cpuMillis) / 10.0
-			status.MemoryUsage = container.Usage.Memory().Value()
-			break
-		}
+	if metrics != nil {
+		// Apply minimum thresholds for billing
+		ApplyMinimums(metrics)
+
+		status.CPUUsage = metrics.CPUPercent
+		status.MemoryUsage = metrics.MemoryBytes
+		status.NetworkRxBytes = metrics.NetworkRxBytes
+		status.NetworkTxBytes = metrics.NetworkTxBytes
+		status.BlockReadBytes = metrics.DiskReadBytes
+		status.BlockWriteBytes = metrics.DiskWriteBytes
+	} else {
+		// Apply minimum values when metrics are nil
+		status.CPUUsage = MinimumCPUPercent
+		status.MemoryUsage = MinimumMemoryBytes
 	}
 }
 
