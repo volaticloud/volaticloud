@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"net/http"
 )
 
 // Runtime defines the interface for managing bot lifecycles across different runtime environments
@@ -41,6 +42,14 @@ type Runtime interface {
 	// Returns error if the bot doesn't exist or API is not accessible
 	GetBotAPIURL(ctx context.Context, botID string) (string, error)
 
+	// GetBotHTTPClient returns an HTTP client and base URL for accessing the bot's API
+	// This handles the complexity of accessing bots across different network environments:
+	// - Docker: returns standard client + docker host URL
+	// - Kubernetes in-cluster: returns standard client + service DNS URL
+	// - Kubernetes outside cluster: returns client with K8s auth + API server proxy URL
+	// The client may have special transport configuration for authenticated proxy access
+	GetBotHTTPClient(ctx context.Context, botID string) (*http.Client, string, error)
+
 	// GetBotLogs retrieves or streams logs from a bot
 	// Use LogOptions to configure filtering, tailing, and streaming
 	GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error)
@@ -68,20 +77,21 @@ type Runtime interface {
 
 // MockRuntime is a no-op implementation for testing
 type MockRuntime struct {
-	CreateBotFunc      func(ctx context.Context, spec BotSpec) error
-	DeleteBotFunc      func(ctx context.Context, botID string) error
-	StartBotFunc       func(ctx context.Context, botID string) error
-	StopBotFunc        func(ctx context.Context, botID string) error
-	RestartBotFunc     func(ctx context.Context, botID string) error
-	GetBotStatusFunc   func(ctx context.Context, botID string) (*BotStatus, error)
-	GetContainerIPFunc func(ctx context.Context, botID string) (string, error)
-	GetBotAPIURLFunc   func(ctx context.Context, botID string) (string, error)
-	GetBotLogsFunc     func(ctx context.Context, botID string, opts LogOptions) (*LogReader, error)
-	UpdateBotFunc      func(ctx context.Context, botID string, spec UpdateBotSpec) error
-	ListBotsFunc       func(ctx context.Context) ([]BotStatus, error)
-	HealthCheckFunc    func(ctx context.Context) error
-	CloseFunc          func() error
-	TypeFunc           func() string
+	CreateBotFunc        func(ctx context.Context, spec BotSpec) error
+	DeleteBotFunc        func(ctx context.Context, botID string) error
+	StartBotFunc         func(ctx context.Context, botID string) error
+	StopBotFunc          func(ctx context.Context, botID string) error
+	RestartBotFunc       func(ctx context.Context, botID string) error
+	GetBotStatusFunc     func(ctx context.Context, botID string) (*BotStatus, error)
+	GetContainerIPFunc   func(ctx context.Context, botID string) (string, error)
+	GetBotAPIURLFunc     func(ctx context.Context, botID string) (string, error)
+	GetBotHTTPClientFunc func(ctx context.Context, botID string) (*http.Client, string, error)
+	GetBotLogsFunc       func(ctx context.Context, botID string, opts LogOptions) (*LogReader, error)
+	UpdateBotFunc        func(ctx context.Context, botID string, spec UpdateBotSpec) error
+	ListBotsFunc         func(ctx context.Context) ([]BotStatus, error)
+	HealthCheckFunc      func(ctx context.Context) error
+	CloseFunc            func() error
+	TypeFunc             func() string
 }
 
 // Ensure MockRuntime implements Runtime interface
@@ -141,6 +151,13 @@ func (m *MockRuntime) GetBotAPIURL(ctx context.Context, botID string) (string, e
 		return m.GetBotAPIURLFunc(ctx, botID)
 	}
 	return "http://127.0.0.1:8080", nil
+}
+
+func (m *MockRuntime) GetBotHTTPClient(ctx context.Context, botID string) (*http.Client, string, error) {
+	if m.GetBotHTTPClientFunc != nil {
+		return m.GetBotHTTPClientFunc(ctx, botID)
+	}
+	return http.DefaultClient, "http://127.0.0.1:8080", nil
 }
 
 func (m *MockRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {

@@ -408,6 +408,22 @@ func (d *Runtime) GetBotAPIURL(ctx context.Context, botID string) (string, error
 	return fmt.Sprintf("http://%s:%s", apiHost, hostPort), nil
 }
 
+// GetBotHTTPClient returns an HTTP client and base URL for accessing the bot's API
+// For Docker, this returns a standard HTTP client and uses the same URL logic as GetBotAPIURL
+func (d *Runtime) GetBotHTTPClient(ctx context.Context, botID string) (*http.Client, string, error) {
+	url, err := d.GetBotAPIURL(ctx, botID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Docker uses a standard HTTP client with reasonable timeouts
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	return client, url, nil
+}
+
 // GetBotLogs retrieves logs from a bot container
 func (d *Runtime) GetBotLogs(ctx context.Context, botID string, opts runner.LogOptions) (*runner.LogReader, error) {
 	containerID, err := d.findContainer(ctx, botID)

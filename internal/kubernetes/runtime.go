@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
+	"strings"
 	"sync"
+	"time"
 
 	"volaticloud/internal/enum"
 	"volaticloud/internal/runner"
@@ -19,6 +22,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/transport"
 	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
@@ -48,10 +52,16 @@ const (
 
 // Runtime implements runner.Runtime for Kubernetes
 type Runtime struct {
-	config        *Config
-	clientset     kubernetes.Interface
-	metricsClient metricsv.Interface
-	mu            sync.RWMutex
+	config           *Config
+	clientset        kubernetes.Interface
+	metricsClient    metricsv.Interface
+	prometheusClient *PrometheusClient
+
+	// API server proxy for external access
+	apiProxyClient *http.Client
+	apiServerURL   string
+
+	mu sync.RWMutex
 }
 
 // NewRuntime creates a new Kubernetes runtime
@@ -72,10 +82,34 @@ func NewRuntime(ctx context.Context, config *Config) (*Runtime, error) {
 		metricsClient = nil
 	}
 
+	// Initialize Prometheus client if URL is configured
+	// Pass restConfig for API server proxy fallback when running outside the cluster
+	prometheusClient := NewPrometheusClient(config.PrometheusURL, restConfig)
+
+	// Initialize API proxy client for external access to services
+	var apiProxyClient *http.Client
+	var apiServerURL string
+	if restConfig != nil {
+		transportConfig, err := restConfig.TransportConfig()
+		if err == nil {
+			rt, err := transport.New(transportConfig)
+			if err == nil {
+				apiProxyClient = &http.Client{
+					Transport: rt,
+					Timeout:   30 * time.Second,
+				}
+				apiServerURL = strings.TrimSuffix(restConfig.Host, "/")
+			}
+		}
+	}
+
 	return &Runtime{
-		config:        config,
-		clientset:     clientset,
-		metricsClient: metricsClient,
+		config:           config,
+		clientset:        clientset,
+		metricsClient:    metricsClient,
+		prometheusClient: prometheusClient,
+		apiProxyClient:   apiProxyClient,
+		apiServerURL:     apiServerURL,
 	}, nil
 }
 
@@ -293,10 +327,8 @@ func (r *Runtime) GetBotStatus(ctx context.Context, botID string) (*runner.BotSt
 			}
 		}
 
-		// Get metrics if available
-		if r.metricsClient != nil {
-			r.populatePodMetrics(ctx, &pod, status)
-		}
+		// Get metrics if available (from Metrics Server and/or Prometheus)
+		r.populatePodMetrics(ctx, &pod, status)
 	}
 
 	// Get Service for host port
@@ -360,6 +392,56 @@ func (r *Runtime) GetBotAPIURL(ctx context.Context, botID string) (string, error
 
 	// No ingressHost configured - cannot access from outside cluster
 	return "", fmt.Errorf("ingressHost is required for external bot access; configure it in the runner settings")
+}
+
+// GetBotHTTPClient returns an HTTP client and base URL for accessing the bot's API
+// Fallback order:
+// 1. Direct Service DNS (in-cluster) - fastest
+// 2. Ingress URL (if configured) - external access
+// 3. K8s API Server Proxy (using kubeconfig) - works from anywhere
+func (r *Runtime) GetBotHTTPClient(ctx context.Context, botID string) (*http.Client, string, error) {
+	serviceName := r.getServiceName(botID)
+	service, err := r.clientset.CoreV1().Services(r.config.Namespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, "", runner.ErrBotNotFound
+		}
+		return nil, "", fmt.Errorf("failed to get service: %w", err)
+	}
+
+	// Get the service port (default to 8080 if not found)
+	port := int32(8080)
+	if len(service.Spec.Ports) > 0 {
+		port = service.Spec.Ports[0].Port
+	}
+
+	defaultClient := &http.Client{Timeout: 30 * time.Second}
+
+	// 1. If running inside K8s cluster, use internal DNS (fastest)
+	if r.isRunningInCluster() {
+		url := fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", serviceName, r.config.Namespace, port)
+		return defaultClient, url, nil
+	}
+
+	// 2. If Ingress is configured, use it
+	if r.config.IngressHost != "" {
+		scheme := "http"
+		if r.config.IngressTLS {
+			scheme = "https"
+		}
+		url := fmt.Sprintf("%s://%s/bot/%s", scheme, r.config.IngressHost, botID)
+		return defaultClient, url, nil
+	}
+
+	// 3. Use K8s API Server Proxy as fallback
+	// This allows accessing the service through the API server using kubeconfig auth
+	if r.apiProxyClient != nil {
+		url := fmt.Sprintf("%s/api/v1/namespaces/%s/services/%s:%d/proxy",
+			r.apiServerURL, r.config.Namespace, serviceName, port)
+		return r.apiProxyClient, url, nil
+	}
+
+	return nil, "", fmt.Errorf("no accessible endpoint: ingressHost not configured and API proxy not available")
 }
 
 // isRunningInCluster checks if the backend is running inside a K8s cluster
@@ -560,28 +642,34 @@ func (r *Runtime) cleanupBotResources(ctx context.Context, botID string) error {
 }
 
 func (r *Runtime) populatePodMetrics(ctx context.Context, pod *corev1.Pod, status *runner.BotStatus) {
-	if r.metricsClient == nil {
-		return
-	}
+	// Get CPU/memory from Metrics Server
+	if r.metricsClient != nil {
+		podMetrics, err := r.metricsClient.MetricsV1beta1().PodMetricses(r.config.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+		if err == nil {
+			for _, container := range podMetrics.Containers {
+				if container.Name == "freqtrade" {
+					// CPU is in millicores, convert to percentage
+					cpuMillis := container.Usage.Cpu().MilliValue()
+					status.CPUUsage = float64(cpuMillis) / 10.0 // Convert millicores to percentage
 
-	podMetrics, err := r.metricsClient.MetricsV1beta1().PodMetricses(r.config.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
-	if err != nil {
-		return
-	}
-
-	for _, container := range podMetrics.Containers {
-		if container.Name == "freqtrade" {
-			// CPU is in millicores, convert to percentage
-			cpuMillis := container.Usage.Cpu().MilliValue()
-			status.CPUUsage = float64(cpuMillis) / 10.0 // Convert millicores to percentage
-
-			// Memory in bytes
-			status.MemoryUsage = container.Usage.Memory().Value()
-			break
+					// Memory in bytes
+					status.MemoryUsage = container.Usage.Memory().Value()
+					break
+				}
+			}
 		}
 	}
 
-	// TODO: Prometheus integration for network/disk I/O
+	// Get network/disk I/O from Prometheus (cAdvisor metrics)
+	if r.prometheusClient != nil {
+		ioMetrics, err := r.prometheusClient.GetContainerIOMetrics(ctx, r.config.Namespace, pod.Name, "freqtrade")
+		if err == nil && ioMetrics != nil {
+			status.NetworkRxBytes = ioMetrics.NetworkRxBytes
+			status.NetworkTxBytes = ioMetrics.NetworkTxBytes
+			status.BlockReadBytes = ioMetrics.DiskReadBytes
+			status.BlockWriteBytes = ioMetrics.DiskWriteBytes
+		}
+	}
 }
 
 // createBotConfigMap creates a ConfigMap with bot configuration

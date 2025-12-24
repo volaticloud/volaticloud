@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"net/http"
 )
 
 // LocalRuntime implements Runtime for local process environments
@@ -47,6 +48,10 @@ func (l *LocalRuntime) GetContainerIP(ctx context.Context, botID string) (string
 
 func (l *LocalRuntime) GetBotAPIURL(ctx context.Context, botID string) (string, error) {
 	return "", fmt.Errorf("local runtime is not yet supported")
+}
+
+func (l *LocalRuntime) GetBotHTTPClient(ctx context.Context, botID string) (*http.Client, string, error) {
+	return nil, "", fmt.Errorf("local runtime is not yet supported")
 }
 
 func (l *LocalRuntime) GetBotLogs(ctx context.Context, botID string, opts LogOptions) (*LogReader, error) {
