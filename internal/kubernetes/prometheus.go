@@ -32,11 +32,11 @@ type PrometheusClient struct {
 	servicePort       string
 
 	// Track which method works
-	mu              sync.RWMutex
-	useAPIProxy     bool
-	proxyTested     bool
-	directTested    bool
-	directWorks     bool
+	mu           sync.RWMutex
+	useAPIProxy  bool
+	proxyTested  bool
+	directTested bool
+	directWorks  bool
 }
 
 // ContainerIOMetrics holds network and disk I/O metrics for a container
