@@ -1,0 +1,74 @@
+query GetTrades($first: Int, $after: Cursor, $where: TradeWhereInput, $orderBy: TradeOrder) {
+  trades(first: $first, after: $after, where: $where, orderBy: $orderBy) {
+    edges {
+      node {
+        id
+        freqtradeTradeID
+        pair
+        isOpen
+        openDate
+        closeDate
+        openRate
+        closeRate
+        amount
+        stakeAmount
+        profitAbs
+        profitRatio
+        sellReason
+        strategyName
+        timeframe
+        createdAt
+        updatedAt
+        bot {
+          id
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetTrade($id: ID!) {
+  trades(where: { id: $id }, first: 1) {
+    edges {
+      node {
+        id
+        freqtradeTradeID
+        pair
+        isOpen
+        openDate
+        closeDate
+        openRate
+        closeRate
+        amount
+        stakeAmount
+        profitAbs
+        profitRatio
+        sellReason
+        strategyName
+        timeframe
+        createdAt
+        updatedAt
+        bot {
+          id
+          name
+          strategy {
+            id
+            name
+          }
+          exchange {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}

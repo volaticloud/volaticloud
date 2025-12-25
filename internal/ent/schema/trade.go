@@ -33,11 +33,13 @@ func (Trade) Fields() []ent.Field {
 			Default(true).
 			Comment("Trade open status"),
 		field.Time("open_date").
-			Comment("Trade open time"),
+			Comment("Trade open time").
+			Annotations(entgql.OrderField("OPEN_DATE")),
 		field.Time("close_date").
 			Optional().
 			Nillable().
-			Comment("Trade close time"),
+			Comment("Trade close time").
+			Annotations(entgql.OrderField("CLOSE_DATE")),
 		field.Float("open_rate").
 			Positive().
 			Comment("Entry price"),
@@ -53,10 +55,12 @@ func (Trade) Fields() []ent.Field {
 			Comment("Stake in base currency"),
 		field.Float("profit_abs").
 			Default(0).
-			Comment("Absolute profit"),
+			Comment("Absolute profit").
+			Annotations(entgql.OrderField("PROFIT_ABS")),
 		field.Float("profit_ratio").
 			Default(0).
-			Comment("Profit percentage (0.05 = 5%)"),
+			Comment("Profit percentage (0.05 = 5%)").
+			Annotations(entgql.OrderField("PROFIT_RATIO")),
 		field.String("sell_reason").
 			Optional().
 			Comment("Reason for selling (roi, stoploss, etc.)"),

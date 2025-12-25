@@ -5,6 +5,9 @@ package ent
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
+	"strconv"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -2302,6 +2305,107 @@ func (_m *TradeQuery) Paginate(
 	}
 	conn.build(nodes, pager, after, first, before, last)
 	return conn, nil
+}
+
+var (
+	// TradeOrderFieldOpenDate orders Trade by open_date.
+	TradeOrderFieldOpenDate = &TradeOrderField{
+		Value: func(_m *Trade) (ent.Value, error) {
+			return _m.OpenDate, nil
+		},
+		column: trade.FieldOpenDate,
+		toTerm: trade.ByOpenDate,
+		toCursor: func(_m *Trade) Cursor {
+			return Cursor{
+				ID:    _m.ID,
+				Value: _m.OpenDate,
+			}
+		},
+	}
+	// TradeOrderFieldCloseDate orders Trade by close_date.
+	TradeOrderFieldCloseDate = &TradeOrderField{
+		Value: func(_m *Trade) (ent.Value, error) {
+			return _m.CloseDate, nil
+		},
+		column: trade.FieldCloseDate,
+		toTerm: trade.ByCloseDate,
+		toCursor: func(_m *Trade) Cursor {
+			return Cursor{
+				ID:    _m.ID,
+				Value: _m.CloseDate,
+			}
+		},
+	}
+	// TradeOrderFieldProfitAbs orders Trade by profit_abs.
+	TradeOrderFieldProfitAbs = &TradeOrderField{
+		Value: func(_m *Trade) (ent.Value, error) {
+			return _m.ProfitAbs, nil
+		},
+		column: trade.FieldProfitAbs,
+		toTerm: trade.ByProfitAbs,
+		toCursor: func(_m *Trade) Cursor {
+			return Cursor{
+				ID:    _m.ID,
+				Value: _m.ProfitAbs,
+			}
+		},
+	}
+	// TradeOrderFieldProfitRatio orders Trade by profit_ratio.
+	TradeOrderFieldProfitRatio = &TradeOrderField{
+		Value: func(_m *Trade) (ent.Value, error) {
+			return _m.ProfitRatio, nil
+		},
+		column: trade.FieldProfitRatio,
+		toTerm: trade.ByProfitRatio,
+		toCursor: func(_m *Trade) Cursor {
+			return Cursor{
+				ID:    _m.ID,
+				Value: _m.ProfitRatio,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f TradeOrderField) String() string {
+	var str string
+	switch f.column {
+	case TradeOrderFieldOpenDate.column:
+		str = "OPEN_DATE"
+	case TradeOrderFieldCloseDate.column:
+		str = "CLOSE_DATE"
+	case TradeOrderFieldProfitAbs.column:
+		str = "PROFIT_ABS"
+	case TradeOrderFieldProfitRatio.column:
+		str = "PROFIT_RATIO"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f TradeOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *TradeOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("TradeOrderField %T must be a string", v)
+	}
+	switch str {
+	case "OPEN_DATE":
+		*f = *TradeOrderFieldOpenDate
+	case "CLOSE_DATE":
+		*f = *TradeOrderFieldCloseDate
+	case "PROFIT_ABS":
+		*f = *TradeOrderFieldProfitAbs
+	case "PROFIT_RATIO":
+		*f = *TradeOrderFieldProfitRatio
+	default:
+		return fmt.Errorf("%s is not a valid TradeOrderField", str)
+	}
+	return nil
 }
 
 // TradeOrderField defines the ordering field of Trade.

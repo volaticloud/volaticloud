@@ -132,7 +132,7 @@ type ComplexityRoot struct {
 		Status           func(childComplexity int) int
 		Strategy         func(childComplexity int) int
 		StrategyID       func(childComplexity int) int
-		Trades           func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
+		Trades           func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) int
 		UpdatedAt        func(childComplexity int) int
 	}
 
@@ -318,7 +318,7 @@ type ComplexityRoot struct {
 		ResourceUsageSamples      func(childComplexity int) int
 		Strategies                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) int
 		StrategyVersions          func(childComplexity int, name string) int
-		Trades                    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
+		Trades                    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) int
 	}
 
 	ResourceUsageAggregation struct {
@@ -484,7 +484,7 @@ type QueryResolver interface {
 	ResourceUsageAggregations(ctx context.Context) ([]*ent.ResourceUsageAggregation, error)
 	ResourceUsageSamples(ctx context.Context) ([]*ent.ResourceUsageSample, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
-	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
+	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
 	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
 	StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error)
 	OrganizationUsage(ctx context.Context, ownerID string, start time.Time, end time.Time) (*ent.ResourceUsageAggregation, error)
@@ -879,7 +879,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bot.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.TradeWhereInput)), true
+		return e.complexity.Bot.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["orderBy"].(*ent.TradeOrder), args["where"].(*ent.TradeWhereInput)), true
 	case "Bot.updatedAt":
 		if e.complexity.Bot.UpdatedAt == nil {
 			break
@@ -1965,7 +1965,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.TradeWhereInput)), true
+		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["orderBy"].(*ent.TradeOrder), args["where"].(*ent.TradeWhereInput)), true
 
 	case "ResourceUsageAggregation.blockReadBytes":
 		if e.complexity.ResourceUsageAggregation.BlockReadBytes == nil {
@@ -2534,6 +2534,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRunnerConfigInput,
 		ec.unmarshalInputS3ConfigInput,
 		ec.unmarshalInputStrategyWhereInput,
+		ec.unmarshalInputTradeOrder,
 		ec.unmarshalInputTradeWhereInput,
 		ec.unmarshalInputUpdateBotInput,
 		ec.unmarshalInputUpdateBotMetricsInput,
@@ -2775,11 +2776,16 @@ func (ec *executionContext) field_Bot_trades_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTradeOrder2ᚖvolaticloudᚋinternalᚋentᚐTradeOrder)
 	if err != nil {
 		return nil, err
 	}
-	args["where"] = arg4
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg5
 	return args, nil
 }
 
@@ -3474,11 +3480,16 @@ func (ec *executionContext) field_Query_trades_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTradeOrder2ᚖvolaticloudᚋinternalᚋentᚐTradeOrder)
 	if err != nil {
 		return nil, err
 	}
-	args["where"] = arg4
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg5
 	return args, nil
 }
 
@@ -5646,7 +5657,7 @@ func (ec *executionContext) _Bot_trades(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Bot_trades,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return obj.Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.TradeWhereInput))
+			return obj.Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.TradeOrder), fc.Args["where"].(*ent.TradeWhereInput))
 		},
 		nil,
 		ec.marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection,
@@ -12090,7 +12101,7 @@ func (ec *executionContext) _Query_trades(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query_trades,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.TradeWhereInput))
+			return ec.resolvers.Query().Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.TradeOrder), fc.Args["where"].(*ent.TradeWhereInput))
 		},
 		nil,
 		ec.marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection,
@@ -26236,6 +26247,44 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTradeOrder(ctx context.Context, obj any) (ent.TradeOrder, error) {
+	var it ent.TradeOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNTradeOrderField2ᚖvolaticloudᚋinternalᚋentᚐTradeOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTradeWhereInput(ctx context.Context, obj any) (ent.TradeWhereInput, error) {
 	var it ent.TradeWhereInput
 	asMap := map[string]any{}
@@ -32678,6 +32727,16 @@ func (ec *executionContext) marshalNNode2ᚕvolaticloudᚋinternalᚋentᚐNoder
 	return ret
 }
 
+func (ec *executionContext) unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx context.Context, v any) (entgql.OrderDirection, error) {
+	var res entgql.OrderDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx context.Context, sel ast.SelectionSet, v entgql.OrderDirection) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v entgql.PageInfo[uuid.UUID]) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)
 }
@@ -32975,6 +33034,22 @@ func (ec *executionContext) marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec._TradeConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTradeOrderField2ᚖvolaticloudᚋinternalᚋentᚐTradeOrderField(ctx context.Context, v any) (*ent.TradeOrderField, error) {
+	var res = new(ent.TradeOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTradeOrderField2ᚖvolaticloudᚋinternalᚋentᚐTradeOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.TradeOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalNTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
@@ -35054,6 +35129,14 @@ func (ec *executionContext) marshalOTradeEdge2ᚖvolaticloudᚋinternalᚋentᚐ
 		return graphql.Null
 	}
 	return ec._TradeEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTradeOrder2ᚖvolaticloudᚋinternalᚋentᚐTradeOrder(ctx context.Context, v any) (*ent.TradeOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTradeOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOTradeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeWhereInputᚄ(ctx context.Context, v any) ([]*ent.TradeWhereInput, error) {

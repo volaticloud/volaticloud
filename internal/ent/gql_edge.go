@@ -49,9 +49,10 @@ func (_m *Bot) Runner(ctx context.Context) (*BotRunner, error) {
 }
 
 func (_m *Bot) Trades(
-	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, where *TradeWhereInput,
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *TradeOrder, where *TradeWhereInput,
 ) (*TradeConnection, error) {
 	opts := []TradePaginateOption{
+		WithTradeOrder(orderBy),
 		WithTradeFilter(where.Filter),
 	}
 	alias := graphql.GetFieldContext(ctx).Field.Alias

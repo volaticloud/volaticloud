@@ -307,6 +307,11 @@ type Bot implements Node {
     last: Int
 
     """
+    Ordering options for Trades returned from the connection.
+    """
+    orderBy: TradeOrder
+
+    """
     Filtering options for Trades returned from the connection.
     """
     where: TradeWhereInput
@@ -2160,6 +2165,11 @@ type Query {
     last: Int
 
     """
+    Ordering options for Trades returned from the connection.
+    """
+    orderBy: TradeOrder
+
+    """
     Filtering options for Trades returned from the connection.
     """
     where: TradeWhereInput
@@ -3052,6 +3062,28 @@ type TradeEdge {
   A cursor for use in pagination.
   """
   cursor: Cursor!
+}
+"""
+Ordering options for Trade connections
+"""
+input TradeOrder {
+  """
+  The ordering direction.
+  """
+  direction: OrderDirection! = ASC
+  """
+  The field by which to order Trades.
+  """
+  field: TradeOrderField!
+}
+"""
+Properties by which Trade connections can be ordered.
+"""
+enum TradeOrderField {
+  OPEN_DATE
+  CLOSE_DATE
+  PROFIT_ABS
+  PROFIT_RATIO
 }
 """
 TradeWhereInput is used for filtering Trade objects.

@@ -1874,6 +1874,28 @@ func newTradePaginateArgs(rv map[string]any) *tradePaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]any:
+			var (
+				err1, err2 error
+				order      = &TradeOrder{Field: &TradeOrderField{}, Direction: entgql.OrderDirectionAsc}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithTradeOrder(order))
+			}
+		case *TradeOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithTradeOrder(v))
+			}
+		}
+	}
 	if v, ok := rv[whereField].(*TradeWhereInput); ok {
 		args.opts = append(args.opts, WithTradeFilter(v.Filter))
 	}

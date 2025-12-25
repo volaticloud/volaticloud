@@ -16,8 +16,6 @@ export interface PaginatedDataGridProps<TRow extends GridValidRowModel> {
   onRowClick?: (row: TRow) => void;
   /** Optional: Get row ID (default: uses 'id' field) */
   getRowId?: (row: TRow) => string;
-  /** Optional: Additional DataGrid props */
-  autoHeight?: boolean;
   /** Optional: Disable row selection */
   disableRowSelectionOnClick?: boolean;
   /** Optional: Row height */
@@ -28,6 +26,10 @@ export interface PaginatedDataGridProps<TRow extends GridValidRowModel> {
   hideFooter?: boolean;
   /** Optional: Polling indicator - shows subtle loading without blocking UI */
   isPolling?: boolean;
+  /** Optional: Custom height (default: viewport-based) */
+  height?: string | number;
+  /** Optional: Minimum height */
+  minHeight?: string | number;
 }
 
 /**
@@ -66,12 +68,13 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
   emptyMessage = 'No data available.',
   onRowClick,
   getRowId = (row) => (row as unknown as { id: string }).id,
-  autoHeight = true,
   disableRowSelectionOnClick = true,
   rowHeight = 52,
   columnHeaderHeight = 56,
   hideFooter = false,
   isPolling = false,
+  height,
+  minHeight,
 }: PaginatedDataGridProps<TRow>) {
   const rows: GridRowsProp<TRow> = pagination.items;
 
@@ -89,7 +92,11 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
   }
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{
+      width: '100%',
+      height: height ?? 'calc(100vh - 200px)',
+      minHeight: minHeight ?? 400
+    }}>
       <DataGrid<TRow>
         rows={rows}
         columns={columns}
@@ -114,7 +121,6 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
         // Row click handler
         onRowClick={onRowClick ? (params) => onRowClick(params.row) : undefined}
         // Styling
-        autoHeight={autoHeight}
         disableRowSelectionOnClick={disableRowSelectionOnClick}
         rowHeight={rowHeight}
         columnHeaderHeight={columnHeaderHeight}
