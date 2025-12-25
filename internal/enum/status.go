@@ -153,7 +153,10 @@ type DataDownloadStatus string
 
 const (
 	DataDownloadStatusIdle        DataDownloadStatus = "idle"
+	DataDownloadStatusPending     DataDownloadStatus = "pending"
 	DataDownloadStatusDownloading DataDownloadStatus = "downloading"
+	DataDownloadStatusPackaging   DataDownloadStatus = "packaging"
+	DataDownloadStatusUploading   DataDownloadStatus = "uploading"
 	DataDownloadStatusCompleted   DataDownloadStatus = "completed"
 	DataDownloadStatusFailed      DataDownloadStatus = "failed"
 )
@@ -162,7 +165,10 @@ const (
 func (DataDownloadStatus) Values() []string {
 	return []string{
 		string(DataDownloadStatusIdle),
+		string(DataDownloadStatusPending),
 		string(DataDownloadStatusDownloading),
+		string(DataDownloadStatusPackaging),
+		string(DataDownloadStatusUploading),
 		string(DataDownloadStatusCompleted),
 		string(DataDownloadStatusFailed),
 	}

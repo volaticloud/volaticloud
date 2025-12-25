@@ -123,7 +123,7 @@ func (c *Config) ToMap() map[string]interface{} {
 }
 
 // DataKey returns the S3 object key for runner data.
-// Format: runners/data/{runnerID}.zip
+// Format: runners/data/{runnerID}.tar.gz
 func DataKey(runnerID string) string {
-	return fmt.Sprintf("runners/data/%s.zip", runnerID)
+	return fmt.Sprintf("runners/data/%s.tar.gz", runnerID)
 }

@@ -21,6 +21,7 @@ type ConfigValidator func(configData map[string]interface{}) error
 var (
 	runtimeCreators        = make(map[enum.RunnerType]RuntimeCreator)
 	backtestRunnerCreators = make(map[enum.RunnerType]BacktestRunnerCreator)
+	dataDownloaderCreators = make(map[enum.RunnerType]DataDownloaderCreator)
 	configValidators       = make(map[enum.RunnerType]ConfigValidator)
 	registryMu             sync.RWMutex
 )
@@ -37,6 +38,13 @@ func RegisterBacktestRunnerCreator(runnerType enum.RunnerType, creator BacktestR
 	registryMu.Lock()
 	defer registryMu.Unlock()
 	backtestRunnerCreators[runnerType] = creator
+}
+
+// RegisterDataDownloaderCreator registers a DataDownloaderCreator for a specific runner type
+func RegisterDataDownloaderCreator(runnerType enum.RunnerType, creator DataDownloaderCreator) {
+	registryMu.Lock()
+	defer registryMu.Unlock()
+	dataDownloaderCreators[runnerType] = creator
 }
 
 // RegisterConfigValidator registers a ConfigValidator for a specific runner type
@@ -64,6 +72,17 @@ func GetBacktestRunnerCreator(runnerType enum.RunnerType) (BacktestRunnerCreator
 	creator, ok := backtestRunnerCreators[runnerType]
 	if !ok {
 		return nil, fmt.Errorf("no backtest runner creator registered for runner type: %s", runnerType)
+	}
+	return creator, nil
+}
+
+// GetDataDownloaderCreator returns the DataDownloaderCreator for a specific runner type
+func GetDataDownloaderCreator(runnerType enum.RunnerType) (DataDownloaderCreator, error) {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+	creator, ok := dataDownloaderCreators[runnerType]
+	if !ok {
+		return nil, fmt.Errorf("no data downloader creator registered for runner type: %s", runnerType)
 	}
 	return creator, nil
 }

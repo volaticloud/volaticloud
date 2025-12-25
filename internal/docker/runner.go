@@ -624,7 +624,7 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 		// Build shell script that downloads data and starts freqtrade
 		dataDir := fmt.Sprintf("/freqtrade/user_data/%s/data", configPaths.botID)
 		shellScript := fmt.Sprintf(
-			`set -e; mkdir -p %s; wget -q -O /tmp/data.zip "$DATA_DOWNLOAD_URL"; unzip -q -o /tmp/data.zip -d %s; rm /tmp/data.zip; exec freqtrade trade %s`,
+			`set -e; mkdir -p %s; wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"; tar -xzf /tmp/data.tar.gz -C %s; rm /tmp/data.tar.gz; exec freqtrade trade %s`,
 			dataDir, dataDir, strings.Join(freqtradeArgs, " "),
 		)
 		entrypoint = []string{"/bin/sh", "-c"}

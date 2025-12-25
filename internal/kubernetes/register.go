@@ -59,4 +59,19 @@ func init() {
 		_, err := ParseConfig(configData)
 		return err
 	})
+
+	// Register Kubernetes data downloader creator
+	runner.RegisterDataDownloaderCreator(enum.RunnerKubernetes, func(ctx context.Context, configData map[string]interface{}) (runner.DataDownloader, error) {
+		config, err := ParseConfig(configData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse Kubernetes config: %w", err)
+		}
+
+		downloader, err := NewDataDownloader(ctx, config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Kubernetes data downloader: %w", err)
+		}
+
+		return downloader, nil
+	})
 }

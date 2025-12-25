@@ -148,7 +148,7 @@ func TestValidateConfig(t *testing.T) {
 
 func TestDataKey(t *testing.T) {
 	key := DataKey("runner-123")
-	expected := "runners/data/runner-123.zip"
+	expected := "runners/data/runner-123.tar.gz"
 	if key != expected {
 		t.Errorf("DataKey() = %v, want %v", key, expected)
 	}

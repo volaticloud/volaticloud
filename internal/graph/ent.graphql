@@ -899,7 +899,10 @@ BotRunnerDataDownloadStatus is enum for the field data_download_status
 """
 enum BotRunnerDataDownloadStatus @goModel(model: "volaticloud/internal/enum.DataDownloadStatus") {
   idle
+  pending
   downloading
+  packaging
+  uploading
   completed
   failed
 }

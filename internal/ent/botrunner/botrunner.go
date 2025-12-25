@@ -184,7 +184,7 @@ const DefaultDataDownloadStatus enum.DataDownloadStatus = "idle"
 // DataDownloadStatusValidator is a validator for the "data_download_status" field enum values. It is called by the builders before save.
 func DataDownloadStatusValidator(dds enum.DataDownloadStatus) error {
 	switch dds {
-	case "idle", "downloading", "completed", "failed":
+	case "idle", "pending", "downloading", "packaging", "uploading", "completed", "failed":
 		return nil
 	default:
 		return fmt.Errorf("botrunner: invalid enum value for data_download_status field: %q", dds)

@@ -54,4 +54,19 @@ func init() {
 		_, err := ParseConfig(configData)
 		return err
 	})
+
+	// Register Docker data downloader creator
+	runner.RegisterDataDownloaderCreator(enum.RunnerDocker, func(ctx context.Context, configData map[string]interface{}) (runner.DataDownloader, error) {
+		config, err := ParseConfig(configData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse Docker config: %w", err)
+		}
+
+		downloader, err := NewDataDownloader(ctx, config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Docker data downloader: %w", err)
+		}
+
+		return downloader, nil
+	})
 }

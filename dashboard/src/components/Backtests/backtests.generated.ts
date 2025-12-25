@@ -24,7 +24,23 @@ export type GetBacktestOptionsQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBacktestOptionsQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null }, botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } | null } | null> | null } };
+export type GetBacktestOptionsQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } | null } | null> | null } };
+
+export type SearchStrategiesQueryVariables = Types.Exact<{
+  search?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  ownerID?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+}>;
+
+
+export type SearchStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null } };
+
+export type GetStrategyByIdQueryVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+}>;
+
+
+export type GetStrategyByIdQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null } };
 
 export type CreateBacktestMutationVariables = Types.Exact<{
   input: Types.CreateBacktestInput;
@@ -187,16 +203,6 @@ export type GetBacktestSuspenseQueryHookResult = ReturnType<typeof useGetBacktes
 export type GetBacktestQueryResult = Apollo.QueryResult<GetBacktestQuery, GetBacktestQueryVariables>;
 export const GetBacktestOptionsDocument = gql`
     query GetBacktestOptions($ownerID: String) {
-  strategies(first: 50, where: {ownerID: $ownerID}) {
-    edges {
-      node {
-        id
-        name
-        versionNumber
-        isLatest
-      }
-    }
-  }
   botRunners(first: 50, where: {ownerID: $ownerID}) {
     edges {
       node {
@@ -241,6 +247,102 @@ export type GetBacktestOptionsQueryHookResult = ReturnType<typeof useGetBacktest
 export type GetBacktestOptionsLazyQueryHookResult = ReturnType<typeof useGetBacktestOptionsLazyQuery>;
 export type GetBacktestOptionsSuspenseQueryHookResult = ReturnType<typeof useGetBacktestOptionsSuspenseQuery>;
 export type GetBacktestOptionsQueryResult = Apollo.QueryResult<GetBacktestOptionsQuery, GetBacktestOptionsQueryVariables>;
+export const SearchStrategiesDocument = gql`
+    query SearchStrategies($search: String, $ownerID: String, $first: Int) {
+  strategies(first: $first, where: {ownerID: $ownerID, nameContainsFold: $search}) {
+    edges {
+      node {
+        id
+        name
+        versionNumber
+        isLatest
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useSearchStrategiesQuery__
+ *
+ * To run a query within a React component, call `useSearchStrategiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchStrategiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchStrategiesQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      ownerID: // value for 'ownerID'
+ *      first: // value for 'first'
+ *   },
+ * });
+ */
+export function useSearchStrategiesQuery(baseOptions?: Apollo.QueryHookOptions<SearchStrategiesQuery, SearchStrategiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SearchStrategiesQuery, SearchStrategiesQueryVariables>(SearchStrategiesDocument, options);
+      }
+export function useSearchStrategiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SearchStrategiesQuery, SearchStrategiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SearchStrategiesQuery, SearchStrategiesQueryVariables>(SearchStrategiesDocument, options);
+        }
+export function useSearchStrategiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SearchStrategiesQuery, SearchStrategiesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SearchStrategiesQuery, SearchStrategiesQueryVariables>(SearchStrategiesDocument, options);
+        }
+export type SearchStrategiesQueryHookResult = ReturnType<typeof useSearchStrategiesQuery>;
+export type SearchStrategiesLazyQueryHookResult = ReturnType<typeof useSearchStrategiesLazyQuery>;
+export type SearchStrategiesSuspenseQueryHookResult = ReturnType<typeof useSearchStrategiesSuspenseQuery>;
+export type SearchStrategiesQueryResult = Apollo.QueryResult<SearchStrategiesQuery, SearchStrategiesQueryVariables>;
+export const GetStrategyByIdDocument = gql`
+    query GetStrategyById($id: ID!) {
+  strategies(first: 1, where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+        versionNumber
+        isLatest
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetStrategyByIdQuery__
+ *
+ * To run a query within a React component, call `useGetStrategyByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStrategyByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStrategyByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetStrategyByIdQuery(baseOptions: Apollo.QueryHookOptions<GetStrategyByIdQuery, GetStrategyByIdQueryVariables> & ({ variables: GetStrategyByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>(GetStrategyByIdDocument, options);
+      }
+export function useGetStrategyByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>(GetStrategyByIdDocument, options);
+        }
+export function useGetStrategyByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>(GetStrategyByIdDocument, options);
+        }
+export type GetStrategyByIdQueryHookResult = ReturnType<typeof useGetStrategyByIdQuery>;
+export type GetStrategyByIdLazyQueryHookResult = ReturnType<typeof useGetStrategyByIdLazyQuery>;
+export type GetStrategyByIdSuspenseQueryHookResult = ReturnType<typeof useGetStrategyByIdSuspenseQuery>;
+export type GetStrategyByIdQueryResult = Apollo.QueryResult<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>;
 export const CreateBacktestDocument = gql`
     mutation CreateBacktest($input: CreateBacktestInput!) {
   createBacktest(input: $input) {

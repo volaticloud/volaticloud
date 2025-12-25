@@ -830,10 +830,10 @@ cp /strategy-source/%s.py /userdata/strategies/
 	if spec.DataDownloadURL != "" {
 		setupScript += `
 echo "Downloading data from S3..."
-wget -q -O /tmp/data.zip "$DATA_DOWNLOAD_URL"
+wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
 echo "Extracting data..."
-unzip -q -o /tmp/data.zip -d /userdata/data
-rm /tmp/data.zip
+tar -xzf /tmp/data.tar.gz -C /userdata/data
+rm /tmp/data.tar.gz
 `
 	}
 
@@ -1043,10 +1043,10 @@ cp /strategy-source/%s.py /userdata/strategies/
 	if spec.DataDownloadURL != "" {
 		setupScript += `
 echo "Downloading data from S3..."
-wget -q -O /tmp/data.zip "$DATA_DOWNLOAD_URL"
+wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
 echo "Extracting data..."
-unzip -q -o /tmp/data.zip -d /userdata/data
-rm /tmp/data.zip
+tar -xzf /tmp/data.tar.gz -C /userdata/data
+rm /tmp/data.tar.gz
 `
 	}
 
