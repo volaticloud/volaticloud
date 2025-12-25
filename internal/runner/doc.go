@@ -63,9 +63,25 @@ The BacktestRunner interface defines operations for one-time backtest jobs:
 		Type() string
 	}
 
+## DataDownloader Interface
+
+The DataDownloader interface defines operations for downloading historical data on runner infrastructure:
+
+	type DataDownloader interface {
+		StartDownload(ctx context.Context, spec DataDownloadSpec) (taskID string, err error)
+		GetDownloadStatus(ctx context.Context, taskID string) (*DataDownloadStatus, error)
+		GetDownloadLogs(ctx context.Context, taskID string) (string, error)
+		CancelDownload(ctx context.Context, taskID string) error
+		CleanupDownload(ctx context.Context, taskID string) error
+	}
+
+Data download runs on the runner's infrastructure (Docker host or K8s cluster), not on the control plane.
+This enables downloading data even when the control plane runs in K8s without Docker access.
+
 Key Difference:
   - Bots are stateful (start/stop/restart operations)
   - Backtests are one-shot (run once, get results, cleanup)
+  - DataDownloads are background tasks (start, poll status, cleanup)
 
 # Factory Pattern
 
@@ -247,6 +263,50 @@ Local process implementation for debugging:
 	  - No container isolation
 	  - Direct filesystem access
 	  - For development only
+
+## DockerDataDownloader
+
+Docker implementation for downloading historical data:
+
+	Features:
+	  - Runs freqtrade container on Docker host
+	  - Downloads existing data from S3 (incremental updates)
+	  - Runs freqtrade download-data command
+	  - Packages results as tar.gz
+	  - Uploads to S3 via presigned PUT URL
+	  - Uses Python urllib (no wget/curl needed in image)
+
+	Container Configuration:
+	  - Image: freqtradeorg/freqtrade:stable
+	  - Runs as root for volume permissions
+	  - Executes shell script with multiple phases
+
+	Download Script Phases:
+	  1. Download existing data from S3 (if available)
+	  2. Extract existing data to /freqtrade/user_data/data
+	  3. Run freqtrade download-data for each exchange
+	  4. Package data as tar.gz
+	  5. Upload to S3 using presigned URL
+
+## KubernetesDataDownloader
+
+Kubernetes implementation for downloading historical data:
+
+	Features:
+	  - Creates Job on K8s cluster
+	  - TTL-based cleanup (1 hour after completion)
+	  - Labels for resource management
+	  - Pod log retrieval for debugging
+
+	Job Configuration:
+	  - RestartPolicy: Never
+	  - BackoffLimit: 0 (no retries)
+	  - TTLSecondsAfterFinished: 3600
+
+	Labels:
+	  - volaticloud.io/managed: true
+	  - volaticloud.io/data-download-id: {runnerID}
+	  - volaticloud.io/task-type: data-download
 
 # Bot Specification
 
@@ -633,6 +693,7 @@ Factory tests verify runtime creation:
 
 	interface.go           - Runtime interface definition
 	backtest_interface.go  - BacktestRunner interface definition
+	data_downloader.go     - DataDownloader interface definition
 	factory.go             - Runtime factory implementation
 	docker_runner.go       - Docker SDK implementation
 	docker_backtest.go     - Docker backtest implementation
@@ -642,6 +703,11 @@ Factory tests verify runtime creation:
 	backtest_types.go      - Backtest-specific types
 	config.go              - Runtime configuration types
 	config_validator.go    - BotSpec validation logic
+
+DataDownloader implementations are in their respective packages:
+
+	internal/docker/data_downloader.go      - Docker implementation
+	internal/kubernetes/data_downloader.go  - Kubernetes implementation
 
 # Related Packages
 
