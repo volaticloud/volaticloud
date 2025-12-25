@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -47,6 +48,8 @@ type Trade struct {
 	StrategyName string `json:"strategy_name,omitempty"`
 	// Timeframe used
 	Timeframe string `json:"timeframe,omitempty"`
+	// Full Freqtrade trade response for advanced analytics
+	RawData map[string]interface{} `json:"raw_data,omitempty"`
 	// Foreign key to bot
 	BotID uuid.UUID `json:"bot_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -86,6 +89,8 @@ func (*Trade) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case trade.FieldRawData:
+			values[i] = new([]byte)
 		case trade.FieldIsOpen:
 			values[i] = new(sql.NullBool)
 		case trade.FieldOpenRate, trade.FieldCloseRate, trade.FieldAmount, trade.FieldStakeAmount, trade.FieldProfitAbs, trade.FieldProfitRatio:
@@ -205,6 +210,14 @@ func (_m *Trade) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Timeframe = value.String
 			}
+		case trade.FieldRawData:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field raw_data", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.RawData); err != nil {
+					return fmt.Errorf("unmarshal field raw_data: %w", err)
+				}
+			}
 		case trade.FieldBotID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field bot_id", values[i])
@@ -309,6 +322,9 @@ func (_m *Trade) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("timeframe=")
 	builder.WriteString(_m.Timeframe)
+	builder.WriteString(", ")
+	builder.WriteString("raw_data=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RawData))
 	builder.WriteString(", ")
 	builder.WriteString("bot_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BotID))

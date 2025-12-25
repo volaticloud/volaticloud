@@ -43,6 +43,8 @@ const (
 	FieldStrategyName = "strategy_name"
 	// FieldTimeframe holds the string denoting the timeframe field in the database.
 	FieldTimeframe = "timeframe"
+	// FieldRawData holds the string denoting the raw_data field in the database.
+	FieldRawData = "raw_data"
 	// FieldBotID holds the string denoting the bot_id field in the database.
 	FieldBotID = "bot_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -79,6 +81,7 @@ var Columns = []string{
 	FieldSellReason,
 	FieldStrategyName,
 	FieldTimeframe,
+	FieldRawData,
 	FieldBotID,
 	FieldCreatedAt,
 	FieldUpdatedAt,

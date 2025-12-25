@@ -587,6 +587,16 @@ func (_q *BotMetricsQuery) collectField(ctx context.Context, oneNode bool, opCtx
 				selectedFields = append(selectedFields, botmetrics.FieldUpdatedAt)
 				fieldSeen[botmetrics.FieldUpdatedAt] = struct{}{}
 			}
+		case "lastSyncedTradeID":
+			if _, ok := fieldSeen[botmetrics.FieldLastSyncedTradeID]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLastSyncedTradeID)
+				fieldSeen[botmetrics.FieldLastSyncedTradeID] = struct{}{}
+			}
+		case "lastTradeSyncAt":
+			if _, ok := fieldSeen[botmetrics.FieldLastTradeSyncAt]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLastTradeSyncAt)
+				fieldSeen[botmetrics.FieldLastTradeSyncAt] = struct{}{}
+			}
 		case "id":
 		case "__typename":
 		default:

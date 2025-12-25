@@ -12,6 +12,8 @@ import (
 	"volaticloud/internal/ent/strategy"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -22,6 +24,7 @@ type BacktestCreate struct {
 	config
 	mutation *BacktestMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetStatus sets the "status" field.
@@ -296,6 +299,7 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 		_node = &Backtest{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(backtest.Table, sqlgraph.NewFieldSpec(backtest.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -377,11 +381,527 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Backtest.Create().
+//		SetStatus(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BacktestUpsert) {
+//			SetStatus(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BacktestCreate) OnConflict(opts ...sql.ConflictOption) *BacktestUpsertOne {
+	_c.conflict = opts
+	return &BacktestUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Backtest.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BacktestCreate) OnConflictColumns(columns ...string) *BacktestUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BacktestUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// BacktestUpsertOne is the builder for "upsert"-ing
+	//  one Backtest node.
+	BacktestUpsertOne struct {
+		create *BacktestCreate
+	}
+
+	// BacktestUpsert is the "OnConflict" setter.
+	BacktestUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetStatus sets the "status" field.
+func (u *BacktestUpsert) SetStatus(v enum.TaskStatus) *BacktestUpsert {
+	u.Set(backtest.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateStatus() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldStatus)
+	return u
+}
+
+// SetResult sets the "result" field.
+func (u *BacktestUpsert) SetResult(v map[string]interface{}) *BacktestUpsert {
+	u.Set(backtest.FieldResult, v)
+	return u
+}
+
+// UpdateResult sets the "result" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateResult() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldResult)
+	return u
+}
+
+// ClearResult clears the value of the "result" field.
+func (u *BacktestUpsert) ClearResult() *BacktestUpsert {
+	u.SetNull(backtest.FieldResult)
+	return u
+}
+
+// SetSummary sets the "summary" field.
+func (u *BacktestUpsert) SetSummary(v map[string]interface{}) *BacktestUpsert {
+	u.Set(backtest.FieldSummary, v)
+	return u
+}
+
+// UpdateSummary sets the "summary" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateSummary() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldSummary)
+	return u
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (u *BacktestUpsert) ClearSummary() *BacktestUpsert {
+	u.SetNull(backtest.FieldSummary)
+	return u
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (u *BacktestUpsert) SetErrorMessage(v string) *BacktestUpsert {
+	u.Set(backtest.FieldErrorMessage, v)
+	return u
+}
+
+// UpdateErrorMessage sets the "error_message" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateErrorMessage() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldErrorMessage)
+	return u
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (u *BacktestUpsert) ClearErrorMessage() *BacktestUpsert {
+	u.SetNull(backtest.FieldErrorMessage)
+	return u
+}
+
+// SetLogs sets the "logs" field.
+func (u *BacktestUpsert) SetLogs(v string) *BacktestUpsert {
+	u.Set(backtest.FieldLogs, v)
+	return u
+}
+
+// UpdateLogs sets the "logs" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateLogs() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldLogs)
+	return u
+}
+
+// ClearLogs clears the value of the "logs" field.
+func (u *BacktestUpsert) ClearLogs() *BacktestUpsert {
+	u.SetNull(backtest.FieldLogs)
+	return u
+}
+
+// SetStrategyID sets the "strategy_id" field.
+func (u *BacktestUpsert) SetStrategyID(v uuid.UUID) *BacktestUpsert {
+	u.Set(backtest.FieldStrategyID, v)
+	return u
+}
+
+// UpdateStrategyID sets the "strategy_id" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateStrategyID() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldStrategyID)
+	return u
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *BacktestUpsert) SetRunnerID(v uuid.UUID) *BacktestUpsert {
+	u.Set(backtest.FieldRunnerID, v)
+	return u
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateRunnerID() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldRunnerID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BacktestUpsert) SetUpdatedAt(v time.Time) *BacktestUpsert {
+	u.Set(backtest.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateUpdatedAt() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldUpdatedAt)
+	return u
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (u *BacktestUpsert) SetCompletedAt(v time.Time) *BacktestUpsert {
+	u.Set(backtest.FieldCompletedAt, v)
+	return u
+}
+
+// UpdateCompletedAt sets the "completed_at" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateCompletedAt() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldCompletedAt)
+	return u
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (u *BacktestUpsert) ClearCompletedAt() *BacktestUpsert {
+	u.SetNull(backtest.FieldCompletedAt)
+	return u
+}
+
+// SetStartDate sets the "start_date" field.
+func (u *BacktestUpsert) SetStartDate(v time.Time) *BacktestUpsert {
+	u.Set(backtest.FieldStartDate, v)
+	return u
+}
+
+// UpdateStartDate sets the "start_date" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateStartDate() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldStartDate)
+	return u
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (u *BacktestUpsert) ClearStartDate() *BacktestUpsert {
+	u.SetNull(backtest.FieldStartDate)
+	return u
+}
+
+// SetEndDate sets the "end_date" field.
+func (u *BacktestUpsert) SetEndDate(v time.Time) *BacktestUpsert {
+	u.Set(backtest.FieldEndDate, v)
+	return u
+}
+
+// UpdateEndDate sets the "end_date" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateEndDate() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldEndDate)
+	return u
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (u *BacktestUpsert) ClearEndDate() *BacktestUpsert {
+	u.SetNull(backtest.FieldEndDate)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Backtest.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(backtest.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BacktestUpsertOne) UpdateNewValues() *BacktestUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(backtest.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(backtest.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Backtest.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *BacktestUpsertOne) Ignore() *BacktestUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BacktestUpsertOne) DoNothing() *BacktestUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BacktestCreate.OnConflict
+// documentation for more info.
+func (u *BacktestUpsertOne) Update(set func(*BacktestUpsert)) *BacktestUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BacktestUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *BacktestUpsertOne) SetStatus(v enum.TaskStatus) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateStatus() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetResult sets the "result" field.
+func (u *BacktestUpsertOne) SetResult(v map[string]interface{}) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetResult(v)
+	})
+}
+
+// UpdateResult sets the "result" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateResult() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateResult()
+	})
+}
+
+// ClearResult clears the value of the "result" field.
+func (u *BacktestUpsertOne) ClearResult() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearResult()
+	})
+}
+
+// SetSummary sets the "summary" field.
+func (u *BacktestUpsertOne) SetSummary(v map[string]interface{}) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetSummary(v)
+	})
+}
+
+// UpdateSummary sets the "summary" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateSummary() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateSummary()
+	})
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (u *BacktestUpsertOne) ClearSummary() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearSummary()
+	})
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (u *BacktestUpsertOne) SetErrorMessage(v string) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetErrorMessage(v)
+	})
+}
+
+// UpdateErrorMessage sets the "error_message" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateErrorMessage() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateErrorMessage()
+	})
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (u *BacktestUpsertOne) ClearErrorMessage() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearErrorMessage()
+	})
+}
+
+// SetLogs sets the "logs" field.
+func (u *BacktestUpsertOne) SetLogs(v string) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetLogs(v)
+	})
+}
+
+// UpdateLogs sets the "logs" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateLogs() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateLogs()
+	})
+}
+
+// ClearLogs clears the value of the "logs" field.
+func (u *BacktestUpsertOne) ClearLogs() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearLogs()
+	})
+}
+
+// SetStrategyID sets the "strategy_id" field.
+func (u *BacktestUpsertOne) SetStrategyID(v uuid.UUID) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetStrategyID(v)
+	})
+}
+
+// UpdateStrategyID sets the "strategy_id" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateStrategyID() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateStrategyID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *BacktestUpsertOne) SetRunnerID(v uuid.UUID) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateRunnerID() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BacktestUpsertOne) SetUpdatedAt(v time.Time) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateUpdatedAt() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (u *BacktestUpsertOne) SetCompletedAt(v time.Time) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetCompletedAt(v)
+	})
+}
+
+// UpdateCompletedAt sets the "completed_at" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateCompletedAt() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateCompletedAt()
+	})
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (u *BacktestUpsertOne) ClearCompletedAt() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearCompletedAt()
+	})
+}
+
+// SetStartDate sets the "start_date" field.
+func (u *BacktestUpsertOne) SetStartDate(v time.Time) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetStartDate(v)
+	})
+}
+
+// UpdateStartDate sets the "start_date" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateStartDate() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateStartDate()
+	})
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (u *BacktestUpsertOne) ClearStartDate() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearStartDate()
+	})
+}
+
+// SetEndDate sets the "end_date" field.
+func (u *BacktestUpsertOne) SetEndDate(v time.Time) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetEndDate(v)
+	})
+}
+
+// UpdateEndDate sets the "end_date" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateEndDate() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateEndDate()
+	})
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (u *BacktestUpsertOne) ClearEndDate() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearEndDate()
+	})
+}
+
+// Exec executes the query.
+func (u *BacktestUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BacktestCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BacktestUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *BacktestUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: BacktestUpsertOne.ID is not supported by MySQL driver. Use BacktestUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *BacktestUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // BacktestCreateBulk is the builder for creating many Backtest entities in bulk.
 type BacktestCreateBulk struct {
 	config
 	err      error
 	builders []*BacktestCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Backtest entities in the database.
@@ -411,6 +931,7 @@ func (_c *BacktestCreateBulk) Save(ctx context.Context) ([]*Backtest, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -457,6 +978,326 @@ func (_c *BacktestCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *BacktestCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Backtest.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BacktestUpsert) {
+//			SetStatus(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BacktestCreateBulk) OnConflict(opts ...sql.ConflictOption) *BacktestUpsertBulk {
+	_c.conflict = opts
+	return &BacktestUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Backtest.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BacktestCreateBulk) OnConflictColumns(columns ...string) *BacktestUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BacktestUpsertBulk{
+		create: _c,
+	}
+}
+
+// BacktestUpsertBulk is the builder for "upsert"-ing
+// a bulk of Backtest nodes.
+type BacktestUpsertBulk struct {
+	create *BacktestCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Backtest.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(backtest.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BacktestUpsertBulk) UpdateNewValues() *BacktestUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(backtest.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(backtest.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Backtest.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *BacktestUpsertBulk) Ignore() *BacktestUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BacktestUpsertBulk) DoNothing() *BacktestUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BacktestCreateBulk.OnConflict
+// documentation for more info.
+func (u *BacktestUpsertBulk) Update(set func(*BacktestUpsert)) *BacktestUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BacktestUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *BacktestUpsertBulk) SetStatus(v enum.TaskStatus) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateStatus() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetResult sets the "result" field.
+func (u *BacktestUpsertBulk) SetResult(v map[string]interface{}) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetResult(v)
+	})
+}
+
+// UpdateResult sets the "result" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateResult() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateResult()
+	})
+}
+
+// ClearResult clears the value of the "result" field.
+func (u *BacktestUpsertBulk) ClearResult() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearResult()
+	})
+}
+
+// SetSummary sets the "summary" field.
+func (u *BacktestUpsertBulk) SetSummary(v map[string]interface{}) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetSummary(v)
+	})
+}
+
+// UpdateSummary sets the "summary" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateSummary() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateSummary()
+	})
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (u *BacktestUpsertBulk) ClearSummary() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearSummary()
+	})
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (u *BacktestUpsertBulk) SetErrorMessage(v string) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetErrorMessage(v)
+	})
+}
+
+// UpdateErrorMessage sets the "error_message" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateErrorMessage() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateErrorMessage()
+	})
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (u *BacktestUpsertBulk) ClearErrorMessage() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearErrorMessage()
+	})
+}
+
+// SetLogs sets the "logs" field.
+func (u *BacktestUpsertBulk) SetLogs(v string) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetLogs(v)
+	})
+}
+
+// UpdateLogs sets the "logs" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateLogs() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateLogs()
+	})
+}
+
+// ClearLogs clears the value of the "logs" field.
+func (u *BacktestUpsertBulk) ClearLogs() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearLogs()
+	})
+}
+
+// SetStrategyID sets the "strategy_id" field.
+func (u *BacktestUpsertBulk) SetStrategyID(v uuid.UUID) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetStrategyID(v)
+	})
+}
+
+// UpdateStrategyID sets the "strategy_id" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateStrategyID() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateStrategyID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *BacktestUpsertBulk) SetRunnerID(v uuid.UUID) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateRunnerID() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BacktestUpsertBulk) SetUpdatedAt(v time.Time) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateUpdatedAt() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (u *BacktestUpsertBulk) SetCompletedAt(v time.Time) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetCompletedAt(v)
+	})
+}
+
+// UpdateCompletedAt sets the "completed_at" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateCompletedAt() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateCompletedAt()
+	})
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (u *BacktestUpsertBulk) ClearCompletedAt() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearCompletedAt()
+	})
+}
+
+// SetStartDate sets the "start_date" field.
+func (u *BacktestUpsertBulk) SetStartDate(v time.Time) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetStartDate(v)
+	})
+}
+
+// UpdateStartDate sets the "start_date" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateStartDate() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateStartDate()
+	})
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (u *BacktestUpsertBulk) ClearStartDate() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearStartDate()
+	})
+}
+
+// SetEndDate sets the "end_date" field.
+func (u *BacktestUpsertBulk) SetEndDate(v time.Time) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetEndDate(v)
+	})
+}
+
+// UpdateEndDate sets the "end_date" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateEndDate() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateEndDate()
+	})
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (u *BacktestUpsertBulk) ClearEndDate() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearEndDate()
+	})
+}
+
+// Exec executes the query.
+func (u *BacktestUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the BacktestCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BacktestCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BacktestUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

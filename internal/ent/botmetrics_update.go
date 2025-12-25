@@ -529,6 +529,47 @@ func (_u *BotMetricsUpdate) SetUpdatedAt(v time.Time) *BotMetricsUpdate {
 	return _u
 }
 
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (_u *BotMetricsUpdate) SetLastSyncedTradeID(v int) *BotMetricsUpdate {
+	_u.mutation.ResetLastSyncedTradeID()
+	_u.mutation.SetLastSyncedTradeID(v)
+	return _u
+}
+
+// SetNillableLastSyncedTradeID sets the "last_synced_trade_id" field if the given value is not nil.
+func (_u *BotMetricsUpdate) SetNillableLastSyncedTradeID(v *int) *BotMetricsUpdate {
+	if v != nil {
+		_u.SetLastSyncedTradeID(*v)
+	}
+	return _u
+}
+
+// AddLastSyncedTradeID adds value to the "last_synced_trade_id" field.
+func (_u *BotMetricsUpdate) AddLastSyncedTradeID(v int) *BotMetricsUpdate {
+	_u.mutation.AddLastSyncedTradeID(v)
+	return _u
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (_u *BotMetricsUpdate) SetLastTradeSyncAt(v time.Time) *BotMetricsUpdate {
+	_u.mutation.SetLastTradeSyncAt(v)
+	return _u
+}
+
+// SetNillableLastTradeSyncAt sets the "last_trade_sync_at" field if the given value is not nil.
+func (_u *BotMetricsUpdate) SetNillableLastTradeSyncAt(v *time.Time) *BotMetricsUpdate {
+	if v != nil {
+		_u.SetLastTradeSyncAt(*v)
+	}
+	return _u
+}
+
+// ClearLastTradeSyncAt clears the value of the "last_trade_sync_at" field.
+func (_u *BotMetricsUpdate) ClearLastTradeSyncAt() *BotMetricsUpdate {
+	_u.mutation.ClearLastTradeSyncAt()
+	return _u
+}
+
 // SetBot sets the "bot" edge to the Bot entity.
 func (_u *BotMetricsUpdate) SetBot(v *Bot) *BotMetricsUpdate {
 	return _u.SetBotID(v.ID)
@@ -759,6 +800,18 @@ func (_u *BotMetricsUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botmetrics.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.LastSyncedTradeID(); ok {
+		_spec.SetField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLastSyncedTradeID(); ok {
+		_spec.AddField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.LastTradeSyncAt(); ok {
+		_spec.SetField(botmetrics.FieldLastTradeSyncAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastTradeSyncAtCleared() {
+		_spec.ClearField(botmetrics.FieldLastTradeSyncAt, field.TypeTime)
 	}
 	if _u.mutation.BotCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1308,6 +1361,47 @@ func (_u *BotMetricsUpdateOne) SetUpdatedAt(v time.Time) *BotMetricsUpdateOne {
 	return _u
 }
 
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (_u *BotMetricsUpdateOne) SetLastSyncedTradeID(v int) *BotMetricsUpdateOne {
+	_u.mutation.ResetLastSyncedTradeID()
+	_u.mutation.SetLastSyncedTradeID(v)
+	return _u
+}
+
+// SetNillableLastSyncedTradeID sets the "last_synced_trade_id" field if the given value is not nil.
+func (_u *BotMetricsUpdateOne) SetNillableLastSyncedTradeID(v *int) *BotMetricsUpdateOne {
+	if v != nil {
+		_u.SetLastSyncedTradeID(*v)
+	}
+	return _u
+}
+
+// AddLastSyncedTradeID adds value to the "last_synced_trade_id" field.
+func (_u *BotMetricsUpdateOne) AddLastSyncedTradeID(v int) *BotMetricsUpdateOne {
+	_u.mutation.AddLastSyncedTradeID(v)
+	return _u
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (_u *BotMetricsUpdateOne) SetLastTradeSyncAt(v time.Time) *BotMetricsUpdateOne {
+	_u.mutation.SetLastTradeSyncAt(v)
+	return _u
+}
+
+// SetNillableLastTradeSyncAt sets the "last_trade_sync_at" field if the given value is not nil.
+func (_u *BotMetricsUpdateOne) SetNillableLastTradeSyncAt(v *time.Time) *BotMetricsUpdateOne {
+	if v != nil {
+		_u.SetLastTradeSyncAt(*v)
+	}
+	return _u
+}
+
+// ClearLastTradeSyncAt clears the value of the "last_trade_sync_at" field.
+func (_u *BotMetricsUpdateOne) ClearLastTradeSyncAt() *BotMetricsUpdateOne {
+	_u.mutation.ClearLastTradeSyncAt()
+	return _u
+}
+
 // SetBot sets the "bot" edge to the Bot entity.
 func (_u *BotMetricsUpdateOne) SetBot(v *Bot) *BotMetricsUpdateOne {
 	return _u.SetBotID(v.ID)
@@ -1568,6 +1662,18 @@ func (_u *BotMetricsUpdateOne) sqlSave(ctx context.Context) (_node *BotMetrics, 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(botmetrics.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.LastSyncedTradeID(); ok {
+		_spec.SetField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLastSyncedTradeID(); ok {
+		_spec.AddField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.LastTradeSyncAt(); ok {
+		_spec.SetField(botmetrics.FieldLastTradeSyncAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastTradeSyncAtCleared() {
+		_spec.ClearField(botmetrics.FieldLastTradeSyncAt, field.TypeTime)
 	}
 	if _u.mutation.BotCleared() {
 		edge := &sqlgraph.EdgeSpec{

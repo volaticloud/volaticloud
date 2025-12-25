@@ -305,6 +305,18 @@ func (_u *TradeUpdate) ClearTimeframe() *TradeUpdate {
 	return _u
 }
 
+// SetRawData sets the "raw_data" field.
+func (_u *TradeUpdate) SetRawData(v map[string]interface{}) *TradeUpdate {
+	_u.mutation.SetRawData(v)
+	return _u
+}
+
+// ClearRawData clears the value of the "raw_data" field.
+func (_u *TradeUpdate) ClearRawData() *TradeUpdate {
+	_u.mutation.ClearRawData()
+	return _u
+}
+
 // SetBotID sets the "bot_id" field.
 func (_u *TradeUpdate) SetBotID(v uuid.UUID) *TradeUpdate {
 	_u.mutation.SetBotID(v)
@@ -499,6 +511,12 @@ func (_u *TradeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.TimeframeCleared() {
 		_spec.ClearField(trade.FieldTimeframe, field.TypeString)
+	}
+	if value, ok := _u.mutation.RawData(); ok {
+		_spec.SetField(trade.FieldRawData, field.TypeJSON, value)
+	}
+	if _u.mutation.RawDataCleared() {
+		_spec.ClearField(trade.FieldRawData, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(trade.FieldUpdatedAt, field.TypeTime, value)
@@ -827,6 +845,18 @@ func (_u *TradeUpdateOne) ClearTimeframe() *TradeUpdateOne {
 	return _u
 }
 
+// SetRawData sets the "raw_data" field.
+func (_u *TradeUpdateOne) SetRawData(v map[string]interface{}) *TradeUpdateOne {
+	_u.mutation.SetRawData(v)
+	return _u
+}
+
+// ClearRawData clears the value of the "raw_data" field.
+func (_u *TradeUpdateOne) ClearRawData() *TradeUpdateOne {
+	_u.mutation.ClearRawData()
+	return _u
+}
+
 // SetBotID sets the "bot_id" field.
 func (_u *TradeUpdateOne) SetBotID(v uuid.UUID) *TradeUpdateOne {
 	_u.mutation.SetBotID(v)
@@ -1051,6 +1081,12 @@ func (_u *TradeUpdateOne) sqlSave(ctx context.Context) (_node *Trade, err error)
 	}
 	if _u.mutation.TimeframeCleared() {
 		_spec.ClearField(trade.FieldTimeframe, field.TypeString)
+	}
+	if value, ok := _u.mutation.RawData(); ok {
+		_spec.SetField(trade.FieldRawData, field.TypeJSON, value)
+	}
+	if _u.mutation.RawDataCleared() {
+		_spec.ClearField(trade.FieldRawData, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(trade.FieldUpdatedAt, field.TypeTime, value)

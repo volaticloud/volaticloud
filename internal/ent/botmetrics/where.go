@@ -161,6 +161,16 @@ func UpdatedAt(v time.Time) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// LastSyncedTradeID applies equality check predicate on the "last_synced_trade_id" field. It's identical to LastSyncedTradeIDEQ.
+func LastSyncedTradeID(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldLastSyncedTradeID, v))
+}
+
+// LastTradeSyncAt applies equality check predicate on the "last_trade_sync_at" field. It's identical to LastTradeSyncAtEQ.
+func LastTradeSyncAt(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldLastTradeSyncAt, v))
+}
+
 // BotIDEQ applies the EQ predicate on the "bot_id" field.
 func BotIDEQ(v uuid.UUID) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldEQ(FieldBotID, v))
@@ -1184,6 +1194,96 @@ func UpdatedAtLT(v time.Time) predicate.BotMetrics {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// LastSyncedTradeIDEQ applies the EQ predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDEQ(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldLastSyncedTradeID, v))
+}
+
+// LastSyncedTradeIDNEQ applies the NEQ predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDNEQ(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNEQ(FieldLastSyncedTradeID, v))
+}
+
+// LastSyncedTradeIDIn applies the In predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDIn(vs ...int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldIn(FieldLastSyncedTradeID, vs...))
+}
+
+// LastSyncedTradeIDNotIn applies the NotIn predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDNotIn(vs ...int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNotIn(FieldLastSyncedTradeID, vs...))
+}
+
+// LastSyncedTradeIDGT applies the GT predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDGT(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGT(FieldLastSyncedTradeID, v))
+}
+
+// LastSyncedTradeIDGTE applies the GTE predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDGTE(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGTE(FieldLastSyncedTradeID, v))
+}
+
+// LastSyncedTradeIDLT applies the LT predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDLT(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLT(FieldLastSyncedTradeID, v))
+}
+
+// LastSyncedTradeIDLTE applies the LTE predicate on the "last_synced_trade_id" field.
+func LastSyncedTradeIDLTE(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLTE(FieldLastSyncedTradeID, v))
+}
+
+// LastTradeSyncAtEQ applies the EQ predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtEQ(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldLastTradeSyncAt, v))
+}
+
+// LastTradeSyncAtNEQ applies the NEQ predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtNEQ(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNEQ(FieldLastTradeSyncAt, v))
+}
+
+// LastTradeSyncAtIn applies the In predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtIn(vs ...time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldIn(FieldLastTradeSyncAt, vs...))
+}
+
+// LastTradeSyncAtNotIn applies the NotIn predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtNotIn(vs ...time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNotIn(FieldLastTradeSyncAt, vs...))
+}
+
+// LastTradeSyncAtGT applies the GT predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtGT(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGT(FieldLastTradeSyncAt, v))
+}
+
+// LastTradeSyncAtGTE applies the GTE predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtGTE(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGTE(FieldLastTradeSyncAt, v))
+}
+
+// LastTradeSyncAtLT applies the LT predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtLT(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLT(FieldLastTradeSyncAt, v))
+}
+
+// LastTradeSyncAtLTE applies the LTE predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtLTE(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLTE(FieldLastTradeSyncAt, v))
+}
+
+// LastTradeSyncAtIsNil applies the IsNil predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtIsNil() predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldIsNull(FieldLastTradeSyncAt))
+}
+
+// LastTradeSyncAtNotNil applies the NotNil predicate on the "last_trade_sync_at" field.
+func LastTradeSyncAtNotNil() predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNotNull(FieldLastTradeSyncAt))
 }
 
 // HasBot applies the HasEdge predicate on the "bot" edge.

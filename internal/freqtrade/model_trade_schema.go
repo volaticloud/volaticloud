@@ -11,7 +11,6 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -83,6 +82,7 @@ type TradeSchema struct {
 	AmountPrecision             NullableFloat32     `json:"amount_precision,omitempty"`
 	PricePrecision              NullableFloat32     `json:"price_precision,omitempty"`
 	PrecisionMode               NullableInt64       `json:"precision_mode,omitempty"`
+	AdditionalProperties        map[string]interface{}
 }
 
 type _TradeSchema TradeSchema
@@ -2550,6 +2550,11 @@ func (o TradeSchema) ToMap() (map[string]interface{}, error) {
 	if o.PrecisionMode.IsSet() {
 		toSerialize["precision_mode"] = o.PrecisionMode.Get()
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -2597,15 +2602,81 @@ func (o *TradeSchema) UnmarshalJSON(data []byte) (err error) {
 
 	varTradeSchema := _TradeSchema{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTradeSchema)
+	err = json.Unmarshal(data, &varTradeSchema)
 
 	if err != nil {
 		return err
 	}
 
 	*o = TradeSchema(varTradeSchema)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "trade_id")
+		delete(additionalProperties, "pair")
+		delete(additionalProperties, "base_currency")
+		delete(additionalProperties, "quote_currency")
+		delete(additionalProperties, "is_open")
+		delete(additionalProperties, "is_short")
+		delete(additionalProperties, "exchange")
+		delete(additionalProperties, "amount")
+		delete(additionalProperties, "amount_requested")
+		delete(additionalProperties, "stake_amount")
+		delete(additionalProperties, "max_stake_amount")
+		delete(additionalProperties, "strategy")
+		delete(additionalProperties, "enter_tag")
+		delete(additionalProperties, "timeframe")
+		delete(additionalProperties, "fee_open")
+		delete(additionalProperties, "fee_open_cost")
+		delete(additionalProperties, "fee_open_currency")
+		delete(additionalProperties, "fee_close")
+		delete(additionalProperties, "fee_close_cost")
+		delete(additionalProperties, "fee_close_currency")
+		delete(additionalProperties, "open_date")
+		delete(additionalProperties, "open_timestamp")
+		delete(additionalProperties, "open_fill_date")
+		delete(additionalProperties, "open_fill_timestamp")
+		delete(additionalProperties, "open_rate")
+		delete(additionalProperties, "open_rate_requested")
+		delete(additionalProperties, "open_trade_value")
+		delete(additionalProperties, "close_date")
+		delete(additionalProperties, "close_timestamp")
+		delete(additionalProperties, "close_rate")
+		delete(additionalProperties, "close_rate_requested")
+		delete(additionalProperties, "close_profit")
+		delete(additionalProperties, "close_profit_pct")
+		delete(additionalProperties, "close_profit_abs")
+		delete(additionalProperties, "profit_ratio")
+		delete(additionalProperties, "profit_pct")
+		delete(additionalProperties, "profit_abs")
+		delete(additionalProperties, "profit_fiat")
+		delete(additionalProperties, "realized_profit")
+		delete(additionalProperties, "realized_profit_ratio")
+		delete(additionalProperties, "exit_reason")
+		delete(additionalProperties, "exit_order_status")
+		delete(additionalProperties, "stop_loss_abs")
+		delete(additionalProperties, "stop_loss_ratio")
+		delete(additionalProperties, "stop_loss_pct")
+		delete(additionalProperties, "stoploss_last_update")
+		delete(additionalProperties, "stoploss_last_update_timestamp")
+		delete(additionalProperties, "initial_stop_loss_abs")
+		delete(additionalProperties, "initial_stop_loss_ratio")
+		delete(additionalProperties, "initial_stop_loss_pct")
+		delete(additionalProperties, "min_rate")
+		delete(additionalProperties, "max_rate")
+		delete(additionalProperties, "has_open_orders")
+		delete(additionalProperties, "orders")
+		delete(additionalProperties, "leverage")
+		delete(additionalProperties, "interest_rate")
+		delete(additionalProperties, "liquidation_price")
+		delete(additionalProperties, "funding_fees")
+		delete(additionalProperties, "trading_mode")
+		delete(additionalProperties, "amount_precision")
+		delete(additionalProperties, "price_precision")
+		delete(additionalProperties, "precision_mode")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

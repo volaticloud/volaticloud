@@ -1493,6 +1493,28 @@ type BotMetricsWhereInput struct {
 	UpdatedAtLT    *time.Time  `json:"updatedAtLT,omitempty"`
 	UpdatedAtLTE   *time.Time  `json:"updatedAtLTE,omitempty"`
 
+	// "last_synced_trade_id" field predicates.
+	LastSyncedTradeID      *int  `json:"lastSyncedTradeID,omitempty"`
+	LastSyncedTradeIDNEQ   *int  `json:"lastSyncedTradeIDNEQ,omitempty"`
+	LastSyncedTradeIDIn    []int `json:"lastSyncedTradeIDIn,omitempty"`
+	LastSyncedTradeIDNotIn []int `json:"lastSyncedTradeIDNotIn,omitempty"`
+	LastSyncedTradeIDGT    *int  `json:"lastSyncedTradeIDGT,omitempty"`
+	LastSyncedTradeIDGTE   *int  `json:"lastSyncedTradeIDGTE,omitempty"`
+	LastSyncedTradeIDLT    *int  `json:"lastSyncedTradeIDLT,omitempty"`
+	LastSyncedTradeIDLTE   *int  `json:"lastSyncedTradeIDLTE,omitempty"`
+
+	// "last_trade_sync_at" field predicates.
+	LastTradeSyncAt       *time.Time  `json:"lastTradeSyncAt,omitempty"`
+	LastTradeSyncAtNEQ    *time.Time  `json:"lastTradeSyncAtNEQ,omitempty"`
+	LastTradeSyncAtIn     []time.Time `json:"lastTradeSyncAtIn,omitempty"`
+	LastTradeSyncAtNotIn  []time.Time `json:"lastTradeSyncAtNotIn,omitempty"`
+	LastTradeSyncAtGT     *time.Time  `json:"lastTradeSyncAtGT,omitempty"`
+	LastTradeSyncAtGTE    *time.Time  `json:"lastTradeSyncAtGTE,omitempty"`
+	LastTradeSyncAtLT     *time.Time  `json:"lastTradeSyncAtLT,omitempty"`
+	LastTradeSyncAtLTE    *time.Time  `json:"lastTradeSyncAtLTE,omitempty"`
+	LastTradeSyncAtIsNil  bool        `json:"lastTradeSyncAtIsNil,omitempty"`
+	LastTradeSyncAtNotNil bool        `json:"lastTradeSyncAtNotNil,omitempty"`
+
 	// "bot" edge predicates.
 	HasBot     *bool            `json:"hasBot,omitempty"`
 	HasBotWith []*BotWhereInput `json:"hasBotWith,omitempty"`
@@ -2207,6 +2229,60 @@ func (i *BotMetricsWhereInput) P() (predicate.BotMetrics, error) {
 	}
 	if i.UpdatedAtLTE != nil {
 		predicates = append(predicates, botmetrics.UpdatedAtLTE(*i.UpdatedAtLTE))
+	}
+	if i.LastSyncedTradeID != nil {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDEQ(*i.LastSyncedTradeID))
+	}
+	if i.LastSyncedTradeIDNEQ != nil {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDNEQ(*i.LastSyncedTradeIDNEQ))
+	}
+	if len(i.LastSyncedTradeIDIn) > 0 {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDIn(i.LastSyncedTradeIDIn...))
+	}
+	if len(i.LastSyncedTradeIDNotIn) > 0 {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDNotIn(i.LastSyncedTradeIDNotIn...))
+	}
+	if i.LastSyncedTradeIDGT != nil {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDGT(*i.LastSyncedTradeIDGT))
+	}
+	if i.LastSyncedTradeIDGTE != nil {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDGTE(*i.LastSyncedTradeIDGTE))
+	}
+	if i.LastSyncedTradeIDLT != nil {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDLT(*i.LastSyncedTradeIDLT))
+	}
+	if i.LastSyncedTradeIDLTE != nil {
+		predicates = append(predicates, botmetrics.LastSyncedTradeIDLTE(*i.LastSyncedTradeIDLTE))
+	}
+	if i.LastTradeSyncAt != nil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtEQ(*i.LastTradeSyncAt))
+	}
+	if i.LastTradeSyncAtNEQ != nil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtNEQ(*i.LastTradeSyncAtNEQ))
+	}
+	if len(i.LastTradeSyncAtIn) > 0 {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtIn(i.LastTradeSyncAtIn...))
+	}
+	if len(i.LastTradeSyncAtNotIn) > 0 {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtNotIn(i.LastTradeSyncAtNotIn...))
+	}
+	if i.LastTradeSyncAtGT != nil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtGT(*i.LastTradeSyncAtGT))
+	}
+	if i.LastTradeSyncAtGTE != nil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtGTE(*i.LastTradeSyncAtGTE))
+	}
+	if i.LastTradeSyncAtLT != nil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtLT(*i.LastTradeSyncAtLT))
+	}
+	if i.LastTradeSyncAtLTE != nil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtLTE(*i.LastTradeSyncAtLTE))
+	}
+	if i.LastTradeSyncAtIsNil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtIsNil())
+	}
+	if i.LastTradeSyncAtNotNil {
+		predicates = append(predicates, botmetrics.LastTradeSyncAtNotNil())
 	}
 
 	if i.HasBot != nil {

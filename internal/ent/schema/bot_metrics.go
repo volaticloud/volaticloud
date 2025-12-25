@@ -99,6 +99,15 @@ func (BotMetrics) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
+
+		// Trade sync tracking
+		field.Int("last_synced_trade_id").
+			Default(0).
+			Comment("Last freqtrade_trade_id synced for incremental fetch"),
+		field.Time("last_trade_sync_at").
+			Optional().
+			Nillable().
+			Comment("Last successful trade sync timestamp"),
 	}
 }
 

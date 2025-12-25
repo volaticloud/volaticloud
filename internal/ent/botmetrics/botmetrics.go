@@ -57,6 +57,10 @@ const (
 	FieldFetchedAt = "fetched_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldLastSyncedTradeID holds the string denoting the last_synced_trade_id field in the database.
+	FieldLastSyncedTradeID = "last_synced_trade_id"
+	// FieldLastTradeSyncAt holds the string denoting the last_trade_sync_at field in the database.
+	FieldLastTradeSyncAt = "last_trade_sync_at"
 	// EdgeBot holds the string denoting the bot edge name in mutations.
 	EdgeBot = "bot"
 	// Table holds the table name of the botmetrics in the database.
@@ -94,6 +98,8 @@ var Columns = []string{
 	FieldLatestTradeTimestamp,
 	FieldFetchedAt,
 	FieldUpdatedAt,
+	FieldLastSyncedTradeID,
+	FieldLastTradeSyncAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -113,6 +119,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultLastSyncedTradeID holds the default value on creation for the "last_synced_trade_id" field.
+	DefaultLastSyncedTradeID int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -228,6 +236,16 @@ func ByFetchedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByLastSyncedTradeID orders the results by the last_synced_trade_id field.
+func ByLastSyncedTradeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastSyncedTradeID, opts...).ToFunc()
+}
+
+// ByLastTradeSyncAt orders the results by the last_trade_sync_at field.
+func ByLastTradeSyncAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastTradeSyncAt, opts...).ToFunc()
 }
 
 // ByBotField orders the results by bot field.

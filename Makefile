@@ -44,8 +44,15 @@ setup:
 generate-freqtrade:
 	@echo "Generating Freqtrade API client from OpenAPI spec..."
 	@which docker > /dev/null || (echo "Docker not installed. Please install Docker." && exit 1)
+	@which npx > /dev/null || (echo "npx not installed. Please install Node.js." && exit 1)
+	@echo "Applying OpenAPI overlay patches..."
+	@npx openapi-format internal/freqtrade/openapi.json \
+		--overlayFile internal/freqtrade/openapi-overlay.yaml \
+		--json \
+		-o internal/freqtrade/openapi-merged.json \
+		> /dev/null 2>&1
 	@docker run --rm --user $$(id -u):$$(id -g) -v $${PWD}:/local openapitools/openapi-generator-cli generate \
-		-i /local/internal/freqtrade/openapi.json \
+		-i /local/internal/freqtrade/openapi-merged.json \
 		-g go \
 		-o /local/internal/freqtrade \
 		--package-name freqtrade \
@@ -55,7 +62,7 @@ generate-freqtrade:
 		> /dev/null 2>&1
 	@echo "Cleaning up generated files (removing tests and docs)..."
 	@chmod -R u+w internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator 2>/dev/null || true
-	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md 2>/dev/null || true
+	@rm -rf internal/freqtrade/test internal/freqtrade/docs internal/freqtrade/api internal/freqtrade/.openapi-generator internal/freqtrade/.openapi-generator-ignore internal/freqtrade/.travis.yml internal/freqtrade/.gitignore internal/freqtrade/git_push.sh internal/freqtrade/README.md internal/freqtrade/openapi-merged.json 2>/dev/null || true
 	@echo "Formatting generated Go files..."
 	@gofmt -w internal/freqtrade/*.go
 	@echo "Freqtrade client generated successfully!"

@@ -2705,6 +2705,9 @@ type BotMetricsMutation struct {
 	latest_trade_timestamp   *time.Time
 	fetched_at               *time.Time
 	updated_at               *time.Time
+	last_synced_trade_id     *int
+	addlast_synced_trade_id  *int
+	last_trade_sync_at       *time.Time
 	clearedFields            map[string]struct{}
 	bot                      *uuid.UUID
 	clearedbot               bool
@@ -4122,6 +4125,111 @@ func (m *BotMetricsMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (m *BotMetricsMutation) SetLastSyncedTradeID(i int) {
+	m.last_synced_trade_id = &i
+	m.addlast_synced_trade_id = nil
+}
+
+// LastSyncedTradeID returns the value of the "last_synced_trade_id" field in the mutation.
+func (m *BotMetricsMutation) LastSyncedTradeID() (r int, exists bool) {
+	v := m.last_synced_trade_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSyncedTradeID returns the old "last_synced_trade_id" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldLastSyncedTradeID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSyncedTradeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSyncedTradeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSyncedTradeID: %w", err)
+	}
+	return oldValue.LastSyncedTradeID, nil
+}
+
+// AddLastSyncedTradeID adds i to the "last_synced_trade_id" field.
+func (m *BotMetricsMutation) AddLastSyncedTradeID(i int) {
+	if m.addlast_synced_trade_id != nil {
+		*m.addlast_synced_trade_id += i
+	} else {
+		m.addlast_synced_trade_id = &i
+	}
+}
+
+// AddedLastSyncedTradeID returns the value that was added to the "last_synced_trade_id" field in this mutation.
+func (m *BotMetricsMutation) AddedLastSyncedTradeID() (r int, exists bool) {
+	v := m.addlast_synced_trade_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetLastSyncedTradeID resets all changes to the "last_synced_trade_id" field.
+func (m *BotMetricsMutation) ResetLastSyncedTradeID() {
+	m.last_synced_trade_id = nil
+	m.addlast_synced_trade_id = nil
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (m *BotMetricsMutation) SetLastTradeSyncAt(t time.Time) {
+	m.last_trade_sync_at = &t
+}
+
+// LastTradeSyncAt returns the value of the "last_trade_sync_at" field in the mutation.
+func (m *BotMetricsMutation) LastTradeSyncAt() (r time.Time, exists bool) {
+	v := m.last_trade_sync_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastTradeSyncAt returns the old "last_trade_sync_at" field's value of the BotMetrics entity.
+// If the BotMetrics object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotMetricsMutation) OldLastTradeSyncAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastTradeSyncAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastTradeSyncAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastTradeSyncAt: %w", err)
+	}
+	return oldValue.LastTradeSyncAt, nil
+}
+
+// ClearLastTradeSyncAt clears the value of the "last_trade_sync_at" field.
+func (m *BotMetricsMutation) ClearLastTradeSyncAt() {
+	m.last_trade_sync_at = nil
+	m.clearedFields[botmetrics.FieldLastTradeSyncAt] = struct{}{}
+}
+
+// LastTradeSyncAtCleared returns if the "last_trade_sync_at" field was cleared in this mutation.
+func (m *BotMetricsMutation) LastTradeSyncAtCleared() bool {
+	_, ok := m.clearedFields[botmetrics.FieldLastTradeSyncAt]
+	return ok
+}
+
+// ResetLastTradeSyncAt resets all changes to the "last_trade_sync_at" field.
+func (m *BotMetricsMutation) ResetLastTradeSyncAt() {
+	m.last_trade_sync_at = nil
+	delete(m.clearedFields, botmetrics.FieldLastTradeSyncAt)
+}
+
 // ClearBot clears the "bot" edge to the Bot entity.
 func (m *BotMetricsMutation) ClearBot() {
 	m.clearedbot = true
@@ -4183,7 +4291,7 @@ func (m *BotMetricsMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotMetricsMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 23)
 	if m.bot != nil {
 		fields = append(fields, botmetrics.FieldBotID)
 	}
@@ -4247,6 +4355,12 @@ func (m *BotMetricsMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, botmetrics.FieldUpdatedAt)
 	}
+	if m.last_synced_trade_id != nil {
+		fields = append(fields, botmetrics.FieldLastSyncedTradeID)
+	}
+	if m.last_trade_sync_at != nil {
+		fields = append(fields, botmetrics.FieldLastTradeSyncAt)
+	}
 	return fields
 }
 
@@ -4297,6 +4411,10 @@ func (m *BotMetricsMutation) Field(name string) (ent.Value, bool) {
 		return m.FetchedAt()
 	case botmetrics.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case botmetrics.FieldLastSyncedTradeID:
+		return m.LastSyncedTradeID()
+	case botmetrics.FieldLastTradeSyncAt:
+		return m.LastTradeSyncAt()
 	}
 	return nil, false
 }
@@ -4348,6 +4466,10 @@ func (m *BotMetricsMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldFetchedAt(ctx)
 	case botmetrics.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case botmetrics.FieldLastSyncedTradeID:
+		return m.OldLastSyncedTradeID(ctx)
+	case botmetrics.FieldLastTradeSyncAt:
+		return m.OldLastTradeSyncAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown BotMetrics field %s", name)
 }
@@ -4504,6 +4626,20 @@ func (m *BotMetricsMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case botmetrics.FieldLastSyncedTradeID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSyncedTradeID(v)
+		return nil
+	case botmetrics.FieldLastTradeSyncAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastTradeSyncAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown BotMetrics field %s", name)
 }
@@ -4557,6 +4693,9 @@ func (m *BotMetricsMutation) AddedFields() []string {
 	if m.addbest_rate != nil {
 		fields = append(fields, botmetrics.FieldBestRate)
 	}
+	if m.addlast_synced_trade_id != nil {
+		fields = append(fields, botmetrics.FieldLastSyncedTradeID)
+	}
 	return fields
 }
 
@@ -4595,6 +4734,8 @@ func (m *BotMetricsMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedMaxDrawdownAbs()
 	case botmetrics.FieldBestRate:
 		return m.AddedBestRate()
+	case botmetrics.FieldLastSyncedTradeID:
+		return m.AddedLastSyncedTradeID()
 	}
 	return nil, false
 }
@@ -4709,6 +4850,13 @@ func (m *BotMetricsMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddBestRate(v)
 		return nil
+	case botmetrics.FieldLastSyncedTradeID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLastSyncedTradeID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown BotMetrics numeric field %s", name)
 }
@@ -4770,6 +4918,9 @@ func (m *BotMetricsMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(botmetrics.FieldLatestTradeTimestamp) {
 		fields = append(fields, botmetrics.FieldLatestTradeTimestamp)
+	}
+	if m.FieldCleared(botmetrics.FieldLastTradeSyncAt) {
+		fields = append(fields, botmetrics.FieldLastTradeSyncAt)
 	}
 	return fields
 }
@@ -4838,6 +4989,9 @@ func (m *BotMetricsMutation) ClearField(name string) error {
 		return nil
 	case botmetrics.FieldLatestTradeTimestamp:
 		m.ClearLatestTradeTimestamp()
+		return nil
+	case botmetrics.FieldLastTradeSyncAt:
+		m.ClearLastTradeSyncAt()
 		return nil
 	}
 	return fmt.Errorf("unknown BotMetrics nullable field %s", name)
@@ -4909,6 +5063,12 @@ func (m *BotMetricsMutation) ResetField(name string) error {
 		return nil
 	case botmetrics.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case botmetrics.FieldLastSyncedTradeID:
+		m.ResetLastSyncedTradeID()
+		return nil
+	case botmetrics.FieldLastTradeSyncAt:
+		m.ResetLastTradeSyncAt()
 		return nil
 	}
 	return fmt.Errorf("unknown BotMetrics field %s", name)
@@ -12010,6 +12170,7 @@ type TradeMutation struct {
 	sell_reason           *string
 	strategy_name         *string
 	timeframe             *string
+	raw_data              *map[string]interface{}
 	created_at            *time.Time
 	updated_at            *time.Time
 	clearedFields         map[string]struct{}
@@ -12834,6 +12995,55 @@ func (m *TradeMutation) ResetTimeframe() {
 	delete(m.clearedFields, trade.FieldTimeframe)
 }
 
+// SetRawData sets the "raw_data" field.
+func (m *TradeMutation) SetRawData(value map[string]interface{}) {
+	m.raw_data = &value
+}
+
+// RawData returns the value of the "raw_data" field in the mutation.
+func (m *TradeMutation) RawData() (r map[string]interface{}, exists bool) {
+	v := m.raw_data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRawData returns the old "raw_data" field's value of the Trade entity.
+// If the Trade object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TradeMutation) OldRawData(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRawData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRawData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRawData: %w", err)
+	}
+	return oldValue.RawData, nil
+}
+
+// ClearRawData clears the value of the "raw_data" field.
+func (m *TradeMutation) ClearRawData() {
+	m.raw_data = nil
+	m.clearedFields[trade.FieldRawData] = struct{}{}
+}
+
+// RawDataCleared returns if the "raw_data" field was cleared in this mutation.
+func (m *TradeMutation) RawDataCleared() bool {
+	_, ok := m.clearedFields[trade.FieldRawData]
+	return ok
+}
+
+// ResetRawData resets all changes to the "raw_data" field.
+func (m *TradeMutation) ResetRawData() {
+	m.raw_data = nil
+	delete(m.clearedFields, trade.FieldRawData)
+}
+
 // SetBotID sets the "bot_id" field.
 func (m *TradeMutation) SetBotID(u uuid.UUID) {
 	m.bot = &u
@@ -13003,7 +13213,7 @@ func (m *TradeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TradeMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.freqtrade_trade_id != nil {
 		fields = append(fields, trade.FieldFreqtradeTradeID)
 	}
@@ -13045,6 +13255,9 @@ func (m *TradeMutation) Fields() []string {
 	}
 	if m.timeframe != nil {
 		fields = append(fields, trade.FieldTimeframe)
+	}
+	if m.raw_data != nil {
+		fields = append(fields, trade.FieldRawData)
 	}
 	if m.bot != nil {
 		fields = append(fields, trade.FieldBotID)
@@ -13091,6 +13304,8 @@ func (m *TradeMutation) Field(name string) (ent.Value, bool) {
 		return m.StrategyName()
 	case trade.FieldTimeframe:
 		return m.Timeframe()
+	case trade.FieldRawData:
+		return m.RawData()
 	case trade.FieldBotID:
 		return m.BotID()
 	case trade.FieldCreatedAt:
@@ -13134,6 +13349,8 @@ func (m *TradeMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldStrategyName(ctx)
 	case trade.FieldTimeframe:
 		return m.OldTimeframe(ctx)
+	case trade.FieldRawData:
+		return m.OldRawData(ctx)
 	case trade.FieldBotID:
 		return m.OldBotID(ctx)
 	case trade.FieldCreatedAt:
@@ -13246,6 +13463,13 @@ func (m *TradeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTimeframe(v)
+		return nil
+	case trade.FieldRawData:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRawData(v)
 		return nil
 	case trade.FieldBotID:
 		v, ok := value.(uuid.UUID)
@@ -13400,6 +13624,9 @@ func (m *TradeMutation) ClearedFields() []string {
 	if m.FieldCleared(trade.FieldTimeframe) {
 		fields = append(fields, trade.FieldTimeframe)
 	}
+	if m.FieldCleared(trade.FieldRawData) {
+		fields = append(fields, trade.FieldRawData)
+	}
 	return fields
 }
 
@@ -13428,6 +13655,9 @@ func (m *TradeMutation) ClearField(name string) error {
 		return nil
 	case trade.FieldTimeframe:
 		m.ClearTimeframe()
+		return nil
+	case trade.FieldRawData:
+		m.ClearRawData()
 		return nil
 	}
 	return fmt.Errorf("unknown Trade nullable field %s", name)
@@ -13478,6 +13708,9 @@ func (m *TradeMutation) ResetField(name string) error {
 		return nil
 	case trade.FieldTimeframe:
 		m.ResetTimeframe()
+		return nil
+	case trade.FieldRawData:
+		m.ResetRawData()
 		return nil
 	case trade.FieldBotID:
 		m.ResetBotID()

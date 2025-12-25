@@ -11,6 +11,8 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/strategy"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -21,6 +23,7 @@ type StrategyCreate struct {
 	config
 	mutation *StrategyMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetPublic sets the "public" field.
@@ -356,6 +359,7 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 		_node = &Strategy{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(strategy.Table, sqlgraph.NewFieldSpec(strategy.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -468,11 +472,449 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Strategy.Create().
+//		SetPublic(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.StrategyUpsert) {
+//			SetPublic(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *StrategyCreate) OnConflict(opts ...sql.ConflictOption) *StrategyUpsertOne {
+	_c.conflict = opts
+	return &StrategyUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Strategy.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *StrategyCreate) OnConflictColumns(columns ...string) *StrategyUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &StrategyUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// StrategyUpsertOne is the builder for "upsert"-ing
+	//  one Strategy node.
+	StrategyUpsertOne struct {
+		create *StrategyCreate
+	}
+
+	// StrategyUpsert is the "OnConflict" setter.
+	StrategyUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetPublic sets the "public" field.
+func (u *StrategyUpsert) SetPublic(v bool) *StrategyUpsert {
+	u.Set(strategy.FieldPublic, v)
+	return u
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdatePublic() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldPublic)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *StrategyUpsert) SetName(v string) *StrategyUpsert {
+	u.Set(strategy.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateName() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *StrategyUpsert) SetDescription(v string) *StrategyUpsert {
+	u.Set(strategy.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateDescription() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *StrategyUpsert) ClearDescription() *StrategyUpsert {
+	u.SetNull(strategy.FieldDescription)
+	return u
+}
+
+// SetCode sets the "code" field.
+func (u *StrategyUpsert) SetCode(v string) *StrategyUpsert {
+	u.Set(strategy.FieldCode, v)
+	return u
+}
+
+// UpdateCode sets the "code" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateCode() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldCode)
+	return u
+}
+
+// SetConfig sets the "config" field.
+func (u *StrategyUpsert) SetConfig(v map[string]interface{}) *StrategyUpsert {
+	u.Set(strategy.FieldConfig, v)
+	return u
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateConfig() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldConfig)
+	return u
+}
+
+// SetParentID sets the "parent_id" field.
+func (u *StrategyUpsert) SetParentID(v uuid.UUID) *StrategyUpsert {
+	u.Set(strategy.FieldParentID, v)
+	return u
+}
+
+// UpdateParentID sets the "parent_id" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateParentID() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldParentID)
+	return u
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (u *StrategyUpsert) ClearParentID() *StrategyUpsert {
+	u.SetNull(strategy.FieldParentID)
+	return u
+}
+
+// SetIsLatest sets the "is_latest" field.
+func (u *StrategyUpsert) SetIsLatest(v bool) *StrategyUpsert {
+	u.Set(strategy.FieldIsLatest, v)
+	return u
+}
+
+// UpdateIsLatest sets the "is_latest" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateIsLatest() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldIsLatest)
+	return u
+}
+
+// SetVersionNumber sets the "version_number" field.
+func (u *StrategyUpsert) SetVersionNumber(v int) *StrategyUpsert {
+	u.Set(strategy.FieldVersionNumber, v)
+	return u
+}
+
+// UpdateVersionNumber sets the "version_number" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateVersionNumber() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldVersionNumber)
+	return u
+}
+
+// AddVersionNumber adds v to the "version_number" field.
+func (u *StrategyUpsert) AddVersionNumber(v int) *StrategyUpsert {
+	u.Add(strategy.FieldVersionNumber, v)
+	return u
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *StrategyUpsert) SetOwnerID(v string) *StrategyUpsert {
+	u.Set(strategy.FieldOwnerID, v)
+	return u
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateOwnerID() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldOwnerID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *StrategyUpsert) SetUpdatedAt(v time.Time) *StrategyUpsert {
+	u.Set(strategy.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateUpdatedAt() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Strategy.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(strategy.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *StrategyUpsertOne) UpdateNewValues() *StrategyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(strategy.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(strategy.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Strategy.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *StrategyUpsertOne) Ignore() *StrategyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *StrategyUpsertOne) DoNothing() *StrategyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the StrategyCreate.OnConflict
+// documentation for more info.
+func (u *StrategyUpsertOne) Update(set func(*StrategyUpsert)) *StrategyUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&StrategyUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPublic sets the "public" field.
+func (u *StrategyUpsertOne) SetPublic(v bool) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetPublic(v)
+	})
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdatePublic() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdatePublic()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *StrategyUpsertOne) SetName(v string) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateName() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *StrategyUpsertOne) SetDescription(v string) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateDescription() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *StrategyUpsertOne) ClearDescription() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetCode sets the "code" field.
+func (u *StrategyUpsertOne) SetCode(v string) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetCode(v)
+	})
+}
+
+// UpdateCode sets the "code" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateCode() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateCode()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *StrategyUpsertOne) SetConfig(v map[string]interface{}) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateConfig() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// SetParentID sets the "parent_id" field.
+func (u *StrategyUpsertOne) SetParentID(v uuid.UUID) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetParentID(v)
+	})
+}
+
+// UpdateParentID sets the "parent_id" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateParentID() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateParentID()
+	})
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (u *StrategyUpsertOne) ClearParentID() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.ClearParentID()
+	})
+}
+
+// SetIsLatest sets the "is_latest" field.
+func (u *StrategyUpsertOne) SetIsLatest(v bool) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetIsLatest(v)
+	})
+}
+
+// UpdateIsLatest sets the "is_latest" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateIsLatest() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateIsLatest()
+	})
+}
+
+// SetVersionNumber sets the "version_number" field.
+func (u *StrategyUpsertOne) SetVersionNumber(v int) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetVersionNumber(v)
+	})
+}
+
+// AddVersionNumber adds v to the "version_number" field.
+func (u *StrategyUpsertOne) AddVersionNumber(v int) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.AddVersionNumber(v)
+	})
+}
+
+// UpdateVersionNumber sets the "version_number" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateVersionNumber() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateVersionNumber()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *StrategyUpsertOne) SetOwnerID(v string) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateOwnerID() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *StrategyUpsertOne) SetUpdatedAt(v time.Time) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateUpdatedAt() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *StrategyUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for StrategyCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *StrategyUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *StrategyUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: StrategyUpsertOne.ID is not supported by MySQL driver. Use StrategyUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *StrategyUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // StrategyCreateBulk is the builder for creating many Strategy entities in bulk.
 type StrategyCreateBulk struct {
 	config
 	err      error
 	builders []*StrategyCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Strategy entities in the database.
@@ -502,6 +944,7 @@ func (_c *StrategyCreateBulk) Save(ctx context.Context) ([]*Strategy, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -548,6 +991,284 @@ func (_c *StrategyCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *StrategyCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Strategy.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.StrategyUpsert) {
+//			SetPublic(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *StrategyCreateBulk) OnConflict(opts ...sql.ConflictOption) *StrategyUpsertBulk {
+	_c.conflict = opts
+	return &StrategyUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Strategy.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *StrategyCreateBulk) OnConflictColumns(columns ...string) *StrategyUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &StrategyUpsertBulk{
+		create: _c,
+	}
+}
+
+// StrategyUpsertBulk is the builder for "upsert"-ing
+// a bulk of Strategy nodes.
+type StrategyUpsertBulk struct {
+	create *StrategyCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Strategy.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(strategy.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *StrategyUpsertBulk) UpdateNewValues() *StrategyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(strategy.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(strategy.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Strategy.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *StrategyUpsertBulk) Ignore() *StrategyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *StrategyUpsertBulk) DoNothing() *StrategyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the StrategyCreateBulk.OnConflict
+// documentation for more info.
+func (u *StrategyUpsertBulk) Update(set func(*StrategyUpsert)) *StrategyUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&StrategyUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPublic sets the "public" field.
+func (u *StrategyUpsertBulk) SetPublic(v bool) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetPublic(v)
+	})
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdatePublic() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdatePublic()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *StrategyUpsertBulk) SetName(v string) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateName() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *StrategyUpsertBulk) SetDescription(v string) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateDescription() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *StrategyUpsertBulk) ClearDescription() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.ClearDescription()
+	})
+}
+
+// SetCode sets the "code" field.
+func (u *StrategyUpsertBulk) SetCode(v string) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetCode(v)
+	})
+}
+
+// UpdateCode sets the "code" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateCode() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateCode()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *StrategyUpsertBulk) SetConfig(v map[string]interface{}) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateConfig() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// SetParentID sets the "parent_id" field.
+func (u *StrategyUpsertBulk) SetParentID(v uuid.UUID) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetParentID(v)
+	})
+}
+
+// UpdateParentID sets the "parent_id" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateParentID() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateParentID()
+	})
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (u *StrategyUpsertBulk) ClearParentID() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.ClearParentID()
+	})
+}
+
+// SetIsLatest sets the "is_latest" field.
+func (u *StrategyUpsertBulk) SetIsLatest(v bool) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetIsLatest(v)
+	})
+}
+
+// UpdateIsLatest sets the "is_latest" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateIsLatest() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateIsLatest()
+	})
+}
+
+// SetVersionNumber sets the "version_number" field.
+func (u *StrategyUpsertBulk) SetVersionNumber(v int) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetVersionNumber(v)
+	})
+}
+
+// AddVersionNumber adds v to the "version_number" field.
+func (u *StrategyUpsertBulk) AddVersionNumber(v int) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.AddVersionNumber(v)
+	})
+}
+
+// UpdateVersionNumber sets the "version_number" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateVersionNumber() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateVersionNumber()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *StrategyUpsertBulk) SetOwnerID(v string) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateOwnerID() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *StrategyUpsertBulk) SetUpdatedAt(v time.Time) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateUpdatedAt() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *StrategyUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the StrategyCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for StrategyCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *StrategyUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

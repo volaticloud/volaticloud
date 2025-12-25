@@ -257,6 +257,8 @@ type CreateBotMetricsInput struct {
 	LatestTradeTimestamp *time.Time
 	FetchedAt            *time.Time
 	UpdatedAt            *time.Time
+	LastSyncedTradeID    *int
+	LastTradeSyncAt      *time.Time
 	BotID                uuid.UUID
 }
 
@@ -322,6 +324,12 @@ func (i *CreateBotMetricsInput) Mutate(m *BotMetricsMutation) {
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
 	}
+	if v := i.LastSyncedTradeID; v != nil {
+		m.SetLastSyncedTradeID(*v)
+	}
+	if v := i.LastTradeSyncAt; v != nil {
+		m.SetLastTradeSyncAt(*v)
+	}
 	m.SetBotID(i.BotID)
 }
 
@@ -371,6 +379,9 @@ type UpdateBotMetricsInput struct {
 	LatestTradeTimestamp      *time.Time
 	FetchedAt                 *time.Time
 	UpdatedAt                 *time.Time
+	LastSyncedTradeID         *int
+	ClearLastTradeSyncAt      bool
+	LastTradeSyncAt           *time.Time
 	BotID                     *uuid.UUID
 }
 
@@ -489,6 +500,15 @@ func (i *UpdateBotMetricsInput) Mutate(m *BotMetricsMutation) {
 	}
 	if v := i.UpdatedAt; v != nil {
 		m.SetUpdatedAt(*v)
+	}
+	if v := i.LastSyncedTradeID; v != nil {
+		m.SetLastSyncedTradeID(*v)
+	}
+	if i.ClearLastTradeSyncAt {
+		m.ClearLastTradeSyncAt()
+	}
+	if v := i.LastTradeSyncAt; v != nil {
+		m.SetLastTradeSyncAt(*v)
 	}
 	if v := i.BotID; v != nil {
 		m.SetBotID(*v)

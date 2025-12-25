@@ -14,6 +14,8 @@ import (
 	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -24,6 +26,7 @@ type BotRunnerCreate struct {
 	config
 	mutation *BotRunnerMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetPublic sets the "public" field.
@@ -521,6 +524,7 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 		_node = &BotRunner{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(botrunner.Table, sqlgraph.NewFieldSpec(botrunner.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -680,11 +684,917 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.BotRunner.Create().
+//		SetPublic(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BotRunnerUpsert) {
+//			SetPublic(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BotRunnerCreate) OnConflict(opts ...sql.ConflictOption) *BotRunnerUpsertOne {
+	_c.conflict = opts
+	return &BotRunnerUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.BotRunner.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BotRunnerCreate) OnConflictColumns(columns ...string) *BotRunnerUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BotRunnerUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// BotRunnerUpsertOne is the builder for "upsert"-ing
+	//  one BotRunner node.
+	BotRunnerUpsertOne struct {
+		create *BotRunnerCreate
+	}
+
+	// BotRunnerUpsert is the "OnConflict" setter.
+	BotRunnerUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetPublic sets the "public" field.
+func (u *BotRunnerUpsert) SetPublic(v bool) *BotRunnerUpsert {
+	u.Set(botrunner.FieldPublic, v)
+	return u
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdatePublic() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldPublic)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *BotRunnerUpsert) SetName(v string) *BotRunnerUpsert {
+	u.Set(botrunner.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateName() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldName)
+	return u
+}
+
+// SetType sets the "type" field.
+func (u *BotRunnerUpsert) SetType(v enum.RunnerType) *BotRunnerUpsert {
+	u.Set(botrunner.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateType() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldType)
+	return u
+}
+
+// SetConfig sets the "config" field.
+func (u *BotRunnerUpsert) SetConfig(v map[string]interface{}) *BotRunnerUpsert {
+	u.Set(botrunner.FieldConfig, v)
+	return u
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateConfig() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldConfig)
+	return u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BotRunnerUpsert) ClearConfig() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldConfig)
+	return u
+}
+
+// SetDataIsReady sets the "data_is_ready" field.
+func (u *BotRunnerUpsert) SetDataIsReady(v bool) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataIsReady, v)
+	return u
+}
+
+// UpdateDataIsReady sets the "data_is_ready" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataIsReady() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataIsReady)
+	return u
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (u *BotRunnerUpsert) SetDataLastUpdated(v time.Time) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataLastUpdated, v)
+	return u
+}
+
+// UpdateDataLastUpdated sets the "data_last_updated" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataLastUpdated() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataLastUpdated)
+	return u
+}
+
+// ClearDataLastUpdated clears the value of the "data_last_updated" field.
+func (u *BotRunnerUpsert) ClearDataLastUpdated() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldDataLastUpdated)
+	return u
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (u *BotRunnerUpsert) SetDataDownloadStatus(v enum.DataDownloadStatus) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataDownloadStatus, v)
+	return u
+}
+
+// UpdateDataDownloadStatus sets the "data_download_status" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataDownloadStatus() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataDownloadStatus)
+	return u
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (u *BotRunnerUpsert) SetDataDownloadStartedAt(v time.Time) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataDownloadStartedAt, v)
+	return u
+}
+
+// UpdateDataDownloadStartedAt sets the "data_download_started_at" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataDownloadStartedAt() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataDownloadStartedAt)
+	return u
+}
+
+// ClearDataDownloadStartedAt clears the value of the "data_download_started_at" field.
+func (u *BotRunnerUpsert) ClearDataDownloadStartedAt() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldDataDownloadStartedAt)
+	return u
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (u *BotRunnerUpsert) SetDataDownloadProgress(v map[string]interface{}) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataDownloadProgress, v)
+	return u
+}
+
+// UpdateDataDownloadProgress sets the "data_download_progress" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataDownloadProgress() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataDownloadProgress)
+	return u
+}
+
+// ClearDataDownloadProgress clears the value of the "data_download_progress" field.
+func (u *BotRunnerUpsert) ClearDataDownloadProgress() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldDataDownloadProgress)
+	return u
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (u *BotRunnerUpsert) SetDataErrorMessage(v string) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataErrorMessage, v)
+	return u
+}
+
+// UpdateDataErrorMessage sets the "data_error_message" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataErrorMessage() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataErrorMessage)
+	return u
+}
+
+// ClearDataErrorMessage clears the value of the "data_error_message" field.
+func (u *BotRunnerUpsert) ClearDataErrorMessage() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldDataErrorMessage)
+	return u
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (u *BotRunnerUpsert) SetDataDownloadConfig(v map[string]interface{}) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataDownloadConfig, v)
+	return u
+}
+
+// UpdateDataDownloadConfig sets the "data_download_config" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataDownloadConfig() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataDownloadConfig)
+	return u
+}
+
+// ClearDataDownloadConfig clears the value of the "data_download_config" field.
+func (u *BotRunnerUpsert) ClearDataDownloadConfig() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldDataDownloadConfig)
+	return u
+}
+
+// SetS3Config sets the "s3_config" field.
+func (u *BotRunnerUpsert) SetS3Config(v map[string]interface{}) *BotRunnerUpsert {
+	u.Set(botrunner.FieldS3Config, v)
+	return u
+}
+
+// UpdateS3Config sets the "s3_config" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateS3Config() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldS3Config)
+	return u
+}
+
+// ClearS3Config clears the value of the "s3_config" field.
+func (u *BotRunnerUpsert) ClearS3Config() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldS3Config)
+	return u
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (u *BotRunnerUpsert) SetS3DataKey(v string) *BotRunnerUpsert {
+	u.Set(botrunner.FieldS3DataKey, v)
+	return u
+}
+
+// UpdateS3DataKey sets the "s3_data_key" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateS3DataKey() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldS3DataKey)
+	return u
+}
+
+// ClearS3DataKey clears the value of the "s3_data_key" field.
+func (u *BotRunnerUpsert) ClearS3DataKey() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldS3DataKey)
+	return u
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (u *BotRunnerUpsert) SetS3DataUploadedAt(v time.Time) *BotRunnerUpsert {
+	u.Set(botrunner.FieldS3DataUploadedAt, v)
+	return u
+}
+
+// UpdateS3DataUploadedAt sets the "s3_data_uploaded_at" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateS3DataUploadedAt() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldS3DataUploadedAt)
+	return u
+}
+
+// ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
+func (u *BotRunnerUpsert) ClearS3DataUploadedAt() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldS3DataUploadedAt)
+	return u
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *BotRunnerUpsert) SetOwnerID(v string) *BotRunnerUpsert {
+	u.Set(botrunner.FieldOwnerID, v)
+	return u
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateOwnerID() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldOwnerID)
+	return u
+}
+
+// SetBillingEnabled sets the "billing_enabled" field.
+func (u *BotRunnerUpsert) SetBillingEnabled(v bool) *BotRunnerUpsert {
+	u.Set(botrunner.FieldBillingEnabled, v)
+	return u
+}
+
+// UpdateBillingEnabled sets the "billing_enabled" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateBillingEnabled() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldBillingEnabled)
+	return u
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsert) SetCPUPricePerCoreHour(v float64) *BotRunnerUpsert {
+	u.Set(botrunner.FieldCPUPricePerCoreHour, v)
+	return u
+}
+
+// UpdateCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateCPUPricePerCoreHour() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldCPUPricePerCoreHour)
+	return u
+}
+
+// AddCPUPricePerCoreHour adds v to the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsert) AddCPUPricePerCoreHour(v float64) *BotRunnerUpsert {
+	u.Add(botrunner.FieldCPUPricePerCoreHour, v)
+	return u
+}
+
+// ClearCPUPricePerCoreHour clears the value of the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsert) ClearCPUPricePerCoreHour() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldCPUPricePerCoreHour)
+	return u
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsert) SetMemoryPricePerGBHour(v float64) *BotRunnerUpsert {
+	u.Set(botrunner.FieldMemoryPricePerGBHour, v)
+	return u
+}
+
+// UpdateMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateMemoryPricePerGBHour() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldMemoryPricePerGBHour)
+	return u
+}
+
+// AddMemoryPricePerGBHour adds v to the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsert) AddMemoryPricePerGBHour(v float64) *BotRunnerUpsert {
+	u.Add(botrunner.FieldMemoryPricePerGBHour, v)
+	return u
+}
+
+// ClearMemoryPricePerGBHour clears the value of the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsert) ClearMemoryPricePerGBHour() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldMemoryPricePerGBHour)
+	return u
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (u *BotRunnerUpsert) SetNetworkPricePerGB(v float64) *BotRunnerUpsert {
+	u.Set(botrunner.FieldNetworkPricePerGB, v)
+	return u
+}
+
+// UpdateNetworkPricePerGB sets the "network_price_per_gb" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateNetworkPricePerGB() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldNetworkPricePerGB)
+	return u
+}
+
+// AddNetworkPricePerGB adds v to the "network_price_per_gb" field.
+func (u *BotRunnerUpsert) AddNetworkPricePerGB(v float64) *BotRunnerUpsert {
+	u.Add(botrunner.FieldNetworkPricePerGB, v)
+	return u
+}
+
+// ClearNetworkPricePerGB clears the value of the "network_price_per_gb" field.
+func (u *BotRunnerUpsert) ClearNetworkPricePerGB() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldNetworkPricePerGB)
+	return u
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (u *BotRunnerUpsert) SetStoragePricePerGB(v float64) *BotRunnerUpsert {
+	u.Set(botrunner.FieldStoragePricePerGB, v)
+	return u
+}
+
+// UpdateStoragePricePerGB sets the "storage_price_per_gb" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateStoragePricePerGB() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldStoragePricePerGB)
+	return u
+}
+
+// AddStoragePricePerGB adds v to the "storage_price_per_gb" field.
+func (u *BotRunnerUpsert) AddStoragePricePerGB(v float64) *BotRunnerUpsert {
+	u.Add(botrunner.FieldStoragePricePerGB, v)
+	return u
+}
+
+// ClearStoragePricePerGB clears the value of the "storage_price_per_gb" field.
+func (u *BotRunnerUpsert) ClearStoragePricePerGB() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldStoragePricePerGB)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotRunnerUpsert) SetUpdatedAt(v time.Time) *BotRunnerUpsert {
+	u.Set(botrunner.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateUpdatedAt() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.BotRunner.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(botrunner.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BotRunnerUpsertOne) UpdateNewValues() *BotRunnerUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(botrunner.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(botrunner.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.BotRunner.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *BotRunnerUpsertOne) Ignore() *BotRunnerUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BotRunnerUpsertOne) DoNothing() *BotRunnerUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BotRunnerCreate.OnConflict
+// documentation for more info.
+func (u *BotRunnerUpsertOne) Update(set func(*BotRunnerUpsert)) *BotRunnerUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BotRunnerUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPublic sets the "public" field.
+func (u *BotRunnerUpsertOne) SetPublic(v bool) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetPublic(v)
+	})
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdatePublic() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdatePublic()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *BotRunnerUpsertOne) SetName(v string) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateName() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *BotRunnerUpsertOne) SetType(v enum.RunnerType) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateType() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *BotRunnerUpsertOne) SetConfig(v map[string]interface{}) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateConfig() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BotRunnerUpsertOne) ClearConfig() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearConfig()
+	})
+}
+
+// SetDataIsReady sets the "data_is_ready" field.
+func (u *BotRunnerUpsertOne) SetDataIsReady(v bool) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataIsReady(v)
+	})
+}
+
+// UpdateDataIsReady sets the "data_is_ready" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataIsReady() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataIsReady()
+	})
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (u *BotRunnerUpsertOne) SetDataLastUpdated(v time.Time) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataLastUpdated(v)
+	})
+}
+
+// UpdateDataLastUpdated sets the "data_last_updated" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataLastUpdated() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataLastUpdated()
+	})
+}
+
+// ClearDataLastUpdated clears the value of the "data_last_updated" field.
+func (u *BotRunnerUpsertOne) ClearDataLastUpdated() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataLastUpdated()
+	})
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (u *BotRunnerUpsertOne) SetDataDownloadStatus(v enum.DataDownloadStatus) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadStatus(v)
+	})
+}
+
+// UpdateDataDownloadStatus sets the "data_download_status" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataDownloadStatus() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadStatus()
+	})
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (u *BotRunnerUpsertOne) SetDataDownloadStartedAt(v time.Time) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadStartedAt(v)
+	})
+}
+
+// UpdateDataDownloadStartedAt sets the "data_download_started_at" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataDownloadStartedAt() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadStartedAt()
+	})
+}
+
+// ClearDataDownloadStartedAt clears the value of the "data_download_started_at" field.
+func (u *BotRunnerUpsertOne) ClearDataDownloadStartedAt() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataDownloadStartedAt()
+	})
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (u *BotRunnerUpsertOne) SetDataDownloadProgress(v map[string]interface{}) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadProgress(v)
+	})
+}
+
+// UpdateDataDownloadProgress sets the "data_download_progress" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataDownloadProgress() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadProgress()
+	})
+}
+
+// ClearDataDownloadProgress clears the value of the "data_download_progress" field.
+func (u *BotRunnerUpsertOne) ClearDataDownloadProgress() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataDownloadProgress()
+	})
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (u *BotRunnerUpsertOne) SetDataErrorMessage(v string) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataErrorMessage(v)
+	})
+}
+
+// UpdateDataErrorMessage sets the "data_error_message" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataErrorMessage() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataErrorMessage()
+	})
+}
+
+// ClearDataErrorMessage clears the value of the "data_error_message" field.
+func (u *BotRunnerUpsertOne) ClearDataErrorMessage() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataErrorMessage()
+	})
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (u *BotRunnerUpsertOne) SetDataDownloadConfig(v map[string]interface{}) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadConfig(v)
+	})
+}
+
+// UpdateDataDownloadConfig sets the "data_download_config" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataDownloadConfig() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadConfig()
+	})
+}
+
+// ClearDataDownloadConfig clears the value of the "data_download_config" field.
+func (u *BotRunnerUpsertOne) ClearDataDownloadConfig() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataDownloadConfig()
+	})
+}
+
+// SetS3Config sets the "s3_config" field.
+func (u *BotRunnerUpsertOne) SetS3Config(v map[string]interface{}) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetS3Config(v)
+	})
+}
+
+// UpdateS3Config sets the "s3_config" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateS3Config() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateS3Config()
+	})
+}
+
+// ClearS3Config clears the value of the "s3_config" field.
+func (u *BotRunnerUpsertOne) ClearS3Config() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearS3Config()
+	})
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (u *BotRunnerUpsertOne) SetS3DataKey(v string) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetS3DataKey(v)
+	})
+}
+
+// UpdateS3DataKey sets the "s3_data_key" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateS3DataKey() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateS3DataKey()
+	})
+}
+
+// ClearS3DataKey clears the value of the "s3_data_key" field.
+func (u *BotRunnerUpsertOne) ClearS3DataKey() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearS3DataKey()
+	})
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (u *BotRunnerUpsertOne) SetS3DataUploadedAt(v time.Time) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetS3DataUploadedAt(v)
+	})
+}
+
+// UpdateS3DataUploadedAt sets the "s3_data_uploaded_at" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateS3DataUploadedAt() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateS3DataUploadedAt()
+	})
+}
+
+// ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
+func (u *BotRunnerUpsertOne) ClearS3DataUploadedAt() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearS3DataUploadedAt()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *BotRunnerUpsertOne) SetOwnerID(v string) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateOwnerID() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetBillingEnabled sets the "billing_enabled" field.
+func (u *BotRunnerUpsertOne) SetBillingEnabled(v bool) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetBillingEnabled(v)
+	})
+}
+
+// UpdateBillingEnabled sets the "billing_enabled" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateBillingEnabled() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateBillingEnabled()
+	})
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsertOne) SetCPUPricePerCoreHour(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetCPUPricePerCoreHour(v)
+	})
+}
+
+// AddCPUPricePerCoreHour adds v to the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsertOne) AddCPUPricePerCoreHour(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddCPUPricePerCoreHour(v)
+	})
+}
+
+// UpdateCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateCPUPricePerCoreHour() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateCPUPricePerCoreHour()
+	})
+}
+
+// ClearCPUPricePerCoreHour clears the value of the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsertOne) ClearCPUPricePerCoreHour() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearCPUPricePerCoreHour()
+	})
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsertOne) SetMemoryPricePerGBHour(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetMemoryPricePerGBHour(v)
+	})
+}
+
+// AddMemoryPricePerGBHour adds v to the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsertOne) AddMemoryPricePerGBHour(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddMemoryPricePerGBHour(v)
+	})
+}
+
+// UpdateMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateMemoryPricePerGBHour() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateMemoryPricePerGBHour()
+	})
+}
+
+// ClearMemoryPricePerGBHour clears the value of the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsertOne) ClearMemoryPricePerGBHour() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearMemoryPricePerGBHour()
+	})
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (u *BotRunnerUpsertOne) SetNetworkPricePerGB(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetNetworkPricePerGB(v)
+	})
+}
+
+// AddNetworkPricePerGB adds v to the "network_price_per_gb" field.
+func (u *BotRunnerUpsertOne) AddNetworkPricePerGB(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddNetworkPricePerGB(v)
+	})
+}
+
+// UpdateNetworkPricePerGB sets the "network_price_per_gb" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateNetworkPricePerGB() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateNetworkPricePerGB()
+	})
+}
+
+// ClearNetworkPricePerGB clears the value of the "network_price_per_gb" field.
+func (u *BotRunnerUpsertOne) ClearNetworkPricePerGB() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearNetworkPricePerGB()
+	})
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (u *BotRunnerUpsertOne) SetStoragePricePerGB(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetStoragePricePerGB(v)
+	})
+}
+
+// AddStoragePricePerGB adds v to the "storage_price_per_gb" field.
+func (u *BotRunnerUpsertOne) AddStoragePricePerGB(v float64) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddStoragePricePerGB(v)
+	})
+}
+
+// UpdateStoragePricePerGB sets the "storage_price_per_gb" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateStoragePricePerGB() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateStoragePricePerGB()
+	})
+}
+
+// ClearStoragePricePerGB clears the value of the "storage_price_per_gb" field.
+func (u *BotRunnerUpsertOne) ClearStoragePricePerGB() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearStoragePricePerGB()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotRunnerUpsertOne) SetUpdatedAt(v time.Time) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateUpdatedAt() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BotRunnerUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BotRunnerCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BotRunnerUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *BotRunnerUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: BotRunnerUpsertOne.ID is not supported by MySQL driver. Use BotRunnerUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *BotRunnerUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // BotRunnerCreateBulk is the builder for creating many BotRunner entities in bulk.
 type BotRunnerCreateBulk struct {
 	config
 	err      error
 	builders []*BotRunnerCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the BotRunner entities in the database.
@@ -714,6 +1624,7 @@ func (_c *BotRunnerCreateBulk) Save(ctx context.Context) ([]*BotRunner, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -760,6 +1671,536 @@ func (_c *BotRunnerCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *BotRunnerCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.BotRunner.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BotRunnerUpsert) {
+//			SetPublic(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BotRunnerCreateBulk) OnConflict(opts ...sql.ConflictOption) *BotRunnerUpsertBulk {
+	_c.conflict = opts
+	return &BotRunnerUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.BotRunner.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BotRunnerCreateBulk) OnConflictColumns(columns ...string) *BotRunnerUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BotRunnerUpsertBulk{
+		create: _c,
+	}
+}
+
+// BotRunnerUpsertBulk is the builder for "upsert"-ing
+// a bulk of BotRunner nodes.
+type BotRunnerUpsertBulk struct {
+	create *BotRunnerCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.BotRunner.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(botrunner.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BotRunnerUpsertBulk) UpdateNewValues() *BotRunnerUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(botrunner.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(botrunner.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.BotRunner.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *BotRunnerUpsertBulk) Ignore() *BotRunnerUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BotRunnerUpsertBulk) DoNothing() *BotRunnerUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BotRunnerCreateBulk.OnConflict
+// documentation for more info.
+func (u *BotRunnerUpsertBulk) Update(set func(*BotRunnerUpsert)) *BotRunnerUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BotRunnerUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPublic sets the "public" field.
+func (u *BotRunnerUpsertBulk) SetPublic(v bool) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetPublic(v)
+	})
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdatePublic() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdatePublic()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *BotRunnerUpsertBulk) SetName(v string) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateName() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *BotRunnerUpsertBulk) SetType(v enum.RunnerType) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateType() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *BotRunnerUpsertBulk) SetConfig(v map[string]interface{}) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateConfig() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BotRunnerUpsertBulk) ClearConfig() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearConfig()
+	})
+}
+
+// SetDataIsReady sets the "data_is_ready" field.
+func (u *BotRunnerUpsertBulk) SetDataIsReady(v bool) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataIsReady(v)
+	})
+}
+
+// UpdateDataIsReady sets the "data_is_ready" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataIsReady() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataIsReady()
+	})
+}
+
+// SetDataLastUpdated sets the "data_last_updated" field.
+func (u *BotRunnerUpsertBulk) SetDataLastUpdated(v time.Time) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataLastUpdated(v)
+	})
+}
+
+// UpdateDataLastUpdated sets the "data_last_updated" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataLastUpdated() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataLastUpdated()
+	})
+}
+
+// ClearDataLastUpdated clears the value of the "data_last_updated" field.
+func (u *BotRunnerUpsertBulk) ClearDataLastUpdated() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataLastUpdated()
+	})
+}
+
+// SetDataDownloadStatus sets the "data_download_status" field.
+func (u *BotRunnerUpsertBulk) SetDataDownloadStatus(v enum.DataDownloadStatus) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadStatus(v)
+	})
+}
+
+// UpdateDataDownloadStatus sets the "data_download_status" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataDownloadStatus() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadStatus()
+	})
+}
+
+// SetDataDownloadStartedAt sets the "data_download_started_at" field.
+func (u *BotRunnerUpsertBulk) SetDataDownloadStartedAt(v time.Time) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadStartedAt(v)
+	})
+}
+
+// UpdateDataDownloadStartedAt sets the "data_download_started_at" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataDownloadStartedAt() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadStartedAt()
+	})
+}
+
+// ClearDataDownloadStartedAt clears the value of the "data_download_started_at" field.
+func (u *BotRunnerUpsertBulk) ClearDataDownloadStartedAt() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataDownloadStartedAt()
+	})
+}
+
+// SetDataDownloadProgress sets the "data_download_progress" field.
+func (u *BotRunnerUpsertBulk) SetDataDownloadProgress(v map[string]interface{}) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadProgress(v)
+	})
+}
+
+// UpdateDataDownloadProgress sets the "data_download_progress" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataDownloadProgress() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadProgress()
+	})
+}
+
+// ClearDataDownloadProgress clears the value of the "data_download_progress" field.
+func (u *BotRunnerUpsertBulk) ClearDataDownloadProgress() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataDownloadProgress()
+	})
+}
+
+// SetDataErrorMessage sets the "data_error_message" field.
+func (u *BotRunnerUpsertBulk) SetDataErrorMessage(v string) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataErrorMessage(v)
+	})
+}
+
+// UpdateDataErrorMessage sets the "data_error_message" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataErrorMessage() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataErrorMessage()
+	})
+}
+
+// ClearDataErrorMessage clears the value of the "data_error_message" field.
+func (u *BotRunnerUpsertBulk) ClearDataErrorMessage() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataErrorMessage()
+	})
+}
+
+// SetDataDownloadConfig sets the "data_download_config" field.
+func (u *BotRunnerUpsertBulk) SetDataDownloadConfig(v map[string]interface{}) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataDownloadConfig(v)
+	})
+}
+
+// UpdateDataDownloadConfig sets the "data_download_config" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataDownloadConfig() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataDownloadConfig()
+	})
+}
+
+// ClearDataDownloadConfig clears the value of the "data_download_config" field.
+func (u *BotRunnerUpsertBulk) ClearDataDownloadConfig() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataDownloadConfig()
+	})
+}
+
+// SetS3Config sets the "s3_config" field.
+func (u *BotRunnerUpsertBulk) SetS3Config(v map[string]interface{}) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetS3Config(v)
+	})
+}
+
+// UpdateS3Config sets the "s3_config" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateS3Config() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateS3Config()
+	})
+}
+
+// ClearS3Config clears the value of the "s3_config" field.
+func (u *BotRunnerUpsertBulk) ClearS3Config() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearS3Config()
+	})
+}
+
+// SetS3DataKey sets the "s3_data_key" field.
+func (u *BotRunnerUpsertBulk) SetS3DataKey(v string) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetS3DataKey(v)
+	})
+}
+
+// UpdateS3DataKey sets the "s3_data_key" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateS3DataKey() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateS3DataKey()
+	})
+}
+
+// ClearS3DataKey clears the value of the "s3_data_key" field.
+func (u *BotRunnerUpsertBulk) ClearS3DataKey() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearS3DataKey()
+	})
+}
+
+// SetS3DataUploadedAt sets the "s3_data_uploaded_at" field.
+func (u *BotRunnerUpsertBulk) SetS3DataUploadedAt(v time.Time) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetS3DataUploadedAt(v)
+	})
+}
+
+// UpdateS3DataUploadedAt sets the "s3_data_uploaded_at" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateS3DataUploadedAt() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateS3DataUploadedAt()
+	})
+}
+
+// ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
+func (u *BotRunnerUpsertBulk) ClearS3DataUploadedAt() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearS3DataUploadedAt()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *BotRunnerUpsertBulk) SetOwnerID(v string) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateOwnerID() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetBillingEnabled sets the "billing_enabled" field.
+func (u *BotRunnerUpsertBulk) SetBillingEnabled(v bool) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetBillingEnabled(v)
+	})
+}
+
+// UpdateBillingEnabled sets the "billing_enabled" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateBillingEnabled() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateBillingEnabled()
+	})
+}
+
+// SetCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsertBulk) SetCPUPricePerCoreHour(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetCPUPricePerCoreHour(v)
+	})
+}
+
+// AddCPUPricePerCoreHour adds v to the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsertBulk) AddCPUPricePerCoreHour(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddCPUPricePerCoreHour(v)
+	})
+}
+
+// UpdateCPUPricePerCoreHour sets the "cpu_price_per_core_hour" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateCPUPricePerCoreHour() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateCPUPricePerCoreHour()
+	})
+}
+
+// ClearCPUPricePerCoreHour clears the value of the "cpu_price_per_core_hour" field.
+func (u *BotRunnerUpsertBulk) ClearCPUPricePerCoreHour() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearCPUPricePerCoreHour()
+	})
+}
+
+// SetMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsertBulk) SetMemoryPricePerGBHour(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetMemoryPricePerGBHour(v)
+	})
+}
+
+// AddMemoryPricePerGBHour adds v to the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsertBulk) AddMemoryPricePerGBHour(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddMemoryPricePerGBHour(v)
+	})
+}
+
+// UpdateMemoryPricePerGBHour sets the "memory_price_per_gb_hour" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateMemoryPricePerGBHour() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateMemoryPricePerGBHour()
+	})
+}
+
+// ClearMemoryPricePerGBHour clears the value of the "memory_price_per_gb_hour" field.
+func (u *BotRunnerUpsertBulk) ClearMemoryPricePerGBHour() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearMemoryPricePerGBHour()
+	})
+}
+
+// SetNetworkPricePerGB sets the "network_price_per_gb" field.
+func (u *BotRunnerUpsertBulk) SetNetworkPricePerGB(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetNetworkPricePerGB(v)
+	})
+}
+
+// AddNetworkPricePerGB adds v to the "network_price_per_gb" field.
+func (u *BotRunnerUpsertBulk) AddNetworkPricePerGB(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddNetworkPricePerGB(v)
+	})
+}
+
+// UpdateNetworkPricePerGB sets the "network_price_per_gb" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateNetworkPricePerGB() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateNetworkPricePerGB()
+	})
+}
+
+// ClearNetworkPricePerGB clears the value of the "network_price_per_gb" field.
+func (u *BotRunnerUpsertBulk) ClearNetworkPricePerGB() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearNetworkPricePerGB()
+	})
+}
+
+// SetStoragePricePerGB sets the "storage_price_per_gb" field.
+func (u *BotRunnerUpsertBulk) SetStoragePricePerGB(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetStoragePricePerGB(v)
+	})
+}
+
+// AddStoragePricePerGB adds v to the "storage_price_per_gb" field.
+func (u *BotRunnerUpsertBulk) AddStoragePricePerGB(v float64) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.AddStoragePricePerGB(v)
+	})
+}
+
+// UpdateStoragePricePerGB sets the "storage_price_per_gb" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateStoragePricePerGB() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateStoragePricePerGB()
+	})
+}
+
+// ClearStoragePricePerGB clears the value of the "storage_price_per_gb" field.
+func (u *BotRunnerUpsertBulk) ClearStoragePricePerGB() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearStoragePricePerGB()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotRunnerUpsertBulk) SetUpdatedAt(v time.Time) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateUpdatedAt() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BotRunnerUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the BotRunnerCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BotRunnerCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BotRunnerUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

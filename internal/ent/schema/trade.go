@@ -66,6 +66,10 @@ func (Trade) Fields() []ent.Field {
 		field.String("timeframe").
 			Optional().
 			Comment("Timeframe used"),
+		field.JSON("raw_data", map[string]interface{}{}).
+			Optional().
+			Comment("Full Freqtrade trade response for advanced analytics").
+			Annotations(entgql.Skip()),
 		field.UUID("bot_id", uuid.UUID{}).
 			Comment("Foreign key to bot"),
 		field.Time("created_at").
@@ -80,6 +84,9 @@ func (Trade) Fields() []ent.Field {
 // Edges of the Trade.
 func (Trade) Edges() []ent.Edge {
 	return []ent.Edge{
+		// Many-to-one: Bot has many Trades
+		// Unique() means "each Trade belongs to exactly one Bot"
+		// The reverse edge Bot.trades (edge.To) allows multiple trades per bot
 		edge.From("bot", Bot.Type).
 			Ref("trades").
 			Field("bot_id").
