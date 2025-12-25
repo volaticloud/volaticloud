@@ -273,12 +273,13 @@ func TestCreateBot(t *testing.T) {
 }
 ```
 
-### Separate Interfaces for Bots and Backtests
+### Separate Interfaces for Bots, Backtests, and Data Download
 
-**Why two interfaces?**
+**Why three interfaces?**
 
 - Bots are long-running stateful containers (start/stop/restart)
 - Backtests are one-shot jobs (run once, collect results, cleanup)
+- Data downloads are background tasks on runner infrastructure (start, poll, cleanup)
 
 ```go
 // internal/runner/backtest_interface.go
@@ -290,9 +291,25 @@ type BacktestRunner interface {
     Close() error
     Type() string
 }
+
+// internal/runner/data_downloader.go
+type DataDownloader interface {
+    StartDownload(ctx context.Context, spec DataDownloadSpec) (taskID string, err error)
+    GetDownloadStatus(ctx context.Context, taskID string) (*DataDownloadStatus, error)
+    GetDownloadLogs(ctx context.Context, taskID string) (string, error)
+    CancelDownload(ctx context.Context, taskID string) error
+    CleanupDownload(ctx context.Context, taskID string) error
+}
 ```
 
-Factory creates both: `Create()` for bots, `CreateBacktestRunner()` for backtests.
+Factory creates all three: `Create()` for bots, `CreateBacktestRunner()` for backtests, `CreateDataDownloader()` for data download.
+
+**DataDownloader enables remote data download:**
+
+- Runs on runner infrastructure (Docker host or K8s cluster)
+- Control plane doesn't need Docker access
+- Uses presigned S3 URLs for data transfer
+- Supports incremental updates
 
 ## Validation
 

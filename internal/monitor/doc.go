@@ -369,6 +369,48 @@ Requires etcd for distributed tests:
 
 	go test -v ./internal/monitor -run TestDistributed
 
+# Remote Data Download
+
+Historical data is downloaded on the runner's infrastructure (Docker host or K8s cluster),
+not on the control plane. This enables data download even when the control plane runs in K8s.
+
+## Architecture
+
+	Control Plane (RunnerMonitor)
+	    │
+	    ├─ Generate presigned S3 URLs (download + upload)
+	    ├─ Create DataDownloader via Factory
+	    ├─ Start download task on runner
+	    ├─ Poll status until completion
+	    └─ Update database with S3 key
+
+	Runner (Docker/K8s)
+	    │
+	    ├─ Download existing data from S3 (incremental)
+	    ├─ Run freqtrade download-data
+	    ├─ Package as tar.gz
+	    └─ Upload to S3 via presigned URL
+
+## Data Format
+
+Data is stored as tar.gz archives (not zip) for compatibility with both Docker and K8s.
+The freqtrade image has tar but may not have unzip.
+
+## Download Phases
+
+1. Pending - Task created but not started
+2. Downloading - freqtrade download-data running
+3. Packaging - Creating tar.gz archive
+4. Uploading - Uploading to S3
+5. Completed - Data ready for use
+
+## S3 Integration
+
+- Presigned GET URL for existing data (incremental updates)
+- Presigned PUT URL for uploading new data
+- URLs valid for 1 hour
+- Data key format: runners/{runnerID}/data.tar.gz
+
 # Files
 
 	manager.go          - Monitor manager (orchestration)
@@ -377,7 +419,8 @@ Requires etcd for distributed tests:
 	coordinator.go      - Distributed bot assignment
 	registry.go         - Instance registration in etcd
 	runner_monitor.go   - Runner data monitoring
-	data_download.go    - Historical data download
+	data_download.go    - Remote data download orchestration
+	data_packager.go    - tar.gz packing/unpacking utilities
 	types.go            - Shared types and constants
 
 # Related Packages

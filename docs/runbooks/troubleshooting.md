@@ -505,6 +505,86 @@ mockUMA := &keycloak.MockUMAClient{
 
 ---
 
+## Data Download Issues
+
+### Symptom
+
+Historical data download fails, runner shows data not ready
+
+### Diagnosis
+
+```bash
+# Check runner data download status in database
+psql -c "SELECT id, name, data_is_ready, data_download_progress FROM bot_runners;"
+
+# Check download container/job logs
+# For Docker runners:
+docker logs volaticloud-data-download-<runner-id>
+
+# For Kubernetes runners:
+kubectl logs -n <namespace> job/volaticloud-data-download-<runner-id>
+```
+
+### Common Causes & Solutions
+
+#### 1. Python/urllib Errors
+
+**Error message**: `urlopen error` or `HTTP Error`
+
+**Solutions**:
+
+- Verify S3 presigned URL is valid and not expired (1 hour validity)
+- Check network connectivity from runner to S3 endpoint
+- Verify S3 bucket and keys exist
+
+#### 2. Freqtrade Download-Data Failures
+
+**Error message**: `Exchange API error` or `Rate limit exceeded`
+
+**Solutions**:
+
+- Check exchange API status
+- Reduce number of pairs or timeframes in data_download_config
+- Add delays between downloads (rate limiting)
+- Verify exchange credentials if required for data access
+
+#### 3. Upload to S3 Failed
+
+**Error message**: `PUT failed` or `Access Denied`
+
+**Solutions**:
+
+- Verify presigned URL was generated correctly
+- Check S3 bucket permissions
+- Ensure presigned URL hasn't expired
+- Verify Content-Type header matches (application/gzip)
+
+#### 4. Container Permission Issues
+
+**Error message**: `Permission denied` or `mkdir failed`
+
+**Solutions**:
+
+```bash
+# For Docker - container should run as root
+# Check container configuration includes User: "0"
+
+# For K8s - verify pod security context
+kubectl get pod <pod-name> -o yaml | grep -A5 securityContext
+```
+
+#### 5. Data Format Issues
+
+**Note**: Data format changed from `.zip` to `.tar.gz` for better compatibility.
+
+**Solutions**:
+
+- Ensure backtests/bots use `tar -xzf` (not unzip)
+- Verify data archive is valid: `tar -tzf data.tar.gz`
+- Check archive contains expected directory structure
+
+---
+
 ## Network Issues
 
 ### Symptom
