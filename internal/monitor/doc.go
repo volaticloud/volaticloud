@@ -40,6 +40,7 @@ Manager:
 BotMonitor:
   - Monitors bot status every 30 seconds (configurable)
   - Fetches trading metrics from Freqtrade API
+  - Syncs trades from Freqtrade to database (incremental)
   - Universal connection strategy (container IP + localhost fallback)
   - Updates database with status and performance metrics
   - Only monitors bots assigned via consistent hashing
@@ -290,6 +291,62 @@ Metrics use upsert pattern (update existing or create new):
  3. If not exists: Create with all fields
  4. Store fetched_at = time.Now()
 
+# Trade Sync
+
+The BotMonitor syncs trades from Freqtrade to the database for historical tracking.
+
+## Sync Strategy
+
+Incremental sync based on last_synced_trade_id:
+
+ 1. Get last synced trade ID from BotMetrics
+ 2. Fetch all trades from Freqtrade API (paginated)
+ 3. Filter trades: new trades (trade_id > last_synced) OR open trades
+ 4. Batch upsert using ON CONFLICT (bot_id, freqtrade_trade_id)
+ 5. Update last_synced_trade_id in BotMetrics
+
+## Trade Fields
+
+Stored in Trade entity (many-to-one with Bot):
+
+	Core Fields:
+	  - freqtrade_trade_id (unique per bot)
+	  - pair (e.g., "BTC/USDT")
+	  - is_open (true for active trades)
+	  - strategy_name (strategy that opened trade)
+
+	Timestamps:
+	  - open_date, close_date
+	  - timeframe (e.g., "1h", "4h")
+
+	Prices:
+	  - open_rate, close_rate
+	  - amount, stake_amount
+
+	Profit:
+	  - profit_abs (absolute profit)
+	  - profit_ratio (percentage as decimal)
+
+	Exit:
+	  - sell_reason (exit signal type)
+
+	Raw Data:
+	  - raw_data (full Freqtrade JSON for analytics)
+
+## Batch Size
+
+	TradeFetchBatchSize: 500 trades per API call
+	Pagination continues until all trades fetched
+
+## Future Alerting
+
+Trade sync is designed for future alerting integration:
+
+	TradeChange types:
+	  - TradeChangeNewTrade: new trade opened
+	  - TradeChangeTradeClosed: trade closed
+	  - TradeChangeTradeUpdated: open trade profit updated
+
 # Error Handling
 
 ## Bot Status Errors
@@ -415,6 +472,7 @@ The freqtrade image has tar but may not have unzip.
 
 	manager.go          - Monitor manager (orchestration)
 	bot_monitor.go      - Bot status and metrics monitoring
+	trade_sync.go       - Trade sync from Freqtrade to database
 	backtest_monitor.go - Backtest lifecycle management
 	coordinator.go      - Distributed bot assignment
 	registry.go         - Instance registration in etcd
