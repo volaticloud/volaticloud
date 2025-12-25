@@ -144,7 +144,7 @@ var (
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "data_is_ready", Type: field.TypeBool, Default: false},
 		{Name: "data_last_updated", Type: field.TypeTime, Nullable: true},
-		{Name: "data_download_status", Type: field.TypeEnum, Enums: []string{"idle", "downloading", "completed", "failed"}, Default: "idle"},
+		{Name: "data_download_status", Type: field.TypeEnum, Enums: []string{"idle", "pending", "downloading", "packaging", "uploading", "completed", "failed"}, Default: "idle"},
 		{Name: "data_download_started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "data_download_progress", Type: field.TypeJSON, Nullable: true},
 		{Name: "data_error_message", Type: field.TypeString, Nullable: true},

@@ -59,7 +59,25 @@ query GetBacktest($id: ID!) {
 }
 
 query GetBacktestOptions($ownerID: String) {
-  strategies(first: 50, where: { ownerID: $ownerID }) {
+  botRunners(first: 50, where: { ownerID: $ownerID }) {
+    edges {
+      node {
+        id
+        name
+        type
+      }
+    }
+  }
+}
+
+query SearchStrategies($search: String, $ownerID: String, $first: Int) {
+  strategies(
+    first: $first
+    where: {
+      ownerID: $ownerID
+      nameContainsFold: $search
+    }
+  ) {
     edges {
       node {
         id
@@ -69,12 +87,16 @@ query GetBacktestOptions($ownerID: String) {
       }
     }
   }
-  botRunners(first: 50, where: { ownerID: $ownerID }) {
+}
+
+query GetStrategyById($id: ID!) {
+  strategies(first: 1, where: { id: $id }) {
     edges {
       node {
         id
         name
-        type
+        versionNumber
+        isLatest
       }
     }
   }

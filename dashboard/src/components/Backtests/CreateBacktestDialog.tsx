@@ -4,10 +4,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormHelperText,
   Box,
   Alert,
@@ -16,9 +12,12 @@ import {
   Typography,
   Divider,
   Chip,
+  Autocomplete,
+  TextField,
+  CircularProgress,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
-import { useCreateBacktestMutation, useGetBacktestOptionsQuery } from './backtests.generated';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useCreateBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -26,6 +25,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { RunnerSelector } from '../shared/RunnerSelector';
+import { debounce } from '@mui/material/utils';
 
 interface CreateBacktestDialogProps {
   open: boolean;
@@ -37,8 +37,17 @@ interface CreateBacktestDialogProps {
 
 type DatePreset = '1week' | '1month' | '3months' | '6months' | '1year' | 'custom';
 
+interface StrategyOption {
+  id: string;
+  name: string;
+  versionNumber: number;
+  isLatest: boolean;
+}
+
 export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreated, preSelectedStrategyId }: CreateBacktestDialogProps) => {
-  const [strategyID, setStrategyID] = useState('');
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyOption | null>(null);
+  const [strategyInputValue, setStrategyInputValue] = useState('');
+  const [strategyOptions, setStrategyOptions] = useState<StrategyOption[]>([]);
   const [runnerID, setRunnerID] = useState('');
   const [datePreset, setDatePreset] = useState<DatePreset>('1month');
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));
@@ -47,20 +56,71 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
   // Get active group for filtering strategies and runners
   const { activeGroupId } = useActiveGroup();
 
-  const { data: optionsData } = useGetBacktestOptionsQuery({
-    variables: {
-      ownerID: activeGroupId || undefined,
-    },
-    skip: !activeGroupId, // Skip query if no active group
-  });
+  const [searchStrategies, { loading: searchLoading }] = useSearchStrategiesLazyQuery();
+  const [getStrategyById] = useGetStrategyByIdLazyQuery();
   const [createBacktest, { loading, error }] = useCreateBacktestMutation();
 
-  // Set pre-selected strategy when dialog opens
+  // Debounced search function
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (search: string) => {
+        if (!activeGroupId) return;
+
+        const { data } = await searchStrategies({
+          variables: {
+            search: search || undefined,
+            ownerID: activeGroupId,
+            first: 20,
+          },
+        });
+
+        const strategies = data?.strategies?.edges
+          ?.map(edge => edge?.node)
+          .filter((node): node is StrategyOption => node !== null && node !== undefined) || [];
+
+        // Ensure selected strategy is always in options
+        setStrategyOptions(() => {
+          if (selectedStrategy && !strategies.some(s => s.id === selectedStrategy.id)) {
+            return [selectedStrategy, ...strategies];
+          }
+          return strategies;
+        });
+      }, 300),
+    [activeGroupId, searchStrategies, selectedStrategy]
+  );
+
+  // Load initial strategies when dialog opens
   useEffect(() => {
-    if (open && preSelectedStrategyId) {
-      setStrategyID(preSelectedStrategyId);
+    if (open && activeGroupId) {
+      debouncedSearch('');
     }
-  }, [open, preSelectedStrategyId]);
+  }, [open, activeGroupId, debouncedSearch]);
+
+  // Load pre-selected strategy
+  useEffect(() => {
+    if (open && preSelectedStrategyId && activeGroupId) {
+      getStrategyById({ variables: { id: preSelectedStrategyId } }).then(({ data }) => {
+        const strategy = data?.strategies?.edges?.[0]?.node;
+        if (strategy) {
+          setSelectedStrategy(strategy as StrategyOption);
+          // Also add to options if not already there
+          setStrategyOptions(prev => {
+            if (prev.some(s => s.id === strategy.id)) return prev;
+            return [strategy as StrategyOption, ...prev];
+          });
+        }
+      });
+    }
+  }, [open, preSelectedStrategyId, activeGroupId, getStrategyById]);
+
+  // Search when input changes
+  const handleStrategyInputChange = useCallback(
+    (_event: React.SyntheticEvent, newInputValue: string) => {
+      setStrategyInputValue(newInputValue);
+      debouncedSearch(newInputValue);
+    },
+    [debouncedSearch]
+  );
 
   // Update dates when preset changes
   const handlePresetChange = (_event: React.MouseEvent<HTMLElement>, newPreset: DatePreset | null) => {
@@ -101,7 +161,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
   };
 
   const handleSubmit = async () => {
-    if (!strategyID || !runnerID || !startDate || !endDate) {
+    if (!selectedStrategy?.id || !runnerID || !startDate || !endDate) {
       return;
     }
 
@@ -109,7 +169,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
       const result = await createBacktest({
         variables: {
           input: {
-            strategyID,
+            strategyID: selectedStrategy.id,
             runnerID,
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
@@ -123,7 +183,8 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
         const newStrategyId = result.data.createBacktest.strategy?.id;
 
         // Reset form
-        setStrategyID('');
+        setSelectedStrategy(null);
+        setStrategyInputValue('');
         setRunnerID('');
         setDatePreset('1month');
         setStartDate(dayjs().subtract(1, 'month'));
@@ -144,33 +205,55 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
     }
   };
 
-  const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle>Create New Backtest</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControl fullWidth required>
-              <InputLabel>Strategy</InputLabel>
-              <Select
-                value={strategyID}
-                onChange={(e) => setStrategyID(e.target.value)}
-                label="Strategy"
-              >
-                {strategies.map((strategy) => (
-                  <MenuItem key={strategy.id} value={strategy.id}>
+            <Autocomplete
+              value={selectedStrategy}
+              onChange={(_event, newValue) => setSelectedStrategy(newValue)}
+              inputValue={strategyInputValue}
+              onInputChange={handleStrategyInputChange}
+              options={strategyOptions}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              loading={searchLoading}
+              filterOptions={(x) => x} // Disable built-in filtering, we filter server-side
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Strategy"
+                  required
+                  placeholder="Search strategies..."
+                  slotProps={{
+                    input: {
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    },
+                  }}
+                />
+              )}
+              renderOption={(props, option) => {
+                const { key, ...otherProps } = props;
+                return (
+                  <li key={key} {...otherProps}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 1 }}>
-                      <Typography>{strategy.name}</Typography>
+                      <Typography>{option.name}</Typography>
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
                         <Chip
-                          label={`v${strategy.versionNumber}`}
+                          label={`v${option.versionNumber}`}
                           size="small"
                           color="primary"
                           variant="outlined"
                         />
-                        {strategy.isLatest && (
+                        {option.isLatest && (
                           <Chip
                             label="Latest"
                             size="small"
@@ -179,15 +262,11 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
                         )}
                       </Box>
                     </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-              {strategies.length === 0 && (
-                <FormHelperText error>
-                  No strategies available. Please add a strategy first.
-                </FormHelperText>
-              )}
-            </FormControl>
+                  </li>
+                );
+              }}
+              noOptionsText={searchLoading ? "Searching..." : "No strategies found"}
+            />
 
             <RunnerSelector
               value={runnerID}
@@ -286,7 +365,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={loading || !strategyID || !runnerID || !startDate || !endDate}
+            disabled={loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate}
           >
             {loading ? 'Creating...' : 'Create Backtest'}
           </Button>

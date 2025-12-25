@@ -48,12 +48,12 @@ func NewClientFromMap(data map[string]interface{}) (*Client, error) {
 }
 
 // UploadData uploads runner data to S3.
-// The data is stored at: runners/data/{runnerID}.zip
+// The data is stored at: runners/data/{runnerID}.tar.gz
 func (c *Client) UploadData(ctx context.Context, runnerID string, reader io.Reader, size int64) error {
 	key := DataKey(runnerID)
 
 	opts := minio.PutObjectOptions{
-		ContentType: "application/zip",
+		ContentType: "application/gzip",
 	}
 
 	_, err := c.mc.PutObject(ctx, c.bucket, key, reader, size, opts)
@@ -84,11 +84,25 @@ func (c *Client) GetPresignedURL(ctx context.Context, runnerID string, expiry ti
 
 	// Set request parameters for content disposition
 	reqParams := make(url.Values)
-	reqParams.Set("response-content-disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", runnerID))
+	reqParams.Set("response-content-disposition", fmt.Sprintf("attachment; filename=\"%s.tar.gz\"", runnerID))
 
 	presignedURL, err := c.mc.PresignedGetObject(ctx, c.bucket, key, expiry, reqParams)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate presigned URL for s3://%s/%s: %w", c.bucket, key, err)
+	}
+
+	return presignedURL.String(), nil
+}
+
+// GetPresignedUploadURL generates a presigned URL for uploading runner data.
+// This URL can be used by remote containers/jobs to upload data directly to S3
+// without having S3 credentials. The URL is valid for the specified duration.
+func (c *Client) GetPresignedUploadURL(ctx context.Context, runnerID string, expiry time.Duration) (string, error) {
+	key := DataKey(runnerID)
+
+	presignedURL, err := c.mc.PresignedPutObject(ctx, c.bucket, key, expiry)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned upload URL for s3://%s/%s: %w", c.bucket, key, err)
 	}
 
 	return presignedURL.String(), nil

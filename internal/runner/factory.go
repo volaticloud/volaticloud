@@ -57,6 +57,22 @@ func (f *Factory) CreateBacktestRunner(ctx context.Context, runnerType enum.Runn
 	}
 }
 
+// CreateDataDownloader creates a DataDownloader instance based on the given type and configuration.
+// DataDownloader runs data download tasks on the runner infrastructure (Docker host or K8s cluster).
+func (f *Factory) CreateDataDownloader(ctx context.Context, runnerType enum.RunnerType, configData map[string]interface{}) (DataDownloader, error) {
+	// Extract runner-type-specific config
+	typeConfig := ExtractRunnerConfig(configData, runnerType)
+
+	// Try to get registered creator
+	creator, err := GetDataDownloaderCreator(runnerType)
+	if err == nil {
+		return creator(ctx, typeConfig)
+	}
+
+	// No fallback for DataDownloader - it must be registered
+	return nil, fmt.Errorf("unsupported runner type for data download: %s (no registered creator found)", runnerType)
+}
+
 // createLocalRuntime creates a Local runtime instance (stub - not yet supported)
 func (f *Factory) createLocalRuntime(ctx context.Context, configData map[string]interface{}) (Runtime, error) {
 	runtime := NewLocalRuntime()

@@ -128,10 +128,25 @@ func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSp
 
 	if spec.DataDownloadURL != "" {
 		// Build shell script that downloads data and starts freqtrade
+		// Uses Python for download (available in freqtrade image) and tar.gz format
+		// Run as root for mkdir, then switch to ftuser for freqtrade
 		dataDir := fmt.Sprintf("/freqtrade/user_data/%s/data", spec.ID)
 		shellScript := fmt.Sprintf(
-			`set -e; mkdir -p %s; wget -q -O /tmp/data.zip "$DATA_DOWNLOAD_URL"; unzip -q -o /tmp/data.zip -d %s; rm /tmp/data.zip; exec freqtrade %s`,
-			dataDir, dataDir, strings.Join(freqtradeArgs, " "),
+			`set -e
+mkdir -p %s
+chown -R ftuser:ftuser /freqtrade/user_data/%s
+python3 -c "
+import urllib.request
+import os
+url = os.environ['DATA_DOWNLOAD_URL']
+urllib.request.urlretrieve(url, '/tmp/data.tar.gz')
+print('Data downloaded successfully')
+"
+tar -xzf /tmp/data.tar.gz -C %s
+chown -R ftuser:ftuser %s
+rm /tmp/data.tar.gz
+exec su -s /bin/sh ftuser -c "freqtrade %s"`,
+			dataDir, spec.ID, dataDir, dataDir, strings.Join(freqtradeArgs, " "),
 		)
 		entrypoint = []string{"/bin/sh", "-c"}
 		cmd = []string{shellScript}
@@ -141,8 +156,10 @@ func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSp
 	}
 
 	// Prepare container config
+	// Run as root to allow creating directories in Docker volume
 	containerConfig := &container.Config{
 		Image: imageName,
+		User:  "0", // Run as root for volume write permissions
 		Cmd:   cmd,
 		Env:   env,
 		Labels: map[string]string{

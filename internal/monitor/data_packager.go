@@ -1,7 +1,8 @@
 package monitor
 
 import (
-	"archive/zip"
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
@@ -10,14 +11,17 @@ import (
 )
 
 // MaxDecompressedSize is the maximum allowed size for decompressed data (1GB).
-// This prevents decompression bomb attacks (zip bombs).
+// This prevents decompression bomb attacks.
 const MaxDecompressedSize = 1 << 30 // 1GB
 
-// PackData creates a zip archive from a directory.
+// PackData creates a tar.gz archive from a directory.
 // The directory structure is preserved in the archive.
 func PackData(dataDir string, writer io.Writer) error {
-	zipWriter := zip.NewWriter(writer)
-	defer zipWriter.Close()
+	gzWriter := gzip.NewWriter(writer)
+	defer gzWriter.Close()
+
+	tarWriter := tar.NewWriter(gzWriter)
+	defer tarWriter.Close()
 
 	// Walk through all files in the directory
 	err := filepath.Walk(dataDir, func(path string, info os.FileInfo, err error) error {
@@ -36,29 +40,24 @@ func PackData(dataDir string, writer io.Writer) error {
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
-		// Use forward slashes for zip compatibility
+		// Use forward slashes for cross-platform compatibility
 		relPath = strings.ReplaceAll(relPath, string(os.PathSeparator), "/")
 
-		// Create zip header
-		header, err := zip.FileInfoHeader(info)
+		// Create tar header
+		header, err := tar.FileInfoHeader(info, "")
 		if err != nil {
-			return fmt.Errorf("failed to create zip header: %w", err)
+			return fmt.Errorf("failed to create tar header: %w", err)
 		}
 		header.Name = relPath
 
-		if info.IsDir() {
-			header.Name += "/"
-			_, err := zipWriter.CreateHeader(header)
-			return err
+		// Write header
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return fmt.Errorf("failed to write tar header: %w", err)
 		}
 
-		// Set compression method
-		header.Method = zip.Deflate
-
-		// Create entry in zip
-		writer, err := zipWriter.CreateHeader(header)
-		if err != nil {
-			return fmt.Errorf("failed to create zip entry: %w", err)
+		// If it's a directory, we're done
+		if info.IsDir() {
+			return nil
 		}
 
 		// Copy file content
@@ -69,7 +68,7 @@ func PackData(dataDir string, writer io.Writer) error {
 		}
 		defer file.Close()
 
-		_, err = io.Copy(writer, file)
+		_, err = io.Copy(tarWriter, file)
 		if err != nil {
 			return fmt.Errorf("failed to copy file content: %w", err)
 		}
@@ -84,68 +83,86 @@ func PackData(dataDir string, writer io.Writer) error {
 	return nil
 }
 
-// UnpackData extracts a zip archive to a destination directory.
-func UnpackData(reader io.ReaderAt, size int64, destDir string) error {
-	zipReader, err := zip.NewReader(reader, size)
+// UnpackData extracts a tar.gz archive to a destination directory.
+func UnpackData(reader io.Reader, destDir string) error {
+	gzReader, err := gzip.NewReader(reader)
 	if err != nil {
-		return fmt.Errorf("failed to create zip reader: %w", err)
+		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
+	defer gzReader.Close()
 
-	for _, file := range zipReader.File {
-		// Construct destination path
-		// #nosec G305 -- path traversal check is performed below
-		destPath := filepath.Join(destDir, file.Name)
+	tarReader := tar.NewReader(gzReader)
 
-		// Prevent path traversal attacks (zip slip)
-		if !strings.HasPrefix(destPath, filepath.Clean(destDir)+string(os.PathSeparator)) {
-			return fmt.Errorf("invalid file path: %s", file.Name)
+	var totalSize int64
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to read tar entry: %w", err)
 		}
 
-		if file.FileInfo().IsDir() {
+		// Construct destination path
+		// #nosec G305 -- path traversal check is performed below
+		destPath := filepath.Join(destDir, header.Name)
+
+		// Prevent path traversal attacks (tar slip)
+		if !strings.HasPrefix(filepath.Clean(destPath), filepath.Clean(destDir)+string(os.PathSeparator)) {
+			return fmt.Errorf("invalid file path: %s", header.Name)
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
 			if err := os.MkdirAll(destPath, 0750); err != nil {
 				return fmt.Errorf("failed to create directory: %w", err)
 			}
-			continue
-		}
 
-		// Ensure parent directory exists
-		if err := os.MkdirAll(filepath.Dir(destPath), 0750); err != nil {
-			return fmt.Errorf("failed to create parent directory: %w", err)
-		}
+		case tar.TypeReg:
+			// Ensure parent directory exists
+			if err := os.MkdirAll(filepath.Dir(destPath), 0750); err != nil {
+				return fmt.Errorf("failed to create parent directory: %w", err)
+			}
 
-		// Extract file
-		if err := extractFile(file, destPath); err != nil {
-			return err
+			// Extract file with size limit
+			if err := extractTarFile(tarReader, destPath, header, &totalSize); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func extractFile(file *zip.File, destPath string) error {
-	src, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("failed to open zip entry: %w", err)
+func extractTarFile(reader *tar.Reader, destPath string, header *tar.Header, totalSize *int64) error {
+	// Check cumulative size to prevent decompression bombs
+	*totalSize += header.Size
+	if *totalSize > MaxDecompressedSize {
+		return fmt.Errorf("archive exceeds maximum decompressed size (%d bytes)", MaxDecompressedSize)
 	}
-	defer src.Close()
+
+	// Safely convert header.Mode to os.FileMode
+	// Use bitwise AND to extract only valid permission bits (0777 = rwxrwxrwx)
+	// This prevents integer overflow when converting int64 to uint32
+	// #nosec G115 -- Mode is safely masked to valid permission bits
+	fileMode := os.FileMode(header.Mode & 0777)
 
 	// #nosec G304 -- destPath is validated for path traversal in UnpackData
-	dst, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+	dst, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file: %w", err)
 	}
 	defer dst.Close()
 
-	// Limit decompressed size to prevent decompression bomb attacks
-	limitedReader := io.LimitReader(src, MaxDecompressedSize)
+	// Copy with size limit
+	limitedReader := io.LimitReader(reader, header.Size)
 	written, err := io.Copy(dst, limitedReader)
 	if err != nil {
 		return fmt.Errorf("failed to extract file: %w", err)
 	}
 
-	// Check if we hit the size limit (potential decompression bomb)
-	if written == MaxDecompressedSize {
-		return fmt.Errorf("file %s exceeds maximum decompressed size (%d bytes)", file.Name, MaxDecompressedSize)
+	if written != header.Size {
+		return fmt.Errorf("file size mismatch: expected %d, got %d", header.Size, written)
 	}
 
 	return nil
