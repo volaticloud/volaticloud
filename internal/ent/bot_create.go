@@ -15,6 +15,8 @@ import (
 	"volaticloud/internal/ent/trade"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -25,6 +27,7 @@ type BotCreate struct {
 	config
 	mutation *BotMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetPublic sets the "public" field.
@@ -404,6 +407,7 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 		_node = &Bot{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(bot.Table, sqlgraph.NewFieldSpec(bot.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -542,11 +546,566 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Bot.Create().
+//		SetPublic(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BotUpsert) {
+//			SetPublic(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BotCreate) OnConflict(opts ...sql.ConflictOption) *BotUpsertOne {
+	_c.conflict = opts
+	return &BotUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Bot.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BotCreate) OnConflictColumns(columns ...string) *BotUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BotUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// BotUpsertOne is the builder for "upsert"-ing
+	//  one Bot node.
+	BotUpsertOne struct {
+		create *BotCreate
+	}
+
+	// BotUpsert is the "OnConflict" setter.
+	BotUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetPublic sets the "public" field.
+func (u *BotUpsert) SetPublic(v bool) *BotUpsert {
+	u.Set(bot.FieldPublic, v)
+	return u
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *BotUpsert) UpdatePublic() *BotUpsert {
+	u.SetExcluded(bot.FieldPublic)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *BotUpsert) SetName(v string) *BotUpsert {
+	u.Set(bot.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BotUpsert) UpdateName() *BotUpsert {
+	u.SetExcluded(bot.FieldName)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *BotUpsert) SetStatus(v enum.BotStatus) *BotUpsert {
+	u.Set(bot.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BotUpsert) UpdateStatus() *BotUpsert {
+	u.SetExcluded(bot.FieldStatus)
+	return u
+}
+
+// SetMode sets the "mode" field.
+func (u *BotUpsert) SetMode(v enum.BotMode) *BotUpsert {
+	u.Set(bot.FieldMode, v)
+	return u
+}
+
+// UpdateMode sets the "mode" field to the value that was provided on create.
+func (u *BotUpsert) UpdateMode() *BotUpsert {
+	u.SetExcluded(bot.FieldMode)
+	return u
+}
+
+// SetConfig sets the "config" field.
+func (u *BotUpsert) SetConfig(v map[string]interface{}) *BotUpsert {
+	u.Set(bot.FieldConfig, v)
+	return u
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BotUpsert) UpdateConfig() *BotUpsert {
+	u.SetExcluded(bot.FieldConfig)
+	return u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BotUpsert) ClearConfig() *BotUpsert {
+	u.SetNull(bot.FieldConfig)
+	return u
+}
+
+// SetSecureConfig sets the "secure_config" field.
+func (u *BotUpsert) SetSecureConfig(v map[string]interface{}) *BotUpsert {
+	u.Set(bot.FieldSecureConfig, v)
+	return u
+}
+
+// UpdateSecureConfig sets the "secure_config" field to the value that was provided on create.
+func (u *BotUpsert) UpdateSecureConfig() *BotUpsert {
+	u.SetExcluded(bot.FieldSecureConfig)
+	return u
+}
+
+// ClearSecureConfig clears the value of the "secure_config" field.
+func (u *BotUpsert) ClearSecureConfig() *BotUpsert {
+	u.SetNull(bot.FieldSecureConfig)
+	return u
+}
+
+// SetFreqtradeVersion sets the "freqtrade_version" field.
+func (u *BotUpsert) SetFreqtradeVersion(v string) *BotUpsert {
+	u.Set(bot.FieldFreqtradeVersion, v)
+	return u
+}
+
+// UpdateFreqtradeVersion sets the "freqtrade_version" field to the value that was provided on create.
+func (u *BotUpsert) UpdateFreqtradeVersion() *BotUpsert {
+	u.SetExcluded(bot.FieldFreqtradeVersion)
+	return u
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (u *BotUpsert) SetLastSeenAt(v time.Time) *BotUpsert {
+	u.Set(bot.FieldLastSeenAt, v)
+	return u
+}
+
+// UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
+func (u *BotUpsert) UpdateLastSeenAt() *BotUpsert {
+	u.SetExcluded(bot.FieldLastSeenAt)
+	return u
+}
+
+// ClearLastSeenAt clears the value of the "last_seen_at" field.
+func (u *BotUpsert) ClearLastSeenAt() *BotUpsert {
+	u.SetNull(bot.FieldLastSeenAt)
+	return u
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (u *BotUpsert) SetErrorMessage(v string) *BotUpsert {
+	u.Set(bot.FieldErrorMessage, v)
+	return u
+}
+
+// UpdateErrorMessage sets the "error_message" field to the value that was provided on create.
+func (u *BotUpsert) UpdateErrorMessage() *BotUpsert {
+	u.SetExcluded(bot.FieldErrorMessage)
+	return u
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (u *BotUpsert) ClearErrorMessage() *BotUpsert {
+	u.SetNull(bot.FieldErrorMessage)
+	return u
+}
+
+// SetExchangeID sets the "exchange_id" field.
+func (u *BotUpsert) SetExchangeID(v uuid.UUID) *BotUpsert {
+	u.Set(bot.FieldExchangeID, v)
+	return u
+}
+
+// UpdateExchangeID sets the "exchange_id" field to the value that was provided on create.
+func (u *BotUpsert) UpdateExchangeID() *BotUpsert {
+	u.SetExcluded(bot.FieldExchangeID)
+	return u
+}
+
+// SetStrategyID sets the "strategy_id" field.
+func (u *BotUpsert) SetStrategyID(v uuid.UUID) *BotUpsert {
+	u.Set(bot.FieldStrategyID, v)
+	return u
+}
+
+// UpdateStrategyID sets the "strategy_id" field to the value that was provided on create.
+func (u *BotUpsert) UpdateStrategyID() *BotUpsert {
+	u.SetExcluded(bot.FieldStrategyID)
+	return u
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *BotUpsert) SetRunnerID(v uuid.UUID) *BotUpsert {
+	u.Set(bot.FieldRunnerID, v)
+	return u
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *BotUpsert) UpdateRunnerID() *BotUpsert {
+	u.SetExcluded(bot.FieldRunnerID)
+	return u
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *BotUpsert) SetOwnerID(v string) *BotUpsert {
+	u.Set(bot.FieldOwnerID, v)
+	return u
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *BotUpsert) UpdateOwnerID() *BotUpsert {
+	u.SetExcluded(bot.FieldOwnerID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotUpsert) SetUpdatedAt(v time.Time) *BotUpsert {
+	u.Set(bot.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotUpsert) UpdateUpdatedAt() *BotUpsert {
+	u.SetExcluded(bot.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Bot.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(bot.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BotUpsertOne) UpdateNewValues() *BotUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(bot.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(bot.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Bot.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *BotUpsertOne) Ignore() *BotUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BotUpsertOne) DoNothing() *BotUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BotCreate.OnConflict
+// documentation for more info.
+func (u *BotUpsertOne) Update(set func(*BotUpsert)) *BotUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BotUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPublic sets the "public" field.
+func (u *BotUpsertOne) SetPublic(v bool) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetPublic(v)
+	})
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdatePublic() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdatePublic()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *BotUpsertOne) SetName(v string) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateName() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *BotUpsertOne) SetStatus(v enum.BotStatus) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateStatus() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetMode sets the "mode" field.
+func (u *BotUpsertOne) SetMode(v enum.BotMode) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetMode(v)
+	})
+}
+
+// UpdateMode sets the "mode" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateMode() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateMode()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *BotUpsertOne) SetConfig(v map[string]interface{}) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateConfig() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BotUpsertOne) ClearConfig() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearConfig()
+	})
+}
+
+// SetSecureConfig sets the "secure_config" field.
+func (u *BotUpsertOne) SetSecureConfig(v map[string]interface{}) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetSecureConfig(v)
+	})
+}
+
+// UpdateSecureConfig sets the "secure_config" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateSecureConfig() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateSecureConfig()
+	})
+}
+
+// ClearSecureConfig clears the value of the "secure_config" field.
+func (u *BotUpsertOne) ClearSecureConfig() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearSecureConfig()
+	})
+}
+
+// SetFreqtradeVersion sets the "freqtrade_version" field.
+func (u *BotUpsertOne) SetFreqtradeVersion(v string) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetFreqtradeVersion(v)
+	})
+}
+
+// UpdateFreqtradeVersion sets the "freqtrade_version" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateFreqtradeVersion() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateFreqtradeVersion()
+	})
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (u *BotUpsertOne) SetLastSeenAt(v time.Time) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetLastSeenAt(v)
+	})
+}
+
+// UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateLastSeenAt() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateLastSeenAt()
+	})
+}
+
+// ClearLastSeenAt clears the value of the "last_seen_at" field.
+func (u *BotUpsertOne) ClearLastSeenAt() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearLastSeenAt()
+	})
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (u *BotUpsertOne) SetErrorMessage(v string) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetErrorMessage(v)
+	})
+}
+
+// UpdateErrorMessage sets the "error_message" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateErrorMessage() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateErrorMessage()
+	})
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (u *BotUpsertOne) ClearErrorMessage() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearErrorMessage()
+	})
+}
+
+// SetExchangeID sets the "exchange_id" field.
+func (u *BotUpsertOne) SetExchangeID(v uuid.UUID) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetExchangeID(v)
+	})
+}
+
+// UpdateExchangeID sets the "exchange_id" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateExchangeID() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateExchangeID()
+	})
+}
+
+// SetStrategyID sets the "strategy_id" field.
+func (u *BotUpsertOne) SetStrategyID(v uuid.UUID) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetStrategyID(v)
+	})
+}
+
+// UpdateStrategyID sets the "strategy_id" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateStrategyID() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateStrategyID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *BotUpsertOne) SetRunnerID(v uuid.UUID) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateRunnerID() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *BotUpsertOne) SetOwnerID(v string) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateOwnerID() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotUpsertOne) SetUpdatedAt(v time.Time) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateUpdatedAt() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BotUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BotCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BotUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *BotUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: BotUpsertOne.ID is not supported by MySQL driver. Use BotUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *BotUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // BotCreateBulk is the builder for creating many Bot entities in bulk.
 type BotCreateBulk struct {
 	config
 	err      error
 	builders []*BotCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Bot entities in the database.
@@ -576,6 +1135,7 @@ func (_c *BotCreateBulk) Save(ctx context.Context) ([]*Bot, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -622,6 +1182,347 @@ func (_c *BotCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *BotCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Bot.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BotUpsert) {
+//			SetPublic(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BotCreateBulk) OnConflict(opts ...sql.ConflictOption) *BotUpsertBulk {
+	_c.conflict = opts
+	return &BotUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Bot.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BotCreateBulk) OnConflictColumns(columns ...string) *BotUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BotUpsertBulk{
+		create: _c,
+	}
+}
+
+// BotUpsertBulk is the builder for "upsert"-ing
+// a bulk of Bot nodes.
+type BotUpsertBulk struct {
+	create *BotCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Bot.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(bot.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BotUpsertBulk) UpdateNewValues() *BotUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(bot.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(bot.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Bot.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *BotUpsertBulk) Ignore() *BotUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BotUpsertBulk) DoNothing() *BotUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BotCreateBulk.OnConflict
+// documentation for more info.
+func (u *BotUpsertBulk) Update(set func(*BotUpsert)) *BotUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BotUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetPublic sets the "public" field.
+func (u *BotUpsertBulk) SetPublic(v bool) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetPublic(v)
+	})
+}
+
+// UpdatePublic sets the "public" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdatePublic() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdatePublic()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *BotUpsertBulk) SetName(v string) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateName() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *BotUpsertBulk) SetStatus(v enum.BotStatus) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateStatus() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetMode sets the "mode" field.
+func (u *BotUpsertBulk) SetMode(v enum.BotMode) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetMode(v)
+	})
+}
+
+// UpdateMode sets the "mode" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateMode() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateMode()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *BotUpsertBulk) SetConfig(v map[string]interface{}) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateConfig() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BotUpsertBulk) ClearConfig() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearConfig()
+	})
+}
+
+// SetSecureConfig sets the "secure_config" field.
+func (u *BotUpsertBulk) SetSecureConfig(v map[string]interface{}) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetSecureConfig(v)
+	})
+}
+
+// UpdateSecureConfig sets the "secure_config" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateSecureConfig() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateSecureConfig()
+	})
+}
+
+// ClearSecureConfig clears the value of the "secure_config" field.
+func (u *BotUpsertBulk) ClearSecureConfig() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearSecureConfig()
+	})
+}
+
+// SetFreqtradeVersion sets the "freqtrade_version" field.
+func (u *BotUpsertBulk) SetFreqtradeVersion(v string) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetFreqtradeVersion(v)
+	})
+}
+
+// UpdateFreqtradeVersion sets the "freqtrade_version" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateFreqtradeVersion() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateFreqtradeVersion()
+	})
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (u *BotUpsertBulk) SetLastSeenAt(v time.Time) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetLastSeenAt(v)
+	})
+}
+
+// UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateLastSeenAt() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateLastSeenAt()
+	})
+}
+
+// ClearLastSeenAt clears the value of the "last_seen_at" field.
+func (u *BotUpsertBulk) ClearLastSeenAt() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearLastSeenAt()
+	})
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (u *BotUpsertBulk) SetErrorMessage(v string) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetErrorMessage(v)
+	})
+}
+
+// UpdateErrorMessage sets the "error_message" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateErrorMessage() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateErrorMessage()
+	})
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (u *BotUpsertBulk) ClearErrorMessage() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearErrorMessage()
+	})
+}
+
+// SetExchangeID sets the "exchange_id" field.
+func (u *BotUpsertBulk) SetExchangeID(v uuid.UUID) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetExchangeID(v)
+	})
+}
+
+// UpdateExchangeID sets the "exchange_id" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateExchangeID() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateExchangeID()
+	})
+}
+
+// SetStrategyID sets the "strategy_id" field.
+func (u *BotUpsertBulk) SetStrategyID(v uuid.UUID) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetStrategyID(v)
+	})
+}
+
+// UpdateStrategyID sets the "strategy_id" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateStrategyID() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateStrategyID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *BotUpsertBulk) SetRunnerID(v uuid.UUID) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateRunnerID() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *BotUpsertBulk) SetOwnerID(v string) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateOwnerID() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotUpsertBulk) SetUpdatedAt(v time.Time) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateUpdatedAt() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BotUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the BotCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BotCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BotUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

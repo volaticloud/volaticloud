@@ -150,3 +150,23 @@ func (c *BotClient) Login(ctx context.Context) (*AccessAndRefreshToken, error) {
 func (c *BotClient) GetUsername() string {
 	return c.username
 }
+
+// GetTrades fetches trades from Freqtrade with pagination
+// Returns trades ordered by trade_id (ascending) for incremental sync
+func (c *BotClient) GetTrades(ctx context.Context, limit, offset int64) (*TradeResponse, error) {
+	ctx = c.contextWithAuth(ctx)
+
+	result, resp, err := c.client.FreqtradeAPI.TradesApiV1TradesGet(ctx).
+		Limit(limit).
+		Offset(offset).
+		OrderById(true). // Order by trade_id for consistent incremental sync
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch trades: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return result, nil
+}

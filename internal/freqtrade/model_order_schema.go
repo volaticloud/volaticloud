@@ -11,7 +11,6 @@ API version: 0.1.0
 package freqtrade
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -36,6 +35,7 @@ type OrderSchema struct {
 	OrderFilledTimestamp NullableInt64   `json:"order_filled_timestamp,omitempty"`
 	FtFeeBase            NullableFloat32 `json:"ft_fee_base,omitempty"`
 	FtOrderTag           NullableString  `json:"ft_order_tag,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _OrderSchema OrderSchema
@@ -577,6 +577,11 @@ func (o OrderSchema) ToMap() (map[string]interface{}, error) {
 	if o.FtOrderTag.IsSet() {
 		toSerialize["ft_order_tag"] = o.FtOrderTag.Get()
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -612,15 +617,34 @@ func (o *OrderSchema) UnmarshalJSON(data []byte) (err error) {
 
 	varOrderSchema := _OrderSchema{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varOrderSchema)
+	err = json.Unmarshal(data, &varOrderSchema)
 
 	if err != nil {
 		return err
 	}
 
 	*o = OrderSchema(varOrderSchema)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "pair")
+		delete(additionalProperties, "order_id")
+		delete(additionalProperties, "status")
+		delete(additionalProperties, "remaining")
+		delete(additionalProperties, "amount")
+		delete(additionalProperties, "safe_price")
+		delete(additionalProperties, "cost")
+		delete(additionalProperties, "filled")
+		delete(additionalProperties, "ft_order_side")
+		delete(additionalProperties, "order_type")
+		delete(additionalProperties, "is_open")
+		delete(additionalProperties, "order_timestamp")
+		delete(additionalProperties, "order_filled_timestamp")
+		delete(additionalProperties, "ft_fee_base")
+		delete(additionalProperties, "ft_order_tag")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

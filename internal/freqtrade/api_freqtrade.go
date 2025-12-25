@@ -7599,7 +7599,7 @@ func (r ApiTradesApiV1TradesGetRequest) OrderById(orderById bool) ApiTradesApiV1
 	return r
 }
 
-func (r ApiTradesApiV1TradesGetRequest) Execute() (interface{}, *http.Response, error) {
+func (r ApiTradesApiV1TradesGetRequest) Execute() (*TradeResponse, *http.Response, error) {
 	return r.ApiService.TradesApiV1TradesGetExecute(r)
 }
 
@@ -7618,13 +7618,13 @@ func (a *FreqtradeAPIService) TradesApiV1TradesGet(ctx context.Context) ApiTrade
 
 // Execute executes the request
 //
-//	@return interface{}
-func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1TradesGetRequest) (interface{}, *http.Response, error) {
+//	@return TradeResponse
+func (a *FreqtradeAPIService) TradesApiV1TradesGetExecute(r ApiTradesApiV1TradesGetRequest) (*TradeResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue interface{}
+		localVarReturnValue *TradeResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "FreqtradeAPIService.TradesApiV1TradesGet")

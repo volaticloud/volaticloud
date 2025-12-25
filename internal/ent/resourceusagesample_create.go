@@ -11,6 +11,8 @@ import (
 	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -21,6 +23,7 @@ type ResourceUsageSampleCreate struct {
 	config
 	mutation *ResourceUsageSampleMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetResourceType sets the "resource_type" field.
@@ -297,6 +300,7 @@ func (_c *ResourceUsageSampleCreate) createSpec() (*ResourceUsageSample, *sqlgra
 		_node = &ResourceUsageSample{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(resourceusagesample.Table, sqlgraph.NewFieldSpec(resourceusagesample.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -365,11 +369,514 @@ func (_c *ResourceUsageSampleCreate) createSpec() (*ResourceUsageSample, *sqlgra
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ResourceUsageSample.Create().
+//		SetResourceType(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ResourceUsageSampleUpsert) {
+//			SetResourceType(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ResourceUsageSampleCreate) OnConflict(opts ...sql.ConflictOption) *ResourceUsageSampleUpsertOne {
+	_c.conflict = opts
+	return &ResourceUsageSampleUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ResourceUsageSample.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ResourceUsageSampleCreate) OnConflictColumns(columns ...string) *ResourceUsageSampleUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ResourceUsageSampleUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// ResourceUsageSampleUpsertOne is the builder for "upsert"-ing
+	//  one ResourceUsageSample node.
+	ResourceUsageSampleUpsertOne struct {
+		create *ResourceUsageSampleCreate
+	}
+
+	// ResourceUsageSampleUpsert is the "OnConflict" setter.
+	ResourceUsageSampleUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetResourceType sets the "resource_type" field.
+func (u *ResourceUsageSampleUpsert) SetResourceType(v enum.ResourceType) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldResourceType, v)
+	return u
+}
+
+// UpdateResourceType sets the "resource_type" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateResourceType() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldResourceType)
+	return u
+}
+
+// SetResourceID sets the "resource_id" field.
+func (u *ResourceUsageSampleUpsert) SetResourceID(v uuid.UUID) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldResourceID, v)
+	return u
+}
+
+// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateResourceID() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldResourceID)
+	return u
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *ResourceUsageSampleUpsert) SetOwnerID(v string) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldOwnerID, v)
+	return u
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateOwnerID() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldOwnerID)
+	return u
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *ResourceUsageSampleUpsert) SetRunnerID(v uuid.UUID) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldRunnerID, v)
+	return u
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateRunnerID() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldRunnerID)
+	return u
+}
+
+// SetCPUPercent sets the "cpu_percent" field.
+func (u *ResourceUsageSampleUpsert) SetCPUPercent(v float64) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldCPUPercent, v)
+	return u
+}
+
+// UpdateCPUPercent sets the "cpu_percent" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateCPUPercent() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldCPUPercent)
+	return u
+}
+
+// AddCPUPercent adds v to the "cpu_percent" field.
+func (u *ResourceUsageSampleUpsert) AddCPUPercent(v float64) *ResourceUsageSampleUpsert {
+	u.Add(resourceusagesample.FieldCPUPercent, v)
+	return u
+}
+
+// SetMemoryBytes sets the "memory_bytes" field.
+func (u *ResourceUsageSampleUpsert) SetMemoryBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldMemoryBytes, v)
+	return u
+}
+
+// UpdateMemoryBytes sets the "memory_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateMemoryBytes() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldMemoryBytes)
+	return u
+}
+
+// AddMemoryBytes adds v to the "memory_bytes" field.
+func (u *ResourceUsageSampleUpsert) AddMemoryBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Add(resourceusagesample.FieldMemoryBytes, v)
+	return u
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (u *ResourceUsageSampleUpsert) SetNetworkRxBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldNetworkRxBytes, v)
+	return u
+}
+
+// UpdateNetworkRxBytes sets the "network_rx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateNetworkRxBytes() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldNetworkRxBytes)
+	return u
+}
+
+// AddNetworkRxBytes adds v to the "network_rx_bytes" field.
+func (u *ResourceUsageSampleUpsert) AddNetworkRxBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Add(resourceusagesample.FieldNetworkRxBytes, v)
+	return u
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (u *ResourceUsageSampleUpsert) SetNetworkTxBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldNetworkTxBytes, v)
+	return u
+}
+
+// UpdateNetworkTxBytes sets the "network_tx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateNetworkTxBytes() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldNetworkTxBytes)
+	return u
+}
+
+// AddNetworkTxBytes adds v to the "network_tx_bytes" field.
+func (u *ResourceUsageSampleUpsert) AddNetworkTxBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Add(resourceusagesample.FieldNetworkTxBytes, v)
+	return u
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (u *ResourceUsageSampleUpsert) SetBlockReadBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldBlockReadBytes, v)
+	return u
+}
+
+// UpdateBlockReadBytes sets the "block_read_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateBlockReadBytes() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldBlockReadBytes)
+	return u
+}
+
+// AddBlockReadBytes adds v to the "block_read_bytes" field.
+func (u *ResourceUsageSampleUpsert) AddBlockReadBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Add(resourceusagesample.FieldBlockReadBytes, v)
+	return u
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (u *ResourceUsageSampleUpsert) SetBlockWriteBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldBlockWriteBytes, v)
+	return u
+}
+
+// UpdateBlockWriteBytes sets the "block_write_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateBlockWriteBytes() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldBlockWriteBytes)
+	return u
+}
+
+// AddBlockWriteBytes adds v to the "block_write_bytes" field.
+func (u *ResourceUsageSampleUpsert) AddBlockWriteBytes(v int64) *ResourceUsageSampleUpsert {
+	u.Add(resourceusagesample.FieldBlockWriteBytes, v)
+	return u
+}
+
+// SetSampledAt sets the "sampled_at" field.
+func (u *ResourceUsageSampleUpsert) SetSampledAt(v time.Time) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldSampledAt, v)
+	return u
+}
+
+// UpdateSampledAt sets the "sampled_at" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateSampledAt() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldSampledAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.ResourceUsageSample.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(resourceusagesample.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *ResourceUsageSampleUpsertOne) UpdateNewValues() *ResourceUsageSampleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(resourceusagesample.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(resourceusagesample.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ResourceUsageSample.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *ResourceUsageSampleUpsertOne) Ignore() *ResourceUsageSampleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ResourceUsageSampleUpsertOne) DoNothing() *ResourceUsageSampleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ResourceUsageSampleCreate.OnConflict
+// documentation for more info.
+func (u *ResourceUsageSampleUpsertOne) Update(set func(*ResourceUsageSampleUpsert)) *ResourceUsageSampleUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ResourceUsageSampleUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetResourceType sets the "resource_type" field.
+func (u *ResourceUsageSampleUpsertOne) SetResourceType(v enum.ResourceType) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetResourceType(v)
+	})
+}
+
+// UpdateResourceType sets the "resource_type" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateResourceType() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateResourceType()
+	})
+}
+
+// SetResourceID sets the "resource_id" field.
+func (u *ResourceUsageSampleUpsertOne) SetResourceID(v uuid.UUID) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetResourceID(v)
+	})
+}
+
+// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateResourceID() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateResourceID()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *ResourceUsageSampleUpsertOne) SetOwnerID(v string) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateOwnerID() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *ResourceUsageSampleUpsertOne) SetRunnerID(v uuid.UUID) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateRunnerID() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetCPUPercent sets the "cpu_percent" field.
+func (u *ResourceUsageSampleUpsertOne) SetCPUPercent(v float64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetCPUPercent(v)
+	})
+}
+
+// AddCPUPercent adds v to the "cpu_percent" field.
+func (u *ResourceUsageSampleUpsertOne) AddCPUPercent(v float64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddCPUPercent(v)
+	})
+}
+
+// UpdateCPUPercent sets the "cpu_percent" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateCPUPercent() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateCPUPercent()
+	})
+}
+
+// SetMemoryBytes sets the "memory_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) SetMemoryBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetMemoryBytes(v)
+	})
+}
+
+// AddMemoryBytes adds v to the "memory_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) AddMemoryBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddMemoryBytes(v)
+	})
+}
+
+// UpdateMemoryBytes sets the "memory_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateMemoryBytes() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateMemoryBytes()
+	})
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) SetNetworkRxBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetNetworkRxBytes(v)
+	})
+}
+
+// AddNetworkRxBytes adds v to the "network_rx_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) AddNetworkRxBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddNetworkRxBytes(v)
+	})
+}
+
+// UpdateNetworkRxBytes sets the "network_rx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateNetworkRxBytes() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateNetworkRxBytes()
+	})
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) SetNetworkTxBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetNetworkTxBytes(v)
+	})
+}
+
+// AddNetworkTxBytes adds v to the "network_tx_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) AddNetworkTxBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddNetworkTxBytes(v)
+	})
+}
+
+// UpdateNetworkTxBytes sets the "network_tx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateNetworkTxBytes() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateNetworkTxBytes()
+	})
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) SetBlockReadBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetBlockReadBytes(v)
+	})
+}
+
+// AddBlockReadBytes adds v to the "block_read_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) AddBlockReadBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddBlockReadBytes(v)
+	})
+}
+
+// UpdateBlockReadBytes sets the "block_read_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateBlockReadBytes() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateBlockReadBytes()
+	})
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) SetBlockWriteBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetBlockWriteBytes(v)
+	})
+}
+
+// AddBlockWriteBytes adds v to the "block_write_bytes" field.
+func (u *ResourceUsageSampleUpsertOne) AddBlockWriteBytes(v int64) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddBlockWriteBytes(v)
+	})
+}
+
+// UpdateBlockWriteBytes sets the "block_write_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateBlockWriteBytes() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateBlockWriteBytes()
+	})
+}
+
+// SetSampledAt sets the "sampled_at" field.
+func (u *ResourceUsageSampleUpsertOne) SetSampledAt(v time.Time) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetSampledAt(v)
+	})
+}
+
+// UpdateSampledAt sets the "sampled_at" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateSampledAt() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateSampledAt()
+	})
+}
+
+// Exec executes the query.
+func (u *ResourceUsageSampleUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ResourceUsageSampleCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ResourceUsageSampleUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ResourceUsageSampleUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: ResourceUsageSampleUpsertOne.ID is not supported by MySQL driver. Use ResourceUsageSampleUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ResourceUsageSampleUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ResourceUsageSampleCreateBulk is the builder for creating many ResourceUsageSample entities in bulk.
 type ResourceUsageSampleCreateBulk struct {
 	config
 	err      error
 	builders []*ResourceUsageSampleCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the ResourceUsageSample entities in the database.
@@ -399,6 +906,7 @@ func (_c *ResourceUsageSampleCreateBulk) Save(ctx context.Context) ([]*ResourceU
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -445,6 +953,319 @@ func (_c *ResourceUsageSampleCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *ResourceUsageSampleCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ResourceUsageSample.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ResourceUsageSampleUpsert) {
+//			SetResourceType(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ResourceUsageSampleCreateBulk) OnConflict(opts ...sql.ConflictOption) *ResourceUsageSampleUpsertBulk {
+	_c.conflict = opts
+	return &ResourceUsageSampleUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ResourceUsageSample.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ResourceUsageSampleCreateBulk) OnConflictColumns(columns ...string) *ResourceUsageSampleUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ResourceUsageSampleUpsertBulk{
+		create: _c,
+	}
+}
+
+// ResourceUsageSampleUpsertBulk is the builder for "upsert"-ing
+// a bulk of ResourceUsageSample nodes.
+type ResourceUsageSampleUpsertBulk struct {
+	create *ResourceUsageSampleCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.ResourceUsageSample.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(resourceusagesample.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *ResourceUsageSampleUpsertBulk) UpdateNewValues() *ResourceUsageSampleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(resourceusagesample.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(resourceusagesample.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ResourceUsageSample.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *ResourceUsageSampleUpsertBulk) Ignore() *ResourceUsageSampleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ResourceUsageSampleUpsertBulk) DoNothing() *ResourceUsageSampleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ResourceUsageSampleCreateBulk.OnConflict
+// documentation for more info.
+func (u *ResourceUsageSampleUpsertBulk) Update(set func(*ResourceUsageSampleUpsert)) *ResourceUsageSampleUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ResourceUsageSampleUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetResourceType sets the "resource_type" field.
+func (u *ResourceUsageSampleUpsertBulk) SetResourceType(v enum.ResourceType) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetResourceType(v)
+	})
+}
+
+// UpdateResourceType sets the "resource_type" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateResourceType() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateResourceType()
+	})
+}
+
+// SetResourceID sets the "resource_id" field.
+func (u *ResourceUsageSampleUpsertBulk) SetResourceID(v uuid.UUID) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetResourceID(v)
+	})
+}
+
+// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateResourceID() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateResourceID()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *ResourceUsageSampleUpsertBulk) SetOwnerID(v string) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateOwnerID() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *ResourceUsageSampleUpsertBulk) SetRunnerID(v uuid.UUID) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateRunnerID() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetCPUPercent sets the "cpu_percent" field.
+func (u *ResourceUsageSampleUpsertBulk) SetCPUPercent(v float64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetCPUPercent(v)
+	})
+}
+
+// AddCPUPercent adds v to the "cpu_percent" field.
+func (u *ResourceUsageSampleUpsertBulk) AddCPUPercent(v float64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddCPUPercent(v)
+	})
+}
+
+// UpdateCPUPercent sets the "cpu_percent" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateCPUPercent() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateCPUPercent()
+	})
+}
+
+// SetMemoryBytes sets the "memory_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) SetMemoryBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetMemoryBytes(v)
+	})
+}
+
+// AddMemoryBytes adds v to the "memory_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) AddMemoryBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddMemoryBytes(v)
+	})
+}
+
+// UpdateMemoryBytes sets the "memory_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateMemoryBytes() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateMemoryBytes()
+	})
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) SetNetworkRxBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetNetworkRxBytes(v)
+	})
+}
+
+// AddNetworkRxBytes adds v to the "network_rx_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) AddNetworkRxBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddNetworkRxBytes(v)
+	})
+}
+
+// UpdateNetworkRxBytes sets the "network_rx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateNetworkRxBytes() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateNetworkRxBytes()
+	})
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) SetNetworkTxBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetNetworkTxBytes(v)
+	})
+}
+
+// AddNetworkTxBytes adds v to the "network_tx_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) AddNetworkTxBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddNetworkTxBytes(v)
+	})
+}
+
+// UpdateNetworkTxBytes sets the "network_tx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateNetworkTxBytes() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateNetworkTxBytes()
+	})
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) SetBlockReadBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetBlockReadBytes(v)
+	})
+}
+
+// AddBlockReadBytes adds v to the "block_read_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) AddBlockReadBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddBlockReadBytes(v)
+	})
+}
+
+// UpdateBlockReadBytes sets the "block_read_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateBlockReadBytes() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateBlockReadBytes()
+	})
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) SetBlockWriteBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetBlockWriteBytes(v)
+	})
+}
+
+// AddBlockWriteBytes adds v to the "block_write_bytes" field.
+func (u *ResourceUsageSampleUpsertBulk) AddBlockWriteBytes(v int64) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.AddBlockWriteBytes(v)
+	})
+}
+
+// UpdateBlockWriteBytes sets the "block_write_bytes" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateBlockWriteBytes() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateBlockWriteBytes()
+	})
+}
+
+// SetSampledAt sets the "sampled_at" field.
+func (u *ResourceUsageSampleUpsertBulk) SetSampledAt(v time.Time) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetSampledAt(v)
+	})
+}
+
+// UpdateSampledAt sets the "sampled_at" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateSampledAt() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateSampledAt()
+	})
+}
+
+// Exec executes the query.
+func (u *ResourceUsageSampleUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ResourceUsageSampleCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ResourceUsageSampleCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ResourceUsageSampleUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

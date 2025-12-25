@@ -10,6 +10,8 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -20,6 +22,7 @@ type BotMetricsCreate struct {
 	config
 	mutation *BotMetricsMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetBotID sets the "bot_id" field.
@@ -308,6 +311,34 @@ func (_c *BotMetricsCreate) SetNillableUpdatedAt(v *time.Time) *BotMetricsCreate
 	return _c
 }
 
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (_c *BotMetricsCreate) SetLastSyncedTradeID(v int) *BotMetricsCreate {
+	_c.mutation.SetLastSyncedTradeID(v)
+	return _c
+}
+
+// SetNillableLastSyncedTradeID sets the "last_synced_trade_id" field if the given value is not nil.
+func (_c *BotMetricsCreate) SetNillableLastSyncedTradeID(v *int) *BotMetricsCreate {
+	if v != nil {
+		_c.SetLastSyncedTradeID(*v)
+	}
+	return _c
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (_c *BotMetricsCreate) SetLastTradeSyncAt(v time.Time) *BotMetricsCreate {
+	_c.mutation.SetLastTradeSyncAt(v)
+	return _c
+}
+
+// SetNillableLastTradeSyncAt sets the "last_trade_sync_at" field if the given value is not nil.
+func (_c *BotMetricsCreate) SetNillableLastTradeSyncAt(v *time.Time) *BotMetricsCreate {
+	if v != nil {
+		_c.SetLastTradeSyncAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *BotMetricsCreate) SetID(v uuid.UUID) *BotMetricsCreate {
 	_c.mutation.SetID(v)
@@ -370,6 +401,10 @@ func (_c *BotMetricsCreate) defaults() {
 		v := botmetrics.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.LastSyncedTradeID(); !ok {
+		v := botmetrics.DefaultLastSyncedTradeID
+		_c.mutation.SetLastSyncedTradeID(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := botmetrics.DefaultID()
 		_c.mutation.SetID(v)
@@ -386,6 +421,9 @@ func (_c *BotMetricsCreate) check() error {
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BotMetrics.updated_at"`)}
+	}
+	if _, ok := _c.mutation.LastSyncedTradeID(); !ok {
+		return &ValidationError{Name: "last_synced_trade_id", err: errors.New(`ent: missing required field "BotMetrics.last_synced_trade_id"`)}
 	}
 	if len(_c.mutation.BotIDs()) == 0 {
 		return &ValidationError{Name: "bot", err: errors.New(`ent: missing required edge "BotMetrics.bot"`)}
@@ -421,6 +459,7 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 		_node = &BotMetrics{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(botmetrics.Table, sqlgraph.NewFieldSpec(botmetrics.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -505,6 +544,14 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 		_spec.SetField(botmetrics.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := _c.mutation.LastSyncedTradeID(); ok {
+		_spec.SetField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+		_node.LastSyncedTradeID = value
+	}
+	if value, ok := _c.mutation.LastTradeSyncAt(); ok {
+		_spec.SetField(botmetrics.FieldLastTradeSyncAt, field.TypeTime, value)
+		_node.LastTradeSyncAt = &value
+	}
 	if nodes := _c.mutation.BotIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -525,11 +572,1200 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.BotMetrics.Create().
+//		SetBotID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BotMetricsUpsert) {
+//			SetBotID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BotMetricsCreate) OnConflict(opts ...sql.ConflictOption) *BotMetricsUpsertOne {
+	_c.conflict = opts
+	return &BotMetricsUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.BotMetrics.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BotMetricsCreate) OnConflictColumns(columns ...string) *BotMetricsUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BotMetricsUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// BotMetricsUpsertOne is the builder for "upsert"-ing
+	//  one BotMetrics node.
+	BotMetricsUpsertOne struct {
+		create *BotMetricsCreate
+	}
+
+	// BotMetricsUpsert is the "OnConflict" setter.
+	BotMetricsUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetBotID sets the "bot_id" field.
+func (u *BotMetricsUpsert) SetBotID(v uuid.UUID) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldBotID, v)
+	return u
+}
+
+// UpdateBotID sets the "bot_id" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateBotID() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldBotID)
+	return u
+}
+
+// SetProfitClosedCoin sets the "profit_closed_coin" field.
+func (u *BotMetricsUpsert) SetProfitClosedCoin(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldProfitClosedCoin, v)
+	return u
+}
+
+// UpdateProfitClosedCoin sets the "profit_closed_coin" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateProfitClosedCoin() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldProfitClosedCoin)
+	return u
+}
+
+// AddProfitClosedCoin adds v to the "profit_closed_coin" field.
+func (u *BotMetricsUpsert) AddProfitClosedCoin(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldProfitClosedCoin, v)
+	return u
+}
+
+// ClearProfitClosedCoin clears the value of the "profit_closed_coin" field.
+func (u *BotMetricsUpsert) ClearProfitClosedCoin() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldProfitClosedCoin)
+	return u
+}
+
+// SetProfitClosedPercent sets the "profit_closed_percent" field.
+func (u *BotMetricsUpsert) SetProfitClosedPercent(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldProfitClosedPercent, v)
+	return u
+}
+
+// UpdateProfitClosedPercent sets the "profit_closed_percent" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateProfitClosedPercent() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldProfitClosedPercent)
+	return u
+}
+
+// AddProfitClosedPercent adds v to the "profit_closed_percent" field.
+func (u *BotMetricsUpsert) AddProfitClosedPercent(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldProfitClosedPercent, v)
+	return u
+}
+
+// ClearProfitClosedPercent clears the value of the "profit_closed_percent" field.
+func (u *BotMetricsUpsert) ClearProfitClosedPercent() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldProfitClosedPercent)
+	return u
+}
+
+// SetProfitAllCoin sets the "profit_all_coin" field.
+func (u *BotMetricsUpsert) SetProfitAllCoin(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldProfitAllCoin, v)
+	return u
+}
+
+// UpdateProfitAllCoin sets the "profit_all_coin" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateProfitAllCoin() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldProfitAllCoin)
+	return u
+}
+
+// AddProfitAllCoin adds v to the "profit_all_coin" field.
+func (u *BotMetricsUpsert) AddProfitAllCoin(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldProfitAllCoin, v)
+	return u
+}
+
+// ClearProfitAllCoin clears the value of the "profit_all_coin" field.
+func (u *BotMetricsUpsert) ClearProfitAllCoin() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldProfitAllCoin)
+	return u
+}
+
+// SetProfitAllPercent sets the "profit_all_percent" field.
+func (u *BotMetricsUpsert) SetProfitAllPercent(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldProfitAllPercent, v)
+	return u
+}
+
+// UpdateProfitAllPercent sets the "profit_all_percent" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateProfitAllPercent() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldProfitAllPercent)
+	return u
+}
+
+// AddProfitAllPercent adds v to the "profit_all_percent" field.
+func (u *BotMetricsUpsert) AddProfitAllPercent(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldProfitAllPercent, v)
+	return u
+}
+
+// ClearProfitAllPercent clears the value of the "profit_all_percent" field.
+func (u *BotMetricsUpsert) ClearProfitAllPercent() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldProfitAllPercent)
+	return u
+}
+
+// SetTradeCount sets the "trade_count" field.
+func (u *BotMetricsUpsert) SetTradeCount(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldTradeCount, v)
+	return u
+}
+
+// UpdateTradeCount sets the "trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateTradeCount() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldTradeCount)
+	return u
+}
+
+// AddTradeCount adds v to the "trade_count" field.
+func (u *BotMetricsUpsert) AddTradeCount(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldTradeCount, v)
+	return u
+}
+
+// ClearTradeCount clears the value of the "trade_count" field.
+func (u *BotMetricsUpsert) ClearTradeCount() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldTradeCount)
+	return u
+}
+
+// SetClosedTradeCount sets the "closed_trade_count" field.
+func (u *BotMetricsUpsert) SetClosedTradeCount(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldClosedTradeCount, v)
+	return u
+}
+
+// UpdateClosedTradeCount sets the "closed_trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateClosedTradeCount() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldClosedTradeCount)
+	return u
+}
+
+// AddClosedTradeCount adds v to the "closed_trade_count" field.
+func (u *BotMetricsUpsert) AddClosedTradeCount(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldClosedTradeCount, v)
+	return u
+}
+
+// ClearClosedTradeCount clears the value of the "closed_trade_count" field.
+func (u *BotMetricsUpsert) ClearClosedTradeCount() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldClosedTradeCount)
+	return u
+}
+
+// SetOpenTradeCount sets the "open_trade_count" field.
+func (u *BotMetricsUpsert) SetOpenTradeCount(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldOpenTradeCount, v)
+	return u
+}
+
+// UpdateOpenTradeCount sets the "open_trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateOpenTradeCount() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldOpenTradeCount)
+	return u
+}
+
+// AddOpenTradeCount adds v to the "open_trade_count" field.
+func (u *BotMetricsUpsert) AddOpenTradeCount(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldOpenTradeCount, v)
+	return u
+}
+
+// ClearOpenTradeCount clears the value of the "open_trade_count" field.
+func (u *BotMetricsUpsert) ClearOpenTradeCount() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldOpenTradeCount)
+	return u
+}
+
+// SetWinningTrades sets the "winning_trades" field.
+func (u *BotMetricsUpsert) SetWinningTrades(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldWinningTrades, v)
+	return u
+}
+
+// UpdateWinningTrades sets the "winning_trades" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateWinningTrades() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldWinningTrades)
+	return u
+}
+
+// AddWinningTrades adds v to the "winning_trades" field.
+func (u *BotMetricsUpsert) AddWinningTrades(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldWinningTrades, v)
+	return u
+}
+
+// ClearWinningTrades clears the value of the "winning_trades" field.
+func (u *BotMetricsUpsert) ClearWinningTrades() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldWinningTrades)
+	return u
+}
+
+// SetLosingTrades sets the "losing_trades" field.
+func (u *BotMetricsUpsert) SetLosingTrades(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldLosingTrades, v)
+	return u
+}
+
+// UpdateLosingTrades sets the "losing_trades" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateLosingTrades() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldLosingTrades)
+	return u
+}
+
+// AddLosingTrades adds v to the "losing_trades" field.
+func (u *BotMetricsUpsert) AddLosingTrades(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldLosingTrades, v)
+	return u
+}
+
+// ClearLosingTrades clears the value of the "losing_trades" field.
+func (u *BotMetricsUpsert) ClearLosingTrades() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldLosingTrades)
+	return u
+}
+
+// SetWinrate sets the "winrate" field.
+func (u *BotMetricsUpsert) SetWinrate(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldWinrate, v)
+	return u
+}
+
+// UpdateWinrate sets the "winrate" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateWinrate() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldWinrate)
+	return u
+}
+
+// AddWinrate adds v to the "winrate" field.
+func (u *BotMetricsUpsert) AddWinrate(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldWinrate, v)
+	return u
+}
+
+// ClearWinrate clears the value of the "winrate" field.
+func (u *BotMetricsUpsert) ClearWinrate() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldWinrate)
+	return u
+}
+
+// SetExpectancy sets the "expectancy" field.
+func (u *BotMetricsUpsert) SetExpectancy(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldExpectancy, v)
+	return u
+}
+
+// UpdateExpectancy sets the "expectancy" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateExpectancy() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldExpectancy)
+	return u
+}
+
+// AddExpectancy adds v to the "expectancy" field.
+func (u *BotMetricsUpsert) AddExpectancy(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldExpectancy, v)
+	return u
+}
+
+// ClearExpectancy clears the value of the "expectancy" field.
+func (u *BotMetricsUpsert) ClearExpectancy() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldExpectancy)
+	return u
+}
+
+// SetProfitFactor sets the "profit_factor" field.
+func (u *BotMetricsUpsert) SetProfitFactor(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldProfitFactor, v)
+	return u
+}
+
+// UpdateProfitFactor sets the "profit_factor" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateProfitFactor() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldProfitFactor)
+	return u
+}
+
+// AddProfitFactor adds v to the "profit_factor" field.
+func (u *BotMetricsUpsert) AddProfitFactor(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldProfitFactor, v)
+	return u
+}
+
+// ClearProfitFactor clears the value of the "profit_factor" field.
+func (u *BotMetricsUpsert) ClearProfitFactor() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldProfitFactor)
+	return u
+}
+
+// SetMaxDrawdown sets the "max_drawdown" field.
+func (u *BotMetricsUpsert) SetMaxDrawdown(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldMaxDrawdown, v)
+	return u
+}
+
+// UpdateMaxDrawdown sets the "max_drawdown" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateMaxDrawdown() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldMaxDrawdown)
+	return u
+}
+
+// AddMaxDrawdown adds v to the "max_drawdown" field.
+func (u *BotMetricsUpsert) AddMaxDrawdown(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldMaxDrawdown, v)
+	return u
+}
+
+// ClearMaxDrawdown clears the value of the "max_drawdown" field.
+func (u *BotMetricsUpsert) ClearMaxDrawdown() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldMaxDrawdown)
+	return u
+}
+
+// SetMaxDrawdownAbs sets the "max_drawdown_abs" field.
+func (u *BotMetricsUpsert) SetMaxDrawdownAbs(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldMaxDrawdownAbs, v)
+	return u
+}
+
+// UpdateMaxDrawdownAbs sets the "max_drawdown_abs" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateMaxDrawdownAbs() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldMaxDrawdownAbs)
+	return u
+}
+
+// AddMaxDrawdownAbs adds v to the "max_drawdown_abs" field.
+func (u *BotMetricsUpsert) AddMaxDrawdownAbs(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldMaxDrawdownAbs, v)
+	return u
+}
+
+// ClearMaxDrawdownAbs clears the value of the "max_drawdown_abs" field.
+func (u *BotMetricsUpsert) ClearMaxDrawdownAbs() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldMaxDrawdownAbs)
+	return u
+}
+
+// SetBestPair sets the "best_pair" field.
+func (u *BotMetricsUpsert) SetBestPair(v string) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldBestPair, v)
+	return u
+}
+
+// UpdateBestPair sets the "best_pair" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateBestPair() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldBestPair)
+	return u
+}
+
+// ClearBestPair clears the value of the "best_pair" field.
+func (u *BotMetricsUpsert) ClearBestPair() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldBestPair)
+	return u
+}
+
+// SetBestRate sets the "best_rate" field.
+func (u *BotMetricsUpsert) SetBestRate(v float64) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldBestRate, v)
+	return u
+}
+
+// UpdateBestRate sets the "best_rate" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateBestRate() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldBestRate)
+	return u
+}
+
+// AddBestRate adds v to the "best_rate" field.
+func (u *BotMetricsUpsert) AddBestRate(v float64) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldBestRate, v)
+	return u
+}
+
+// ClearBestRate clears the value of the "best_rate" field.
+func (u *BotMetricsUpsert) ClearBestRate() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldBestRate)
+	return u
+}
+
+// SetFirstTradeTimestamp sets the "first_trade_timestamp" field.
+func (u *BotMetricsUpsert) SetFirstTradeTimestamp(v time.Time) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldFirstTradeTimestamp, v)
+	return u
+}
+
+// UpdateFirstTradeTimestamp sets the "first_trade_timestamp" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateFirstTradeTimestamp() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldFirstTradeTimestamp)
+	return u
+}
+
+// ClearFirstTradeTimestamp clears the value of the "first_trade_timestamp" field.
+func (u *BotMetricsUpsert) ClearFirstTradeTimestamp() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldFirstTradeTimestamp)
+	return u
+}
+
+// SetLatestTradeTimestamp sets the "latest_trade_timestamp" field.
+func (u *BotMetricsUpsert) SetLatestTradeTimestamp(v time.Time) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldLatestTradeTimestamp, v)
+	return u
+}
+
+// UpdateLatestTradeTimestamp sets the "latest_trade_timestamp" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateLatestTradeTimestamp() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldLatestTradeTimestamp)
+	return u
+}
+
+// ClearLatestTradeTimestamp clears the value of the "latest_trade_timestamp" field.
+func (u *BotMetricsUpsert) ClearLatestTradeTimestamp() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldLatestTradeTimestamp)
+	return u
+}
+
+// SetFetchedAt sets the "fetched_at" field.
+func (u *BotMetricsUpsert) SetFetchedAt(v time.Time) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldFetchedAt, v)
+	return u
+}
+
+// UpdateFetchedAt sets the "fetched_at" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateFetchedAt() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldFetchedAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotMetricsUpsert) SetUpdatedAt(v time.Time) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateUpdatedAt() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldUpdatedAt)
+	return u
+}
+
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (u *BotMetricsUpsert) SetLastSyncedTradeID(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldLastSyncedTradeID, v)
+	return u
+}
+
+// UpdateLastSyncedTradeID sets the "last_synced_trade_id" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateLastSyncedTradeID() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldLastSyncedTradeID)
+	return u
+}
+
+// AddLastSyncedTradeID adds v to the "last_synced_trade_id" field.
+func (u *BotMetricsUpsert) AddLastSyncedTradeID(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldLastSyncedTradeID, v)
+	return u
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (u *BotMetricsUpsert) SetLastTradeSyncAt(v time.Time) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldLastTradeSyncAt, v)
+	return u
+}
+
+// UpdateLastTradeSyncAt sets the "last_trade_sync_at" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateLastTradeSyncAt() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldLastTradeSyncAt)
+	return u
+}
+
+// ClearLastTradeSyncAt clears the value of the "last_trade_sync_at" field.
+func (u *BotMetricsUpsert) ClearLastTradeSyncAt() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldLastTradeSyncAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.BotMetrics.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(botmetrics.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BotMetricsUpsertOne) UpdateNewValues() *BotMetricsUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(botmetrics.FieldID)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.BotMetrics.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *BotMetricsUpsertOne) Ignore() *BotMetricsUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BotMetricsUpsertOne) DoNothing() *BotMetricsUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BotMetricsCreate.OnConflict
+// documentation for more info.
+func (u *BotMetricsUpsertOne) Update(set func(*BotMetricsUpsert)) *BotMetricsUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BotMetricsUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetBotID sets the "bot_id" field.
+func (u *BotMetricsUpsertOne) SetBotID(v uuid.UUID) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetBotID(v)
+	})
+}
+
+// UpdateBotID sets the "bot_id" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateBotID() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateBotID()
+	})
+}
+
+// SetProfitClosedCoin sets the "profit_closed_coin" field.
+func (u *BotMetricsUpsertOne) SetProfitClosedCoin(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitClosedCoin(v)
+	})
+}
+
+// AddProfitClosedCoin adds v to the "profit_closed_coin" field.
+func (u *BotMetricsUpsertOne) AddProfitClosedCoin(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitClosedCoin(v)
+	})
+}
+
+// UpdateProfitClosedCoin sets the "profit_closed_coin" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateProfitClosedCoin() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitClosedCoin()
+	})
+}
+
+// ClearProfitClosedCoin clears the value of the "profit_closed_coin" field.
+func (u *BotMetricsUpsertOne) ClearProfitClosedCoin() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitClosedCoin()
+	})
+}
+
+// SetProfitClosedPercent sets the "profit_closed_percent" field.
+func (u *BotMetricsUpsertOne) SetProfitClosedPercent(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitClosedPercent(v)
+	})
+}
+
+// AddProfitClosedPercent adds v to the "profit_closed_percent" field.
+func (u *BotMetricsUpsertOne) AddProfitClosedPercent(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitClosedPercent(v)
+	})
+}
+
+// UpdateProfitClosedPercent sets the "profit_closed_percent" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateProfitClosedPercent() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitClosedPercent()
+	})
+}
+
+// ClearProfitClosedPercent clears the value of the "profit_closed_percent" field.
+func (u *BotMetricsUpsertOne) ClearProfitClosedPercent() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitClosedPercent()
+	})
+}
+
+// SetProfitAllCoin sets the "profit_all_coin" field.
+func (u *BotMetricsUpsertOne) SetProfitAllCoin(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitAllCoin(v)
+	})
+}
+
+// AddProfitAllCoin adds v to the "profit_all_coin" field.
+func (u *BotMetricsUpsertOne) AddProfitAllCoin(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitAllCoin(v)
+	})
+}
+
+// UpdateProfitAllCoin sets the "profit_all_coin" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateProfitAllCoin() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitAllCoin()
+	})
+}
+
+// ClearProfitAllCoin clears the value of the "profit_all_coin" field.
+func (u *BotMetricsUpsertOne) ClearProfitAllCoin() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitAllCoin()
+	})
+}
+
+// SetProfitAllPercent sets the "profit_all_percent" field.
+func (u *BotMetricsUpsertOne) SetProfitAllPercent(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitAllPercent(v)
+	})
+}
+
+// AddProfitAllPercent adds v to the "profit_all_percent" field.
+func (u *BotMetricsUpsertOne) AddProfitAllPercent(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitAllPercent(v)
+	})
+}
+
+// UpdateProfitAllPercent sets the "profit_all_percent" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateProfitAllPercent() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitAllPercent()
+	})
+}
+
+// ClearProfitAllPercent clears the value of the "profit_all_percent" field.
+func (u *BotMetricsUpsertOne) ClearProfitAllPercent() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitAllPercent()
+	})
+}
+
+// SetTradeCount sets the "trade_count" field.
+func (u *BotMetricsUpsertOne) SetTradeCount(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetTradeCount(v)
+	})
+}
+
+// AddTradeCount adds v to the "trade_count" field.
+func (u *BotMetricsUpsertOne) AddTradeCount(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddTradeCount(v)
+	})
+}
+
+// UpdateTradeCount sets the "trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateTradeCount() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateTradeCount()
+	})
+}
+
+// ClearTradeCount clears the value of the "trade_count" field.
+func (u *BotMetricsUpsertOne) ClearTradeCount() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearTradeCount()
+	})
+}
+
+// SetClosedTradeCount sets the "closed_trade_count" field.
+func (u *BotMetricsUpsertOne) SetClosedTradeCount(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetClosedTradeCount(v)
+	})
+}
+
+// AddClosedTradeCount adds v to the "closed_trade_count" field.
+func (u *BotMetricsUpsertOne) AddClosedTradeCount(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddClosedTradeCount(v)
+	})
+}
+
+// UpdateClosedTradeCount sets the "closed_trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateClosedTradeCount() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateClosedTradeCount()
+	})
+}
+
+// ClearClosedTradeCount clears the value of the "closed_trade_count" field.
+func (u *BotMetricsUpsertOne) ClearClosedTradeCount() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearClosedTradeCount()
+	})
+}
+
+// SetOpenTradeCount sets the "open_trade_count" field.
+func (u *BotMetricsUpsertOne) SetOpenTradeCount(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetOpenTradeCount(v)
+	})
+}
+
+// AddOpenTradeCount adds v to the "open_trade_count" field.
+func (u *BotMetricsUpsertOne) AddOpenTradeCount(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddOpenTradeCount(v)
+	})
+}
+
+// UpdateOpenTradeCount sets the "open_trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateOpenTradeCount() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateOpenTradeCount()
+	})
+}
+
+// ClearOpenTradeCount clears the value of the "open_trade_count" field.
+func (u *BotMetricsUpsertOne) ClearOpenTradeCount() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearOpenTradeCount()
+	})
+}
+
+// SetWinningTrades sets the "winning_trades" field.
+func (u *BotMetricsUpsertOne) SetWinningTrades(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetWinningTrades(v)
+	})
+}
+
+// AddWinningTrades adds v to the "winning_trades" field.
+func (u *BotMetricsUpsertOne) AddWinningTrades(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddWinningTrades(v)
+	})
+}
+
+// UpdateWinningTrades sets the "winning_trades" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateWinningTrades() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateWinningTrades()
+	})
+}
+
+// ClearWinningTrades clears the value of the "winning_trades" field.
+func (u *BotMetricsUpsertOne) ClearWinningTrades() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearWinningTrades()
+	})
+}
+
+// SetLosingTrades sets the "losing_trades" field.
+func (u *BotMetricsUpsertOne) SetLosingTrades(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLosingTrades(v)
+	})
+}
+
+// AddLosingTrades adds v to the "losing_trades" field.
+func (u *BotMetricsUpsertOne) AddLosingTrades(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddLosingTrades(v)
+	})
+}
+
+// UpdateLosingTrades sets the "losing_trades" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateLosingTrades() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLosingTrades()
+	})
+}
+
+// ClearLosingTrades clears the value of the "losing_trades" field.
+func (u *BotMetricsUpsertOne) ClearLosingTrades() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearLosingTrades()
+	})
+}
+
+// SetWinrate sets the "winrate" field.
+func (u *BotMetricsUpsertOne) SetWinrate(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetWinrate(v)
+	})
+}
+
+// AddWinrate adds v to the "winrate" field.
+func (u *BotMetricsUpsertOne) AddWinrate(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddWinrate(v)
+	})
+}
+
+// UpdateWinrate sets the "winrate" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateWinrate() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateWinrate()
+	})
+}
+
+// ClearWinrate clears the value of the "winrate" field.
+func (u *BotMetricsUpsertOne) ClearWinrate() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearWinrate()
+	})
+}
+
+// SetExpectancy sets the "expectancy" field.
+func (u *BotMetricsUpsertOne) SetExpectancy(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetExpectancy(v)
+	})
+}
+
+// AddExpectancy adds v to the "expectancy" field.
+func (u *BotMetricsUpsertOne) AddExpectancy(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddExpectancy(v)
+	})
+}
+
+// UpdateExpectancy sets the "expectancy" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateExpectancy() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateExpectancy()
+	})
+}
+
+// ClearExpectancy clears the value of the "expectancy" field.
+func (u *BotMetricsUpsertOne) ClearExpectancy() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearExpectancy()
+	})
+}
+
+// SetProfitFactor sets the "profit_factor" field.
+func (u *BotMetricsUpsertOne) SetProfitFactor(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitFactor(v)
+	})
+}
+
+// AddProfitFactor adds v to the "profit_factor" field.
+func (u *BotMetricsUpsertOne) AddProfitFactor(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitFactor(v)
+	})
+}
+
+// UpdateProfitFactor sets the "profit_factor" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateProfitFactor() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitFactor()
+	})
+}
+
+// ClearProfitFactor clears the value of the "profit_factor" field.
+func (u *BotMetricsUpsertOne) ClearProfitFactor() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitFactor()
+	})
+}
+
+// SetMaxDrawdown sets the "max_drawdown" field.
+func (u *BotMetricsUpsertOne) SetMaxDrawdown(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetMaxDrawdown(v)
+	})
+}
+
+// AddMaxDrawdown adds v to the "max_drawdown" field.
+func (u *BotMetricsUpsertOne) AddMaxDrawdown(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddMaxDrawdown(v)
+	})
+}
+
+// UpdateMaxDrawdown sets the "max_drawdown" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateMaxDrawdown() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateMaxDrawdown()
+	})
+}
+
+// ClearMaxDrawdown clears the value of the "max_drawdown" field.
+func (u *BotMetricsUpsertOne) ClearMaxDrawdown() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearMaxDrawdown()
+	})
+}
+
+// SetMaxDrawdownAbs sets the "max_drawdown_abs" field.
+func (u *BotMetricsUpsertOne) SetMaxDrawdownAbs(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetMaxDrawdownAbs(v)
+	})
+}
+
+// AddMaxDrawdownAbs adds v to the "max_drawdown_abs" field.
+func (u *BotMetricsUpsertOne) AddMaxDrawdownAbs(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddMaxDrawdownAbs(v)
+	})
+}
+
+// UpdateMaxDrawdownAbs sets the "max_drawdown_abs" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateMaxDrawdownAbs() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateMaxDrawdownAbs()
+	})
+}
+
+// ClearMaxDrawdownAbs clears the value of the "max_drawdown_abs" field.
+func (u *BotMetricsUpsertOne) ClearMaxDrawdownAbs() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearMaxDrawdownAbs()
+	})
+}
+
+// SetBestPair sets the "best_pair" field.
+func (u *BotMetricsUpsertOne) SetBestPair(v string) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetBestPair(v)
+	})
+}
+
+// UpdateBestPair sets the "best_pair" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateBestPair() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateBestPair()
+	})
+}
+
+// ClearBestPair clears the value of the "best_pair" field.
+func (u *BotMetricsUpsertOne) ClearBestPair() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearBestPair()
+	})
+}
+
+// SetBestRate sets the "best_rate" field.
+func (u *BotMetricsUpsertOne) SetBestRate(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetBestRate(v)
+	})
+}
+
+// AddBestRate adds v to the "best_rate" field.
+func (u *BotMetricsUpsertOne) AddBestRate(v float64) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddBestRate(v)
+	})
+}
+
+// UpdateBestRate sets the "best_rate" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateBestRate() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateBestRate()
+	})
+}
+
+// ClearBestRate clears the value of the "best_rate" field.
+func (u *BotMetricsUpsertOne) ClearBestRate() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearBestRate()
+	})
+}
+
+// SetFirstTradeTimestamp sets the "first_trade_timestamp" field.
+func (u *BotMetricsUpsertOne) SetFirstTradeTimestamp(v time.Time) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetFirstTradeTimestamp(v)
+	})
+}
+
+// UpdateFirstTradeTimestamp sets the "first_trade_timestamp" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateFirstTradeTimestamp() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateFirstTradeTimestamp()
+	})
+}
+
+// ClearFirstTradeTimestamp clears the value of the "first_trade_timestamp" field.
+func (u *BotMetricsUpsertOne) ClearFirstTradeTimestamp() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearFirstTradeTimestamp()
+	})
+}
+
+// SetLatestTradeTimestamp sets the "latest_trade_timestamp" field.
+func (u *BotMetricsUpsertOne) SetLatestTradeTimestamp(v time.Time) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLatestTradeTimestamp(v)
+	})
+}
+
+// UpdateLatestTradeTimestamp sets the "latest_trade_timestamp" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateLatestTradeTimestamp() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLatestTradeTimestamp()
+	})
+}
+
+// ClearLatestTradeTimestamp clears the value of the "latest_trade_timestamp" field.
+func (u *BotMetricsUpsertOne) ClearLatestTradeTimestamp() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearLatestTradeTimestamp()
+	})
+}
+
+// SetFetchedAt sets the "fetched_at" field.
+func (u *BotMetricsUpsertOne) SetFetchedAt(v time.Time) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetFetchedAt(v)
+	})
+}
+
+// UpdateFetchedAt sets the "fetched_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateFetchedAt() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateFetchedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotMetricsUpsertOne) SetUpdatedAt(v time.Time) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateUpdatedAt() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (u *BotMetricsUpsertOne) SetLastSyncedTradeID(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLastSyncedTradeID(v)
+	})
+}
+
+// AddLastSyncedTradeID adds v to the "last_synced_trade_id" field.
+func (u *BotMetricsUpsertOne) AddLastSyncedTradeID(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddLastSyncedTradeID(v)
+	})
+}
+
+// UpdateLastSyncedTradeID sets the "last_synced_trade_id" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateLastSyncedTradeID() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLastSyncedTradeID()
+	})
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (u *BotMetricsUpsertOne) SetLastTradeSyncAt(v time.Time) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLastTradeSyncAt(v)
+	})
+}
+
+// UpdateLastTradeSyncAt sets the "last_trade_sync_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateLastTradeSyncAt() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLastTradeSyncAt()
+	})
+}
+
+// ClearLastTradeSyncAt clears the value of the "last_trade_sync_at" field.
+func (u *BotMetricsUpsertOne) ClearLastTradeSyncAt() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearLastTradeSyncAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BotMetricsUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BotMetricsCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BotMetricsUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *BotMetricsUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: BotMetricsUpsertOne.ID is not supported by MySQL driver. Use BotMetricsUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *BotMetricsUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // BotMetricsCreateBulk is the builder for creating many BotMetrics entities in bulk.
 type BotMetricsCreateBulk struct {
 	config
 	err      error
 	builders []*BotMetricsCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the BotMetrics entities in the database.
@@ -559,6 +1795,7 @@ func (_c *BotMetricsCreateBulk) Save(ctx context.Context) ([]*BotMetrics, error)
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -605,6 +1842,687 @@ func (_c *BotMetricsCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *BotMetricsCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.BotMetrics.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BotMetricsUpsert) {
+//			SetBotID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BotMetricsCreateBulk) OnConflict(opts ...sql.ConflictOption) *BotMetricsUpsertBulk {
+	_c.conflict = opts
+	return &BotMetricsUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.BotMetrics.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BotMetricsCreateBulk) OnConflictColumns(columns ...string) *BotMetricsUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BotMetricsUpsertBulk{
+		create: _c,
+	}
+}
+
+// BotMetricsUpsertBulk is the builder for "upsert"-ing
+// a bulk of BotMetrics nodes.
+type BotMetricsUpsertBulk struct {
+	create *BotMetricsCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.BotMetrics.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(botmetrics.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BotMetricsUpsertBulk) UpdateNewValues() *BotMetricsUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(botmetrics.FieldID)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.BotMetrics.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *BotMetricsUpsertBulk) Ignore() *BotMetricsUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BotMetricsUpsertBulk) DoNothing() *BotMetricsUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BotMetricsCreateBulk.OnConflict
+// documentation for more info.
+func (u *BotMetricsUpsertBulk) Update(set func(*BotMetricsUpsert)) *BotMetricsUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BotMetricsUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetBotID sets the "bot_id" field.
+func (u *BotMetricsUpsertBulk) SetBotID(v uuid.UUID) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetBotID(v)
+	})
+}
+
+// UpdateBotID sets the "bot_id" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateBotID() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateBotID()
+	})
+}
+
+// SetProfitClosedCoin sets the "profit_closed_coin" field.
+func (u *BotMetricsUpsertBulk) SetProfitClosedCoin(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitClosedCoin(v)
+	})
+}
+
+// AddProfitClosedCoin adds v to the "profit_closed_coin" field.
+func (u *BotMetricsUpsertBulk) AddProfitClosedCoin(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitClosedCoin(v)
+	})
+}
+
+// UpdateProfitClosedCoin sets the "profit_closed_coin" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateProfitClosedCoin() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitClosedCoin()
+	})
+}
+
+// ClearProfitClosedCoin clears the value of the "profit_closed_coin" field.
+func (u *BotMetricsUpsertBulk) ClearProfitClosedCoin() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitClosedCoin()
+	})
+}
+
+// SetProfitClosedPercent sets the "profit_closed_percent" field.
+func (u *BotMetricsUpsertBulk) SetProfitClosedPercent(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitClosedPercent(v)
+	})
+}
+
+// AddProfitClosedPercent adds v to the "profit_closed_percent" field.
+func (u *BotMetricsUpsertBulk) AddProfitClosedPercent(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitClosedPercent(v)
+	})
+}
+
+// UpdateProfitClosedPercent sets the "profit_closed_percent" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateProfitClosedPercent() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitClosedPercent()
+	})
+}
+
+// ClearProfitClosedPercent clears the value of the "profit_closed_percent" field.
+func (u *BotMetricsUpsertBulk) ClearProfitClosedPercent() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitClosedPercent()
+	})
+}
+
+// SetProfitAllCoin sets the "profit_all_coin" field.
+func (u *BotMetricsUpsertBulk) SetProfitAllCoin(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitAllCoin(v)
+	})
+}
+
+// AddProfitAllCoin adds v to the "profit_all_coin" field.
+func (u *BotMetricsUpsertBulk) AddProfitAllCoin(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitAllCoin(v)
+	})
+}
+
+// UpdateProfitAllCoin sets the "profit_all_coin" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateProfitAllCoin() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitAllCoin()
+	})
+}
+
+// ClearProfitAllCoin clears the value of the "profit_all_coin" field.
+func (u *BotMetricsUpsertBulk) ClearProfitAllCoin() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitAllCoin()
+	})
+}
+
+// SetProfitAllPercent sets the "profit_all_percent" field.
+func (u *BotMetricsUpsertBulk) SetProfitAllPercent(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitAllPercent(v)
+	})
+}
+
+// AddProfitAllPercent adds v to the "profit_all_percent" field.
+func (u *BotMetricsUpsertBulk) AddProfitAllPercent(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitAllPercent(v)
+	})
+}
+
+// UpdateProfitAllPercent sets the "profit_all_percent" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateProfitAllPercent() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitAllPercent()
+	})
+}
+
+// ClearProfitAllPercent clears the value of the "profit_all_percent" field.
+func (u *BotMetricsUpsertBulk) ClearProfitAllPercent() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitAllPercent()
+	})
+}
+
+// SetTradeCount sets the "trade_count" field.
+func (u *BotMetricsUpsertBulk) SetTradeCount(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetTradeCount(v)
+	})
+}
+
+// AddTradeCount adds v to the "trade_count" field.
+func (u *BotMetricsUpsertBulk) AddTradeCount(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddTradeCount(v)
+	})
+}
+
+// UpdateTradeCount sets the "trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateTradeCount() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateTradeCount()
+	})
+}
+
+// ClearTradeCount clears the value of the "trade_count" field.
+func (u *BotMetricsUpsertBulk) ClearTradeCount() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearTradeCount()
+	})
+}
+
+// SetClosedTradeCount sets the "closed_trade_count" field.
+func (u *BotMetricsUpsertBulk) SetClosedTradeCount(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetClosedTradeCount(v)
+	})
+}
+
+// AddClosedTradeCount adds v to the "closed_trade_count" field.
+func (u *BotMetricsUpsertBulk) AddClosedTradeCount(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddClosedTradeCount(v)
+	})
+}
+
+// UpdateClosedTradeCount sets the "closed_trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateClosedTradeCount() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateClosedTradeCount()
+	})
+}
+
+// ClearClosedTradeCount clears the value of the "closed_trade_count" field.
+func (u *BotMetricsUpsertBulk) ClearClosedTradeCount() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearClosedTradeCount()
+	})
+}
+
+// SetOpenTradeCount sets the "open_trade_count" field.
+func (u *BotMetricsUpsertBulk) SetOpenTradeCount(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetOpenTradeCount(v)
+	})
+}
+
+// AddOpenTradeCount adds v to the "open_trade_count" field.
+func (u *BotMetricsUpsertBulk) AddOpenTradeCount(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddOpenTradeCount(v)
+	})
+}
+
+// UpdateOpenTradeCount sets the "open_trade_count" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateOpenTradeCount() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateOpenTradeCount()
+	})
+}
+
+// ClearOpenTradeCount clears the value of the "open_trade_count" field.
+func (u *BotMetricsUpsertBulk) ClearOpenTradeCount() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearOpenTradeCount()
+	})
+}
+
+// SetWinningTrades sets the "winning_trades" field.
+func (u *BotMetricsUpsertBulk) SetWinningTrades(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetWinningTrades(v)
+	})
+}
+
+// AddWinningTrades adds v to the "winning_trades" field.
+func (u *BotMetricsUpsertBulk) AddWinningTrades(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddWinningTrades(v)
+	})
+}
+
+// UpdateWinningTrades sets the "winning_trades" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateWinningTrades() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateWinningTrades()
+	})
+}
+
+// ClearWinningTrades clears the value of the "winning_trades" field.
+func (u *BotMetricsUpsertBulk) ClearWinningTrades() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearWinningTrades()
+	})
+}
+
+// SetLosingTrades sets the "losing_trades" field.
+func (u *BotMetricsUpsertBulk) SetLosingTrades(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLosingTrades(v)
+	})
+}
+
+// AddLosingTrades adds v to the "losing_trades" field.
+func (u *BotMetricsUpsertBulk) AddLosingTrades(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddLosingTrades(v)
+	})
+}
+
+// UpdateLosingTrades sets the "losing_trades" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateLosingTrades() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLosingTrades()
+	})
+}
+
+// ClearLosingTrades clears the value of the "losing_trades" field.
+func (u *BotMetricsUpsertBulk) ClearLosingTrades() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearLosingTrades()
+	})
+}
+
+// SetWinrate sets the "winrate" field.
+func (u *BotMetricsUpsertBulk) SetWinrate(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetWinrate(v)
+	})
+}
+
+// AddWinrate adds v to the "winrate" field.
+func (u *BotMetricsUpsertBulk) AddWinrate(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddWinrate(v)
+	})
+}
+
+// UpdateWinrate sets the "winrate" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateWinrate() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateWinrate()
+	})
+}
+
+// ClearWinrate clears the value of the "winrate" field.
+func (u *BotMetricsUpsertBulk) ClearWinrate() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearWinrate()
+	})
+}
+
+// SetExpectancy sets the "expectancy" field.
+func (u *BotMetricsUpsertBulk) SetExpectancy(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetExpectancy(v)
+	})
+}
+
+// AddExpectancy adds v to the "expectancy" field.
+func (u *BotMetricsUpsertBulk) AddExpectancy(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddExpectancy(v)
+	})
+}
+
+// UpdateExpectancy sets the "expectancy" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateExpectancy() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateExpectancy()
+	})
+}
+
+// ClearExpectancy clears the value of the "expectancy" field.
+func (u *BotMetricsUpsertBulk) ClearExpectancy() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearExpectancy()
+	})
+}
+
+// SetProfitFactor sets the "profit_factor" field.
+func (u *BotMetricsUpsertBulk) SetProfitFactor(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetProfitFactor(v)
+	})
+}
+
+// AddProfitFactor adds v to the "profit_factor" field.
+func (u *BotMetricsUpsertBulk) AddProfitFactor(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddProfitFactor(v)
+	})
+}
+
+// UpdateProfitFactor sets the "profit_factor" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateProfitFactor() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateProfitFactor()
+	})
+}
+
+// ClearProfitFactor clears the value of the "profit_factor" field.
+func (u *BotMetricsUpsertBulk) ClearProfitFactor() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearProfitFactor()
+	})
+}
+
+// SetMaxDrawdown sets the "max_drawdown" field.
+func (u *BotMetricsUpsertBulk) SetMaxDrawdown(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetMaxDrawdown(v)
+	})
+}
+
+// AddMaxDrawdown adds v to the "max_drawdown" field.
+func (u *BotMetricsUpsertBulk) AddMaxDrawdown(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddMaxDrawdown(v)
+	})
+}
+
+// UpdateMaxDrawdown sets the "max_drawdown" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateMaxDrawdown() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateMaxDrawdown()
+	})
+}
+
+// ClearMaxDrawdown clears the value of the "max_drawdown" field.
+func (u *BotMetricsUpsertBulk) ClearMaxDrawdown() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearMaxDrawdown()
+	})
+}
+
+// SetMaxDrawdownAbs sets the "max_drawdown_abs" field.
+func (u *BotMetricsUpsertBulk) SetMaxDrawdownAbs(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetMaxDrawdownAbs(v)
+	})
+}
+
+// AddMaxDrawdownAbs adds v to the "max_drawdown_abs" field.
+func (u *BotMetricsUpsertBulk) AddMaxDrawdownAbs(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddMaxDrawdownAbs(v)
+	})
+}
+
+// UpdateMaxDrawdownAbs sets the "max_drawdown_abs" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateMaxDrawdownAbs() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateMaxDrawdownAbs()
+	})
+}
+
+// ClearMaxDrawdownAbs clears the value of the "max_drawdown_abs" field.
+func (u *BotMetricsUpsertBulk) ClearMaxDrawdownAbs() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearMaxDrawdownAbs()
+	})
+}
+
+// SetBestPair sets the "best_pair" field.
+func (u *BotMetricsUpsertBulk) SetBestPair(v string) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetBestPair(v)
+	})
+}
+
+// UpdateBestPair sets the "best_pair" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateBestPair() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateBestPair()
+	})
+}
+
+// ClearBestPair clears the value of the "best_pair" field.
+func (u *BotMetricsUpsertBulk) ClearBestPair() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearBestPair()
+	})
+}
+
+// SetBestRate sets the "best_rate" field.
+func (u *BotMetricsUpsertBulk) SetBestRate(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetBestRate(v)
+	})
+}
+
+// AddBestRate adds v to the "best_rate" field.
+func (u *BotMetricsUpsertBulk) AddBestRate(v float64) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddBestRate(v)
+	})
+}
+
+// UpdateBestRate sets the "best_rate" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateBestRate() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateBestRate()
+	})
+}
+
+// ClearBestRate clears the value of the "best_rate" field.
+func (u *BotMetricsUpsertBulk) ClearBestRate() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearBestRate()
+	})
+}
+
+// SetFirstTradeTimestamp sets the "first_trade_timestamp" field.
+func (u *BotMetricsUpsertBulk) SetFirstTradeTimestamp(v time.Time) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetFirstTradeTimestamp(v)
+	})
+}
+
+// UpdateFirstTradeTimestamp sets the "first_trade_timestamp" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateFirstTradeTimestamp() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateFirstTradeTimestamp()
+	})
+}
+
+// ClearFirstTradeTimestamp clears the value of the "first_trade_timestamp" field.
+func (u *BotMetricsUpsertBulk) ClearFirstTradeTimestamp() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearFirstTradeTimestamp()
+	})
+}
+
+// SetLatestTradeTimestamp sets the "latest_trade_timestamp" field.
+func (u *BotMetricsUpsertBulk) SetLatestTradeTimestamp(v time.Time) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLatestTradeTimestamp(v)
+	})
+}
+
+// UpdateLatestTradeTimestamp sets the "latest_trade_timestamp" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateLatestTradeTimestamp() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLatestTradeTimestamp()
+	})
+}
+
+// ClearLatestTradeTimestamp clears the value of the "latest_trade_timestamp" field.
+func (u *BotMetricsUpsertBulk) ClearLatestTradeTimestamp() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearLatestTradeTimestamp()
+	})
+}
+
+// SetFetchedAt sets the "fetched_at" field.
+func (u *BotMetricsUpsertBulk) SetFetchedAt(v time.Time) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetFetchedAt(v)
+	})
+}
+
+// UpdateFetchedAt sets the "fetched_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateFetchedAt() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateFetchedAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BotMetricsUpsertBulk) SetUpdatedAt(v time.Time) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateUpdatedAt() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetLastSyncedTradeID sets the "last_synced_trade_id" field.
+func (u *BotMetricsUpsertBulk) SetLastSyncedTradeID(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLastSyncedTradeID(v)
+	})
+}
+
+// AddLastSyncedTradeID adds v to the "last_synced_trade_id" field.
+func (u *BotMetricsUpsertBulk) AddLastSyncedTradeID(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddLastSyncedTradeID(v)
+	})
+}
+
+// UpdateLastSyncedTradeID sets the "last_synced_trade_id" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateLastSyncedTradeID() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLastSyncedTradeID()
+	})
+}
+
+// SetLastTradeSyncAt sets the "last_trade_sync_at" field.
+func (u *BotMetricsUpsertBulk) SetLastTradeSyncAt(v time.Time) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLastTradeSyncAt(v)
+	})
+}
+
+// UpdateLastTradeSyncAt sets the "last_trade_sync_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateLastTradeSyncAt() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLastTradeSyncAt()
+	})
+}
+
+// ClearLastTradeSyncAt clears the value of the "last_trade_sync_at" field.
+func (u *BotMetricsUpsertBulk) ClearLastTradeSyncAt() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearLastTradeSyncAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BotMetricsUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the BotMetricsCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BotMetricsCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BotMetricsUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

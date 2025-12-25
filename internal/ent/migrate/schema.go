@@ -119,6 +119,8 @@ var (
 		{Name: "latest_trade_timestamp", Type: field.TypeTime, Nullable: true},
 		{Name: "fetched_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "last_synced_trade_id", Type: field.TypeInt, Default: 0},
+		{Name: "last_trade_sync_at", Type: field.TypeTime, Nullable: true},
 		{Name: "bot_id", Type: field.TypeUUID, Unique: true},
 	}
 	// BotMetricsTable holds the schema information for the "bot_metrics" table.
@@ -129,7 +131,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bot_metrics_bots_metrics",
-				Columns:    []*schema.Column{BotMetricsColumns[21]},
+				Columns:    []*schema.Column{BotMetricsColumns[23]},
 				RefColumns: []*schema.Column{BotsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -380,6 +382,7 @@ var (
 		{Name: "sell_reason", Type: field.TypeString, Nullable: true},
 		{Name: "strategy_name", Type: field.TypeString, Nullable: true},
 		{Name: "timeframe", Type: field.TypeString, Nullable: true},
+		{Name: "raw_data", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "bot_id", Type: field.TypeUUID},
@@ -392,7 +395,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "trades_bots_trades",
-				Columns:    []*schema.Column{TradesColumns[17]},
+				Columns:    []*schema.Column{TradesColumns[18]},
 				RefColumns: []*schema.Column{BotsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -401,12 +404,12 @@ var (
 			{
 				Name:    "trade_bot_id_freqtrade_trade_id",
 				Unique:  true,
-				Columns: []*schema.Column{TradesColumns[17], TradesColumns[1]},
+				Columns: []*schema.Column{TradesColumns[18], TradesColumns[1]},
 			},
 			{
 				Name:    "trade_bot_id_is_open",
 				Unique:  false,
-				Columns: []*schema.Column{TradesColumns[17], TradesColumns[3]},
+				Columns: []*schema.Column{TradesColumns[18], TradesColumns[3]},
 			},
 			{
 				Name:    "trade_open_date",

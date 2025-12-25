@@ -587,6 +587,16 @@ func (_q *BotMetricsQuery) collectField(ctx context.Context, oneNode bool, opCtx
 				selectedFields = append(selectedFields, botmetrics.FieldUpdatedAt)
 				fieldSeen[botmetrics.FieldUpdatedAt] = struct{}{}
 			}
+		case "lastSyncedTradeID":
+			if _, ok := fieldSeen[botmetrics.FieldLastSyncedTradeID]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLastSyncedTradeID)
+				fieldSeen[botmetrics.FieldLastSyncedTradeID] = struct{}{}
+			}
+		case "lastTradeSyncAt":
+			if _, ok := fieldSeen[botmetrics.FieldLastTradeSyncAt]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLastTradeSyncAt)
+				fieldSeen[botmetrics.FieldLastTradeSyncAt] = struct{}{}
+			}
 		case "id":
 		case "__typename":
 		default:
@@ -1863,6 +1873,28 @@ func newTradePaginateArgs(rv map[string]any) *tradePaginateArgs {
 	}
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]any:
+			var (
+				err1, err2 error
+				order      = &TradeOrder{Field: &TradeOrderField{}, Direction: entgql.OrderDirectionAsc}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithTradeOrder(order))
+			}
+		case *TradeOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithTradeOrder(v))
+			}
+		}
 	}
 	if v, ok := rv[whereField].(*TradeWhereInput); ok {
 		args.opts = append(args.opts, WithTradeFilter(v.Filter))

@@ -132,7 +132,7 @@ type ComplexityRoot struct {
 		Status           func(childComplexity int) int
 		Strategy         func(childComplexity int) int
 		StrategyID       func(childComplexity int) int
-		Trades           func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
+		Trades           func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) int
 		UpdatedAt        func(childComplexity int) int
 	}
 
@@ -157,6 +157,8 @@ type ComplexityRoot struct {
 		FetchedAt            func(childComplexity int) int
 		FirstTradeTimestamp  func(childComplexity int) int
 		ID                   func(childComplexity int) int
+		LastSyncedTradeID    func(childComplexity int) int
+		LastTradeSyncAt      func(childComplexity int) int
 		LatestTradeTimestamp func(childComplexity int) int
 		LosingTrades         func(childComplexity int) int
 		MaxDrawdown          func(childComplexity int) int
@@ -316,7 +318,7 @@ type ComplexityRoot struct {
 		ResourceUsageSamples      func(childComplexity int) int
 		Strategies                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) int
 		StrategyVersions          func(childComplexity int, name string) int
-		Trades                    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) int
+		Trades                    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) int
 	}
 
 	ResourceUsageAggregation struct {
@@ -482,7 +484,7 @@ type QueryResolver interface {
 	ResourceUsageAggregations(ctx context.Context) ([]*ent.ResourceUsageAggregation, error)
 	ResourceUsageSamples(ctx context.Context) ([]*ent.ResourceUsageSample, error)
 	Strategies(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) (*ent.StrategyConnection, error)
-	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
+	Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) (*ent.TradeConnection, error)
 	GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error)
 	StrategyVersions(ctx context.Context, name string) ([]*ent.Strategy, error)
 	OrganizationUsage(ctx context.Context, ownerID string, start time.Time, end time.Time) (*ent.ResourceUsageAggregation, error)
@@ -877,7 +879,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bot.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.TradeWhereInput)), true
+		return e.complexity.Bot.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["orderBy"].(*ent.TradeOrder), args["where"].(*ent.TradeWhereInput)), true
 	case "Bot.updatedAt":
 		if e.complexity.Bot.UpdatedAt == nil {
 			break
@@ -971,6 +973,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotMetrics.ID(childComplexity), true
+	case "BotMetrics.lastSyncedTradeID":
+		if e.complexity.BotMetrics.LastSyncedTradeID == nil {
+			break
+		}
+
+		return e.complexity.BotMetrics.LastSyncedTradeID(childComplexity), true
+	case "BotMetrics.lastTradeSyncAt":
+		if e.complexity.BotMetrics.LastTradeSyncAt == nil {
+			break
+		}
+
+		return e.complexity.BotMetrics.LastTradeSyncAt(childComplexity), true
 	case "BotMetrics.latestTradeTimestamp":
 		if e.complexity.BotMetrics.LatestTradeTimestamp == nil {
 			break
@@ -1951,7 +1965,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.TradeWhereInput)), true
+		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["orderBy"].(*ent.TradeOrder), args["where"].(*ent.TradeWhereInput)), true
 
 	case "ResourceUsageAggregation.blockReadBytes":
 		if e.complexity.ResourceUsageAggregation.BlockReadBytes == nil {
@@ -2520,6 +2534,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRunnerConfigInput,
 		ec.unmarshalInputS3ConfigInput,
 		ec.unmarshalInputStrategyWhereInput,
+		ec.unmarshalInputTradeOrder,
 		ec.unmarshalInputTradeWhereInput,
 		ec.unmarshalInputUpdateBotInput,
 		ec.unmarshalInputUpdateBotMetricsInput,
@@ -2761,11 +2776,16 @@ func (ec *executionContext) field_Bot_trades_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTradeOrder2ᚖvolaticloudᚋinternalᚋentᚐTradeOrder)
 	if err != nil {
 		return nil, err
 	}
-	args["where"] = arg4
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg5
 	return args, nil
 }
 
@@ -3460,11 +3480,16 @@ func (ec *executionContext) field_Query_trades_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["last"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTradeOrder2ᚖvolaticloudᚋinternalᚋentᚐTradeOrder)
 	if err != nil {
 		return nil, err
 	}
-	args["where"] = arg4
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg5
 	return args, nil
 }
 
@@ -5632,7 +5657,7 @@ func (ec *executionContext) _Bot_trades(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Bot_trades,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return obj.Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.TradeWhereInput))
+			return obj.Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.TradeOrder), fc.Args["where"].(*ent.TradeWhereInput))
 		},
 		nil,
 		ec.marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection,
@@ -5741,6 +5766,10 @@ func (ec *executionContext) fieldContext_Bot_metrics(_ context.Context, field gr
 				return ec.fieldContext_BotMetrics_fetchedAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_BotMetrics_updatedAt(ctx, field)
+			case "lastSyncedTradeID":
+				return ec.fieldContext_BotMetrics_lastSyncedTradeID(ctx, field)
+			case "lastTradeSyncAt":
+				return ec.fieldContext_BotMetrics_lastTradeSyncAt(ctx, field)
 			case "bot":
 				return ec.fieldContext_BotMetrics_bot(ctx, field)
 			}
@@ -6654,6 +6683,64 @@ func (ec *executionContext) _BotMetrics_updatedAt(ctx context.Context, field gra
 }
 
 func (ec *executionContext) fieldContext_BotMetrics_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotMetrics",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotMetrics_lastSyncedTradeID(ctx context.Context, field graphql.CollectedField, obj *ent.BotMetrics) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotMetrics_lastSyncedTradeID,
+		func(ctx context.Context) (any, error) {
+			return obj.LastSyncedTradeID, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotMetrics_lastSyncedTradeID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotMetrics",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BotMetrics_lastTradeSyncAt(ctx context.Context, field graphql.CollectedField, obj *ent.BotMetrics) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotMetrics_lastTradeSyncAt,
+		func(ctx context.Context) (any, error) {
+			return obj.LastTradeSyncAt, nil
+		},
+		nil,
+		ec.marshalOTime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotMetrics_lastTradeSyncAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BotMetrics",
 		Field:      field,
@@ -11714,6 +11801,10 @@ func (ec *executionContext) fieldContext_Query_botMetricsSlice(_ context.Context
 				return ec.fieldContext_BotMetrics_fetchedAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_BotMetrics_updatedAt(ctx, field)
+			case "lastSyncedTradeID":
+				return ec.fieldContext_BotMetrics_lastSyncedTradeID(ctx, field)
+			case "lastTradeSyncAt":
+				return ec.fieldContext_BotMetrics_lastTradeSyncAt(ctx, field)
 			case "bot":
 				return ec.fieldContext_BotMetrics_bot(ctx, field)
 			}
@@ -12010,7 +12101,7 @@ func (ec *executionContext) _Query_trades(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query_trades,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["where"].(*ent.TradeWhereInput))
+			return ec.resolvers.Query().Trades(ctx, fc.Args["after"].(*entgql.Cursor[uuid.UUID]), fc.Args["first"].(*int), fc.Args["before"].(*entgql.Cursor[uuid.UUID]), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.TradeOrder), fc.Args["where"].(*ent.TradeWhereInput))
 		},
 		nil,
 		ec.marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋentᚐTradeConnection,
@@ -17789,7 +17880,7 @@ func (ec *executionContext) unmarshalInputBotMetricsWhereInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "botID", "botIDNEQ", "botIDIn", "botIDNotIn", "profitClosedCoin", "profitClosedCoinNEQ", "profitClosedCoinIn", "profitClosedCoinNotIn", "profitClosedCoinGT", "profitClosedCoinGTE", "profitClosedCoinLT", "profitClosedCoinLTE", "profitClosedCoinIsNil", "profitClosedCoinNotNil", "profitClosedPercent", "profitClosedPercentNEQ", "profitClosedPercentIn", "profitClosedPercentNotIn", "profitClosedPercentGT", "profitClosedPercentGTE", "profitClosedPercentLT", "profitClosedPercentLTE", "profitClosedPercentIsNil", "profitClosedPercentNotNil", "profitAllCoin", "profitAllCoinNEQ", "profitAllCoinIn", "profitAllCoinNotIn", "profitAllCoinGT", "profitAllCoinGTE", "profitAllCoinLT", "profitAllCoinLTE", "profitAllCoinIsNil", "profitAllCoinNotNil", "profitAllPercent", "profitAllPercentNEQ", "profitAllPercentIn", "profitAllPercentNotIn", "profitAllPercentGT", "profitAllPercentGTE", "profitAllPercentLT", "profitAllPercentLTE", "profitAllPercentIsNil", "profitAllPercentNotNil", "tradeCount", "tradeCountNEQ", "tradeCountIn", "tradeCountNotIn", "tradeCountGT", "tradeCountGTE", "tradeCountLT", "tradeCountLTE", "tradeCountIsNil", "tradeCountNotNil", "closedTradeCount", "closedTradeCountNEQ", "closedTradeCountIn", "closedTradeCountNotIn", "closedTradeCountGT", "closedTradeCountGTE", "closedTradeCountLT", "closedTradeCountLTE", "closedTradeCountIsNil", "closedTradeCountNotNil", "openTradeCount", "openTradeCountNEQ", "openTradeCountIn", "openTradeCountNotIn", "openTradeCountGT", "openTradeCountGTE", "openTradeCountLT", "openTradeCountLTE", "openTradeCountIsNil", "openTradeCountNotNil", "winningTrades", "winningTradesNEQ", "winningTradesIn", "winningTradesNotIn", "winningTradesGT", "winningTradesGTE", "winningTradesLT", "winningTradesLTE", "winningTradesIsNil", "winningTradesNotNil", "losingTrades", "losingTradesNEQ", "losingTradesIn", "losingTradesNotIn", "losingTradesGT", "losingTradesGTE", "losingTradesLT", "losingTradesLTE", "losingTradesIsNil", "losingTradesNotNil", "winrate", "winrateNEQ", "winrateIn", "winrateNotIn", "winrateGT", "winrateGTE", "winrateLT", "winrateLTE", "winrateIsNil", "winrateNotNil", "expectancy", "expectancyNEQ", "expectancyIn", "expectancyNotIn", "expectancyGT", "expectancyGTE", "expectancyLT", "expectancyLTE", "expectancyIsNil", "expectancyNotNil", "profitFactor", "profitFactorNEQ", "profitFactorIn", "profitFactorNotIn", "profitFactorGT", "profitFactorGTE", "profitFactorLT", "profitFactorLTE", "profitFactorIsNil", "profitFactorNotNil", "maxDrawdown", "maxDrawdownNEQ", "maxDrawdownIn", "maxDrawdownNotIn", "maxDrawdownGT", "maxDrawdownGTE", "maxDrawdownLT", "maxDrawdownLTE", "maxDrawdownIsNil", "maxDrawdownNotNil", "maxDrawdownAbs", "maxDrawdownAbsNEQ", "maxDrawdownAbsIn", "maxDrawdownAbsNotIn", "maxDrawdownAbsGT", "maxDrawdownAbsGTE", "maxDrawdownAbsLT", "maxDrawdownAbsLTE", "maxDrawdownAbsIsNil", "maxDrawdownAbsNotNil", "bestPair", "bestPairNEQ", "bestPairIn", "bestPairNotIn", "bestPairGT", "bestPairGTE", "bestPairLT", "bestPairLTE", "bestPairContains", "bestPairHasPrefix", "bestPairHasSuffix", "bestPairIsNil", "bestPairNotNil", "bestPairEqualFold", "bestPairContainsFold", "bestRate", "bestRateNEQ", "bestRateIn", "bestRateNotIn", "bestRateGT", "bestRateGTE", "bestRateLT", "bestRateLTE", "bestRateIsNil", "bestRateNotNil", "firstTradeTimestamp", "firstTradeTimestampNEQ", "firstTradeTimestampIn", "firstTradeTimestampNotIn", "firstTradeTimestampGT", "firstTradeTimestampGTE", "firstTradeTimestampLT", "firstTradeTimestampLTE", "firstTradeTimestampIsNil", "firstTradeTimestampNotNil", "latestTradeTimestamp", "latestTradeTimestampNEQ", "latestTradeTimestampIn", "latestTradeTimestampNotIn", "latestTradeTimestampGT", "latestTradeTimestampGTE", "latestTradeTimestampLT", "latestTradeTimestampLTE", "latestTradeTimestampIsNil", "latestTradeTimestampNotNil", "fetchedAt", "fetchedAtNEQ", "fetchedAtIn", "fetchedAtNotIn", "fetchedAtGT", "fetchedAtGTE", "fetchedAtLT", "fetchedAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBot", "hasBotWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "botID", "botIDNEQ", "botIDIn", "botIDNotIn", "profitClosedCoin", "profitClosedCoinNEQ", "profitClosedCoinIn", "profitClosedCoinNotIn", "profitClosedCoinGT", "profitClosedCoinGTE", "profitClosedCoinLT", "profitClosedCoinLTE", "profitClosedCoinIsNil", "profitClosedCoinNotNil", "profitClosedPercent", "profitClosedPercentNEQ", "profitClosedPercentIn", "profitClosedPercentNotIn", "profitClosedPercentGT", "profitClosedPercentGTE", "profitClosedPercentLT", "profitClosedPercentLTE", "profitClosedPercentIsNil", "profitClosedPercentNotNil", "profitAllCoin", "profitAllCoinNEQ", "profitAllCoinIn", "profitAllCoinNotIn", "profitAllCoinGT", "profitAllCoinGTE", "profitAllCoinLT", "profitAllCoinLTE", "profitAllCoinIsNil", "profitAllCoinNotNil", "profitAllPercent", "profitAllPercentNEQ", "profitAllPercentIn", "profitAllPercentNotIn", "profitAllPercentGT", "profitAllPercentGTE", "profitAllPercentLT", "profitAllPercentLTE", "profitAllPercentIsNil", "profitAllPercentNotNil", "tradeCount", "tradeCountNEQ", "tradeCountIn", "tradeCountNotIn", "tradeCountGT", "tradeCountGTE", "tradeCountLT", "tradeCountLTE", "tradeCountIsNil", "tradeCountNotNil", "closedTradeCount", "closedTradeCountNEQ", "closedTradeCountIn", "closedTradeCountNotIn", "closedTradeCountGT", "closedTradeCountGTE", "closedTradeCountLT", "closedTradeCountLTE", "closedTradeCountIsNil", "closedTradeCountNotNil", "openTradeCount", "openTradeCountNEQ", "openTradeCountIn", "openTradeCountNotIn", "openTradeCountGT", "openTradeCountGTE", "openTradeCountLT", "openTradeCountLTE", "openTradeCountIsNil", "openTradeCountNotNil", "winningTrades", "winningTradesNEQ", "winningTradesIn", "winningTradesNotIn", "winningTradesGT", "winningTradesGTE", "winningTradesLT", "winningTradesLTE", "winningTradesIsNil", "winningTradesNotNil", "losingTrades", "losingTradesNEQ", "losingTradesIn", "losingTradesNotIn", "losingTradesGT", "losingTradesGTE", "losingTradesLT", "losingTradesLTE", "losingTradesIsNil", "losingTradesNotNil", "winrate", "winrateNEQ", "winrateIn", "winrateNotIn", "winrateGT", "winrateGTE", "winrateLT", "winrateLTE", "winrateIsNil", "winrateNotNil", "expectancy", "expectancyNEQ", "expectancyIn", "expectancyNotIn", "expectancyGT", "expectancyGTE", "expectancyLT", "expectancyLTE", "expectancyIsNil", "expectancyNotNil", "profitFactor", "profitFactorNEQ", "profitFactorIn", "profitFactorNotIn", "profitFactorGT", "profitFactorGTE", "profitFactorLT", "profitFactorLTE", "profitFactorIsNil", "profitFactorNotNil", "maxDrawdown", "maxDrawdownNEQ", "maxDrawdownIn", "maxDrawdownNotIn", "maxDrawdownGT", "maxDrawdownGTE", "maxDrawdownLT", "maxDrawdownLTE", "maxDrawdownIsNil", "maxDrawdownNotNil", "maxDrawdownAbs", "maxDrawdownAbsNEQ", "maxDrawdownAbsIn", "maxDrawdownAbsNotIn", "maxDrawdownAbsGT", "maxDrawdownAbsGTE", "maxDrawdownAbsLT", "maxDrawdownAbsLTE", "maxDrawdownAbsIsNil", "maxDrawdownAbsNotNil", "bestPair", "bestPairNEQ", "bestPairIn", "bestPairNotIn", "bestPairGT", "bestPairGTE", "bestPairLT", "bestPairLTE", "bestPairContains", "bestPairHasPrefix", "bestPairHasSuffix", "bestPairIsNil", "bestPairNotNil", "bestPairEqualFold", "bestPairContainsFold", "bestRate", "bestRateNEQ", "bestRateIn", "bestRateNotIn", "bestRateGT", "bestRateGTE", "bestRateLT", "bestRateLTE", "bestRateIsNil", "bestRateNotNil", "firstTradeTimestamp", "firstTradeTimestampNEQ", "firstTradeTimestampIn", "firstTradeTimestampNotIn", "firstTradeTimestampGT", "firstTradeTimestampGTE", "firstTradeTimestampLT", "firstTradeTimestampLTE", "firstTradeTimestampIsNil", "firstTradeTimestampNotNil", "latestTradeTimestamp", "latestTradeTimestampNEQ", "latestTradeTimestampIn", "latestTradeTimestampNotIn", "latestTradeTimestampGT", "latestTradeTimestampGTE", "latestTradeTimestampLT", "latestTradeTimestampLTE", "latestTradeTimestampIsNil", "latestTradeTimestampNotNil", "fetchedAt", "fetchedAtNEQ", "fetchedAtIn", "fetchedAtNotIn", "fetchedAtGT", "fetchedAtGTE", "fetchedAtLT", "fetchedAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "lastSyncedTradeID", "lastSyncedTradeIDNEQ", "lastSyncedTradeIDIn", "lastSyncedTradeIDNotIn", "lastSyncedTradeIDGT", "lastSyncedTradeIDGTE", "lastSyncedTradeIDLT", "lastSyncedTradeIDLTE", "lastTradeSyncAt", "lastTradeSyncAtNEQ", "lastTradeSyncAtIn", "lastTradeSyncAtNotIn", "lastTradeSyncAtGT", "lastTradeSyncAtGTE", "lastTradeSyncAtLT", "lastTradeSyncAtLTE", "lastTradeSyncAtIsNil", "lastTradeSyncAtNotNil", "hasBot", "hasBotWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -19308,6 +19399,132 @@ func (ec *executionContext) unmarshalInputBotMetricsWhereInput(ctx context.Conte
 				return it, err
 			}
 			it.UpdatedAtLTE = data
+		case "lastSyncedTradeID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeID"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeID = data
+		case "lastSyncedTradeIDNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDNEQ"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDNEQ = data
+		case "lastSyncedTradeIDIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDIn"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDIn = data
+		case "lastSyncedTradeIDNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDNotIn"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDNotIn = data
+		case "lastSyncedTradeIDGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDGT"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDGT = data
+		case "lastSyncedTradeIDGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDGTE"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDGTE = data
+		case "lastSyncedTradeIDLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDLT"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDLT = data
+		case "lastSyncedTradeIDLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeIDLTE"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeIDLTE = data
+		case "lastTradeSyncAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAt = data
+		case "lastTradeSyncAtNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtNEQ"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtNEQ = data
+		case "lastTradeSyncAtIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtIn = data
+		case "lastTradeSyncAtNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtNotIn"))
+			data, err := ec.unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtNotIn = data
+		case "lastTradeSyncAtGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtGT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtGT = data
+		case "lastTradeSyncAtGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtGTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtGTE = data
+		case "lastTradeSyncAtLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtLT"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtLT = data
+		case "lastTradeSyncAtLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtLTE"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtLTE = data
+		case "lastTradeSyncAtIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtIsNil = data
+		case "lastTradeSyncAtNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAtNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAtNotNil = data
 		case "hasBot":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBot"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -21696,7 +21913,7 @@ func (ec *executionContext) unmarshalInputCreateBotMetricsInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"profitClosedCoin", "profitClosedPercent", "profitAllCoin", "profitAllPercent", "tradeCount", "closedTradeCount", "openTradeCount", "winningTrades", "losingTrades", "winrate", "expectancy", "profitFactor", "maxDrawdown", "maxDrawdownAbs", "bestPair", "bestRate", "firstTradeTimestamp", "latestTradeTimestamp", "fetchedAt", "updatedAt", "botID"}
+	fieldsInOrder := [...]string{"profitClosedCoin", "profitClosedPercent", "profitAllCoin", "profitAllPercent", "tradeCount", "closedTradeCount", "openTradeCount", "winningTrades", "losingTrades", "winrate", "expectancy", "profitFactor", "maxDrawdown", "maxDrawdownAbs", "bestPair", "bestRate", "firstTradeTimestamp", "latestTradeTimestamp", "fetchedAt", "updatedAt", "lastSyncedTradeID", "lastTradeSyncAt", "botID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21843,6 +22060,20 @@ func (ec *executionContext) unmarshalInputCreateBotMetricsInput(ctx context.Cont
 				return it, err
 			}
 			it.UpdatedAt = data
+		case "lastSyncedTradeID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeID"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeID = data
+		case "lastTradeSyncAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAt = data
 		case "botID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("botID"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -26016,6 +26247,44 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTradeOrder(ctx context.Context, obj any) (ent.TradeOrder, error) {
+	var it ent.TradeOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNTradeOrderField2ᚖvolaticloudᚋinternalᚋentᚐTradeOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTradeWhereInput(ctx context.Context, obj any) (ent.TradeWhereInput, error) {
 	var it ent.TradeWhereInput
 	asMap := map[string]any{}
@@ -27393,7 +27662,7 @@ func (ec *executionContext) unmarshalInputUpdateBotMetricsInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"profitClosedCoin", "clearProfitClosedCoin", "profitClosedPercent", "clearProfitClosedPercent", "profitAllCoin", "clearProfitAllCoin", "profitAllPercent", "clearProfitAllPercent", "tradeCount", "clearTradeCount", "closedTradeCount", "clearClosedTradeCount", "openTradeCount", "clearOpenTradeCount", "winningTrades", "clearWinningTrades", "losingTrades", "clearLosingTrades", "winrate", "clearWinrate", "expectancy", "clearExpectancy", "profitFactor", "clearProfitFactor", "maxDrawdown", "clearMaxDrawdown", "maxDrawdownAbs", "clearMaxDrawdownAbs", "bestPair", "clearBestPair", "bestRate", "clearBestRate", "firstTradeTimestamp", "clearFirstTradeTimestamp", "latestTradeTimestamp", "clearLatestTradeTimestamp", "fetchedAt", "updatedAt", "botID"}
+	fieldsInOrder := [...]string{"profitClosedCoin", "clearProfitClosedCoin", "profitClosedPercent", "clearProfitClosedPercent", "profitAllCoin", "clearProfitAllCoin", "profitAllPercent", "clearProfitAllPercent", "tradeCount", "clearTradeCount", "closedTradeCount", "clearClosedTradeCount", "openTradeCount", "clearOpenTradeCount", "winningTrades", "clearWinningTrades", "losingTrades", "clearLosingTrades", "winrate", "clearWinrate", "expectancy", "clearExpectancy", "profitFactor", "clearProfitFactor", "maxDrawdown", "clearMaxDrawdown", "maxDrawdownAbs", "clearMaxDrawdownAbs", "bestPair", "clearBestPair", "bestRate", "clearBestRate", "firstTradeTimestamp", "clearFirstTradeTimestamp", "latestTradeTimestamp", "clearLatestTradeTimestamp", "fetchedAt", "updatedAt", "lastSyncedTradeID", "lastTradeSyncAt", "clearLastTradeSyncAt", "botID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -27666,6 +27935,27 @@ func (ec *executionContext) unmarshalInputUpdateBotMetricsInput(ctx context.Cont
 				return it, err
 			}
 			it.UpdatedAt = data
+		case "lastSyncedTradeID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastSyncedTradeID"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastSyncedTradeID = data
+		case "lastTradeSyncAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTradeSyncAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastTradeSyncAt = data
+		case "clearLastTradeSyncAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearLastTradeSyncAt"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearLastTradeSyncAt = data
 		case "botID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("botID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -29302,6 +29592,13 @@ func (ec *executionContext) _BotMetrics(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "lastSyncedTradeID":
+			out.Values[i] = ec._BotMetrics_lastSyncedTradeID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastTradeSyncAt":
+			out.Values[i] = ec._BotMetrics_lastTradeSyncAt(ctx, field, obj)
 		case "bot":
 			field := field
 
@@ -32430,6 +32727,16 @@ func (ec *executionContext) marshalNNode2ᚕvolaticloudᚋinternalᚋentᚐNoder
 	return ret
 }
 
+func (ec *executionContext) unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx context.Context, v any) (entgql.OrderDirection, error) {
+	var res entgql.OrderDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx context.Context, sel ast.SelectionSet, v entgql.OrderDirection) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v entgql.PageInfo[uuid.UUID]) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)
 }
@@ -32727,6 +33034,22 @@ func (ec *executionContext) marshalNTradeConnection2ᚖvolaticloudᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec._TradeConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTradeOrderField2ᚖvolaticloudᚋinternalᚋentᚐTradeOrderField(ctx context.Context, v any) (*ent.TradeOrderField, error) {
+	var res = new(ent.TradeOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTradeOrderField2ᚖvolaticloudᚋinternalᚋentᚐTradeOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.TradeOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalNTradeWhereInput2ᚖvolaticloudᚋinternalᚋentᚐTradeWhereInput(ctx context.Context, v any) (*ent.TradeWhereInput, error) {
@@ -34806,6 +35129,14 @@ func (ec *executionContext) marshalOTradeEdge2ᚖvolaticloudᚋinternalᚋentᚐ
 		return graphql.Null
 	}
 	return ec._TradeEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTradeOrder2ᚖvolaticloudᚋinternalᚋentᚐTradeOrder(ctx context.Context, v any) (*ent.TradeOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTradeOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOTradeWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐTradeWhereInputᚄ(ctx context.Context, v any) ([]*ent.TradeWhereInput, error) {

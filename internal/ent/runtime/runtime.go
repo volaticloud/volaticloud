@@ -85,6 +85,10 @@ func init() {
 	botmetrics.DefaultUpdatedAt = botmetricsDescUpdatedAt.Default.(func() time.Time)
 	// botmetrics.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	botmetrics.UpdateDefaultUpdatedAt = botmetricsDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// botmetricsDescLastSyncedTradeID is the schema descriptor for last_synced_trade_id field.
+	botmetricsDescLastSyncedTradeID := botmetricsFields[22].Descriptor()
+	// botmetrics.DefaultLastSyncedTradeID holds the default value on creation for the last_synced_trade_id field.
+	botmetrics.DefaultLastSyncedTradeID = botmetricsDescLastSyncedTradeID.Default.(int)
 	// botmetricsDescID is the schema descriptor for id field.
 	botmetricsDescID := botmetricsFields[0].Descriptor()
 	// botmetrics.DefaultID holds the default value on creation for the id field.
@@ -321,11 +325,11 @@ func init() {
 	// trade.DefaultProfitRatio holds the default value on creation for the profit_ratio field.
 	trade.DefaultProfitRatio = tradeDescProfitRatio.Default.(float64)
 	// tradeDescCreatedAt is the schema descriptor for created_at field.
-	tradeDescCreatedAt := tradeFields[16].Descriptor()
+	tradeDescCreatedAt := tradeFields[17].Descriptor()
 	// trade.DefaultCreatedAt holds the default value on creation for the created_at field.
 	trade.DefaultCreatedAt = tradeDescCreatedAt.Default.(func() time.Time)
 	// tradeDescUpdatedAt is the schema descriptor for updated_at field.
-	tradeDescUpdatedAt := tradeFields[17].Descriptor()
+	tradeDescUpdatedAt := tradeFields[18].Descriptor()
 	// trade.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	trade.DefaultUpdatedAt = tradeDescUpdatedAt.Default.(func() time.Time)
 	// trade.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

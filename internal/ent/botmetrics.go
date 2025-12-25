@@ -61,6 +61,10 @@ type BotMetrics struct {
 	FetchedAt time.Time `json:"fetched_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Last freqtrade_trade_id synced for incremental fetch
+	LastSyncedTradeID int `json:"last_synced_trade_id,omitempty"`
+	// Last successful trade sync timestamp
+	LastTradeSyncAt *time.Time `json:"last_trade_sync_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BotMetricsQuery when eager-loading is set.
 	Edges        BotMetricsEdges `json:"edges"`
@@ -96,11 +100,11 @@ func (*BotMetrics) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case botmetrics.FieldProfitClosedCoin, botmetrics.FieldProfitClosedPercent, botmetrics.FieldProfitAllCoin, botmetrics.FieldProfitAllPercent, botmetrics.FieldWinrate, botmetrics.FieldExpectancy, botmetrics.FieldProfitFactor, botmetrics.FieldMaxDrawdown, botmetrics.FieldMaxDrawdownAbs, botmetrics.FieldBestRate:
 			values[i] = new(sql.NullFloat64)
-		case botmetrics.FieldTradeCount, botmetrics.FieldClosedTradeCount, botmetrics.FieldOpenTradeCount, botmetrics.FieldWinningTrades, botmetrics.FieldLosingTrades:
+		case botmetrics.FieldTradeCount, botmetrics.FieldClosedTradeCount, botmetrics.FieldOpenTradeCount, botmetrics.FieldWinningTrades, botmetrics.FieldLosingTrades, botmetrics.FieldLastSyncedTradeID:
 			values[i] = new(sql.NullInt64)
 		case botmetrics.FieldBestPair:
 			values[i] = new(sql.NullString)
-		case botmetrics.FieldFirstTradeTimestamp, botmetrics.FieldLatestTradeTimestamp, botmetrics.FieldFetchedAt, botmetrics.FieldUpdatedAt:
+		case botmetrics.FieldFirstTradeTimestamp, botmetrics.FieldLatestTradeTimestamp, botmetrics.FieldFetchedAt, botmetrics.FieldUpdatedAt, botmetrics.FieldLastTradeSyncAt:
 			values[i] = new(sql.NullTime)
 		case botmetrics.FieldID, botmetrics.FieldBotID:
 			values[i] = new(uuid.UUID)
@@ -251,6 +255,19 @@ func (_m *BotMetrics) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case botmetrics.FieldLastSyncedTradeID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field last_synced_trade_id", values[i])
+			} else if value.Valid {
+				_m.LastSyncedTradeID = int(value.Int64)
+			}
+		case botmetrics.FieldLastTradeSyncAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_trade_sync_at", values[i])
+			} else if value.Valid {
+				_m.LastTradeSyncAt = new(time.Time)
+				*_m.LastTradeSyncAt = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -354,6 +371,14 @@ func (_m *BotMetrics) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("last_synced_trade_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.LastSyncedTradeID))
+	builder.WriteString(", ")
+	if v := _m.LastTradeSyncAt; v != nil {
+		builder.WriteString("last_trade_sync_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

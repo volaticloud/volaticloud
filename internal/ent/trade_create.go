@@ -10,6 +10,8 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/trade"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -20,6 +22,7 @@ type TradeCreate struct {
 	config
 	mutation *TradeMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
@@ -167,6 +170,12 @@ func (_c *TradeCreate) SetNillableTimeframe(v *string) *TradeCreate {
 	if v != nil {
 		_c.SetTimeframe(*v)
 	}
+	return _c
+}
+
+// SetRawData sets the "raw_data" field.
+func (_c *TradeCreate) SetRawData(v map[string]interface{}) *TradeCreate {
+	_c.mutation.SetRawData(v)
 	return _c
 }
 
@@ -381,6 +390,7 @@ func (_c *TradeCreate) createSpec() (*Trade, *sqlgraph.CreateSpec) {
 		_node = &Trade{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(trade.Table, sqlgraph.NewFieldSpec(trade.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -441,6 +451,10 @@ func (_c *TradeCreate) createSpec() (*Trade, *sqlgraph.CreateSpec) {
 		_spec.SetField(trade.FieldTimeframe, field.TypeString, value)
 		_node.Timeframe = value
 	}
+	if value, ok := _c.mutation.RawData(); ok {
+		_spec.SetField(trade.FieldRawData, field.TypeJSON, value)
+		_node.RawData = value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(trade.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -469,11 +483,761 @@ func (_c *TradeCreate) createSpec() (*Trade, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Trade.Create().
+//		SetFreqtradeTradeID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TradeUpsert) {
+//			SetFreqtradeTradeID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TradeCreate) OnConflict(opts ...sql.ConflictOption) *TradeUpsertOne {
+	_c.conflict = opts
+	return &TradeUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Trade.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TradeCreate) OnConflictColumns(columns ...string) *TradeUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TradeUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// TradeUpsertOne is the builder for "upsert"-ing
+	//  one Trade node.
+	TradeUpsertOne struct {
+		create *TradeCreate
+	}
+
+	// TradeUpsert is the "OnConflict" setter.
+	TradeUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
+func (u *TradeUpsert) SetFreqtradeTradeID(v int) *TradeUpsert {
+	u.Set(trade.FieldFreqtradeTradeID, v)
+	return u
+}
+
+// UpdateFreqtradeTradeID sets the "freqtrade_trade_id" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateFreqtradeTradeID() *TradeUpsert {
+	u.SetExcluded(trade.FieldFreqtradeTradeID)
+	return u
+}
+
+// AddFreqtradeTradeID adds v to the "freqtrade_trade_id" field.
+func (u *TradeUpsert) AddFreqtradeTradeID(v int) *TradeUpsert {
+	u.Add(trade.FieldFreqtradeTradeID, v)
+	return u
+}
+
+// SetPair sets the "pair" field.
+func (u *TradeUpsert) SetPair(v string) *TradeUpsert {
+	u.Set(trade.FieldPair, v)
+	return u
+}
+
+// UpdatePair sets the "pair" field to the value that was provided on create.
+func (u *TradeUpsert) UpdatePair() *TradeUpsert {
+	u.SetExcluded(trade.FieldPair)
+	return u
+}
+
+// SetIsOpen sets the "is_open" field.
+func (u *TradeUpsert) SetIsOpen(v bool) *TradeUpsert {
+	u.Set(trade.FieldIsOpen, v)
+	return u
+}
+
+// UpdateIsOpen sets the "is_open" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateIsOpen() *TradeUpsert {
+	u.SetExcluded(trade.FieldIsOpen)
+	return u
+}
+
+// SetOpenDate sets the "open_date" field.
+func (u *TradeUpsert) SetOpenDate(v time.Time) *TradeUpsert {
+	u.Set(trade.FieldOpenDate, v)
+	return u
+}
+
+// UpdateOpenDate sets the "open_date" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateOpenDate() *TradeUpsert {
+	u.SetExcluded(trade.FieldOpenDate)
+	return u
+}
+
+// SetCloseDate sets the "close_date" field.
+func (u *TradeUpsert) SetCloseDate(v time.Time) *TradeUpsert {
+	u.Set(trade.FieldCloseDate, v)
+	return u
+}
+
+// UpdateCloseDate sets the "close_date" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateCloseDate() *TradeUpsert {
+	u.SetExcluded(trade.FieldCloseDate)
+	return u
+}
+
+// ClearCloseDate clears the value of the "close_date" field.
+func (u *TradeUpsert) ClearCloseDate() *TradeUpsert {
+	u.SetNull(trade.FieldCloseDate)
+	return u
+}
+
+// SetOpenRate sets the "open_rate" field.
+func (u *TradeUpsert) SetOpenRate(v float64) *TradeUpsert {
+	u.Set(trade.FieldOpenRate, v)
+	return u
+}
+
+// UpdateOpenRate sets the "open_rate" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateOpenRate() *TradeUpsert {
+	u.SetExcluded(trade.FieldOpenRate)
+	return u
+}
+
+// AddOpenRate adds v to the "open_rate" field.
+func (u *TradeUpsert) AddOpenRate(v float64) *TradeUpsert {
+	u.Add(trade.FieldOpenRate, v)
+	return u
+}
+
+// SetCloseRate sets the "close_rate" field.
+func (u *TradeUpsert) SetCloseRate(v float64) *TradeUpsert {
+	u.Set(trade.FieldCloseRate, v)
+	return u
+}
+
+// UpdateCloseRate sets the "close_rate" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateCloseRate() *TradeUpsert {
+	u.SetExcluded(trade.FieldCloseRate)
+	return u
+}
+
+// AddCloseRate adds v to the "close_rate" field.
+func (u *TradeUpsert) AddCloseRate(v float64) *TradeUpsert {
+	u.Add(trade.FieldCloseRate, v)
+	return u
+}
+
+// ClearCloseRate clears the value of the "close_rate" field.
+func (u *TradeUpsert) ClearCloseRate() *TradeUpsert {
+	u.SetNull(trade.FieldCloseRate)
+	return u
+}
+
+// SetAmount sets the "amount" field.
+func (u *TradeUpsert) SetAmount(v float64) *TradeUpsert {
+	u.Set(trade.FieldAmount, v)
+	return u
+}
+
+// UpdateAmount sets the "amount" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateAmount() *TradeUpsert {
+	u.SetExcluded(trade.FieldAmount)
+	return u
+}
+
+// AddAmount adds v to the "amount" field.
+func (u *TradeUpsert) AddAmount(v float64) *TradeUpsert {
+	u.Add(trade.FieldAmount, v)
+	return u
+}
+
+// SetStakeAmount sets the "stake_amount" field.
+func (u *TradeUpsert) SetStakeAmount(v float64) *TradeUpsert {
+	u.Set(trade.FieldStakeAmount, v)
+	return u
+}
+
+// UpdateStakeAmount sets the "stake_amount" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateStakeAmount() *TradeUpsert {
+	u.SetExcluded(trade.FieldStakeAmount)
+	return u
+}
+
+// AddStakeAmount adds v to the "stake_amount" field.
+func (u *TradeUpsert) AddStakeAmount(v float64) *TradeUpsert {
+	u.Add(trade.FieldStakeAmount, v)
+	return u
+}
+
+// SetProfitAbs sets the "profit_abs" field.
+func (u *TradeUpsert) SetProfitAbs(v float64) *TradeUpsert {
+	u.Set(trade.FieldProfitAbs, v)
+	return u
+}
+
+// UpdateProfitAbs sets the "profit_abs" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateProfitAbs() *TradeUpsert {
+	u.SetExcluded(trade.FieldProfitAbs)
+	return u
+}
+
+// AddProfitAbs adds v to the "profit_abs" field.
+func (u *TradeUpsert) AddProfitAbs(v float64) *TradeUpsert {
+	u.Add(trade.FieldProfitAbs, v)
+	return u
+}
+
+// SetProfitRatio sets the "profit_ratio" field.
+func (u *TradeUpsert) SetProfitRatio(v float64) *TradeUpsert {
+	u.Set(trade.FieldProfitRatio, v)
+	return u
+}
+
+// UpdateProfitRatio sets the "profit_ratio" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateProfitRatio() *TradeUpsert {
+	u.SetExcluded(trade.FieldProfitRatio)
+	return u
+}
+
+// AddProfitRatio adds v to the "profit_ratio" field.
+func (u *TradeUpsert) AddProfitRatio(v float64) *TradeUpsert {
+	u.Add(trade.FieldProfitRatio, v)
+	return u
+}
+
+// SetSellReason sets the "sell_reason" field.
+func (u *TradeUpsert) SetSellReason(v string) *TradeUpsert {
+	u.Set(trade.FieldSellReason, v)
+	return u
+}
+
+// UpdateSellReason sets the "sell_reason" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateSellReason() *TradeUpsert {
+	u.SetExcluded(trade.FieldSellReason)
+	return u
+}
+
+// ClearSellReason clears the value of the "sell_reason" field.
+func (u *TradeUpsert) ClearSellReason() *TradeUpsert {
+	u.SetNull(trade.FieldSellReason)
+	return u
+}
+
+// SetStrategyName sets the "strategy_name" field.
+func (u *TradeUpsert) SetStrategyName(v string) *TradeUpsert {
+	u.Set(trade.FieldStrategyName, v)
+	return u
+}
+
+// UpdateStrategyName sets the "strategy_name" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateStrategyName() *TradeUpsert {
+	u.SetExcluded(trade.FieldStrategyName)
+	return u
+}
+
+// ClearStrategyName clears the value of the "strategy_name" field.
+func (u *TradeUpsert) ClearStrategyName() *TradeUpsert {
+	u.SetNull(trade.FieldStrategyName)
+	return u
+}
+
+// SetTimeframe sets the "timeframe" field.
+func (u *TradeUpsert) SetTimeframe(v string) *TradeUpsert {
+	u.Set(trade.FieldTimeframe, v)
+	return u
+}
+
+// UpdateTimeframe sets the "timeframe" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateTimeframe() *TradeUpsert {
+	u.SetExcluded(trade.FieldTimeframe)
+	return u
+}
+
+// ClearTimeframe clears the value of the "timeframe" field.
+func (u *TradeUpsert) ClearTimeframe() *TradeUpsert {
+	u.SetNull(trade.FieldTimeframe)
+	return u
+}
+
+// SetRawData sets the "raw_data" field.
+func (u *TradeUpsert) SetRawData(v map[string]interface{}) *TradeUpsert {
+	u.Set(trade.FieldRawData, v)
+	return u
+}
+
+// UpdateRawData sets the "raw_data" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateRawData() *TradeUpsert {
+	u.SetExcluded(trade.FieldRawData)
+	return u
+}
+
+// ClearRawData clears the value of the "raw_data" field.
+func (u *TradeUpsert) ClearRawData() *TradeUpsert {
+	u.SetNull(trade.FieldRawData)
+	return u
+}
+
+// SetBotID sets the "bot_id" field.
+func (u *TradeUpsert) SetBotID(v uuid.UUID) *TradeUpsert {
+	u.Set(trade.FieldBotID, v)
+	return u
+}
+
+// UpdateBotID sets the "bot_id" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateBotID() *TradeUpsert {
+	u.SetExcluded(trade.FieldBotID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TradeUpsert) SetUpdatedAt(v time.Time) *TradeUpsert {
+	u.Set(trade.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateUpdatedAt() *TradeUpsert {
+	u.SetExcluded(trade.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Trade.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(trade.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TradeUpsertOne) UpdateNewValues() *TradeUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(trade.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(trade.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Trade.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TradeUpsertOne) Ignore() *TradeUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TradeUpsertOne) DoNothing() *TradeUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TradeCreate.OnConflict
+// documentation for more info.
+func (u *TradeUpsertOne) Update(set func(*TradeUpsert)) *TradeUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TradeUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
+func (u *TradeUpsertOne) SetFreqtradeTradeID(v int) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetFreqtradeTradeID(v)
+	})
+}
+
+// AddFreqtradeTradeID adds v to the "freqtrade_trade_id" field.
+func (u *TradeUpsertOne) AddFreqtradeTradeID(v int) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddFreqtradeTradeID(v)
+	})
+}
+
+// UpdateFreqtradeTradeID sets the "freqtrade_trade_id" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateFreqtradeTradeID() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateFreqtradeTradeID()
+	})
+}
+
+// SetPair sets the "pair" field.
+func (u *TradeUpsertOne) SetPair(v string) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetPair(v)
+	})
+}
+
+// UpdatePair sets the "pair" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdatePair() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdatePair()
+	})
+}
+
+// SetIsOpen sets the "is_open" field.
+func (u *TradeUpsertOne) SetIsOpen(v bool) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetIsOpen(v)
+	})
+}
+
+// UpdateIsOpen sets the "is_open" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateIsOpen() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateIsOpen()
+	})
+}
+
+// SetOpenDate sets the "open_date" field.
+func (u *TradeUpsertOne) SetOpenDate(v time.Time) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetOpenDate(v)
+	})
+}
+
+// UpdateOpenDate sets the "open_date" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateOpenDate() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateOpenDate()
+	})
+}
+
+// SetCloseDate sets the "close_date" field.
+func (u *TradeUpsertOne) SetCloseDate(v time.Time) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetCloseDate(v)
+	})
+}
+
+// UpdateCloseDate sets the "close_date" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateCloseDate() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateCloseDate()
+	})
+}
+
+// ClearCloseDate clears the value of the "close_date" field.
+func (u *TradeUpsertOne) ClearCloseDate() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearCloseDate()
+	})
+}
+
+// SetOpenRate sets the "open_rate" field.
+func (u *TradeUpsertOne) SetOpenRate(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetOpenRate(v)
+	})
+}
+
+// AddOpenRate adds v to the "open_rate" field.
+func (u *TradeUpsertOne) AddOpenRate(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddOpenRate(v)
+	})
+}
+
+// UpdateOpenRate sets the "open_rate" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateOpenRate() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateOpenRate()
+	})
+}
+
+// SetCloseRate sets the "close_rate" field.
+func (u *TradeUpsertOne) SetCloseRate(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetCloseRate(v)
+	})
+}
+
+// AddCloseRate adds v to the "close_rate" field.
+func (u *TradeUpsertOne) AddCloseRate(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddCloseRate(v)
+	})
+}
+
+// UpdateCloseRate sets the "close_rate" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateCloseRate() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateCloseRate()
+	})
+}
+
+// ClearCloseRate clears the value of the "close_rate" field.
+func (u *TradeUpsertOne) ClearCloseRate() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearCloseRate()
+	})
+}
+
+// SetAmount sets the "amount" field.
+func (u *TradeUpsertOne) SetAmount(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetAmount(v)
+	})
+}
+
+// AddAmount adds v to the "amount" field.
+func (u *TradeUpsertOne) AddAmount(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddAmount(v)
+	})
+}
+
+// UpdateAmount sets the "amount" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateAmount() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateAmount()
+	})
+}
+
+// SetStakeAmount sets the "stake_amount" field.
+func (u *TradeUpsertOne) SetStakeAmount(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetStakeAmount(v)
+	})
+}
+
+// AddStakeAmount adds v to the "stake_amount" field.
+func (u *TradeUpsertOne) AddStakeAmount(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddStakeAmount(v)
+	})
+}
+
+// UpdateStakeAmount sets the "stake_amount" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateStakeAmount() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateStakeAmount()
+	})
+}
+
+// SetProfitAbs sets the "profit_abs" field.
+func (u *TradeUpsertOne) SetProfitAbs(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetProfitAbs(v)
+	})
+}
+
+// AddProfitAbs adds v to the "profit_abs" field.
+func (u *TradeUpsertOne) AddProfitAbs(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddProfitAbs(v)
+	})
+}
+
+// UpdateProfitAbs sets the "profit_abs" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateProfitAbs() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateProfitAbs()
+	})
+}
+
+// SetProfitRatio sets the "profit_ratio" field.
+func (u *TradeUpsertOne) SetProfitRatio(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetProfitRatio(v)
+	})
+}
+
+// AddProfitRatio adds v to the "profit_ratio" field.
+func (u *TradeUpsertOne) AddProfitRatio(v float64) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddProfitRatio(v)
+	})
+}
+
+// UpdateProfitRatio sets the "profit_ratio" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateProfitRatio() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateProfitRatio()
+	})
+}
+
+// SetSellReason sets the "sell_reason" field.
+func (u *TradeUpsertOne) SetSellReason(v string) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetSellReason(v)
+	})
+}
+
+// UpdateSellReason sets the "sell_reason" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateSellReason() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateSellReason()
+	})
+}
+
+// ClearSellReason clears the value of the "sell_reason" field.
+func (u *TradeUpsertOne) ClearSellReason() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearSellReason()
+	})
+}
+
+// SetStrategyName sets the "strategy_name" field.
+func (u *TradeUpsertOne) SetStrategyName(v string) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetStrategyName(v)
+	})
+}
+
+// UpdateStrategyName sets the "strategy_name" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateStrategyName() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateStrategyName()
+	})
+}
+
+// ClearStrategyName clears the value of the "strategy_name" field.
+func (u *TradeUpsertOne) ClearStrategyName() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearStrategyName()
+	})
+}
+
+// SetTimeframe sets the "timeframe" field.
+func (u *TradeUpsertOne) SetTimeframe(v string) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetTimeframe(v)
+	})
+}
+
+// UpdateTimeframe sets the "timeframe" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateTimeframe() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateTimeframe()
+	})
+}
+
+// ClearTimeframe clears the value of the "timeframe" field.
+func (u *TradeUpsertOne) ClearTimeframe() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearTimeframe()
+	})
+}
+
+// SetRawData sets the "raw_data" field.
+func (u *TradeUpsertOne) SetRawData(v map[string]interface{}) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetRawData(v)
+	})
+}
+
+// UpdateRawData sets the "raw_data" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateRawData() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateRawData()
+	})
+}
+
+// ClearRawData clears the value of the "raw_data" field.
+func (u *TradeUpsertOne) ClearRawData() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearRawData()
+	})
+}
+
+// SetBotID sets the "bot_id" field.
+func (u *TradeUpsertOne) SetBotID(v uuid.UUID) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetBotID(v)
+	})
+}
+
+// UpdateBotID sets the "bot_id" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateBotID() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateBotID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TradeUpsertOne) SetUpdatedAt(v time.Time) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateUpdatedAt() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TradeUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TradeCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TradeUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TradeUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: TradeUpsertOne.ID is not supported by MySQL driver. Use TradeUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TradeUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TradeCreateBulk is the builder for creating many Trade entities in bulk.
 type TradeCreateBulk struct {
 	config
 	err      error
 	builders []*TradeCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Trade entities in the database.
@@ -503,6 +1267,7 @@ func (_c *TradeCreateBulk) Save(ctx context.Context) ([]*Trade, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -549,6 +1314,452 @@ func (_c *TradeCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *TradeCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Trade.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TradeUpsert) {
+//			SetFreqtradeTradeID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TradeCreateBulk) OnConflict(opts ...sql.ConflictOption) *TradeUpsertBulk {
+	_c.conflict = opts
+	return &TradeUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Trade.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TradeCreateBulk) OnConflictColumns(columns ...string) *TradeUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TradeUpsertBulk{
+		create: _c,
+	}
+}
+
+// TradeUpsertBulk is the builder for "upsert"-ing
+// a bulk of Trade nodes.
+type TradeUpsertBulk struct {
+	create *TradeCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Trade.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(trade.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TradeUpsertBulk) UpdateNewValues() *TradeUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(trade.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(trade.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Trade.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TradeUpsertBulk) Ignore() *TradeUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TradeUpsertBulk) DoNothing() *TradeUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TradeCreateBulk.OnConflict
+// documentation for more info.
+func (u *TradeUpsertBulk) Update(set func(*TradeUpsert)) *TradeUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TradeUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
+func (u *TradeUpsertBulk) SetFreqtradeTradeID(v int) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetFreqtradeTradeID(v)
+	})
+}
+
+// AddFreqtradeTradeID adds v to the "freqtrade_trade_id" field.
+func (u *TradeUpsertBulk) AddFreqtradeTradeID(v int) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddFreqtradeTradeID(v)
+	})
+}
+
+// UpdateFreqtradeTradeID sets the "freqtrade_trade_id" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateFreqtradeTradeID() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateFreqtradeTradeID()
+	})
+}
+
+// SetPair sets the "pair" field.
+func (u *TradeUpsertBulk) SetPair(v string) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetPair(v)
+	})
+}
+
+// UpdatePair sets the "pair" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdatePair() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdatePair()
+	})
+}
+
+// SetIsOpen sets the "is_open" field.
+func (u *TradeUpsertBulk) SetIsOpen(v bool) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetIsOpen(v)
+	})
+}
+
+// UpdateIsOpen sets the "is_open" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateIsOpen() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateIsOpen()
+	})
+}
+
+// SetOpenDate sets the "open_date" field.
+func (u *TradeUpsertBulk) SetOpenDate(v time.Time) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetOpenDate(v)
+	})
+}
+
+// UpdateOpenDate sets the "open_date" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateOpenDate() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateOpenDate()
+	})
+}
+
+// SetCloseDate sets the "close_date" field.
+func (u *TradeUpsertBulk) SetCloseDate(v time.Time) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetCloseDate(v)
+	})
+}
+
+// UpdateCloseDate sets the "close_date" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateCloseDate() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateCloseDate()
+	})
+}
+
+// ClearCloseDate clears the value of the "close_date" field.
+func (u *TradeUpsertBulk) ClearCloseDate() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearCloseDate()
+	})
+}
+
+// SetOpenRate sets the "open_rate" field.
+func (u *TradeUpsertBulk) SetOpenRate(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetOpenRate(v)
+	})
+}
+
+// AddOpenRate adds v to the "open_rate" field.
+func (u *TradeUpsertBulk) AddOpenRate(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddOpenRate(v)
+	})
+}
+
+// UpdateOpenRate sets the "open_rate" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateOpenRate() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateOpenRate()
+	})
+}
+
+// SetCloseRate sets the "close_rate" field.
+func (u *TradeUpsertBulk) SetCloseRate(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetCloseRate(v)
+	})
+}
+
+// AddCloseRate adds v to the "close_rate" field.
+func (u *TradeUpsertBulk) AddCloseRate(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddCloseRate(v)
+	})
+}
+
+// UpdateCloseRate sets the "close_rate" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateCloseRate() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateCloseRate()
+	})
+}
+
+// ClearCloseRate clears the value of the "close_rate" field.
+func (u *TradeUpsertBulk) ClearCloseRate() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearCloseRate()
+	})
+}
+
+// SetAmount sets the "amount" field.
+func (u *TradeUpsertBulk) SetAmount(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetAmount(v)
+	})
+}
+
+// AddAmount adds v to the "amount" field.
+func (u *TradeUpsertBulk) AddAmount(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddAmount(v)
+	})
+}
+
+// UpdateAmount sets the "amount" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateAmount() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateAmount()
+	})
+}
+
+// SetStakeAmount sets the "stake_amount" field.
+func (u *TradeUpsertBulk) SetStakeAmount(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetStakeAmount(v)
+	})
+}
+
+// AddStakeAmount adds v to the "stake_amount" field.
+func (u *TradeUpsertBulk) AddStakeAmount(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddStakeAmount(v)
+	})
+}
+
+// UpdateStakeAmount sets the "stake_amount" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateStakeAmount() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateStakeAmount()
+	})
+}
+
+// SetProfitAbs sets the "profit_abs" field.
+func (u *TradeUpsertBulk) SetProfitAbs(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetProfitAbs(v)
+	})
+}
+
+// AddProfitAbs adds v to the "profit_abs" field.
+func (u *TradeUpsertBulk) AddProfitAbs(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddProfitAbs(v)
+	})
+}
+
+// UpdateProfitAbs sets the "profit_abs" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateProfitAbs() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateProfitAbs()
+	})
+}
+
+// SetProfitRatio sets the "profit_ratio" field.
+func (u *TradeUpsertBulk) SetProfitRatio(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetProfitRatio(v)
+	})
+}
+
+// AddProfitRatio adds v to the "profit_ratio" field.
+func (u *TradeUpsertBulk) AddProfitRatio(v float64) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.AddProfitRatio(v)
+	})
+}
+
+// UpdateProfitRatio sets the "profit_ratio" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateProfitRatio() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateProfitRatio()
+	})
+}
+
+// SetSellReason sets the "sell_reason" field.
+func (u *TradeUpsertBulk) SetSellReason(v string) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetSellReason(v)
+	})
+}
+
+// UpdateSellReason sets the "sell_reason" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateSellReason() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateSellReason()
+	})
+}
+
+// ClearSellReason clears the value of the "sell_reason" field.
+func (u *TradeUpsertBulk) ClearSellReason() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearSellReason()
+	})
+}
+
+// SetStrategyName sets the "strategy_name" field.
+func (u *TradeUpsertBulk) SetStrategyName(v string) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetStrategyName(v)
+	})
+}
+
+// UpdateStrategyName sets the "strategy_name" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateStrategyName() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateStrategyName()
+	})
+}
+
+// ClearStrategyName clears the value of the "strategy_name" field.
+func (u *TradeUpsertBulk) ClearStrategyName() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearStrategyName()
+	})
+}
+
+// SetTimeframe sets the "timeframe" field.
+func (u *TradeUpsertBulk) SetTimeframe(v string) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetTimeframe(v)
+	})
+}
+
+// UpdateTimeframe sets the "timeframe" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateTimeframe() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateTimeframe()
+	})
+}
+
+// ClearTimeframe clears the value of the "timeframe" field.
+func (u *TradeUpsertBulk) ClearTimeframe() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearTimeframe()
+	})
+}
+
+// SetRawData sets the "raw_data" field.
+func (u *TradeUpsertBulk) SetRawData(v map[string]interface{}) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetRawData(v)
+	})
+}
+
+// UpdateRawData sets the "raw_data" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateRawData() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateRawData()
+	})
+}
+
+// ClearRawData clears the value of the "raw_data" field.
+func (u *TradeUpsertBulk) ClearRawData() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearRawData()
+	})
+}
+
+// SetBotID sets the "bot_id" field.
+func (u *TradeUpsertBulk) SetBotID(v uuid.UUID) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetBotID(v)
+	})
+}
+
+// UpdateBotID sets the "bot_id" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateBotID() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateBotID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TradeUpsertBulk) SetUpdatedAt(v time.Time) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateUpdatedAt() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TradeUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TradeCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TradeCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TradeUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

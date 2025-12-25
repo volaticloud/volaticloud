@@ -1,0 +1,47 @@
+overlay: 1.0.0
+info:
+  title: Freqtrade OpenAPI Patches
+  version: 1.0.0
+actions:
+  # Allow additional properties on TradeSchema (Freqtrade API may return new fields)
+  - target: $.components.schemas.TradeSchema
+    update:
+      additionalProperties: true
+
+  # Allow additional properties on OrderSchema (embedded in trades)
+  - target: $.components.schemas.OrderSchema
+    update:
+      additionalProperties: true
+
+  # Add TradeResponse schema
+  - target: $.components.schemas
+    update:
+      TradeResponse:
+        type: object
+        properties:
+          trades:
+            type: array
+            items:
+              $ref: "#/components/schemas/TradeSchema"
+            title: Trades
+          trades_count:
+            type: integer
+            title: Trades Count
+          offset:
+            type: integer
+            title: Offset
+          total_trades:
+            type: integer
+            title: Total Trades
+        required:
+          - trades
+          - trades_count
+          - offset
+          - total_trades
+        title: TradeResponse
+
+  # Update /api/v1/trades response to use TradeResponse
+  - target: $.paths['/api/v1/trades'].get.responses['200'].content['application/json']
+    update:
+      schema:
+        $ref: "#/components/schemas/TradeResponse"

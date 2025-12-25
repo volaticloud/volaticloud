@@ -171,7 +171,7 @@ func (r *queryResolver) Strategies(ctx context.Context, after *entgql.Cursor[uui
 	return query.Paginate(ctx, after, first, before, last)
 }
 
-func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.TradeWhereInput) (*ent.TradeConnection, error) {
+func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) (*ent.TradeConnection, error) {
 	query := r.client.Trade.Query()
 	if where != nil {
 		p, err := where.P()
@@ -180,7 +180,7 @@ func (r *queryResolver) Trades(ctx context.Context, after *entgql.Cursor[uuid.UU
 		}
 		query = query.Where(p)
 	}
-	return query.Paginate(ctx, after, first, before, last)
+	return query.Paginate(ctx, after, first, before, last, ent.WithTradeOrder(orderBy))
 }
 
 func (r *Resolver) Backtest() BacktestResolver { return &backtestResolver{r} }

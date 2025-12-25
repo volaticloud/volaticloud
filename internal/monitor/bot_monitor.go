@@ -26,12 +26,23 @@ const (
 	MonitorBatchSize = 10
 )
 
+// TradeSyncConfig holds configuration for trade synchronization
+type TradeSyncConfig struct {
+	// Enabled determines whether trade sync is enabled
+	Enabled bool
+	// Interval is how often to sync trades for each bot
+	Interval time.Duration
+}
+
 // BotMonitor periodically checks bot status and updates the database
 type BotMonitor struct {
 	dbClient       *ent.Client
 	coordinator    *Coordinator
 	usageCollector usage.Collector
 	interval       time.Duration
+
+	// Trade sync configuration
+	tradeSyncConfig TradeSyncConfig
 
 	stopChan chan struct{}
 	doneChan chan struct{}
@@ -44,9 +55,18 @@ func NewBotMonitor(dbClient *ent.Client, coordinator *Coordinator) *BotMonitor {
 		coordinator:    coordinator,
 		usageCollector: usage.NewCollector(dbClient),
 		interval:       DefaultMonitorInterval,
-		stopChan:       make(chan struct{}),
-		doneChan:       make(chan struct{}),
+		tradeSyncConfig: TradeSyncConfig{
+			Enabled:  true, // Trade sync enabled by default
+			Interval: DefaultTradeSyncInterval,
+		},
+		stopChan: make(chan struct{}),
+		doneChan: make(chan struct{}),
 	}
+}
+
+// SetTradeSyncConfig sets the trade sync configuration
+func (m *BotMonitor) SetTradeSyncConfig(config TradeSyncConfig) {
+	m.tradeSyncConfig = config
 }
 
 // SetInterval sets the monitoring interval
@@ -401,6 +421,27 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, r
 
 	if err != nil {
 		return fmt.Errorf("failed to upsert bot metrics: %w", err)
+	}
+
+	// Sync trades if enabled and interval has passed
+	if m.tradeSyncConfig.Enabled {
+		shouldSync := false
+
+		if existingMetrics != nil && existingMetrics.LastTradeSyncAt != nil {
+			// Check if enough time has passed since last sync
+			timeSinceSync := time.Since(*existingMetrics.LastTradeSyncAt)
+			shouldSync = timeSinceSync >= m.tradeSyncConfig.Interval
+		} else {
+			// No previous sync, do initial sync
+			shouldSync = true
+		}
+
+		if shouldSync {
+			if err := m.syncTrades(ctx, b, ftClient); err != nil {
+				// Log error but don't fail the metrics update
+				log.Printf("Bot %s (%s) failed to sync trades: %v", b.Name, b.ID, err)
+			}
+		}
 	}
 
 	return nil

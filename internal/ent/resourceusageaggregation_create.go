@@ -11,6 +11,8 @@ import (
 	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -21,6 +23,7 @@ type ResourceUsageAggregationCreate struct {
 	config
 	mutation *ResourceUsageAggregationMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetResourceType sets the "resource_type" field.
@@ -449,6 +452,7 @@ func (_c *ResourceUsageAggregationCreate) createSpec() (*ResourceUsageAggregatio
 		_node = &ResourceUsageAggregation{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(resourceusageaggregation.Table, sqlgraph.NewFieldSpec(resourceusageaggregation.FieldID, field.TypeUUID))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
@@ -545,11 +549,761 @@ func (_c *ResourceUsageAggregationCreate) createSpec() (*ResourceUsageAggregatio
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ResourceUsageAggregation.Create().
+//		SetResourceType(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ResourceUsageAggregationUpsert) {
+//			SetResourceType(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ResourceUsageAggregationCreate) OnConflict(opts ...sql.ConflictOption) *ResourceUsageAggregationUpsertOne {
+	_c.conflict = opts
+	return &ResourceUsageAggregationUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ResourceUsageAggregation.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ResourceUsageAggregationCreate) OnConflictColumns(columns ...string) *ResourceUsageAggregationUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ResourceUsageAggregationUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// ResourceUsageAggregationUpsertOne is the builder for "upsert"-ing
+	//  one ResourceUsageAggregation node.
+	ResourceUsageAggregationUpsertOne struct {
+		create *ResourceUsageAggregationCreate
+	}
+
+	// ResourceUsageAggregationUpsert is the "OnConflict" setter.
+	ResourceUsageAggregationUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetResourceType sets the "resource_type" field.
+func (u *ResourceUsageAggregationUpsert) SetResourceType(v enum.ResourceType) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldResourceType, v)
+	return u
+}
+
+// UpdateResourceType sets the "resource_type" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateResourceType() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldResourceType)
+	return u
+}
+
+// SetResourceID sets the "resource_id" field.
+func (u *ResourceUsageAggregationUpsert) SetResourceID(v uuid.UUID) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldResourceID, v)
+	return u
+}
+
+// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateResourceID() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldResourceID)
+	return u
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *ResourceUsageAggregationUpsert) SetOwnerID(v string) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldOwnerID, v)
+	return u
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateOwnerID() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldOwnerID)
+	return u
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *ResourceUsageAggregationUpsert) SetRunnerID(v uuid.UUID) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldRunnerID, v)
+	return u
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateRunnerID() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldRunnerID)
+	return u
+}
+
+// SetGranularity sets the "granularity" field.
+func (u *ResourceUsageAggregationUpsert) SetGranularity(v enum.AggregationGranularity) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldGranularity, v)
+	return u
+}
+
+// UpdateGranularity sets the "granularity" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateGranularity() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldGranularity)
+	return u
+}
+
+// SetBucketStart sets the "bucket_start" field.
+func (u *ResourceUsageAggregationUpsert) SetBucketStart(v time.Time) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldBucketStart, v)
+	return u
+}
+
+// UpdateBucketStart sets the "bucket_start" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateBucketStart() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldBucketStart)
+	return u
+}
+
+// SetBucketEnd sets the "bucket_end" field.
+func (u *ResourceUsageAggregationUpsert) SetBucketEnd(v time.Time) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldBucketEnd, v)
+	return u
+}
+
+// UpdateBucketEnd sets the "bucket_end" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateBucketEnd() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldBucketEnd)
+	return u
+}
+
+// SetCPUCoreSeconds sets the "cpu_core_seconds" field.
+func (u *ResourceUsageAggregationUpsert) SetCPUCoreSeconds(v float64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldCPUCoreSeconds, v)
+	return u
+}
+
+// UpdateCPUCoreSeconds sets the "cpu_core_seconds" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateCPUCoreSeconds() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldCPUCoreSeconds)
+	return u
+}
+
+// AddCPUCoreSeconds adds v to the "cpu_core_seconds" field.
+func (u *ResourceUsageAggregationUpsert) AddCPUCoreSeconds(v float64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldCPUCoreSeconds, v)
+	return u
+}
+
+// SetCPUAvgPercent sets the "cpu_avg_percent" field.
+func (u *ResourceUsageAggregationUpsert) SetCPUAvgPercent(v float64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldCPUAvgPercent, v)
+	return u
+}
+
+// UpdateCPUAvgPercent sets the "cpu_avg_percent" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateCPUAvgPercent() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldCPUAvgPercent)
+	return u
+}
+
+// AddCPUAvgPercent adds v to the "cpu_avg_percent" field.
+func (u *ResourceUsageAggregationUpsert) AddCPUAvgPercent(v float64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldCPUAvgPercent, v)
+	return u
+}
+
+// SetCPUMaxPercent sets the "cpu_max_percent" field.
+func (u *ResourceUsageAggregationUpsert) SetCPUMaxPercent(v float64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldCPUMaxPercent, v)
+	return u
+}
+
+// UpdateCPUMaxPercent sets the "cpu_max_percent" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateCPUMaxPercent() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldCPUMaxPercent)
+	return u
+}
+
+// AddCPUMaxPercent adds v to the "cpu_max_percent" field.
+func (u *ResourceUsageAggregationUpsert) AddCPUMaxPercent(v float64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldCPUMaxPercent, v)
+	return u
+}
+
+// SetMemoryGBSeconds sets the "memory_gb_seconds" field.
+func (u *ResourceUsageAggregationUpsert) SetMemoryGBSeconds(v float64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldMemoryGBSeconds, v)
+	return u
+}
+
+// UpdateMemoryGBSeconds sets the "memory_gb_seconds" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateMemoryGBSeconds() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldMemoryGBSeconds)
+	return u
+}
+
+// AddMemoryGBSeconds adds v to the "memory_gb_seconds" field.
+func (u *ResourceUsageAggregationUpsert) AddMemoryGBSeconds(v float64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldMemoryGBSeconds, v)
+	return u
+}
+
+// SetMemoryAvgBytes sets the "memory_avg_bytes" field.
+func (u *ResourceUsageAggregationUpsert) SetMemoryAvgBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldMemoryAvgBytes, v)
+	return u
+}
+
+// UpdateMemoryAvgBytes sets the "memory_avg_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateMemoryAvgBytes() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldMemoryAvgBytes)
+	return u
+}
+
+// AddMemoryAvgBytes adds v to the "memory_avg_bytes" field.
+func (u *ResourceUsageAggregationUpsert) AddMemoryAvgBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldMemoryAvgBytes, v)
+	return u
+}
+
+// SetMemoryMaxBytes sets the "memory_max_bytes" field.
+func (u *ResourceUsageAggregationUpsert) SetMemoryMaxBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldMemoryMaxBytes, v)
+	return u
+}
+
+// UpdateMemoryMaxBytes sets the "memory_max_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateMemoryMaxBytes() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldMemoryMaxBytes)
+	return u
+}
+
+// AddMemoryMaxBytes adds v to the "memory_max_bytes" field.
+func (u *ResourceUsageAggregationUpsert) AddMemoryMaxBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldMemoryMaxBytes, v)
+	return u
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (u *ResourceUsageAggregationUpsert) SetNetworkRxBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldNetworkRxBytes, v)
+	return u
+}
+
+// UpdateNetworkRxBytes sets the "network_rx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateNetworkRxBytes() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldNetworkRxBytes)
+	return u
+}
+
+// AddNetworkRxBytes adds v to the "network_rx_bytes" field.
+func (u *ResourceUsageAggregationUpsert) AddNetworkRxBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldNetworkRxBytes, v)
+	return u
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (u *ResourceUsageAggregationUpsert) SetNetworkTxBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldNetworkTxBytes, v)
+	return u
+}
+
+// UpdateNetworkTxBytes sets the "network_tx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateNetworkTxBytes() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldNetworkTxBytes)
+	return u
+}
+
+// AddNetworkTxBytes adds v to the "network_tx_bytes" field.
+func (u *ResourceUsageAggregationUpsert) AddNetworkTxBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldNetworkTxBytes, v)
+	return u
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (u *ResourceUsageAggregationUpsert) SetBlockReadBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldBlockReadBytes, v)
+	return u
+}
+
+// UpdateBlockReadBytes sets the "block_read_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateBlockReadBytes() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldBlockReadBytes)
+	return u
+}
+
+// AddBlockReadBytes adds v to the "block_read_bytes" field.
+func (u *ResourceUsageAggregationUpsert) AddBlockReadBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldBlockReadBytes, v)
+	return u
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (u *ResourceUsageAggregationUpsert) SetBlockWriteBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldBlockWriteBytes, v)
+	return u
+}
+
+// UpdateBlockWriteBytes sets the "block_write_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateBlockWriteBytes() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldBlockWriteBytes)
+	return u
+}
+
+// AddBlockWriteBytes adds v to the "block_write_bytes" field.
+func (u *ResourceUsageAggregationUpsert) AddBlockWriteBytes(v int64) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldBlockWriteBytes, v)
+	return u
+}
+
+// SetSampleCount sets the "sample_count" field.
+func (u *ResourceUsageAggregationUpsert) SetSampleCount(v int) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldSampleCount, v)
+	return u
+}
+
+// UpdateSampleCount sets the "sample_count" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateSampleCount() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldSampleCount)
+	return u
+}
+
+// AddSampleCount adds v to the "sample_count" field.
+func (u *ResourceUsageAggregationUpsert) AddSampleCount(v int) *ResourceUsageAggregationUpsert {
+	u.Add(resourceusageaggregation.FieldSampleCount, v)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.ResourceUsageAggregation.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(resourceusageaggregation.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *ResourceUsageAggregationUpsertOne) UpdateNewValues() *ResourceUsageAggregationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(resourceusageaggregation.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(resourceusageaggregation.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ResourceUsageAggregation.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *ResourceUsageAggregationUpsertOne) Ignore() *ResourceUsageAggregationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ResourceUsageAggregationUpsertOne) DoNothing() *ResourceUsageAggregationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ResourceUsageAggregationCreate.OnConflict
+// documentation for more info.
+func (u *ResourceUsageAggregationUpsertOne) Update(set func(*ResourceUsageAggregationUpsert)) *ResourceUsageAggregationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ResourceUsageAggregationUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetResourceType sets the "resource_type" field.
+func (u *ResourceUsageAggregationUpsertOne) SetResourceType(v enum.ResourceType) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetResourceType(v)
+	})
+}
+
+// UpdateResourceType sets the "resource_type" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateResourceType() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateResourceType()
+	})
+}
+
+// SetResourceID sets the "resource_id" field.
+func (u *ResourceUsageAggregationUpsertOne) SetResourceID(v uuid.UUID) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetResourceID(v)
+	})
+}
+
+// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateResourceID() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateResourceID()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *ResourceUsageAggregationUpsertOne) SetOwnerID(v string) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateOwnerID() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *ResourceUsageAggregationUpsertOne) SetRunnerID(v uuid.UUID) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateRunnerID() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetGranularity sets the "granularity" field.
+func (u *ResourceUsageAggregationUpsertOne) SetGranularity(v enum.AggregationGranularity) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetGranularity(v)
+	})
+}
+
+// UpdateGranularity sets the "granularity" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateGranularity() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateGranularity()
+	})
+}
+
+// SetBucketStart sets the "bucket_start" field.
+func (u *ResourceUsageAggregationUpsertOne) SetBucketStart(v time.Time) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBucketStart(v)
+	})
+}
+
+// UpdateBucketStart sets the "bucket_start" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateBucketStart() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBucketStart()
+	})
+}
+
+// SetBucketEnd sets the "bucket_end" field.
+func (u *ResourceUsageAggregationUpsertOne) SetBucketEnd(v time.Time) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBucketEnd(v)
+	})
+}
+
+// UpdateBucketEnd sets the "bucket_end" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateBucketEnd() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBucketEnd()
+	})
+}
+
+// SetCPUCoreSeconds sets the "cpu_core_seconds" field.
+func (u *ResourceUsageAggregationUpsertOne) SetCPUCoreSeconds(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetCPUCoreSeconds(v)
+	})
+}
+
+// AddCPUCoreSeconds adds v to the "cpu_core_seconds" field.
+func (u *ResourceUsageAggregationUpsertOne) AddCPUCoreSeconds(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddCPUCoreSeconds(v)
+	})
+}
+
+// UpdateCPUCoreSeconds sets the "cpu_core_seconds" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateCPUCoreSeconds() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateCPUCoreSeconds()
+	})
+}
+
+// SetCPUAvgPercent sets the "cpu_avg_percent" field.
+func (u *ResourceUsageAggregationUpsertOne) SetCPUAvgPercent(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetCPUAvgPercent(v)
+	})
+}
+
+// AddCPUAvgPercent adds v to the "cpu_avg_percent" field.
+func (u *ResourceUsageAggregationUpsertOne) AddCPUAvgPercent(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddCPUAvgPercent(v)
+	})
+}
+
+// UpdateCPUAvgPercent sets the "cpu_avg_percent" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateCPUAvgPercent() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateCPUAvgPercent()
+	})
+}
+
+// SetCPUMaxPercent sets the "cpu_max_percent" field.
+func (u *ResourceUsageAggregationUpsertOne) SetCPUMaxPercent(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetCPUMaxPercent(v)
+	})
+}
+
+// AddCPUMaxPercent adds v to the "cpu_max_percent" field.
+func (u *ResourceUsageAggregationUpsertOne) AddCPUMaxPercent(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddCPUMaxPercent(v)
+	})
+}
+
+// UpdateCPUMaxPercent sets the "cpu_max_percent" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateCPUMaxPercent() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateCPUMaxPercent()
+	})
+}
+
+// SetMemoryGBSeconds sets the "memory_gb_seconds" field.
+func (u *ResourceUsageAggregationUpsertOne) SetMemoryGBSeconds(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetMemoryGBSeconds(v)
+	})
+}
+
+// AddMemoryGBSeconds adds v to the "memory_gb_seconds" field.
+func (u *ResourceUsageAggregationUpsertOne) AddMemoryGBSeconds(v float64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddMemoryGBSeconds(v)
+	})
+}
+
+// UpdateMemoryGBSeconds sets the "memory_gb_seconds" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateMemoryGBSeconds() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateMemoryGBSeconds()
+	})
+}
+
+// SetMemoryAvgBytes sets the "memory_avg_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) SetMemoryAvgBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetMemoryAvgBytes(v)
+	})
+}
+
+// AddMemoryAvgBytes adds v to the "memory_avg_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) AddMemoryAvgBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddMemoryAvgBytes(v)
+	})
+}
+
+// UpdateMemoryAvgBytes sets the "memory_avg_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateMemoryAvgBytes() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateMemoryAvgBytes()
+	})
+}
+
+// SetMemoryMaxBytes sets the "memory_max_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) SetMemoryMaxBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetMemoryMaxBytes(v)
+	})
+}
+
+// AddMemoryMaxBytes adds v to the "memory_max_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) AddMemoryMaxBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddMemoryMaxBytes(v)
+	})
+}
+
+// UpdateMemoryMaxBytes sets the "memory_max_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateMemoryMaxBytes() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateMemoryMaxBytes()
+	})
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) SetNetworkRxBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetNetworkRxBytes(v)
+	})
+}
+
+// AddNetworkRxBytes adds v to the "network_rx_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) AddNetworkRxBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddNetworkRxBytes(v)
+	})
+}
+
+// UpdateNetworkRxBytes sets the "network_rx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateNetworkRxBytes() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateNetworkRxBytes()
+	})
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) SetNetworkTxBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetNetworkTxBytes(v)
+	})
+}
+
+// AddNetworkTxBytes adds v to the "network_tx_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) AddNetworkTxBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddNetworkTxBytes(v)
+	})
+}
+
+// UpdateNetworkTxBytes sets the "network_tx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateNetworkTxBytes() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateNetworkTxBytes()
+	})
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) SetBlockReadBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBlockReadBytes(v)
+	})
+}
+
+// AddBlockReadBytes adds v to the "block_read_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) AddBlockReadBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddBlockReadBytes(v)
+	})
+}
+
+// UpdateBlockReadBytes sets the "block_read_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateBlockReadBytes() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBlockReadBytes()
+	})
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) SetBlockWriteBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBlockWriteBytes(v)
+	})
+}
+
+// AddBlockWriteBytes adds v to the "block_write_bytes" field.
+func (u *ResourceUsageAggregationUpsertOne) AddBlockWriteBytes(v int64) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddBlockWriteBytes(v)
+	})
+}
+
+// UpdateBlockWriteBytes sets the "block_write_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateBlockWriteBytes() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBlockWriteBytes()
+	})
+}
+
+// SetSampleCount sets the "sample_count" field.
+func (u *ResourceUsageAggregationUpsertOne) SetSampleCount(v int) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetSampleCount(v)
+	})
+}
+
+// AddSampleCount adds v to the "sample_count" field.
+func (u *ResourceUsageAggregationUpsertOne) AddSampleCount(v int) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddSampleCount(v)
+	})
+}
+
+// UpdateSampleCount sets the "sample_count" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateSampleCount() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateSampleCount()
+	})
+}
+
+// Exec executes the query.
+func (u *ResourceUsageAggregationUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ResourceUsageAggregationCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ResourceUsageAggregationUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ResourceUsageAggregationUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
+	if u.create.driver.Dialect() == dialect.MySQL {
+		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
+		// fields from the database since MySQL does not support the RETURNING clause.
+		return id, errors.New("ent: ResourceUsageAggregationUpsertOne.ID is not supported by MySQL driver. Use ResourceUsageAggregationUpsertOne.Exec instead")
+	}
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ResourceUsageAggregationUpsertOne) IDX(ctx context.Context) uuid.UUID {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ResourceUsageAggregationCreateBulk is the builder for creating many ResourceUsageAggregation entities in bulk.
 type ResourceUsageAggregationCreateBulk struct {
 	config
 	err      error
 	builders []*ResourceUsageAggregationCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the ResourceUsageAggregation entities in the database.
@@ -579,6 +1333,7 @@ func (_c *ResourceUsageAggregationCreateBulk) Save(ctx context.Context) ([]*Reso
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -625,6 +1380,452 @@ func (_c *ResourceUsageAggregationCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *ResourceUsageAggregationCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ResourceUsageAggregation.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ResourceUsageAggregationUpsert) {
+//			SetResourceType(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ResourceUsageAggregationCreateBulk) OnConflict(opts ...sql.ConflictOption) *ResourceUsageAggregationUpsertBulk {
+	_c.conflict = opts
+	return &ResourceUsageAggregationUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ResourceUsageAggregation.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ResourceUsageAggregationCreateBulk) OnConflictColumns(columns ...string) *ResourceUsageAggregationUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ResourceUsageAggregationUpsertBulk{
+		create: _c,
+	}
+}
+
+// ResourceUsageAggregationUpsertBulk is the builder for "upsert"-ing
+// a bulk of ResourceUsageAggregation nodes.
+type ResourceUsageAggregationUpsertBulk struct {
+	create *ResourceUsageAggregationCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.ResourceUsageAggregation.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(resourceusageaggregation.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *ResourceUsageAggregationUpsertBulk) UpdateNewValues() *ResourceUsageAggregationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(resourceusageaggregation.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(resourceusageaggregation.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ResourceUsageAggregation.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *ResourceUsageAggregationUpsertBulk) Ignore() *ResourceUsageAggregationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ResourceUsageAggregationUpsertBulk) DoNothing() *ResourceUsageAggregationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ResourceUsageAggregationCreateBulk.OnConflict
+// documentation for more info.
+func (u *ResourceUsageAggregationUpsertBulk) Update(set func(*ResourceUsageAggregationUpsert)) *ResourceUsageAggregationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ResourceUsageAggregationUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetResourceType sets the "resource_type" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetResourceType(v enum.ResourceType) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetResourceType(v)
+	})
+}
+
+// UpdateResourceType sets the "resource_type" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateResourceType() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateResourceType()
+	})
+}
+
+// SetResourceID sets the "resource_id" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetResourceID(v uuid.UUID) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetResourceID(v)
+	})
+}
+
+// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateResourceID() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateResourceID()
+	})
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetOwnerID(v string) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetOwnerID(v)
+	})
+}
+
+// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateOwnerID() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateOwnerID()
+	})
+}
+
+// SetRunnerID sets the "runner_id" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetRunnerID(v uuid.UUID) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetRunnerID(v)
+	})
+}
+
+// UpdateRunnerID sets the "runner_id" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateRunnerID() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateRunnerID()
+	})
+}
+
+// SetGranularity sets the "granularity" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetGranularity(v enum.AggregationGranularity) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetGranularity(v)
+	})
+}
+
+// UpdateGranularity sets the "granularity" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateGranularity() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateGranularity()
+	})
+}
+
+// SetBucketStart sets the "bucket_start" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetBucketStart(v time.Time) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBucketStart(v)
+	})
+}
+
+// UpdateBucketStart sets the "bucket_start" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateBucketStart() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBucketStart()
+	})
+}
+
+// SetBucketEnd sets the "bucket_end" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetBucketEnd(v time.Time) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBucketEnd(v)
+	})
+}
+
+// UpdateBucketEnd sets the "bucket_end" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateBucketEnd() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBucketEnd()
+	})
+}
+
+// SetCPUCoreSeconds sets the "cpu_core_seconds" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetCPUCoreSeconds(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetCPUCoreSeconds(v)
+	})
+}
+
+// AddCPUCoreSeconds adds v to the "cpu_core_seconds" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddCPUCoreSeconds(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddCPUCoreSeconds(v)
+	})
+}
+
+// UpdateCPUCoreSeconds sets the "cpu_core_seconds" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateCPUCoreSeconds() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateCPUCoreSeconds()
+	})
+}
+
+// SetCPUAvgPercent sets the "cpu_avg_percent" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetCPUAvgPercent(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetCPUAvgPercent(v)
+	})
+}
+
+// AddCPUAvgPercent adds v to the "cpu_avg_percent" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddCPUAvgPercent(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddCPUAvgPercent(v)
+	})
+}
+
+// UpdateCPUAvgPercent sets the "cpu_avg_percent" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateCPUAvgPercent() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateCPUAvgPercent()
+	})
+}
+
+// SetCPUMaxPercent sets the "cpu_max_percent" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetCPUMaxPercent(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetCPUMaxPercent(v)
+	})
+}
+
+// AddCPUMaxPercent adds v to the "cpu_max_percent" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddCPUMaxPercent(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddCPUMaxPercent(v)
+	})
+}
+
+// UpdateCPUMaxPercent sets the "cpu_max_percent" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateCPUMaxPercent() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateCPUMaxPercent()
+	})
+}
+
+// SetMemoryGBSeconds sets the "memory_gb_seconds" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetMemoryGBSeconds(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetMemoryGBSeconds(v)
+	})
+}
+
+// AddMemoryGBSeconds adds v to the "memory_gb_seconds" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddMemoryGBSeconds(v float64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddMemoryGBSeconds(v)
+	})
+}
+
+// UpdateMemoryGBSeconds sets the "memory_gb_seconds" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateMemoryGBSeconds() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateMemoryGBSeconds()
+	})
+}
+
+// SetMemoryAvgBytes sets the "memory_avg_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetMemoryAvgBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetMemoryAvgBytes(v)
+	})
+}
+
+// AddMemoryAvgBytes adds v to the "memory_avg_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddMemoryAvgBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddMemoryAvgBytes(v)
+	})
+}
+
+// UpdateMemoryAvgBytes sets the "memory_avg_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateMemoryAvgBytes() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateMemoryAvgBytes()
+	})
+}
+
+// SetMemoryMaxBytes sets the "memory_max_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetMemoryMaxBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetMemoryMaxBytes(v)
+	})
+}
+
+// AddMemoryMaxBytes adds v to the "memory_max_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddMemoryMaxBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddMemoryMaxBytes(v)
+	})
+}
+
+// UpdateMemoryMaxBytes sets the "memory_max_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateMemoryMaxBytes() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateMemoryMaxBytes()
+	})
+}
+
+// SetNetworkRxBytes sets the "network_rx_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetNetworkRxBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetNetworkRxBytes(v)
+	})
+}
+
+// AddNetworkRxBytes adds v to the "network_rx_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddNetworkRxBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddNetworkRxBytes(v)
+	})
+}
+
+// UpdateNetworkRxBytes sets the "network_rx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateNetworkRxBytes() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateNetworkRxBytes()
+	})
+}
+
+// SetNetworkTxBytes sets the "network_tx_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetNetworkTxBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetNetworkTxBytes(v)
+	})
+}
+
+// AddNetworkTxBytes adds v to the "network_tx_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddNetworkTxBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddNetworkTxBytes(v)
+	})
+}
+
+// UpdateNetworkTxBytes sets the "network_tx_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateNetworkTxBytes() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateNetworkTxBytes()
+	})
+}
+
+// SetBlockReadBytes sets the "block_read_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetBlockReadBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBlockReadBytes(v)
+	})
+}
+
+// AddBlockReadBytes adds v to the "block_read_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddBlockReadBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddBlockReadBytes(v)
+	})
+}
+
+// UpdateBlockReadBytes sets the "block_read_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateBlockReadBytes() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBlockReadBytes()
+	})
+}
+
+// SetBlockWriteBytes sets the "block_write_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetBlockWriteBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetBlockWriteBytes(v)
+	})
+}
+
+// AddBlockWriteBytes adds v to the "block_write_bytes" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddBlockWriteBytes(v int64) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddBlockWriteBytes(v)
+	})
+}
+
+// UpdateBlockWriteBytes sets the "block_write_bytes" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateBlockWriteBytes() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateBlockWriteBytes()
+	})
+}
+
+// SetSampleCount sets the "sample_count" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetSampleCount(v int) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetSampleCount(v)
+	})
+}
+
+// AddSampleCount adds v to the "sample_count" field.
+func (u *ResourceUsageAggregationUpsertBulk) AddSampleCount(v int) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.AddSampleCount(v)
+	})
+}
+
+// UpdateSampleCount sets the "sample_count" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateSampleCount() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateSampleCount()
+	})
+}
+
+// Exec executes the query.
+func (u *ResourceUsageAggregationUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ResourceUsageAggregationCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ResourceUsageAggregationCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ResourceUsageAggregationUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

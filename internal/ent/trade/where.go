@@ -821,6 +821,16 @@ func TimeframeContainsFold(v string) predicate.Trade {
 	return predicate.Trade(sql.FieldContainsFold(FieldTimeframe, v))
 }
 
+// RawDataIsNil applies the IsNil predicate on the "raw_data" field.
+func RawDataIsNil() predicate.Trade {
+	return predicate.Trade(sql.FieldIsNull(FieldRawData))
+}
+
+// RawDataNotNil applies the NotNil predicate on the "raw_data" field.
+func RawDataNotNil() predicate.Trade {
+	return predicate.Trade(sql.FieldNotNull(FieldRawData))
+}
+
 // BotIDEQ applies the EQ predicate on the "bot_id" field.
 func BotIDEQ(v uuid.UUID) predicate.Trade {
 	return predicate.Trade(sql.FieldEQ(FieldBotID, v))
