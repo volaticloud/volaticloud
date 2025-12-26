@@ -621,11 +621,12 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 	var cmd []string
 
 	if spec.DataDownloadURL != "" {
-		// Build shell script that downloads data and starts freqtrade
+		// Build shell script that downloads data (if not exists) and starts freqtrade
+		// Check if data exists to handle container restarts when presigned URL may have expired
 		dataDir := fmt.Sprintf("/freqtrade/user_data/%s/data", configPaths.botID)
 		shellScript := fmt.Sprintf(
-			`set -e; mkdir -p %s; wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"; tar -xzf /tmp/data.tar.gz -C %s; rm /tmp/data.tar.gz; exec freqtrade trade %s`,
-			dataDir, dataDir, strings.Join(freqtradeArgs, " "),
+			`set -e; mkdir -p %s; if [ -z "$(ls -A %s 2>/dev/null)" ]; then echo "Downloading data..."; wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"; tar -xzf /tmp/data.tar.gz -C %s; rm /tmp/data.tar.gz; else echo "Data exists, skipping download"; fi; exec freqtrade trade %s`,
+			dataDir, dataDir, dataDir, strings.Join(freqtradeArgs, " "),
 		)
 		entrypoint = []string{"/bin/sh", "-c"}
 		cmd = []string{shellScript}

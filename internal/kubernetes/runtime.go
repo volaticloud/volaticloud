@@ -845,12 +845,20 @@ cp /strategy-source/%s.py /userdata/strategies/
 `, spec.StrategyName)
 
 	if spec.DataDownloadURL != "" {
+		// Check if data already exists to handle pod restarts
+		// emptyDir persists across container restarts within the same pod
+		// This prevents failed downloads when presigned URL expires on restart
 		setupScript += `
-echo "Downloading data from S3..."
-wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
-echo "Extracting data..."
-tar -xzf /tmp/data.tar.gz -C /userdata/data
-rm /tmp/data.tar.gz
+if [ -z "$(ls -A /userdata/data 2>/dev/null)" ]; then
+    echo "Downloading data from S3..."
+    wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
+    echo "Extracting data..."
+    tar -xzf /tmp/data.tar.gz -C /userdata/data
+    rm /tmp/data.tar.gz
+else
+    echo "Data already exists, skipping download"
+    ls -la /userdata/data/
+fi
 `
 	}
 
