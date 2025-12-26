@@ -14,7 +14,9 @@ const (
 // Permission scopes for each resource type
 
 // StrategyScopes defines the available permission scopes for Strategy resources
-var StrategyScopes = []string{"view", "edit", "backtest", "delete"}
+// Backtest operations (run-backtest, stop-backtest, delete-backtest) are checked against strategy
+// because backtests don't have their own Keycloak resources
+var StrategyScopes = []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest"}
 
 // BotScopes defines the available permission scopes for Bot resources
 // view-secrets is for sensitive config fields (API keys, trading params)

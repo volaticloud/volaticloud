@@ -322,12 +322,9 @@ type Mutation {
   # Backtest mutations
   # Backtests are immutable - only creation is allowed, no updates
   # Authorization is checked via strategy_id (backtests inherit permissions from their parent strategy)
-  createBacktest(input: CreateBacktestInput!): Backtest! @isAuthenticated
-  deleteBacktest(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete-backtest")
-
-  # Backtest lifecycle mutations
-  runBacktest(id: ID!): Backtest! @hasScope(resource: "id", scope: "run-backtest")
+  runBacktest(input: CreateBacktestInput!): Backtest! @hasScope(resource: "input.strategyID", scope: "run-backtest")
   stopBacktest(id: ID!): Backtest! @hasScope(resource: "id", scope: "stop-backtest")
+  deleteBacktest(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete-backtest")
 
   # Trade mutations
   createTrade(input: CreateTradeInput!): Trade! @isAuthenticated

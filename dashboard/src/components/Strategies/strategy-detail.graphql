@@ -8,6 +8,7 @@ query GetStrategyDetail($id: ID!) {
         code
         versionNumber
         isLatest
+        public
         config
         createdAt
         updatedAt

@@ -11,7 +11,7 @@ var (
 	// BacktestsColumns holds the columns for the "backtests" table.
 	BacktestsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed"}, Default: "pending"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed", "cancelled"}, Default: "pending"},
 		{Name: "result", Type: field.TypeJSON, Nullable: true},
 		{Name: "summary", Type: field.TypeJSON, Nullable: true},
 		{Name: "error_message", Type: field.TypeString, Nullable: true},

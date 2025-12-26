@@ -17,7 +17,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useCreateBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
+import { useRunBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -58,7 +58,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
 
   const [searchStrategies, { loading: searchLoading }] = useSearchStrategiesLazyQuery();
   const [getStrategyById] = useGetStrategyByIdLazyQuery();
-  const [createBacktest, { loading, error }] = useCreateBacktestMutation();
+  const [runBacktest, { loading, error }] = useRunBacktestMutation();
 
   // Debounced search function
   const debouncedSearch = useMemo(
@@ -166,7 +166,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
     }
 
     try {
-      const result = await createBacktest({
+      const result = await runBacktest({
         variables: {
           input: {
             strategyID: selectedStrategy.id,
@@ -178,9 +178,9 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
       });
 
       // Only close and reset if mutation was successful
-      if (result.data?.createBacktest) {
-        const backtestId = result.data.createBacktest.id;
-        const newStrategyId = result.data.createBacktest.strategy?.id;
+      if (result.data?.runBacktest) {
+        const backtestId = result.data.runBacktest.id;
+        const newStrategyId = result.data.runBacktest.strategy?.id;
 
         // Reset form
         setSelectedStrategy(null);

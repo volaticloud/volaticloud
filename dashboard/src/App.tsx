@@ -63,6 +63,7 @@ function App() {
                 <Route path="bots/:id" element={<BotDetailPage />} />
                 <Route path="exchanges" element={<ExchangesPage />} />
                 <Route path="strategies" element={<StrategiesPage />} />
+                <Route path="strategies/new" element={<StrategyStudioPage />} />
                 <Route path="strategies/:id" element={<StrategyDetailPage />} />
                 <Route path="strategies/:id/edit" element={<StrategyStudioPage />} />
                 <Route path="backtests" element={<BacktestsPage />} />

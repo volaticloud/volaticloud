@@ -156,7 +156,7 @@ func TestAuthorizationIntegration_HasScope(t *testing.T) {
 		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "insufficient permissions")
+		assert.Contains(t, err.Error(), "you don't have")
 		assert.Contains(t, err.Error(), "edit")
 	})
 }
@@ -239,7 +239,7 @@ func TestAuthorizationIntegration_DeleteOperation(t *testing.T) {
 		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "insufficient permissions")
+		assert.Contains(t, err.Error(), "you don't have")
 
 		// Verify strategy still exists
 		exists, err := env.Client.Strategy.Query().Where(strategyent.IDEQ(strategy.ID)).Exist(env.Context)
@@ -741,7 +741,7 @@ func TestAuthorizationIntegration_MissingViewPermission(t *testing.T) {
 		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "insufficient permissions")
+		assert.Contains(t, err.Error(), "you don't have")
 	})
 
 	t.Run("OnlyEditPermission_ReadFailure", func(t *testing.T) {
@@ -769,7 +769,7 @@ func TestAuthorizationIntegration_MissingViewPermission(t *testing.T) {
 		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "insufficient permissions")
+		assert.Contains(t, err.Error(), "you don't have")
 		assert.Contains(t, err.Error(), "view")
 	})
 
@@ -854,7 +854,7 @@ func TestAuthorizationIntegration_ForbiddenOperations(t *testing.T) {
 		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "insufficient permissions")
+		assert.Contains(t, err.Error(), "you don't have")
 	})
 
 	t.Run("Bot_Delete_WithoutPermission", func(t *testing.T) {
@@ -927,7 +927,7 @@ func TestAuthorizationIntegration_ForbiddenOperations(t *testing.T) {
 		)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "insufficient permissions")
+		assert.Contains(t, err.Error(), "you don't have")
 		assert.Contains(t, err.Error(), "delete")
 	})
 }

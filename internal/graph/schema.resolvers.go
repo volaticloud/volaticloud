@@ -25,6 +25,7 @@ import (
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
+	strategy1 "volaticloud/internal/strategy"
 	"volaticloud/internal/usage"
 
 	"github.com/google/uuid"
@@ -168,33 +169,16 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 			return fmt.Errorf("failed to load strategy: %w", err)
 		}
 
-		// Mark old strategy as not latest (within transaction)
-		err = tx.Strategy.UpdateOneID(id).SetIsLatest(false).Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to mark old strategy as not latest: %w", err)
+		// Create new version using domain function
+		// Preserves owner_id and public visibility from parent
+		versionInput := &strategy1.VersionInput{
+			Name:        input.Name,
+			Description: input.Description,
+			Code:        input.Code,
+			Config:      input.Config,
 		}
 
-		// Create new version with input values, falling back to old values (within transaction)
-		// ENT hook will automatically create Keycloak resource for this new version
-		newVersion := tx.Strategy.Create().
-			SetName(coalesce(input.Name, &oldStrategy.Name)).
-			SetDescription(coalesce(input.Description, &oldStrategy.Description)).
-			SetCode(coalesce(input.Code, &oldStrategy.Code)).
-			SetVersionNumber(oldStrategy.VersionNumber + 1).
-			SetParentID(oldStrategy.ID).
-			SetIsLatest(true).
-			SetOwnerID(oldStrategy.OwnerID) // Preserve owner_id from parent
-
-		// Handle optional fields
-		if input.Config != nil {
-			newVersion.SetConfig(input.Config)
-		} else if oldStrategy.Config != nil {
-			newVersion.SetConfig(oldStrategy.Config)
-		}
-
-		// Save new version (this will trigger validation hook AND Keycloak hook)
-		// If validation or Keycloak sync fails, the entire transaction rolls back
-		result, err = newVersion.Save(ctx)
+		result, err = strategy1.CreateVersion(ctx, tx, oldStrategy, versionInput)
 		if err != nil {
 			return err
 		}
@@ -705,7 +689,7 @@ func (r *mutationResolver) TestS3Connection(ctx context.Context, config model.S3
 	}, nil
 }
 
-func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
+func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error) {
 	var result *ent.Backtest
 
 	// Use transaction to ensure atomicity - entity creation and validation both succeed or both fail
@@ -791,34 +775,19 @@ func (r *mutationResolver) CreateBacktest(ctx context.Context, input ent.CreateB
 	return r.runBacktestHelper(ctx, result)
 }
 
-func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Backtest.DeleteOneID(id).Exec(ctx)
-	return err == nil, err
-}
-
-func (r *mutationResolver) RunBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error) {
-	// Load the backtest with its runner and strategy
+func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error) {
+	// Load backtest with runner
 	bt, err := r.client.Backtest.Query().
 		Where(backtest.ID(id)).
 		WithRunner().
-		WithStrategy().
 		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load backtest: %w", err)
 	}
 
-	// Use the helper to run the backtest
-	return r.runBacktestHelper(ctx, bt)
-}
-
-func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error) {
-	// Load the backtest with its runner configuration
-	bt, err := r.client.Backtest.Query().
-		Where(backtest.ID(id)).
-		WithRunner().
-		Only(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load backtest: %w", err)
+	// Only allow stopping running backtests
+	if bt.Status != enum.TaskStatusRunning {
+		return nil, fmt.Errorf("backtest is not running (status: %s)", bt.Status)
 	}
 
 	// Get the runner
@@ -833,32 +802,29 @@ func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent
 	if err != nil {
 		return nil, fmt.Errorf("failed to create backtest runner client: %w", err)
 	}
-	defer backtestRunner.Close()
+	defer func() {
+		_ = backtestRunner.Close()
+	}()
 
-	// Stop the backtest in the runtime using backtest ID
-	if err := backtestRunner.StopBacktest(ctx, bt.ID.String()); err != nil {
-		// If container not found, just update status - it was manually deleted or completed
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "No such container") {
-			bt, err = r.client.Backtest.UpdateOneID(id).
-				SetStatus(enum.TaskStatusCompleted).
-				Save(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("failed to update backtest status: %w", err)
-			}
-			return bt, nil
-		}
-		return nil, fmt.Errorf("failed to stop backtest in runner: %w", err)
+	// Stop the backtest container
+	if err := backtestRunner.StopBacktest(ctx, id.String()); err != nil {
+		return nil, fmt.Errorf("failed to stop backtest: %w", err)
 	}
 
-	// Update backtest status
-	bt, err = r.client.Backtest.UpdateOneID(id).
-		SetStatus(enum.TaskStatusCompleted).
+	// Update backtest status to cancelled
+	bt, err = bt.Update().
+		SetStatus(enum.TaskStatusCancelled).
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update backtest status: %w", err)
 	}
 
 	return bt, nil
+}
+
+func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error) {
+	err := r.client.Backtest.DeleteOneID(id).Exec(ctx)
+	return err == nil, err
 }
 
 func (r *mutationResolver) CreateTrade(ctx context.Context, input ent.CreateTradeInput) (*ent.Trade, error) {

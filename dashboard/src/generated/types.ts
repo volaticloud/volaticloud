@@ -100,6 +100,7 @@ export type BacktestSummary = {
 
 /** BacktestTaskStatus is enum for the field status */
 export enum BacktestTaskStatus {
+  Cancelled = 'cancelled',
   Completed = 'completed',
   Failed = 'failed',
   Pending = 'pending',
@@ -1552,7 +1553,6 @@ export type LocalConfigInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  createBacktest: Backtest;
   createBot: Bot;
   createBotRunner: BotRunner;
   createExchange: Exchange;
@@ -1602,11 +1602,6 @@ export type Mutation = {
   updateExchange: Exchange;
   updateStrategy: Strategy;
   updateTrade: Trade;
-};
-
-
-export type MutationCreateBacktestArgs = {
-  input: CreateBacktestInput;
 };
 
 
@@ -1681,7 +1676,7 @@ export type MutationRestartBotArgs = {
 
 
 export type MutationRunBacktestArgs = {
-  id: Scalars['ID']['input'];
+  input: CreateBacktestInput;
 };
 
 

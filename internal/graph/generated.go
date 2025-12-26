@@ -264,7 +264,6 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateBacktest        func(childComplexity int, input ent.CreateBacktestInput) int
 		CreateBot             func(childComplexity int, input ent.CreateBotInput) int
 		CreateBotRunner       func(childComplexity int, input ent.CreateBotRunnerInput) int
 		CreateExchange        func(childComplexity int, input ent.CreateExchangeInput) int
@@ -279,7 +278,7 @@ type ComplexityRoot struct {
 		GetFreqtradeToken     func(childComplexity int, botID uuid.UUID) int
 		RefreshRunnerData     func(childComplexity int, id uuid.UUID) int
 		RestartBot            func(childComplexity int, id uuid.UUID) int
-		RunBacktest           func(childComplexity int, id uuid.UUID) int
+		RunBacktest           func(childComplexity int, input ent.CreateBacktestInput) int
 		SetBotVisibility      func(childComplexity int, id uuid.UUID, public bool) int
 		SetRunnerVisibility   func(childComplexity int, id uuid.UUID, public bool) int
 		SetStrategyVisibility func(childComplexity int, id uuid.UUID, public bool) int
@@ -461,10 +460,9 @@ type MutationResolver interface {
 	RefreshRunnerData(ctx context.Context, id uuid.UUID) (*ent.BotRunner, error)
 	TestRunnerConnection(ctx context.Context, typeArg enum.RunnerType, config model.RunnerConfigInput) (*model.ConnectionTestResult, error)
 	TestS3Connection(ctx context.Context, config model.S3ConfigInput) (*model.ConnectionTestResult, error)
-	CreateBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
-	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
-	RunBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
+	RunBacktest(ctx context.Context, input ent.CreateBacktestInput) (*ent.Backtest, error)
 	StopBacktest(ctx context.Context, id uuid.UUID) (*ent.Backtest, error)
+	DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error)
 	CreateTrade(ctx context.Context, input ent.CreateTradeInput) (*ent.Trade, error)
 	UpdateTrade(ctx context.Context, id uuid.UUID, input ent.UpdateTradeInput) (*ent.Trade, error)
 	DeleteTrade(ctx context.Context, id uuid.UUID) (bool, error)
@@ -1460,17 +1458,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.FreqtradeToken.Username(childComplexity), true
 
-	case "Mutation.createBacktest":
-		if e.complexity.Mutation.CreateBacktest == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createBacktest_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateBacktest(childComplexity, args["input"].(ent.CreateBacktestInput)), true
 	case "Mutation.createBot":
 		if e.complexity.Mutation.CreateBot == nil {
 			break
@@ -1635,7 +1622,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RunBacktest(childComplexity, args["id"].(uuid.UUID)), true
+		return e.complexity.Mutation.RunBacktest(childComplexity, args["input"].(ent.CreateBacktestInput)), true
 	case "Mutation.setBotVisibility":
 		if e.complexity.Mutation.SetBotVisibility == nil {
 			break
@@ -2820,17 +2807,6 @@ func (ec *executionContext) field_Exchange_bots_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBacktestInput2volaticloudᚋinternalᚋentᚐCreateBacktestInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createBotRunner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2988,11 +2964,11 @@ func (ec *executionContext) field_Mutation_restartBot_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_runBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateBacktestInput2volaticloudᚋinternalᚋentᚐCreateBacktestInput)
 	if err != nil {
 		return nil, err
 	}
-	args["id"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -10431,158 +10407,6 @@ func (ec *executionContext) fieldContext_Mutation_testS3Connection(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_createBacktest,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateBacktest(ctx, fc.Args["input"].(ent.CreateBacktestInput))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsAuthenticated == nil {
-					var zeroVal *ent.Backtest
-					return zeroVal, errors.New("directive isAuthenticated is not implemented")
-				}
-				return ec.directives.IsAuthenticated(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Backtest_id(ctx, field)
-			case "status":
-				return ec.fieldContext_Backtest_status(ctx, field)
-			case "result":
-				return ec.fieldContext_Backtest_result(ctx, field)
-			case "errorMessage":
-				return ec.fieldContext_Backtest_errorMessage(ctx, field)
-			case "logs":
-				return ec.fieldContext_Backtest_logs(ctx, field)
-			case "strategyID":
-				return ec.fieldContext_Backtest_strategyID(ctx, field)
-			case "runnerID":
-				return ec.fieldContext_Backtest_runnerID(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Backtest_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Backtest_updatedAt(ctx, field)
-			case "completedAt":
-				return ec.fieldContext_Backtest_completedAt(ctx, field)
-			case "startDate":
-				return ec.fieldContext_Backtest_startDate(ctx, field)
-			case "endDate":
-				return ec.fieldContext_Backtest_endDate(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Backtest_strategy(ctx, field)
-			case "runner":
-				return ec.fieldContext_Backtest_runner(ctx, field)
-			case "summary":
-				return ec.fieldContext_Backtest_summary(ctx, field)
-			case "resourceUsage":
-				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteBacktest,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteBacktest(ctx, fc.Args["id"].(uuid.UUID))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				resource, err := ec.unmarshalNString2string(ctx, "id")
-				if err != nil {
-					var zeroVal bool
-					return zeroVal, err
-				}
-				scope, err := ec.unmarshalNString2string(ctx, "delete-backtest")
-				if err != nil {
-					var zeroVal bool
-					return zeroVal, err
-				}
-				if ec.directives.HasScope == nil {
-					var zeroVal bool
-					return zeroVal, errors.New("directive hasScope is not implemented")
-				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_runBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10591,13 +10415,13 @@ func (ec *executionContext) _Mutation_runBacktest(ctx context.Context, field gra
 		ec.fieldContext_Mutation_runBacktest,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RunBacktest(ctx, fc.Args["id"].(uuid.UUID))
+			return ec.resolvers.Mutation().RunBacktest(ctx, fc.Args["input"].(ent.CreateBacktestInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				resource, err := ec.unmarshalNString2string(ctx, "id")
+				resource, err := ec.unmarshalNString2string(ctx, "input.strategyID")
 				if err != nil {
 					var zeroVal *ent.Backtest
 					return zeroVal, err
@@ -10773,6 +10597,70 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_stopBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteBacktest,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteBacktest(ctx, fc.Args["id"].(uuid.UUID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "delete-backtest")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -30441,20 +30329,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createBacktest":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createBacktest(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteBacktest":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteBacktest(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "runBacktest":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_runBacktest(ctx, field)
@@ -30465,6 +30339,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "stopBacktest":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_stopBacktest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteBacktest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteBacktest(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

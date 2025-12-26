@@ -20,12 +20,10 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
-import { useGetStrategiesQuery, useSetStrategyVisibilityMutation, GetStrategiesQuery } from './strategies.generated';
-import { CreateStrategyDialog } from './CreateStrategyDialog';
-import { EditStrategyDialog } from './EditStrategyDialog';
+import { useGetStrategiesQuery, GetStrategiesQuery } from './strategies.generated';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
-import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
@@ -39,19 +37,12 @@ export const StrategiesList = () => {
   const navigate = useGroupNavigate();
   const { activeGroupId } = useActiveGroup();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
-  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
   const [selectedStrategyForBacktest, setSelectedStrategyForBacktest] = useState<string | null>(null);
   const [selectedStrategy, setSelectedStrategy] = useState<{
     id: string;
     name: string;
-    description?: string | null;
-    code: string;
-    versionNumber: number;
-    public?: boolean;
   } | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -62,8 +53,6 @@ export const StrategiesList = () => {
   // Pagination hook
   const pagination = useCursorPagination<Strategy>({ initialPageSize: 10 });
   const { setLoading, updateFromResponse, reset } = pagination;
-
-  const [setStrategyVisibility, { loading: visibilityLoading }] = useSetStrategyVisibilityMutation();
 
   const { data, loading, refetch } = useGetStrategiesQuery({
     variables: {
@@ -176,25 +165,16 @@ export const StrategiesList = () => {
           </Tooltip>
           {viewMode === 'mine' && (
             <>
-              <Tooltip title={params.row.public ? 'Make Private' : 'Make Public'}>
-                <IconButton
-                  size="small"
-                  color={params.row.public ? 'info' : 'default'}
-                  onClick={() => {
-                    setSelectedStrategy(params.row);
-                    setVisibilityDialogOpen(true);
-                  }}
-                >
-                  {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
-                </IconButton>
-              </Tooltip>
+              <StrategyVisibilityButton
+                strategyId={params.row.id}
+                strategyName={params.row.name}
+                isPublic={params.row.public}
+                onSuccess={() => refetch()}
+              />
               <Tooltip title="Edit">
                 <IconButton
                   size="small"
-                  onClick={() => {
-                    setSelectedStrategy(params.row);
-                    setEditDialogOpen(true);
-                  }}
+                  onClick={() => navigate(`/strategies/${params.row.id}/edit`)}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
@@ -256,7 +236,7 @@ export const StrategiesList = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setCreateDialogOpen(true)}
+              onClick={() => navigate('/strategies/new')}
               sx={{ flexShrink: 0 }}
             >
               Create Strategy
@@ -272,57 +252,24 @@ export const StrategiesList = () => {
         onRowClick={(row) => navigate(`/strategies/${row.id}`)}
       />
 
-      <CreateStrategyDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        onSuccess={() => {
-          refetch();
-          setSnackbar({
-            open: true,
-            message: 'Strategy created successfully',
-            severity: 'success',
-          });
-        }}
-      />
-
       {selectedStrategy && (
-        <>
-          <EditStrategyDialog
-            open={editDialogOpen}
-            onClose={() => {
-              setEditDialogOpen(false);
-              setSelectedStrategy(null);
-            }}
-            onSuccess={() => {
-              refetch();
-              setSelectedStrategy(null);
-              setSnackbar({
-                open: true,
-                message: 'Strategy updated successfully',
-                severity: 'success',
-              });
-            }}
-            strategy={selectedStrategy}
-          />
-
-          <DeleteStrategyDialog
-            open={deleteDialogOpen}
-            onClose={() => {
-              setDeleteDialogOpen(false);
-              setSelectedStrategy(null);
-            }}
-            onSuccess={() => {
-              refetch();
-              setSelectedStrategy(null);
-              setSnackbar({
-                open: true,
-                message: 'Strategy deleted successfully',
-                severity: 'success',
-              });
-            }}
-            strategy={selectedStrategy}
-          />
-        </>
+        <DeleteStrategyDialog
+          open={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setSelectedStrategy(null);
+          }}
+          onSuccess={() => {
+            refetch();
+            setSelectedStrategy(null);
+            setSnackbar({
+              open: true,
+              message: 'Strategy deleted successfully',
+              severity: 'success',
+            });
+          }}
+          strategy={selectedStrategy}
+        />
       )}
 
       <CreateBacktestDialog
@@ -345,37 +292,6 @@ export const StrategiesList = () => {
         }}
         preSelectedStrategyId={selectedStrategyForBacktest || undefined}
       />
-
-      {selectedStrategy && (
-        <VisibilityToggleDialog
-          open={visibilityDialogOpen}
-          onClose={() => {
-            setVisibilityDialogOpen(false);
-            setSelectedStrategy(null);
-          }}
-          onConfirm={async () => {
-            const result = await setStrategyVisibility({
-              variables: {
-                id: selectedStrategy.id,
-                public: !selectedStrategy.public,
-              },
-            });
-            if (result.errors) {
-              throw new Error(result.errors[0]?.message || 'Failed to update visibility');
-            }
-            refetch();
-            setSnackbar({
-              open: true,
-              message: `Strategy is now ${selectedStrategy.public ? 'private' : 'public'}`,
-              severity: 'success',
-            });
-          }}
-          resourceType="strategy"
-          resourceName={selectedStrategy.name}
-          currentlyPublic={selectedStrategy.public || false}
-          loading={visibilityLoading}
-        />
-      )}
 
       <Snackbar
         open={snackbar.open}

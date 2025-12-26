@@ -81,6 +81,7 @@ enum BacktestTaskStatus @goModel(model: "volaticloud/internal/enum.TaskStatus") 
   running
   completed
   failed
+  cancelled
 }
 """
 BacktestWhereInput is used for filtering Backtest objects.

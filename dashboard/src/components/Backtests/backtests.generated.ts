@@ -42,26 +42,12 @@ export type GetStrategyByIdQueryVariables = Types.Exact<{
 
 export type GetStrategyByIdQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null } };
 
-export type CreateBacktestMutationVariables = Types.Exact<{
+export type RunBacktestMutationVariables = Types.Exact<{
   input: Types.CreateBacktestInput;
 }>;
 
 
-export type CreateBacktestMutation = { __typename?: 'Mutation', createBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string, strategy: { __typename?: 'Strategy', id: string, name: string, versionNumber: number } } };
-
-export type DeleteBacktestMutationVariables = Types.Exact<{
-  id: Types.Scalars['ID']['input'];
-}>;
-
-
-export type DeleteBacktestMutation = { __typename?: 'Mutation', deleteBacktest: boolean };
-
-export type RunBacktestMutationVariables = Types.Exact<{
-  id: Types.Scalars['ID']['input'];
-}>;
-
-
-export type RunBacktestMutation = { __typename?: 'Mutation', runBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } };
+export type RunBacktestMutation = { __typename?: 'Mutation', runBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, createdAt: string, strategy: { __typename?: 'Strategy', id: string, name: string, versionNumber: number } } };
 
 export type StopBacktestMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -69,6 +55,13 @@ export type StopBacktestMutationVariables = Types.Exact<{
 
 
 export type StopBacktestMutation = { __typename?: 'Mutation', stopBacktest: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus } };
+
+export type DeleteBacktestMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+}>;
+
+
+export type DeleteBacktestMutation = { __typename?: 'Mutation', deleteBacktest: boolean };
 
 
 export const GetBacktestsDocument = gql`
@@ -343,9 +336,9 @@ export type GetStrategyByIdQueryHookResult = ReturnType<typeof useGetStrategyByI
 export type GetStrategyByIdLazyQueryHookResult = ReturnType<typeof useGetStrategyByIdLazyQuery>;
 export type GetStrategyByIdSuspenseQueryHookResult = ReturnType<typeof useGetStrategyByIdSuspenseQuery>;
 export type GetStrategyByIdQueryResult = Apollo.QueryResult<GetStrategyByIdQuery, GetStrategyByIdQueryVariables>;
-export const CreateBacktestDocument = gql`
-    mutation CreateBacktest($input: CreateBacktestInput!) {
-  createBacktest(input: $input) {
+export const RunBacktestDocument = gql`
+    mutation RunBacktest($input: CreateBacktestInput!) {
+  runBacktest(input: $input) {
     id
     status
     createdAt
@@ -354,71 +347,6 @@ export const CreateBacktestDocument = gql`
       name
       versionNumber
     }
-  }
-}
-    `;
-export type CreateBacktestMutationFn = Apollo.MutationFunction<CreateBacktestMutation, CreateBacktestMutationVariables>;
-
-/**
- * __useCreateBacktestMutation__
- *
- * To run a mutation, you first call `useCreateBacktestMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateBacktestMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createBacktestMutation, { data, loading, error }] = useCreateBacktestMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateBacktestMutation(baseOptions?: Apollo.MutationHookOptions<CreateBacktestMutation, CreateBacktestMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateBacktestMutation, CreateBacktestMutationVariables>(CreateBacktestDocument, options);
-      }
-export type CreateBacktestMutationHookResult = ReturnType<typeof useCreateBacktestMutation>;
-export type CreateBacktestMutationResult = Apollo.MutationResult<CreateBacktestMutation>;
-export type CreateBacktestMutationOptions = Apollo.BaseMutationOptions<CreateBacktestMutation, CreateBacktestMutationVariables>;
-export const DeleteBacktestDocument = gql`
-    mutation DeleteBacktest($id: ID!) {
-  deleteBacktest(id: $id)
-}
-    `;
-export type DeleteBacktestMutationFn = Apollo.MutationFunction<DeleteBacktestMutation, DeleteBacktestMutationVariables>;
-
-/**
- * __useDeleteBacktestMutation__
- *
- * To run a mutation, you first call `useDeleteBacktestMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteBacktestMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteBacktestMutation, { data, loading, error }] = useDeleteBacktestMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteBacktestMutation(baseOptions?: Apollo.MutationHookOptions<DeleteBacktestMutation, DeleteBacktestMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteBacktestMutation, DeleteBacktestMutationVariables>(DeleteBacktestDocument, options);
-      }
-export type DeleteBacktestMutationHookResult = ReturnType<typeof useDeleteBacktestMutation>;
-export type DeleteBacktestMutationResult = Apollo.MutationResult<DeleteBacktestMutation>;
-export type DeleteBacktestMutationOptions = Apollo.BaseMutationOptions<DeleteBacktestMutation, DeleteBacktestMutationVariables>;
-export const RunBacktestDocument = gql`
-    mutation RunBacktest($id: ID!) {
-  runBacktest(id: $id) {
-    id
-    status
   }
 }
     `;
@@ -437,7 +365,7 @@ export type RunBacktestMutationFn = Apollo.MutationFunction<RunBacktestMutation,
  * @example
  * const [runBacktestMutation, { data, loading, error }] = useRunBacktestMutation({
  *   variables: {
- *      id: // value for 'id'
+ *      input: // value for 'input'
  *   },
  * });
  */
@@ -482,3 +410,34 @@ export function useStopBacktestMutation(baseOptions?: Apollo.MutationHookOptions
 export type StopBacktestMutationHookResult = ReturnType<typeof useStopBacktestMutation>;
 export type StopBacktestMutationResult = Apollo.MutationResult<StopBacktestMutation>;
 export type StopBacktestMutationOptions = Apollo.BaseMutationOptions<StopBacktestMutation, StopBacktestMutationVariables>;
+export const DeleteBacktestDocument = gql`
+    mutation DeleteBacktest($id: ID!) {
+  deleteBacktest(id: $id)
+}
+    `;
+export type DeleteBacktestMutationFn = Apollo.MutationFunction<DeleteBacktestMutation, DeleteBacktestMutationVariables>;
+
+/**
+ * __useDeleteBacktestMutation__
+ *
+ * To run a mutation, you first call `useDeleteBacktestMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteBacktestMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteBacktestMutation, { data, loading, error }] = useDeleteBacktestMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteBacktestMutation(baseOptions?: Apollo.MutationHookOptions<DeleteBacktestMutation, DeleteBacktestMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteBacktestMutation, DeleteBacktestMutationVariables>(DeleteBacktestDocument, options);
+      }
+export type DeleteBacktestMutationHookResult = ReturnType<typeof useDeleteBacktestMutation>;
+export type DeleteBacktestMutationResult = Apollo.MutationResult<DeleteBacktestMutation>;
+export type DeleteBacktestMutationOptions = Apollo.BaseMutationOptions<DeleteBacktestMutation, DeleteBacktestMutationVariables>;
