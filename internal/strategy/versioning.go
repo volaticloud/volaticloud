@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/mixin"
 	"volaticloud/internal/ent/strategy"
 )
 
@@ -85,8 +86,12 @@ func Coalesce[T any](newVal, oldVal *T) T {
 // It finds the root version and recursively deletes all children.
 // Uses the soft-delete hook automatically via DeleteOneID.
 func DeleteAllVersions(ctx context.Context, client *ent.Client, strategyID uuid.UUID) error {
+	// Include soft-deleted records when traversing version tree
+	// This ensures we find all versions even if some were previously deleted
+	includeDeletedCtx := mixin.IncludeDeleted(ctx)
+
 	// Get the strategy
-	s, err := client.Strategy.Get(ctx, strategyID)
+	s, err := client.Strategy.Get(includeDeletedCtx, strategyID)
 	if err != nil {
 		return fmt.Errorf("failed to get strategy: %w", err)
 	}
@@ -94,22 +99,23 @@ func DeleteAllVersions(ctx context.Context, client *ent.Client, strategyID uuid.
 	// Find the root strategy (the one with no parent)
 	root := s
 	for root.ParentID != nil {
-		parent, err := client.Strategy.Get(ctx, *root.ParentID)
+		parent, err := client.Strategy.Get(includeDeletedCtx, *root.ParentID)
 		if err != nil {
 			return fmt.Errorf("failed to get parent strategy: %w", err)
 		}
 		root = parent
 	}
 
-	// Collect all versions starting from root
-	allVersions, err := collectAllVersions(ctx, client, root.ID)
+	// Collect all versions starting from root (including soft-deleted ones)
+	allVersions, err := collectAllVersions(includeDeletedCtx, client, root.ID)
 	if err != nil {
 		return err
 	}
 
 	// Soft-delete all versions (the hook will convert to UPDATE SET deleted_at)
+	// Use includeDeletedCtx so we can find and re-delete already soft-deleted versions
 	for _, id := range allVersions {
-		if err := client.Strategy.DeleteOneID(id).Exec(ctx); err != nil {
+		if err := client.Strategy.DeleteOneID(id).Exec(includeDeletedCtx); err != nil {
 			return fmt.Errorf("failed to delete strategy version %s: %w", id, err)
 		}
 	}

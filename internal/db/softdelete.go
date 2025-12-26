@@ -93,7 +93,8 @@ func SetupSoftDelete(client *entclient.Client) {
 				}
 			}
 
-			return nil, nil
+			// Return count of affected rows (Delete operations expect int, not entity)
+			return len(ids), nil
 		})
 	}
 

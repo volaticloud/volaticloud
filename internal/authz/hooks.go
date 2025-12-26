@@ -92,14 +92,20 @@ func strategyCreateHook() ent.Hook {
 func strategyDeleteHook() ent.Hook {
 	return hook.On(
 		func(next ent.Mutator) ent.Mutator {
-			return hook.StrategyFunc(func(ctx context.Context, m *ent.StrategyMutation) (ent.Value, error) {
+			// Use MutateFunc instead of StrategyFunc to handle nil returns from soft-delete
+			return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+				sm, ok := m.(*ent.StrategyMutation)
+				if !ok {
+					return next.Mutate(ctx, m)
+				}
+
 				// Capture ID before deletion
-				id, exists := m.ID()
+				id, exists := sm.ID()
 				if !exists {
 					return next.Mutate(ctx, m)
 				}
 
-				// Execute the mutation
+				// Execute the mutation (soft-delete returns nil, nil)
 				v, err := next.Mutate(ctx, m)
 				if err != nil {
 					return nil, err
@@ -173,14 +179,20 @@ func botCreateHook() ent.Hook {
 func botDeleteHook() ent.Hook {
 	return hook.On(
 		func(next ent.Mutator) ent.Mutator {
-			return hook.BotFunc(func(ctx context.Context, m *ent.BotMutation) (ent.Value, error) {
+			// Use MutateFunc instead of BotFunc to handle nil returns from soft-delete
+			return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+				bm, ok := m.(*ent.BotMutation)
+				if !ok {
+					return next.Mutate(ctx, m)
+				}
+
 				// Capture ID before deletion
-				id, exists := m.ID()
+				id, exists := bm.ID()
 				if !exists {
 					return next.Mutate(ctx, m)
 				}
 
-				// Execute the mutation
+				// Execute the mutation (soft-delete returns nil, nil)
 				v, err := next.Mutate(ctx, m)
 				if err != nil {
 					return nil, err
@@ -254,14 +266,20 @@ func exchangeCreateHook() ent.Hook {
 func exchangeDeleteHook() ent.Hook {
 	return hook.On(
 		func(next ent.Mutator) ent.Mutator {
-			return hook.ExchangeFunc(func(ctx context.Context, m *ent.ExchangeMutation) (ent.Value, error) {
+			// Use MutateFunc instead of ExchangeFunc to handle nil returns from soft-delete
+			return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+				em, ok := m.(*ent.ExchangeMutation)
+				if !ok {
+					return next.Mutate(ctx, m)
+				}
+
 				// Capture ID before deletion
-				id, exists := m.ID()
+				id, exists := em.ID()
 				if !exists {
 					return next.Mutate(ctx, m)
 				}
 
-				// Execute the mutation
+				// Execute the mutation (soft-delete returns nil, nil)
 				v, err := next.Mutate(ctx, m)
 				if err != nil {
 					return nil, err
@@ -335,14 +353,20 @@ func botRunnerCreateHook() ent.Hook {
 func botRunnerDeleteHook() ent.Hook {
 	return hook.On(
 		func(next ent.Mutator) ent.Mutator {
-			return hook.BotRunnerFunc(func(ctx context.Context, m *ent.BotRunnerMutation) (ent.Value, error) {
+			// Use MutateFunc instead of BotRunnerFunc to handle nil returns from soft-delete
+			return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+				brm, ok := m.(*ent.BotRunnerMutation)
+				if !ok {
+					return next.Mutate(ctx, m)
+				}
+
 				// Capture ID before deletion
-				id, exists := m.ID()
+				id, exists := brm.ID()
 				if !exists {
 					return next.Mutate(ctx, m)
 				}
 
-				// Execute the mutation
+				// Execute the mutation (soft-delete returns nil, nil)
 				v, err := next.Mutate(ctx, m)
 				if err != nil {
 					return nil, err
