@@ -26,6 +26,20 @@ type ResourceUsageSampleCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *ResourceUsageSampleCreate) SetDeletedAt(v time.Time) *ResourceUsageSampleCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *ResourceUsageSampleCreate) SetNillableDeletedAt(v *time.Time) *ResourceUsageSampleCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetResourceType sets the "resource_type" field.
 func (_c *ResourceUsageSampleCreate) SetResourceType(v enum.ResourceType) *ResourceUsageSampleCreate {
 	_c.mutation.SetResourceType(v)
@@ -305,6 +319,10 @@ func (_c *ResourceUsageSampleCreate) createSpec() (*ResourceUsageSample, *sqlgra
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(resourceusagesample.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.ResourceType(); ok {
 		_spec.SetField(resourceusagesample.FieldResourceType, field.TypeEnum, value)
 		_node.ResourceType = value
@@ -373,7 +391,7 @@ func (_c *ResourceUsageSampleCreate) createSpec() (*ResourceUsageSample, *sqlgra
 // of the `INSERT` statement. For example:
 //
 //	client.ResourceUsageSample.Create().
-//		SetResourceType(v).
+//		SetDeletedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -382,7 +400,7 @@ func (_c *ResourceUsageSampleCreate) createSpec() (*ResourceUsageSample, *sqlgra
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ResourceUsageSampleUpsert) {
-//			SetResourceType(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ResourceUsageSampleCreate) OnConflict(opts ...sql.ConflictOption) *ResourceUsageSampleUpsertOne {
@@ -417,6 +435,24 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ResourceUsageSampleUpsert) SetDeletedAt(v time.Time) *ResourceUsageSampleUpsert {
+	u.Set(resourceusagesample.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsert) UpdateDeletedAt() *ResourceUsageSampleUpsert {
+	u.SetExcluded(resourceusagesample.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ResourceUsageSampleUpsert) ClearDeletedAt() *ResourceUsageSampleUpsert {
+	u.SetNull(resourceusagesample.FieldDeletedAt)
+	return u
+}
 
 // SetResourceType sets the "resource_type" field.
 func (u *ResourceUsageSampleUpsert) SetResourceType(v enum.ResourceType) *ResourceUsageSampleUpsert {
@@ -635,6 +671,27 @@ func (u *ResourceUsageSampleUpsertOne) Update(set func(*ResourceUsageSampleUpser
 		set(&ResourceUsageSampleUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ResourceUsageSampleUpsertOne) SetDeletedAt(v time.Time) *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertOne) UpdateDeletedAt() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ResourceUsageSampleUpsertOne) ClearDeletedAt() *ResourceUsageSampleUpsertOne {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetResourceType sets the "resource_type" field.
@@ -969,7 +1026,7 @@ func (_c *ResourceUsageSampleCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ResourceUsageSampleUpsert) {
-//			SetResourceType(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ResourceUsageSampleCreateBulk) OnConflict(opts ...sql.ConflictOption) *ResourceUsageSampleUpsertBulk {
@@ -1049,6 +1106,27 @@ func (u *ResourceUsageSampleUpsertBulk) Update(set func(*ResourceUsageSampleUpse
 		set(&ResourceUsageSampleUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ResourceUsageSampleUpsertBulk) SetDeletedAt(v time.Time) *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ResourceUsageSampleUpsertBulk) UpdateDeletedAt() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ResourceUsageSampleUpsertBulk) ClearDeletedAt() *ResourceUsageSampleUpsertBulk {
+	return u.Update(func(s *ResourceUsageSampleUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetResourceType sets the "resource_type" field.

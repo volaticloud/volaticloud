@@ -31,6 +31,26 @@ func (_u *ResourceUsageSampleUpdate) Where(ps ...predicate.ResourceUsageSample) 
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ResourceUsageSampleUpdate) SetDeletedAt(v time.Time) *ResourceUsageSampleUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ResourceUsageSampleUpdate) SetNillableDeletedAt(v *time.Time) *ResourceUsageSampleUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ResourceUsageSampleUpdate) ClearDeletedAt() *ResourceUsageSampleUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetResourceType sets the "resource_type" field.
 func (_u *ResourceUsageSampleUpdate) SetResourceType(v enum.ResourceType) *ResourceUsageSampleUpdate {
 	_u.mutation.SetResourceType(v)
@@ -300,6 +320,12 @@ func (_u *ResourceUsageSampleUpdate) sqlSave(ctx context.Context) (_node int, er
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(resourceusagesample.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(resourceusagesample.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.ResourceType(); ok {
 		_spec.SetField(resourceusagesample.FieldResourceType, field.TypeEnum, value)
 	}
@@ -395,6 +421,26 @@ type ResourceUsageSampleUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ResourceUsageSampleMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ResourceUsageSampleUpdateOne) SetDeletedAt(v time.Time) *ResourceUsageSampleUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ResourceUsageSampleUpdateOne) SetNillableDeletedAt(v *time.Time) *ResourceUsageSampleUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ResourceUsageSampleUpdateOne) ClearDeletedAt() *ResourceUsageSampleUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetResourceType sets the "resource_type" field.
@@ -695,6 +741,12 @@ func (_u *ResourceUsageSampleUpdateOne) sqlSave(ctx context.Context) (_node *Res
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(resourceusagesample.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(resourceusagesample.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.ResourceType(); ok {
 		_spec.SetField(resourceusagesample.FieldResourceType, field.TypeEnum, value)

@@ -22,6 +22,8 @@ type Backtest struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Task status
 	Status enum.TaskStatus `json:"status,omitempty"`
 	// Backtest result data (metrics, logs, trades, etc.)
@@ -96,7 +98,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case backtest.FieldStatus, backtest.FieldErrorMessage, backtest.FieldLogs:
 			values[i] = new(sql.NullString)
-		case backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt, backtest.FieldStartDate, backtest.FieldEndDate:
+		case backtest.FieldDeletedAt, backtest.FieldCreatedAt, backtest.FieldUpdatedAt, backtest.FieldCompletedAt, backtest.FieldStartDate, backtest.FieldEndDate:
 			values[i] = new(sql.NullTime)
 		case backtest.FieldID, backtest.FieldStrategyID, backtest.FieldRunnerID:
 			values[i] = new(uuid.UUID)
@@ -120,6 +122,13 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case backtest.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case backtest.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -243,6 +252,11 @@ func (_m *Backtest) String() string {
 	var builder strings.Builder
 	builder.WriteString("Backtest(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")

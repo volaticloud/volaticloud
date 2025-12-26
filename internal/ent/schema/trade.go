@@ -10,6 +10,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
+
+	entmixin "volaticloud/internal/ent/mixin"
 )
 
 // Trade holds the schema definition for the Trade entity.
@@ -118,5 +120,12 @@ func (Trade) Annotations() []schema.Annotation {
 		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+	}
+}
+
+// Mixin of the Trade.
+func (Trade) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.SoftDeleteMixin{},
 	}
 }

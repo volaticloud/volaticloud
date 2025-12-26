@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -130,5 +131,12 @@ func (ResourceUsageAggregation) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.QueryField(),
 		// No mutations - aggregations are created programmatically by the aggregator
+	}
+}
+
+// Mixin of the ResourceUsageAggregation.
+func (ResourceUsageAggregation) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.SoftDeleteMixin{},
 	}
 }

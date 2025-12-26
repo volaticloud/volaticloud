@@ -303,12 +303,12 @@ func (_q *ExchangeQuery) WithBots(opts ...func(*BotQuery)) *ExchangeQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Exchange.Query().
-//		GroupBy(exchange.FieldName).
+//		GroupBy(exchange.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ExchangeQuery) GroupBy(field string, fields ...string) *ExchangeGroupBy {
@@ -326,11 +326,11 @@ func (_q *ExchangeQuery) GroupBy(field string, fields ...string) *ExchangeGroupB
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.Exchange.Query().
-//		Select(exchange.FieldName).
+//		Select(exchange.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *ExchangeQuery) Select(fields ...string) *ExchangeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

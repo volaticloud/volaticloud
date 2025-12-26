@@ -45,6 +45,26 @@ func (_u *StrategyUpdate) SetNillablePublic(v *bool) *StrategyUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *StrategyUpdate) SetDeletedAt(v time.Time) *StrategyUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *StrategyUpdate) SetNillableDeletedAt(v *time.Time) *StrategyUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *StrategyUpdate) ClearDeletedAt() *StrategyUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *StrategyUpdate) SetName(v string) *StrategyUpdate {
 	_u.mutation.SetName(v)
@@ -359,6 +379,12 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Public(); ok {
 		_spec.SetField(strategy.FieldPublic, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(strategy.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(strategy.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(strategy.FieldName, field.TypeString, value)
 	}
@@ -568,6 +594,26 @@ func (_u *StrategyUpdateOne) SetNillablePublic(v *bool) *StrategyUpdateOne {
 	if v != nil {
 		_u.SetPublic(*v)
 	}
+	return _u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *StrategyUpdateOne) SetDeletedAt(v time.Time) *StrategyUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *StrategyUpdateOne) SetNillableDeletedAt(v *time.Time) *StrategyUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *StrategyUpdateOne) ClearDeletedAt() *StrategyUpdateOne {
+	_u.mutation.ClearDeletedAt()
 	return _u
 }
 
@@ -914,6 +960,12 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	}
 	if value, ok := _u.mutation.Public(); ok {
 		_spec.SetField(strategy.FieldPublic, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(strategy.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(strategy.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(strategy.FieldName, field.TypeString, value)

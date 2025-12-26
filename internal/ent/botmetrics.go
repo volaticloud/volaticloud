@@ -19,6 +19,8 @@ type BotMetrics struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Foreign key to bot (one-to-one)
 	BotID uuid.UUID `json:"bot_id,omitempty"`
 	// Total closed profit in coin
@@ -104,7 +106,7 @@ func (*BotMetrics) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case botmetrics.FieldBestPair:
 			values[i] = new(sql.NullString)
-		case botmetrics.FieldFirstTradeTimestamp, botmetrics.FieldLatestTradeTimestamp, botmetrics.FieldFetchedAt, botmetrics.FieldUpdatedAt, botmetrics.FieldLastTradeSyncAt:
+		case botmetrics.FieldDeletedAt, botmetrics.FieldFirstTradeTimestamp, botmetrics.FieldLatestTradeTimestamp, botmetrics.FieldFetchedAt, botmetrics.FieldUpdatedAt, botmetrics.FieldLastTradeSyncAt:
 			values[i] = new(sql.NullTime)
 		case botmetrics.FieldID, botmetrics.FieldBotID:
 			values[i] = new(uuid.UUID)
@@ -128,6 +130,13 @@ func (_m *BotMetrics) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case botmetrics.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case botmetrics.FieldBotID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -309,6 +318,11 @@ func (_m *BotMetrics) String() string {
 	var builder strings.Builder
 	builder.WriteString("BotMetrics(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("bot_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BotID))
 	builder.WriteString(", ")

@@ -49,6 +49,26 @@ func (_u *BotUpdate) SetNillablePublic(v *bool) *BotUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BotUpdate) SetDeletedAt(v time.Time) *BotUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BotUpdate) SetNillableDeletedAt(v *time.Time) *BotUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BotUpdate) ClearDeletedAt() *BotUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BotUpdate) SetName(v string) *BotUpdate {
 	_u.mutation.SetName(v)
@@ -415,6 +435,12 @@ func (_u *BotUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Public(); ok {
 		_spec.SetField(bot.FieldPublic, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(bot.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(bot.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(bot.FieldName, field.TypeString, value)
 	}
@@ -649,6 +675,26 @@ func (_u *BotUpdateOne) SetNillablePublic(v *bool) *BotUpdateOne {
 	if v != nil {
 		_u.SetPublic(*v)
 	}
+	return _u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BotUpdateOne) SetDeletedAt(v time.Time) *BotUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BotUpdateOne) SetNillableDeletedAt(v *time.Time) *BotUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BotUpdateOne) ClearDeletedAt() *BotUpdateOne {
+	_u.mutation.ClearDeletedAt()
 	return _u
 }
 
@@ -1047,6 +1093,12 @@ func (_u *BotUpdateOne) sqlSave(ctx context.Context) (_node *Bot, err error) {
 	}
 	if value, ok := _u.mutation.Public(); ok {
 		_spec.SetField(bot.FieldPublic, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(bot.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(bot.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(bot.FieldName, field.TypeString, value)

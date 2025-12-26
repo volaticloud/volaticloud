@@ -10,6 +10,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
+
+	entmixin "volaticloud/internal/ent/mixin"
 )
 
 // Exchange holds the schema definition for the Exchange entity.
@@ -74,5 +76,12 @@ func (Exchange) Annotations() []schema.Annotation {
 func (Exchange) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateExchangeConfig,
+	}
+}
+
+// Mixin of the Exchange.
+func (Exchange) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.SoftDeleteMixin{},
 	}
 }

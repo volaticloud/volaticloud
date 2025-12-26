@@ -25,6 +25,20 @@ type TradeCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *TradeCreate) SetDeletedAt(v time.Time) *TradeCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *TradeCreate) SetNillableDeletedAt(v *time.Time) *TradeCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
 func (_c *TradeCreate) SetFreqtradeTradeID(v int) *TradeCreate {
 	_c.mutation.SetFreqtradeTradeID(v)
@@ -395,6 +409,10 @@ func (_c *TradeCreate) createSpec() (*Trade, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(trade.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.FreqtradeTradeID(); ok {
 		_spec.SetField(trade.FieldFreqtradeTradeID, field.TypeInt, value)
 		_node.FreqtradeTradeID = value
@@ -487,7 +505,7 @@ func (_c *TradeCreate) createSpec() (*Trade, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Trade.Create().
-//		SetFreqtradeTradeID(v).
+//		SetDeletedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -496,7 +514,7 @@ func (_c *TradeCreate) createSpec() (*Trade, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TradeUpsert) {
-//			SetFreqtradeTradeID(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *TradeCreate) OnConflict(opts ...sql.ConflictOption) *TradeUpsertOne {
@@ -531,6 +549,24 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TradeUpsert) SetDeletedAt(v time.Time) *TradeUpsert {
+	u.Set(trade.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TradeUpsert) UpdateDeletedAt() *TradeUpsert {
+	u.SetExcluded(trade.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TradeUpsert) ClearDeletedAt() *TradeUpsert {
+	u.SetNull(trade.FieldDeletedAt)
+	return u
+}
 
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
 func (u *TradeUpsert) SetFreqtradeTradeID(v int) *TradeUpsert {
@@ -863,6 +899,27 @@ func (u *TradeUpsertOne) Update(set func(*TradeUpsert)) *TradeUpsertOne {
 		set(&TradeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TradeUpsertOne) SetDeletedAt(v time.Time) *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TradeUpsertOne) UpdateDeletedAt() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TradeUpsertOne) ClearDeletedAt() *TradeUpsertOne {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
@@ -1330,7 +1387,7 @@ func (_c *TradeCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TradeUpsert) {
-//			SetFreqtradeTradeID(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *TradeCreateBulk) OnConflict(opts ...sql.ConflictOption) *TradeUpsertBulk {
@@ -1410,6 +1467,27 @@ func (u *TradeUpsertBulk) Update(set func(*TradeUpsert)) *TradeUpsertBulk {
 		set(&TradeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *TradeUpsertBulk) SetDeletedAt(v time.Time) *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *TradeUpsertBulk) UpdateDeletedAt() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *TradeUpsertBulk) ClearDeletedAt() *TradeUpsertBulk {
+	return u.Update(func(s *TradeUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.

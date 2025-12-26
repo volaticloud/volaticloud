@@ -30,6 +30,26 @@ func (_u *ExchangeUpdate) Where(ps ...predicate.Exchange) *ExchangeUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ExchangeUpdate) SetDeletedAt(v time.Time) *ExchangeUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ExchangeUpdate) SetNillableDeletedAt(v *time.Time) *ExchangeUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ExchangeUpdate) ClearDeletedAt() *ExchangeUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *ExchangeUpdate) SetName(v string) *ExchangeUpdate {
 	_u.mutation.SetName(v)
@@ -186,6 +206,12 @@ func (_u *ExchangeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(exchange.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(exchange.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(exchange.FieldName, field.TypeString, value)
 	}
@@ -264,6 +290,26 @@ type ExchangeUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ExchangeMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ExchangeUpdateOne) SetDeletedAt(v time.Time) *ExchangeUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ExchangeUpdateOne) SetNillableDeletedAt(v *time.Time) *ExchangeUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ExchangeUpdateOne) ClearDeletedAt() *ExchangeUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -451,6 +497,12 @@ func (_u *ExchangeUpdateOne) sqlSave(ctx context.Context) (_node *Exchange, err 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(exchange.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(exchange.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(exchange.FieldName, field.TypeString, value)

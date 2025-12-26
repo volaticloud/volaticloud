@@ -11,6 +11,7 @@ import (
 
 // CreateBacktestInput represents a mutation input for creating backtests.
 type CreateBacktestInput struct {
+	DeletedAt    *time.Time
 	Status       *enum.TaskStatus
 	Result       map[string]interface{}
 	ErrorMessage *string
@@ -26,6 +27,9 @@ type CreateBacktestInput struct {
 
 // Mutate applies the CreateBacktestInput on the BacktestMutation builder.
 func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if v := i.Status; v != nil {
 		m.SetStatus(*v)
 	}
@@ -66,6 +70,7 @@ func (c *BacktestCreate) SetInput(i CreateBacktestInput) *BacktestCreate {
 // CreateBotInput represents a mutation input for creating bots.
 type CreateBotInput struct {
 	Public           *bool
+	DeletedAt        *time.Time
 	Name             string
 	Status           *enum.BotStatus
 	Mode             *enum.BotMode
@@ -87,6 +92,9 @@ type CreateBotInput struct {
 func (i *CreateBotInput) Mutate(m *BotMutation) {
 	if v := i.Public; v != nil {
 		m.SetPublic(*v)
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
 	}
 	m.SetName(i.Name)
 	if v := i.Status; v != nil {
@@ -134,6 +142,8 @@ func (c *BotCreate) SetInput(i CreateBotInput) *BotCreate {
 // UpdateBotInput represents a mutation input for updating bots.
 type UpdateBotInput struct {
 	Public            *bool
+	ClearDeletedAt    bool
+	DeletedAt         *time.Time
 	Name              *string
 	Status            *enum.BotStatus
 	Mode              *enum.BotMode
@@ -160,6 +170,12 @@ type UpdateBotInput struct {
 func (i *UpdateBotInput) Mutate(m *BotMutation) {
 	if v := i.Public; v != nil {
 		m.SetPublic(*v)
+	}
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
 	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
@@ -237,6 +253,7 @@ func (c *BotUpdateOne) SetInput(i UpdateBotInput) *BotUpdateOne {
 
 // CreateBotMetricsInput represents a mutation input for creating botmetricsslice.
 type CreateBotMetricsInput struct {
+	DeletedAt            *time.Time
 	ProfitClosedCoin     *float64
 	ProfitClosedPercent  *float64
 	ProfitAllCoin        *float64
@@ -264,6 +281,9 @@ type CreateBotMetricsInput struct {
 
 // Mutate applies the CreateBotMetricsInput on the BotMetricsMutation builder.
 func (i *CreateBotMetricsInput) Mutate(m *BotMetricsMutation) {
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if v := i.ProfitClosedCoin; v != nil {
 		m.SetProfitClosedCoin(*v)
 	}
@@ -341,6 +361,8 @@ func (c *BotMetricsCreate) SetInput(i CreateBotMetricsInput) *BotMetricsCreate {
 
 // UpdateBotMetricsInput represents a mutation input for updating botmetricsslice.
 type UpdateBotMetricsInput struct {
+	ClearDeletedAt            bool
+	DeletedAt                 *time.Time
 	ClearProfitClosedCoin     bool
 	ProfitClosedCoin          *float64
 	ClearProfitClosedPercent  bool
@@ -387,6 +409,12 @@ type UpdateBotMetricsInput struct {
 
 // Mutate applies the UpdateBotMetricsInput on the BotMetricsMutation builder.
 func (i *UpdateBotMetricsInput) Mutate(m *BotMetricsMutation) {
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if i.ClearProfitClosedCoin {
 		m.ClearProfitClosedCoin()
 	}
@@ -530,6 +558,7 @@ func (c *BotMetricsUpdateOne) SetInput(i UpdateBotMetricsInput) *BotMetricsUpdat
 // CreateBotRunnerInput represents a mutation input for creating botrunners.
 type CreateBotRunnerInput struct {
 	Public                *bool
+	DeletedAt             *time.Time
 	Name                  string
 	Type                  *enum.RunnerType
 	Config                map[string]interface{}
@@ -559,6 +588,9 @@ type CreateBotRunnerInput struct {
 func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	if v := i.Public; v != nil {
 		m.SetPublic(*v)
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
 	}
 	m.SetName(i.Name)
 	if v := i.Type; v != nil {
@@ -636,6 +668,8 @@ func (c *BotRunnerCreate) SetInput(i CreateBotRunnerInput) *BotRunnerCreate {
 // UpdateBotRunnerInput represents a mutation input for updating botrunners.
 type UpdateBotRunnerInput struct {
 	Public                     *bool
+	ClearDeletedAt             bool
+	DeletedAt                  *time.Time
 	Name                       *string
 	Type                       *enum.RunnerType
 	ClearConfig                bool
@@ -681,6 +715,12 @@ type UpdateBotRunnerInput struct {
 func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	if v := i.Public; v != nil {
 		m.SetPublic(*v)
+	}
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
 	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
@@ -815,6 +855,7 @@ func (c *BotRunnerUpdateOne) SetInput(i UpdateBotRunnerInput) *BotRunnerUpdateOn
 
 // CreateExchangeInput represents a mutation input for creating exchanges.
 type CreateExchangeInput struct {
+	DeletedAt *time.Time
 	Name      string
 	Config    map[string]interface{}
 	OwnerID   string
@@ -825,6 +866,9 @@ type CreateExchangeInput struct {
 
 // Mutate applies the CreateExchangeInput on the ExchangeMutation builder.
 func (i *CreateExchangeInput) Mutate(m *ExchangeMutation) {
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	m.SetName(i.Name)
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
@@ -849,18 +893,26 @@ func (c *ExchangeCreate) SetInput(i CreateExchangeInput) *ExchangeCreate {
 
 // UpdateExchangeInput represents a mutation input for updating exchanges.
 type UpdateExchangeInput struct {
-	Name         *string
-	ClearConfig  bool
-	Config       map[string]interface{}
-	OwnerID      *string
-	UpdatedAt    *time.Time
-	ClearBots    bool
-	AddBotIDs    []uuid.UUID
-	RemoveBotIDs []uuid.UUID
+	ClearDeletedAt bool
+	DeletedAt      *time.Time
+	Name           *string
+	ClearConfig    bool
+	Config         map[string]interface{}
+	OwnerID        *string
+	UpdatedAt      *time.Time
+	ClearBots      bool
+	AddBotIDs      []uuid.UUID
+	RemoveBotIDs   []uuid.UUID
 }
 
 // Mutate applies the UpdateExchangeInput on the ExchangeMutation builder.
 func (i *UpdateExchangeInput) Mutate(m *ExchangeMutation) {
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
@@ -902,6 +954,7 @@ func (c *ExchangeUpdateOne) SetInput(i UpdateExchangeInput) *ExchangeUpdateOne {
 // CreateStrategyInput represents a mutation input for creating strategies.
 type CreateStrategyInput struct {
 	Public        *bool
+	DeletedAt     *time.Time
 	Name          string
 	Description   *string
 	Code          string
@@ -921,6 +974,9 @@ type CreateStrategyInput struct {
 func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 	if v := i.Public; v != nil {
 		m.SetPublic(*v)
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
 	}
 	m.SetName(i.Name)
 	if v := i.Description; v != nil {
@@ -966,6 +1022,8 @@ func (c *StrategyCreate) SetInput(i CreateStrategyInput) *StrategyCreate {
 // UpdateStrategyInput represents a mutation input for updating strategies.
 type UpdateStrategyInput struct {
 	Public           *bool
+	ClearDeletedAt   bool
+	DeletedAt        *time.Time
 	Name             *string
 	ClearDescription bool
 	Description      *string
@@ -991,6 +1049,12 @@ type UpdateStrategyInput struct {
 func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	if v := i.Public; v != nil {
 		m.SetPublic(*v)
+	}
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
 	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
@@ -1065,6 +1129,7 @@ func (c *StrategyUpdateOne) SetInput(i UpdateStrategyInput) *StrategyUpdateOne {
 
 // CreateTradeInput represents a mutation input for creating trades.
 type CreateTradeInput struct {
+	DeletedAt        *time.Time
 	FreqtradeTradeID int
 	Pair             string
 	IsOpen           *bool
@@ -1086,6 +1151,9 @@ type CreateTradeInput struct {
 
 // Mutate applies the CreateTradeInput on the TradeMutation builder.
 func (i *CreateTradeInput) Mutate(m *TradeMutation) {
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	m.SetFreqtradeTradeID(i.FreqtradeTradeID)
 	m.SetPair(i.Pair)
 	if v := i.IsOpen; v != nil {
@@ -1133,6 +1201,8 @@ func (c *TradeCreate) SetInput(i CreateTradeInput) *TradeCreate {
 
 // UpdateTradeInput represents a mutation input for updating trades.
 type UpdateTradeInput struct {
+	ClearDeletedAt    bool
+	DeletedAt         *time.Time
 	FreqtradeTradeID  *int
 	Pair              *string
 	IsOpen            *bool
@@ -1158,6 +1228,12 @@ type UpdateTradeInput struct {
 
 // Mutate applies the UpdateTradeInput on the TradeMutation builder.
 func (i *UpdateTradeInput) Mutate(m *TradeMutation) {
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
 	if v := i.FreqtradeTradeID; v != nil {
 		m.SetFreqtradeTradeID(*v)
 	}

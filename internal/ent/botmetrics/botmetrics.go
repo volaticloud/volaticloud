@@ -5,6 +5,7 @@ package botmetrics
 import (
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -15,6 +16,8 @@ const (
 	Label = "bot_metrics"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldBotID holds the string denoting the bot_id field in the database.
 	FieldBotID = "bot_id"
 	// FieldProfitClosedCoin holds the string denoting the profit_closed_coin field in the database.
@@ -77,6 +80,7 @@ const (
 // Columns holds all SQL columns for botmetrics fields.
 var Columns = []string{
 	FieldID,
+	FieldDeletedAt,
 	FieldBotID,
 	FieldProfitClosedCoin,
 	FieldProfitClosedPercent,
@@ -112,7 +116,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "volaticloud/internal/ent/runtime"
 var (
+	Interceptors [1]ent.Interceptor
 	// DefaultFetchedAt holds the default value on creation for the "fetched_at" field.
 	DefaultFetchedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -131,6 +141,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByBotID orders the results by the bot_id field.

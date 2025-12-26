@@ -25,6 +25,20 @@ type ExchangeCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *ExchangeCreate) SetDeletedAt(v time.Time) *ExchangeCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *ExchangeCreate) SetNillableDeletedAt(v *time.Time) *ExchangeCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *ExchangeCreate) SetName(v string) *ExchangeCreate {
 	_c.mutation.SetName(v)
@@ -221,6 +235,10 @@ func (_c *ExchangeCreate) createSpec() (*Exchange, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(exchange.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(exchange.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -264,7 +282,7 @@ func (_c *ExchangeCreate) createSpec() (*Exchange, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Exchange.Create().
-//		SetName(v).
+//		SetDeletedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -273,7 +291,7 @@ func (_c *ExchangeCreate) createSpec() (*Exchange, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ExchangeUpsert) {
-//			SetName(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ExchangeCreate) OnConflict(opts ...sql.ConflictOption) *ExchangeUpsertOne {
@@ -308,6 +326,24 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ExchangeUpsert) SetDeletedAt(v time.Time) *ExchangeUpsert {
+	u.Set(exchange.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ExchangeUpsert) UpdateDeletedAt() *ExchangeUpsert {
+	u.SetExcluded(exchange.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ExchangeUpsert) ClearDeletedAt() *ExchangeUpsert {
+	u.SetNull(exchange.FieldDeletedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *ExchangeUpsert) SetName(v string) *ExchangeUpsert {
@@ -412,6 +448,27 @@ func (u *ExchangeUpsertOne) Update(set func(*ExchangeUpsert)) *ExchangeUpsertOne
 		set(&ExchangeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ExchangeUpsertOne) SetDeletedAt(v time.Time) *ExchangeUpsertOne {
+	return u.Update(func(s *ExchangeUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ExchangeUpsertOne) UpdateDeletedAt() *ExchangeUpsertOne {
+	return u.Update(func(s *ExchangeUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ExchangeUpsertOne) ClearDeletedAt() *ExchangeUpsertOne {
+	return u.Update(func(s *ExchangeUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -613,7 +670,7 @@ func (_c *ExchangeCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ExchangeUpsert) {
-//			SetName(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ExchangeCreateBulk) OnConflict(opts ...sql.ConflictOption) *ExchangeUpsertBulk {
@@ -693,6 +750,27 @@ func (u *ExchangeUpsertBulk) Update(set func(*ExchangeUpsert)) *ExchangeUpsertBu
 		set(&ExchangeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ExchangeUpsertBulk) SetDeletedAt(v time.Time) *ExchangeUpsertBulk {
+	return u.Update(func(s *ExchangeUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ExchangeUpsertBulk) UpdateDeletedAt() *ExchangeUpsertBulk {
+	return u.Update(func(s *ExchangeUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ExchangeUpsertBulk) ClearDeletedAt() *ExchangeUpsertBulk {
+	return u.Update(func(s *ExchangeUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetName sets the "name" field.

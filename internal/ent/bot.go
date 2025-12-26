@@ -26,6 +26,8 @@ type Bot struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Whether this resource is publicly visible to all authenticated users
 	Public bool `json:"public,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Bot display name
 	Name string `json:"name,omitempty"`
 	// Bot lifecycle status
@@ -145,7 +147,7 @@ func (*Bot) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case bot.FieldName, bot.FieldStatus, bot.FieldMode, bot.FieldFreqtradeVersion, bot.FieldErrorMessage, bot.FieldOwnerID:
 			values[i] = new(sql.NullString)
-		case bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
+		case bot.FieldDeletedAt, bot.FieldLastSeenAt, bot.FieldCreatedAt, bot.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case bot.FieldID, bot.FieldExchangeID, bot.FieldStrategyID, bot.FieldRunnerID:
 			values[i] = new(uuid.UUID)
@@ -175,6 +177,13 @@ func (_m *Bot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field public", values[i])
 			} else if value.Valid {
 				_m.Public = value.Bool
+			}
+		case bot.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case bot.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -327,6 +336,11 @@ func (_m *Bot) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("public=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Public))
+	builder.WriteString(", ")
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

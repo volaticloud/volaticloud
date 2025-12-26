@@ -40,6 +40,20 @@ func (_c *StrategyCreate) SetNillablePublic(v *bool) *StrategyCreate {
 	return _c
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *StrategyCreate) SetDeletedAt(v time.Time) *StrategyCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *StrategyCreate) SetNillableDeletedAt(v *time.Time) *StrategyCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *StrategyCreate) SetName(v string) *StrategyCreate {
 	_c.mutation.SetName(v)
@@ -368,6 +382,10 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 		_spec.SetField(strategy.FieldPublic, field.TypeBool, value)
 		_node.Public = value
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(strategy.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(strategy.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -530,6 +548,24 @@ func (u *StrategyUpsert) SetPublic(v bool) *StrategyUpsert {
 // UpdatePublic sets the "public" field to the value that was provided on create.
 func (u *StrategyUpsert) UpdatePublic() *StrategyUpsert {
 	u.SetExcluded(strategy.FieldPublic)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *StrategyUpsert) SetDeletedAt(v time.Time) *StrategyUpsert {
+	u.Set(strategy.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateDeletedAt() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *StrategyUpsert) ClearDeletedAt() *StrategyUpsert {
+	u.SetNull(strategy.FieldDeletedAt)
 	return u
 }
 
@@ -721,6 +757,27 @@ func (u *StrategyUpsertOne) SetPublic(v bool) *StrategyUpsertOne {
 func (u *StrategyUpsertOne) UpdatePublic() *StrategyUpsertOne {
 	return u.Update(func(s *StrategyUpsert) {
 		s.UpdatePublic()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *StrategyUpsertOne) SetDeletedAt(v time.Time) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateDeletedAt() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *StrategyUpsertOne) ClearDeletedAt() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.ClearDeletedAt()
 	})
 }
 
@@ -1100,6 +1157,27 @@ func (u *StrategyUpsertBulk) SetPublic(v bool) *StrategyUpsertBulk {
 func (u *StrategyUpsertBulk) UpdatePublic() *StrategyUpsertBulk {
 	return u.Update(func(s *StrategyUpsert) {
 		s.UpdatePublic()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *StrategyUpsertBulk) SetDeletedAt(v time.Time) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateDeletedAt() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *StrategyUpsertBulk) ClearDeletedAt() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.ClearDeletedAt()
 	})
 }
 

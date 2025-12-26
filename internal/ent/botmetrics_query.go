@@ -301,12 +301,12 @@ func (_q *BotMetricsQuery) WithBot(opts ...func(*BotQuery)) *BotMetricsQuery {
 // Example:
 //
 //	var v []struct {
-//		BotID uuid.UUID `json:"bot_id,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.BotMetrics.Query().
-//		GroupBy(botmetrics.FieldBotID).
+//		GroupBy(botmetrics.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *BotMetricsQuery) GroupBy(field string, fields ...string) *BotMetricsGroupBy {
@@ -324,11 +324,11 @@ func (_q *BotMetricsQuery) GroupBy(field string, fields ...string) *BotMetricsGr
 // Example:
 //
 //	var v []struct {
-//		BotID uuid.UUID `json:"bot_id,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.BotMetrics.Query().
-//		Select(botmetrics.FieldBotID).
+//		Select(botmetrics.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *BotMetricsQuery) Select(fields ...string) *BotMetricsSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

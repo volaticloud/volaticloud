@@ -21,6 +21,8 @@ const (
 	FieldID = "id"
 	// FieldPublic holds the string denoting the public field in the database.
 	FieldPublic = "public"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldType holds the string denoting the type field in the database.
@@ -107,6 +109,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldPublic,
+	FieldDeletedAt,
 	FieldName,
 	FieldType,
 	FieldConfig,
@@ -146,7 +149,8 @@ func ValidColumn(column string) bool {
 //
 //	import _ "volaticloud/internal/ent/runtime"
 var (
-	Hooks [2]ent.Hook
+	Hooks        [2]ent.Hook
+	Interceptors [1]ent.Interceptor
 	// DefaultPublic holds the default value on creation for the "public" field.
 	DefaultPublic bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -202,6 +206,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByPublic orders the results by the public field.
 func ByPublic(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPublic, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

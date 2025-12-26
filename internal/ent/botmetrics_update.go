@@ -30,6 +30,26 @@ func (_u *BotMetricsUpdate) Where(ps ...predicate.BotMetrics) *BotMetricsUpdate 
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BotMetricsUpdate) SetDeletedAt(v time.Time) *BotMetricsUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BotMetricsUpdate) SetNillableDeletedAt(v *time.Time) *BotMetricsUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BotMetricsUpdate) ClearDeletedAt() *BotMetricsUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetBotID sets the "bot_id" field.
 func (_u *BotMetricsUpdate) SetBotID(v uuid.UUID) *BotMetricsUpdate {
 	_u.mutation.SetBotID(v)
@@ -642,6 +662,12 @@ func (_u *BotMetricsUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(botmetrics.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(botmetrics.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.ProfitClosedCoin(); ok {
 		_spec.SetField(botmetrics.FieldProfitClosedCoin, field.TypeFloat64, value)
 	}
@@ -860,6 +886,26 @@ type BotMetricsUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *BotMetricsMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BotMetricsUpdateOne) SetDeletedAt(v time.Time) *BotMetricsUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BotMetricsUpdateOne) SetNillableDeletedAt(v *time.Time) *BotMetricsUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BotMetricsUpdateOne) ClearDeletedAt() *BotMetricsUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetBotID sets the "bot_id" field.
@@ -1503,6 +1549,12 @@ func (_u *BotMetricsUpdateOne) sqlSave(ctx context.Context) (_node *BotMetrics, 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(botmetrics.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(botmetrics.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.ProfitClosedCoin(); ok {
 		_spec.SetField(botmetrics.FieldProfitClosedCoin, field.TypeFloat64, value)

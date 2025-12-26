@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -104,5 +105,12 @@ func (ResourceUsageSample) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.QueryField(),
 		// No mutations - samples are created programmatically by the collector
+	}
+}
+
+// Mixin of the ResourceUsageSample.
+func (ResourceUsageSample) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.SoftDeleteMixin{},
 	}
 }

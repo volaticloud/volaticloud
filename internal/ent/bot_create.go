@@ -44,6 +44,20 @@ func (_c *BotCreate) SetNillablePublic(v *bool) *BotCreate {
 	return _c
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *BotCreate) SetDeletedAt(v time.Time) *BotCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *BotCreate) SetNillableDeletedAt(v *time.Time) *BotCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *BotCreate) SetName(v string) *BotCreate {
 	_c.mutation.SetName(v)
@@ -416,6 +430,10 @@ func (_c *BotCreate) createSpec() (*Bot, *sqlgraph.CreateSpec) {
 		_spec.SetField(bot.FieldPublic, field.TypeBool, value)
 		_node.Public = value
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(bot.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(bot.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -604,6 +622,24 @@ func (u *BotUpsert) SetPublic(v bool) *BotUpsert {
 // UpdatePublic sets the "public" field to the value that was provided on create.
 func (u *BotUpsert) UpdatePublic() *BotUpsert {
 	u.SetExcluded(bot.FieldPublic)
+	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BotUpsert) SetDeletedAt(v time.Time) *BotUpsert {
+	u.Set(bot.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BotUpsert) UpdateDeletedAt() *BotUpsert {
+	u.SetExcluded(bot.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BotUpsert) ClearDeletedAt() *BotUpsert {
+	u.SetNull(bot.FieldDeletedAt)
 	return u
 }
 
@@ -849,6 +885,27 @@ func (u *BotUpsertOne) SetPublic(v bool) *BotUpsertOne {
 func (u *BotUpsertOne) UpdatePublic() *BotUpsertOne {
 	return u.Update(func(s *BotUpsert) {
 		s.UpdatePublic()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BotUpsertOne) SetDeletedAt(v time.Time) *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BotUpsertOne) UpdateDeletedAt() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BotUpsertOne) ClearDeletedAt() *BotUpsertOne {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearDeletedAt()
 	})
 }
 
@@ -1291,6 +1348,27 @@ func (u *BotUpsertBulk) SetPublic(v bool) *BotUpsertBulk {
 func (u *BotUpsertBulk) UpdatePublic() *BotUpsertBulk {
 	return u.Update(func(s *BotUpsert) {
 		s.UpdatePublic()
+	})
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BotUpsertBulk) SetDeletedAt(v time.Time) *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BotUpsertBulk) UpdateDeletedAt() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BotUpsertBulk) ClearDeletedAt() *BotUpsertBulk {
+	return u.Update(func(s *BotUpsert) {
+		s.ClearDeletedAt()
 	})
 }
 

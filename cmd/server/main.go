@@ -24,6 +24,7 @@ import (
 
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
+	"volaticloud/internal/db"
 	_ "volaticloud/internal/docker" // Register Docker runtime creator
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/migrate"
@@ -175,6 +176,9 @@ func runServer(c *cli.Context) error {
 	); err != nil {
 		return fmt.Errorf("failed creating schema resources: %w", err)
 	}
+
+	// Setup soft-delete hooks - converts Delete() to UPDATE SET deleted_at
+	db.SetupSoftDelete(client)
 
 	host := c.String("host")
 	port := c.Int("port")

@@ -22,6 +22,9 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	backtestMixin := schema.Backtest{}.Mixin()
+	backtestMixinInters0 := backtestMixin[0].Interceptors()
+	backtest.Interceptors[0] = backtestMixinInters0[0]
 	backtestFields := schema.Backtest{}.Fields()
 	_ = backtestFields
 	// backtestDescCreatedAt is the schema descriptor for created_at field.
@@ -39,6 +42,8 @@ func init() {
 	// backtest.DefaultID holds the default value on creation for the id field.
 	backtest.DefaultID = backtestDescID.Default.(func() uuid.UUID)
 	botMixin := schema.Bot{}.Mixin()
+	botMixinInters1 := botMixin[1].Interceptors()
+	bot.Interceptors[0] = botMixinInters1[0]
 	botMixinFields0 := botMixin[0].Fields()
 	_ = botMixinFields0
 	botFields := schema.Bot{}.Fields()
@@ -73,6 +78,9 @@ func init() {
 	botDescID := botFields[0].Descriptor()
 	// bot.DefaultID holds the default value on creation for the id field.
 	bot.DefaultID = botDescID.Default.(func() uuid.UUID)
+	botmetricsMixin := schema.BotMetrics{}.Mixin()
+	botmetricsMixinInters0 := botmetricsMixin[0].Interceptors()
+	botmetrics.Interceptors[0] = botmetricsMixinInters0[0]
 	botmetricsFields := schema.BotMetrics{}.Fields()
 	_ = botmetricsFields
 	// botmetricsDescFetchedAt is the schema descriptor for fetched_at field.
@@ -97,6 +105,8 @@ func init() {
 	botrunnerHooks := schema.BotRunner{}.Hooks()
 	botrunner.Hooks[0] = botrunnerHooks[0]
 	botrunner.Hooks[1] = botrunnerHooks[1]
+	botrunnerMixinInters1 := botrunnerMixin[1].Interceptors()
+	botrunner.Interceptors[0] = botrunnerMixinInters1[0]
 	botrunnerMixinFields0 := botrunnerMixin[0].Fields()
 	_ = botrunnerMixinFields0
 	botrunnerFields := schema.BotRunner{}.Fields()
@@ -135,8 +145,11 @@ func init() {
 	botrunnerDescID := botrunnerFields[0].Descriptor()
 	// botrunner.DefaultID holds the default value on creation for the id field.
 	botrunner.DefaultID = botrunnerDescID.Default.(func() uuid.UUID)
+	exchangeMixin := schema.Exchange{}.Mixin()
 	exchangeHooks := schema.Exchange{}.Hooks()
 	exchange.Hooks[0] = exchangeHooks[0]
+	exchangeMixinInters0 := exchangeMixin[0].Interceptors()
+	exchange.Interceptors[0] = exchangeMixinInters0[0]
 	exchangeFields := schema.Exchange{}.Fields()
 	_ = exchangeFields
 	// exchangeDescName is the schema descriptor for name field.
@@ -161,6 +174,9 @@ func init() {
 	exchangeDescID := exchangeFields[0].Descriptor()
 	// exchange.DefaultID holds the default value on creation for the id field.
 	exchange.DefaultID = exchangeDescID.Default.(func() uuid.UUID)
+	resourceusageaggregationMixin := schema.ResourceUsageAggregation{}.Mixin()
+	resourceusageaggregationMixinInters0 := resourceusageaggregationMixin[0].Interceptors()
+	resourceusageaggregation.Interceptors[0] = resourceusageaggregationMixinInters0[0]
 	resourceusageaggregationFields := schema.ResourceUsageAggregation{}.Fields()
 	_ = resourceusageaggregationFields
 	// resourceusageaggregationDescOwnerID is the schema descriptor for owner_id field.
@@ -219,6 +235,9 @@ func init() {
 	resourceusageaggregationDescID := resourceusageaggregationFields[0].Descriptor()
 	// resourceusageaggregation.DefaultID holds the default value on creation for the id field.
 	resourceusageaggregation.DefaultID = resourceusageaggregationDescID.Default.(func() uuid.UUID)
+	resourceusagesampleMixin := schema.ResourceUsageSample{}.Mixin()
+	resourceusagesampleMixinInters0 := resourceusagesampleMixin[0].Interceptors()
+	resourceusagesample.Interceptors[0] = resourceusagesampleMixinInters0[0]
 	resourceusagesampleFields := schema.ResourceUsageSample{}.Fields()
 	_ = resourceusagesampleFields
 	// resourceusagesampleDescOwnerID is the schema descriptor for owner_id field.
@@ -252,6 +271,8 @@ func init() {
 	strategyMixin := schema.Strategy{}.Mixin()
 	strategyHooks := schema.Strategy{}.Hooks()
 	strategy.Hooks[0] = strategyHooks[0]
+	strategyMixinInters1 := strategyMixin[1].Interceptors()
+	strategy.Interceptors[0] = strategyMixinInters1[0]
 	strategyMixinFields0 := strategyMixin[0].Fields()
 	_ = strategyMixinFields0
 	strategyFields := schema.Strategy{}.Fields()
@@ -290,6 +311,9 @@ func init() {
 	strategyDescID := strategyFields[0].Descriptor()
 	// strategy.DefaultID holds the default value on creation for the id field.
 	strategy.DefaultID = strategyDescID.Default.(func() uuid.UUID)
+	tradeMixin := schema.Trade{}.Mixin()
+	tradeMixinInters0 := tradeMixin[0].Interceptors()
+	trade.Interceptors[0] = tradeMixinInters0[0]
 	tradeFields := schema.Trade{}.Fields()
 	_ = tradeFields
 	// tradeDescFreqtradeTradeID is the schema descriptor for freqtrade_trade_id field.

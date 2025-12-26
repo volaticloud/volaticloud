@@ -56,6 +56,11 @@ func IDLTE(id uuid.UUID) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldLTE(FieldID, id))
 }
 
+// DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
+func DeletedAt(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldDeletedAt, v))
+}
+
 // BotID applies equality check predicate on the "bot_id" field. It's identical to BotIDEQ.
 func BotID(v uuid.UUID) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldEQ(FieldBotID, v))
@@ -169,6 +174,56 @@ func LastSyncedTradeID(v int) predicate.BotMetrics {
 // LastTradeSyncAt applies equality check predicate on the "last_trade_sync_at" field. It's identical to LastTradeSyncAtEQ.
 func LastTradeSyncAt(v time.Time) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldEQ(FieldLastTradeSyncAt, v))
+}
+
+// DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
+func DeletedAtEQ(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
+func DeletedAtNEQ(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtIn applies the In predicate on the "deleted_at" field.
+func DeletedAtIn(vs ...time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
+func DeletedAtNotIn(vs ...time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNotIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtGT applies the GT predicate on the "deleted_at" field.
+func DeletedAtGT(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGT(FieldDeletedAt, v))
+}
+
+// DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
+func DeletedAtGTE(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGTE(FieldDeletedAt, v))
+}
+
+// DeletedAtLT applies the LT predicate on the "deleted_at" field.
+func DeletedAtLT(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLT(FieldDeletedAt, v))
+}
+
+// DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
+func DeletedAtLTE(v time.Time) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
+func DeletedAtIsNil() predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldIsNull(FieldDeletedAt))
+}
+
+// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
+func DeletedAtNotNil() predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // BotIDEQ applies the EQ predicate on the "bot_id" field.

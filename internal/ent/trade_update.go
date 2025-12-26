@@ -30,6 +30,26 @@ func (_u *TradeUpdate) Where(ps ...predicate.Trade) *TradeUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *TradeUpdate) SetDeletedAt(v time.Time) *TradeUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *TradeUpdate) SetNillableDeletedAt(v *time.Time) *TradeUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *TradeUpdate) ClearDeletedAt() *TradeUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
 func (_u *TradeUpdate) SetFreqtradeTradeID(v int) *TradeUpdate {
 	_u.mutation.ResetFreqtradeTradeID()
@@ -434,6 +454,12 @@ func (_u *TradeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(trade.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(trade.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.FreqtradeTradeID(); ok {
 		_spec.SetField(trade.FieldFreqtradeTradeID, field.TypeInt, value)
 	}
@@ -568,6 +594,26 @@ type TradeUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TradeMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *TradeUpdateOne) SetDeletedAt(v time.Time) *TradeUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *TradeUpdateOne) SetNillableDeletedAt(v *time.Time) *TradeUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *TradeUpdateOne) ClearDeletedAt() *TradeUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetFreqtradeTradeID sets the "freqtrade_trade_id" field.
@@ -1003,6 +1049,12 @@ func (_u *TradeUpdateOne) sqlSave(ctx context.Context) (_node *Trade, err error)
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(trade.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(trade.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.FreqtradeTradeID(); ok {
 		_spec.SetField(trade.FieldFreqtradeTradeID, field.TypeInt, value)

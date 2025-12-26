@@ -420,7 +420,8 @@ func (c *BacktestClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *BacktestClient) Interceptors() []Interceptor {
-	return c.inters.Backtest
+	inters := c.inters.Backtest
+	return append(inters[:len(inters):len(inters)], backtest.Interceptors[:]...)
 }
 
 func (c *BacktestClient) mutate(ctx context.Context, m *BacktestMutation) (Value, error) {
@@ -633,7 +634,8 @@ func (c *BotClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *BotClient) Interceptors() []Interceptor {
-	return c.inters.Bot
+	inters := c.inters.Bot
+	return append(inters[:len(inters):len(inters)], bot.Interceptors[:]...)
 }
 
 func (c *BotClient) mutate(ctx context.Context, m *BotMutation) (Value, error) {
@@ -782,7 +784,8 @@ func (c *BotMetricsClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *BotMetricsClient) Interceptors() []Interceptor {
-	return c.inters.BotMetrics
+	inters := c.inters.BotMetrics
+	return append(inters[:len(inters):len(inters)], botmetrics.Interceptors[:]...)
 }
 
 func (c *BotMetricsClient) mutate(ctx context.Context, m *BotMetricsMutation) (Value, error) {
@@ -980,7 +983,8 @@ func (c *BotRunnerClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *BotRunnerClient) Interceptors() []Interceptor {
-	return c.inters.BotRunner
+	inters := c.inters.BotRunner
+	return append(inters[:len(inters):len(inters)], botrunner.Interceptors[:]...)
 }
 
 func (c *BotRunnerClient) mutate(ctx context.Context, m *BotRunnerMutation) (Value, error) {
@@ -1130,7 +1134,8 @@ func (c *ExchangeClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *ExchangeClient) Interceptors() []Interceptor {
-	return c.inters.Exchange
+	inters := c.inters.Exchange
+	return append(inters[:len(inters):len(inters)], exchange.Interceptors[:]...)
 }
 
 func (c *ExchangeClient) mutate(ctx context.Context, m *ExchangeMutation) (Value, error) {
@@ -1279,7 +1284,8 @@ func (c *ResourceUsageAggregationClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *ResourceUsageAggregationClient) Interceptors() []Interceptor {
-	return c.inters.ResourceUsageAggregation
+	inters := c.inters.ResourceUsageAggregation
+	return append(inters[:len(inters):len(inters)], resourceusageaggregation.Interceptors[:]...)
 }
 
 func (c *ResourceUsageAggregationClient) mutate(ctx context.Context, m *ResourceUsageAggregationMutation) (Value, error) {
@@ -1428,7 +1434,8 @@ func (c *ResourceUsageSampleClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *ResourceUsageSampleClient) Interceptors() []Interceptor {
-	return c.inters.ResourceUsageSample
+	inters := c.inters.ResourceUsageSample
+	return append(inters[:len(inters):len(inters)], resourceusagesample.Interceptors[:]...)
 }
 
 func (c *ResourceUsageSampleClient) mutate(ctx context.Context, m *ResourceUsageSampleMutation) (Value, error) {
@@ -1626,7 +1633,8 @@ func (c *StrategyClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *StrategyClient) Interceptors() []Interceptor {
-	return c.inters.Strategy
+	inters := c.inters.Strategy
+	return append(inters[:len(inters):len(inters)], strategy.Interceptors[:]...)
 }
 
 func (c *StrategyClient) mutate(ctx context.Context, m *StrategyMutation) (Value, error) {
@@ -1775,7 +1783,8 @@ func (c *TradeClient) Hooks() []Hook {
 
 // Interceptors returns the client interceptors.
 func (c *TradeClient) Interceptors() []Interceptor {
-	return c.inters.Trade
+	inters := c.inters.Trade
+	return append(inters[:len(inters):len(inters)], trade.Interceptors[:]...)
 }
 
 func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, error) {

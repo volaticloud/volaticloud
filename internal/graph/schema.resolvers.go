@@ -140,8 +140,9 @@ func (r *mutationResolver) UpdateExchange(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteExchange(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Delete exchange - ENT hook handles Keycloak resource cleanup automatically
-	err := r.client.Exchange.DeleteOneID(id).Exec(ctx)
+	// Soft-delete exchange by setting deleted_at timestamp
+	// ENT hook handles Keycloak resource cleanup automatically
+	_, err := r.client.Exchange.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
 	return err == nil, err
 }
 
@@ -194,9 +195,10 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Delete strategy - ENT hook handles Keycloak resource cleanup automatically
-	// Also deletes associated backtest via cascade
-	err := r.client.Strategy.DeleteOneID(id).Exec(ctx)
+	// Soft-delete strategy by setting deleted_at timestamp
+	// ENT hook handles Keycloak resource cleanup automatically
+	// Note: Associated backtest is NOT cascade soft-deleted - handle separately if needed
+	_, err := r.client.Strategy.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
 	return err == nil, err
 }
 
@@ -304,8 +306,9 @@ func (r *mutationResolver) UpdateBot(ctx context.Context, id uuid.UUID, input en
 }
 
 func (r *mutationResolver) DeleteBot(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Delete bot - ENT hook handles Keycloak resource cleanup automatically
-	err := r.client.Bot.DeleteOneID(id).Exec(ctx)
+	// Soft-delete bot by setting deleted_at timestamp
+	// ENT hook handles Keycloak resource cleanup automatically
+	_, err := r.client.Bot.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
 	return err == nil, err
 }
 
@@ -536,8 +539,9 @@ func (r *mutationResolver) UpdateBotRunner(ctx context.Context, id uuid.UUID, in
 }
 
 func (r *mutationResolver) DeleteBotRunner(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Delete bot runner - ENT hook handles Keycloak resource cleanup automatically
-	err := r.client.BotRunner.DeleteOneID(id).Exec(ctx)
+	// Soft-delete bot runner by setting deleted_at timestamp
+	// ENT hook handles Keycloak resource cleanup automatically
+	_, err := r.client.BotRunner.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
 	return err == nil, err
 }
 
@@ -823,7 +827,8 @@ func (r *mutationResolver) StopBacktest(ctx context.Context, id uuid.UUID) (*ent
 }
 
 func (r *mutationResolver) DeleteBacktest(ctx context.Context, id uuid.UUID) (bool, error) {
-	err := r.client.Backtest.DeleteOneID(id).Exec(ctx)
+	// Soft-delete backtest by setting deleted_at timestamp
+	_, err := r.client.Backtest.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
 	return err == nil, err
 }
 
