@@ -195,10 +195,10 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 }
 
 func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error) {
-	// Soft-delete strategy by setting deleted_at timestamp
+	// Soft-delete strategy and all its versions
+	// Uses DeleteOneID which triggers the soft-delete hook
 	// ENT hook handles Keycloak resource cleanup automatically
-	// Note: Associated backtest is NOT cascade soft-deleted - handle separately if needed
-	_, err := r.client.Strategy.UpdateOneID(id).SetDeletedAt(time.Now()).Save(ctx)
+	err := strategy1.DeleteAllVersions(ctx, r.client, id)
 	return err == nil, err
 }
 
