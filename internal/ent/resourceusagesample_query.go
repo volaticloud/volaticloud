@@ -301,12 +301,12 @@ func (_q *ResourceUsageSampleQuery) WithRunner(opts ...func(*BotRunnerQuery)) *R
 // Example:
 //
 //	var v []struct {
-//		ResourceType enum.ResourceType `json:"resource_type,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ResourceUsageSample.Query().
-//		GroupBy(resourceusagesample.FieldResourceType).
+//		GroupBy(resourceusagesample.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ResourceUsageSampleQuery) GroupBy(field string, fields ...string) *ResourceUsageSampleGroupBy {
@@ -324,11 +324,11 @@ func (_q *ResourceUsageSampleQuery) GroupBy(field string, fields ...string) *Res
 // Example:
 //
 //	var v []struct {
-//		ResourceType enum.ResourceType `json:"resource_type,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.ResourceUsageSample.Query().
-//		Select(resourceusagesample.FieldResourceType).
+//		Select(resourceusagesample.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *ResourceUsageSampleQuery) Select(fields ...string) *ResourceUsageSampleSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

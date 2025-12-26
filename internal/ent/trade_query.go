@@ -301,12 +301,12 @@ func (_q *TradeQuery) WithBot(opts ...func(*BotQuery)) *TradeQuery {
 // Example:
 //
 //	var v []struct {
-//		FreqtradeTradeID int `json:"freqtrade_trade_id,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Trade.Query().
-//		GroupBy(trade.FieldFreqtradeTradeID).
+//		GroupBy(trade.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *TradeQuery) GroupBy(field string, fields ...string) *TradeGroupBy {
@@ -324,11 +324,11 @@ func (_q *TradeQuery) GroupBy(field string, fields ...string) *TradeGroupBy {
 // Example:
 //
 //	var v []struct {
-//		FreqtradeTradeID int `json:"freqtrade_trade_id,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.Trade.Query().
-//		Select(trade.FieldFreqtradeTradeID).
+//		Select(trade.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *TradeQuery) Select(fields ...string) *TradeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

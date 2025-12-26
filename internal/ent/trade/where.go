@@ -56,6 +56,11 @@ func IDLTE(id uuid.UUID) predicate.Trade {
 	return predicate.Trade(sql.FieldLTE(FieldID, id))
 }
 
+// DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
+func DeletedAt(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldEQ(FieldDeletedAt, v))
+}
+
 // FreqtradeTradeID applies equality check predicate on the "freqtrade_trade_id" field. It's identical to FreqtradeTradeIDEQ.
 func FreqtradeTradeID(v int) predicate.Trade {
 	return predicate.Trade(sql.FieldEQ(FieldFreqtradeTradeID, v))
@@ -139,6 +144,56 @@ func CreatedAt(v time.Time) predicate.Trade {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Trade {
 	return predicate.Trade(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
+func DeletedAtEQ(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
+func DeletedAtNEQ(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldNEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtIn applies the In predicate on the "deleted_at" field.
+func DeletedAtIn(vs ...time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
+func DeletedAtNotIn(vs ...time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldNotIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtGT applies the GT predicate on the "deleted_at" field.
+func DeletedAtGT(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldGT(FieldDeletedAt, v))
+}
+
+// DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
+func DeletedAtGTE(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldGTE(FieldDeletedAt, v))
+}
+
+// DeletedAtLT applies the LT predicate on the "deleted_at" field.
+func DeletedAtLT(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldLT(FieldDeletedAt, v))
+}
+
+// DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
+func DeletedAtLTE(v time.Time) predicate.Trade {
+	return predicate.Trade(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
+func DeletedAtIsNil() predicate.Trade {
+	return predicate.Trade(sql.FieldIsNull(FieldDeletedAt))
+}
+
+// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
+func DeletedAtNotNil() predicate.Trade {
+	return predicate.Trade(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // FreqtradeTradeIDEQ applies the EQ predicate on the "freqtrade_trade_id" field.

@@ -73,6 +73,11 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldRunnerID)
 				fieldSeen[backtest.FieldRunnerID] = struct{}{}
 			}
+		case "deletedAt":
+			if _, ok := fieldSeen[backtest.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, backtest.FieldDeletedAt)
+				fieldSeen[backtest.FieldDeletedAt] = struct{}{}
+			}
 		case "status":
 			if _, ok := fieldSeen[backtest.FieldStatus]; !ok {
 				selectedFields = append(selectedFields, backtest.FieldStatus)
@@ -340,6 +345,11 @@ func (_q *BotQuery) collectField(ctx context.Context, oneNode bool, opCtx *graph
 				selectedFields = append(selectedFields, bot.FieldPublic)
 				fieldSeen[bot.FieldPublic] = struct{}{}
 			}
+		case "deletedAt":
+			if _, ok := fieldSeen[bot.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, bot.FieldDeletedAt)
+				fieldSeen[bot.FieldDeletedAt] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[bot.FieldName]; !ok {
 				selectedFields = append(selectedFields, bot.FieldName)
@@ -481,6 +491,11 @@ func (_q *BotMetricsQuery) collectField(ctx context.Context, oneNode bool, opCtx
 			if _, ok := fieldSeen[botmetrics.FieldBotID]; !ok {
 				selectedFields = append(selectedFields, botmetrics.FieldBotID)
 				fieldSeen[botmetrics.FieldBotID] = struct{}{}
+			}
+		case "deletedAt":
+			if _, ok := fieldSeen[botmetrics.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldDeletedAt)
+				fieldSeen[botmetrics.FieldDeletedAt] = struct{}{}
 			}
 		case "botID":
 			if _, ok := fieldSeen[botmetrics.FieldBotID]; !ok {
@@ -842,6 +857,11 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				selectedFields = append(selectedFields, botrunner.FieldPublic)
 				fieldSeen[botrunner.FieldPublic] = struct{}{}
 			}
+		case "deletedAt":
+			if _, ok := fieldSeen[botrunner.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDeletedAt)
+				fieldSeen[botrunner.FieldDeletedAt] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[botrunner.FieldName]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldName)
@@ -1098,6 +1118,11 @@ func (_q *ExchangeQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 			_q.WithNamedBots(alias, func(wq *BotQuery) {
 				*wq = *query
 			})
+		case "deletedAt":
+			if _, ok := fieldSeen[exchange.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, exchange.FieldDeletedAt)
+				fieldSeen[exchange.FieldDeletedAt] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[exchange.FieldName]; !ok {
 				selectedFields = append(selectedFields, exchange.FieldName)
@@ -1199,6 +1224,11 @@ func (_q *ResourceUsageAggregationQuery) collectField(ctx context.Context, oneNo
 			if _, ok := fieldSeen[resourceusageaggregation.FieldRunnerID]; !ok {
 				selectedFields = append(selectedFields, resourceusageaggregation.FieldRunnerID)
 				fieldSeen[resourceusageaggregation.FieldRunnerID] = struct{}{}
+			}
+		case "deletedAt":
+			if _, ok := fieldSeen[resourceusageaggregation.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, resourceusageaggregation.FieldDeletedAt)
+				fieldSeen[resourceusageaggregation.FieldDeletedAt] = struct{}{}
 			}
 		case "resourceType":
 			if _, ok := fieldSeen[resourceusageaggregation.FieldResourceType]; !ok {
@@ -1371,6 +1401,11 @@ func (_q *ResourceUsageSampleQuery) collectField(ctx context.Context, oneNode bo
 			if _, ok := fieldSeen[resourceusagesample.FieldRunnerID]; !ok {
 				selectedFields = append(selectedFields, resourceusagesample.FieldRunnerID)
 				fieldSeen[resourceusagesample.FieldRunnerID] = struct{}{}
+			}
+		case "deletedAt":
+			if _, ok := fieldSeen[resourceusagesample.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, resourceusagesample.FieldDeletedAt)
+				fieldSeen[resourceusagesample.FieldDeletedAt] = struct{}{}
 			}
 		case "resourceType":
 			if _, ok := fieldSeen[resourceusagesample.FieldResourceType]; !ok {
@@ -1627,6 +1662,11 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, strategy.FieldPublic)
 				fieldSeen[strategy.FieldPublic] = struct{}{}
 			}
+		case "deletedAt":
+			if _, ok := fieldSeen[strategy.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldDeletedAt)
+				fieldSeen[strategy.FieldDeletedAt] = struct{}{}
+			}
 		case "name":
 			if _, ok := fieldSeen[strategy.FieldName]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldName)
@@ -1753,6 +1793,11 @@ func (_q *TradeQuery) collectField(ctx context.Context, oneNode bool, opCtx *gra
 			if _, ok := fieldSeen[trade.FieldBotID]; !ok {
 				selectedFields = append(selectedFields, trade.FieldBotID)
 				fieldSeen[trade.FieldBotID] = struct{}{}
+			}
+		case "deletedAt":
+			if _, ok := fieldSeen[trade.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, trade.FieldDeletedAt)
+				fieldSeen[trade.FieldDeletedAt] = struct{}{}
 			}
 		case "freqtradeTradeID":
 			if _, ok := fieldSeen[trade.FieldFreqtradeTradeID]; !ok {

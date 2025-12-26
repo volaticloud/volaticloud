@@ -16,6 +16,8 @@ const (
 	Label = "exchange"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldConfig holds the string denoting the config field in the database.
@@ -42,6 +44,7 @@ const (
 // Columns holds all SQL columns for exchange fields.
 var Columns = []string{
 	FieldID,
+	FieldDeletedAt,
 	FieldName,
 	FieldConfig,
 	FieldOwnerID,
@@ -65,7 +68,8 @@ func ValidColumn(column string) bool {
 //
 //	import _ "volaticloud/internal/ent/runtime"
 var (
-	Hooks [1]ent.Hook
+	Hooks        [1]ent.Hook
+	Interceptors [1]ent.Interceptor
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
@@ -86,6 +90,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

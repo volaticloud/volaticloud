@@ -20,6 +20,8 @@ type ResourceUsageSample struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Type of resource: bot or backtest
 	ResourceType enum.ResourceType `json:"resource_type,omitempty"`
 	// ID of the bot or backtest
@@ -83,7 +85,7 @@ func (*ResourceUsageSample) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case resourceusagesample.FieldResourceType, resourceusagesample.FieldOwnerID:
 			values[i] = new(sql.NullString)
-		case resourceusagesample.FieldSampledAt, resourceusagesample.FieldCreatedAt:
+		case resourceusagesample.FieldDeletedAt, resourceusagesample.FieldSampledAt, resourceusagesample.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		case resourceusagesample.FieldID, resourceusagesample.FieldResourceID, resourceusagesample.FieldRunnerID:
 			values[i] = new(uuid.UUID)
@@ -107,6 +109,13 @@ func (_m *ResourceUsageSample) assignValues(columns []string, values []any) erro
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case resourceusagesample.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case resourceusagesample.FieldResourceType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -221,6 +230,11 @@ func (_m *ResourceUsageSample) String() string {
 	var builder strings.Builder
 	builder.WriteString("ResourceUsageSample(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("resource_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ResourceType))
 	builder.WriteString(", ")

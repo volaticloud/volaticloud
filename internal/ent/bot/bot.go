@@ -7,6 +7,7 @@ import (
 	"time"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/99designs/gqlgen/graphql"
@@ -20,6 +21,8 @@ const (
 	FieldID = "id"
 	// FieldPublic holds the string denoting the public field in the database.
 	FieldPublic = "public"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldStatus holds the string denoting the status field in the database.
@@ -101,6 +104,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldPublic,
+	FieldDeletedAt,
 	FieldName,
 	FieldStatus,
 	FieldMode,
@@ -127,7 +131,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "volaticloud/internal/ent/runtime"
 var (
+	Interceptors [1]ent.Interceptor
 	// DefaultPublic holds the default value on creation for the "public" field.
 	DefaultPublic bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -181,6 +191,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByPublic orders the results by the public field.
 func ByPublic(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPublic, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

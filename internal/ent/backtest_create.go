@@ -27,6 +27,20 @@ type BacktestCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *BacktestCreate) SetDeletedAt(v time.Time) *BacktestCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *BacktestCreate) SetNillableDeletedAt(v *time.Time) *BacktestCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *BacktestCreate) SetStatus(v enum.TaskStatus) *BacktestCreate {
 	_c.mutation.SetStatus(v)
@@ -304,6 +318,10 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(backtest.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
@@ -385,7 +403,7 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Backtest.Create().
-//		SetStatus(v).
+//		SetDeletedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -394,7 +412,7 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BacktestUpsert) {
-//			SetStatus(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BacktestCreate) OnConflict(opts ...sql.ConflictOption) *BacktestUpsertOne {
@@ -429,6 +447,24 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BacktestUpsert) SetDeletedAt(v time.Time) *BacktestUpsert {
+	u.Set(backtest.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateDeletedAt() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BacktestUpsert) ClearDeletedAt() *BacktestUpsert {
+	u.SetNull(backtest.FieldDeletedAt)
+	return u
+}
 
 // SetStatus sets the "status" field.
 func (u *BacktestUpsert) SetStatus(v enum.TaskStatus) *BacktestUpsert {
@@ -653,6 +689,27 @@ func (u *BacktestUpsertOne) Update(set func(*BacktestUpsert)) *BacktestUpsertOne
 		set(&BacktestUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BacktestUpsertOne) SetDeletedAt(v time.Time) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateDeletedAt() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BacktestUpsertOne) ClearDeletedAt() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetStatus sets the "status" field.
@@ -994,7 +1051,7 @@ func (_c *BacktestCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BacktestUpsert) {
-//			SetStatus(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BacktestCreateBulk) OnConflict(opts ...sql.ConflictOption) *BacktestUpsertBulk {
@@ -1074,6 +1131,27 @@ func (u *BacktestUpsertBulk) Update(set func(*BacktestUpsert)) *BacktestUpsertBu
 		set(&BacktestUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BacktestUpsertBulk) SetDeletedAt(v time.Time) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateDeletedAt() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BacktestUpsertBulk) ClearDeletedAt() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetStatus sets the "status" field.

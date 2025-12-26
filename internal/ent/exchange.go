@@ -19,6 +19,8 @@ type Exchange struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Exchange display name (e.g., 'Binance Production', 'Coinbase Testnet')
 	Name string `json:"name,omitempty"`
 	// Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
@@ -66,7 +68,7 @@ func (*Exchange) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case exchange.FieldName, exchange.FieldOwnerID:
 			values[i] = new(sql.NullString)
-		case exchange.FieldCreatedAt, exchange.FieldUpdatedAt:
+		case exchange.FieldDeletedAt, exchange.FieldCreatedAt, exchange.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case exchange.FieldID:
 			values[i] = new(uuid.UUID)
@@ -90,6 +92,13 @@ func (_m *Exchange) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case exchange.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case exchange.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -164,6 +173,11 @@ func (_m *Exchange) String() string {
 	var builder strings.Builder
 	builder.WriteString("Exchange(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")

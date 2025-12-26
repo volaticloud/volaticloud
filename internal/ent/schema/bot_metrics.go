@@ -9,6 +9,8 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+
+	entmixin "volaticloud/internal/ent/mixin"
 )
 
 // BotMetrics holds real-time metrics fetched from Freqtrade API.
@@ -127,5 +129,12 @@ func (BotMetrics) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+	}
+}
+
+// Mixin of the BotMetrics.
+func (BotMetrics) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.SoftDeleteMixin{},
 	}
 }

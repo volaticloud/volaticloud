@@ -32,6 +32,26 @@ func (_u *BacktestUpdate) Where(ps ...predicate.Backtest) *BacktestUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BacktestUpdate) SetDeletedAt(v time.Time) *BacktestUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BacktestUpdate) SetNillableDeletedAt(v *time.Time) *BacktestUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BacktestUpdate) ClearDeletedAt() *BacktestUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *BacktestUpdate) SetStatus(v enum.TaskStatus) *BacktestUpdate {
 	_u.mutation.SetStatus(v)
@@ -295,6 +315,12 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(backtest.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(backtest.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)
 	}
@@ -419,6 +445,26 @@ type BacktestUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *BacktestMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BacktestUpdateOne) SetDeletedAt(v time.Time) *BacktestUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BacktestUpdateOne) SetNillableDeletedAt(v *time.Time) *BacktestUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BacktestUpdateOne) ClearDeletedAt() *BacktestUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetStatus sets the "status" field.
@@ -713,6 +759,12 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(backtest.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(backtest.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(backtest.FieldStatus, field.TypeEnum, value)

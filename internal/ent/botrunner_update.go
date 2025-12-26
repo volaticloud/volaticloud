@@ -48,6 +48,26 @@ func (_u *BotRunnerUpdate) SetNillablePublic(v *bool) *BotRunnerUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BotRunnerUpdate) SetDeletedAt(v time.Time) *BotRunnerUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BotRunnerUpdate) SetNillableDeletedAt(v *time.Time) *BotRunnerUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BotRunnerUpdate) ClearDeletedAt() *BotRunnerUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BotRunnerUpdate) SetName(v string) *BotRunnerUpdate {
 	_u.mutation.SetName(v)
@@ -625,6 +645,12 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Public(); ok {
 		_spec.SetField(botrunner.FieldPublic, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(botrunner.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(botrunner.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(botrunner.FieldName, field.TypeString, value)
 	}
@@ -947,6 +973,26 @@ func (_u *BotRunnerUpdateOne) SetNillablePublic(v *bool) *BotRunnerUpdateOne {
 	if v != nil {
 		_u.SetPublic(*v)
 	}
+	return _u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *BotRunnerUpdateOne) SetDeletedAt(v time.Time) *BotRunnerUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *BotRunnerUpdateOne) SetNillableDeletedAt(v *time.Time) *BotRunnerUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *BotRunnerUpdateOne) ClearDeletedAt() *BotRunnerUpdateOne {
+	_u.mutation.ClearDeletedAt()
 	return _u
 }
 
@@ -1556,6 +1602,12 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	}
 	if value, ok := _u.mutation.Public(); ok {
 		_spec.SetField(botrunner.FieldPublic, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(botrunner.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(botrunner.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(botrunner.FieldName, field.TypeString, value)

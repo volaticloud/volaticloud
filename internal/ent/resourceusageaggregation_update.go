@@ -31,6 +31,26 @@ func (_u *ResourceUsageAggregationUpdate) Where(ps ...predicate.ResourceUsageAgg
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ResourceUsageAggregationUpdate) SetDeletedAt(v time.Time) *ResourceUsageAggregationUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ResourceUsageAggregationUpdate) SetNillableDeletedAt(v *time.Time) *ResourceUsageAggregationUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ResourceUsageAggregationUpdate) ClearDeletedAt() *ResourceUsageAggregationUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetResourceType sets the "resource_type" field.
 func (_u *ResourceUsageAggregationUpdate) SetResourceType(v enum.ResourceType) *ResourceUsageAggregationUpdate {
 	_u.mutation.SetResourceType(v)
@@ -438,6 +458,12 @@ func (_u *ResourceUsageAggregationUpdate) sqlSave(ctx context.Context) (_node in
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(resourceusageaggregation.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(resourceusageaggregation.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.ResourceType(); ok {
 		_spec.SetField(resourceusageaggregation.FieldResourceType, field.TypeEnum, value)
 	}
@@ -569,6 +595,26 @@ type ResourceUsageAggregationUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ResourceUsageAggregationMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ResourceUsageAggregationUpdateOne) SetDeletedAt(v time.Time) *ResourceUsageAggregationUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ResourceUsageAggregationUpdateOne) SetNillableDeletedAt(v *time.Time) *ResourceUsageAggregationUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ResourceUsageAggregationUpdateOne) ClearDeletedAt() *ResourceUsageAggregationUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetResourceType sets the "resource_type" field.
@@ -1007,6 +1053,12 @@ func (_u *ResourceUsageAggregationUpdateOne) sqlSave(ctx context.Context) (_node
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(resourceusageaggregation.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(resourceusageaggregation.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.ResourceType(); ok {
 		_spec.SetField(resourceusageaggregation.FieldResourceType, field.TypeEnum, value)

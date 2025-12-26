@@ -25,6 +25,20 @@ type BotMetricsCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *BotMetricsCreate) SetDeletedAt(v time.Time) *BotMetricsCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *BotMetricsCreate) SetNillableDeletedAt(v *time.Time) *BotMetricsCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetBotID sets the "bot_id" field.
 func (_c *BotMetricsCreate) SetBotID(v uuid.UUID) *BotMetricsCreate {
 	_c.mutation.SetBotID(v)
@@ -464,6 +478,10 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(botmetrics.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.ProfitClosedCoin(); ok {
 		_spec.SetField(botmetrics.FieldProfitClosedCoin, field.TypeFloat64, value)
 		_node.ProfitClosedCoin = value
@@ -576,7 +594,7 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.BotMetrics.Create().
-//		SetBotID(v).
+//		SetDeletedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -585,7 +603,7 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BotMetricsUpsert) {
-//			SetBotID(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BotMetricsCreate) OnConflict(opts ...sql.ConflictOption) *BotMetricsUpsertOne {
@@ -620,6 +638,24 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BotMetricsUpsert) SetDeletedAt(v time.Time) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateDeletedAt() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BotMetricsUpsert) ClearDeletedAt() *BotMetricsUpsert {
+	u.SetNull(botmetrics.FieldDeletedAt)
+	return u
+}
 
 // SetBotID sets the "bot_id" field.
 func (u *BotMetricsUpsert) SetBotID(v uuid.UUID) *BotMetricsUpsert {
@@ -1153,6 +1189,27 @@ func (u *BotMetricsUpsertOne) Update(set func(*BotMetricsUpsert)) *BotMetricsUps
 		set(&BotMetricsUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BotMetricsUpsertOne) SetDeletedAt(v time.Time) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateDeletedAt() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BotMetricsUpsertOne) ClearDeletedAt() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetBotID sets the "bot_id" field.
@@ -1858,7 +1915,7 @@ func (_c *BotMetricsCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BotMetricsUpsert) {
-//			SetBotID(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BotMetricsCreateBulk) OnConflict(opts ...sql.ConflictOption) *BotMetricsUpsertBulk {
@@ -1935,6 +1992,27 @@ func (u *BotMetricsUpsertBulk) Update(set func(*BotMetricsUpsert)) *BotMetricsUp
 		set(&BotMetricsUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *BotMetricsUpsertBulk) SetDeletedAt(v time.Time) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateDeletedAt() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *BotMetricsUpsertBulk) ClearDeletedAt() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetBotID sets the "bot_id" field.

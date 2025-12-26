@@ -161,5 +161,6 @@ func (BotRunner) Hooks() []ent.Hook {
 func (BotRunner) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		entmixin.PublicMixin{},
+		entmixin.SoftDeleteMixin{},
 	}
 }

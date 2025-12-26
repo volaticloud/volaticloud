@@ -57,6 +57,11 @@ func IDLTE(id uuid.UUID) predicate.Backtest {
 	return predicate.Backtest(sql.FieldLTE(FieldID, id))
 }
 
+// DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
+func DeletedAt(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldDeletedAt, v))
+}
+
 // ErrorMessage applies equality check predicate on the "error_message" field. It's identical to ErrorMessageEQ.
 func ErrorMessage(v string) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldErrorMessage, v))
@@ -100,6 +105,56 @@ func StartDate(v time.Time) predicate.Backtest {
 // EndDate applies equality check predicate on the "end_date" field. It's identical to EndDateEQ.
 func EndDate(v time.Time) predicate.Backtest {
 	return predicate.Backtest(sql.FieldEQ(FieldEndDate, v))
+}
+
+// DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
+func DeletedAtEQ(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
+func DeletedAtNEQ(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtIn applies the In predicate on the "deleted_at" field.
+func DeletedAtIn(vs ...time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
+func DeletedAtNotIn(vs ...time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtGT applies the GT predicate on the "deleted_at" field.
+func DeletedAtGT(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGT(FieldDeletedAt, v))
+}
+
+// DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
+func DeletedAtGTE(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldGTE(FieldDeletedAt, v))
+}
+
+// DeletedAtLT applies the LT predicate on the "deleted_at" field.
+func DeletedAtLT(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLT(FieldDeletedAt, v))
+}
+
+// DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
+func DeletedAtLTE(v time.Time) predicate.Backtest {
+	return predicate.Backtest(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
+func DeletedAtIsNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldIsNull(FieldDeletedAt))
+}
+
+// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
+func DeletedAtNotNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

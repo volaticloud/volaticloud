@@ -337,12 +337,12 @@ func (_q *BacktestQuery) WithRunner(opts ...func(*BotRunnerQuery)) *BacktestQuer
 // Example:
 //
 //	var v []struct {
-//		Status enum.TaskStatus `json:"status,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Backtest.Query().
-//		GroupBy(backtest.FieldStatus).
+//		GroupBy(backtest.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *BacktestQuery) GroupBy(field string, fields ...string) *BacktestGroupBy {
@@ -360,11 +360,11 @@ func (_q *BacktestQuery) GroupBy(field string, fields ...string) *BacktestGroupB
 // Example:
 //
 //	var v []struct {
-//		Status enum.TaskStatus `json:"status,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.Backtest.Query().
-//		Select(backtest.FieldStatus).
+//		Select(backtest.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *BacktestQuery) Select(fields ...string) *BacktestSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

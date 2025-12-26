@@ -26,6 +26,20 @@ type ResourceUsageAggregationCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *ResourceUsageAggregationCreate) SetDeletedAt(v time.Time) *ResourceUsageAggregationCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *ResourceUsageAggregationCreate) SetNillableDeletedAt(v *time.Time) *ResourceUsageAggregationCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetResourceType sets the "resource_type" field.
 func (_c *ResourceUsageAggregationCreate) SetResourceType(v enum.ResourceType) *ResourceUsageAggregationCreate {
 	_c.mutation.SetResourceType(v)
@@ -457,6 +471,10 @@ func (_c *ResourceUsageAggregationCreate) createSpec() (*ResourceUsageAggregatio
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(resourceusageaggregation.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.ResourceType(); ok {
 		_spec.SetField(resourceusageaggregation.FieldResourceType, field.TypeEnum, value)
 		_node.ResourceType = value
@@ -553,7 +571,7 @@ func (_c *ResourceUsageAggregationCreate) createSpec() (*ResourceUsageAggregatio
 // of the `INSERT` statement. For example:
 //
 //	client.ResourceUsageAggregation.Create().
-//		SetResourceType(v).
+//		SetDeletedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -562,7 +580,7 @@ func (_c *ResourceUsageAggregationCreate) createSpec() (*ResourceUsageAggregatio
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ResourceUsageAggregationUpsert) {
-//			SetResourceType(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ResourceUsageAggregationCreate) OnConflict(opts ...sql.ConflictOption) *ResourceUsageAggregationUpsertOne {
@@ -597,6 +615,24 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ResourceUsageAggregationUpsert) SetDeletedAt(v time.Time) *ResourceUsageAggregationUpsert {
+	u.Set(resourceusageaggregation.FieldDeletedAt, v)
+	return u
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsert) UpdateDeletedAt() *ResourceUsageAggregationUpsert {
+	u.SetExcluded(resourceusageaggregation.FieldDeletedAt)
+	return u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ResourceUsageAggregationUpsert) ClearDeletedAt() *ResourceUsageAggregationUpsert {
+	u.SetNull(resourceusageaggregation.FieldDeletedAt)
+	return u
+}
 
 // SetResourceType sets the "resource_type" field.
 func (u *ResourceUsageAggregationUpsert) SetResourceType(v enum.ResourceType) *ResourceUsageAggregationUpsert {
@@ -929,6 +965,27 @@ func (u *ResourceUsageAggregationUpsertOne) Update(set func(*ResourceUsageAggreg
 		set(&ResourceUsageAggregationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ResourceUsageAggregationUpsertOne) SetDeletedAt(v time.Time) *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertOne) UpdateDeletedAt() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ResourceUsageAggregationUpsertOne) ClearDeletedAt() *ResourceUsageAggregationUpsertOne {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetResourceType sets the "resource_type" field.
@@ -1396,7 +1453,7 @@ func (_c *ResourceUsageAggregationCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ResourceUsageAggregationUpsert) {
-//			SetResourceType(v+v).
+//			SetDeletedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ResourceUsageAggregationCreateBulk) OnConflict(opts ...sql.ConflictOption) *ResourceUsageAggregationUpsertBulk {
@@ -1476,6 +1533,27 @@ func (u *ResourceUsageAggregationUpsertBulk) Update(set func(*ResourceUsageAggre
 		set(&ResourceUsageAggregationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (u *ResourceUsageAggregationUpsertBulk) SetDeletedAt(v time.Time) *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.SetDeletedAt(v)
+	})
+}
+
+// UpdateDeletedAt sets the "deleted_at" field to the value that was provided on create.
+func (u *ResourceUsageAggregationUpsertBulk) UpdateDeletedAt() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.UpdateDeletedAt()
+	})
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (u *ResourceUsageAggregationUpsertBulk) ClearDeletedAt() *ResourceUsageAggregationUpsertBulk {
+	return u.Update(func(s *ResourceUsageAggregationUpsert) {
+		s.ClearDeletedAt()
+	})
 }
 
 // SetResourceType sets the "resource_type" field.

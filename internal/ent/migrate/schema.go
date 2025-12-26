@@ -11,6 +11,7 @@ var (
 	// BacktestsColumns holds the columns for the "backtests" table.
 	BacktestsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "running", "completed", "failed", "cancelled"}, Default: "pending"},
 		{Name: "result", Type: field.TypeJSON, Nullable: true},
 		{Name: "summary", Type: field.TypeJSON, Nullable: true},
@@ -32,13 +33,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_bot_runners_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[11]},
+				Columns:    []*schema.Column{BacktestsColumns[12]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "backtests_strategies_backtest",
-				Columns:    []*schema.Column{BacktestsColumns[12]},
+				Columns:    []*schema.Column{BacktestsColumns[13]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -48,6 +49,7 @@ var (
 	BotsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "public", Type: field.TypeBool, Default: false},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"creating", "running", "unhealthy", "stopped", "error", "backtesting", "hyperopt"}, Default: "creating"},
 		{Name: "mode", Type: field.TypeEnum, Enums: []string{"dry_run", "live"}, Default: "dry_run"},
@@ -71,19 +73,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bots_bot_runners_bots",
-				Columns:    []*schema.Column{BotsColumns[13]},
+				Columns:    []*schema.Column{BotsColumns[14]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_exchanges_bots",
-				Columns:    []*schema.Column{BotsColumns[14]},
+				Columns:    []*schema.Column{BotsColumns[15]},
 				RefColumns: []*schema.Column{ExchangesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bots_strategies_bots",
-				Columns:    []*schema.Column{BotsColumns[15]},
+				Columns:    []*schema.Column{BotsColumns[16]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -92,13 +94,14 @@ var (
 			{
 				Name:    "bot_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotsColumns[10]},
+				Columns: []*schema.Column{BotsColumns[11]},
 			},
 		},
 	}
 	// BotMetricsColumns holds the columns for the "bot_metrics" table.
 	BotMetricsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "profit_closed_coin", Type: field.TypeFloat64, Nullable: true},
 		{Name: "profit_closed_percent", Type: field.TypeFloat64, Nullable: true},
 		{Name: "profit_all_coin", Type: field.TypeFloat64, Nullable: true},
@@ -131,7 +134,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bot_metrics_bots_metrics",
-				Columns:    []*schema.Column{BotMetricsColumns[23]},
+				Columns:    []*schema.Column{BotMetricsColumns[24]},
 				RefColumns: []*schema.Column{BotsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -141,6 +144,7 @@ var (
 	BotRunnersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "public", Type: field.TypeBool, Default: false},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"docker", "kubernetes", "local"}, Default: "docker"},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
@@ -172,13 +176,14 @@ var (
 			{
 				Name:    "botrunner_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotRunnersColumns[15]},
+				Columns: []*schema.Column{BotRunnersColumns[16]},
 			},
 		},
 	}
 	// ExchangesColumns holds the columns for the "exchanges" table.
 	ExchangesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "owner_id", Type: field.TypeString},
@@ -194,13 +199,14 @@ var (
 			{
 				Name:    "exchange_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{ExchangesColumns[3]},
+				Columns: []*schema.Column{ExchangesColumns[4]},
 			},
 		},
 	}
 	// ResourceUsageAggregationsColumns holds the columns for the "resource_usage_aggregations" table.
 	ResourceUsageAggregationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"bot", "backtest"}},
 		{Name: "resource_id", Type: field.TypeUUID},
 		{Name: "owner_id", Type: field.TypeString},
@@ -229,7 +235,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "resource_usage_aggregations_bot_runners_usage_aggregations",
-				Columns:    []*schema.Column{ResourceUsageAggregationsColumns[19]},
+				Columns:    []*schema.Column{ResourceUsageAggregationsColumns[20]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -238,28 +244,29 @@ var (
 			{
 				Name:    "resourceusageaggregation_resource_type_resource_id_granularity_bucket_start",
 				Unique:  true,
-				Columns: []*schema.Column{ResourceUsageAggregationsColumns[1], ResourceUsageAggregationsColumns[2], ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5]},
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[2], ResourceUsageAggregationsColumns[3], ResourceUsageAggregationsColumns[5], ResourceUsageAggregationsColumns[6]},
 			},
 			{
 				Name:    "resourceusageaggregation_owner_id_granularity_bucket_start",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageAggregationsColumns[3], ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5]},
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5], ResourceUsageAggregationsColumns[6]},
 			},
 			{
 				Name:    "resourceusageaggregation_runner_id_granularity_bucket_start",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageAggregationsColumns[19], ResourceUsageAggregationsColumns[4], ResourceUsageAggregationsColumns[5]},
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[20], ResourceUsageAggregationsColumns[5], ResourceUsageAggregationsColumns[6]},
 			},
 			{
 				Name:    "resourceusageaggregation_resource_id_bucket_start",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageAggregationsColumns[2], ResourceUsageAggregationsColumns[5]},
+				Columns: []*schema.Column{ResourceUsageAggregationsColumns[3], ResourceUsageAggregationsColumns[6]},
 			},
 		},
 	}
 	// ResourceUsageSamplesColumns holds the columns for the "resource_usage_samples" table.
 	ResourceUsageSamplesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"bot", "backtest"}},
 		{Name: "resource_id", Type: field.TypeUUID},
 		{Name: "owner_id", Type: field.TypeString},
@@ -281,7 +288,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "resource_usage_samples_bot_runners_usage_samples",
-				Columns:    []*schema.Column{ResourceUsageSamplesColumns[12]},
+				Columns:    []*schema.Column{ResourceUsageSamplesColumns[13]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -290,22 +297,22 @@ var (
 			{
 				Name:    "resourceusagesample_resource_type_resource_id_sampled_at",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageSamplesColumns[1], ResourceUsageSamplesColumns[2], ResourceUsageSamplesColumns[10]},
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[2], ResourceUsageSamplesColumns[3], ResourceUsageSamplesColumns[11]},
 			},
 			{
 				Name:    "resourceusagesample_owner_id_sampled_at",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageSamplesColumns[3], ResourceUsageSamplesColumns[10]},
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[4], ResourceUsageSamplesColumns[11]},
 			},
 			{
 				Name:    "resourceusagesample_runner_id_sampled_at",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageSamplesColumns[12], ResourceUsageSamplesColumns[10]},
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[13], ResourceUsageSamplesColumns[11]},
 			},
 			{
 				Name:    "resourceusagesample_sampled_at",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceUsageSamplesColumns[10]},
+				Columns: []*schema.Column{ResourceUsageSamplesColumns[11]},
 			},
 		},
 	}
@@ -313,6 +320,7 @@ var (
 	StrategiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "public", Type: field.TypeBool, Default: false},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "code", Type: field.TypeString, Size: 2147483647},
@@ -332,7 +340,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "strategies_strategies_parent",
-				Columns:    []*schema.Column{StrategiesColumns[11]},
+				Columns:    []*schema.Column{StrategiesColumns[12]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -341,33 +349,34 @@ var (
 			{
 				Name:    "strategy_name_version_number",
 				Unique:  true,
-				Columns: []*schema.Column{StrategiesColumns[2], StrategiesColumns[7]},
+				Columns: []*schema.Column{StrategiesColumns[3], StrategiesColumns[8]},
 			},
 			{
 				Name:    "strategy_is_latest",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[6]},
+				Columns: []*schema.Column{StrategiesColumns[7]},
 			},
 			{
 				Name:    "strategy_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[11]},
+				Columns: []*schema.Column{StrategiesColumns[12]},
 			},
 			{
 				Name:    "strategy_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[8]},
+				Columns: []*schema.Column{StrategiesColumns[9]},
 			},
 			{
 				Name:    "strategy_owner_id_is_latest",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[8], StrategiesColumns[6]},
+				Columns: []*schema.Column{StrategiesColumns[9], StrategiesColumns[7]},
 			},
 		},
 	}
 	// TradesColumns holds the columns for the "trades" table.
 	TradesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "freqtrade_trade_id", Type: field.TypeInt},
 		{Name: "pair", Type: field.TypeString},
 		{Name: "is_open", Type: field.TypeBool, Default: true},
@@ -395,7 +404,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "trades_bots_trades",
-				Columns:    []*schema.Column{TradesColumns[18]},
+				Columns:    []*schema.Column{TradesColumns[19]},
 				RefColumns: []*schema.Column{BotsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -404,17 +413,17 @@ var (
 			{
 				Name:    "trade_bot_id_freqtrade_trade_id",
 				Unique:  true,
-				Columns: []*schema.Column{TradesColumns[18], TradesColumns[1]},
+				Columns: []*schema.Column{TradesColumns[19], TradesColumns[2]},
 			},
 			{
 				Name:    "trade_bot_id_is_open",
 				Unique:  false,
-				Columns: []*schema.Column{TradesColumns[18], TradesColumns[3]},
+				Columns: []*schema.Column{TradesColumns[19], TradesColumns[4]},
 			},
 			{
 				Name:    "trade_open_date",
 				Unique:  false,
-				Columns: []*schema.Column{TradesColumns[4]},
+				Columns: []*schema.Column{TradesColumns[5]},
 			},
 		},
 	}

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 
+	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
 )
 
@@ -95,5 +96,12 @@ func (Backtest) Annotations() []schema.Annotation {
 		entgql.QueryField(),
 		// Backtests are immutable - only allow creation, no updates
 		entgql.Mutations(entgql.MutationCreate()),
+	}
+}
+
+// Mixin of the Backtest.
+func (Backtest) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		entmixin.SoftDeleteMixin{},
 	}
 }

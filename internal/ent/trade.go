@@ -20,6 +20,8 @@ type Trade struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Original trade ID from freqtrade
 	FreqtradeTradeID int `json:"freqtrade_trade_id,omitempty"`
 	// Trading pair (BTC/USDT)
@@ -99,7 +101,7 @@ func (*Trade) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case trade.FieldPair, trade.FieldSellReason, trade.FieldStrategyName, trade.FieldTimeframe:
 			values[i] = new(sql.NullString)
-		case trade.FieldOpenDate, trade.FieldCloseDate, trade.FieldCreatedAt, trade.FieldUpdatedAt:
+		case trade.FieldDeletedAt, trade.FieldOpenDate, trade.FieldCloseDate, trade.FieldCreatedAt, trade.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case trade.FieldID, trade.FieldBotID:
 			values[i] = new(uuid.UUID)
@@ -123,6 +125,13 @@ func (_m *Trade) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case trade.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case trade.FieldFreqtradeTradeID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -277,6 +286,11 @@ func (_m *Trade) String() string {
 	var builder strings.Builder
 	builder.WriteString("Trade(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("freqtrade_trade_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.FreqtradeTradeID))
 	builder.WriteString(", ")

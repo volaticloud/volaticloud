@@ -22,6 +22,8 @@ type BotRunner struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Whether this resource is publicly visible to all authenticated users
 	Public bool `json:"public,omitempty"`
+	// Soft-delete timestamp. If set, record is considered deleted.
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Runner display name
 	Name string `json:"name,omitempty"`
 	// Runner environment type (docker, kubernetes, local)
@@ -141,7 +143,7 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case botrunner.FieldName, botrunner.FieldType, botrunner.FieldDataDownloadStatus, botrunner.FieldDataErrorMessage, botrunner.FieldS3DataKey, botrunner.FieldOwnerID:
 			values[i] = new(sql.NullString)
-		case botrunner.FieldDataLastUpdated, botrunner.FieldDataDownloadStartedAt, botrunner.FieldS3DataUploadedAt, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
+		case botrunner.FieldDeletedAt, botrunner.FieldDataLastUpdated, botrunner.FieldDataDownloadStartedAt, botrunner.FieldS3DataUploadedAt, botrunner.FieldCreatedAt, botrunner.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case botrunner.FieldID:
 			values[i] = new(uuid.UUID)
@@ -171,6 +173,13 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field public", values[i])
 			} else if value.Valid {
 				_m.Public = value.Bool
+			}
+		case botrunner.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case botrunner.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -370,6 +379,11 @@ func (_m *BotRunner) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("public=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Public))
+	builder.WriteString(", ")
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)

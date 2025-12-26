@@ -118,5 +118,6 @@ func (Strategy) Hooks() []ent.Hook {
 func (Strategy) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		entmixin.PublicMixin{},
+		entmixin.SoftDeleteMixin{},
 	}
 }

@@ -121,5 +121,6 @@ func (Bot) Annotations() []schema.Annotation {
 func (Bot) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		entmixin.PublicMixin{},
+		entmixin.SoftDeleteMixin{},
 	}
 }
