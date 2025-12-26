@@ -3,13 +3,17 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"time"
 
 	"entgo.io/ent"
+	"github.com/google/uuid"
+
 	entclient "volaticloud/internal/ent"
 )
 
-// softDeleteKey is the context key for hard delete operations.
+// hardDeleteKey is the context key for hard delete operations.
 type hardDeleteKey struct{}
 
 // WithHardDelete returns a context that bypasses soft-delete and performs permanent deletion.
@@ -24,9 +28,20 @@ func isHardDelete(ctx context.Context) bool {
 	return ok && hardDelete
 }
 
+// softDeletableMutation defines the interface for mutations that support soft-delete.
+// Any ENT mutation with SoftDeleteMixin automatically implements this interface.
+type softDeletableMutation interface {
+	ent.Mutation
+	IDs(context.Context) ([]uuid.UUID, error)
+	SetDeletedAt(time.Time)
+}
+
 // SetupSoftDelete configures soft-delete hooks on the ENT client.
-// This should be called after ent.Open() to enable automatic soft-delete
-// for all Delete operations.
+// This hook automatically applies to ALL entities that have the SoftDeleteMixin.
+// No explicit entity listing is required - it detects soft-delete support at runtime
+// via the softDeletableMutation interface.
+//
+// The hook intercepts Delete operations and converts them to UPDATE SET deleted_at.
 //
 // With this hook:
 //   - client.Strategy.DeleteOneID(id).Exec(ctx) → sets deleted_at = now
@@ -38,249 +53,94 @@ func isHardDelete(ctx context.Context) bool {
 //	ctx = mixin.IncludeDeleted(ctx) // needed to find soft-deleted records
 //	client.Strategy.DeleteOneID(id).Exec(ctx)
 func SetupSoftDelete(client *entclient.Client) {
-	// Add soft-delete hook to Strategy
-	client.Strategy.Use(func(next ent.Mutator) ent.Mutator {
+	// Single hook applied to all entity types
+	hook := func(next ent.Mutator) ent.Mutator {
 		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.StrategyMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
 			// Only intercept delete operations
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
+			if !m.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
 				return next.Mutate(ctx, m)
 			}
+
 			// Allow hard delete via context
 			if isHardDelete(ctx) {
 				return next.Mutate(ctx, m)
 			}
-			// Soft delete: update deleted_at instead of deleting
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().Strategy.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
 
-	// Add soft-delete hook to Bot
-	client.Bot.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.BotMutation)
+			// Check if mutation supports soft-delete (has SetDeletedAt method)
+			sdm, ok := m.(softDeletableMutation)
 			if !ok {
+				// Entity doesn't have SoftDeleteMixin, proceed with hard delete
 				return next.Mutate(ctx, m)
 			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().Bot.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
 
-	// Add soft-delete hook to BotRunner
-	client.BotRunner.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.BotRunnerMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
+			// Get IDs to soft-delete
+			ids, err := sdm.IDs(ctx)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("soft-delete: failed to get IDs: %w", err)
 			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().BotRunner.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
 
-	// Add soft-delete hook to Exchange
-	client.Exchange.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.ExchangeMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
+			if len(ids) == 0 {
+				return nil, nil
 			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().Exchange.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
 
-	// Add soft-delete hook to Backtest
-	client.Backtest.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.BacktestMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
+			// Execute soft-delete using reflection to call the correct Update method
+			entityType := m.Type()
 			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().Backtest.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
 
-	// Add soft-delete hook to Trade
-	client.Trade.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.TradeMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
 			for _, id := range ids {
-				if _, err := mut.Client().Trade.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
+				if err := softDeleteByReflection(ctx, client, entityType, id, now); err != nil {
 					return nil, err
 				}
 			}
-			return nil, nil
-		})
-	})
 
-	// Add soft-delete hook to BotMetrics
-	client.BotMetrics.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.BotMetricsMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().BotMetrics.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
 			return nil, nil
 		})
-	})
+	}
 
-	// Add soft-delete hook to ResourceUsageSample
-	client.ResourceUsageSample.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.ResourceUsageSampleMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().ResourceUsageSample.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
+	// Apply hook to all entities
+	client.Use(hook)
+}
 
-	// Add soft-delete hook to ResourceUsageAggregation
-	client.ResourceUsageAggregation.Use(func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			mut, ok := m.(*entclient.ResourceUsageAggregationMutation)
-			if !ok {
-				return next.Mutate(ctx, m)
-			}
-			if !mut.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
-				return next.Mutate(ctx, m)
-			}
-			if isHardDelete(ctx) {
-				return next.Mutate(ctx, m)
-			}
-			ids, err := mut.IDs(ctx)
-			if err != nil {
-				return nil, err
-			}
-			now := time.Now()
-			for _, id := range ids {
-				if _, err := mut.Client().ResourceUsageAggregation.UpdateOneID(id).SetDeletedAt(now).Save(ctx); err != nil {
-					return nil, err
-				}
-			}
-			return nil, nil
-		})
-	})
+// softDeleteByReflection uses reflection to call client.<EntityType>.UpdateOneID(id).SetDeletedAt(now).Save(ctx)
+func softDeleteByReflection(ctx context.Context, client *entclient.Client, entityType string, id uuid.UUID, deletedAt time.Time) error {
+	// Get the entity client field (e.g., client.Strategy)
+	clientValue := reflect.ValueOf(client).Elem()
+	entityClient := clientValue.FieldByName(entityType)
+
+	if !entityClient.IsValid() {
+		return fmt.Errorf("soft-delete: unknown entity type %q", entityType)
+	}
+
+	// Call UpdateOneID(id)
+	updateMethod := entityClient.MethodByName("UpdateOneID")
+	if !updateMethod.IsValid() {
+		return fmt.Errorf("soft-delete: entity %q has no UpdateOneID method", entityType)
+	}
+
+	updateBuilder := updateMethod.Call([]reflect.Value{reflect.ValueOf(id)})[0]
+
+	// Call SetDeletedAt(deletedAt)
+	setDeletedAt := updateBuilder.MethodByName("SetDeletedAt")
+	if !setDeletedAt.IsValid() {
+		return fmt.Errorf("soft-delete: entity %q has no SetDeletedAt method", entityType)
+	}
+
+	updateBuilder = setDeletedAt.Call([]reflect.Value{reflect.ValueOf(deletedAt)})[0]
+
+	// Call Save(ctx)
+	saveMethod := updateBuilder.MethodByName("Save")
+	if !saveMethod.IsValid() {
+		return fmt.Errorf("soft-delete: entity %q update builder has no Save method", entityType)
+	}
+
+	results := saveMethod.Call([]reflect.Value{reflect.ValueOf(ctx)})
+
+	// Check for error (second return value)
+	if len(results) >= 2 && !results[1].IsNil() {
+		if err, ok := results[1].Interface().(error); ok {
+			return err
+		}
+	}
+
+	return nil
 }
