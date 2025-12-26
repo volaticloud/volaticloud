@@ -63,3 +63,13 @@ func (m *MockUMAClient) DeleteResource(ctx context.Context, resourceID string) e
 func (m *MockUMAClient) CreatePermission(ctx context.Context, resourceID, ownerID string) error {
 	return nil
 }
+
+// UpdateResource is a no-op for the mock (not needed in tests)
+func (m *MockUMAClient) UpdateResource(ctx context.Context, resourceID string, attributes map[string][]string) error {
+	return nil
+}
+
+// SyncResourceScopes is a no-op for the mock (not needed in tests)
+func (m *MockUMAClient) SyncResourceScopes(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error {
+	return nil
+}

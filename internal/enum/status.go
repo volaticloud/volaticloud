@@ -86,6 +86,7 @@ const (
 	TaskStatusRunning   TaskStatus = "running"
 	TaskStatusCompleted TaskStatus = "completed"
 	TaskStatusFailed    TaskStatus = "failed"
+	TaskStatusCancelled TaskStatus = "cancelled"
 )
 
 // Values returns all possible task status values
@@ -95,6 +96,7 @@ func (TaskStatus) Values() []string {
 		string(TaskStatusRunning),
 		string(TaskStatusCompleted),
 		string(TaskStatusFailed),
+		string(TaskStatusCancelled),
 	}
 }
 

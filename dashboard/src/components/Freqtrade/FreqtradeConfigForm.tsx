@@ -163,7 +163,12 @@ export function FreqtradeConfigForm({
             }
           }}
           height="500px"
-          placeholder='{\n  "stake_currency": "USDT",\n  "stake_amount": 100,\n  ...\n}'
+          placeholder={`{
+  "stake_currency": "USDT",
+  "stake_amount": 100,
+  "max_open_trades": 3,
+  "timeframe": "5m"
+}`}
         />
       )}
     </Box>

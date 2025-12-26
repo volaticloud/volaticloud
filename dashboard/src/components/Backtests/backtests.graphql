@@ -102,8 +102,8 @@ query GetStrategyById($id: ID!) {
   }
 }
 
-mutation CreateBacktest($input: CreateBacktestInput!) {
-  createBacktest(input: $input) {
+mutation RunBacktest($input: CreateBacktestInput!) {
+  runBacktest(input: $input) {
     id
     status
     createdAt
@@ -115,20 +115,13 @@ mutation CreateBacktest($input: CreateBacktestInput!) {
   }
 }
 
-mutation DeleteBacktest($id: ID!) {
-  deleteBacktest(id: $id)
-}
-
-mutation RunBacktest($id: ID!) {
-  runBacktest(id: $id) {
-    id
-    status
-  }
-}
-
 mutation StopBacktest($id: ID!) {
   stopBacktest(id: $id) {
     id
     status
   }
+}
+
+mutation DeleteBacktest($id: ID!) {
+  deleteBacktest(id: $id)
 }

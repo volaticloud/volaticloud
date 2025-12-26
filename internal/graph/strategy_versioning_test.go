@@ -171,7 +171,7 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 	assert.True(t, v3Check.IsLatest)
 }
 
-func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
+func TestRunBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
 
@@ -249,7 +249,7 @@ func TestCreateBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 		StrategyID: strategy.ID,
 		RunnerID:   runner.ID,
 	}
-	backtest2, err := resolver.Mutation().CreateBacktest(ctx, backtest2Input)
+	backtest2, err := resolver.Mutation().RunBacktest(ctx, backtest2Input)
 
 	// Should succeed by auto-creating new version
 	require.NoError(t, err)

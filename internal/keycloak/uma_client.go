@@ -14,6 +14,7 @@ type UMAClientInterface interface {
 	CheckPermission(ctx context.Context, token, resourceID, scope string) (bool, error)
 	CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error
 	UpdateResource(ctx context.Context, resourceID string, attributes map[string][]string) error
+	SyncResourceScopes(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error
 	DeleteResource(ctx context.Context, resourceID string) error
 	CreatePermission(ctx context.Context, resourceID, ownerID string) error
 }
@@ -145,6 +146,54 @@ func (u *UMAClient) UpdateResource(ctx context.Context, resourceID string, attri
 	}
 
 	log.Printf("Updated Keycloak resource: %s with attributes: %v", resourceID, attributes)
+	return nil
+}
+
+// SyncResourceScopes updates the scopes of an existing resource in Keycloak
+// This is used during startup to ensure all resources have the latest scopes
+// If the resource doesn't exist, it will be created
+func (u *UMAClient) SyncResourceScopes(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error {
+	token, err := u.getClientToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Get existing resource
+	resources, err := u.client.GetResourcesClient(ctx, token, u.realm, gocloak.GetResourceParams{
+		Name: gocloak.StringP(resourceID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get resource: %w", err)
+	}
+
+	// If resource doesn't exist, create it
+	if len(resources) == 0 {
+		return u.CreateResource(ctx, resourceID, resourceName, scopes, attributes)
+	}
+
+	existingResource := resources[0]
+
+	// Convert scopes to ScopeRepresentation format
+	// Note: Use Scopes field for updates (ResourceScopes is read-only response field)
+	resourceScopes := make([]gocloak.ScopeRepresentation, len(scopes))
+	for i, scope := range scopes {
+		resourceScopes[i] = gocloak.ScopeRepresentation{
+			Name: gocloak.StringP(scope),
+		}
+	}
+
+	// Update scopes and attributes
+	// Scopes is the writable field, ResourceScopes is read-only
+	existingResource.Scopes = &resourceScopes
+	existingResource.Attributes = &attributes
+
+	// Update resource using UMA Protection API
+	err = u.client.UpdateResourceClient(ctx, token, u.realm, *existingResource)
+	if err != nil {
+		return fmt.Errorf("failed to update resource scopes in Keycloak: %w", err)
+	}
+
+	log.Printf("Synced Keycloak resource scopes: %s with scopes: %v", resourceID, scopes)
 	return nil
 }
 

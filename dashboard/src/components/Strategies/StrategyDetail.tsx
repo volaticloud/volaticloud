@@ -14,11 +14,13 @@ import {
   Delete,
   ArrowBack,
   Restore,
+  Public as PublicIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useGetStrategyDetailQuery, useGetStrategyVersionsQuery } from './strategy-detail.generated';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { DeleteStrategyDialog } from './DeleteStrategyDialog';
+import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
 import { BacktestResults } from '../Backtests/BacktestResults';
@@ -87,6 +89,15 @@ const StrategyDetail = () => {
             {strategy.isLatest && (
               <Chip label="Latest" size="small" color="success" />
             )}
+            {strategy.public && (
+              <Chip
+                icon={<PublicIcon />}
+                label="Public"
+                size="small"
+                color="info"
+                variant="outlined"
+              />
+            )}
           </Box>
           {strategy.description && (
             <Typography variant="body2" color="text.secondary">
@@ -114,6 +125,12 @@ const StrategyDetail = () => {
             Restore to this version
           </Button>
         )}
+        <StrategyVisibilityButton
+          strategyId={strategy.id}
+          strategyName={strategy.name}
+          isPublic={strategy.public}
+          onSuccess={() => refetch()}
+        />
         <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
           <Delete />
         </IconButton>

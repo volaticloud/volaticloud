@@ -75,10 +75,17 @@ export const BacktestsList = () => {
   const [runBacktest] = useRunBacktestMutation({ onCompleted: () => refetch() });
   const [stopBacktest] = useStopBacktestMutation({ onCompleted: () => refetch() });
 
-  const handleRunBacktest = async (e: React.MouseEvent, id: string) => {
+  const handleRunBacktest = async (e: React.MouseEvent, backtest: Backtest) => {
     e.stopPropagation();
     try {
-      const result = await runBacktest({ variables: { id } });
+      const result = await runBacktest({
+        variables: {
+          input: {
+            strategyID: backtest.strategy.id,
+            runnerID: backtest.runner.id,
+          },
+        },
+      });
       if (result.errors || !result.data?.runBacktest) {
         setSnackbar({
           open: true,
@@ -222,7 +229,7 @@ export const BacktestsList = () => {
             <IconButton
               size="small"
               color="primary"
-              onClick={(e) => handleRunBacktest(e, params.row.id)}
+              onClick={(e) => handleRunBacktest(e, params.row)}
               disabled={params.row.status === 'running'}
             >
               <RunIcon fontSize="small" />

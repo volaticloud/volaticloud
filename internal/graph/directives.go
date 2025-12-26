@@ -3,12 +3,14 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 	"volaticloud/internal/auth"
+	"volaticloud/internal/authz"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/keycloak"
 )
@@ -29,6 +31,9 @@ func IsAuthenticatedDirective(ctx context.Context, obj interface{}, next graphql
 // verifyResourcePermission dynamically determines the resource type and verifies permission
 // This is a generic helper that works with all resource types (Strategy, Bot, Exchange, BotRunner, Backtest, Group)
 // For Backtest: permission is checked against the parent Strategy (backtests don't have their own Keycloak resources)
+//
+// Self-healing: If permission check fails, syncs the resource's scopes to Keycloak and retries once.
+// This handles cases where new scopes were added to the application but Keycloak resources are stale.
 func verifyResourcePermission(
 	ctx context.Context,
 	client *ent.Client,
@@ -43,30 +48,67 @@ func verifyResourcePermission(
 
 	// Try to find the resource and determine its type
 	// Check Strategy
-	if _, err := client.Strategy.Get(ctx, id); err == nil {
-		return VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
+	if s, err := client.Strategy.Get(ctx, id); err == nil {
+		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
+		if !hasPermission && permErr == nil {
+			// Permission denied - try self-healing sync and retry
+			if syncAndRetry := trySyncStrategy(ctx, s, umaClient); syncAndRetry {
+				return VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
+			}
+		}
+		return hasPermission, permErr
 	}
 
 	// Check Bot
-	if _, err := client.Bot.Get(ctx, id); err == nil {
-		return VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
+	if b, err := client.Bot.Get(ctx, id); err == nil {
+		hasPermission, permErr := VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
+		if !hasPermission && permErr == nil {
+			if syncAndRetry := trySyncBot(ctx, b, umaClient); syncAndRetry {
+				return VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
+			}
+		}
+		return hasPermission, permErr
 	}
 
 	// Check Exchange
-	if _, err := client.Exchange.Get(ctx, id); err == nil {
-		return VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
+	if e, err := client.Exchange.Get(ctx, id); err == nil {
+		hasPermission, permErr := VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
+		if !hasPermission && permErr == nil {
+			if syncAndRetry := trySyncExchange(ctx, e, umaClient); syncAndRetry {
+				return VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
+			}
+		}
+		return hasPermission, permErr
 	}
 
 	// Check BotRunner
-	if _, err := client.BotRunner.Get(ctx, id); err == nil {
-		return VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
+	if r, err := client.BotRunner.Get(ctx, id); err == nil {
+		hasPermission, permErr := VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
+		if !hasPermission && permErr == nil {
+			if syncAndRetry := trySyncBotRunner(ctx, r, umaClient); syncAndRetry {
+				return VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
+			}
+		}
+		return hasPermission, permErr
 	}
 
 	// Check Backtest - authorization is delegated to the parent Strategy
 	// Backtests don't have their own Keycloak resources; they inherit permissions from Strategy
 	if bt, err := client.Backtest.Get(ctx, id); err == nil {
-		// Use the strategy_id to check permission on the parent strategy
-		return VerifyStrategyPermission(ctx, client, umaClient, bt.StrategyID.String(), userToken, scope)
+		// Load strategy for potential self-healing
+		strategyID := bt.StrategyID
+		strategy, stratErr := client.Strategy.Get(ctx, strategyID)
+		if stratErr != nil {
+			return false, fmt.Errorf("backtest's strategy not found: %w", stratErr)
+		}
+
+		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, strategyID.String(), userToken, scope)
+		if !hasPermission && permErr == nil {
+			if syncAndRetry := trySyncStrategy(ctx, strategy, umaClient); syncAndRetry {
+				return VerifyStrategyPermission(ctx, client, umaClient, strategyID.String(), userToken, scope)
+			}
+		}
+		return hasPermission, permErr
 	}
 
 	// If not found in database, it might be a Group resource (managed by Keycloak, not ENT)
@@ -77,6 +119,99 @@ func verifyResourcePermission(
 	}
 
 	return false, fmt.Errorf("resource not found: %s", resourceID)
+}
+
+// ============================================================================
+// Self-healing sync helpers
+// These sync resource scopes to Keycloak when permission check fails
+// ============================================================================
+
+func trySyncStrategy(ctx context.Context, s *ent.Strategy, umaClient keycloak.UMAClientInterface) bool {
+	if umaClient == nil {
+		return false
+	}
+
+	resourceName := fmt.Sprintf("%s (v%d)", s.Name, s.VersionNumber)
+	scopes := authz.GetScopesForType(authz.ResourceTypeStrategy)
+	attributes := map[string][]string{
+		"ownerId": {s.OwnerID},
+		"type":    {string(authz.ResourceTypeStrategy)},
+		"public":  {fmt.Sprintf("%t", s.Public)},
+	}
+
+	err := umaClient.SyncResourceScopes(ctx, s.ID.String(), resourceName, scopes, attributes)
+	if err != nil {
+		log.Printf("Self-healing: failed to sync strategy %s scopes: %v", s.ID, err)
+		return false
+	}
+
+	log.Printf("Self-healing: synced strategy %s scopes, retrying permission check", s.ID)
+	return true
+}
+
+func trySyncBot(ctx context.Context, b *ent.Bot, umaClient keycloak.UMAClientInterface) bool {
+	if umaClient == nil {
+		return false
+	}
+
+	scopes := authz.GetScopesForType(authz.ResourceTypeBot)
+	attributes := map[string][]string{
+		"ownerId": {b.OwnerID},
+		"type":    {string(authz.ResourceTypeBot)},
+		"public":  {fmt.Sprintf("%t", b.Public)},
+	}
+
+	err := umaClient.SyncResourceScopes(ctx, b.ID.String(), b.Name, scopes, attributes)
+	if err != nil {
+		log.Printf("Self-healing: failed to sync bot %s scopes: %v", b.ID, err)
+		return false
+	}
+
+	log.Printf("Self-healing: synced bot %s scopes, retrying permission check", b.ID)
+	return true
+}
+
+func trySyncExchange(ctx context.Context, e *ent.Exchange, umaClient keycloak.UMAClientInterface) bool {
+	if umaClient == nil {
+		return false
+	}
+
+	scopes := authz.GetScopesForType(authz.ResourceTypeExchange)
+	attributes := map[string][]string{
+		"ownerId": {e.OwnerID},
+		"type":    {string(authz.ResourceTypeExchange)},
+	}
+
+	err := umaClient.SyncResourceScopes(ctx, e.ID.String(), e.Name, scopes, attributes)
+	if err != nil {
+		log.Printf("Self-healing: failed to sync exchange %s scopes: %v", e.ID, err)
+		return false
+	}
+
+	log.Printf("Self-healing: synced exchange %s scopes, retrying permission check", e.ID)
+	return true
+}
+
+func trySyncBotRunner(ctx context.Context, r *ent.BotRunner, umaClient keycloak.UMAClientInterface) bool {
+	if umaClient == nil {
+		return false
+	}
+
+	scopes := authz.GetScopesForType(authz.ResourceTypeBotRunner)
+	attributes := map[string][]string{
+		"ownerId": {r.OwnerID},
+		"type":    {string(authz.ResourceTypeBotRunner)},
+		"public":  {fmt.Sprintf("%t", r.Public)},
+	}
+
+	err := umaClient.SyncResourceScopes(ctx, r.ID.String(), r.Name, scopes, attributes)
+	if err != nil {
+		log.Printf("Self-healing: failed to sync bot runner %s scopes: %v", r.ID, err)
+		return false
+	}
+
+	log.Printf("Self-healing: synced bot runner %s scopes, retrying permission check", r.ID)
+	return true
 }
 
 // HasScopeDirective checks if the user has a specific permission scope on a resource
@@ -130,7 +265,7 @@ func HasScopeDirective(
 	}
 
 	if !hasPermission {
-		return nil, fmt.Errorf("insufficient permissions: missing '%s' scope on resource %s", scope, resourceID)
+		return nil, fmt.Errorf("you don't have %q access to resource %q", scope, resourceID)
 	}
 
 	// User has permission, proceed with resolver
@@ -257,7 +392,7 @@ func RequiresPermissionDirective(
 	if !hasPermission {
 		// Return null for unauthorized nodes (GraphQL standard pattern)
 		// This will show as null in the response with a partial error
-		return nil, fmt.Errorf("insufficient permissions: missing '%s' scope on resource %s", scope, resourceID)
+		return nil, fmt.Errorf("you don't have %q access to resource %q", scope, resourceID)
 	}
 
 	// User has permission, proceed with field resolver

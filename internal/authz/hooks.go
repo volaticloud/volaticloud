@@ -72,6 +72,7 @@ func strategyCreateHook() ent.Hook {
 				attributes := map[string][]string{
 					"ownerId": {strategy.OwnerID},
 					"type":    {string(ResourceTypeStrategy)},
+					"public":  {fmt.Sprintf("%t", strategy.Public)},
 				}
 
 				err = umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, scopes, attributes)
