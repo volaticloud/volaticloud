@@ -115,6 +115,11 @@ func (m *Manager) HandleBotStatus(
 		"timestamp":     time.Now(),
 	}
 
+	// Validate and sanitize event data
+	if err := ValidateEventData(eventData); err != nil {
+		return fmt.Errorf("invalid event data: %w", err)
+	}
+
 	// Determine alert type
 	alertType := enum.AlertTypeStatusChange
 	if newStatus == enum.BotStatusError {
