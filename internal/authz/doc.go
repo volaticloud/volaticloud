@@ -18,9 +18,10 @@ flowchart TB
 	end
 
 	subgraph Authz["authz Package"]
-	    RT["ResourceTypes<br/>Strategy, Bot, Exchange, BotRunner"]
+	    RT["ResourceTypes<br/>Strategy, Bot, Exchange, BotRunner, Group"]
 	    SC["Scopes<br/>view, edit, view-secrets"]
 	    VF["Verify<br/>Permission Checks"]
+	    SH["Self-Healing<br/>Scope Sync"]
 	end
 
 	subgraph Keycloak["Keycloak UMA 2.0"]
@@ -35,12 +36,13 @@ flowchart TB
 
 # Resource Types
 
-VolatiCloud manages four main resource types:
+VolatiCloud manages five main resource types:
 
   - Strategy:  Trading strategy code and configurations
   - Bot:       Running bot instances with exchange connections
   - Exchange:  Exchange API credentials and settings
   - BotRunner: Container runtime environments (Docker/Kubernetes)
+  - Group:     Organization/tenant groups managed by Keycloak
 
 Each resource type has associated permission scopes defined in this package.
 
@@ -165,13 +167,34 @@ GraphQL directive usage:
 
 # Scope Definitions by Resource Type
 
-Strategy Scopes: view, edit, backtest, delete
+Strategy Scopes: view, edit, run-backtest, stop-backtest, delete-backtest, delete
 
-Bot Scopes: view, view-secrets, edit, run, stop, delete
+Bot Scopes: view, view-secrets, edit, run, stop, delete, freqtrade-api
 
 Exchange Scopes: view, view-secrets, edit, delete
 
 BotRunner Scopes: view, view-secrets, edit, delete, make-public
+
+Group Scopes: view, edit, delete, mark-alert-as-read
+
+# Self-Healing Scope Sync
+
+When new scopes are added to the application, existing Keycloak resources may not
+have them registered. The package provides helper functions to detect and handle
+this situation:
+
+  - IsInvalidScopeError: Checks if an error indicates an unregistered scope
+  - ShouldTriggerSelfHealing: Determines if scope sync should be attempted
+
+Example self-healing flow:
+
+	hasPermission, err := umaClient.CheckPermission(ctx, token, resourceID, scope)
+	if authz.ShouldTriggerSelfHealing(hasPermission, err) {
+	    // Sync scopes to Keycloak and retry
+	    scopes := authz.GetScopesForType(resourceType)
+	    umaClient.SyncResourceScopes(ctx, resourceID, name, scopes, attrs)
+	    hasPermission, err = umaClient.CheckPermission(ctx, token, resourceID, scope)
+	}
 
 # Related Packages
 
