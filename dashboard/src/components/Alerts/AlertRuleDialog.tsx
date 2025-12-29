@@ -79,14 +79,14 @@ const botModeFilterLabels: Record<AlertRuleAlertBotModeFilter, string> = {
 
 // Alert types that are related to bot trading (should show bot mode filter)
 const botRelatedAlertTypes: AlertRuleAlertType[] = [
-  'status_change',
-  'trade_opened',
-  'trade_closed',
-  'large_profit_loss',
-  'daily_loss_limit',
-  'drawdown_threshold',
-  'profit_target',
-  'connection_issue',
+  AlertRuleAlertType.StatusChange,
+  AlertRuleAlertType.TradeOpened,
+  AlertRuleAlertType.TradeClosed,
+  AlertRuleAlertType.LargeProfitLoss,
+  AlertRuleAlertType.DailyLossLimit,
+  AlertRuleAlertType.DrawdownThreshold,
+  AlertRuleAlertType.ProfitTarget,
+  AlertRuleAlertType.ConnectionIssue,
 ];
 
 export const AlertRuleDialog = ({
@@ -99,12 +99,12 @@ export const AlertRuleDialog = ({
   const isEdit = !!rule;
 
   // Step 1: Resource selection (required first)
-  const [resourceType, setResourceType] = useState<AlertRuleAlertResourceType>('organization');
+  const [resourceType, setResourceType] = useState<AlertRuleAlertResourceType>(AlertRuleAlertResourceType.Organization);
   const [resourceId, setResourceId] = useState<string>('');
 
   // Step 2: Alert type selection (depends on resource)
   const [alertType, setAlertType] = useState<AlertRuleAlertType | ''>('');
-  const [severity, setSeverity] = useState<AlertRuleAlertSeverity>('warning');
+  const [severity, setSeverity] = useState<AlertRuleAlertSeverity>(AlertRuleAlertSeverity.Warning);
 
   // Step 3: Conditions (depends on alert type)
   const [conditions, setConditions] = useState<Record<string, unknown>>({});
@@ -112,12 +112,12 @@ export const AlertRuleDialog = ({
   // Other form fields
   const [name, setName] = useState('');
   const [enabled, setEnabled] = useState(true);
-  const [deliveryMode, setDeliveryMode] = useState<AlertRuleAlertDeliveryMode>('immediate');
+  const [deliveryMode, setDeliveryMode] = useState<AlertRuleAlertDeliveryMode>(AlertRuleAlertDeliveryMode.Immediate);
   const [batchIntervalMinutes, setBatchIntervalMinutes] = useState(60);
   const [cooldownMinutes, setCooldownMinutes] = useState(5);
   const [recipientInput, setRecipientInput] = useState('');
   const [recipients, setRecipients] = useState<string[]>([]);
-  const [botModeFilter, setBotModeFilter] = useState<AlertRuleAlertBotModeFilter>('all');
+  const [botModeFilter, setBotModeFilter] = useState<AlertRuleAlertBotModeFilter>(AlertRuleAlertBotModeFilter.All);
 
   // Fetch alert types for selected resource - this is the key new feature
   const { data: alertTypesData, loading: loadingAlertTypes } = useGetAlertTypesForResourceQuery({
@@ -162,22 +162,22 @@ export const AlertRuleDialog = ({
       setCooldownMinutes(rule.cooldownMinutes);
       setRecipients(rule.recipients || []);
       setRecipientInput('');
-      setBotModeFilter(rule.botModeFilter || 'all');
+      setBotModeFilter(rule.botModeFilter || AlertRuleAlertBotModeFilter.All);
     } else {
       // Reset for create
       setName('');
-      setResourceType('organization');
+      setResourceType(AlertRuleAlertResourceType.Organization);
       setResourceId('');
       setAlertType('');
-      setSeverity('warning');
+      setSeverity(AlertRuleAlertSeverity.Warning);
       setConditions({});
       setEnabled(true);
-      setDeliveryMode('immediate');
+      setDeliveryMode(AlertRuleAlertDeliveryMode.Immediate);
       setBatchIntervalMinutes(60);
       setCooldownMinutes(5);
       setRecipients([]);
       setRecipientInput('');
-      setBotModeFilter('all');
+      setBotModeFilter(AlertRuleAlertBotModeFilter.All);
     }
   }, [rule, open]);
 
@@ -231,7 +231,7 @@ export const AlertRuleDialog = ({
     if (!name || !activeGroupId || recipients.length === 0 || !alertType) return;
 
     // Require resourceId for non-organization scope
-    const requiresResourceId = resourceType !== 'organization';
+    const requiresResourceId = resourceType !== AlertRuleAlertResourceType.Organization;
     if (requiresResourceId && !resourceId) return;
 
     try {
@@ -251,7 +251,7 @@ export const AlertRuleDialog = ({
               resourceID: requiresResourceId ? resourceId : undefined,
               conditions: Object.keys(conditions).length > 0 ? conditions : undefined,
               deliveryMode,
-              batchIntervalMinutes: deliveryMode === 'batched' ? batchIntervalMinutes : undefined,
+              batchIntervalMinutes: deliveryMode === AlertRuleAlertDeliveryMode.Batched ? batchIntervalMinutes : undefined,
               cooldownMinutes,
               recipients,
               botModeFilter: isBotRelatedAlert ? botModeFilter : undefined,
@@ -274,7 +274,7 @@ export const AlertRuleDialog = ({
               resourceID: requiresResourceId ? resourceId : undefined,
               conditions: Object.keys(conditions).length > 0 ? conditions : undefined,
               deliveryMode,
-              batchIntervalMinutes: deliveryMode === 'batched' ? batchIntervalMinutes : undefined,
+              batchIntervalMinutes: deliveryMode === AlertRuleAlertDeliveryMode.Batched ? batchIntervalMinutes : undefined,
               cooldownMinutes,
               recipients,
               ownerID: activeGroupId,
@@ -293,7 +293,7 @@ export const AlertRuleDialog = ({
   };
 
   // Require resourceId when resourceType is not 'organization'
-  const requiresResourceId = resourceType !== 'organization';
+  const requiresResourceId = resourceType !== AlertRuleAlertResourceType.Organization;
   const canSubmit =
     name &&
     recipients.length > 0 &&
