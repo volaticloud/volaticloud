@@ -2,6 +2,23 @@
 
 package model
 
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+	"volaticloud/internal/enum"
+)
+
+// Metadata about an alert type including available condition fields
+type AlertTypeInfo struct {
+	Type            enum.AlertType     `json:"type"`
+	Label           string             `json:"label"`
+	Description     string             `json:"description"`
+	DefaultSeverity enum.AlertSeverity `json:"defaultSeverity"`
+	ConditionFields []*ConditionField  `json:"conditionFields"`
+}
+
 type BinanceConfigInput struct {
 	APIKey    string `json:"apiKey"`
 	APISecret string `json:"apiSecret"`
@@ -15,6 +32,25 @@ type BitfinexConfigInput struct {
 type BybitConfigInput struct {
 	APIKey    string `json:"apiKey"`
 	APISecret string `json:"apiSecret"`
+}
+
+// Describes a configurable condition field for an alert type
+type ConditionField struct {
+	Name        string             `json:"name"`
+	Label       string             `json:"label"`
+	Type        ConditionFieldType `json:"type"`
+	Required    bool               `json:"required"`
+	Description string             `json:"description"`
+	// For number fields: minimum value
+	Min *float64 `json:"min,omitempty"`
+	// For number fields: maximum value
+	Max *float64 `json:"max,omitempty"`
+	// For number fields: default value
+	Default *float64 `json:"default,omitempty"`
+	// For number fields: unit label (e.g., "%", "minutes")
+	Unit *string `json:"unit,omitempty"`
+	// For select/multi_select fields: available options
+	Options []*SelectOption `json:"options,omitempty"`
 }
 
 type ConnectionTestResult struct {
@@ -131,6 +167,12 @@ type S3ConfigInput struct {
 	UseSsl *bool `json:"useSSL,omitempty"`
 }
 
+// Option for select/multi_select condition fields
+type SelectOption struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
 // Estimated cost breakdown for resource usage
 // Uses runner-specific pricing rates
 type UsageCost struct {
@@ -146,4 +188,62 @@ type UsageCost struct {
 	TotalCost float64 `json:"totalCost"`
 	// Currency for the cost
 	Currency string `json:"currency"`
+}
+
+// Type of condition field for alert configuration
+type ConditionFieldType string
+
+const (
+	ConditionFieldTypeNumber      ConditionFieldType = "number"
+	ConditionFieldTypeSelect      ConditionFieldType = "select"
+	ConditionFieldTypeMultiSelect ConditionFieldType = "multi_select"
+)
+
+var AllConditionFieldType = []ConditionFieldType{
+	ConditionFieldTypeNumber,
+	ConditionFieldTypeSelect,
+	ConditionFieldTypeMultiSelect,
+}
+
+func (e ConditionFieldType) IsValid() bool {
+	switch e {
+	case ConditionFieldTypeNumber, ConditionFieldTypeSelect, ConditionFieldTypeMultiSelect:
+		return true
+	}
+	return false
+}
+
+func (e ConditionFieldType) String() string {
+	return string(e)
+}
+
+func (e *ConditionFieldType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ConditionFieldType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ConditionFieldType", str)
+	}
+	return nil
+}
+
+func (e ConditionFieldType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ConditionFieldType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ConditionFieldType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

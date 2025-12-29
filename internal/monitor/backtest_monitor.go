@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"volaticloud/internal/alert"
 	"volaticloud/internal/backtest"
 	"volaticloud/internal/ent"
 	entbacktest "volaticloud/internal/ent/backtest"
@@ -227,6 +228,9 @@ func (m *BacktestMonitor) handleCompletedBacktest(ctx context.Context, bt *ent.B
 
 	log.Printf("Backtest %s completed successfully, results saved", bt.ID)
 
+	// Emit backtest completed alert
+	m.emitBacktestAlert(ctx, bt, true, "", summary)
+
 	// Cleanup container after successfully saving results
 	if err := backtestRunner.DeleteBacktest(ctx, bt.ID.String()); err != nil {
 		log.Printf("Warning: Failed to cleanup backtest container %s: %v", bt.ID, err)
@@ -276,11 +280,59 @@ func (m *BacktestMonitor) handleFailedBacktest(ctx context.Context, bt *ent.Back
 		return
 	}
 
+	// Emit backtest failed alert
+	errorMsg := "Backtest failed"
+	if err == nil && result.ErrorMessage != "" {
+		errorMsg = result.ErrorMessage
+	}
+	m.emitBacktestAlert(ctx, bt, false, errorMsg, nil)
+
 	// Cleanup container after successfully saving failed status
 	if err := backtestRunner.DeleteBacktest(ctx, bt.ID.String()); err != nil {
 		log.Printf("Warning: Failed to cleanup failed backtest container %s: %v", bt.ID, err)
 		// Don't return error - status is already saved
 	} else {
 		log.Printf("Failed backtest %s container cleaned up", bt.ID)
+	}
+}
+
+// emitBacktestAlert sends an alert for backtest completion or failure
+func (m *BacktestMonitor) emitBacktestAlert(ctx context.Context, bt *ent.Backtest, success bool, errorMessage string, summary *backtest.BacktestSummary) {
+	alertMgr := alert.GetManagerFromContext(ctx)
+	if alertMgr == nil {
+		return // Alert manager not configured
+	}
+
+	// Get strategy info
+	if bt.Edges.Strategy == nil {
+		return // No strategy info available
+	}
+
+	strategy := bt.Edges.Strategy
+	totalTrades := 0
+	winRate := 0.0
+	profitTotal := 0.0
+
+	if summary != nil {
+		totalTrades = summary.TotalTrades
+		if summary.WinRate != nil {
+			winRate = *summary.WinRate
+		}
+		profitTotal = summary.ProfitTotalAbs
+	}
+
+	if err := alertMgr.HandleBacktestCompleted(
+		ctx,
+		bt.ID,
+		strategy.ID,
+		strategy.Name,
+		strategy.OwnerID,
+		success,
+		errorMessage,
+		totalTrades,
+		winRate,
+		profitTotal,
+	); err != nil {
+		log.Printf("Backtest %s: failed to emit backtest alert: %v", bt.ID, err)
 	}
 }

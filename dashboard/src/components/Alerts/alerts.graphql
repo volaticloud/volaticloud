@@ -1,0 +1,163 @@
+# Alert Rules
+query GetAlertRules($first: Int, $after: Cursor, $where: AlertRuleWhereInput) {
+  alertRules(first: $first, after: $after, where: $where) {
+    edges {
+      node {
+        id
+        name
+        alertType
+        severity
+        enabled
+        resourceType
+        resourceID
+        conditions
+        deliveryMode
+        batchIntervalMinutes
+        recipients
+        cooldownMinutes
+        lastTriggeredAt
+        ownerID
+        createdAt
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+mutation CreateAlertRule($input: CreateAlertRuleInput!) {
+  createAlertRule(input: $input) {
+    id
+    name
+    alertType
+    severity
+    enabled
+    resourceType
+    resourceID
+    conditions
+    deliveryMode
+    batchIntervalMinutes
+    recipients
+    cooldownMinutes
+  }
+}
+
+mutation UpdateAlertRule($id: ID!, $input: UpdateAlertRuleInput!) {
+  updateAlertRule(id: $id, input: $input) {
+    id
+    name
+    alertType
+    severity
+    enabled
+    resourceType
+    resourceID
+    conditions
+    deliveryMode
+    batchIntervalMinutes
+    recipients
+    cooldownMinutes
+  }
+}
+
+mutation DeleteAlertRule($id: ID!) {
+  deleteAlertRule(id: $id)
+}
+
+mutation ToggleAlertRule($id: ID!, $enabled: Boolean!) {
+  toggleAlertRule(id: $id, enabled: $enabled) {
+    id
+    enabled
+  }
+}
+
+mutation TestAlertRule($id: ID!) {
+  testAlertRule(id: $id)
+}
+
+# Alert Type Metadata (for dynamic form fields)
+query GetAlertTypesForResource($resourceType: AlertRuleAlertResourceType!, $resourceID: ID) {
+  alertTypesForResource(resourceType: $resourceType, resourceID: $resourceID) {
+    type
+    label
+    description
+    defaultSeverity
+    conditionFields {
+      name
+      label
+      type
+      required
+      description
+      min
+      max
+      default
+      unit
+      options {
+        value
+        label
+      }
+    }
+  }
+}
+
+# Alert Events (History)
+query GetAlertEvents($first: Int, $after: Cursor, $where: AlertEventWhereInput, $orderBy: AlertEventOrder) {
+  alertEvents(first: $first, after: $after, where: $where, orderBy: $orderBy) {
+    edges {
+      node {
+        id
+        status
+        alertType
+        severity
+        subject
+        body
+        context
+        recipients
+        channelType
+        sentAt
+        readAt
+        errorMessage
+        resourceType
+        resourceID
+        ownerID
+        createdAt
+        rule {
+          id
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Query to get unread count for notifications badge
+query GetUnreadAlertCount($where: AlertEventWhereInput) {
+  alertEvents(first: 0, where: $where) {
+    totalCount
+  }
+}
+
+# Mark single alert as read
+mutation MarkAlertEventAsRead($id: ID!, $ownerID: String!) {
+  markAlertEventAsRead(id: $id, ownerID: $ownerID) {
+    id
+    readAt
+  }
+}
+
+# Mark all alerts as read
+mutation MarkAllAlertEventsAsRead($ownerID: String!) {
+  markAllAlertEventsAsRead(ownerID: $ownerID)
+}

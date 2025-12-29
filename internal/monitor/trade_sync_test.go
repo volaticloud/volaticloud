@@ -107,9 +107,10 @@ func TestTradeFetchBatchSize(t *testing.T) {
 	assert.Equal(t, int64(500), TradeFetchBatchSize)
 }
 
-func TestTradeChangeTypes(t *testing.T) {
-	// Verify trade change type constants
-	assert.Equal(t, TradeChangeType("new_trade"), TradeChangeNewTrade)
-	assert.Equal(t, TradeChangeType("trade_closed"), TradeChangeTradeClosed)
-	assert.Equal(t, TradeChangeType("trade_updated"), TradeChangeTradeUpdated)
+func TestTradeSyncTimeout(t *testing.T) {
+	assert.Equal(t, 30*time.Second, TradeSyncTimeout)
+}
+
+func TestRecentTradesWindow(t *testing.T) {
+	assert.Equal(t, 7*24*time.Hour, RecentTradesWindow)
 }

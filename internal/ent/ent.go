@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"volaticloud/internal/ent/alertevent"
+	"volaticloud/internal/ent/alertrule"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -81,6 +83,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			alertevent.Table:               alertevent.ValidColumn,
+			alertrule.Table:                alertrule.ValidColumn,
 			backtest.Table:                 backtest.ValidColumn,
 			bot.Table:                      bot.ValidColumn,
 			botmetrics.Table:               botmetrics.ValidColumn,

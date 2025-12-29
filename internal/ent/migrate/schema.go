@@ -8,6 +8,111 @@ import (
 )
 
 var (
+	// AlertEventsColumns holds the columns for the "alert_events" table.
+	AlertEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "failed", "suppressed"}, Default: "pending"},
+		{Name: "alert_type", Type: field.TypeEnum, Enums: []string{"status_change", "trade_opened", "trade_closed", "large_profit_loss", "daily_loss_limit", "drawdown_threshold", "profit_target", "connection_issue", "backtest_completed", "backtest_failed"}},
+		{Name: "severity", Type: field.TypeEnum, Enums: []string{"critical", "warning", "info"}},
+		{Name: "subject", Type: field.TypeString},
+		{Name: "body", Type: field.TypeString, Size: 2147483647},
+		{Name: "context", Type: field.TypeJSON, Nullable: true},
+		{Name: "recipients", Type: field.TypeJSON},
+		{Name: "channel_type", Type: field.TypeString, Default: "email"},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"organization", "bot", "strategy", "runner"}},
+		{Name: "resource_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "owner_id", Type: field.TypeString},
+		{Name: "read_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "rule_id", Type: field.TypeUUID},
+	}
+	// AlertEventsTable holds the schema information for the "alert_events" table.
+	AlertEventsTable = &schema.Table{
+		Name:       "alert_events",
+		Columns:    AlertEventsColumns,
+		PrimaryKey: []*schema.Column{AlertEventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "alert_events_alert_rules_events",
+				Columns:    []*schema.Column{AlertEventsColumns[16]},
+				RefColumns: []*schema.Column{AlertRulesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "alertevent_owner_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AlertEventsColumns[13], AlertEventsColumns[15]},
+			},
+			{
+				Name:    "alertevent_owner_id_read_at",
+				Unique:  false,
+				Columns: []*schema.Column{AlertEventsColumns[13], AlertEventsColumns[14]},
+			},
+			{
+				Name:    "alertevent_rule_id",
+				Unique:  false,
+				Columns: []*schema.Column{AlertEventsColumns[16]},
+			},
+			{
+				Name:    "alertevent_status",
+				Unique:  false,
+				Columns: []*schema.Column{AlertEventsColumns[1]},
+			},
+			{
+				Name:    "alertevent_resource_type_resource_id",
+				Unique:  false,
+				Columns: []*schema.Column{AlertEventsColumns[11], AlertEventsColumns[12]},
+			},
+		},
+	}
+	// AlertRulesColumns holds the columns for the "alert_rules" table.
+	AlertRulesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "alert_type", Type: field.TypeEnum, Enums: []string{"status_change", "trade_opened", "trade_closed", "large_profit_loss", "daily_loss_limit", "drawdown_threshold", "profit_target", "connection_issue", "backtest_completed", "backtest_failed"}},
+		{Name: "severity", Type: field.TypeEnum, Enums: []string{"critical", "warning", "info"}, Default: "info"},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"organization", "bot", "strategy", "runner"}},
+		{Name: "resource_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "conditions", Type: field.TypeJSON, Nullable: true},
+		{Name: "delivery_mode", Type: field.TypeEnum, Enums: []string{"immediate", "batched"}, Default: "immediate"},
+		{Name: "batch_interval_minutes", Type: field.TypeInt, Default: 60},
+		{Name: "recipients", Type: field.TypeJSON},
+		{Name: "bot_mode_filter", Type: field.TypeEnum, Enums: []string{"all", "live", "dry_run"}, Default: "all"},
+		{Name: "cooldown_minutes", Type: field.TypeInt, Default: 5},
+		{Name: "last_triggered_at", Type: field.TypeTime, Nullable: true},
+		{Name: "owner_id", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// AlertRulesTable holds the schema information for the "alert_rules" table.
+	AlertRulesTable = &schema.Table{
+		Name:       "alert_rules",
+		Columns:    AlertRulesColumns,
+		PrimaryKey: []*schema.Column{AlertRulesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "alertrule_owner_id",
+				Unique:  false,
+				Columns: []*schema.Column{AlertRulesColumns[15]},
+			},
+			{
+				Name:    "alertrule_resource_type_resource_id",
+				Unique:  false,
+				Columns: []*schema.Column{AlertRulesColumns[6], AlertRulesColumns[7]},
+			},
+			{
+				Name:    "alertrule_alert_type_enabled",
+				Unique:  false,
+				Columns: []*schema.Column{AlertRulesColumns[3], AlertRulesColumns[5]},
+			},
+		},
+	}
 	// BacktestsColumns holds the columns for the "backtests" table.
 	BacktestsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -123,6 +228,7 @@ var (
 		{Name: "fetched_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "last_synced_trade_id", Type: field.TypeInt, Default: 0},
+		{Name: "last_known_max_trade_id", Type: field.TypeInt, Default: 0},
 		{Name: "last_trade_sync_at", Type: field.TypeTime, Nullable: true},
 		{Name: "bot_id", Type: field.TypeUUID, Unique: true},
 	}
@@ -134,7 +240,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bot_metrics_bots_metrics",
-				Columns:    []*schema.Column{BotMetricsColumns[24]},
+				Columns:    []*schema.Column{BotMetricsColumns[25]},
 				RefColumns: []*schema.Column{BotsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -411,9 +517,9 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "trade_bot_id_freqtrade_trade_id",
+				Name:    "trade_bot_id_freqtrade_trade_id_open_date",
 				Unique:  true,
-				Columns: []*schema.Column{TradesColumns[19], TradesColumns[2]},
+				Columns: []*schema.Column{TradesColumns[19], TradesColumns[2], TradesColumns[5]},
 			},
 			{
 				Name:    "trade_bot_id_is_open",
@@ -429,6 +535,8 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AlertEventsTable,
+		AlertRulesTable,
 		BacktestsTable,
 		BotsTable,
 		BotMetricsTable,
@@ -442,6 +550,7 @@ var (
 )
 
 func init() {
+	AlertEventsTable.ForeignKeys[0].RefTable = AlertRulesTable
 	BacktestsTable.ForeignKeys[0].RefTable = BotRunnersTable
 	BacktestsTable.ForeignKeys[1].RefTable = StrategiesTable
 	BotsTable.ForeignKeys[0].RefTable = BotRunnersTable

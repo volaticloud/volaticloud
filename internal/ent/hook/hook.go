@@ -8,6 +8,30 @@ import (
 	"volaticloud/internal/ent"
 )
 
+// The AlertEventFunc type is an adapter to allow the use of ordinary
+// function as AlertEvent mutator.
+type AlertEventFunc func(context.Context, *ent.AlertEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AlertEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AlertEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AlertEventMutation", m)
+}
+
+// The AlertRuleFunc type is an adapter to allow the use of ordinary
+// function as AlertRule mutator.
+type AlertRuleFunc func(context.Context, *ent.AlertRuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AlertRuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AlertRuleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AlertRuleMutation", m)
+}
+
 // The BacktestFunc type is an adapter to allow the use of ordinary
 // function as Backtest mutator.
 type BacktestFunc func(context.Context, *ent.BacktestMutation) (ent.Value, error)

@@ -1,0 +1,297 @@
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Tooltip,
+  Switch,
+  Chip,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  PlayArrow as TestIcon,
+} from '@mui/icons-material';
+import {
+  useGetAlertRulesQuery,
+  useToggleAlertRuleMutation,
+  useDeleteAlertRuleMutation,
+  useTestAlertRuleMutation,
+  GetAlertRulesQuery,
+} from './alerts.generated';
+import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
+import { useCursorPagination } from '../../hooks/useCursorPagination';
+import { useActiveGroup } from '../../contexts/GroupContext';
+import { AlertRuleAlertSeverity, AlertRuleAlertType } from '../../generated/types';
+import { AlertRuleDialog } from './AlertRuleDialog';
+
+// Extract AlertRule type from generated query
+type AlertRule = NonNullable<
+  NonNullable<NonNullable<GetAlertRulesQuery['alertRules']['edges']>[number]>['node']
+>;
+
+const severityColors: Record<AlertRuleAlertSeverity, 'error' | 'warning' | 'info'> = {
+  critical: 'error',
+  warning: 'warning',
+  info: 'info',
+};
+
+const alertTypeLabels: Record<AlertRuleAlertType, string> = {
+  status_change: 'Status Change',
+  trade_opened: 'Trade Opened',
+  trade_closed: 'Trade Closed',
+  large_profit_loss: 'Large Profit/Loss',
+  daily_loss_limit: 'Daily Loss Limit',
+  drawdown_threshold: 'Drawdown Threshold',
+  profit_target: 'Profit Target',
+  connection_issue: 'Connection Issue',
+  backtest_completed: 'Backtest Completed',
+  backtest_failed: 'Backtest Failed',
+};
+
+export const AlertRulesTab = () => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRule, setSelectedRule] = useState<AlertRule | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'error' | 'success';
+  }>({ open: false, message: '', severity: 'success' });
+
+  const { activeGroupId } = useActiveGroup();
+
+  const showSnackbar = (message: string, severity: 'error' | 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const pagination = useCursorPagination<AlertRule>({ initialPageSize: 10 });
+  const { setLoading, updateFromResponse, reset } = pagination;
+
+  const { data, loading, refetch } = useGetAlertRulesQuery({
+    variables: {
+      first: pagination.pageSize,
+      after: pagination.cursor,
+      where: {
+        ownerID: activeGroupId || undefined,
+        deletedAtIsNil: true,
+      },
+    },
+    skip: !activeGroupId,
+  });
+
+  const [toggleRule] = useToggleAlertRuleMutation();
+  const [deleteRule] = useDeleteAlertRuleMutation();
+  const [testRule] = useTestAlertRuleMutation();
+
+  useEffect(() => {
+    setLoading(loading);
+    if (data?.alertRules) {
+      updateFromResponse(data.alertRules);
+    }
+  }, [data, loading, setLoading, updateFromResponse]);
+
+  useEffect(() => {
+    reset();
+  }, [activeGroupId, reset]);
+
+  const handleToggle = async (rule: AlertRule) => {
+    try {
+      await toggleRule({
+        variables: {
+          id: rule.id,
+          enabled: !rule.enabled,
+        },
+      });
+      showSnackbar(`Rule ${rule.enabled ? 'disabled' : 'enabled'}`, 'success');
+      refetch();
+    } catch (error) {
+      showSnackbar(`Failed to toggle rule: ${error}`, 'error');
+    }
+  };
+
+  const handleDelete = async (rule: AlertRule) => {
+    if (!confirm(`Delete alert rule "${rule.name}"?`)) return;
+    try {
+      await deleteRule({ variables: { id: rule.id } });
+      showSnackbar('Rule deleted', 'success');
+      refetch();
+    } catch (error) {
+      showSnackbar(`Failed to delete rule: ${error}`, 'error');
+    }
+  };
+
+  const handleTest = async (rule: AlertRule) => {
+    try {
+      await testRule({ variables: { id: rule.id } });
+      showSnackbar('Test alert sent', 'success');
+    } catch (error) {
+      showSnackbar(`Failed to send test alert: ${error}`, 'error');
+    }
+  };
+
+  const columns: GridColDef<AlertRule>[] = [
+    {
+      field: 'enabled',
+      headerName: '',
+      width: 60,
+      renderCell: (params: GridRenderCellParams<AlertRule>) => (
+        <Switch
+          checked={params.row.enabled}
+          onChange={() => handleToggle(params.row)}
+          size="small"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+    },
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: GridRenderCellParams<AlertRule>) => (
+        <Typography variant="body2" fontWeight={600}>
+          {params.row.name}
+        </Typography>
+      ),
+    },
+    {
+      field: 'alertType',
+      headerName: 'Type',
+      width: 180,
+      renderCell: (params: GridRenderCellParams<AlertRule>) => (
+        <Typography variant="body2">
+          {alertTypeLabels[params.row.alertType] || params.row.alertType}
+        </Typography>
+      ),
+    },
+    {
+      field: 'severity',
+      headerName: 'Severity',
+      width: 100,
+      renderCell: (params: GridRenderCellParams<AlertRule>) => (
+        <Chip
+          label={params.row.severity}
+          size="small"
+          color={severityColors[params.row.severity]}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: 'recipients',
+      headerName: 'Recipients',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<AlertRule>) => (
+        <Typography variant="caption" color="text.secondary">
+          {params.row.recipients.length} recipient(s)
+        </Typography>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 140,
+      sortable: false,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams<AlertRule>) => (
+        <Box onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Test">
+            <IconButton
+              size="small"
+              onClick={() => handleTest(params.row)}
+              color="primary"
+            >
+              <TestIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setSelectedRule(params.row);
+                setDialogOpen(true);
+              }}
+              color="primary"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton
+              size="small"
+              onClick={() => handleDelete(params.row)}
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          {pagination.totalCount || 0} alert rules
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => {
+            setSelectedRule(null);
+            setDialogOpen(true);
+          }}
+          size="small"
+        >
+          Add Rule
+        </Button>
+      </Box>
+
+      <PaginatedDataGrid<AlertRule>
+        columns={columns}
+        pagination={pagination}
+        emptyMessage="No alert rules configured. Add a rule to receive notifications."
+      />
+
+      <AlertRuleDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSuccess={() => {
+          showSnackbar(selectedRule ? 'Rule updated' : 'Rule created', 'success');
+          refetch();
+        }}
+        rule={selectedRule}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};

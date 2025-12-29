@@ -1,7 +1,22 @@
-# Query for runner selector - fetches both own and public runners
-query GetRunnersForSelector($ownerID: String) {
+# Query for runner selector with search, pagination, and public/private filtering
+query GetRunnersForSelector(
+  $ownerID: String
+  $search: String
+  $includePublic: Boolean!
+  $dataReadyOnly: Boolean
+  $first: Int = 20
+  $after: Cursor
+) {
   # My runners
-  myRunners: botRunners(first: 50, where: { ownerID: $ownerID }) {
+  myRunners: botRunners(
+    first: $first
+    after: $after
+    where: {
+      ownerID: $ownerID
+      nameContainsFold: $search
+      dataIsReady: $dataReadyOnly
+    }
+  ) {
     edges {
       node {
         id
@@ -11,9 +26,23 @@ query GetRunnersForSelector($ownerID: String) {
         dataIsReady
       }
     }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
   }
-  # Public runners (excludes own since they're already in myRunners)
-  publicRunners: botRunners(first: 50, where: { public: true }) {
+  # Public runners (only fetched if includePublic is true)
+  publicRunners: botRunners(
+    first: $first
+    after: $after
+    where: {
+      public: true
+      ownerIDNEQ: $ownerID
+      nameContainsFold: $search
+      dataIsReady: $dataReadyOnly
+    }
+  ) @include(if: $includePublic) {
     edges {
       node {
         id
@@ -23,6 +52,170 @@ query GetRunnersForSelector($ownerID: String) {
         dataIsReady
         ownerID
       }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Query for a specific runner by ID (to ensure selected value is in list)
+query GetRunnerById($id: ID!) {
+  node(id: $id) {
+    ... on BotRunner {
+      id
+      name
+      type
+      public
+      dataIsReady
+    }
+  }
+}
+
+# Query for bot selector with search, pagination, and public/private filtering
+query GetBotsForSelector(
+  $ownerID: String
+  $search: String
+  $includePublic: Boolean!
+  $first: Int = 20
+  $after: Cursor
+) {
+  # My bots
+  myBots: bots(
+    first: $first
+    after: $after
+    where: {
+      ownerID: $ownerID
+      nameContainsFold: $search
+    }
+  ) {
+    edges {
+      node {
+        id
+        name
+        status
+        public
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+  # Public bots (only fetched if includePublic is true)
+  publicBots: bots(
+    first: $first
+    after: $after
+    where: {
+      public: true
+      ownerIDNEQ: $ownerID
+      nameContainsFold: $search
+    }
+  ) @include(if: $includePublic) {
+    edges {
+      node {
+        id
+        name
+        status
+        public
+        ownerID
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Query for a specific bot by ID (to ensure selected value is in list)
+query GetBotById($id: ID!) {
+  node(id: $id) {
+    ... on Bot {
+      id
+      name
+      status
+      public
+    }
+  }
+}
+
+# Query for strategy selector with search, pagination, version filtering, and public/private
+query GetStrategiesForSelector(
+  $ownerID: String
+  $search: String
+  $includePublic: Boolean!
+  $latestOnly: Boolean
+  $first: Int = 20
+  $after: Cursor
+) {
+  # My strategies
+  myStrategies: strategies(
+    first: $first
+    after: $after
+    where: {
+      ownerID: $ownerID
+      nameContainsFold: $search
+      isLatest: $latestOnly
+    }
+  ) {
+    edges {
+      node {
+        id
+        name
+        isLatest
+        versionNumber
+        public
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+  # Public strategies (only fetched if includePublic is true)
+  publicStrategies: strategies(
+    first: $first
+    after: $after
+    where: {
+      public: true
+      ownerIDNEQ: $ownerID
+      nameContainsFold: $search
+      isLatest: $latestOnly
+    }
+  ) @include(if: $includePublic) {
+    edges {
+      node {
+        id
+        name
+        isLatest
+        versionNumber
+        public
+        ownerID
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Query for a specific strategy by ID (to ensure selected value is in list)
+query GetStrategyForSelector($id: ID!) {
+  node(id: $id) {
+    ... on Strategy {
+      id
+      name
+      isLatest
+      versionNumber
+      public
     }
   }
 }

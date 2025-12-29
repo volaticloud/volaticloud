@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"volaticloud/internal/alert"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -14,8 +15,6 @@ import (
 	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/usage"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -218,14 +217,16 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 			if b.Status != enum.BotStatusStopped {
 				log.Printf("Bot %s (%s) container not found, marking as stopped", b.Name, b.ID)
 			}
-			return m.updateBotStatus(ctx, b.ID, enum.BotStatusStopped, false, nil, "Container not found")
+			return m.updateBotStatus(ctx, b, enum.BotStatusStopped, false, nil, "Container not found")
 		}
 		// For other errors (network issues, etc.), mark as error status
 		// Only log if status is changing to avoid log spam during persistent issues
 		if b.Status != enum.BotStatusError {
 			log.Printf("Bot %s (%s) error checking status (will retry): %v", b.Name, b.ID, err)
 		}
-		return m.updateBotStatus(ctx, b.ID, enum.BotStatusError, false, nil, err.Error())
+		// Emit connection issue alert for connection/network errors
+		m.emitConnectionIssueAlert(ctx, b, err.Error())
+		return m.updateBotStatus(ctx, b, enum.BotStatusError, false, nil, err.Error())
 	}
 
 	// If bot was in error state and successfully recovered, log it
@@ -240,17 +241,20 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 	errorMsg := status.ErrorMessage
 
 	// Update database
-	err = m.updateBotStatus(ctx, b.ID, botStatus, healthy, lastSeenAt, errorMsg)
+	err = m.updateBotStatus(ctx, b, botStatus, healthy, lastSeenAt, errorMsg)
 	if err != nil {
 		return err
 	}
 
 	// Fetch and update bot metrics if bot is running and healthy
 	if botStatus == enum.BotStatusRunning && healthy {
+		log.Printf("Bot %s: running and healthy, fetching metrics", b.Name)
 		if err := m.fetchAndUpdateBotMetrics(ctx, b, rt); err != nil {
 			// Log error but don't fail the status check
 			log.Printf("Bot %s (%s) failed to fetch metrics: %v", b.Name, b.ID, err)
 		}
+	} else {
+		log.Printf("Bot %s: status=%s healthy=%v - skipping metrics fetch", b.Name, botStatus, healthy)
 	}
 
 	// Record usage sample if billing is enabled for this runner
@@ -276,9 +280,11 @@ func (m *BotMonitor) checkBot(ctx context.Context, b *ent.Bot) error {
 	return nil
 }
 
-// updateBotStatus updates bot status in the database
-func (m *BotMonitor) updateBotStatus(ctx context.Context, botID uuid.UUID, status enum.BotStatus, healthy bool, lastSeenAt *time.Time, errorMsg string) error {
-	update := m.dbClient.Bot.UpdateOneID(botID).
+// updateBotStatus updates bot status in the database and emits alerts if status changed
+func (m *BotMonitor) updateBotStatus(ctx context.Context, b *ent.Bot, status enum.BotStatus, healthy bool, lastSeenAt *time.Time, errorMsg string) error {
+	oldStatus := b.Status
+
+	update := m.dbClient.Bot.UpdateOneID(b.ID).
 		SetStatus(status)
 
 	if lastSeenAt != nil {
@@ -296,7 +302,44 @@ func (m *BotMonitor) updateBotStatus(ctx context.Context, botID uuid.UUID, statu
 		return fmt.Errorf("failed to update bot status: %w", err)
 	}
 
+	// Emit alert if status changed
+	if oldStatus != status {
+		m.emitStatusAlert(ctx, b, oldStatus, status, errorMsg)
+	}
+
 	return nil
+}
+
+// emitStatusAlert sends a bot status change alert via the alert manager
+func (m *BotMonitor) emitStatusAlert(ctx context.Context, b *ent.Bot, oldStatus, newStatus enum.BotStatus, errorMsg string) {
+	alertMgr := alert.GetManagerFromContext(ctx)
+	if alertMgr == nil {
+		return // Alert manager not configured
+	}
+
+	botMode := string(b.Mode)
+	if err := alertMgr.HandleBotStatus(ctx, b.ID, b.Name, b.OwnerID, oldStatus, newStatus, errorMsg, botMode); err != nil {
+		log.Printf("Bot %s: failed to emit status alert: %v", b.Name, err)
+	}
+}
+
+// emitConnectionIssueAlert sends a connection issue alert via the alert manager
+func (m *BotMonitor) emitConnectionIssueAlert(ctx context.Context, b *ent.Bot, errorMsg string) {
+	alertMgr := alert.GetManagerFromContext(ctx)
+	if alertMgr == nil {
+		return // Alert manager not configured
+	}
+
+	// Only emit if bot was previously running/healthy (not already in error state)
+	// to avoid alert spam during persistent connection issues
+	if b.Status == enum.BotStatusError {
+		return // Already in error state, don't spam alerts
+	}
+
+	botMode := string(b.Mode)
+	if err := alertMgr.HandleConnectionIssue(ctx, b.ID, b.Name, b.OwnerID, errorMsg, 0, botMode); err != nil {
+		log.Printf("Bot %s: failed to emit connection issue alert: %v", b.Name, err)
+	}
 }
 
 // fetchAndUpdateBotMetrics fetches metrics from Freqtrade API and updates BotMetrics entity
@@ -431,9 +474,12 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, r
 			// Check if enough time has passed since last sync
 			timeSinceSync := time.Since(*existingMetrics.LastTradeSyncAt)
 			shouldSync = timeSinceSync >= m.tradeSyncConfig.Interval
+			log.Printf("Bot %s: trade sync check - last sync %v ago, interval %v, shouldSync=%v",
+				b.Name, timeSinceSync.Round(time.Second), m.tradeSyncConfig.Interval, shouldSync)
 		} else {
 			// No previous sync, do initial sync
 			shouldSync = true
+			log.Printf("Bot %s: trade sync check - no previous sync, will sync now", b.Name)
 		}
 
 		if shouldSync {
@@ -442,6 +488,8 @@ func (m *BotMonitor) fetchAndUpdateBotMetrics(ctx context.Context, b *ent.Bot, r
 				log.Printf("Bot %s (%s) failed to sync trades: %v", b.Name, b.ID, err)
 			}
 		}
+	} else {
+		log.Printf("Bot %s: trade sync disabled", b.Name)
 	}
 
 	return nil

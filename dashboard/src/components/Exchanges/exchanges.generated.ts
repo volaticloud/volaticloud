@@ -18,6 +18,8 @@ export type GetExchangeQueryVariables = Types.Exact<{
 
 
 export type GetExchangeQuery = { __typename?: 'Query', node?:
+    | { __typename?: 'AlertEvent' }
+    | { __typename?: 'AlertRule' }
     | { __typename?: 'Backtest' }
     | { __typename?: 'Bot' }
     | { __typename?: 'BotMetrics' }

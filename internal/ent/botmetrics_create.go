@@ -339,6 +339,20 @@ func (_c *BotMetricsCreate) SetNillableLastSyncedTradeID(v *int) *BotMetricsCrea
 	return _c
 }
 
+// SetLastKnownMaxTradeID sets the "last_known_max_trade_id" field.
+func (_c *BotMetricsCreate) SetLastKnownMaxTradeID(v int) *BotMetricsCreate {
+	_c.mutation.SetLastKnownMaxTradeID(v)
+	return _c
+}
+
+// SetNillableLastKnownMaxTradeID sets the "last_known_max_trade_id" field if the given value is not nil.
+func (_c *BotMetricsCreate) SetNillableLastKnownMaxTradeID(v *int) *BotMetricsCreate {
+	if v != nil {
+		_c.SetLastKnownMaxTradeID(*v)
+	}
+	return _c
+}
+
 // SetLastTradeSyncAt sets the "last_trade_sync_at" field.
 func (_c *BotMetricsCreate) SetLastTradeSyncAt(v time.Time) *BotMetricsCreate {
 	_c.mutation.SetLastTradeSyncAt(v)
@@ -419,6 +433,10 @@ func (_c *BotMetricsCreate) defaults() {
 		v := botmetrics.DefaultLastSyncedTradeID
 		_c.mutation.SetLastSyncedTradeID(v)
 	}
+	if _, ok := _c.mutation.LastKnownMaxTradeID(); !ok {
+		v := botmetrics.DefaultLastKnownMaxTradeID
+		_c.mutation.SetLastKnownMaxTradeID(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := botmetrics.DefaultID()
 		_c.mutation.SetID(v)
@@ -438,6 +456,9 @@ func (_c *BotMetricsCreate) check() error {
 	}
 	if _, ok := _c.mutation.LastSyncedTradeID(); !ok {
 		return &ValidationError{Name: "last_synced_trade_id", err: errors.New(`ent: missing required field "BotMetrics.last_synced_trade_id"`)}
+	}
+	if _, ok := _c.mutation.LastKnownMaxTradeID(); !ok {
+		return &ValidationError{Name: "last_known_max_trade_id", err: errors.New(`ent: missing required field "BotMetrics.last_known_max_trade_id"`)}
 	}
 	if len(_c.mutation.BotIDs()) == 0 {
 		return &ValidationError{Name: "bot", err: errors.New(`ent: missing required edge "BotMetrics.bot"`)}
@@ -565,6 +586,10 @@ func (_c *BotMetricsCreate) createSpec() (*BotMetrics, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LastSyncedTradeID(); ok {
 		_spec.SetField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
 		_node.LastSyncedTradeID = value
+	}
+	if value, ok := _c.mutation.LastKnownMaxTradeID(); ok {
+		_spec.SetField(botmetrics.FieldLastKnownMaxTradeID, field.TypeInt, value)
+		_node.LastKnownMaxTradeID = value
 	}
 	if value, ok := _c.mutation.LastTradeSyncAt(); ok {
 		_spec.SetField(botmetrics.FieldLastTradeSyncAt, field.TypeTime, value)
@@ -1122,6 +1147,24 @@ func (u *BotMetricsUpsert) UpdateLastSyncedTradeID() *BotMetricsUpsert {
 // AddLastSyncedTradeID adds v to the "last_synced_trade_id" field.
 func (u *BotMetricsUpsert) AddLastSyncedTradeID(v int) *BotMetricsUpsert {
 	u.Add(botmetrics.FieldLastSyncedTradeID, v)
+	return u
+}
+
+// SetLastKnownMaxTradeID sets the "last_known_max_trade_id" field.
+func (u *BotMetricsUpsert) SetLastKnownMaxTradeID(v int) *BotMetricsUpsert {
+	u.Set(botmetrics.FieldLastKnownMaxTradeID, v)
+	return u
+}
+
+// UpdateLastKnownMaxTradeID sets the "last_known_max_trade_id" field to the value that was provided on create.
+func (u *BotMetricsUpsert) UpdateLastKnownMaxTradeID() *BotMetricsUpsert {
+	u.SetExcluded(botmetrics.FieldLastKnownMaxTradeID)
+	return u
+}
+
+// AddLastKnownMaxTradeID adds v to the "last_known_max_trade_id" field.
+func (u *BotMetricsUpsert) AddLastKnownMaxTradeID(v int) *BotMetricsUpsert {
+	u.Add(botmetrics.FieldLastKnownMaxTradeID, v)
 	return u
 }
 
@@ -1755,6 +1798,27 @@ func (u *BotMetricsUpsertOne) AddLastSyncedTradeID(v int) *BotMetricsUpsertOne {
 func (u *BotMetricsUpsertOne) UpdateLastSyncedTradeID() *BotMetricsUpsertOne {
 	return u.Update(func(s *BotMetricsUpsert) {
 		s.UpdateLastSyncedTradeID()
+	})
+}
+
+// SetLastKnownMaxTradeID sets the "last_known_max_trade_id" field.
+func (u *BotMetricsUpsertOne) SetLastKnownMaxTradeID(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLastKnownMaxTradeID(v)
+	})
+}
+
+// AddLastKnownMaxTradeID adds v to the "last_known_max_trade_id" field.
+func (u *BotMetricsUpsertOne) AddLastKnownMaxTradeID(v int) *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddLastKnownMaxTradeID(v)
+	})
+}
+
+// UpdateLastKnownMaxTradeID sets the "last_known_max_trade_id" field to the value that was provided on create.
+func (u *BotMetricsUpsertOne) UpdateLastKnownMaxTradeID() *BotMetricsUpsertOne {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLastKnownMaxTradeID()
 	})
 }
 
@@ -2558,6 +2622,27 @@ func (u *BotMetricsUpsertBulk) AddLastSyncedTradeID(v int) *BotMetricsUpsertBulk
 func (u *BotMetricsUpsertBulk) UpdateLastSyncedTradeID() *BotMetricsUpsertBulk {
 	return u.Update(func(s *BotMetricsUpsert) {
 		s.UpdateLastSyncedTradeID()
+	})
+}
+
+// SetLastKnownMaxTradeID sets the "last_known_max_trade_id" field.
+func (u *BotMetricsUpsertBulk) SetLastKnownMaxTradeID(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.SetLastKnownMaxTradeID(v)
+	})
+}
+
+// AddLastKnownMaxTradeID adds v to the "last_known_max_trade_id" field.
+func (u *BotMetricsUpsertBulk) AddLastKnownMaxTradeID(v int) *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.AddLastKnownMaxTradeID(v)
+	})
+}
+
+// UpdateLastKnownMaxTradeID sets the "last_known_max_trade_id" field to the value that was provided on create.
+func (u *BotMetricsUpsertBulk) UpdateLastKnownMaxTradeID() *BotMetricsUpsertBulk {
+	return u.Update(func(s *BotMetricsUpsert) {
+		s.UpdateLastKnownMaxTradeID()
 	})
 }
 

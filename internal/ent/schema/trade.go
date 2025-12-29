@@ -104,8 +104,10 @@ func (Trade) Edges() []ent.Edge {
 // Indexes of the Trade.
 func (Trade) Indexes() []ent.Index {
 	return []ent.Index{
-		// Unique constraint on bot_id + freqtrade_trade_id
-		index.Fields("bot_id", "freqtrade_trade_id").
+		// Unique constraint on bot_id + freqtrade_trade_id + open_date
+		// This allows trades with the same ID to exist when a bot is recreated
+		// (old trades from before recreation have different open_date)
+		index.Fields("bot_id", "freqtrade_trade_id", "open_date").
 			Unique(),
 		// Index for querying open trades
 		index.Fields("bot_id", "is_open"),

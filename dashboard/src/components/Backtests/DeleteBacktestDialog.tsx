@@ -1,14 +1,7 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  DialogContentText,
-  Alert,
-} from '@mui/material';
-import { useState } from 'react';
+import { Typography } from '@mui/material';
 import { useDeleteBacktestMutation } from './backtests.generated';
+import { ConfirmDialog } from '../shared/FormDialog';
+import { useMutationHandler } from '../../hooks';
 
 interface DeleteBacktestDialogProps {
   open: boolean;
@@ -26,52 +19,37 @@ export const DeleteBacktestDialog = ({
   onSuccess,
   backtest,
 }: DeleteBacktestDialogProps) => {
-  const [deleteBacktest, { loading }] = useDeleteBacktestMutation();
-  const [error, setError] = useState<string | null>(null);
+  const [deleteBacktest] = useDeleteBacktestMutation();
 
-  const handleDelete = async () => {
-    try {
-      setError(null);
-      const result = await deleteBacktest({
-        variables: { id: backtest.id },
-      });
-
-      // Check for GraphQL errors (errorPolicy: 'all' means errors don't throw)
-      if (result.errors || !result.data?.deleteBacktest) {
-        const errorMsg = result.errors?.[0]?.message || 'Failed to delete backtest';
-        setError(errorMsg);
-        return;
-      }
-
+  const mutation = useMutationHandler(deleteBacktest, {
+    getResult: (data) => data.deleteBacktest,
+    errorMessage: 'Failed to delete backtest',
+    onSuccess: () => {
       onSuccess();
       onClose();
-    } catch (err) {
-      // Catch network errors
-      console.error('Failed to delete backtest:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete backtest');
-    }
+    },
+  });
+
+  const handleDelete = () => {
+    mutation.execute({ id: backtest.id });
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Delete Backtest</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      title="Delete Backtest"
+      message={
+        <Typography>
           Are you sure you want to delete the backtest for strategy "{backtest.strategy.name}"?
           This action cannot be undone.
-        </DialogContentText>
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleDelete} color="error" disabled={loading} variant="contained">
-          {loading ? 'Deleting...' : 'Delete'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </Typography>
+      }
+      confirmLabel="Delete"
+      confirmLoadingLabel="Deleting..."
+      loading={mutation.state.loading}
+      error={mutation.state.error}
+      onConfirm={handleDelete}
+    />
   );
 };

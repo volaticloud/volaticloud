@@ -11,10 +11,12 @@ import (
 	"log"
 	"strings"
 	"time"
+	"volaticloud/internal/alert"
 	"volaticloud/internal/auth"
 	backtest1 "volaticloud/internal/backtest"
 	bot1 "volaticloud/internal/bot"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/alertevent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/resourceusageaggregation"
@@ -939,6 +941,94 @@ func (r *mutationResolver) GetFreqtradeToken(ctx context.Context, botID uuid.UUI
 	}, nil
 }
 
+func (r *mutationResolver) CreateAlertRule(ctx context.Context, input ent.CreateAlertRuleInput) (*ent.AlertRule, error) {
+	alertSvc := alert.GetServiceFromContext(ctx)
+	if alertSvc == nil {
+		return nil, fmt.Errorf("alert service not available")
+	}
+
+	return alertSvc.CreateRule(ctx, input)
+}
+
+func (r *mutationResolver) UpdateAlertRule(ctx context.Context, id uuid.UUID, input ent.UpdateAlertRuleInput) (*ent.AlertRule, error) {
+	alertSvc := alert.GetServiceFromContext(ctx)
+	if alertSvc == nil {
+		return nil, fmt.Errorf("alert service not available")
+	}
+
+	return alertSvc.UpdateRule(ctx, id, input)
+}
+
+func (r *mutationResolver) ToggleAlertRule(ctx context.Context, id uuid.UUID, enabled bool) (*ent.AlertRule, error) {
+	alertSvc := alert.GetServiceFromContext(ctx)
+	if alertSvc == nil {
+		return nil, fmt.Errorf("alert service not available")
+	}
+
+	return alertSvc.ToggleRule(ctx, id, enabled)
+}
+
+func (r *mutationResolver) DeleteAlertRule(ctx context.Context, id uuid.UUID) (bool, error) {
+	alertSvc := alert.GetServiceFromContext(ctx)
+	if alertSvc == nil {
+		return false, fmt.Errorf("alert service not available")
+	}
+
+	if err := alertSvc.DeleteRule(ctx, id); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) TestAlertRule(ctx context.Context, id uuid.UUID) (bool, error) {
+	alertMgr := alert.GetManagerFromContext(ctx)
+	if alertMgr == nil {
+		return false, fmt.Errorf("alert system not configured")
+	}
+
+	if err := alertMgr.TestRule(ctx, id); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) MarkAlertEventAsRead(ctx context.Context, id uuid.UUID, ownerID string) (*ent.AlertEvent, error) {
+	// Authorization is handled by @hasScope directive on ownerID
+	// Verify the alert belongs to the specified organization
+	event, err := r.client.AlertEvent.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("alert event not found: %w", err)
+	}
+
+	if event.OwnerID != ownerID {
+		return nil, fmt.Errorf("alert event does not belong to this organization")
+	}
+
+	// Update read_at timestamp
+	now := time.Now()
+	return r.client.AlertEvent.UpdateOneID(id).
+		SetReadAt(now).
+		Save(ctx)
+}
+
+func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID string) (int, error) {
+	// Authentication is handled by @isAuthenticated directive
+	// Update all unread events for this owner
+	now := time.Now()
+	count, err := r.client.AlertEvent.Update().
+		Where(
+			alertevent.OwnerID(ownerID),
+			alertevent.ReadAtIsNil(),
+		).
+		SetReadAt(now).
+		Save(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to mark events as read: %w", err)
+	}
+
+	return count, nil
+}
+
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {
 	// Load the bot with its runner configuration
 	b, err := r.client.Bot.Query().
@@ -1103,6 +1193,60 @@ func (r *queryResolver) BotUsageHistory(ctx context.Context, botID uuid.UUID, st
 	}
 
 	return aggs, nil
+}
+
+func (r *queryResolver) AlertTypesForResource(ctx context.Context, resourceType enum.AlertResourceType, resourceID *uuid.UUID) ([]*model.AlertTypeInfo, error) {
+	// Get alert types from the alert package
+	var resourceIDStr *string
+	if resourceID != nil {
+		s := resourceID.String()
+		resourceIDStr = &s
+	}
+
+	alertTypes := alert.GetAlertTypesForResource(resourceType, resourceIDStr)
+
+	// Convert to GraphQL model types
+	result := make([]*model.AlertTypeInfo, 0, len(alertTypes))
+	for _, at := range alertTypes {
+		conditionFields := make([]*model.ConditionField, 0, len(at.ConditionFields))
+		for _, cf := range at.ConditionFields {
+			options := make([]*model.SelectOption, 0, len(cf.Options))
+			for _, opt := range cf.Options {
+				options = append(options, &model.SelectOption{
+					Value: opt.Value,
+					Label: opt.Label,
+				})
+			}
+
+			var unit *string
+			if cf.Unit != "" {
+				unit = &cf.Unit
+			}
+
+			conditionFields = append(conditionFields, &model.ConditionField{
+				Name:        cf.Name,
+				Label:       cf.Label,
+				Type:        model.ConditionFieldType(cf.Type),
+				Required:    cf.Required,
+				Description: cf.Description,
+				Min:         cf.Min,
+				Max:         cf.Max,
+				Default:     cf.Default,
+				Unit:        unit,
+				Options:     options,
+			})
+		}
+
+		result = append(result, &model.AlertTypeInfo{
+			Type:            at.Type,
+			Label:           at.Label,
+			Description:     at.Description,
+			DefaultSeverity: at.DefaultSeverity,
+			ConditionFields: conditionFields,
+		})
+	}
+
+	return result, nil
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

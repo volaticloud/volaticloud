@@ -65,6 +65,8 @@ type BotMetrics struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Last freqtrade_trade_id synced for incremental fetch
 	LastSyncedTradeID int `json:"last_synced_trade_id,omitempty"`
+	// Highest trade ID ever seen - used to detect bot reset (when current max < this)
+	LastKnownMaxTradeID int `json:"last_known_max_trade_id,omitempty"`
 	// Last successful trade sync timestamp
 	LastTradeSyncAt *time.Time `json:"last_trade_sync_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -102,7 +104,7 @@ func (*BotMetrics) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case botmetrics.FieldProfitClosedCoin, botmetrics.FieldProfitClosedPercent, botmetrics.FieldProfitAllCoin, botmetrics.FieldProfitAllPercent, botmetrics.FieldWinrate, botmetrics.FieldExpectancy, botmetrics.FieldProfitFactor, botmetrics.FieldMaxDrawdown, botmetrics.FieldMaxDrawdownAbs, botmetrics.FieldBestRate:
 			values[i] = new(sql.NullFloat64)
-		case botmetrics.FieldTradeCount, botmetrics.FieldClosedTradeCount, botmetrics.FieldOpenTradeCount, botmetrics.FieldWinningTrades, botmetrics.FieldLosingTrades, botmetrics.FieldLastSyncedTradeID:
+		case botmetrics.FieldTradeCount, botmetrics.FieldClosedTradeCount, botmetrics.FieldOpenTradeCount, botmetrics.FieldWinningTrades, botmetrics.FieldLosingTrades, botmetrics.FieldLastSyncedTradeID, botmetrics.FieldLastKnownMaxTradeID:
 			values[i] = new(sql.NullInt64)
 		case botmetrics.FieldBestPair:
 			values[i] = new(sql.NullString)
@@ -270,6 +272,12 @@ func (_m *BotMetrics) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.LastSyncedTradeID = int(value.Int64)
 			}
+		case botmetrics.FieldLastKnownMaxTradeID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field last_known_max_trade_id", values[i])
+			} else if value.Valid {
+				_m.LastKnownMaxTradeID = int(value.Int64)
+			}
 		case botmetrics.FieldLastTradeSyncAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_trade_sync_at", values[i])
@@ -388,6 +396,9 @@ func (_m *BotMetrics) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("last_synced_trade_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.LastSyncedTradeID))
+	builder.WriteString(", ")
+	builder.WriteString("last_known_max_trade_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.LastKnownMaxTradeID))
 	builder.WriteString(", ")
 	if v := _m.LastTradeSyncAt; v != nil {
 		builder.WriteString("last_trade_sync_at=")

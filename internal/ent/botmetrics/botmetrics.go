@@ -62,6 +62,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldLastSyncedTradeID holds the string denoting the last_synced_trade_id field in the database.
 	FieldLastSyncedTradeID = "last_synced_trade_id"
+	// FieldLastKnownMaxTradeID holds the string denoting the last_known_max_trade_id field in the database.
+	FieldLastKnownMaxTradeID = "last_known_max_trade_id"
 	// FieldLastTradeSyncAt holds the string denoting the last_trade_sync_at field in the database.
 	FieldLastTradeSyncAt = "last_trade_sync_at"
 	// EdgeBot holds the string denoting the bot edge name in mutations.
@@ -103,6 +105,7 @@ var Columns = []string{
 	FieldFetchedAt,
 	FieldUpdatedAt,
 	FieldLastSyncedTradeID,
+	FieldLastKnownMaxTradeID,
 	FieldLastTradeSyncAt,
 }
 
@@ -131,6 +134,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultLastSyncedTradeID holds the default value on creation for the "last_synced_trade_id" field.
 	DefaultLastSyncedTradeID int
+	// DefaultLastKnownMaxTradeID holds the default value on creation for the "last_known_max_trade_id" field.
+	DefaultLastKnownMaxTradeID int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -256,6 +261,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByLastSyncedTradeID orders the results by the last_synced_trade_id field.
 func ByLastSyncedTradeID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSyncedTradeID, opts...).ToFunc()
+}
+
+// ByLastKnownMaxTradeID orders the results by the last_known_max_trade_id field.
+func ByLastKnownMaxTradeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastKnownMaxTradeID, opts...).ToFunc()
 }
 
 // ByLastTradeSyncAt orders the results by the last_trade_sync_at field.

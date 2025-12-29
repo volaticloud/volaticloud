@@ -2,7 +2,9 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   // Use local schema files instead of remote endpoint (avoids auth issues)
+  // scalars.graphql must be first to define Time, Map, Cursor before they're used
   schema: [
+    '../internal/graph/scalars.graphql',
     '../internal/graph/ent.graphql',
     '../internal/graph/schema.graphqls'
   ],

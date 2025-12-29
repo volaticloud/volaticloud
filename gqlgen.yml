@@ -1,7 +1,10 @@
-# Schema files (order matters - schema.graphqls first for scalar declarations)
+# Schema files - scalars.graphql must be first to define Time, Map, Cursor
+# before they are referenced by types in ent.graphql
+# See: https://gqlgen.com/reference/scalars/
 schema:
-  - internal/graph/schema.graphqls
+  - internal/graph/scalars.graphql
   - internal/graph/ent.graphql
+  - internal/graph/schema.graphqls
 
 # Generated code locations
 exec:

@@ -9,6 +9,200 @@ import (
 	"github.com/google/uuid"
 )
 
+// CreateAlertRuleInput represents a mutation input for creating alertrules.
+type CreateAlertRuleInput struct {
+	DeletedAt            *time.Time
+	Name                 string
+	AlertType            enum.AlertType
+	Severity             *enum.AlertSeverity
+	Enabled              *bool
+	ResourceType         enum.AlertResourceType
+	ResourceID           *uuid.UUID
+	Conditions           map[string]interface{}
+	DeliveryMode         *enum.AlertDeliveryMode
+	BatchIntervalMinutes *int
+	Recipients           []string
+	BotModeFilter        *enum.AlertBotModeFilter
+	CooldownMinutes      *int
+	LastTriggeredAt      *time.Time
+	OwnerID              string
+	CreatedAt            *time.Time
+	UpdatedAt            *time.Time
+	EventIDs             []uuid.UUID
+}
+
+// Mutate applies the CreateAlertRuleInput on the AlertRuleMutation builder.
+func (i *CreateAlertRuleInput) Mutate(m *AlertRuleMutation) {
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
+	m.SetName(i.Name)
+	m.SetAlertType(i.AlertType)
+	if v := i.Severity; v != nil {
+		m.SetSeverity(*v)
+	}
+	if v := i.Enabled; v != nil {
+		m.SetEnabled(*v)
+	}
+	m.SetResourceType(i.ResourceType)
+	if v := i.ResourceID; v != nil {
+		m.SetResourceID(*v)
+	}
+	if v := i.Conditions; v != nil {
+		m.SetConditions(v)
+	}
+	if v := i.DeliveryMode; v != nil {
+		m.SetDeliveryMode(*v)
+	}
+	if v := i.BatchIntervalMinutes; v != nil {
+		m.SetBatchIntervalMinutes(*v)
+	}
+	if v := i.Recipients; v != nil {
+		m.SetRecipients(v)
+	}
+	if v := i.BotModeFilter; v != nil {
+		m.SetBotModeFilter(*v)
+	}
+	if v := i.CooldownMinutes; v != nil {
+		m.SetCooldownMinutes(*v)
+	}
+	if v := i.LastTriggeredAt; v != nil {
+		m.SetLastTriggeredAt(*v)
+	}
+	m.SetOwnerID(i.OwnerID)
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if v := i.EventIDs; len(v) > 0 {
+		m.AddEventIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the CreateAlertRuleInput on the AlertRuleCreate builder.
+func (c *AlertRuleCreate) SetInput(i CreateAlertRuleInput) *AlertRuleCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateAlertRuleInput represents a mutation input for updating alertrules.
+type UpdateAlertRuleInput struct {
+	ClearDeletedAt       bool
+	DeletedAt            *time.Time
+	Name                 *string
+	AlertType            *enum.AlertType
+	Severity             *enum.AlertSeverity
+	Enabled              *bool
+	ResourceType         *enum.AlertResourceType
+	ClearResourceID      bool
+	ResourceID           *uuid.UUID
+	ClearConditions      bool
+	Conditions           map[string]interface{}
+	DeliveryMode         *enum.AlertDeliveryMode
+	BatchIntervalMinutes *int
+	Recipients           []string
+	AppendRecipients     []string
+	BotModeFilter        *enum.AlertBotModeFilter
+	CooldownMinutes      *int
+	ClearLastTriggeredAt bool
+	LastTriggeredAt      *time.Time
+	OwnerID              *string
+	UpdatedAt            *time.Time
+	ClearEvents          bool
+	AddEventIDs          []uuid.UUID
+	RemoveEventIDs       []uuid.UUID
+}
+
+// Mutate applies the UpdateAlertRuleInput on the AlertRuleMutation builder.
+func (i *UpdateAlertRuleInput) Mutate(m *AlertRuleMutation) {
+	if i.ClearDeletedAt {
+		m.ClearDeletedAt()
+	}
+	if v := i.DeletedAt; v != nil {
+		m.SetDeletedAt(*v)
+	}
+	if v := i.Name; v != nil {
+		m.SetName(*v)
+	}
+	if v := i.AlertType; v != nil {
+		m.SetAlertType(*v)
+	}
+	if v := i.Severity; v != nil {
+		m.SetSeverity(*v)
+	}
+	if v := i.Enabled; v != nil {
+		m.SetEnabled(*v)
+	}
+	if v := i.ResourceType; v != nil {
+		m.SetResourceType(*v)
+	}
+	if i.ClearResourceID {
+		m.ClearResourceID()
+	}
+	if v := i.ResourceID; v != nil {
+		m.SetResourceID(*v)
+	}
+	if i.ClearConditions {
+		m.ClearConditions()
+	}
+	if v := i.Conditions; v != nil {
+		m.SetConditions(v)
+	}
+	if v := i.DeliveryMode; v != nil {
+		m.SetDeliveryMode(*v)
+	}
+	if v := i.BatchIntervalMinutes; v != nil {
+		m.SetBatchIntervalMinutes(*v)
+	}
+	if v := i.Recipients; v != nil {
+		m.SetRecipients(v)
+	}
+	if i.AppendRecipients != nil {
+		m.AppendRecipients(i.Recipients)
+	}
+	if v := i.BotModeFilter; v != nil {
+		m.SetBotModeFilter(*v)
+	}
+	if v := i.CooldownMinutes; v != nil {
+		m.SetCooldownMinutes(*v)
+	}
+	if i.ClearLastTriggeredAt {
+		m.ClearLastTriggeredAt()
+	}
+	if v := i.LastTriggeredAt; v != nil {
+		m.SetLastTriggeredAt(*v)
+	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
+	}
+	if v := i.UpdatedAt; v != nil {
+		m.SetUpdatedAt(*v)
+	}
+	if i.ClearEvents {
+		m.ClearEvents()
+	}
+	if v := i.AddEventIDs; len(v) > 0 {
+		m.AddEventIDs(v...)
+	}
+	if v := i.RemoveEventIDs; len(v) > 0 {
+		m.RemoveEventIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateAlertRuleInput on the AlertRuleUpdate builder.
+func (c *AlertRuleUpdate) SetInput(i UpdateAlertRuleInput) *AlertRuleUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateAlertRuleInput on the AlertRuleUpdateOne builder.
+func (c *AlertRuleUpdateOne) SetInput(i UpdateAlertRuleInput) *AlertRuleUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateBacktestInput represents a mutation input for creating backtests.
 type CreateBacktestInput struct {
 	DeletedAt    *time.Time
@@ -275,6 +469,7 @@ type CreateBotMetricsInput struct {
 	FetchedAt            *time.Time
 	UpdatedAt            *time.Time
 	LastSyncedTradeID    *int
+	LastKnownMaxTradeID  *int
 	LastTradeSyncAt      *time.Time
 	BotID                uuid.UUID
 }
@@ -347,6 +542,9 @@ func (i *CreateBotMetricsInput) Mutate(m *BotMetricsMutation) {
 	if v := i.LastSyncedTradeID; v != nil {
 		m.SetLastSyncedTradeID(*v)
 	}
+	if v := i.LastKnownMaxTradeID; v != nil {
+		m.SetLastKnownMaxTradeID(*v)
+	}
 	if v := i.LastTradeSyncAt; v != nil {
 		m.SetLastTradeSyncAt(*v)
 	}
@@ -402,6 +600,7 @@ type UpdateBotMetricsInput struct {
 	FetchedAt                 *time.Time
 	UpdatedAt                 *time.Time
 	LastSyncedTradeID         *int
+	LastKnownMaxTradeID       *int
 	ClearLastTradeSyncAt      bool
 	LastTradeSyncAt           *time.Time
 	BotID                     *uuid.UUID
@@ -531,6 +730,9 @@ func (i *UpdateBotMetricsInput) Mutate(m *BotMetricsMutation) {
 	}
 	if v := i.LastSyncedTradeID; v != nil {
 		m.SetLastSyncedTradeID(*v)
+	}
+	if v := i.LastKnownMaxTradeID; v != nil {
+		m.SetLastKnownMaxTradeID(*v)
 	}
 	if i.ClearLastTradeSyncAt {
 		m.ClearLastTradeSyncAt()

@@ -22,6 +22,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/cli/v2"
 
+	"volaticloud/internal/alert"
+	"volaticloud/internal/alert/channel"
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
 	"volaticloud/internal/db"
@@ -98,6 +100,30 @@ func main() {
 				Name:    "keycloak-client-secret",
 				Usage:   "Keycloak client secret for UMA resource management",
 				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_CLIENT_SECRET"},
+			},
+			// Alert configuration
+			&cli.StringFlag{
+				Name:    "sendgrid-api-key",
+				Usage:   "SendGrid API key for email alerts",
+				EnvVars: []string{"VOLATICLOUD_SENDGRID_API_KEY"},
+			},
+			&cli.StringFlag{
+				Name:    "alert-from-email",
+				Usage:   "Sender email address for alerts",
+				Value:   "alerts@volaticloud.com",
+				EnvVars: []string{"VOLATICLOUD_ALERT_FROM_EMAIL"},
+			},
+			&cli.StringFlag{
+				Name:    "alert-from-name",
+				Usage:   "Sender display name for alerts",
+				Value:   "VolatiCloud Alerts",
+				EnvVars: []string{"VOLATICLOUD_ALERT_FROM_NAME"},
+			},
+			&cli.DurationFlag{
+				Name:    "alert-batch-interval",
+				Usage:   "How often to send batched alerts",
+				Value:   time.Hour,
+				EnvVars: []string{"VOLATICLOUD_ALERT_BATCH_INTERVAL"},
 			},
 		},
 		Action: runServer,
@@ -196,8 +222,52 @@ func runServer(c *cli.Context) error {
 		return fmt.Errorf("failed to create monitor manager: %w", err)
 	}
 
-	// Start monitor manager
-	if err := monitorManager.Start(ctx); err != nil {
+	// Initialize alert manager (optional - only if SendGrid is configured)
+	var alertManager *alert.Manager
+	sendgridAPIKey := c.String("sendgrid-api-key")
+	if sendgridAPIKey != "" {
+		alertManager, err = alert.NewManager(alert.Config{
+			DatabaseClient: client,
+			BatchInterval:  c.Duration("alert-batch-interval"),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create alert manager: %w", err)
+		}
+
+		// Create SendGrid email channel
+		emailChannel, err := channel.NewSendGridChannel(channel.SendGridConfig{
+			APIKey:    sendgridAPIKey,
+			FromEmail: c.String("alert-from-email"),
+			FromName:  c.String("alert-from-name"),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create SendGrid channel: %w", err)
+		}
+		alertManager.SetEmailChannel(emailChannel)
+
+		// Start alert manager
+		if err := alertManager.Start(ctx); err != nil {
+			return fmt.Errorf("failed to start alert manager: %w", err)
+		}
+		defer func() {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := alertManager.Stop(shutdownCtx); err != nil {
+				log.Printf("Error stopping alert manager: %v", err)
+			}
+		}()
+
+		log.Println("✓ Alert manager initialized with SendGrid email channel")
+	} else {
+		log.Println("⚠ Alert manager disabled (VOLATICLOUD_SENDGRID_API_KEY not set)")
+	}
+
+	// Start monitor manager (inject alert manager into context if available)
+	monitorCtx := ctx
+	if alertManager != nil {
+		monitorCtx = alert.SetManagerInContext(ctx, alertManager)
+	}
+	if err := monitorManager.Start(monitorCtx); err != nil {
 		return fmt.Errorf("failed to start monitor manager: %w", err)
 	}
 	defer func() {
@@ -269,6 +339,9 @@ func runServer(c *cli.Context) error {
 		MaxAge:           300,
 	})
 
+	// Create alert service (always available, uses DB client directly)
+	alertService := alert.NewService(client)
+
 	// Middleware to inject ENT and UMA clients into context for GraphQL directives and ENT hooks
 	injectClientsMiddleware := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -279,6 +352,12 @@ func runServer(c *cli.Context) error {
 			ctx = graph.SetUMAClientInContext(ctx, umaClient)
 			// Inject UMA client for ENT hooks (authz package uses its own context key)
 			ctx = authz.SetUMAClientInContext(ctx, umaClient)
+			// Inject alert service (always available)
+			ctx = alert.SetServiceInContext(ctx, alertService)
+			// Inject alert manager (only if configured)
+			if alertManager != nil {
+				ctx = alert.SetManagerInContext(ctx, alertManager)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
