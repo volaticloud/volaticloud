@@ -1,6 +1,6 @@
 export { LoadingSpinner } from './LoadingSpinner';
 export { ErrorAlert } from './ErrorAlert';
-export { TradesTable } from './TradesTable';
+export { default as TradesTable } from './TradesTable';
 export { Logo } from './Logo';
 export { RunnerSelector } from './RunnerSelector';
 export { VisibilityToggleDialog } from './VisibilityToggleDialog';

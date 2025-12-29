@@ -10,14 +10,14 @@ export type GetAlertRulesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetAlertRulesQuery = { __typename?: 'Query', alertRules: { __typename?: 'AlertRuleConnection', totalCount: number, edges?: Array<{ __typename?: 'AlertRuleEdge', node?: { __typename?: 'AlertRule', id: string, name: string, alertType: Types.AlertRuleAlertType, severity: Types.AlertRuleAlertSeverity, enabled: boolean, resourceType: Types.AlertRuleAlertResourceType, resourceID?: string | null, conditions?: Record<string, any> | null, deliveryMode: Types.AlertRuleAlertDeliveryMode, batchIntervalMinutes: number, recipients: Array<string>, cooldownMinutes: number, lastTriggeredAt?: string | null, ownerID: string, createdAt: string, updatedAt: string } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetAlertRulesQuery = { __typename?: 'Query', alertRules: { __typename?: 'AlertRuleConnection', totalCount: number, edges?: Array<{ __typename?: 'AlertRuleEdge', node?: { __typename?: 'AlertRule', id: string, name: string, alertType: Types.AlertRuleAlertType, severity: Types.AlertRuleAlertSeverity, enabled: boolean, resourceType: Types.AlertRuleAlertResourceType, resourceID?: string | null, conditions?: Record<string, any> | null, deliveryMode: Types.AlertRuleAlertDeliveryMode, batchIntervalMinutes: number, recipients: Array<string>, cooldownMinutes: number, botModeFilter: Types.AlertRuleAlertBotModeFilter, lastTriggeredAt?: string | null, ownerID: string, createdAt: string, updatedAt: string } | null } | null> | null, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CreateAlertRuleMutationVariables = Types.Exact<{
   input: Types.CreateAlertRuleInput;
 }>;
 
 
-export type CreateAlertRuleMutation = { __typename?: 'Mutation', createAlertRule: { __typename?: 'AlertRule', id: string, name: string, alertType: Types.AlertRuleAlertType, severity: Types.AlertRuleAlertSeverity, enabled: boolean, resourceType: Types.AlertRuleAlertResourceType, resourceID?: string | null, conditions?: Record<string, any> | null, deliveryMode: Types.AlertRuleAlertDeliveryMode, batchIntervalMinutes: number, recipients: Array<string>, cooldownMinutes: number } };
+export type CreateAlertRuleMutation = { __typename?: 'Mutation', createAlertRule: { __typename?: 'AlertRule', id: string, name: string, alertType: Types.AlertRuleAlertType, severity: Types.AlertRuleAlertSeverity, enabled: boolean, resourceType: Types.AlertRuleAlertResourceType, resourceID?: string | null, conditions?: Record<string, any> | null, deliveryMode: Types.AlertRuleAlertDeliveryMode, batchIntervalMinutes: number, recipients: Array<string>, cooldownMinutes: number, botModeFilter: Types.AlertRuleAlertBotModeFilter } };
 
 export type UpdateAlertRuleMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -25,7 +25,7 @@ export type UpdateAlertRuleMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateAlertRuleMutation = { __typename?: 'Mutation', updateAlertRule: { __typename?: 'AlertRule', id: string, name: string, alertType: Types.AlertRuleAlertType, severity: Types.AlertRuleAlertSeverity, enabled: boolean, resourceType: Types.AlertRuleAlertResourceType, resourceID?: string | null, conditions?: Record<string, any> | null, deliveryMode: Types.AlertRuleAlertDeliveryMode, batchIntervalMinutes: number, recipients: Array<string>, cooldownMinutes: number } };
+export type UpdateAlertRuleMutation = { __typename?: 'Mutation', updateAlertRule: { __typename?: 'AlertRule', id: string, name: string, alertType: Types.AlertRuleAlertType, severity: Types.AlertRuleAlertSeverity, enabled: boolean, resourceType: Types.AlertRuleAlertResourceType, resourceID?: string | null, conditions?: Record<string, any> | null, deliveryMode: Types.AlertRuleAlertDeliveryMode, batchIntervalMinutes: number, recipients: Array<string>, cooldownMinutes: number, botModeFilter: Types.AlertRuleAlertBotModeFilter } };
 
 export type DeleteAlertRuleMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -107,6 +107,7 @@ export const GetAlertRulesDocument = gql`
         batchIntervalMinutes
         recipients
         cooldownMinutes
+        botModeFilter
         lastTriggeredAt
         ownerID
         createdAt
@@ -173,6 +174,7 @@ export const CreateAlertRuleDocument = gql`
     batchIntervalMinutes
     recipients
     cooldownMinutes
+    botModeFilter
   }
 }
     `;
@@ -217,6 +219,7 @@ export const UpdateAlertRuleDocument = gql`
     batchIntervalMinutes
     recipients
     cooldownMinutes
+    botModeFilter
   }
 }
     `;
