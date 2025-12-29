@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"volaticloud/internal/ent/alertevent"
+	"volaticloud/internal/ent/alertrule"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -105,6 +107,551 @@ func paginateLimit(first, last *int) int {
 		limit = *last + 1
 	}
 	return limit
+}
+
+// AlertEventEdge is the edge representation of AlertEvent.
+type AlertEventEdge struct {
+	Node   *AlertEvent `json:"node"`
+	Cursor Cursor      `json:"cursor"`
+}
+
+// AlertEventConnection is the connection containing edges to AlertEvent.
+type AlertEventConnection struct {
+	Edges      []*AlertEventEdge `json:"edges"`
+	PageInfo   PageInfo          `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
+}
+
+func (c *AlertEventConnection) build(nodes []*AlertEvent, pager *alerteventPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *AlertEvent
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *AlertEvent {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *AlertEvent {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*AlertEventEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &AlertEventEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// AlertEventPaginateOption enables pagination customization.
+type AlertEventPaginateOption func(*alerteventPager) error
+
+// WithAlertEventOrder configures pagination ordering.
+func WithAlertEventOrder(order *AlertEventOrder) AlertEventPaginateOption {
+	if order == nil {
+		order = DefaultAlertEventOrder
+	}
+	o := *order
+	return func(pager *alerteventPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultAlertEventOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithAlertEventFilter configures pagination filter.
+func WithAlertEventFilter(filter func(*AlertEventQuery) (*AlertEventQuery, error)) AlertEventPaginateOption {
+	return func(pager *alerteventPager) error {
+		if filter == nil {
+			return errors.New("AlertEventQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type alerteventPager struct {
+	reverse bool
+	order   *AlertEventOrder
+	filter  func(*AlertEventQuery) (*AlertEventQuery, error)
+}
+
+func newAlertEventPager(opts []AlertEventPaginateOption, reverse bool) (*alerteventPager, error) {
+	pager := &alerteventPager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultAlertEventOrder
+	}
+	return pager, nil
+}
+
+func (p *alerteventPager) applyFilter(query *AlertEventQuery) (*AlertEventQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *alerteventPager) toCursor(_m *AlertEvent) Cursor {
+	return p.order.Field.toCursor(_m)
+}
+
+func (p *alerteventPager) applyCursors(query *AlertEventQuery, after, before *Cursor) (*AlertEventQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultAlertEventOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *alerteventPager) applyOrder(query *AlertEventQuery) *AlertEventQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultAlertEventOrder.Field {
+		query = query.Order(DefaultAlertEventOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return query
+}
+
+func (p *alerteventPager) orderExpr(query *AlertEventQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultAlertEventOrder.Field {
+			b.Comma().Ident(DefaultAlertEventOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to AlertEvent.
+func (_m *AlertEventQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...AlertEventPaginateOption,
+) (*AlertEventConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newAlertEventPager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if _m, err = pager.applyFilter(_m); err != nil {
+		return nil, err
+	}
+	conn := &AlertEventConnection{Edges: []*AlertEventEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			c := _m.Clone()
+			c.ctx.Fields = nil
+			if conn.TotalCount, err = c.Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+	if _m, err = pager.applyCursors(_m, after, before); err != nil {
+		return nil, err
+	}
+	limit := paginateLimit(first, last)
+	if limit != 0 {
+		_m.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := _m.collectField(ctx, limit == 1, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+	_m = pager.applyOrder(_m)
+	nodes, err := _m.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+var (
+	// AlertEventOrderFieldCreatedAt orders AlertEvent by created_at.
+	AlertEventOrderFieldCreatedAt = &AlertEventOrderField{
+		Value: func(_m *AlertEvent) (ent.Value, error) {
+			return _m.CreatedAt, nil
+		},
+		column: alertevent.FieldCreatedAt,
+		toTerm: alertevent.ByCreatedAt,
+		toCursor: func(_m *AlertEvent) Cursor {
+			return Cursor{
+				ID:    _m.ID,
+				Value: _m.CreatedAt,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f AlertEventOrderField) String() string {
+	var str string
+	switch f.column {
+	case AlertEventOrderFieldCreatedAt.column:
+		str = "CREATED_AT"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f AlertEventOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *AlertEventOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("AlertEventOrderField %T must be a string", v)
+	}
+	switch str {
+	case "CREATED_AT":
+		*f = *AlertEventOrderFieldCreatedAt
+	default:
+		return fmt.Errorf("%s is not a valid AlertEventOrderField", str)
+	}
+	return nil
+}
+
+// AlertEventOrderField defines the ordering field of AlertEvent.
+type AlertEventOrderField struct {
+	// Value extracts the ordering value from the given AlertEvent.
+	Value    func(*AlertEvent) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) alertevent.OrderOption
+	toCursor func(*AlertEvent) Cursor
+}
+
+// AlertEventOrder defines the ordering of AlertEvent.
+type AlertEventOrder struct {
+	Direction OrderDirection        `json:"direction"`
+	Field     *AlertEventOrderField `json:"field"`
+}
+
+// DefaultAlertEventOrder is the default ordering of AlertEvent.
+var DefaultAlertEventOrder = &AlertEventOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &AlertEventOrderField{
+		Value: func(_m *AlertEvent) (ent.Value, error) {
+			return _m.ID, nil
+		},
+		column: alertevent.FieldID,
+		toTerm: alertevent.ByID,
+		toCursor: func(_m *AlertEvent) Cursor {
+			return Cursor{ID: _m.ID}
+		},
+	},
+}
+
+// ToEdge converts AlertEvent into AlertEventEdge.
+func (_m *AlertEvent) ToEdge(order *AlertEventOrder) *AlertEventEdge {
+	if order == nil {
+		order = DefaultAlertEventOrder
+	}
+	return &AlertEventEdge{
+		Node:   _m,
+		Cursor: order.Field.toCursor(_m),
+	}
+}
+
+// AlertRuleEdge is the edge representation of AlertRule.
+type AlertRuleEdge struct {
+	Node   *AlertRule `json:"node"`
+	Cursor Cursor     `json:"cursor"`
+}
+
+// AlertRuleConnection is the connection containing edges to AlertRule.
+type AlertRuleConnection struct {
+	Edges      []*AlertRuleEdge `json:"edges"`
+	PageInfo   PageInfo         `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
+}
+
+func (c *AlertRuleConnection) build(nodes []*AlertRule, pager *alertrulePager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *AlertRule
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *AlertRule {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *AlertRule {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*AlertRuleEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &AlertRuleEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// AlertRulePaginateOption enables pagination customization.
+type AlertRulePaginateOption func(*alertrulePager) error
+
+// WithAlertRuleOrder configures pagination ordering.
+func WithAlertRuleOrder(order *AlertRuleOrder) AlertRulePaginateOption {
+	if order == nil {
+		order = DefaultAlertRuleOrder
+	}
+	o := *order
+	return func(pager *alertrulePager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultAlertRuleOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithAlertRuleFilter configures pagination filter.
+func WithAlertRuleFilter(filter func(*AlertRuleQuery) (*AlertRuleQuery, error)) AlertRulePaginateOption {
+	return func(pager *alertrulePager) error {
+		if filter == nil {
+			return errors.New("AlertRuleQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type alertrulePager struct {
+	reverse bool
+	order   *AlertRuleOrder
+	filter  func(*AlertRuleQuery) (*AlertRuleQuery, error)
+}
+
+func newAlertRulePager(opts []AlertRulePaginateOption, reverse bool) (*alertrulePager, error) {
+	pager := &alertrulePager{reverse: reverse}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultAlertRuleOrder
+	}
+	return pager, nil
+}
+
+func (p *alertrulePager) applyFilter(query *AlertRuleQuery) (*AlertRuleQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *alertrulePager) toCursor(_m *AlertRule) Cursor {
+	return p.order.Field.toCursor(_m)
+}
+
+func (p *alertrulePager) applyCursors(query *AlertRuleQuery, after, before *Cursor) (*AlertRuleQuery, error) {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	for _, predicate := range entgql.CursorsPredicate(after, before, DefaultAlertRuleOrder.Field.column, p.order.Field.column, direction) {
+		query = query.Where(predicate)
+	}
+	return query, nil
+}
+
+func (p *alertrulePager) applyOrder(query *AlertRuleQuery) *AlertRuleQuery {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	query = query.Order(p.order.Field.toTerm(direction.OrderTermOption()))
+	if p.order.Field != DefaultAlertRuleOrder.Field {
+		query = query.Order(DefaultAlertRuleOrder.Field.toTerm(direction.OrderTermOption()))
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return query
+}
+
+func (p *alertrulePager) orderExpr(query *AlertRuleQuery) sql.Querier {
+	direction := p.order.Direction
+	if p.reverse {
+		direction = direction.Reverse()
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(p.order.Field.column)
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.column).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultAlertRuleOrder.Field {
+			b.Comma().Ident(DefaultAlertRuleOrder.Field.column).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to AlertRule.
+func (_m *AlertRuleQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...AlertRulePaginateOption,
+) (*AlertRuleConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newAlertRulePager(opts, last != nil)
+	if err != nil {
+		return nil, err
+	}
+	if _m, err = pager.applyFilter(_m); err != nil {
+		return nil, err
+	}
+	conn := &AlertRuleConnection{Edges: []*AlertRuleEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			c := _m.Clone()
+			c.ctx.Fields = nil
+			if conn.TotalCount, err = c.Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+	if _m, err = pager.applyCursors(_m, after, before); err != nil {
+		return nil, err
+	}
+	limit := paginateLimit(first, last)
+	if limit != 0 {
+		_m.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := _m.collectField(ctx, limit == 1, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+	_m = pager.applyOrder(_m)
+	nodes, err := _m.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// AlertRuleOrderField defines the ordering field of AlertRule.
+type AlertRuleOrderField struct {
+	// Value extracts the ordering value from the given AlertRule.
+	Value    func(*AlertRule) (ent.Value, error)
+	column   string // field or computed.
+	toTerm   func(...sql.OrderTermOption) alertrule.OrderOption
+	toCursor func(*AlertRule) Cursor
+}
+
+// AlertRuleOrder defines the ordering of AlertRule.
+type AlertRuleOrder struct {
+	Direction OrderDirection       `json:"direction"`
+	Field     *AlertRuleOrderField `json:"field"`
+}
+
+// DefaultAlertRuleOrder is the default ordering of AlertRule.
+var DefaultAlertRuleOrder = &AlertRuleOrder{
+	Direction: entgql.OrderDirectionAsc,
+	Field: &AlertRuleOrderField{
+		Value: func(_m *AlertRule) (ent.Value, error) {
+			return _m.ID, nil
+		},
+		column: alertrule.FieldID,
+		toTerm: alertrule.ByID,
+		toCursor: func(_m *AlertRule) Cursor {
+			return Cursor{ID: _m.ID}
+		},
+	},
+}
+
+// ToEdge converts AlertRule into AlertRuleEdge.
+func (_m *AlertRule) ToEdge(order *AlertRuleOrder) *AlertRuleEdge {
+	if order == nil {
+		order = DefaultAlertRuleOrder
+	}
+	return &AlertRuleEdge{
+		Node:   _m,
+		Cursor: order.Field.toCursor(_m),
+	}
 }
 
 // BacktestEdge is the edge representation of Backtest.

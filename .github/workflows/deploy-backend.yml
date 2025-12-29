@@ -80,6 +80,9 @@ jobs:
             --from-literal=VOLATICLOUD_KEYCLOAK_REALM="${{ secrets.VOLATICLOUD_KEYCLOAK_REALM }}" \
             --from-literal=VOLATICLOUD_KEYCLOAK_CLIENT_ID="${{ secrets.VOLATICLOUD_KEYCLOAK_CLIENT_ID }}" \
             --from-literal=VOLATICLOUD_KEYCLOAK_CLIENT_SECRET="${{ secrets.VOLATICLOUD_KEYCLOAK_CLIENT_SECRET }}" \
+            --from-literal=VOLATICLOUD_SENDGRID_API_KEY="${{ secrets.VOLATICLOUD_SENDGRID_API_KEY }}" \
+            --from-literal=VOLATICLOUD_ALERT_FROM_EMAIL="${{ secrets.VOLATICLOUD_ALERT_FROM_EMAIL }}" \
+            --from-literal=VOLATICLOUD_ALERT_FROM_NAME="${{ secrets.VOLATICLOUD_ALERT_FROM_NAME }}" \
             --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 

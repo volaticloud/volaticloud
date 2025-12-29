@@ -18,6 +18,7 @@ import {
   Science as BacktestIcon,
   ShowChart as TradeIcon,
   Storage as RuntimeIcon,
+  NotificationsActive as AlertsIcon,
   DataUsage as UsageIcon,
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
@@ -35,6 +36,7 @@ const menuItems = [
   { text: 'Backtests', icon: <BacktestIcon />, path: '/backtests' },
   { text: 'Trades', icon: <TradeIcon />, path: '/trades' },
   { text: 'Runners', icon: <RuntimeIcon />, path: '/runners' },
+  { text: 'Alerts', icon: <AlertsIcon />, path: '/alerts' },
   { text: 'Usage', icon: <UsageIcon />, path: '/usage' },
 ];
 

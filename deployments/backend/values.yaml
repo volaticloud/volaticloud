@@ -41,6 +41,9 @@ deployments:
             - VOLATICLOUD_KEYCLOAK_REALM
             - VOLATICLOUD_KEYCLOAK_CLIENT_ID
             - VOLATICLOUD_KEYCLOAK_CLIENT_SECRET
+            - VOLATICLOUD_SENDGRID_API_KEY
+            - VOLATICLOUD_ALERT_FROM_EMAIL
+            - VOLATICLOUD_ALERT_FROM_NAME
 
         livenessProbe:
           httpGet:

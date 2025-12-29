@@ -106,6 +106,9 @@ func (BotMetrics) Fields() []ent.Field {
 		field.Int("last_synced_trade_id").
 			Default(0).
 			Comment("Last freqtrade_trade_id synced for incremental fetch"),
+		field.Int("last_known_max_trade_id").
+			Default(0).
+			Comment("Highest trade ID ever seen - used to detect bot reset (when current max < this)"),
 		field.Time("last_trade_sync_at").
 			Optional().
 			Nillable().

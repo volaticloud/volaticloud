@@ -6,6 +6,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"volaticloud/internal/ent/alertevent"
+	"volaticloud/internal/ent/alertrule"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -21,6 +23,421 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 )
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (_q *AlertEventQuery) CollectFields(ctx context.Context, satisfies ...string) (*AlertEventQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return _q, nil
+	}
+	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return _q, nil
+}
+
+func (_q *AlertEventQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(alertevent.Columns))
+		selectedFields = []string{alertevent.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+
+		case "rule":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AlertRuleClient{config: _q.config}).Query()
+			)
+			if err := query.collectField(ctx, oneNode, opCtx, field, path, mayAddCondition(satisfies, alertruleImplementors)...); err != nil {
+				return err
+			}
+			_q.withRule = query
+			if _, ok := fieldSeen[alertevent.FieldRuleID]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldRuleID)
+				fieldSeen[alertevent.FieldRuleID] = struct{}{}
+			}
+		case "ruleID":
+			if _, ok := fieldSeen[alertevent.FieldRuleID]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldRuleID)
+				fieldSeen[alertevent.FieldRuleID] = struct{}{}
+			}
+		case "status":
+			if _, ok := fieldSeen[alertevent.FieldStatus]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldStatus)
+				fieldSeen[alertevent.FieldStatus] = struct{}{}
+			}
+		case "alertType":
+			if _, ok := fieldSeen[alertevent.FieldAlertType]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldAlertType)
+				fieldSeen[alertevent.FieldAlertType] = struct{}{}
+			}
+		case "severity":
+			if _, ok := fieldSeen[alertevent.FieldSeverity]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldSeverity)
+				fieldSeen[alertevent.FieldSeverity] = struct{}{}
+			}
+		case "subject":
+			if _, ok := fieldSeen[alertevent.FieldSubject]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldSubject)
+				fieldSeen[alertevent.FieldSubject] = struct{}{}
+			}
+		case "body":
+			if _, ok := fieldSeen[alertevent.FieldBody]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldBody)
+				fieldSeen[alertevent.FieldBody] = struct{}{}
+			}
+		case "context":
+			if _, ok := fieldSeen[alertevent.FieldContext]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldContext)
+				fieldSeen[alertevent.FieldContext] = struct{}{}
+			}
+		case "recipients":
+			if _, ok := fieldSeen[alertevent.FieldRecipients]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldRecipients)
+				fieldSeen[alertevent.FieldRecipients] = struct{}{}
+			}
+		case "channelType":
+			if _, ok := fieldSeen[alertevent.FieldChannelType]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldChannelType)
+				fieldSeen[alertevent.FieldChannelType] = struct{}{}
+			}
+		case "sentAt":
+			if _, ok := fieldSeen[alertevent.FieldSentAt]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldSentAt)
+				fieldSeen[alertevent.FieldSentAt] = struct{}{}
+			}
+		case "errorMessage":
+			if _, ok := fieldSeen[alertevent.FieldErrorMessage]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldErrorMessage)
+				fieldSeen[alertevent.FieldErrorMessage] = struct{}{}
+			}
+		case "resourceType":
+			if _, ok := fieldSeen[alertevent.FieldResourceType]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldResourceType)
+				fieldSeen[alertevent.FieldResourceType] = struct{}{}
+			}
+		case "resourceID":
+			if _, ok := fieldSeen[alertevent.FieldResourceID]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldResourceID)
+				fieldSeen[alertevent.FieldResourceID] = struct{}{}
+			}
+		case "ownerID":
+			if _, ok := fieldSeen[alertevent.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldOwnerID)
+				fieldSeen[alertevent.FieldOwnerID] = struct{}{}
+			}
+		case "readAt":
+			if _, ok := fieldSeen[alertevent.FieldReadAt]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldReadAt)
+				fieldSeen[alertevent.FieldReadAt] = struct{}{}
+			}
+		case "createdAt":
+			if _, ok := fieldSeen[alertevent.FieldCreatedAt]; !ok {
+				selectedFields = append(selectedFields, alertevent.FieldCreatedAt)
+				fieldSeen[alertevent.FieldCreatedAt] = struct{}{}
+			}
+		case "id":
+		case "__typename":
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		_q.Select(selectedFields...)
+	}
+	return nil
+}
+
+type alerteventPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []AlertEventPaginateOption
+}
+
+func newAlertEventPaginateArgs(rv map[string]any) *alerteventPaginateArgs {
+	args := &alerteventPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]any:
+			var (
+				err1, err2 error
+				order      = &AlertEventOrder{Field: &AlertEventOrderField{}, Direction: entgql.OrderDirectionAsc}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithAlertEventOrder(order))
+			}
+		case *AlertEventOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithAlertEventOrder(v))
+			}
+		}
+	}
+	if v, ok := rv[whereField].(*AlertEventWhereInput); ok {
+		args.opts = append(args.opts, WithAlertEventFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (_q *AlertRuleQuery) CollectFields(ctx context.Context, satisfies ...string) (*AlertRuleQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return _q, nil
+	}
+	if err := _q.collectField(ctx, false, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return _q, nil
+}
+
+func (_q *AlertRuleQuery) collectField(ctx context.Context, oneNode bool, opCtx *graphql.OperationContext, collected graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	var (
+		unknownSeen    bool
+		fieldSeen      = make(map[string]struct{}, len(alertrule.Columns))
+		selectedFields = []string{alertrule.FieldID}
+	)
+	for _, field := range graphql.CollectFields(opCtx, collected.Selections, satisfies) {
+		switch field.Name {
+
+		case "events":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&AlertEventClient{config: _q.config}).Query()
+			)
+			args := newAlertEventPaginateArgs(fieldArgs(ctx, new(AlertEventWhereInput), path...))
+			if err := validateFirstLast(args.first, args.last); err != nil {
+				return fmt.Errorf("validate first and last in path %q: %w", path, err)
+			}
+			pager, err := newAlertEventPager(args.opts, args.last != nil)
+			if err != nil {
+				return fmt.Errorf("create new pager in path %q: %w", path, err)
+			}
+			if query, err = pager.applyFilter(query); err != nil {
+				return err
+			}
+			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
+			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
+				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
+				if hasPagination || ignoredEdges {
+					query := query.Clone()
+					_q.loadTotal = append(_q.loadTotal, func(ctx context.Context, nodes []*AlertRule) error {
+						ids := make([]driver.Value, len(nodes))
+						for i := range nodes {
+							ids[i] = nodes[i].ID
+						}
+						var v []struct {
+							NodeID uuid.UUID `sql:"rule_id"`
+							Count  int       `sql:"count"`
+						}
+						query.Where(func(s *sql.Selector) {
+							s.Where(sql.InValues(s.C(alertrule.EventsColumn), ids...))
+						})
+						if err := query.GroupBy(alertrule.EventsColumn).Aggregate(Count()).Scan(ctx, &v); err != nil {
+							return err
+						}
+						m := make(map[uuid.UUID]int, len(v))
+						for i := range v {
+							m[v[i].NodeID] = v[i].Count
+						}
+						for i := range nodes {
+							n := m[nodes[i].ID]
+							if nodes[i].Edges.totalCount[0] == nil {
+								nodes[i].Edges.totalCount[0] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[0][alias] = n
+						}
+						return nil
+					})
+				} else {
+					_q.loadTotal = append(_q.loadTotal, func(_ context.Context, nodes []*AlertRule) error {
+						for i := range nodes {
+							n := len(nodes[i].Edges.Events)
+							if nodes[i].Edges.totalCount[0] == nil {
+								nodes[i].Edges.totalCount[0] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[0][alias] = n
+						}
+						return nil
+					})
+				}
+			}
+			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
+				continue
+			}
+			if query, err = pager.applyCursors(query, args.after, args.before); err != nil {
+				return err
+			}
+			path = append(path, edgesField, nodeField)
+			if field := collectedField(ctx, path...); field != nil {
+				if err := query.collectField(ctx, false, opCtx, *field, path, mayAddCondition(satisfies, alerteventImplementors)...); err != nil {
+					return err
+				}
+			}
+			if limit := paginateLimit(args.first, args.last); limit > 0 {
+				if oneNode {
+					pager.applyOrder(query.Limit(limit))
+				} else {
+					modify := entgql.LimitPerRow(alertrule.EventsColumn, limit, pager.orderExpr(query))
+					query.modifiers = append(query.modifiers, modify)
+				}
+			} else {
+				query = pager.applyOrder(query)
+			}
+			_q.WithNamedEvents(alias, func(wq *AlertEventQuery) {
+				*wq = *query
+			})
+		case "deletedAt":
+			if _, ok := fieldSeen[alertrule.FieldDeletedAt]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldDeletedAt)
+				fieldSeen[alertrule.FieldDeletedAt] = struct{}{}
+			}
+		case "name":
+			if _, ok := fieldSeen[alertrule.FieldName]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldName)
+				fieldSeen[alertrule.FieldName] = struct{}{}
+			}
+		case "alertType":
+			if _, ok := fieldSeen[alertrule.FieldAlertType]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldAlertType)
+				fieldSeen[alertrule.FieldAlertType] = struct{}{}
+			}
+		case "severity":
+			if _, ok := fieldSeen[alertrule.FieldSeverity]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldSeverity)
+				fieldSeen[alertrule.FieldSeverity] = struct{}{}
+			}
+		case "enabled":
+			if _, ok := fieldSeen[alertrule.FieldEnabled]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldEnabled)
+				fieldSeen[alertrule.FieldEnabled] = struct{}{}
+			}
+		case "resourceType":
+			if _, ok := fieldSeen[alertrule.FieldResourceType]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldResourceType)
+				fieldSeen[alertrule.FieldResourceType] = struct{}{}
+			}
+		case "resourceID":
+			if _, ok := fieldSeen[alertrule.FieldResourceID]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldResourceID)
+				fieldSeen[alertrule.FieldResourceID] = struct{}{}
+			}
+		case "conditions":
+			if _, ok := fieldSeen[alertrule.FieldConditions]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldConditions)
+				fieldSeen[alertrule.FieldConditions] = struct{}{}
+			}
+		case "deliveryMode":
+			if _, ok := fieldSeen[alertrule.FieldDeliveryMode]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldDeliveryMode)
+				fieldSeen[alertrule.FieldDeliveryMode] = struct{}{}
+			}
+		case "batchIntervalMinutes":
+			if _, ok := fieldSeen[alertrule.FieldBatchIntervalMinutes]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldBatchIntervalMinutes)
+				fieldSeen[alertrule.FieldBatchIntervalMinutes] = struct{}{}
+			}
+		case "recipients":
+			if _, ok := fieldSeen[alertrule.FieldRecipients]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldRecipients)
+				fieldSeen[alertrule.FieldRecipients] = struct{}{}
+			}
+		case "botModeFilter":
+			if _, ok := fieldSeen[alertrule.FieldBotModeFilter]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldBotModeFilter)
+				fieldSeen[alertrule.FieldBotModeFilter] = struct{}{}
+			}
+		case "cooldownMinutes":
+			if _, ok := fieldSeen[alertrule.FieldCooldownMinutes]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldCooldownMinutes)
+				fieldSeen[alertrule.FieldCooldownMinutes] = struct{}{}
+			}
+		case "lastTriggeredAt":
+			if _, ok := fieldSeen[alertrule.FieldLastTriggeredAt]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldLastTriggeredAt)
+				fieldSeen[alertrule.FieldLastTriggeredAt] = struct{}{}
+			}
+		case "ownerID":
+			if _, ok := fieldSeen[alertrule.FieldOwnerID]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldOwnerID)
+				fieldSeen[alertrule.FieldOwnerID] = struct{}{}
+			}
+		case "createdAt":
+			if _, ok := fieldSeen[alertrule.FieldCreatedAt]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldCreatedAt)
+				fieldSeen[alertrule.FieldCreatedAt] = struct{}{}
+			}
+		case "updatedAt":
+			if _, ok := fieldSeen[alertrule.FieldUpdatedAt]; !ok {
+				selectedFields = append(selectedFields, alertrule.FieldUpdatedAt)
+				fieldSeen[alertrule.FieldUpdatedAt] = struct{}{}
+			}
+		case "id":
+		case "__typename":
+		default:
+			unknownSeen = true
+		}
+	}
+	if !unknownSeen {
+		_q.Select(selectedFields...)
+	}
+	return nil
+}
+
+type alertrulePaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []AlertRulePaginateOption
+}
+
+func newAlertRulePaginateArgs(rv map[string]any) *alertrulePaginateArgs {
+	args := &alertrulePaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[whereField].(*AlertRuleWhereInput); ok {
+		args.opts = append(args.opts, WithAlertRuleFilter(v.Filter))
+	}
+	return args
+}
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (_q *BacktestQuery) CollectFields(ctx context.Context, satisfies ...string) (*BacktestQuery, error) {
@@ -606,6 +1023,11 @@ func (_q *BotMetricsQuery) collectField(ctx context.Context, oneNode bool, opCtx
 			if _, ok := fieldSeen[botmetrics.FieldLastSyncedTradeID]; !ok {
 				selectedFields = append(selectedFields, botmetrics.FieldLastSyncedTradeID)
 				fieldSeen[botmetrics.FieldLastSyncedTradeID] = struct{}{}
+			}
+		case "lastKnownMaxTradeID":
+			if _, ok := fieldSeen[botmetrics.FieldLastKnownMaxTradeID]; !ok {
+				selectedFields = append(selectedFields, botmetrics.FieldLastKnownMaxTradeID)
+				fieldSeen[botmetrics.FieldLastKnownMaxTradeID] = struct{}{}
 			}
 		case "lastTradeSyncAt":
 			if _, ok := fieldSeen[botmetrics.FieldLastTradeSyncAt]; !ok {

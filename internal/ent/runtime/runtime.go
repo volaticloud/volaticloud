@@ -4,6 +4,8 @@ package runtime
 
 import (
 	"time"
+	"volaticloud/internal/ent/alertevent"
+	"volaticloud/internal/ent/alertrule"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -22,6 +24,67 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	alerteventFields := schema.AlertEvent{}.Fields()
+	_ = alerteventFields
+	// alerteventDescChannelType is the schema descriptor for channel_type field.
+	alerteventDescChannelType := alerteventFields[9].Descriptor()
+	// alertevent.DefaultChannelType holds the default value on creation for the channel_type field.
+	alertevent.DefaultChannelType = alerteventDescChannelType.Default.(string)
+	// alerteventDescOwnerID is the schema descriptor for owner_id field.
+	alerteventDescOwnerID := alerteventFields[14].Descriptor()
+	// alertevent.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	alertevent.OwnerIDValidator = alerteventDescOwnerID.Validators[0].(func(string) error)
+	// alerteventDescCreatedAt is the schema descriptor for created_at field.
+	alerteventDescCreatedAt := alerteventFields[16].Descriptor()
+	// alertevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	alertevent.DefaultCreatedAt = alerteventDescCreatedAt.Default.(func() time.Time)
+	// alerteventDescID is the schema descriptor for id field.
+	alerteventDescID := alerteventFields[0].Descriptor()
+	// alertevent.DefaultID holds the default value on creation for the id field.
+	alertevent.DefaultID = alerteventDescID.Default.(func() uuid.UUID)
+	alertruleMixin := schema.AlertRule{}.Mixin()
+	alertruleMixinInters0 := alertruleMixin[0].Interceptors()
+	alertrule.Interceptors[0] = alertruleMixinInters0[0]
+	alertruleFields := schema.AlertRule{}.Fields()
+	_ = alertruleFields
+	// alertruleDescName is the schema descriptor for name field.
+	alertruleDescName := alertruleFields[1].Descriptor()
+	// alertrule.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	alertrule.NameValidator = alertruleDescName.Validators[0].(func(string) error)
+	// alertruleDescEnabled is the schema descriptor for enabled field.
+	alertruleDescEnabled := alertruleFields[4].Descriptor()
+	// alertrule.DefaultEnabled holds the default value on creation for the enabled field.
+	alertrule.DefaultEnabled = alertruleDescEnabled.Default.(bool)
+	// alertruleDescBatchIntervalMinutes is the schema descriptor for batch_interval_minutes field.
+	alertruleDescBatchIntervalMinutes := alertruleFields[9].Descriptor()
+	// alertrule.DefaultBatchIntervalMinutes holds the default value on creation for the batch_interval_minutes field.
+	alertrule.DefaultBatchIntervalMinutes = alertruleDescBatchIntervalMinutes.Default.(int)
+	// alertruleDescRecipients is the schema descriptor for recipients field.
+	alertruleDescRecipients := alertruleFields[10].Descriptor()
+	// alertrule.DefaultRecipients holds the default value on creation for the recipients field.
+	alertrule.DefaultRecipients = alertruleDescRecipients.Default.([]string)
+	// alertruleDescCooldownMinutes is the schema descriptor for cooldown_minutes field.
+	alertruleDescCooldownMinutes := alertruleFields[12].Descriptor()
+	// alertrule.DefaultCooldownMinutes holds the default value on creation for the cooldown_minutes field.
+	alertrule.DefaultCooldownMinutes = alertruleDescCooldownMinutes.Default.(int)
+	// alertruleDescOwnerID is the schema descriptor for owner_id field.
+	alertruleDescOwnerID := alertruleFields[14].Descriptor()
+	// alertrule.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	alertrule.OwnerIDValidator = alertruleDescOwnerID.Validators[0].(func(string) error)
+	// alertruleDescCreatedAt is the schema descriptor for created_at field.
+	alertruleDescCreatedAt := alertruleFields[15].Descriptor()
+	// alertrule.DefaultCreatedAt holds the default value on creation for the created_at field.
+	alertrule.DefaultCreatedAt = alertruleDescCreatedAt.Default.(func() time.Time)
+	// alertruleDescUpdatedAt is the schema descriptor for updated_at field.
+	alertruleDescUpdatedAt := alertruleFields[16].Descriptor()
+	// alertrule.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	alertrule.DefaultUpdatedAt = alertruleDescUpdatedAt.Default.(func() time.Time)
+	// alertrule.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	alertrule.UpdateDefaultUpdatedAt = alertruleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// alertruleDescID is the schema descriptor for id field.
+	alertruleDescID := alertruleFields[0].Descriptor()
+	// alertrule.DefaultID holds the default value on creation for the id field.
+	alertrule.DefaultID = alertruleDescID.Default.(func() uuid.UUID)
 	backtestMixin := schema.Backtest{}.Mixin()
 	backtestMixinInters0 := backtestMixin[0].Interceptors()
 	backtest.Interceptors[0] = backtestMixinInters0[0]
@@ -97,6 +160,10 @@ func init() {
 	botmetricsDescLastSyncedTradeID := botmetricsFields[22].Descriptor()
 	// botmetrics.DefaultLastSyncedTradeID holds the default value on creation for the last_synced_trade_id field.
 	botmetrics.DefaultLastSyncedTradeID = botmetricsDescLastSyncedTradeID.Default.(int)
+	// botmetricsDescLastKnownMaxTradeID is the schema descriptor for last_known_max_trade_id field.
+	botmetricsDescLastKnownMaxTradeID := botmetricsFields[23].Descriptor()
+	// botmetrics.DefaultLastKnownMaxTradeID holds the default value on creation for the last_known_max_trade_id field.
+	botmetrics.DefaultLastKnownMaxTradeID = botmetricsDescLastKnownMaxTradeID.Default.(int)
 	// botmetricsDescID is the schema descriptor for id field.
 	botmetricsDescID := botmetricsFields[0].Descriptor()
 	// botmetrics.DefaultID holds the default value on creation for the id field.

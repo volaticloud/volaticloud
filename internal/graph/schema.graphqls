@@ -1,10 +1,6 @@
 # Custom GraphQL schema
-
-# Scalar declarations
-# These must be declared here because ENT uses them before defining them in ent.graphql
-# See: https://github.com/ent/ent/issues/2518
-scalar Time
-scalar Map
+# Note: Scalar declarations (Time, Map, Cursor) are in scalars.graphql
+# which must be loaded first in gqlgen.yml
 
 # Authorization directives
 
@@ -432,4 +428,127 @@ extend type Query {
   Returns time-series data for charts (granularity depends on aggregation settings)
   """
   botUsageHistory(botID: ID!, start: Time!, end: Time!): [ResourceUsageAggregation!]! @hasScope(resource: "botID", scope: "view")
+}
+
+# Alert System Extensions
+# Note: Base types (AlertRule, AlertEvent) and list queries are ENT-generated in ent.graphql
+# Create/Update/Delete mutations are defined here for authorization control
+
+extend type Mutation {
+  # Alert Rule mutations
+  """
+  Create a new alert rule
+  """
+  createAlertRule(input: CreateAlertRuleInput!): AlertRule! @isAuthenticated
+
+  """
+  Update an existing alert rule
+  """
+  updateAlertRule(id: ID!, input: UpdateAlertRuleInput!): AlertRule! @isAuthenticated
+
+  """
+  Toggle alert rule enabled/disabled state
+  Quick toggle without full update
+  """
+  toggleAlertRule(id: ID!, enabled: Boolean!): AlertRule! @isAuthenticated
+
+  """
+  Delete an alert rule (soft delete)
+  Associated events are preserved for audit
+  """
+  deleteAlertRule(id: ID!): Boolean! @isAuthenticated
+
+  """
+  Test an alert rule by simulating an event
+  Sends a test alert to configured recipients
+  """
+  testAlertRule(id: ID!): Boolean! @isAuthenticated
+
+  # Alert Event mutations
+  """
+  Mark a single alert event as read
+  Sets readAt to current timestamp
+  Only marks alert if it belongs to the specified organization
+  """
+  markAlertEventAsRead(id: ID!, ownerID: String!): AlertEvent! @hasScope(resource: "ownerID", scope: "mark-alert-as-read")
+
+  """
+  Mark all unread alert events as read for an organization
+  Returns the count of events marked as read
+  """
+  markAllAlertEventsAsRead(ownerID: String!): Int! @hasScope(resource: "ownerID", scope: "mark-alert-as-read")
+}
+
+# Alert Type Metadata Types
+# Used to dynamically show available alert types based on selected resource
+
+"""
+Type of condition field for alert configuration
+"""
+enum ConditionFieldType {
+  number
+  select
+  multi_select
+}
+
+"""
+Option for select/multi_select condition fields
+"""
+type SelectOption {
+  value: String!
+  label: String!
+}
+
+"""
+Describes a configurable condition field for an alert type
+"""
+type ConditionField {
+  name: String!
+  label: String!
+  type: ConditionFieldType!
+  required: Boolean!
+  description: String!
+  """
+  For number fields: minimum value
+  """
+  min: Float
+  """
+  For number fields: maximum value
+  """
+  max: Float
+  """
+  For number fields: default value
+  """
+  default: Float
+  """
+  For number fields: unit label (e.g., "%", "minutes")
+  """
+  unit: String
+  """
+  For select/multi_select fields: available options
+  """
+  options: [SelectOption!]
+}
+
+"""
+Metadata about an alert type including available condition fields
+"""
+type AlertTypeInfo {
+  type: AlertRuleAlertType!
+  label: String!
+  description: String!
+  defaultSeverity: AlertRuleAlertSeverity!
+  conditionFields: [ConditionField!]!
+}
+
+extend type Query {
+  """
+  Get available alert types for a resource
+  Returns alert types that can be configured for the given resource type
+  The resourceID is optional and reserved for future smart filtering
+  """
+  alertTypesForResource(
+    resourceType: AlertRuleAlertResourceType!
+    resourceID: ID
+  ): [AlertTypeInfo!]! @isAuthenticated
 }

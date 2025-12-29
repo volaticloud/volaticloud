@@ -35,6 +35,7 @@ export {
   formatDate,
   formatAxisDate,
   formatTime,
+  formatRelativeTime,
   formatPrice,
   formatVolume,
   formatDuration,

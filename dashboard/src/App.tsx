@@ -21,6 +21,7 @@ import { BacktestsPage } from './pages/BacktestsPage';
 import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
 import { UsagePage } from './pages/Usage/UsagePage';
 import { TradesPage } from './pages/Trades/TradesPage';
+import { AlertsPage } from './pages/Alerts/AlertsPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -70,6 +71,7 @@ function App() {
                 <Route path="backtests/:id" element={<BacktestDetailPage />} />
                 <Route path="trades" element={<TradesPage />} />
                 <Route path="runners" element={<RunnersPage />} />
+                <Route path="alerts" element={<AlertsPage />} />
                 <Route path="usage" element={<UsagePage />} />
               </Route>
               </Routes>

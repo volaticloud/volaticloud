@@ -171,6 +171,11 @@ func LastSyncedTradeID(v int) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldEQ(FieldLastSyncedTradeID, v))
 }
 
+// LastKnownMaxTradeID applies equality check predicate on the "last_known_max_trade_id" field. It's identical to LastKnownMaxTradeIDEQ.
+func LastKnownMaxTradeID(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldLastKnownMaxTradeID, v))
+}
+
 // LastTradeSyncAt applies equality check predicate on the "last_trade_sync_at" field. It's identical to LastTradeSyncAtEQ.
 func LastTradeSyncAt(v time.Time) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldEQ(FieldLastTradeSyncAt, v))
@@ -1289,6 +1294,46 @@ func LastSyncedTradeIDLT(v int) predicate.BotMetrics {
 // LastSyncedTradeIDLTE applies the LTE predicate on the "last_synced_trade_id" field.
 func LastSyncedTradeIDLTE(v int) predicate.BotMetrics {
 	return predicate.BotMetrics(sql.FieldLTE(FieldLastSyncedTradeID, v))
+}
+
+// LastKnownMaxTradeIDEQ applies the EQ predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDEQ(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldEQ(FieldLastKnownMaxTradeID, v))
+}
+
+// LastKnownMaxTradeIDNEQ applies the NEQ predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDNEQ(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNEQ(FieldLastKnownMaxTradeID, v))
+}
+
+// LastKnownMaxTradeIDIn applies the In predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDIn(vs ...int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldIn(FieldLastKnownMaxTradeID, vs...))
+}
+
+// LastKnownMaxTradeIDNotIn applies the NotIn predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDNotIn(vs ...int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldNotIn(FieldLastKnownMaxTradeID, vs...))
+}
+
+// LastKnownMaxTradeIDGT applies the GT predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDGT(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGT(FieldLastKnownMaxTradeID, v))
+}
+
+// LastKnownMaxTradeIDGTE applies the GTE predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDGTE(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldGTE(FieldLastKnownMaxTradeID, v))
+}
+
+// LastKnownMaxTradeIDLT applies the LT predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDLT(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLT(FieldLastKnownMaxTradeID, v))
+}
+
+// LastKnownMaxTradeIDLTE applies the LTE predicate on the "last_known_max_trade_id" field.
+func LastKnownMaxTradeIDLTE(v int) predicate.BotMetrics {
+	return predicate.BotMetrics(sql.FieldLTE(FieldLastKnownMaxTradeID, v))
 }
 
 // LastTradeSyncAtEQ applies the EQ predicate on the "last_trade_sync_at" field.

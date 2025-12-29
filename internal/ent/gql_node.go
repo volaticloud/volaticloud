@@ -5,6 +5,8 @@ package ent
 import (
 	"context"
 	"fmt"
+	"volaticloud/internal/ent/alertevent"
+	"volaticloud/internal/ent/alertrule"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -25,6 +27,16 @@ import (
 type Noder interface {
 	IsNode()
 }
+
+var alerteventImplementors = []string{"AlertEvent", "Node"}
+
+// IsNode implements the Node interface check for GQLGen.
+func (*AlertEvent) IsNode() {}
+
+var alertruleImplementors = []string{"AlertRule", "Node"}
+
+// IsNode implements the Node interface check for GQLGen.
+func (*AlertRule) IsNode() {}
 
 var backtestImplementors = []string{"Backtest", "Node"}
 
@@ -129,6 +141,24 @@ func (c *Client) Noder(ctx context.Context, id uuid.UUID, opts ...NodeOption) (_
 
 func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, error) {
 	switch table {
+	case alertevent.Table:
+		query := c.AlertEvent.Query().
+			Where(alertevent.ID(id))
+		if fc := graphql.GetFieldContext(ctx); fc != nil {
+			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, alerteventImplementors...); err != nil {
+				return nil, err
+			}
+		}
+		return query.Only(ctx)
+	case alertrule.Table:
+		query := c.AlertRule.Query().
+			Where(alertrule.ID(id))
+		if fc := graphql.GetFieldContext(ctx); fc != nil {
+			if err := query.collectField(ctx, true, graphql.GetOperationContext(ctx), fc.Field, nil, alertruleImplementors...); err != nil {
+				return nil, err
+			}
+		}
+		return query.Only(ctx)
 	case backtest.Table:
 		query := c.Backtest.Query().
 			Where(backtest.ID(id))
@@ -283,6 +313,38 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		idmap[id] = append(idmap[id], &noders[i])
 	}
 	switch table {
+	case alertevent.Table:
+		query := c.AlertEvent.Query().
+			Where(alertevent.IDIn(ids...))
+		query, err := query.CollectFields(ctx, alerteventImplementors...)
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case alertrule.Table:
+		query := c.AlertRule.Query().
+			Where(alertrule.IDIn(ids...))
+		query, err := query.CollectFields(ctx, alertruleImplementors...)
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case backtest.Table:
 		query := c.Backtest.Query().
 			Where(backtest.IDIn(ids...))

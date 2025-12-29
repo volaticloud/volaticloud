@@ -22,6 +22,40 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder
 	return r.client.Noders(ctx, ids)
 }
 
+func (r *queryResolver) AlertEvents(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.AlertEventOrder, where *ent.AlertEventWhereInput) (*ent.AlertEventConnection, error) {
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	query := r.client.AlertEvent.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last, ent.WithAlertEventOrder(orderBy))
+}
+
+func (r *queryResolver) AlertRules(ctx context.Context, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.AlertRuleWhereInput) (*ent.AlertRuleConnection, error) {
+	_, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	query := r.client.AlertRule.Query()
+	if where != nil {
+		p, err := where.P()
+		if err != nil {
+			return nil, err
+		}
+		query = query.Where(p)
+	}
+	return query.Paginate(ctx, after, first, before, last)
+}
+
 // Backtests resolver
 // Note: Backtests are associated with strategies which have owner_id.
 // Client should pass appropriate filters via where clause.

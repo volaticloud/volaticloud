@@ -8,6 +8,35 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+func (_m *AlertEvent) Rule(ctx context.Context) (*AlertRule, error) {
+	result, err := _m.Edges.RuleOrErr()
+	if IsNotLoaded(err) {
+		result, err = _m.QueryRule().Only(ctx)
+	}
+	return result, err
+}
+
+func (_m *AlertRule) Events(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *AlertEventOrder, where *AlertEventWhereInput,
+) (*AlertEventConnection, error) {
+	opts := []AlertEventPaginateOption{
+		WithAlertEventOrder(orderBy),
+		WithAlertEventFilter(where.Filter),
+	}
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := _m.Edges.totalCount[0][alias]
+	if nodes, err := _m.NamedEvents(alias); err == nil || hasTotalCount {
+		pager, err := newAlertEventPager(opts, last != nil)
+		if err != nil {
+			return nil, err
+		}
+		conn := &AlertEventConnection{Edges: []*AlertEventEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
+	}
+	return _m.QueryEvents().Paginate(ctx, after, first, before, last, opts...)
+}
+
 func (_m *Backtest) Strategy(ctx context.Context) (*Strategy, error) {
 	result, err := _m.Edges.StrategyOrErr()
 	if IsNotLoaded(err) {

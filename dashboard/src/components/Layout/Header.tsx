@@ -15,7 +15,6 @@ import {
   MenuOpen as MenuOpenIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  Notifications as NotificationsIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
@@ -24,6 +23,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../shared/Logo';
 import { GroupSwitcher } from '../shared/GroupSwitcher';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -117,11 +117,7 @@ export const Header = ({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Notifications">
-            <IconButton color="inherit">
-              <NotificationsIcon />
-            </IconButton>
-          </Tooltip>
+          <NotificationsDropdown />
 
           <Tooltip title="Settings">
             <IconButton color="inherit">

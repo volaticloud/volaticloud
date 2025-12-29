@@ -33,6 +33,7 @@
 
 | Package | Responsibility |
 |---------|---------------|
+| `alert` | Alerting system, notifications, email delivery |
 | `authz` | Authorization, UMA resources |
 | `bot` | Bot lifecycle, config validation |
 | `backtest` | Backtest execution, result parsing |
@@ -88,13 +89,14 @@ See `/docs/adr/README.md` for complete index.
 
 ```
 internal/
+├── alert/         # Alerting system → See doc.go
 ├── auth/          # JWT authentication, middleware
-├── authz/         # UMA authorization hooks
+├── authz/         # UMA authorization hooks → See doc.go
 ├── backtest/      # Backtest domain → See doc.go
 ├── bot/           # Bot domain → See doc.go
 ├── db/            # Database utilities
 ├── ent/           # ENT ORM schemas
-├── enum/          # Custom enums
+├── enum/          # Custom enums (including alert enums)
 ├── exchange/      # Exchange domain
 ├── freqtrade/     # Generated API client
 ├── graph/         # GraphQL resolvers (THIN) → See doc.go
@@ -231,6 +233,7 @@ make coverage   # Open HTML report
 
 **Package Documentation:**
 
+- `internal/alert/doc.go` - Alerting system, notifications, email delivery
 - `internal/authz/doc.go` - Authorization scopes and resource types
 - `internal/monitor/doc.go` - Bot/backtest monitoring architecture
 - `internal/runner/doc.go` - Runtime abstraction (Docker/K8s)

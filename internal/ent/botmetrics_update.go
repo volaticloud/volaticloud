@@ -570,6 +570,27 @@ func (_u *BotMetricsUpdate) AddLastSyncedTradeID(v int) *BotMetricsUpdate {
 	return _u
 }
 
+// SetLastKnownMaxTradeID sets the "last_known_max_trade_id" field.
+func (_u *BotMetricsUpdate) SetLastKnownMaxTradeID(v int) *BotMetricsUpdate {
+	_u.mutation.ResetLastKnownMaxTradeID()
+	_u.mutation.SetLastKnownMaxTradeID(v)
+	return _u
+}
+
+// SetNillableLastKnownMaxTradeID sets the "last_known_max_trade_id" field if the given value is not nil.
+func (_u *BotMetricsUpdate) SetNillableLastKnownMaxTradeID(v *int) *BotMetricsUpdate {
+	if v != nil {
+		_u.SetLastKnownMaxTradeID(*v)
+	}
+	return _u
+}
+
+// AddLastKnownMaxTradeID adds value to the "last_known_max_trade_id" field.
+func (_u *BotMetricsUpdate) AddLastKnownMaxTradeID(v int) *BotMetricsUpdate {
+	_u.mutation.AddLastKnownMaxTradeID(v)
+	return _u
+}
+
 // SetLastTradeSyncAt sets the "last_trade_sync_at" field.
 func (_u *BotMetricsUpdate) SetLastTradeSyncAt(v time.Time) *BotMetricsUpdate {
 	_u.mutation.SetLastTradeSyncAt(v)
@@ -832,6 +853,12 @@ func (_u *BotMetricsUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.AddedLastSyncedTradeID(); ok {
 		_spec.AddField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.LastKnownMaxTradeID(); ok {
+		_spec.SetField(botmetrics.FieldLastKnownMaxTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLastKnownMaxTradeID(); ok {
+		_spec.AddField(botmetrics.FieldLastKnownMaxTradeID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.LastTradeSyncAt(); ok {
 		_spec.SetField(botmetrics.FieldLastTradeSyncAt, field.TypeTime, value)
@@ -1428,6 +1455,27 @@ func (_u *BotMetricsUpdateOne) AddLastSyncedTradeID(v int) *BotMetricsUpdateOne 
 	return _u
 }
 
+// SetLastKnownMaxTradeID sets the "last_known_max_trade_id" field.
+func (_u *BotMetricsUpdateOne) SetLastKnownMaxTradeID(v int) *BotMetricsUpdateOne {
+	_u.mutation.ResetLastKnownMaxTradeID()
+	_u.mutation.SetLastKnownMaxTradeID(v)
+	return _u
+}
+
+// SetNillableLastKnownMaxTradeID sets the "last_known_max_trade_id" field if the given value is not nil.
+func (_u *BotMetricsUpdateOne) SetNillableLastKnownMaxTradeID(v *int) *BotMetricsUpdateOne {
+	if v != nil {
+		_u.SetLastKnownMaxTradeID(*v)
+	}
+	return _u
+}
+
+// AddLastKnownMaxTradeID adds value to the "last_known_max_trade_id" field.
+func (_u *BotMetricsUpdateOne) AddLastKnownMaxTradeID(v int) *BotMetricsUpdateOne {
+	_u.mutation.AddLastKnownMaxTradeID(v)
+	return _u
+}
+
 // SetLastTradeSyncAt sets the "last_trade_sync_at" field.
 func (_u *BotMetricsUpdateOne) SetLastTradeSyncAt(v time.Time) *BotMetricsUpdateOne {
 	_u.mutation.SetLastTradeSyncAt(v)
@@ -1720,6 +1768,12 @@ func (_u *BotMetricsUpdateOne) sqlSave(ctx context.Context) (_node *BotMetrics, 
 	}
 	if value, ok := _u.mutation.AddedLastSyncedTradeID(); ok {
 		_spec.AddField(botmetrics.FieldLastSyncedTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.LastKnownMaxTradeID(); ok {
+		_spec.SetField(botmetrics.FieldLastKnownMaxTradeID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLastKnownMaxTradeID(); ok {
+		_spec.AddField(botmetrics.FieldLastKnownMaxTradeID, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.LastTradeSyncAt(); ok {
 		_spec.SetField(botmetrics.FieldLastTradeSyncAt, field.TypeTime, value)

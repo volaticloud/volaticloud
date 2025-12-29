@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"volaticloud/internal/ent"
+	"volaticloud/internal/ent/alertevent"
+	"volaticloud/internal/ent/alertrule"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
@@ -75,6 +77,60 @@ func (f TraverseFunc) Traverse(ctx context.Context, q ent.Query) error {
 		return err
 	}
 	return f(ctx, query)
+}
+
+// The AlertEventFunc type is an adapter to allow the use of ordinary function as a Querier.
+type AlertEventFunc func(context.Context, *ent.AlertEventQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f AlertEventFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.AlertEventQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.AlertEventQuery", q)
+}
+
+// The TraverseAlertEvent type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseAlertEvent func(context.Context, *ent.AlertEventQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseAlertEvent) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseAlertEvent) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.AlertEventQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.AlertEventQuery", q)
+}
+
+// The AlertRuleFunc type is an adapter to allow the use of ordinary function as a Querier.
+type AlertRuleFunc func(context.Context, *ent.AlertRuleQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f AlertRuleFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.AlertRuleQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.AlertRuleQuery", q)
+}
+
+// The TraverseAlertRule type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseAlertRule func(context.Context, *ent.AlertRuleQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseAlertRule) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseAlertRule) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.AlertRuleQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.AlertRuleQuery", q)
 }
 
 // The BacktestFunc type is an adapter to allow the use of ordinary function as a Querier.
@@ -323,6 +379,10 @@ func (f TraverseTrade) Traverse(ctx context.Context, q ent.Query) error {
 // NewQuery returns the generic Query interface for the given typed query.
 func NewQuery(q ent.Query) (Query, error) {
 	switch q := q.(type) {
+	case *ent.AlertEventQuery:
+		return &query[*ent.AlertEventQuery, predicate.AlertEvent, alertevent.OrderOption]{typ: ent.TypeAlertEvent, tq: q}, nil
+	case *ent.AlertRuleQuery:
+		return &query[*ent.AlertRuleQuery, predicate.AlertRule, alertrule.OrderOption]{typ: ent.TypeAlertRule, tq: q}, nil
 	case *ent.BacktestQuery:
 		return &query[*ent.BacktestQuery, predicate.Backtest, backtest.OrderOption]{typ: ent.TypeBacktest, tq: q}, nil
 	case *ent.BotQuery:

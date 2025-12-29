@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"volaticloud/internal/alert"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/trade"
@@ -21,32 +22,23 @@ const (
 
 	// TradeFetchBatchSize is the maximum number of trades to fetch per API call
 	TradeFetchBatchSize int64 = 500
-)
 
-// TradeChange represents a detected trade event for future alerting
-type TradeChange struct {
-	Type      TradeChangeType
-	Trade     *ent.Trade
-	BotID     uuid.UUID
-	Timestamp time.Time
-}
+	// TradeSyncTimeout is the maximum time allowed for a single trade sync operation
+	TradeSyncTimeout = 30 * time.Second
 
-// TradeChangeType represents the type of trade change detected
-type TradeChangeType string
-
-const (
-	// TradeChangeNewTrade indicates a new trade was opened
-	TradeChangeNewTrade TradeChangeType = "new_trade"
-	// TradeChangeTradeClosed indicates a trade was closed
-	TradeChangeTradeClosed TradeChangeType = "trade_closed"
-	// TradeChangeTradeUpdated indicates a trade was updated (profit changed)
-	TradeChangeTradeUpdated TradeChangeType = "trade_updated"
+	// RecentTradesWindow is how far back to look for DB trades (for detecting changes)
+	// This limits memory usage for bots with many historical trades
+	RecentTradesWindow = 7 * 24 * time.Hour // 7 days
 )
 
 // syncTrades fetches trades from Freqtrade and upserts them to the database
-// Uses incremental sync based on last_synced_trade_id for efficiency
+// Uses smart incremental sync with bot reset detection for efficiency
 func (m *BotMonitor) syncTrades(ctx context.Context, b *ent.Bot, ftClient *freqtrade.BotClient) error {
-	// Get existing metrics to find last synced trade ID
+	// Add timeout to prevent long-running syncs
+	ctx, cancel := context.WithTimeout(ctx, TradeSyncTimeout)
+	defer cancel()
+
+	// Get existing metrics for sync state
 	metrics, err := m.dbClient.BotMetrics.Query().
 		Where(botmetrics.BotIDEQ(b.ID)).
 		Only(ctx)
@@ -55,48 +47,208 @@ func (m *BotMonitor) syncTrades(ctx context.Context, b *ent.Bot, ftClient *freqt
 	}
 
 	lastSyncedTradeID := 0
+	lastKnownMaxTradeID := 0
 	if metrics != nil {
 		lastSyncedTradeID = metrics.LastSyncedTradeID
+		lastKnownMaxTradeID = metrics.LastKnownMaxTradeID
 	}
 
-	// Fetch all trades from Freqtrade (paginated)
-	allTrades, err := m.fetchAllTrades(ctx, ftClient)
+	// Fetch trades from Freqtrade API (paginated but in memory)
+	log.Printf("Bot %s: fetching trades from Freqtrade API...", b.Name)
+	allAPITrades, err := m.fetchAllTrades(ctx, ftClient)
+	if err != nil {
+		log.Printf("Bot %s: failed to fetch trades: %v", b.Name, err)
+		return err
+	}
+
+	if len(allAPITrades) == 0 {
+		log.Printf("Bot %s: no trades found, skipping sync", b.Name)
+		return nil
+	}
+
+	// Find max trade ID from API response
+	apiMaxTradeID := 0
+	for _, t := range allAPITrades {
+		if int(t.TradeId) > apiMaxTradeID {
+			apiMaxTradeID = int(t.TradeId)
+		}
+	}
+
+	// Detect bot reset: if API max < last known max, bot was recreated
+	botWasReset := lastKnownMaxTradeID > 0 && apiMaxTradeID < lastKnownMaxTradeID
+	if botWasReset {
+		log.Printf("Bot %s: RESET DETECTED - API max trade ID (%d) < last known max (%d)",
+			b.Name, apiMaxTradeID, lastKnownMaxTradeID)
+		// Reset sync state - all trades are new
+		lastSyncedTradeID = 0
+	}
+
+	log.Printf("Bot %s: fetched %d trades from API (lastSyncedID=%d, apiMax=%d, reset=%v)",
+		b.Name, len(allAPITrades), lastSyncedTradeID, apiMaxTradeID, botWasReset)
+
+	// Query only relevant DB trades (open + recent) to minimize memory
+	existingTrades, err := m.queryRelevantTrades(ctx, b.ID, botWasReset)
 	if err != nil {
 		return err
 	}
 
-	if len(allTrades) == 0 {
-		return nil
+	// Build lookup maps for existing trades using composite key (trade_id, open_date)
+	type tradeKey struct {
+		tradeID      int
+		openDateUnix int64
+	}
+	existingTradeKeys := make(map[tradeKey]bool)
+	existingOpenTradeKeys := make(map[tradeKey]bool)
+	for _, t := range existingTrades {
+		key := tradeKey{tradeID: t.FreqtradeTradeID, openDateUnix: t.OpenDate.Unix()}
+		existingTradeKeys[key] = true
+		if t.IsOpen {
+			existingOpenTradeKeys[key] = true
+		}
 	}
 
-	// Filter trades that need syncing (trade_id > lastSyncedTradeID or still open)
+	// Process trades and collect for sync/alerts
 	tradesToSync := make([]freqtrade.TradeSchema, 0)
-	maxTradeID := lastSyncedTradeID
-	for _, t := range allTrades {
+	var newTrades []freqtrade.TradeSchema
+	var closedTrades []freqtrade.TradeSchema
+
+	for _, t := range allAPITrades {
 		tradeID := int(t.TradeId)
-		if tradeID > maxTradeID {
-			maxTradeID = tradeID
-		}
-		// Sync new trades or open trades (open trades can update)
-		if tradeID > lastSyncedTradeID || t.IsOpen {
+		openDateUnix := t.OpenTimestamp / 1000 // Convert milliseconds to seconds
+		key := tradeKey{tradeID: tradeID, openDateUnix: openDateUnix}
+
+		// Check if trade is missing from database using composite key
+		isMissingFromDB := !existingTradeKeys[key]
+
+		// Sync trades that are:
+		// 1. New (trade_id > lastSyncedTradeID)
+		// 2. Open (open trades can update)
+		// 3. Missing from database (handles gaps and bot recreation)
+		if tradeID > lastSyncedTradeID || t.IsOpen || isMissingFromDB {
 			tradesToSync = append(tradesToSync, t)
+		}
+
+		// Detect new trades for alerts
+		if isMissingFromDB {
+			newTrades = append(newTrades, t)
+			if !t.IsOpen {
+				// Trade opened and closed between syncs
+				closedTrades = append(closedTrades, t)
+			}
+		} else if !t.IsOpen && existingOpenTradeKeys[key] {
+			// Existing trade transitioned from open to closed
+			closedTrades = append(closedTrades, t)
 		}
 	}
 
 	if len(tradesToSync) == 0 {
+		log.Printf("Bot %s: no trades to sync (all %d trades already synced)", b.Name, len(allAPITrades))
 		return nil
 	}
 
-	log.Printf("Bot %s: syncing %d trades (last synced: %d, max: %d)",
-		b.Name, len(tradesToSync), lastSyncedTradeID, maxTradeID)
+	log.Printf("Bot %s: syncing %d trades, %d new, %d closed",
+		b.Name, len(tradesToSync), len(newTrades), len(closedTrades))
 
 	// Batch upsert trades
 	if err := m.upsertTrades(ctx, b.ID, tradesToSync); err != nil {
 		return err
 	}
 
-	// Update last synced trade ID
-	return m.updateLastSyncedTradeID(ctx, b.ID, maxTradeID)
+	// Emit grouped alerts (single alert per type with all trades)
+	m.emitTradeAlerts(ctx, b, newTrades, closedTrades)
+
+	// Update sync state including max trade ID for reset detection
+	return m.updateTradeSyncState(ctx, b.ID, apiMaxTradeID)
+}
+
+// queryRelevantTrades queries only the trades we need for comparison
+// - If bot was reset: query trades from recent window only
+// - Otherwise: query open trades + trades from recent window
+func (m *BotMonitor) queryRelevantTrades(ctx context.Context, botID uuid.UUID, botWasReset bool) ([]*ent.Trade, error) {
+	recentCutoff := time.Now().Add(-RecentTradesWindow)
+
+	query := m.dbClient.Trade.Query().
+		Where(trade.BotIDEQ(botID))
+
+	if botWasReset {
+		// For reset, only need recent trades to avoid false duplicates
+		query = query.Where(trade.OpenDateGTE(recentCutoff))
+	} else {
+		// Normal case: open trades + recent trades
+		query = query.Where(
+			trade.Or(
+				trade.IsOpenEQ(true),
+				trade.OpenDateGTE(recentCutoff),
+			),
+		)
+	}
+
+	return query.All(ctx)
+}
+
+// emitTradeAlerts sends grouped alerts for new and closed trades
+func (m *BotMonitor) emitTradeAlerts(ctx context.Context, b *ent.Bot, newTrades, closedTrades []freqtrade.TradeSchema) {
+	alertMgr := alert.GetManagerFromContext(ctx)
+	if alertMgr == nil {
+		return // Alert manager not configured
+	}
+
+	botMode := string(b.Mode)
+
+	// Convert to TradeInfo and send grouped alert for new trades
+	if len(newTrades) > 0 {
+		tradeInfos := make([]alert.TradeInfo, len(newTrades))
+		for i, t := range newTrades {
+			tradeInfos[i] = alert.TradeInfo{
+				TradeID:     int(t.TradeId),
+				Pair:        t.Pair,
+				Amount:      float64(t.Amount),
+				StakeAmount: float64(t.StakeAmount),
+				OpenRate:    float64(t.OpenRate),
+				Strategy:    t.Strategy,
+				IsOpen:      t.IsOpen,
+			}
+		}
+		if err := alertMgr.HandleTradesOpened(ctx, b.ID, b.Name, b.OwnerID, botMode, tradeInfos); err != nil {
+			log.Printf("Bot %s: failed to emit trades opened alert: %v", b.Name, err)
+		}
+	}
+
+	// Convert to TradeInfo and send grouped alert for closed trades
+	if len(closedTrades) > 0 {
+		tradeInfos := make([]alert.TradeInfo, len(closedTrades))
+		for i, t := range closedTrades {
+			profitAbs := 0.0
+			if t.ProfitAbs.IsSet() && t.ProfitAbs.Get() != nil {
+				profitAbs = float64(*t.ProfitAbs.Get())
+			}
+			profitRatio := 0.0
+			if t.ProfitRatio.IsSet() && t.ProfitRatio.Get() != nil {
+				profitRatio = float64(*t.ProfitRatio.Get())
+			}
+			closeRate := 0.0
+			if t.CloseRate.IsSet() && t.CloseRate.Get() != nil {
+				closeRate = float64(*t.CloseRate.Get())
+			}
+			exitReason := ""
+			if t.ExitReason.IsSet() && t.ExitReason.Get() != nil {
+				exitReason = *t.ExitReason.Get()
+			}
+
+			tradeInfos[i] = alert.TradeInfo{
+				TradeID:     int(t.TradeId),
+				Pair:        t.Pair,
+				ProfitAbs:   profitAbs,
+				ProfitRatio: profitRatio,
+				OpenRate:    float64(t.OpenRate),
+				CloseRate:   closeRate,
+				ExitReason:  exitReason,
+			}
+		}
+		if err := alertMgr.HandleTradesClosed(ctx, b.ID, b.Name, b.OwnerID, botMode, tradeInfos); err != nil {
+			log.Printf("Bot %s: failed to emit trades closed alert: %v", b.Name, err)
+		}
+	}
 }
 
 // fetchAllTrades fetches all trades from Freqtrade with pagination
@@ -123,7 +275,7 @@ func (m *BotMonitor) fetchAllTrades(ctx context.Context, ftClient *freqtrade.Bot
 	return allTrades, nil
 }
 
-// upsertTrades batch upserts trades to the database using PostgreSQL ON CONFLICT
+// upsertTrades batch upserts trades to the database using ON CONFLICT
 func (m *BotMonitor) upsertTrades(ctx context.Context, botID uuid.UUID, trades []freqtrade.TradeSchema) error {
 	builders := make([]*ent.TradeCreate, 0, len(trades))
 
@@ -204,26 +356,29 @@ func (m *BotMonitor) upsertTrades(ctx context.Context, botID uuid.UUID, trades [
 	}
 
 	// Batch upsert with ON CONFLICT
+	// Uses (bot_id, freqtrade_trade_id, open_date) to allow same trade IDs
+	// when a bot is recreated (old trades have different open_date)
 	return m.dbClient.Trade.CreateBulk(builders...).
 		OnConflict(
-			sql.ConflictColumns(trade.FieldBotID, trade.FieldFreqtradeTradeID),
+			sql.ConflictColumns(trade.FieldBotID, trade.FieldFreqtradeTradeID, trade.FieldOpenDate),
 		).
 		UpdateNewValues().
 		Exec(ctx)
 }
 
-// updateLastSyncedTradeID updates the last synced trade ID in BotMetrics
-func (m *BotMonitor) updateLastSyncedTradeID(ctx context.Context, botID uuid.UUID, lastTradeID int) error {
+// updateTradeSyncState updates the sync state in BotMetrics
+func (m *BotMonitor) updateTradeSyncState(ctx context.Context, botID uuid.UUID, maxTradeID int) error {
 	// Check if bot metrics exist
 	metrics, err := m.dbClient.BotMetrics.Query().
 		Where(botmetrics.BotIDEQ(botID)).
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			// Create metrics with just the sync tracking fields
+			// Create metrics with sync tracking fields
 			return m.dbClient.BotMetrics.Create().
 				SetBotID(botID).
-				SetLastSyncedTradeID(lastTradeID).
+				SetLastSyncedTradeID(maxTradeID).
+				SetLastKnownMaxTradeID(maxTradeID).
 				SetLastTradeSyncAt(time.Now()).
 				Exec(ctx)
 		}
@@ -231,8 +386,15 @@ func (m *BotMonitor) updateLastSyncedTradeID(ctx context.Context, botID uuid.UUI
 	}
 
 	// Update existing metrics
+	// Only update lastKnownMaxTradeID if current max is higher (handles normal case)
+	newMaxTradeID := metrics.LastKnownMaxTradeID
+	if maxTradeID > newMaxTradeID {
+		newMaxTradeID = maxTradeID
+	}
+
 	return m.dbClient.BotMetrics.UpdateOneID(metrics.ID).
-		SetLastSyncedTradeID(lastTradeID).
+		SetLastSyncedTradeID(maxTradeID).
+		SetLastKnownMaxTradeID(newMaxTradeID).
 		SetLastTradeSyncAt(time.Now()).
 		Exec(ctx)
 }

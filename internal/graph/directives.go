@@ -115,7 +115,14 @@ func verifyResourcePermission(
 	// Groups are registered as resources in Keycloak but not stored in our database
 	// Check directly with Keycloak UMA
 	if umaClient != nil {
-		return umaClient.CheckPermission(ctx, userToken, resourceID, scope)
+		hasPermission, permErr := umaClient.CheckPermission(ctx, userToken, resourceID, scope)
+		// Self-heal if permission denied or error indicates invalid scope
+		if authz.ShouldTriggerSelfHealing(hasPermission, permErr) {
+			if syncAndRetry := trySyncGroup(ctx, resourceID, umaClient); syncAndRetry {
+				return umaClient.CheckPermission(ctx, userToken, resourceID, scope)
+			}
+		}
+		return hasPermission, permErr
 	}
 
 	return false, fmt.Errorf("resource not found: %s", resourceID)
@@ -211,6 +218,28 @@ func trySyncBotRunner(ctx context.Context, r *ent.BotRunner, umaClient keycloak.
 	}
 
 	log.Printf("Self-healing: synced bot runner %s scopes, retrying permission check", r.ID)
+	return true
+}
+
+func trySyncGroup(ctx context.Context, groupID string, umaClient keycloak.UMAClientInterface) bool {
+	if umaClient == nil {
+		return false
+	}
+
+	scopes := authz.GetScopesForType(authz.ResourceTypeGroup)
+	attributes := map[string][]string{
+		"type": {string(authz.ResourceTypeGroup)},
+	}
+
+	// For groups, we use the groupID as both the resource ID and name
+	// Groups are managed by Keycloak, so we only sync scopes (not create the resource)
+	err := umaClient.SyncResourceScopes(ctx, groupID, groupID, scopes, attributes)
+	if err != nil {
+		log.Printf("Self-healing: failed to sync group %s scopes: %v", groupID, err)
+		return false
+	}
+
+	log.Printf("Self-healing: synced group %s scopes, retrying permission check", groupID)
 	return true
 }
 
