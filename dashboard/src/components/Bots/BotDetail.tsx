@@ -1,10 +1,9 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
   Paper,
   Chip,
-  Button,
   CircularProgress,
   Alert,
   Table,
@@ -15,46 +14,54 @@ import {
   TableRow,
   Divider,
   IconButton,
-  Tooltip,
   Grid,
+  Snackbar,
+  Tabs,
+  Tab,
 } from '@mui/material';
-import {
-  PlayArrow,
-  Stop,
-  Refresh,
-  Delete,
-  ArrowBack,
-  Dashboard,
-} from '@mui/icons-material';
-import { useState } from 'react';
-import {
-  useGetBotQuery,
-  useStopBotMutation,
-  useStartBotMutation,
-  useRestartBotMutation,
-  useDeleteBotMutation,
-} from './bots.generated';
+import { ArrowBack, Dashboard, DataUsage, SwapHoriz } from '@mui/icons-material';
+import { useState, SyntheticEvent } from 'react';
+import { useGetBotQuery } from './bots.generated';
 import BotMetrics from './BotMetrics';
 import BotUsageCharts from './BotUsageCharts';
-import FreqUIDialog from './FreqUIDialog';
+import BotActionsMenu from './BotActionsMenu';
 import { useGroupNavigate } from '../../contexts/GroupContext';
+
+type TabValue = 'overview' | 'usage' | 'trades';
+
+const VALID_TABS: TabValue[] = ['overview', 'usage', 'trades'];
 
 const BotDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useGroupNavigate();
-  const [actionLoading, setActionLoading] = useState(false);
-  const [frequiDialogOpen, setFrequiDialogOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  // Get tab from URL, default to 'overview'
+  const tabParam = searchParams.get('tab') as TabValue | null;
+  const activeTab: TabValue = tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'overview';
+
+  const handleTabChange = (_event: SyntheticEvent, newValue: TabValue) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      if (newValue === 'overview') {
+        newParams.delete('tab'); // Clean URL for default tab
+      } else {
+        newParams.set('tab', newValue);
+      }
+      return newParams;
+    });
+  };
 
   const { data, loading, error, refetch } = useGetBotQuery({
     variables: { id: id! },
     skip: !id,
-    pollInterval: 10000, // Refresh every 10 seconds
+    pollInterval: 10000,
   });
-
-  const [stopBot] = useStopBotMutation();
-  const [startBot] = useStartBotMutation();
-  const [restartBot] = useRestartBotMutation();
-  const [deleteBot] = useDeleteBotMutation();
 
   if (loading) {
     return (
@@ -81,33 +88,6 @@ const BotDetail = () => {
       </Box>
     );
   }
-
-  const handleAction = async (action: () => Promise<any>, successMessage: string) => {
-    setActionLoading(true);
-    try {
-      await action();
-      await refetch();
-      alert(successMessage);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this bot? This action cannot be undone.')) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await deleteBot({ variables: { id: id! } });
-      navigate('/bots');
-    } catch (err: any) {
-      alert(`Error deleting bot: ${err.message}`);
-      setActionLoading(false);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -143,14 +123,10 @@ const BotDetail = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  const canStart = bot.status === 'stopped';
-  const canStop = bot.status === 'running' || bot.status === 'unhealthy';
-  const canRestart = bot.status === 'running' || bot.status === 'unhealthy';
-
   return (
     <Box p={3}>
       {/* Header */}
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Box display="flex" alignItems="center" gap={2}>
           <IconButton onClick={() => navigate('/bots')}>
             <ArrowBack />
@@ -160,255 +136,213 @@ const BotDetail = () => {
           <Chip label={bot.mode} color={getModeColor(bot.mode)} />
         </Box>
 
-        <Box display="flex" gap={1}>
-          <Tooltip title="Start Bot">
-            <span>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<PlayArrow />}
-                disabled={!canStart || actionLoading}
-                onClick={() =>
-                  handleAction(
-                    () => startBot({ variables: { id: id! } }),
-                    'Bot started successfully'
-                  )
-                }
-              >
-                Start
-              </Button>
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Stop Bot">
-            <span>
-              <Button
-                variant="contained"
-                color="warning"
-                startIcon={<Stop />}
-                disabled={!canStop || actionLoading}
-                onClick={() =>
-                  handleAction(
-                    () => stopBot({ variables: { id: id! } }),
-                    'Bot stopped successfully'
-                  )
-                }
-              >
-                Stop
-              </Button>
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Restart Bot">
-            <span>
-              <Button
-                variant="contained"
-                startIcon={<Refresh />}
-                disabled={!canRestart || actionLoading}
-                onClick={() =>
-                  handleAction(
-                    () => restartBot({ variables: { id: id! } }),
-                    'Bot restarted successfully'
-                  )
-                }
-              >
-                Restart
-              </Button>
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Delete Bot">
-            <span>
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<Delete />}
-                disabled={actionLoading}
-                onClick={handleDelete}
-              >
-                Delete
-              </Button>
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Open FreqUI Dashboard">
-            <span>
-              <Button
-                variant="outlined"
-                startIcon={<Dashboard />}
-                onClick={() => setFrequiDialogOpen(true)}
-              >
-                Open FreqUI
-              </Button>
-            </span>
-          </Tooltip>
-        </Box>
+        <BotActionsMenu
+          botId={bot.id}
+          botName={bot.name}
+          botStatus={bot.status}
+          showFreqUI
+          refetch={refetch}
+          onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+          onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+          onDeleteSuccess={() => navigate('/bots')}
+        />
       </Box>
 
       {/* Error Message */}
       {bot.errorMessage && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {bot.errorMessage}
         </Alert>
       )}
 
-      {/* Metrics */}
-      <BotMetrics metrics={bot.metrics} botStatus={bot.status} />
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={activeTab} onChange={handleTabChange}>
+          <Tab icon={<Dashboard />} iconPosition="start" label="Overview" value="overview" />
+          <Tab icon={<DataUsage />} iconPosition="start" label="Usage" value="usage" />
+          <Tab
+            icon={<SwapHoriz />}
+            iconPosition="start"
+            label={`Trades${bot.trades?.edges?.length ? ` (${bot.trades.edges.length})` : ''}`}
+            value="trades"
+          />
+        </Tabs>
+      </Box>
 
-      {/* Bot Information */}
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Bot Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Freqtrade Version
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Metrics */}
+          <BotMetrics metrics={bot.metrics} botStatus={bot.status} />
+
+          {/* Bot Information */}
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Bot Information
                 </Typography>
-                <Typography variant="body1">{bot.freqtradeVersion}</Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Exchange
-                </Typography>
-                <Typography variant="body1">
-                  {bot.exchange?.name}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Strategy
-                </Typography>
-                <Typography variant="body1">{bot.strategy?.name}</Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Runner
-                </Typography>
-                <Typography variant="body1">
-                  {bot.runner?.name} ({bot.runner?.type})
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Last Seen
-                </Typography>
-                <Typography variant="body1">{formatDate(bot.lastSeenAt)}</Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Created
-                </Typography>
-                <Typography variant="body1">{formatDate(bot.createdAt)}</Typography>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Updated
-                </Typography>
-                <Typography variant="body1">{formatDate(bot.updatedAt)}</Typography>
-              </Grid>
+                <Divider sx={{ mb: 2 }} />
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Freqtrade Version
+                    </Typography>
+                    <Typography variant="body1">{bot.freqtradeVersion}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Exchange
+                    </Typography>
+                    <Typography variant="body1">{bot.exchange?.name}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Strategy
+                    </Typography>
+                    <Typography variant="body1">{bot.strategy?.name}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Runner
+                    </Typography>
+                    <Typography variant="body1">
+                      {bot.runner?.name} ({bot.runner?.type})
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Last Seen
+                    </Typography>
+                    <Typography variant="body1">{formatDate(bot.lastSeenAt)}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Created
+                    </Typography>
+                    <Typography variant="body1">{formatDate(bot.createdAt)}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Updated
+                    </Typography>
+                    <Typography variant="body1">{formatDate(bot.updatedAt)}</Typography>
+                  </Grid>
+                </Grid>
+              </Paper>
             </Grid>
-          </Paper>
-        </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Strategy Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              Name
-            </Typography>
-            <Typography variant="body1" gutterBottom>
-              {bot.strategy?.name}
-            </Typography>
-            <Typography variant="body2" color="textSecondary" gutterBottom sx={{ mt: 2 }}>
-              Description
-            </Typography>
-            <Typography variant="body1">
-              {bot.strategy?.description || 'No description available'}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Strategy Information
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Name
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {bot.strategy?.name}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom sx={{ mt: 2 }}>
+                  Description
+                </Typography>
+                <Typography variant="body1">
+                  {bot.strategy?.description || 'No description available'}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </>
+      )}
 
-      {/* Resource Usage Charts */}
-      <BotUsageCharts botId={bot.id} />
+      {activeTab === 'usage' && <BotUsageCharts botId={bot.id} />}
 
-      {/* Recent Trades */}
-      {bot.trades?.edges && bot.trades.edges.length > 0 && (
-        <Paper sx={{ mt: 3, p: 3 }}>
+      {activeTab === 'trades' && (
+        <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Recent Trades
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 650 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Pair</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Open Date</TableCell>
-                  <TableCell align="right">Close Date</TableCell>
-                  <TableCell align="right">Profit</TableCell>
-                  <TableCell align="right">Profit %</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {bot.trades.edges.map((edge) => {
-                  const trade = edge.node;
-                  return (
-                    <TableRow key={trade.id}>
-                      <TableCell>{trade.pair}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={trade.isOpen ? 'Open' : 'Closed'}
-                          size="small"
-                          color={trade.isOpen ? 'primary' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">{formatDate(trade.openDate)}</TableCell>
-                      <TableCell align="right">{formatDate(trade.closeDate)}</TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          color:
-                            trade.profitAbs && trade.profitAbs > 0 ? 'success.main' : 'error.main',
-                        }}
-                      >
-                        {formatNumber(trade.profitAbs, 4)}
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          color:
-                            trade.profitRatio && trade.profitRatio > 0
-                              ? 'success.main'
-                              : 'error.main',
-                        }}
-                      >
-                        {formatPercent(trade.profitRatio ? trade.profitRatio * 100 : null)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {bot.trades?.edges && bot.trades.edges.length > 0 ? (
+            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 650 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Pair</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Open Date</TableCell>
+                    <TableCell align="right">Close Date</TableCell>
+                    <TableCell align="right">Profit</TableCell>
+                    <TableCell align="right">Profit %</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {bot.trades.edges.map((edge) => {
+                    const trade = edge.node;
+                    return (
+                      <TableRow key={trade.id}>
+                        <TableCell>{trade.pair}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={trade.isOpen ? 'Open' : 'Closed'}
+                            size="small"
+                            color={trade.isOpen ? 'primary' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell align="right">{formatDate(trade.openDate)}</TableCell>
+                        <TableCell align="right">{formatDate(trade.closeDate)}</TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color:
+                              trade.profitAbs && trade.profitAbs > 0
+                                ? 'success.main'
+                                : 'error.main',
+                          }}
+                        >
+                          {formatNumber(trade.profitAbs, 4)}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            color:
+                              trade.profitRatio && trade.profitRatio > 0
+                                ? 'success.main'
+                                : 'error.main',
+                          }}
+                        >
+                          {formatPercent(trade.profitRatio ? trade.profitRatio * 100 : null)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography color="text.secondary" textAlign="center" py={4}>
+              No trades yet. Start the bot to begin trading.
+            </Typography>
+          )}
         </Paper>
       )}
 
-      {/* FreqUI Dialog */}
-      <FreqUIDialog
-        open={frequiDialogOpen}
-        onClose={() => setFrequiDialogOpen(false)}
-        botId={bot.id}
-        botName={bot.name}
-      />
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -3,7 +3,6 @@ import {
   Typography,
   Button,
   Chip,
-  IconButton,
   Tooltip,
   Snackbar,
   Alert,
@@ -13,21 +12,15 @@ import {
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
-  PlayArrow as StartIcon,
-  Stop as StopIcon,
-  Refresh as RestartIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Public as PublicIcon,
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
-import { useGetBotsQuery, useStartBotMutation, useStopBotMutation, useRestartBotMutation, useSetBotVisibilityMutation, GetBotsQuery } from './bots.generated';
+import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
-import { DeleteBotDialog } from './DeleteBotDialog';
-import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import BotActionsMenu from './BotActionsMenu';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 
@@ -41,12 +34,11 @@ export const BotsList = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<{
     id: string;
     name: string;
     mode: string;
+    status: string;
     public?: boolean;
     exchange: { id: string; name: string };
     strategy: { id: string; name: string };
@@ -91,75 +83,6 @@ export const BotsList = () => {
     reset();
   }, [viewMode, activeGroupId, reset]);
 
-  // Mutations
-  const [startBot] = useStartBotMutation({ onCompleted: () => refetch() });
-  const [stopBot] = useStopBotMutation({ onCompleted: () => refetch() });
-  const [restartBot] = useRestartBotMutation({ onCompleted: () => refetch() });
-  const [setBotVisibility, { loading: visibilityLoading }] = useSetBotVisibilityMutation();
-
-  const handleStartBot = async (id: string) => {
-    try {
-      const result = await startBot({ variables: { id } });
-      if (result.errors || !result.data?.startBot) {
-        setSnackbar({
-          open: true,
-          message: result.errors?.[0]?.message || 'Failed to start bot',
-          severity: 'error',
-        });
-      } else {
-        setSnackbar({ open: true, message: 'Bot started successfully', severity: 'success' });
-      }
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : 'Failed to start bot',
-        severity: 'error',
-      });
-    }
-  };
-
-  const handleStopBot = async (id: string) => {
-    try {
-      const result = await stopBot({ variables: { id } });
-      if (result.errors || !result.data?.stopBot) {
-        setSnackbar({
-          open: true,
-          message: result.errors?.[0]?.message || 'Failed to stop bot',
-          severity: 'error',
-        });
-      } else {
-        setSnackbar({ open: true, message: 'Bot stopped successfully', severity: 'success' });
-      }
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : 'Failed to stop bot',
-        severity: 'error',
-      });
-    }
-  };
-
-  const handleRestartBot = async (id: string) => {
-    try {
-      const result = await restartBot({ variables: { id } });
-      if (result.errors || !result.data?.restartBot) {
-        setSnackbar({
-          open: true,
-          message: result.errors?.[0]?.message || 'Failed to restart bot',
-          severity: 'error',
-        });
-      } else {
-        setSnackbar({ open: true, message: 'Bot restarted successfully', severity: 'success' });
-      }
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : 'Failed to restart bot',
-        severity: 'error',
-      });
-    }
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
@@ -176,9 +99,6 @@ export const BotsList = () => {
       default: return 'default';
     }
   };
-
-  const canStart = (status: string) => status === 'stopped' || status === 'error';
-  const canStopOrRestart = (status: string) => status === 'running' || status === 'unhealthy';
 
   // Define columns for the DataGrid
   const columns: GridColDef<Bot>[] = [
@@ -259,82 +179,29 @@ export const BotsList = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 220,
+      width: 130,
       sortable: false,
       align: 'right',
       headerAlign: 'right',
       renderCell: (params: GridRenderCellParams<Bot>) => (
-        <Box onClick={(e) => e.stopPropagation()}>
-          {viewMode === 'mine' && (
-            <>
-              <Tooltip title="Start">
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={() => handleStartBot(params.row.id)}
-                  disabled={!canStart(params.row.status)}
-                >
-                  <StartIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Stop">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => handleStopBot(params.row.id)}
-                  disabled={!canStopOrRestart(params.row.status)}
-                >
-                  <StopIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Restart">
-                <IconButton
-                  size="small"
-                  color="warning"
-                  onClick={() => handleRestartBot(params.row.id)}
-                  disabled={!canStopOrRestart(params.row.status)}
-                >
-                  <RestartIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={params.row.public ? 'Make Private' : 'Make Public'}>
-                <IconButton
-                  size="small"
-                  color={params.row.public ? 'info' : 'default'}
-                  onClick={() => {
-                    setSelectedBot(params.row);
-                    setVisibilityDialogOpen(true);
-                  }}
-                >
-                  {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Edit">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    setSelectedBot(params.row);
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => {
-                    setSelectedBot(params.row);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </Box>
+        viewMode === 'mine' ? (
+          <BotActionsMenu
+            botId={params.row.id}
+            botName={params.row.name}
+            botStatus={params.row.status}
+            isPublic={params.row.public}
+            compact
+            showEdit
+            showVisibility
+            refetch={refetch}
+            onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+            onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+            onEdit={() => {
+              setSelectedBot(params.row);
+              setEditDialogOpen(true);
+            }}
+          />
+        ) : null
       ),
     },
   ];
@@ -401,62 +268,18 @@ export const BotsList = () => {
       />
 
       {selectedBot && (
-        <>
-          <EditBotDialog
-            open={editDialogOpen}
-            onClose={() => {
-              setEditDialogOpen(false);
-              setSelectedBot(null);
-            }}
-            onSuccess={() => {
-              refetch();
-              setSelectedBot(null);
-            }}
-            bot={selectedBot}
-          />
-
-          <DeleteBotDialog
-            open={deleteDialogOpen}
-            onClose={() => {
-              setDeleteDialogOpen(false);
-              setSelectedBot(null);
-            }}
-            onSuccess={() => {
-              refetch();
-              setSelectedBot(null);
-            }}
-            bot={selectedBot}
-          />
-
-          <VisibilityToggleDialog
-            open={visibilityDialogOpen}
-            onClose={() => {
-              setVisibilityDialogOpen(false);
-              setSelectedBot(null);
-            }}
-            onConfirm={async () => {
-              const result = await setBotVisibility({
-                variables: {
-                  id: selectedBot.id,
-                  public: !selectedBot.public,
-                },
-              });
-              if (result.errors) {
-                throw new Error(result.errors[0]?.message || 'Failed to update visibility');
-              }
-              refetch();
-              setSnackbar({
-                open: true,
-                message: `Bot is now ${selectedBot.public ? 'private' : 'public'}`,
-                severity: 'success',
-              });
-            }}
-            resourceType="bot"
-            resourceName={selectedBot.name}
-            currentlyPublic={selectedBot.public || false}
-            loading={visibilityLoading}
-          />
-        </>
+        <EditBotDialog
+          open={editDialogOpen}
+          onClose={() => {
+            setEditDialogOpen(false);
+            setSelectedBot(null);
+          }}
+          onSuccess={() => {
+            refetch();
+            setSelectedBot(null);
+          }}
+          bot={selectedBot}
+        />
       )}
 
       <Snackbar
