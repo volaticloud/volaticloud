@@ -9,8 +9,10 @@ import (
 	"github.com/google/uuid"
 
 	"volaticloud/internal/alert/channel"
+	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/keycloak"
 )
 
 // Config holds configuration for the alert manager
@@ -29,6 +31,7 @@ type Manager struct {
 	dispatcher   *Dispatcher
 	batcher      *Batcher
 	emailChannel channel.Channel
+	umaClient    keycloak.UMAClientInterface
 }
 
 // NewManager creates a new alert manager
@@ -63,6 +66,11 @@ func NewManager(cfg Config) (*Manager, error) {
 func (m *Manager) SetEmailChannel(ch channel.Channel) {
 	m.emailChannel = ch
 	m.dispatcher.SetEmailChannel(ch)
+}
+
+// SetUMAClient sets the UMA client for permission checks
+func (m *Manager) SetUMAClient(client keycloak.UMAClientInterface) {
+	m.umaClient = client
 }
 
 // Start starts the alert manager
@@ -498,6 +506,23 @@ func (m *Manager) TestRule(ctx context.Context, ruleID uuid.UUID) error {
 	rule, err := m.dbClient.AlertRule.Get(ctx, ruleID)
 	if err != nil {
 		return fmt.Errorf("failed to load rule: %w", err)
+	}
+
+	// Check permission on the rule's resource (testing is an update operation)
+	if m.umaClient != nil {
+		userCtx, err := auth.GetUserContext(ctx)
+		if err != nil {
+			return fmt.Errorf("authentication required: %w", err)
+		}
+
+		effectiveResourceID := getEffectiveResourceID(rule.ResourceType, rule.ResourceID, rule.OwnerID)
+		hasPermission, permErr := m.umaClient.CheckPermission(ctx, userCtx.RawToken, effectiveResourceID, "update-alert-rule")
+		if permErr != nil {
+			return fmt.Errorf("permission check failed: %w", permErr)
+		}
+		if !hasPermission {
+			return fmt.Errorf("you don't have permission to test alert rules on resource %q", effectiveResourceID)
+		}
 	}
 
 	// Check recipients

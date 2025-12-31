@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { IconButton, Tooltip, Snackbar, Alert } from '@mui/material';
+import { IconButton, Tooltip, Snackbar, Alert, CircularProgress } from '@mui/material';
 import { Public as PublicIcon, Lock as LockIcon } from '@mui/icons-material';
 import { useSetStrategyVisibilityMutation } from './strategies.generated';
 import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { useCanPerform } from '../../hooks/useCanPerform';
 
 interface StrategyVisibilityButtonProps {
   strategyId: string;
@@ -25,6 +26,12 @@ export const StrategyVisibilityButton = ({
   }>({ open: false, message: '', severity: 'success' });
 
   const [setStrategyVisibility, { loading }] = useSetStrategyVisibilityMutation();
+
+  // Check if user has permission to change visibility
+  const { can: canMakePublic, loading: permissionLoading } = useCanPerform({
+    resourceId: strategyId,
+    scope: 'make-public',
+  });
 
   const handleConfirm = async () => {
     try {
@@ -53,16 +60,33 @@ export const StrategyVisibilityButton = ({
     }
   };
 
+  const getTooltip = () => {
+    if (permissionLoading) return 'Loading permissions...';
+    if (!canMakePublic) return 'No permission to change visibility';
+    return isPublic ? 'Make Private' : 'Make Public';
+  };
+
+  const isDisabled = !canMakePublic || permissionLoading;
+
   return (
     <>
-      <Tooltip title={isPublic ? 'Make Private' : 'Make Public'}>
-        <IconButton
-          size="small"
-          color={isPublic ? 'info' : 'default'}
-          onClick={() => setDialogOpen(true)}
-        >
-          {isPublic ? <PublicIcon /> : <LockIcon />}
-        </IconButton>
+      <Tooltip title={getTooltip()}>
+        <span>
+          <IconButton
+            size="small"
+            color={isPublic ? 'info' : 'default'}
+            onClick={() => setDialogOpen(true)}
+            disabled={isDisabled}
+          >
+            {permissionLoading ? (
+              <CircularProgress size={18} />
+            ) : isPublic ? (
+              <PublicIcon />
+            ) : (
+              <LockIcon />
+            )}
+          </IconButton>
+        </span>
       </Tooltip>
 
       <VisibilityToggleDialog

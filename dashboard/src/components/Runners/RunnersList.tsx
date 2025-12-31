@@ -3,7 +3,6 @@ import {
   Typography,
   Button,
   Chip,
-  IconButton,
   Tooltip,
   LinearProgress,
   Snackbar,
@@ -32,6 +31,7 @@ import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
+import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
 
@@ -213,55 +213,58 @@ export const RunnersList = () => {
         <Box onClick={(e) => e.stopPropagation()}>
           {viewMode === 'mine' && (
             <>
-              <Tooltip title="Refresh Data">
-                <IconButton
-                  size="small"
-                  color="primary"
-                  disabled={params.row.dataDownloadStatus === 'downloading'}
-                  onClick={() => handleRefreshData(params.row.id, params.row.name)}
-                >
-                  <RefreshIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={params.row.public ? 'Make Private' : 'Make Public'}>
-                <IconButton
-                  size="small"
-                  color={params.row.public ? 'info' : 'default'}
-                  onClick={() => {
-                    setSelectedRunner(params.row);
-                    setVisibilityDialogOpen(true);
-                  }}
-                >
-                  {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Edit Runner">
-                <IconButton
-                  size="small"
-                  onClick={async () => {
-                    const result = await getRunnerWithSecrets({ variables: { id: params.row.id } });
-                    const runnerData = result.data?.botRunners?.edges?.[0]?.node;
-                    if (runnerData) {
-                      setSelectedRunner(runnerData as Runner);
-                      setEditDialogOpen(true);
-                    }
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete Runner">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => {
-                    setSelectedRunner(params.row);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <ProtectedIconButton
+                resourceId={params.row.id}
+                scope="edit"
+                size="small"
+                color="primary"
+                onClick={() => handleRefreshData(params.row.id, params.row.name)}
+                deniedTooltip="No permission to refresh data"
+              >
+                <RefreshIcon fontSize="small" />
+              </ProtectedIconButton>
+              <ProtectedIconButton
+                resourceId={params.row.id}
+                scope="make-public"
+                size="small"
+                color={params.row.public ? 'info' : 'default'}
+                onClick={() => {
+                  setSelectedRunner(params.row);
+                  setVisibilityDialogOpen(true);
+                }}
+                deniedTooltip="No permission to change visibility"
+              >
+                {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
+              </ProtectedIconButton>
+              <ProtectedIconButton
+                resourceId={params.row.id}
+                scope="edit"
+                size="small"
+                onClick={async () => {
+                  const result = await getRunnerWithSecrets({ variables: { id: params.row.id } });
+                  const runnerData = result.data?.botRunners?.edges?.[0]?.node;
+                  if (runnerData) {
+                    setSelectedRunner(runnerData as Runner);
+                    setEditDialogOpen(true);
+                  }
+                }}
+                deniedTooltip="No permission to edit"
+              >
+                <EditIcon fontSize="small" />
+              </ProtectedIconButton>
+              <ProtectedIconButton
+                resourceId={params.row.id}
+                scope="delete"
+                size="small"
+                color="error"
+                onClick={() => {
+                  setSelectedRunner(params.row);
+                  setDeleteDialogOpen(true);
+                }}
+                deniedTooltip="No permission to delete"
+              >
+                <DeleteIcon fontSize="small" />
+              </ProtectedIconButton>
             </>
           )}
         </Box>

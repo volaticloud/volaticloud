@@ -209,6 +209,38 @@ func runServer(c *cli.Context) error {
 	host := c.String("host")
 	port := c.Int("port")
 
+	// Initialize Keycloak client (REQUIRED in all environments)
+	// Must be initialized before alert manager and monitor manager
+	keycloakConfig := auth.KeycloakConfig{
+		URL:          c.String("keycloak-url"),
+		Realm:        c.String("keycloak-realm"),
+		ClientID:     c.String("keycloak-client-id"),
+		ClientSecret: c.String("keycloak-client-secret"),
+	}
+
+	// Validate that Keycloak is configured
+	if keycloakConfig.URL == "" || keycloakConfig.ClientID == "" || keycloakConfig.ClientSecret == "" {
+		return fmt.Errorf("keycloak configuration is required (URL, ClientID, ClientSecret must be set)")
+	}
+
+	keycloakClient, err := auth.InitKeycloak(ctx, keycloakConfig)
+	if err != nil {
+		return fmt.Errorf("failed to initialize Keycloak: %w", err)
+	}
+
+	// Initialize UMA client for resource-level authorization
+	umaClient := keycloak.NewUMAClient(
+		keycloakConfig.URL,
+		keycloakConfig.Realm,
+		keycloakConfig.ClientID,
+		keycloakConfig.ClientSecret,
+	)
+	log.Println("✓ Keycloak UMA 2.0 authorization enabled")
+
+	// Register ENT hooks for automatic Keycloak resource sync
+	// This ensures resources are created/deleted in Keycloak when entities are created/deleted
+	authz.RegisterKeycloakHooks(client)
+
 	// Initialize monitor manager
 	etcdEndpoints := c.StringSlice("etcd-endpoints")
 	monitorInterval := c.Duration("monitor-interval")
@@ -244,6 +276,7 @@ func runServer(c *cli.Context) error {
 			return fmt.Errorf("failed to create SendGrid channel: %w", err)
 		}
 		alertManager.SetEmailChannel(emailChannel)
+		alertManager.SetUMAClient(umaClient)
 
 		// Start alert manager
 		if err := alertManager.Start(ctx); err != nil {
@@ -278,37 +311,6 @@ func runServer(c *cli.Context) error {
 		}
 	}()
 
-	// Initialize Keycloak client (REQUIRED in all environments)
-	keycloakConfig := auth.KeycloakConfig{
-		URL:          c.String("keycloak-url"),
-		Realm:        c.String("keycloak-realm"),
-		ClientID:     c.String("keycloak-client-id"),
-		ClientSecret: c.String("keycloak-client-secret"),
-	}
-
-	// Validate that Keycloak is configured
-	if keycloakConfig.URL == "" || keycloakConfig.ClientID == "" || keycloakConfig.ClientSecret == "" {
-		return fmt.Errorf("keycloak configuration is required (URL, ClientID, ClientSecret must be set)")
-	}
-
-	keycloakClient, err := auth.InitKeycloak(ctx, keycloakConfig)
-	if err != nil {
-		return fmt.Errorf("failed to initialize Keycloak: %w", err)
-	}
-
-	// Initialize UMA client for resource-level authorization
-	umaClient := keycloak.NewUMAClient(
-		keycloakConfig.URL,
-		keycloakConfig.Realm,
-		keycloakConfig.ClientID,
-		keycloakConfig.ClientSecret,
-	)
-	log.Println("✓ Keycloak UMA 2.0 authorization enabled")
-
-	// Register ENT hooks for automatic Keycloak resource sync
-	// This ensures resources are created/deleted in Keycloak when entities are created/deleted
-	authz.RegisterKeycloakHooks(client)
-
 	// Setup GraphQL server with auth clients and directive handlers
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: graph.NewResolver(client, keycloakClient, umaClient),
@@ -340,7 +342,7 @@ func runServer(c *cli.Context) error {
 	})
 
 	// Create alert service (always available, uses DB client directly)
-	alertService := alert.NewService(client)
+	alertService := alert.NewService(client, umaClient)
 
 	// Middleware to inject ENT and UMA clients into context for GraphQL directives and ENT hooks
 	injectClientsMiddleware := func(next http.Handler) http.Handler {

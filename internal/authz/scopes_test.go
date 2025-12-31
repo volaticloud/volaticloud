@@ -15,31 +15,31 @@ func TestGetScopesForType(t *testing.T) {
 		{
 			name:         "Strategy scopes",
 			resourceType: ResourceTypeStrategy,
-			wantLen:      6,
+			wantLen:      11, // view, edit, delete, run-backtest, stop-backtest, delete-backtest, make-public + 4 alert scopes
 			wantContains: "run-backtest",
 		},
 		{
 			name:         "Bot scopes",
 			resourceType: ResourceTypeBot,
-			wantLen:      7,
+			wantLen:      12, // view, view-secrets, run, stop, delete, edit, freqtrade-api, make-public + 4 alert scopes
 			wantContains: "freqtrade-api",
 		},
 		{
 			name:         "Exchange scopes",
 			resourceType: ResourceTypeExchange,
-			wantLen:      4,
+			wantLen:      4, // view, view-secrets, edit, delete (no alert scopes)
 			wantContains: "view-secrets",
 		},
 		{
 			name:         "BotRunner scopes",
 			resourceType: ResourceTypeBotRunner,
-			wantLen:      5,
+			wantLen:      9, // view, view-secrets, edit, delete, make-public + 4 alert scopes
 			wantContains: "make-public",
 		},
 		{
 			name:         "Group scopes",
 			resourceType: ResourceTypeGroup,
-			wantLen:      4,
+			wantLen:      8, // view, edit, delete, mark-alert-as-read + 4 alert scopes
 			wantContains: "mark-alert-as-read",
 		},
 		{
@@ -91,6 +91,16 @@ func TestIsInvalidScopeError(t *testing.T) {
 		{
 			name: "invalid scope (with space) error returns true",
 			err:  errors.New("invalid scope: some-scope"),
+			want: true,
+		},
+		{
+			name: "invalid_resource error returns true",
+			err:  errors.New("400 Bad Request: invalid_resource: Resource with id [abc] does not exist."),
+			want: true,
+		},
+		{
+			name: "resource does not exist error returns true",
+			err:  errors.New("Resource with id [abc-123] does not exist."),
 			want: true,
 		},
 		{

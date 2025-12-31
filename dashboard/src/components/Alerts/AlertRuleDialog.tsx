@@ -20,6 +20,7 @@ import {
   Slider,
   Checkbox,
   ListItemText,
+  Alert,
 } from '@mui/material';
 import {
   useCreateAlertRuleMutation,
@@ -39,6 +40,7 @@ import { useActiveGroup } from '../../contexts/GroupContext';
 import { BotSelector } from '../shared/BotSelector';
 import { StrategySelector } from '../shared/StrategySelector';
 import { RunnerSelector } from '../shared/RunnerSelector';
+import { usePermissions } from '../../hooks/usePermissions';
 
 type AlertRule = NonNullable<
   NonNullable<NonNullable<GetAlertRulesQuery['alertRules']['edges']>[number]>['node']
@@ -97,6 +99,9 @@ export const AlertRuleDialog = ({
 }: AlertRuleDialogProps) => {
   const { activeGroupId } = useActiveGroup();
   const isEdit = !!rule;
+
+  // Permission checks
+  const { can, loading: permissionsLoading } = usePermissions();
 
   // Step 1: Resource selection (required first)
   const [resourceType, setResourceType] = useState<AlertRuleAlertResourceType>(AlertRuleAlertResourceType.Organization);
@@ -231,8 +236,13 @@ export const AlertRuleDialog = ({
     if (!name || !activeGroupId || recipients.length === 0 || !alertType) return;
 
     // Require resourceId for non-organization scope
-    const requiresResourceId = resourceType !== AlertRuleAlertResourceType.Organization;
-    if (requiresResourceId && !resourceId) return;
+    const requiresResourceIdFlag = resourceType !== AlertRuleAlertResourceType.Organization;
+    if (requiresResourceIdFlag && !resourceId) return;
+
+    // Always save resourceID - for organization type, save the activeGroupId
+    const effectiveResId = resourceType === AlertRuleAlertResourceType.Organization
+      ? activeGroupId
+      : resourceId;
 
     try {
       // Only include botModeFilter for bot-related alert types
@@ -248,7 +258,7 @@ export const AlertRuleDialog = ({
               severity,
               enabled,
               resourceType,
-              resourceID: requiresResourceId ? resourceId : undefined,
+              resourceID: effectiveResId,
               conditions: Object.keys(conditions).length > 0 ? conditions : undefined,
               deliveryMode,
               batchIntervalMinutes: deliveryMode === AlertRuleAlertDeliveryMode.Batched ? batchIntervalMinutes : undefined,
@@ -271,7 +281,7 @@ export const AlertRuleDialog = ({
               severity,
               enabled,
               resourceType,
-              resourceID: requiresResourceId ? resourceId : undefined,
+              resourceID: effectiveResId,
               conditions: Object.keys(conditions).length > 0 ? conditions : undefined,
               deliveryMode,
               batchIntervalMinutes: deliveryMode === AlertRuleAlertDeliveryMode.Batched ? batchIntervalMinutes : undefined,
@@ -292,13 +302,31 @@ export const AlertRuleDialog = ({
     }
   };
 
+  // Determine the effective resource ID for permission checking
+  // For organization type, use activeGroupId; for others, use the selected resourceId
+  const effectiveResourceId = useMemo(() => {
+    if (resourceType === AlertRuleAlertResourceType.Organization) {
+      return activeGroupId || '';
+    }
+    return resourceId;
+  }, [resourceType, resourceId, activeGroupId]);
+
+  // Check if user has permission to create/update alert rule on the selected resource
+  const hasAlertPermission = useMemo(() => {
+    if (!effectiveResourceId) return false;
+    const scope = isEdit ? 'update-alert-rule' : 'create-alert-rule';
+    return can(effectiveResourceId, scope);
+  }, [effectiveResourceId, isEdit, can]);
+
   // Require resourceId when resourceType is not 'organization'
   const requiresResourceId = resourceType !== AlertRuleAlertResourceType.Organization;
   const canSubmit =
     name &&
     recipients.length > 0 &&
     alertType &&
-    (!requiresResourceId || resourceId);
+    (!requiresResourceId || resourceId) &&
+    hasAlertPermission &&
+    !permissionsLoading;
 
   // Render condition field based on type
   const renderConditionField = (field: AlertTypeInfo['conditionFields'][number]) => {
@@ -624,6 +652,13 @@ export const AlertRuleDialog = ({
             }
             label="Enabled"
           />
+
+          {/* Permission warning */}
+          {!permissionsLoading && effectiveResourceId && !hasAlertPermission && (
+            <Alert severity="warning">
+              You don't have permission to {isEdit ? 'update' : 'create'} alert rules on this resource.
+            </Alert>
+          )}
 
           {error && (
             <FormHelperText error>

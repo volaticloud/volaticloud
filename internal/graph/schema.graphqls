@@ -552,3 +552,48 @@ extend type Query {
     resourceID: ID
   ): [AlertTypeInfo!]! @isAuthenticated
 }
+
+# Permission checking for frontend authorization
+# Used by dashboard to check multiple permissions in a single request
+# Triggers self-healing if resource scopes are out of sync
+
+"""
+Input for checking a single permission
+"""
+input PermissionCheckInput {
+  """
+  The resource ID (UUID) to check permission for
+  """
+  resourceId: ID!
+  """
+  The scope to check (e.g., "edit", "delete", "run")
+  """
+  scope: String!
+}
+
+"""
+Result of a permission check
+"""
+type PermissionCheckResult {
+  """
+  The resource ID that was checked
+  """
+  resourceId: ID!
+  """
+  The scope that was checked
+  """
+  scope: String!
+  """
+  Whether the permission is granted
+  """
+  granted: Boolean!
+}
+
+extend type Query {
+  """
+  Check multiple permissions in a single request
+  Returns granted permissions for each resource/scope pair
+  Triggers self-healing if resource scopes are out of sync in Keycloak
+  """
+  checkPermissions(permissions: [PermissionCheckInput!]!): [PermissionCheckResult!]! @isAuthenticated
+}

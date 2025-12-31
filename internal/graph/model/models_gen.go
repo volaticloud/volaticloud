@@ -8,6 +8,8 @@ import (
 	"io"
 	"strconv"
 	"volaticloud/internal/enum"
+
+	"github.com/google/uuid"
 )
 
 // Metadata about an alert type including available condition fields
@@ -131,6 +133,24 @@ type PassphraseExchangeConfigInput struct {
 	APIKey     string `json:"apiKey"`
 	APISecret  string `json:"apiSecret"`
 	Passphrase string `json:"passphrase"`
+}
+
+// Input for checking a single permission
+type PermissionCheckInput struct {
+	// The resource ID (UUID) to check permission for
+	ResourceID uuid.UUID `json:"resourceId"`
+	// The scope to check (e.g., "edit", "delete", "run")
+	Scope string `json:"scope"`
+}
+
+// Result of a permission check
+type PermissionCheckResult struct {
+	// The resource ID that was checked
+	ResourceID uuid.UUID `json:"resourceId"`
+	// The scope that was checked
+	Scope string `json:"scope"`
+	// Whether the permission is granted
+	Granted bool `json:"granted"`
 }
 
 type RegistryAuthInput struct {
