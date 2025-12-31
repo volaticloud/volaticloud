@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, {
+import {
   createContext,
   useContext,
   useCallback,
@@ -59,7 +59,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
 
   // Batch pending permission requests
   const pendingRequests = useRef<Set<string>>(new Set());
-  const batchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Create permission key
   const makeKey = (resourceId: string, scope: string) => `${resourceId}:${scope}`;

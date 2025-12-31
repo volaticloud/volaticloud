@@ -29,8 +29,8 @@ interface ProtectedButtonBaseProps {
   skipPermissionCheck?: boolean;
 }
 
-type ProtectedButtonProps = ProtectedButtonBaseProps & Omit<ButtonProps, 'disabled'>;
-type ProtectedIconButtonProps = ProtectedButtonBaseProps & Omit<IconButtonProps, 'disabled'>;
+type ProtectedButtonProps = ProtectedButtonBaseProps & ButtonProps;
+type ProtectedIconButtonProps = ProtectedButtonBaseProps & IconButtonProps;
 
 /**
  * Button that checks permission before enabling.

@@ -1451,6 +1451,7 @@ The React dashboard implements a streamlined permission checking system that int
 **1. Backend Proxy Instead of Direct Keycloak:**
 
 The frontend calls a GraphQL `checkPermissions` query instead of directly calling Keycloak. Benefits:
+
 - Backend triggers self-healing when new scopes are added
 - Single source of truth for permission logic
 - No Keycloak credentials exposed to frontend
