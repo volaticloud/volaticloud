@@ -195,23 +195,25 @@ The SyncResourcePermissions function is the central routing function for self-he
 
 ```mermaid
 flowchart TB
-    A[SyncResourcePermissions]
-    B[Parse UUID]
-    C{Find in DB}
-    D[Bot]
-    E[Strategy]
-    F[Exchange]
-    G[BotRunner]
-    H[Group fallback]
-    K[SyncResourceScopes<br/>to Keycloak]
 
-    A --> B
-    B --> C
-    C --> D --> K
-    C --> E --> K
-    C --> F --> K
-    C --> G --> K
-    C --> H --> K
+	A[SyncResourcePermissions]
+	B[Parse UUID]
+	C{Find in DB}
+	D[Bot]
+	E[Strategy]
+	F[Exchange]
+	G[BotRunner]
+	H[Group fallback]
+	K[SyncResourceScopes<br/>to Keycloak]
+
+	A --> B
+	B --> C
+	C --> D --> K
+	C --> E --> K
+	C --> F --> K
+	C --> G --> K
+	C --> H --> K
+
 ```
 
 The function tries each resource type in sequence until a match is found,
