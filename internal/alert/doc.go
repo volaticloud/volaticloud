@@ -69,6 +69,42 @@ Channel:
   - Email channel (SendGrid) configured at app level
   - Extensible for webhook, push notifications (future)
 
+# Authorization & Self-Healing
+
+The alert service implements UMA 2.0 authorization with automatic self-healing scope synchronization.
+
+Permission Checks:
+  - All CRUD operations (CreateRule, UpdateRule, DeleteRule, ToggleRule) require permission checks
+  - Permissions are checked against the alert's target resource (bot, strategy, runner, organization)
+  - Uses scopes: create-alert-rule, update-alert-rule, delete-alert-rule
+
+Resource Scoping:
+  - Organization-level alerts: permission checked against ownerID (organization/group ID)
+  - Resource-specific alerts: permission checked against resourceID (bot/strategy/runner UUID)
+
+Self-Healing Behavior:
+  - When permission check fails with "invalid_scope" or "resource does not exist" error
+  - Service calls authz.SyncResourcePermissions to sync scopes with Keycloak UMA registry
+  - After successful sync, permission check is automatically retried
+  - Sync failures are logged but don't block the request (fail open for stale cache)
+  - Prevents permission errors caused by missing or outdated scopes in Keycloak
+
+Implementation:
+  - checkAlertPermission() method (service.go:43-86)
+  - Uses authz.ShouldTriggerSelfHealing() to detect scope issues
+  - Uses authz.SyncResourcePermissions() to sync scopes
+  - Logs self-healing attempts for audit trail
+
+Example Flow:
+
+	1. User creates alert rule on bot-123
+	2. Permission check: UMA returns "invalid_scope: create-alert-rule"
+	3. Self-healing triggered: sync bot-123 scopes with Keycloak
+	4. Permission re-checked: UMA grants access
+	5. Alert rule created successfully
+
+This ensures alert operations work even when Keycloak scopes are out of sync with database resources.
+
 # Event Types
 
 Event types are defined in their source domains (following DDD):
