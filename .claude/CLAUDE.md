@@ -158,6 +158,26 @@ See [ADR-0003](../docs/adr/0003-strategy-immutable-versioning.md) for full detai
 make generate  # Runs: ENT generation → GraphQL schema generation → gqlgen
 ```
 
+**OpenAPI Generator Docker Image:**
+
+If CI fails with "Generated code is out of date" after running `make generate` locally:
+
+```bash
+# Pull latest OpenAPI generator Docker image
+docker pull openapitools/openapi-generator-cli:latest
+
+# Regenerate Freqtrade client
+make generate-freqtrade
+
+# Commit any changes
+git add internal/freqtrade/
+git commit -m "fix: update generated Freqtrade client"
+```
+
+**Note:** The Makefile uses `openapitools/openapi-generator-cli:latest` which can cause
+inconsistent code generation between local and CI environments. Consider pinning to a specific
+version if this becomes a recurring issue.
+
 **Frontend:**
 
 ```bash
