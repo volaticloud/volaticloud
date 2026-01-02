@@ -830,10 +830,14 @@ cp /strategy-source/%s.py /userdata/strategies/
 	if spec.DataDownloadURL != "" {
 		setupScript += `
 echo "Downloading data from S3..."
-wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
-echo "Extracting data..."
-tar -xzf /tmp/data.tar.gz -C /userdata/data
-rm /tmp/data.tar.gz
+if wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL" 2>/dev/null; then
+    echo "Extracting data..."
+    tar -xzf /tmp/data.tar.gz -C /userdata/data
+    rm /tmp/data.tar.gz
+    echo "Data download successful"
+else
+    echo "WARNING: Data download failed (possibly expired URL). Backtest will run with available data."
+fi
 `
 	}
 
@@ -1043,10 +1047,14 @@ cp /strategy-source/%s.py /userdata/strategies/
 	if spec.DataDownloadURL != "" {
 		setupScript += `
 echo "Downloading data from S3..."
-wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
-echo "Extracting data..."
-tar -xzf /tmp/data.tar.gz -C /userdata/data
-rm /tmp/data.tar.gz
+if wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL" 2>/dev/null; then
+    echo "Extracting data..."
+    tar -xzf /tmp/data.tar.gz -C /userdata/data
+    rm /tmp/data.tar.gz
+    echo "Data download successful"
+else
+    echo "WARNING: Data download failed (possibly expired URL). Backtest will run with available data."
+fi
 `
 	}
 
