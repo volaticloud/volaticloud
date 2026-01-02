@@ -3,10 +3,12 @@ package alert
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 
 	"volaticloud/internal/auth"
+	"volaticloud/internal/authz"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/keycloak"
@@ -38,7 +40,9 @@ func getEffectiveResourceID(resourceType enum.AlertResourceType, resourceID *uui
 	return ownerID
 }
 
-// checkAlertPermission verifies that the user has the specified permission on the alert's resource
+// checkAlertPermission verifies that the user has the specified permission on the alert's resource.
+// If the permission check fails due to missing or invalid scopes, it attempts self-healing by
+// syncing the resource's scopes with Keycloak and retrying the permission check.
 func (s *Service) checkAlertPermission(ctx context.Context, resourceType enum.AlertResourceType, resourceID *uuid.UUID, ownerID, scope string) error {
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
@@ -53,7 +57,24 @@ func (s *Service) checkAlertPermission(ctx context.Context, resourceType enum.Al
 	effectiveResourceID := getEffectiveResourceID(resourceType, resourceID, ownerID)
 
 	hasPermission, err := s.umaClient.CheckPermission(ctx, userCtx.RawToken, effectiveResourceID, scope)
-	if err != nil {
+
+	// Self-healing: if permission denied due to missing/invalid scopes, sync and retry
+	if authz.ShouldTriggerSelfHealing(hasPermission, err) {
+		log.Printf("Attempting self-healing for alert resource %s (scope: %s)", effectiveResourceID, scope)
+
+		if syncErr := authz.SyncResourcePermissions(ctx, s.dbClient, s.umaClient, effectiveResourceID); syncErr != nil {
+			log.Printf("Self-healing failed for alert resource %s: %v", effectiveResourceID, syncErr)
+		} else {
+			// Re-check permission after successful sync
+			hasPermission, err = s.umaClient.CheckPermission(ctx, userCtx.RawToken, effectiveResourceID, scope)
+			if err != nil {
+				log.Printf("Permission re-check failed for %s#%s: %v", effectiveResourceID, scope, err)
+			}
+		}
+	}
+
+	// If there's an error that's not an invalid scope error, return it
+	if err != nil && !authz.IsInvalidScopeError(err) {
 		return fmt.Errorf("permission check failed: %w", err)
 	}
 

@@ -10,13 +10,18 @@ import {
   ReactNode,
 } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { useApolloClient } from '@apollo/client';
+import { useApolloClient, ApolloError } from '@apollo/client';
 import {
   CheckPermissionsDocument,
   CheckPermissionsQuery,
   CheckPermissionsQueryVariables,
 } from '../services/permissions/permissions.generated';
 import { PermissionScope } from '../services/permissions';
+
+interface CachedPermission {
+  granted: boolean;
+  timestamp: number;
+}
 
 interface PermissionContextValue {
   /**
@@ -32,6 +37,12 @@ interface PermissionContextValue {
   loading: boolean;
 
   /**
+   * Errors encountered during permission checks (e.g., network errors).
+   * Map of "resourceId:scope" -> error message.
+   */
+  errors: Map<string, string>;
+
+  /**
    * Force refresh all cached permissions.
    */
   refresh: () => Promise<void>;
@@ -45,14 +56,17 @@ interface PermissionProviderProps {
 
 // Batching configuration
 const BATCH_DELAY_MS = 50; // Wait 50ms to collect all permission requests
+const MAX_BATCH_SIZE = 50; // Maximum batch size before immediate execution
+const PERMISSION_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
   const auth = useAuth();
   const apolloClient = useApolloClient();
 
-  // Store permissions: Map<"resourceId:scope", boolean>
-  const [permissions, setPermissions] = useState<Map<string, boolean>>(new Map());
+  // Store permissions with timestamps: Map<"resourceId:scope", CachedPermission>
+  const [permissions, setPermissions] = useState<Map<string, CachedPermission>>(new Map());
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Map<string, string>>(new Map());
 
   // Track which permissions have been requested (to avoid duplicate requests)
   const requestedPermissions = useRef<Set<string>>(new Set());
@@ -89,27 +103,54 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         fetchPolicy: 'network-only',
       });
 
-      // Update permissions cache
+      const now = Date.now();
+
+      // Update permissions cache with timestamps
       setPermissions((prev) => {
         const updated = new Map(prev);
         for (const perm of result.data.checkPermissions) {
           const key = makeKey(perm.resourceId, perm.scope);
-          updated.set(key, perm.granted);
+          updated.set(key, { granted: perm.granted, timestamp: now });
         }
         return updated;
       });
+
+      // Clear errors on success
+      setErrors(new Map());
     } catch (error) {
       console.error('Failed to check permissions:', error);
-      // Mark as checked (false) to avoid infinite retries
-      setPermissions((prev) => {
-        const updated = new Map(prev);
+
+      // Detect network errors vs permission errors
+      const isNetworkError =
+        error instanceof ApolloError &&
+        (error.networkError !== null || error.message.includes('network'));
+
+      if (isNetworkError) {
+        // Network error: store error message, re-add to pending for retry
+        setErrors(new Map(pending.map((key) => [key, 'Network error - retrying...'])));
+
+        // Re-add to pending for automatic retry
         for (const key of pending) {
-          if (!updated.has(key)) {
-            updated.set(key, false);
-          }
+          pendingRequests.current.add(key);
         }
-        return updated;
-      });
+
+        // Schedule retry after 2 seconds
+        setTimeout(() => {
+          executeBatch();
+        }, 2000);
+      } else {
+        // Permission error: cache as denied
+        const now = Date.now();
+        setPermissions((prev) => {
+          const updated = new Map(prev);
+          for (const key of pending) {
+            if (!updated.has(key)) {
+              updated.set(key, { granted: false, timestamp: now });
+            }
+          }
+          return updated;
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -127,7 +168,17 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       // Add to pending batch
       pendingRequests.current.add(key);
 
-      // Schedule batch execution
+      // Execute immediately if batch is full (Phase 2: Fix race condition)
+      if (pendingRequests.current.size >= MAX_BATCH_SIZE) {
+        if (batchTimeoutRef.current) {
+          clearTimeout(batchTimeoutRef.current);
+          batchTimeoutRef.current = null;
+        }
+        executeBatch();
+        return;
+      }
+
+      // Otherwise schedule batch execution with delay
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current);
       }
@@ -138,7 +189,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     [executeBatch]
   );
 
-  // Check permission - auto-requests if not cached
+  // Check permission - auto-requests if not cached or expired (Phase 5: TTL check)
   const can = useCallback(
     (resourceId: string, scope: PermissionScope): boolean => {
       if (!resourceId) return false;
@@ -146,12 +197,16 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       const key = makeKey(resourceId, scope);
       const cached = permissions.get(key);
 
-      // If cached, return the value
+      // Check if cached and still valid (not expired)
       if (cached !== undefined) {
-        return cached;
+        const age = Date.now() - cached.timestamp;
+        if (age < PERMISSION_CACHE_TTL_MS) {
+          return cached.granted;
+        }
+        // Expired - re-fetch
       }
 
-      // Not cached - schedule a request and return false for now
+      // Not cached or expired - schedule a request and return false for now
       scheduleRequest(resourceId, scope);
       return false;
     },
@@ -180,11 +235,12 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         fetchPolicy: 'network-only',
       });
 
-      // Replace permissions cache
-      const newPermissions = new Map<string, boolean>();
+      // Replace permissions cache with fresh timestamps
+      const now = Date.now();
+      const newPermissions = new Map<string, CachedPermission>();
       for (const perm of result.data.checkPermissions) {
         const key = makeKey(perm.resourceId, perm.scope);
-        newPermissions.set(key, perm.granted);
+        newPermissions.set(key, { granted: perm.granted, timestamp: now });
       }
       setPermissions(newPermissions);
     } catch (error) {
@@ -194,11 +250,13 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     }
   }, [apolloClient]);
 
-  // Clear permissions when user logs out
+  // Clear permissions when user logs out (Phase 3: Fix memory leak)
   useEffect(() => {
     if (!auth.isAuthenticated) {
       setPermissions(new Map());
-      requestedPermissions.current = new Set();
+      requestedPermissions.current.clear(); // Use .clear() instead of new Set()
+      pendingRequests.current.clear();
+      setErrors(new Map());
     }
   }, [auth.isAuthenticated]);
 
@@ -215,9 +273,10 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     () => ({
       can,
       loading,
+      errors,
       refresh,
     }),
-    [can, loading, refresh]
+    [can, loading, errors, refresh]
   );
 
   return <PermissionContext.Provider value={value}>{children}</PermissionContext.Provider>;
