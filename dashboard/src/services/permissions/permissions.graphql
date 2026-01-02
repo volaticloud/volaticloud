@@ -1,0 +1,9 @@
+# Permission checking query - uses backend proxy with self-healing
+
+query CheckPermissions($permissions: [PermissionCheckInput!]!) {
+  checkPermissions(permissions: $permissions) {
+    resourceId
+    scope
+    granted
+  }
+}

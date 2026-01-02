@@ -16,15 +16,23 @@ const (
 
 // Permission scopes for each resource type
 
+// AlertRuleScopes are shared scopes for alert rule management on resources
+// These are added to resource types that support alert rules (Bot, Strategy, BotRunner, Group)
+var AlertRuleScopes = []string{"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+
 // StrategyScopes defines the available permission scopes for Strategy resources
 // Backtest operations (run-backtest, stop-backtest, delete-backtest) are checked against strategy
 // because backtests don't have their own Keycloak resources
-var StrategyScopes = []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest"}
+// Alert rule scopes are included for strategy-level alerts
+var StrategyScopes = []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest", "make-public",
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // BotScopes defines the available permission scopes for Bot resources
 // view-secrets is for sensitive config fields (API keys, trading params)
 // freqtrade-api is for obtaining Freqtrade API tokens (used by FreqUI)
-var BotScopes = []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api"}
+// Alert rule scopes are included for bot-level alerts
+var BotScopes = []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api", "make-public",
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // ExchangeScopes defines the available permission scopes for Exchange resources
 // view-secrets is for sensitive config fields (API keys, secrets)
@@ -32,12 +40,16 @@ var ExchangeScopes = []string{"view", "view-secrets", "edit", "delete"}
 
 // BotRunnerScopes defines the available permission scopes for BotRunner resources
 // view-secrets is for sensitive config fields (connection credentials)
-var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-public"}
+// Alert rule scopes are included for runner-level alerts
+var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-public",
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // GroupScopes defines the available permission scopes for Group (organization) resources
 // Groups are managed by Keycloak, not in the ENT database
 // mark-alert-as-read is for marking alert events as read
-var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read"}
+// Alert rule scopes are included for organization-wide alerts
+var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read",
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // GetScopesForType returns the permission scopes for a given resource type
 func GetScopesForType(resourceType ResourceType) []string {
@@ -57,16 +69,19 @@ func GetScopesForType(resourceType ResourceType) []string {
 	}
 }
 
-// IsInvalidScopeError checks if an error indicates that a scope is not registered in Keycloak.
-// This is used to trigger self-healing scope sync when new scopes are added to the application
-// but haven't been synced to existing Keycloak resources yet.
+// IsInvalidScopeError checks if an error indicates that a scope or resource is not properly
+// registered in Keycloak. This is used to trigger self-healing scope sync when new scopes
+// are added to the application but haven't been synced to existing Keycloak resources yet.
+// Note: Keycloak may return "invalid_resource" when a scope doesn't exist on a resource.
 func IsInvalidScopeError(err error) bool {
 	if err == nil {
 		return false
 	}
 	errStr := err.Error()
 	return strings.Contains(errStr, "invalid_scope") ||
-		strings.Contains(errStr, "invalid scope")
+		strings.Contains(errStr, "invalid scope") ||
+		strings.Contains(errStr, "invalid_resource") ||
+		strings.Contains(errStr, "does not exist")
 }
 
 // ShouldTriggerSelfHealing determines if self-healing scope sync should be attempted.

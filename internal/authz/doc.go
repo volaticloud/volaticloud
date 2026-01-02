@@ -181,20 +181,74 @@ Group Scopes: view, edit, delete, mark-alert-as-read
 
 When new scopes are added to the application, existing Keycloak resources may not
 have them registered. The package provides helper functions to detect and handle
-this situation:
+this situation automatically.
 
+## Core Functions
+
+  - SyncResourcePermissions: Determines resource type and syncs all scopes with Keycloak
   - IsInvalidScopeError: Checks if an error indicates an unregistered scope
   - ShouldTriggerSelfHealing: Determines if scope sync should be attempted
 
-Example self-healing flow:
+## Architecture
+
+The SyncResourcePermissions function is the central routing function for self-healing:
+
+```mermaid
+flowchart TB
+
+	A[SyncResourcePermissions]
+	B[Parse UUID]
+	C{Find in DB}
+	D[Bot]
+	E[Strategy]
+	F[Exchange]
+	G[BotRunner]
+	H[Group fallback]
+	K[SyncResourceScopes<br/>to Keycloak]
+
+	A --> B
+	B --> C
+	C --> D --> K
+	C --> E --> K
+	C --> F --> K
+	C --> G --> K
+	C --> H --> K
+
+```
+
+The function tries each resource type in sequence until a match is found,
+then syncs the appropriate scopes to Keycloak.
+
+## Usage Patterns
+
+### In GraphQL Resolvers (internal/graph)
 
 	hasPermission, err := umaClient.CheckPermission(ctx, token, resourceID, scope)
 	if authz.ShouldTriggerSelfHealing(hasPermission, err) {
-	    // Sync scopes to Keycloak and retry
-	    scopes := authz.GetScopesForType(resourceType)
-	    umaClient.SyncResourceScopes(ctx, resourceID, name, scopes, attrs)
+	    // Sync using the central function from graph context
+	    graph.SyncResourceScopes(ctx, client, resourceID)  // Extracts UMA client from context
 	    hasPermission, err = umaClient.CheckPermission(ctx, token, resourceID, scope)
 	}
+
+### In Domain Services (internal/alert)
+
+	hasPermission, err := s.umaClient.CheckPermission(ctx, token, resourceID, scope)
+	if authz.ShouldTriggerSelfHealing(hasPermission, err) {
+	    // Sync directly with UMA client available
+	    authz.SyncResourcePermissions(ctx, s.dbClient, s.umaClient, resourceID)
+	    hasPermission, err = s.umaClient.CheckPermission(ctx, token, resourceID, scope)
+	}
+
+## Error Detection
+
+Self-healing is triggered on these Keycloak error patterns:
+
+  - "invalid_scope": Scope not registered for resource
+  - "invalid scope": Scope format error
+  - "invalid_resource": Resource doesn't exist
+  - "does not exist": Resource not found
+
+All patterns are detected by IsInvalidScopeError().
 
 # Related Packages
 

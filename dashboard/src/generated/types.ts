@@ -2556,6 +2556,25 @@ export type PassphraseExchangeConfigInput = {
   passphrase: Scalars['String']['input'];
 };
 
+/** Input for checking a single permission */
+export type PermissionCheckInput = {
+  /** The resource ID (UUID) to check permission for */
+  resourceId: Scalars['ID']['input'];
+  /** The scope to check (e.g., "edit", "delete", "run") */
+  scope: Scalars['String']['input'];
+};
+
+/** Result of a permission check */
+export type PermissionCheckResult = {
+  __typename?: 'PermissionCheckResult';
+  /** Whether the permission is granted */
+  granted: Scalars['Boolean']['output'];
+  /** The resource ID that was checked */
+  resourceId: Scalars['ID']['output'];
+  /** The scope that was checked */
+  scope: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   alertEvents: AlertEventConnection;
@@ -2575,6 +2594,12 @@ export type Query = {
    */
   botUsageHistory: Array<ResourceUsageAggregation>;
   bots: BotConnection;
+  /**
+   * Check multiple permissions in a single request
+   * Returns granted permissions for each resource/scope pair
+   * Triggers self-healing if resource scopes are out of sync in Keycloak
+   */
+  checkPermissions: Array<PermissionCheckResult>;
   /**
    * Calculate estimated cost for usage over a time range
    * Uses runner-specific pricing rates
@@ -2656,6 +2681,11 @@ export type QueryBotsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   where?: InputMaybe<BotWhereInput>;
+};
+
+
+export type QueryCheckPermissionsArgs = {
+  permissions: Array<PermissionCheckInput>;
 };
 
 

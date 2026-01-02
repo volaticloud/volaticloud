@@ -399,6 +399,66 @@ Automatic UMA resource registration for authorization:
  5. Keycloak checks policies and permissions
  6. If granted: proceed, If denied: 403 error
 
+## Self-Healing Scope Synchronization:
+
+The SyncResourceScopes function provides automatic scope synchronization with
+deduplication and cooldown to prevent thundering herd and infinite retry loops.
+
+### Architecture (permission_helpers.go):
+
+```
+Concurrent Requests for same resource:
+
+	Request 1 → LoadOrStore(resourceID, doneCh) → First! → Sync → Close(doneCh)
+	Request 2 → LoadOrStore(resourceID, doneCh) → Wait on existing channel
+	Request 3 → LoadOrStore(resourceID, doneCh) → Wait on existing channel
+	...
+	Request N → All wait → All return when first completes
+
+Cooldown on failure:
+
+	Sync fails → Store(resourceID, timestamp) → Block retries for 5 minutes
+	Sync succeeds → Delete(resourceID) → Clear cooldown
+
+```
+
+### Deduplication:
+
+Uses sync.Map to ensure only ONE sync operation per resource ID at a time:
+
+  - First goroutine creates channel and performs sync
+  - Concurrent goroutines wait on the same channel
+  - All goroutines return when sync completes
+  - Map entry cleaned up after completion
+
+### Cooldown Period:
+
+Tracks failed sync attempts to prevent infinite retry loops:
+
+  - On sync failure: stores timestamp with 5-minute cooldown
+  - Subsequent attempts blocked until cooldown expires
+  - On sync success: clears cooldown entry
+  - Prevents API hammering when Keycloak is unavailable
+
+### Usage in Resolvers:
+
+	hasPermission, err := umaClient.CheckPermission(ctx, token, resourceID, scope)
+	if authz.ShouldTriggerSelfHealing(hasPermission, err) {
+	    // Sync with automatic deduplication and cooldown
+	    if syncErr := SyncResourceScopes(ctx, client, resourceID); syncErr != nil {
+	        log.Printf("Self-healing failed: %v", syncErr)
+	    }
+	    // Retry permission check
+	    hasPermission, err = umaClient.CheckPermission(ctx, token, resourceID, scope)
+	}
+
+### Concurrency Properties:
+
+  - Thread-safe using sync.Map primitives
+  - 10 concurrent requests → 1 sync call (verified by tests)
+  - Context cancellation support for graceful shutdown
+  - No goroutine leaks (channels closed, map cleaned up)
+
 # Error Handling
 
 ## GraphQL Error Format:

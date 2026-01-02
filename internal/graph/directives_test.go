@@ -313,9 +313,10 @@ func TestContextHelpers(t *testing.T) {
 // Scopes are now defined in the authz package
 func TestEntityScopes(t *testing.T) {
 	t.Run("BotScopes contains expected values", func(t *testing.T) {
-		expected := []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api"}
+		expected := []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api", "make-public",
+			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 		assert.Equal(t, expected, authz.BotScopes, "BotScopes should contain the expected values")
-		assert.Len(t, authz.BotScopes, 7, "BotScopes should have 7 scopes")
+		assert.Len(t, authz.BotScopes, 12, "BotScopes should have 12 scopes")
 	})
 
 	t.Run("ExchangeScopes contains expected values", func(t *testing.T) {
@@ -325,15 +326,24 @@ func TestEntityScopes(t *testing.T) {
 	})
 
 	t.Run("BotRunnerScopes contains expected values", func(t *testing.T) {
-		expected := []string{"view", "view-secrets", "edit", "delete", "make-public"}
+		expected := []string{"view", "view-secrets", "edit", "delete", "make-public",
+			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 		assert.Equal(t, expected, authz.BotRunnerScopes, "BotRunnerScopes should contain the expected values")
-		assert.Len(t, authz.BotRunnerScopes, 5, "BotRunnerScopes should have 5 scopes")
+		assert.Len(t, authz.BotRunnerScopes, 9, "BotRunnerScopes should have 9 scopes")
 	})
 
 	t.Run("StrategyScopes contains expected values", func(t *testing.T) {
-		expected := []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest"}
+		expected := []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest", "make-public",
+			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 		assert.Equal(t, expected, authz.StrategyScopes, "StrategyScopes should contain the expected values")
-		assert.Len(t, authz.StrategyScopes, 6, "StrategyScopes should have 6 scopes")
+		assert.Len(t, authz.StrategyScopes, 11, "StrategyScopes should have 11 scopes")
+	})
+
+	t.Run("GroupScopes contains expected values", func(t *testing.T) {
+		expected := []string{"view", "edit", "delete", "mark-alert-as-read",
+			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+		assert.Equal(t, expected, authz.GroupScopes, "GroupScopes should contain the expected values")
+		assert.Len(t, authz.GroupScopes, 8, "GroupScopes should have 8 scopes")
 	})
 }
 

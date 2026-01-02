@@ -14,6 +14,7 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -34,6 +35,7 @@ import {
   useSetBotVisibilityMutation,
 } from './bots.generated';
 import FreqUIDialog from './FreqUIDialog';
+import { usePermissions } from '../../hooks/usePermissions';
 
 export interface BotActionsMenuProps {
   botId: string;
@@ -83,6 +85,18 @@ export const BotActionsMenu = ({
   const [frequiDialogOpen, setFrequiDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const menuOpen = Boolean(anchorEl);
+
+  // Check permissions via backend proxy (with self-healing)
+  // Permissions are auto-fetched when can() is called
+  const { can, loading: permissionsLoading } = usePermissions();
+
+  // Permission checks - auto-fetched on first call
+  const canRun = can(botId, 'run');
+  const canStopBot = can(botId, 'stop');
+  const canEdit = can(botId, 'edit');
+  const canDelete = can(botId, 'delete');
+  const canFreqtradeApi = can(botId, 'freqtrade-api');
+  const canMakePublic = can(botId, 'make-public');
 
   // Mutations
   const [startBot] = useStartBotMutation();
@@ -180,15 +194,35 @@ export const BotActionsMenu = ({
     onEdit?.();
   };
 
-  const startEnabled = canStart(botStatus) && !actionLoading;
-  const stopEnabled = canStopOrRestart(botStatus) && !actionLoading;
-  const restartEnabled = canStopOrRestart(botStatus) && !actionLoading;
+  // Combine status checks with permission checks
+  const startEnabled = canStart(botStatus) && canRun && !actionLoading && !permissionsLoading;
+  const stopEnabled = canStopOrRestart(botStatus) && canStopBot && !actionLoading && !permissionsLoading;
+  const restartEnabled = canStopOrRestart(botStatus) && canRun && !actionLoading && !permissionsLoading;
+  const editEnabled = canEdit && !actionLoading && !permissionsLoading;
+  const deleteEnabled = canDelete && !actionLoading && !permissionsLoading;
+  const freqUIEnabled = canFreqtradeApi && !actionLoading && !permissionsLoading;
+  const visibilityEnabled = canMakePublic && !actionLoading && !permissionsLoading;
+
+  // Tooltip messages for disabled buttons
+  const getStartTooltip = () => {
+    if (permissionsLoading) return 'Loading permissions...';
+    if (!canRun) return 'No permission to start this bot';
+    if (!canStart(botStatus)) return 'Bot must be stopped to start';
+    return 'Start';
+  };
+
+  const getStopTooltip = () => {
+    if (permissionsLoading) return 'Loading permissions...';
+    if (!canStopBot) return 'No permission to stop this bot';
+    if (!canStopOrRestart(botStatus)) return 'Bot must be running to stop';
+    return 'Stop';
+  };
 
   if (compact) {
     // Compact mode: Start/Stop as icon buttons, rest in menu
     return (
       <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-        <Tooltip title="Start">
+        <Tooltip title={getStartTooltip()}>
           <span>
             <IconButton
               size="small"
@@ -196,11 +230,15 @@ export const BotActionsMenu = ({
               onClick={handleStart}
               disabled={!startEnabled}
             >
-              <PlayArrow fontSize="small" />
+              {permissionsLoading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <PlayArrow fontSize="small" />
+              )}
             </IconButton>
           </span>
         </Tooltip>
-        <Tooltip title="Stop">
+        <Tooltip title={getStopTooltip()}>
           <span>
             <IconButton
               size="small"
@@ -208,7 +246,11 @@ export const BotActionsMenu = ({
               onClick={handleStop}
               disabled={!stopEnabled}
             >
-              <Stop fontSize="small" />
+              {permissionsLoading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <Stop fontSize="small" />
+              )}
             </IconButton>
           </span>
         </Tooltip>
@@ -233,35 +275,41 @@ export const BotActionsMenu = ({
             <ListItemText>Restart</ListItemText>
           </MenuItem>
           {showFreqUI && (
-            <MenuItem onClick={handleOpenFreqUI} disabled={actionLoading}>
+            <MenuItem onClick={handleOpenFreqUI} disabled={!freqUIEnabled}>
               <ListItemIcon>
-                <Dashboard fontSize="small" />
+                <Dashboard fontSize="small" color={freqUIEnabled ? 'inherit' : 'disabled'} />
               </ListItemIcon>
               <ListItemText>Open FreqUI</ListItemText>
             </MenuItem>
           )}
           {showEdit && onEdit && (
-            <MenuItem onClick={handleEditClick} disabled={actionLoading}>
+            <MenuItem onClick={handleEditClick} disabled={!editEnabled}>
               <ListItemIcon>
-                <Edit fontSize="small" />
+                <Edit fontSize="small" color={editEnabled ? 'inherit' : 'disabled'} />
               </ListItemIcon>
               <ListItemText>Edit</ListItemText>
             </MenuItem>
           )}
           {showVisibility && (
-            <MenuItem onClick={handleVisibilityToggle} disabled={actionLoading}>
+            <MenuItem onClick={handleVisibilityToggle} disabled={!visibilityEnabled}>
               <ListItemIcon>
-                {isPublic ? <Lock fontSize="small" /> : <Public fontSize="small" />}
+                {isPublic ? (
+                  <Lock fontSize="small" color={visibilityEnabled ? 'inherit' : 'disabled'} />
+                ) : (
+                  <Public fontSize="small" color={visibilityEnabled ? 'inherit' : 'disabled'} />
+                )}
               </ListItemIcon>
               <ListItemText>{isPublic ? 'Make Private' : 'Make Public'}</ListItemText>
             </MenuItem>
           )}
           <Divider />
-          <MenuItem onClick={() => setDeleteDialogOpen(true)} disabled={actionLoading}>
+          <MenuItem onClick={() => setDeleteDialogOpen(true)} disabled={!deleteEnabled}>
             <ListItemIcon>
-              <Delete fontSize="small" color="error" />
+              <Delete fontSize="small" color={deleteEnabled ? 'error' : 'disabled'} />
             </ListItemIcon>
-            <ListItemText sx={{ color: 'error.main' }}>Delete</ListItemText>
+            <ListItemText sx={{ color: deleteEnabled ? 'error.main' : 'text.disabled' }}>
+              Delete
+            </ListItemText>
           </MenuItem>
         </Menu>
 
@@ -297,7 +345,7 @@ export const BotActionsMenu = ({
   // Full mode: Start/Stop as primary icon buttons, rest in menu (for detail page)
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Tooltip title="Start Bot">
+      <Tooltip title={getStartTooltip()}>
         <span>
           <IconButton
             onClick={handleStart}
@@ -308,11 +356,11 @@ export const BotActionsMenu = ({
               '&:hover': { bgcolor: 'success.dark' },
             }}
           >
-            <PlayArrow />
+            {permissionsLoading ? <CircularProgress size={24} color="inherit" /> : <PlayArrow />}
           </IconButton>
         </span>
       </Tooltip>
-      <Tooltip title="Stop Bot">
+      <Tooltip title={getStopTooltip()}>
         <span>
           <IconButton
             onClick={handleStop}
@@ -323,7 +371,7 @@ export const BotActionsMenu = ({
               '&:hover': { bgcolor: 'warning.dark' },
             }}
           >
-            <Stop />
+            {permissionsLoading ? <CircularProgress size={24} color="inherit" /> : <Stop />}
           </IconButton>
         </span>
       </Tooltip>
@@ -347,35 +395,41 @@ export const BotActionsMenu = ({
           <ListItemText>Restart</ListItemText>
         </MenuItem>
         {showFreqUI && (
-          <MenuItem onClick={handleOpenFreqUI} disabled={actionLoading}>
+          <MenuItem onClick={handleOpenFreqUI} disabled={!freqUIEnabled}>
             <ListItemIcon>
-              <Dashboard fontSize="small" />
+              <Dashboard fontSize="small" color={freqUIEnabled ? 'inherit' : 'disabled'} />
             </ListItemIcon>
             <ListItemText>Open FreqUI</ListItemText>
           </MenuItem>
         )}
         {showEdit && onEdit && (
-          <MenuItem onClick={handleEditClick} disabled={actionLoading}>
+          <MenuItem onClick={handleEditClick} disabled={!editEnabled}>
             <ListItemIcon>
-              <Edit fontSize="small" />
+              <Edit fontSize="small" color={editEnabled ? 'inherit' : 'disabled'} />
             </ListItemIcon>
             <ListItemText>Edit</ListItemText>
           </MenuItem>
         )}
         {showVisibility && (
-          <MenuItem onClick={handleVisibilityToggle} disabled={actionLoading}>
+          <MenuItem onClick={handleVisibilityToggle} disabled={!visibilityEnabled}>
             <ListItemIcon>
-              {isPublic ? <Lock fontSize="small" /> : <Public fontSize="small" />}
+              {isPublic ? (
+                <Lock fontSize="small" color={visibilityEnabled ? 'inherit' : 'disabled'} />
+              ) : (
+                <Public fontSize="small" color={visibilityEnabled ? 'inherit' : 'disabled'} />
+              )}
             </ListItemIcon>
             <ListItemText>{isPublic ? 'Make Private' : 'Make Public'}</ListItemText>
           </MenuItem>
         )}
         <Divider />
-        <MenuItem onClick={() => setDeleteDialogOpen(true)} disabled={actionLoading}>
+        <MenuItem onClick={() => setDeleteDialogOpen(true)} disabled={!deleteEnabled}>
           <ListItemIcon>
-            <Delete fontSize="small" color="error" />
+            <Delete fontSize="small" color={deleteEnabled ? 'error' : 'disabled'} />
           </ListItemIcon>
-          <ListItemText sx={{ color: 'error.main' }}>Delete</ListItemText>
+          <ListItemText sx={{ color: deleteEnabled ? 'error.main' : 'text.disabled' }}>
+            Delete
+          </ListItemText>
         </MenuItem>
       </Menu>
 

@@ -9,6 +9,7 @@ import {
   Chip,
   Snackbar,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
@@ -29,6 +30,7 @@ import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import { AlertRuleAlertSeverity, AlertRuleAlertType } from '../../generated/types';
 import { AlertRuleDialog } from './AlertRuleDialog';
+import { usePermissions } from '../../hooks/usePermissions';
 
 // Extract AlertRule type from generated query
 type AlertRule = NonNullable<
@@ -54,6 +56,20 @@ const alertTypeLabels: Record<AlertRuleAlertType, string> = {
   backtest_failed: 'Backtest Failed',
 };
 
+/**
+ * Get the resource ID to check permissions against for an alert rule.
+ * For organization-scoped rules, use the owner (group) ID.
+ * For resource-specific rules, use the resource ID.
+ */
+const getPermissionResourceId = (rule: AlertRule, fallbackGroupId: string): string => {
+  if (rule.resourceType === 'organization') {
+    // For organization-scoped rules, check permission on the group/organization
+    return rule.resourceID || fallbackGroupId;
+  }
+  // For resource-specific rules, check permission on that resource
+  return rule.resourceID || fallbackGroupId;
+};
+
 export const AlertRulesTab = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<AlertRule | null>(null);
@@ -64,6 +80,13 @@ export const AlertRulesTab = () => {
   }>({ open: false, message: '', severity: 'success' });
 
   const { activeGroupId } = useActiveGroup();
+
+  // Permission checks via backend proxy (with self-healing)
+  // Permissions are auto-fetched when can() is called
+  const { can, loading: permissionsLoading } = usePermissions();
+
+  // Check if user can create alert rules on the organization - auto-fetched!
+  const canCreateAlertRule = activeGroupId ? can(activeGroupId, 'create-alert-rule') : false;
 
   const showSnackbar = (message: string, severity: 'error' | 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -143,14 +166,23 @@ export const AlertRulesTab = () => {
       field: 'enabled',
       headerName: '',
       width: 60,
-      renderCell: (params: GridRenderCellParams<AlertRule>) => (
-        <Switch
-          checked={params.row.enabled}
-          onChange={() => handleToggle(params.row)}
-          size="small"
-          onClick={(e) => e.stopPropagation()}
-        />
-      ),
+      renderCell: (params: GridRenderCellParams<AlertRule>) => {
+        const resourceId = getPermissionResourceId(params.row, activeGroupId || '');
+        const canUpdate = can(resourceId, 'update-alert-rule');
+        return (
+          <Tooltip title={!canUpdate ? 'No permission to toggle this rule' : ''}>
+            <span>
+              <Switch
+                checked={params.row.enabled}
+                onChange={() => handleToggle(params.row)}
+                size="small"
+                onClick={(e) => e.stopPropagation()}
+                disabled={!canUpdate || permissionsLoading}
+              />
+            </span>
+          </Tooltip>
+        );
+      },
     },
     {
       field: 'name',
@@ -203,40 +235,55 @@ export const AlertRulesTab = () => {
       sortable: false,
       align: 'right',
       headerAlign: 'right',
-      renderCell: (params: GridRenderCellParams<AlertRule>) => (
-        <Box onClick={(e) => e.stopPropagation()}>
-          <Tooltip title="Test">
-            <IconButton
-              size="small"
-              onClick={() => handleTest(params.row)}
-              color="primary"
-            >
-              <TestIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={() => {
-                setSelectedRule(params.row);
-                setDialogOpen(true);
-              }}
-              color="primary"
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              onClick={() => handleDelete(params.row)}
-              color="error"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ),
+      renderCell: (params: GridRenderCellParams<AlertRule>) => {
+        const resourceId = getPermissionResourceId(params.row, activeGroupId || '');
+        const canUpdate = can(resourceId, 'update-alert-rule');
+        const canDelete = can(resourceId, 'delete-alert-rule');
+
+        return (
+          <Box onClick={(e) => e.stopPropagation()}>
+            <Tooltip title={canUpdate ? 'Test' : 'No permission to test this rule'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => handleTest(params.row)}
+                  color="primary"
+                  disabled={!canUpdate || permissionsLoading}
+                >
+                  <TestIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title={canUpdate ? 'Edit' : 'No permission to edit this rule'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSelectedRule(params.row);
+                    setDialogOpen(true);
+                  }}
+                  color="primary"
+                  disabled={!canUpdate || permissionsLoading}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title={canDelete ? 'Delete' : 'No permission to delete this rule'}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => handleDelete(params.row)}
+                  color="error"
+                  disabled={!canDelete || permissionsLoading}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
+        );
+      },
     },
   ];
 
@@ -253,17 +300,32 @@ export const AlertRulesTab = () => {
         <Typography variant="body2" color="text.secondary">
           {pagination.totalCount || 0} alert rules
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setSelectedRule(null);
-            setDialogOpen(true);
-          }}
-          size="small"
+        <Tooltip
+          title={
+            permissionsLoading
+              ? 'Loading permissions...'
+              : !canCreateAlertRule
+                ? 'No permission to create alert rules'
+                : ''
+          }
         >
-          Add Rule
-        </Button>
+          <span>
+            <Button
+              variant="contained"
+              startIcon={
+                permissionsLoading ? <CircularProgress size={16} color="inherit" /> : <AddIcon />
+              }
+              onClick={() => {
+                setSelectedRule(null);
+                setDialogOpen(true);
+              }}
+              size="small"
+              disabled={!canCreateAlertRule || permissionsLoading}
+            >
+              Add Rule
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
 
       <PaginatedDataGrid<AlertRule>

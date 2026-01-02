@@ -1425,3 +1425,142 @@ After completing Keycloak setup:
 3. Configure production deployment with proper secrets management
 4. Set up monitoring for Keycloak availability
 5. Review the Implementation section above for details on hierarchical group structure and organization-level permissions
+
+---
+
+## Frontend Permission System
+
+The React dashboard implements a streamlined permission checking system that integrates with the backend GraphQL API.
+
+### Architecture
+
+```
+┌─────────────────────┐    ┌──────────────────────┐    ┌─────────────────┐
+│  React Components   │    │  PermissionContext   │    │  GraphQL API    │
+│                     │    │                      │    │                 │
+│  • usePermissions   │───▶│  • Auto-batching     │───▶│ checkPermissions│
+│  • useCanPerform    │    │  • 50ms batch window │    │ query           │
+│  • PermissionGate   │    │  • Deduplication     │    │                 │
+│  • ProtectedButton  │    │  • Caching           │    │ Backend calls   │
+│                     │    │                      │    │ Keycloak + sync │
+└─────────────────────┘    └──────────────────────┘    └─────────────────┘
+```
+
+### Key Design Decisions
+
+**1. Backend Proxy Instead of Direct Keycloak:**
+
+The frontend calls a GraphQL `checkPermissions` query instead of directly calling Keycloak. Benefits:
+
+- Backend triggers self-healing when new scopes are added
+- Single source of truth for permission logic
+- No Keycloak credentials exposed to frontend
+- Simplified CORS configuration
+
+**2. Auto-Request Pattern:**
+
+Permissions are automatically fetched when `can()` is called:
+
+```typescript
+// Simple usage - no useEffect needed!
+const { can } = usePermissions();
+const canEdit = can(bot.id, 'edit');  // Auto-fetches if not cached
+```
+
+**3. Request Batching:**
+
+Multiple permission checks within 50ms are batched into a single GraphQL request:
+
+```typescript
+// These three calls become ONE GraphQL request
+const canEdit = can(bot.id, 'edit');
+const canDelete = can(bot.id, 'delete');
+const canRun = can(bot.id, 'run');
+```
+
+### Components and Hooks
+
+**`usePermissions`** - Main hook for permission checking:
+
+```typescript
+const { can, loading, refresh } = usePermissions();
+
+// Check permission (auto-fetches if not cached)
+const canEdit = can(resourceId, 'edit');
+
+// Force refresh all cached permissions
+await refresh();
+```
+
+**`useCanPerform`** - Single permission check with loading state:
+
+```typescript
+const { can, loading } = useCanPerform({
+  resourceId: strategy.id,
+  scope: 'edit',
+  skip: !isEditing, // Optional: skip check conditionally
+});
+```
+
+**`PermissionGate`** - Conditional rendering based on permission:
+
+```typescript
+<PermissionGate resourceId={bot.id} scope="edit">
+  <EditButton />
+</PermissionGate>
+```
+
+**`ProtectedButton`** - Button with built-in permission check:
+
+```typescript
+<ProtectedButton
+  resourceId={bot.id}
+  scope="delete"
+  deniedTooltip="No permission to delete"
+  hideWhenDenied
+>
+  Delete
+</ProtectedButton>
+```
+
+### Self-Healing Flow
+
+When new scopes are added to the codebase:
+
+1. Frontend calls `can(resourceId, 'new-scope')`
+2. GraphQL `checkPermissions` query sent to backend
+3. Backend checks Keycloak UMA
+4. If scope doesn't exist → self-healing triggers
+5. Backend syncs scopes to Keycloak resource
+6. Re-checks permission
+7. Returns result to frontend
+
+This eliminates the need for manual scope migrations when adding new permissions.
+
+### Permission Scopes by Resource Type
+
+| Resource | Available Scopes |
+|----------|-----------------|
+| Bot | `view`, `view-secrets`, `run`, `stop`, `delete`, `edit`, `freqtrade-api`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+| Strategy | `view`, `edit`, `delete`, `run-backtest`, `stop-backtest`, `delete-backtest`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+| Exchange | `view`, `view-secrets`, `edit`, `delete` |
+| BotRunner | `view`, `view-secrets`, `edit`, `delete`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+| Group | `view`, `edit`, `delete`, `mark-alert-as-read`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+
+### Implementation Files
+
+**Frontend:**
+
+- `dashboard/src/contexts/PermissionContext.tsx` - Provider with batching logic
+- `dashboard/src/hooks/usePermissions.ts` - Main permission hook
+- `dashboard/src/hooks/useCanPerform.ts` - Single permission hook
+- `dashboard/src/components/shared/PermissionGate.tsx` - Conditional render component
+- `dashboard/src/components/shared/ProtectedButton.tsx` - Protected button components
+- `dashboard/src/services/permissions/types.ts` - TypeScript type definitions
+- `dashboard/src/services/permissions/permissions.graphql` - GraphQL query
+
+**Backend:**
+
+- `internal/graph/schema.graphqls` - `checkPermissions` query definition
+- `internal/graph/schema.resolvers.go` - Query resolver with self-healing
+- `internal/authz/scopes.go` - Scope definitions and self-healing detection

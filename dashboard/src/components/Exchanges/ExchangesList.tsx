@@ -2,8 +2,6 @@ import {
   Box,
   Typography,
   Button,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
@@ -19,6 +17,7 @@ import { DeleteExchangeDialog } from './DeleteExchangeDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
+import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 // Extract Exchange type from generated query
 type Exchange = NonNullable<NonNullable<NonNullable<GetExchangesQuery['exchanges']['edges']>[number]>['node']>;
@@ -119,30 +118,32 @@ export const ExchangesList = () => {
       headerAlign: 'right',
       renderCell: (params: GridRenderCellParams<Exchange>) => (
         <Box onClick={(e) => e.stopPropagation()}>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={() => {
-                setSelectedExchange(params.row);
-                setEditDialogOpen(true);
-              }}
-              color="primary"
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              onClick={() => {
-                setSelectedExchange(params.row);
-                setDeleteDialogOpen(true);
-              }}
-              color="error"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <ProtectedIconButton
+            resourceId={params.row.id}
+            scope="edit"
+            size="small"
+            onClick={() => {
+              setSelectedExchange(params.row);
+              setEditDialogOpen(true);
+            }}
+            color="primary"
+            deniedTooltip="No permission to edit"
+          >
+            <EditIcon fontSize="small" />
+          </ProtectedIconButton>
+          <ProtectedIconButton
+            resourceId={params.row.id}
+            scope="delete"
+            size="small"
+            onClick={() => {
+              setSelectedExchange(params.row);
+              setDeleteDialogOpen(true);
+            }}
+            color="error"
+            deniedTooltip="No permission to delete"
+          >
+            <DeleteIcon fontSize="small" />
+          </ProtectedIconButton>
         </Box>
       ),
     },

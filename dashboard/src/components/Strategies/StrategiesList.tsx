@@ -3,8 +3,6 @@ import {
   Typography,
   Button,
   Chip,
-  IconButton,
-  Tooltip,
   Snackbar,
   Alert,
   ToggleButtonGroup,
@@ -27,6 +25,7 @@ import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
 
@@ -151,18 +150,19 @@ export const StrategiesList = () => {
       headerAlign: 'right',
       renderCell: (params: GridRenderCellParams<Strategy>) => (
         <Box onClick={(e) => e.stopPropagation()}>
-          <Tooltip title="Quick Backtest">
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() => {
-                setSelectedStrategyForBacktest(params.row.id);
-                setBacktestDialogOpen(true);
-              }}
-            >
-              <PlayArrowIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <ProtectedIconButton
+            resourceId={params.row.id}
+            scope="run-backtest"
+            size="small"
+            color="primary"
+            onClick={() => {
+              setSelectedStrategyForBacktest(params.row.id);
+              setBacktestDialogOpen(true);
+            }}
+            deniedTooltip="No permission to run backtest"
+          >
+            <PlayArrowIcon fontSize="small" />
+          </ProtectedIconButton>
           {viewMode === 'mine' && (
             <>
               <StrategyVisibilityButton
@@ -171,26 +171,28 @@ export const StrategiesList = () => {
                 isPublic={params.row.public}
                 onSuccess={() => refetch()}
               />
-              <Tooltip title="Edit">
-                <IconButton
-                  size="small"
-                  onClick={() => navigate(`/strategies/${params.row.id}/edit`)}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => {
-                    setSelectedStrategy(params.row);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <ProtectedIconButton
+                resourceId={params.row.id}
+                scope="edit"
+                size="small"
+                onClick={() => navigate(`/strategies/${params.row.id}/edit`)}
+                deniedTooltip="No permission to edit"
+              >
+                <EditIcon fontSize="small" />
+              </ProtectedIconButton>
+              <ProtectedIconButton
+                resourceId={params.row.id}
+                scope="delete"
+                size="small"
+                color="error"
+                onClick={() => {
+                  setSelectedStrategy(params.row);
+                  setDeleteDialogOpen(true);
+                }}
+                deniedTooltip="No permission to delete"
+              >
+                <DeleteIcon fontSize="small" />
+              </ProtectedIconButton>
             </>
           )}
         </Box>

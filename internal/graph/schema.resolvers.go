@@ -13,6 +13,7 @@ import (
 	"time"
 	"volaticloud/internal/alert"
 	"volaticloud/internal/auth"
+	"volaticloud/internal/authz"
 	backtest1 "volaticloud/internal/backtest"
 	bot1 "volaticloud/internal/bot"
 	"volaticloud/internal/ent"
@@ -1247,6 +1248,57 @@ func (r *queryResolver) AlertTypesForResource(ctx context.Context, resourceType 
 	}
 
 	return result, nil
+}
+
+func (r *queryResolver) CheckPermissions(ctx context.Context, permissions []*model.PermissionCheckInput) ([]*model.PermissionCheckResult, error) {
+	// Get user context
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Get UMA client from context
+	umaClient := GetUMAClientFromContext(ctx)
+	if umaClient == nil {
+		return nil, fmt.Errorf("UMA client not available")
+	}
+
+	results := make([]*model.PermissionCheckResult, len(permissions))
+
+	for i, perm := range permissions {
+		resourceID := perm.ResourceID.String()
+		scope := perm.Scope
+
+		// Check permission
+		granted, err := umaClient.CheckPermission(ctx, userCtx.RawToken, resourceID, scope)
+
+		// If permission denied and might be due to invalid scope, trigger self-healing
+		if authz.ShouldTriggerSelfHealing(granted, err) {
+			// Try to sync scopes for this resource
+			if syncErr := SyncResourceScopes(ctx, r.client, resourceID); syncErr != nil {
+				log.Printf("Self-healing failed for resource %s: %v", resourceID, syncErr)
+			} else {
+				// Re-check permission after sync
+				granted, err = umaClient.CheckPermission(ctx, userCtx.RawToken, resourceID, scope)
+				if err != nil {
+					log.Printf("Permission re-check failed for %s#%s: %v", resourceID, scope, err)
+				}
+			}
+		}
+
+		// Log non-invalid-scope errors but don't fail the whole request
+		if err != nil && !authz.IsInvalidScopeError(err) {
+			log.Printf("Permission check error for %s#%s: %v", resourceID, scope, err)
+		}
+
+		results[i] = &model.PermissionCheckResult{
+			ResourceID: perm.ResourceID,
+			Scope:      scope,
+			Granted:    granted,
+		}
+	}
+
+	return results, nil
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

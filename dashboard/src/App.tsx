@@ -7,6 +7,7 @@ import { createApolloClient } from './graphql/client';
 import { useConfigValue } from './contexts/ConfigContext';
 import { useAuth } from './contexts/AuthContext';
 import { GroupProvider } from './contexts/GroupContext';
+import { PermissionProvider } from './contexts/PermissionContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
@@ -53,29 +54,31 @@ function App() {
         />
         <BrowserRouter>
           <GroupProvider>
-            <SidebarProvider>
-              <Routes>
-              <Route
-                path="/"
-                element={<DashboardLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
-              >
-                <Route index element={<DashboardPage />} />
-                <Route path="bots" element={<BotsPage />} />
-                <Route path="bots/:id" element={<BotDetailPage />} />
-                <Route path="exchanges" element={<ExchangesPage />} />
-                <Route path="strategies" element={<StrategiesPage />} />
-                <Route path="strategies/new" element={<StrategyStudioPage />} />
-                <Route path="strategies/:id" element={<StrategyDetailPage />} />
-                <Route path="strategies/:id/edit" element={<StrategyStudioPage />} />
-                <Route path="backtests" element={<BacktestsPage />} />
-                <Route path="backtests/:id" element={<BacktestDetailPage />} />
-                <Route path="trades" element={<TradesPage />} />
-                <Route path="runners" element={<RunnersPage />} />
-                <Route path="alerts" element={<AlertsPage />} />
-                <Route path="usage" element={<UsagePage />} />
-              </Route>
-              </Routes>
-            </SidebarProvider>
+            <PermissionProvider>
+              <SidebarProvider>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={<DashboardLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
+                  >
+                    <Route index element={<DashboardPage />} />
+                    <Route path="bots" element={<BotsPage />} />
+                    <Route path="bots/:id" element={<BotDetailPage />} />
+                    <Route path="exchanges" element={<ExchangesPage />} />
+                    <Route path="strategies" element={<StrategiesPage />} />
+                    <Route path="strategies/new" element={<StrategyStudioPage />} />
+                    <Route path="strategies/:id" element={<StrategyDetailPage />} />
+                    <Route path="strategies/:id/edit" element={<StrategyStudioPage />} />
+                    <Route path="backtests" element={<BacktestsPage />} />
+                    <Route path="backtests/:id" element={<BacktestDetailPage />} />
+                    <Route path="trades" element={<TradesPage />} />
+                    <Route path="runners" element={<RunnersPage />} />
+                    <Route path="alerts" element={<AlertsPage />} />
+                    <Route path="usage" element={<UsagePage />} />
+                  </Route>
+                </Routes>
+              </SidebarProvider>
+            </PermissionProvider>
           </GroupProvider>
         </BrowserRouter>
       </ThemeProvider>
