@@ -58,6 +58,9 @@ interface PermissionProviderProps {
 const BATCH_DELAY_MS = 50; // Wait 50ms to collect all permission requests
 const MAX_BATCH_SIZE = 50; // Maximum batch size before immediate execution
 const PERMISSION_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 1000; // Maximum number of cached permissions (LRU eviction)
+const MAX_RETRIES = 3; // Maximum retry attempts for network errors
+const INITIAL_RETRY_DELAY_MS = 2000; // Initial retry delay (2 seconds)
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
   const auth = useAuth();
@@ -75,8 +78,22 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   const pendingRequests = useRef<Set<string>>(new Set());
   const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Track retry attempts per batch
+  const retryCount = useRef<Map<string, number>>(new Map());
+
   // Create permission key
   const makeKey = (resourceId: string, scope: string) => `${resourceId}:${scope}`;
+
+  // LRU eviction: remove oldest entries when cache exceeds MAX_CACHE_SIZE
+  const evictOldestIfNeeded = useCallback((cacheMap: Map<string, CachedPermission>) => {
+    if (cacheMap.size <= MAX_CACHE_SIZE) return cacheMap;
+
+    // Sort by timestamp and keep only the newest MAX_CACHE_SIZE entries
+    const sorted = Array.from(cacheMap.entries()).sort(
+      ([, a], [, b]) => b.timestamp - a.timestamp
+    );
+    return new Map(sorted.slice(0, MAX_CACHE_SIZE));
+  }, []);
 
   // Execute batched permission check
   const executeBatch = useCallback(async () => {
@@ -105,18 +122,22 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
 
       const now = Date.now();
 
-      // Update permissions cache with timestamps
+      // Update permissions cache with timestamps and apply LRU eviction
       setPermissions((prev) => {
         const updated = new Map(prev);
         for (const perm of result.data.checkPermissions) {
           const key = makeKey(perm.resourceId, perm.scope);
           updated.set(key, { granted: perm.granted, timestamp: now });
         }
-        return updated;
+        // Apply LRU eviction if cache exceeds MAX_CACHE_SIZE
+        return evictOldestIfNeeded(updated);
       });
 
-      // Clear errors on success
+      // Clear errors and retry counts on success
       setErrors(new Map());
+      for (const key of pending) {
+        retryCount.current.delete(key);
+      }
     } catch (error) {
       console.error('Failed to check permissions:', error);
 
@@ -126,18 +147,55 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         (error.networkError !== null || error.message.includes('network'));
 
       if (isNetworkError) {
-        // Network error: store error message, re-add to pending for retry
-        setErrors(new Map(pending.map((key) => [key, 'Network error - retrying...'])));
+        // Check retry count and implement exponential backoff
+        const batchKey = pending.join(',');
+        const currentRetries = retryCount.current.get(batchKey) || 0;
 
-        // Re-add to pending for automatic retry
-        for (const key of pending) {
-          pendingRequests.current.add(key);
+        if (currentRetries < MAX_RETRIES) {
+          // Update retry count
+          retryCount.current.set(batchKey, currentRetries + 1);
+
+          // Calculate exponential backoff delay: 2s, 4s, 8s
+          const retryDelay = INITIAL_RETRY_DELAY_MS * Math.pow(2, currentRetries);
+
+          setErrors(
+            new Map(
+              pending.map((key) => [
+                key,
+                `Network error - retry ${currentRetries + 1}/${MAX_RETRIES} in ${retryDelay / 1000}s...`,
+              ])
+            )
+          );
+
+          // Re-add to pending for automatic retry
+          for (const key of pending) {
+            pendingRequests.current.add(key);
+          }
+
+          // Schedule retry with exponential backoff
+          setTimeout(() => {
+            executeBatch();
+          }, retryDelay);
+        } else {
+          // Max retries exceeded, give up and cache as denied
+          retryCount.current.delete(batchKey);
+          setErrors(
+            new Map(
+              pending.map((key) => [key, `Network error - max retries (${MAX_RETRIES}) exceeded`])
+            )
+          );
+
+          const now = Date.now();
+          setPermissions((prev) => {
+            const updated = new Map(prev);
+            for (const key of pending) {
+              if (!updated.has(key)) {
+                updated.set(key, { granted: false, timestamp: now });
+              }
+            }
+            return evictOldestIfNeeded(updated);
+          });
         }
-
-        // Schedule retry after 2 seconds
-        setTimeout(() => {
-          executeBatch();
-        }, 2000);
       } else {
         // Permission error: cache as denied
         const now = Date.now();
@@ -148,7 +206,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
               updated.set(key, { granted: false, timestamp: now });
             }
           }
-          return updated;
+          return evictOldestIfNeeded(updated);
         });
       }
     } finally {
