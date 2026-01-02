@@ -311,19 +311,30 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   // Clear permissions when user logs out (Phase 3: Fix memory leak)
   useEffect(() => {
     if (!auth.isAuthenticated) {
+      // Cancel pending batch to prevent race conditions
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+        batchTimeoutRef.current = null;
+      }
+
+      // Replace Sets (thread-safe, prevents race conditions during iteration)
+      requestedPermissions.current = new Set();
+      pendingRequests.current = new Set();
+
+      // Clear maps and retry counters
       setPermissions(new Map());
-      requestedPermissions.current.clear(); // Use .clear() instead of new Set()
-      pendingRequests.current.clear();
       setErrors(new Map());
+      retryCount.current.clear();
     }
   }, [auth.isAuthenticated]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeout and retry counters on unmount
   useEffect(() => {
     return () => {
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current);
       }
+      retryCount.current.clear();
     };
   }, []);
 
