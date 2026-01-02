@@ -846,15 +846,21 @@ cp /strategy-source/%s.py /userdata/strategies/
 
 	if spec.DataDownloadURL != "" {
 		// Check if data already exists to handle pod restarts
-		// emptyDir persists across container restarts within the same pod
-		// This prevents failed downloads when presigned URL expires on restart
+		// NOTE: emptyDir persists only across container restarts, NOT pod restarts
+		// On pod restart, data will be empty and download may fail if presigned URL expired
+		// This is non-fatal - bot will start and Freqtrade will download fresh data from exchange
 		setupScript += `
 if [ -z "$(ls -A /userdata/data 2>/dev/null)" ]; then
     echo "Downloading data from S3..."
-    wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL"
-    echo "Extracting data..."
-    tar -xzf /tmp/data.tar.gz -C /userdata/data
-    rm /tmp/data.tar.gz
+    if wget -q -O /tmp/data.tar.gz "$DATA_DOWNLOAD_URL" 2>/dev/null; then
+        echo "Extracting data..."
+        tar -xzf /tmp/data.tar.gz -C /userdata/data
+        rm /tmp/data.tar.gz
+        echo "Data download successful"
+    else
+        echo "WARNING: Data download failed (possibly expired URL). Bot will start without cached data."
+        echo "Freqtrade will download fresh data from exchange on startup."
+    fi
 else
     echo "Data already exists, skipping download"
     ls -la /userdata/data/
