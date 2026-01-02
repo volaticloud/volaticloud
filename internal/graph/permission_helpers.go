@@ -30,7 +30,10 @@ func SyncResourceScopes(ctx context.Context, client *ent.Client, resourceID stri
 
 	if loaded {
 		// Another goroutine is already syncing this resource, wait for it
-		existingCh := actual.(chan struct{})
+		existingCh, ok := actual.(chan struct{})
+		if !ok {
+			return fmt.Errorf("unexpected type in sync map for resource %s", resourceID)
+		}
 		select {
 		case <-existingCh:
 			// Sync completed by another goroutine
