@@ -97,11 +97,11 @@ Implementation:
 
 Example Flow:
 
-	1. User creates alert rule on bot-123
-	2. Permission check: UMA returns "invalid_scope: create-alert-rule"
-	3. Self-healing triggered: sync bot-123 scopes with Keycloak
-	4. Permission re-checked: UMA grants access
-	5. Alert rule created successfully
+ 1. User creates alert rule on bot-123
+ 2. Permission check: UMA returns "invalid_scope: create-alert-rule"
+ 3. Self-healing triggered: sync bot-123 scopes with Keycloak
+ 4. Permission re-checked: UMA grants access
+ 5. Alert rule created successfully
 
 This ensures alert operations work even when Keycloak scopes are out of sync with database resources.
 
