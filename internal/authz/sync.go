@@ -16,8 +16,9 @@ import (
 // 3. Syncing those scopes with Keycloak UMA resource registry
 //
 // This is used when permission checks fail due to missing or outdated scopes in Keycloak.
-// The function will attempt to find the resource in the database. If not found, it assumes
-// the resource is a Group/Organization (which exist only in Keycloak, not in our database).
+// The function will attempt to find the resource in the database. If not found in any entity
+// and not a valid Group ID format, it returns an error to avoid syncing deleted resources
+// with incorrect scopes.
 func SyncResourcePermissions(
 	ctx context.Context,
 	client *ent.Client,
@@ -75,8 +76,11 @@ func SyncResourcePermissions(
 			})
 	}
 
-	// If not found in any entity, it might be a Group/Organization ID (not in DB)
-	// For groups, we sync with group scopes
+	// If not found in any entity table, might be:
+	// 1. A Group/Organization ID (exists only in Keycloak)
+	// 2. A deleted resource (should not be synced)
+	// Try to sync as a Group. If this fails, the resource likely doesn't exist at all.
+	// This prevents polluting Keycloak with wrong scopes for deleted resources.
 	return syncGroupResource(ctx, umaClient, resourceID)
 }
 
