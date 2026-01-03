@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { AuthProvider as OidcAuthProvider, useAuth } from 'react-oidc-context';
-import { Box, CircularProgress, Typography, Alert } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { createOidcConfig } from '../config/keycloak';
 import { useConfigValue } from './ConfigContext';
 
@@ -31,31 +31,6 @@ const AuthLoading: React.FC = () => {
   );
 };
 
-/**
- * Error component shown when authentication fails
- */
-const AuthError: React.FC<{ error: Error }> = ({ error }) => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        gap: 2,
-        p: 3,
-      }}
-    >
-      <Alert severity="error" sx={{ maxWidth: 600 }}>
-        <Typography variant="h6" gutterBottom>
-          Authentication Error
-        </Typography>
-        <Typography variant="body2">{error.message}</Typography>
-      </Alert>
-    </Box>
-  );
-};
 
 /**
  * Inner component that handles authentication state and renders children
@@ -131,14 +106,26 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
     };
   }, [auth]);
 
+  // Handle authentication errors - always redirect to login for better UX
+  useEffect(() => {
+    if (auth.error && !auth.isLoading) {
+      console.error('Authentication error detected:', auth.error.message);
+      console.log('Redirecting to login page...');
+      // Clear error state and redirect to login
+      // This handles all auth errors: expired tokens, invalid tokens, network issues, etc.
+      void auth.removeUser();
+      void auth.signinRedirect();
+    }
+  }, [auth.error, auth.isLoading, auth]);
+
   // Show loading state
   if (auth.isLoading) {
     return <AuthLoading />;
   }
 
-  // Show error state
+  // If there's an error, show loading while redirecting to login
   if (auth.error) {
-    return <AuthError error={auth.error} />;
+    return <AuthLoading />;
   }
 
   // User must be authenticated to see content
