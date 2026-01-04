@@ -23,6 +23,11 @@ import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
 import { UsagePage } from './pages/Usage/UsagePage';
 import { TradesPage } from './pages/Trades/TradesPage';
 import { AlertsPage } from './pages/Alerts/AlertsPage';
+import { ProfileLayout } from './components/Layout/ProfileLayout';
+import { ProfilePage } from './pages/Profile/ProfilePage';
+import { CredentialsPage } from './pages/Profile/CredentialsPage';
+import { SessionsPage } from './pages/Profile/SessionsPage';
+import { TwoFactorPage } from './pages/Profile/TwoFactorPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -75,6 +80,15 @@ function App() {
                     <Route path="runners" element={<RunnersPage />} />
                     <Route path="alerts" element={<AlertsPage />} />
                     <Route path="usage" element={<UsagePage />} />
+                  </Route>
+                  <Route
+                    path="profile"
+                    element={<ProfileLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
+                  >
+                    <Route index element={<ProfilePage />} />
+                    <Route path="credentials" element={<CredentialsPage />} />
+                    <Route path="sessions" element={<SessionsPage />} />
+                    <Route path="two-factor" element={<TwoFactorPage />} />
                   </Route>
                 </Routes>
               </SidebarProvider>

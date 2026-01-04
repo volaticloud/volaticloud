@@ -1,6 +1,6 @@
 import { Box, Toolbar } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import { Sidebar, drawerWidth, collapsedDrawerWidth } from './Sidebar';
+import { Sidebar, drawerWidth, collapsedDrawerWidth, mainMenuItems } from './Sidebar';
 import { Header } from './Header';
 import { useSidebar } from '../../contexts/SidebarContext';
 
@@ -35,6 +35,7 @@ export const DashboardLayout = ({ darkMode, onToggleDarkMode }: DashboardLayoutP
         currentDrawerWidth={currentDrawerWidth}
       />
       <Sidebar
+        menuItems={mainMenuItems}
         mobileOpen={mobileOpen}
         onMobileClose={handleMobileClose}
         collapsed={sidebarCollapsed}
