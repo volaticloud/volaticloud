@@ -20,7 +20,6 @@ import { StrategyStudioPage } from './pages/Strategies/StrategyStudioPage';
 import { RunnersPage } from './pages/Runners/RunnersPage';
 import { BacktestsPage } from './pages/BacktestsPage';
 import { BacktestDetailPage } from './pages/Backtests/BacktestDetailPage';
-import { UsagePage } from './pages/Usage/UsagePage';
 import { TradesPage } from './pages/Trades/TradesPage';
 import { AlertsPage } from './pages/Alerts/AlertsPage';
 import { ProfileLayout } from './components/Layout/ProfileLayout';
@@ -28,6 +27,11 @@ import { ProfilePage } from './pages/Profile/ProfilePage';
 import { CredentialsPage } from './pages/Profile/CredentialsPage';
 import { SessionsPage } from './pages/Profile/SessionsPage';
 import { TwoFactorPage } from './pages/Profile/TwoFactorPage';
+import { OrganizationLayout } from './components/Layout/OrganizationLayout';
+import { OrganizationDetailsPage } from './pages/Organization/OrganizationDetailsPage';
+import { OrganizationUsersPage } from './pages/Organization/OrganizationUsersPage';
+import { OrganizationUsagePage } from './pages/Organization/OrganizationUsagePage';
+import { OrganizationBillingPage } from './pages/Organization/OrganizationBillingPage';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -79,7 +83,6 @@ function App() {
                     <Route path="trades" element={<TradesPage />} />
                     <Route path="runners" element={<RunnersPage />} />
                     <Route path="alerts" element={<AlertsPage />} />
-                    <Route path="usage" element={<UsagePage />} />
                   </Route>
                   <Route
                     path="profile"
@@ -89,6 +92,15 @@ function App() {
                     <Route path="credentials" element={<CredentialsPage />} />
                     <Route path="sessions" element={<SessionsPage />} />
                     <Route path="two-factor" element={<TwoFactorPage />} />
+                  </Route>
+                  <Route
+                    path="organization"
+                    element={<OrganizationLayout darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />}
+                  >
+                    <Route path="details" element={<OrganizationDetailsPage />} />
+                    <Route path="users" element={<OrganizationUsersPage />} />
+                    <Route path="usage" element={<OrganizationUsagePage />} />
+                    <Route path="billing" element={<OrganizationBillingPage />} />
                   </Route>
                 </Routes>
               </SidebarProvider>
