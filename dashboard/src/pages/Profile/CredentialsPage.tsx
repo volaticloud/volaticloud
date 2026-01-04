@@ -43,9 +43,6 @@ export const CredentialsPage = () => {
       authUrl.searchParams.set('nonce', nonce);
       authUrl.searchParams.set('kc_action', 'UPDATE_PASSWORD');
 
-      console.log('[CredentialsPage] Redirecting to:', authUrl.toString());
-      console.log('[CredentialsPage] Redirect URI:', redirectUrl);
-
       // Redirect to Keycloak
       window.location.href = authUrl.toString();
     } catch (err) {

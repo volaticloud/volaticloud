@@ -39,7 +39,8 @@ export const TwoFactorPage = () => {
   // Refresh credentials when component mounts
   useEffect(() => {
     account.refreshCredentials();
-  }, [account.refreshCredentials]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
 
   const handleStartSetup = () => {
@@ -64,9 +65,6 @@ export const TwoFactorPage = () => {
       authUrl.searchParams.set('scope', 'openid');
       authUrl.searchParams.set('nonce', nonce);
       authUrl.searchParams.set('kc_action', 'CONFIGURE_TOTP');
-
-      console.log('[TwoFactorPage] Redirecting to:', authUrl.toString());
-      console.log('[TwoFactorPage] Redirect URI:', redirectUrl);
 
       // Redirect to Keycloak
       window.location.href = authUrl.toString();

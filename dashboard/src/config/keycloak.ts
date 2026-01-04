@@ -30,18 +30,26 @@ export const createOidcConfig = (
       const returnPath = sessionStorage.getItem('kc_return_path') || '/';
       sessionStorage.removeItem('kc_return_path');
 
+      // Security: Validate return path to prevent open redirects
+      const allowedPaths = [
+        '/',
+        '/profile',
+        '/profile/credentials',
+        '/profile/sessions',
+        '/profile/two-factor',
+      ];
+      const safePath = allowedPaths.includes(returnPath) ? returnPath : '/';
+
       // Remove OIDC-specific parameters
       urlParams.delete('code');
       urlParams.delete('state');
       urlParams.delete('session_state');
       urlParams.delete('iss');
 
-      // Build final URL with return path and any remaining Keycloak params
+      // Build final URL with validated path and any remaining Keycloak params
       const finalUrl = urlParams.toString()
-        ? `${returnPath}?${urlParams.toString()}`
-        : returnPath;
-
-      console.log('[onSigninCallback] Navigating to:', finalUrl);
+        ? `${safePath}?${urlParams.toString()}`
+        : safePath;
 
       // Use window.location.replace to actually navigate (triggers React Router)
       window.location.replace(finalUrl);
