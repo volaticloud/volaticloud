@@ -61,7 +61,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
 
       const { result } = renderHook(() => useKeycloakAccount());
@@ -90,7 +89,6 @@ describe('useKeycloakAccount', () => {
         firstName: 'Test',
         lastName: 'User',
         emailVerified: true,
-        enabled: true,
       };
 
       mockGetProfile.mockResolvedValueOnce(mockProfile);
@@ -140,7 +138,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
 
       // Should not be loading after resolution
@@ -159,7 +156,6 @@ describe('useKeycloakAccount', () => {
         firstName: 'Test',
         lastName: 'User',
         emailVerified: true,
-        enabled: true,
       };
 
       const updatedProfile: KeycloakUserProfile = {
@@ -193,7 +189,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockUpdateProfile.mockRejectedValueOnce(new Error('Update failed'));
 
@@ -220,7 +215,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
 
       const mockSessions = [
@@ -255,7 +249,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockGetSessions.mockRejectedValueOnce(new Error('Fetch failed'));
 
@@ -278,7 +271,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockDeleteSession.mockResolvedValueOnce(undefined);
       mockGetSessions.mockResolvedValue([]);
@@ -298,7 +290,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockDeleteSession.mockRejectedValueOnce(new Error('Delete failed'));
 
@@ -321,7 +312,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockChangePassword.mockResolvedValueOnce(undefined);
 
@@ -347,7 +337,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockChangePassword.mockRejectedValueOnce(new Error('Wrong password'));
 
@@ -370,7 +359,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
 
       const mockCredentials = [
@@ -401,7 +389,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockGetCredentials.mockRejectedValueOnce(new Error('Fetch failed'));
 
@@ -425,7 +412,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockDeleteCredential.mockResolvedValueOnce(undefined);
       mockGetCredentials.mockResolvedValue([]);
@@ -445,7 +431,6 @@ describe('useKeycloakAccount', () => {
         username: 'test',
         email: 'test@test.com',
         emailVerified: true,
-        enabled: true,
       });
       mockDeleteCredential.mockRejectedValueOnce(new Error('Delete failed'));
 

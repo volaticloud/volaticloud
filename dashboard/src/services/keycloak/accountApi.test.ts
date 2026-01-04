@@ -135,7 +135,6 @@ describe('KeycloakAccountApi', () => {
         firstName: 'Test',
         lastName: 'User',
         emailVerified: true,
-        enabled: true,
       };
 
       (global.fetch as any).mockResolvedValueOnce({
@@ -171,7 +170,6 @@ describe('KeycloakAccountApi', () => {
         firstName: 'Updated',
         lastName: 'Name',
         emailVerified: true,
-        enabled: true,
       };
 
       (global.fetch as any).mockResolvedValueOnce({
