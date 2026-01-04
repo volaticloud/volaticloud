@@ -51,6 +51,23 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: npx tsc --noEmit
 
+  test:
+    name: Tests
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+        with:
+          node-version: ${{ inputs.node-version }}
+          working-directory: ${{ inputs.working-directory }}
+
+      - name: Run tests
+        working-directory: ${{ inputs.working-directory }}
+        run: npm test
+
   build:
     name: Build
     runs-on: ${{ vars.RUNNER_LABEL }}

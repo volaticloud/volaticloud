@@ -20,6 +20,7 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../shared/Logo';
 import { GroupSwitcher } from '../shared/GroupSwitcher';
@@ -43,7 +44,12 @@ export const Header = ({
   currentDrawerWidth,
 }: HeaderProps) => {
   const auth = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Hide organization switcher on profile pages
+  const isProfilePage = location.pathname.startsWith('/profile');
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -105,10 +111,12 @@ export const Header = ({
         {/* Spacer for desktop */}
         <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
 
-        {/* Group Switcher */}
-        <Box sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-          <GroupSwitcher />
-        </Box>
+        {/* Group Switcher - Hidden on profile pages */}
+        {!isProfilePage && (
+          <Box sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
+            <GroupSwitcher />
+          </Box>
+        )}
 
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Tooltip title={darkMode ? 'Light mode' : 'Dark mode'}>
@@ -156,7 +164,12 @@ export const Header = ({
               </Typography>
             </Box>
             <Divider />
-            <MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleMenuClose();
+                navigate('/profile');
+              }}
+            >
               <PersonIcon sx={{ mr: 1 }} fontSize="small" />
               Profile
             </MenuItem>

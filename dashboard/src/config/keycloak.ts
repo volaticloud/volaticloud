@@ -23,8 +23,36 @@ export const createOidcConfig = (
     revokeTokensOnSignout: true,
     revokeTokenTypes: ['access_token', 'refresh_token'],
     onSigninCallback: () => {
-      // Remove query parameters after successful login
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Required: Remove OIDC parameters from URL to enable silent token renewal
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Get return path from sessionStorage (Keycloak overwrites state parameter)
+      const returnPath = sessionStorage.getItem('kc_return_path') || '/';
+      sessionStorage.removeItem('kc_return_path');
+
+      // Security: Validate return path to prevent open redirects
+      const allowedPaths = [
+        '/',
+        '/profile',
+        '/profile/credentials',
+        '/profile/sessions',
+        '/profile/two-factor',
+      ];
+      const safePath = allowedPaths.includes(returnPath) ? returnPath : '/';
+
+      // Remove OIDC-specific parameters
+      urlParams.delete('code');
+      urlParams.delete('state');
+      urlParams.delete('session_state');
+      urlParams.delete('iss');
+
+      // Build final URL with validated path and any remaining Keycloak params
+      const finalUrl = urlParams.toString()
+        ? `${safePath}?${urlParams.toString()}`
+        : safePath;
+
+      // Use window.location.replace to actually navigate (triggers React Router)
+      window.location.replace(finalUrl);
     },
     onSignoutCallback: () => {
       // Clean up after logout

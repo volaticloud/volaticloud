@@ -1,16 +1,29 @@
 import { Box, Toolbar } from '@mui/material';
 import { Outlet } from 'react-router-dom';
+import {
+  Person as PersonIcon,
+  Lock as LockIcon,
+  Devices as DevicesIcon,
+  Security as SecurityIcon,
+} from '@mui/icons-material';
 import { Sidebar } from './Sidebar';
-import { drawerWidth, collapsedDrawerWidth, mainMenuItems } from './sidebarConfig';
+import { drawerWidth, collapsedDrawerWidth, type MenuItem } from './sidebarConfig';
 import { Header } from './Header';
 import { useSidebar } from '../../contexts/SidebarContext';
 
-interface DashboardLayoutProps {
+const profileMenuItems: MenuItem[] = [
+  { text: 'Profile Information', icon: <PersonIcon />, path: '/profile' },
+  { text: 'Password', icon: <LockIcon />, path: '/profile/credentials' },
+  { text: 'Active Sessions', icon: <DevicesIcon />, path: '/profile/sessions' },
+  { text: 'Two-Factor Auth', icon: <SecurityIcon />, path: '/profile/two-factor' },
+];
+
+interface ProfileLayoutProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
 }
 
-export const DashboardLayout = ({ darkMode, onToggleDarkMode }: DashboardLayoutProps) => {
+export const ProfileLayout = ({ darkMode, onToggleDarkMode }: ProfileLayoutProps) => {
   const {
     collapsed: sidebarCollapsed,
     mobileOpen,
@@ -36,10 +49,11 @@ export const DashboardLayout = ({ darkMode, onToggleDarkMode }: DashboardLayoutP
         currentDrawerWidth={currentDrawerWidth}
       />
       <Sidebar
-        menuItems={mainMenuItems}
+        menuItems={profileMenuItems}
         mobileOpen={mobileOpen}
         onMobileClose={handleMobileClose}
         collapsed={sidebarCollapsed}
+        backButton={{ text: 'Back to Dashboard', path: '/' }}
       />
       <Box
         component="main"

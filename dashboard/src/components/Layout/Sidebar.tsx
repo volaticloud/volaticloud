@@ -11,47 +11,38 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
-  SmartToy as BotIcon,
-  AccountBalance as ExchangeIcon,
-  Psychology as StrategyIcon,
-  Science as BacktestIcon,
-  ShowChart as TradeIcon,
-  Storage as RuntimeIcon,
-  NotificationsActive as AlertsIcon,
-  DataUsage as UsageIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
 import { useGroupNavigate } from '../../contexts/GroupContext';
-
-export const drawerWidth = 260;
-export const collapsedDrawerWidth = 72;
-
-const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Bots', icon: <BotIcon />, path: '/bots' },
-  { text: 'Exchanges', icon: <ExchangeIcon />, path: '/exchanges' },
-  { text: 'Strategies', icon: <StrategyIcon />, path: '/strategies' },
-  { text: 'Backtests', icon: <BacktestIcon />, path: '/backtests' },
-  { text: 'Trades', icon: <TradeIcon />, path: '/trades' },
-  { text: 'Runners', icon: <RuntimeIcon />, path: '/runners' },
-  { text: 'Alerts', icon: <AlertsIcon />, path: '/alerts' },
-  { text: 'Usage', icon: <UsageIcon />, path: '/usage' },
-];
+import {
+  drawerWidth,
+  collapsedDrawerWidth,
+  type MenuItem,
+  type BackButton,
+} from './sidebarConfig';
 
 interface SidebarProps {
+  menuItems: MenuItem[];
   mobileOpen: boolean;
   onMobileClose: () => void;
   collapsed?: boolean;
+  backButton?: BackButton;
 }
 
-export const Sidebar = ({ mobileOpen, onMobileClose, collapsed = false }: SidebarProps) => {
-  const navigate = useGroupNavigate();
+export const Sidebar = ({
+  menuItems,
+  mobileOpen,
+  onMobileClose,
+  collapsed = false,
+  backButton
+}: SidebarProps) => {
+  const groupNavigate = useGroupNavigate();
   const location = useLocation();
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    groupNavigate(path);
     onMobileClose(); // Close drawer on mobile after navigation
   };
 
@@ -63,6 +54,68 @@ export const Sidebar = ({ mobileOpen, onMobileClose, collapsed = false }: Sideba
         <Logo onClick={() => handleNavigate('/')} variant={isCollapsed ? 'icon' : 'full'} />
       </Toolbar>
       <Divider />
+      {backButton && (
+        <>
+          <Box>
+            {isCollapsed ? (
+              <Tooltip title={backButton.text} placement="right" arrow>
+                <ListItemButton
+                  onClick={() => handleNavigate(backButton.path)}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: 'center',
+                    px: 2,
+                    opacity: 0.8,
+                    '&:hover': {
+                      opacity: 1,
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      color: 'inherit',
+                      minWidth: 0,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <ArrowBackIcon />
+                  </ListItemIcon>
+                </ListItemButton>
+              </Tooltip>
+            ) : (
+              <ListItemButton
+                onClick={() => handleNavigate(backButton.path)}
+                sx={{
+                  minHeight: 48,
+                  px: 2.5,
+                  opacity: 0.8,
+                  '&:hover': {
+                    opacity: 1,
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    color: 'inherit',
+                    minWidth: 40,
+                    mr: 2,
+                  }}
+                >
+                  <ArrowBackIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={backButton.text}
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                />
+              </ListItemButton>
+            )}
+          </Box>
+          <Divider />
+        </>
+      )}
       <List>
         {menuItems.map((item) => {
           const listItemButton = (
