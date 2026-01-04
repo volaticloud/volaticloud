@@ -161,13 +161,8 @@ export function useKeycloakAccount(): UseKeycloakAccountReturn {
   // Change password
   const changePassword = useCallback(
     async (data: ChangePasswordRequest): Promise<boolean> => {
-      try {
-        await api.changePassword(data);
-        return true;
-      } catch (error) {
-        // Let the calling component handle the error display
-        throw error;
-      }
+      await api.changePassword(data);
+      return true;
     },
     [api]
   );

@@ -14,7 +14,6 @@ import {
   UpdateProfileRequest,
   ChangePasswordRequest,
   KeycloakSession,
-  KeycloakCredential,
   KeycloakCredentialType,
   LinkedAccount,
   KeycloakErrorResponse,

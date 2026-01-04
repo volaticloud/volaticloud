@@ -216,11 +216,11 @@ export const TwoFactorPage = () => {
         title="Remove 2FA Device?"
         message="Are you sure you want to remove this device? You will no longer be able to use it for two-factor authentication."
         onConfirm={handleDeleteDevice}
-        onCancel={() => {
+        onClose={() => {
           setDeleteDialogOpen(false);
           setDeviceToDelete(null);
         }}
-        confirmText="Remove"
+        confirmLabel="Remove"
         confirmColor="error"
       />
     </Box>

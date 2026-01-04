@@ -1,6 +1,7 @@
 import { Box, Toolbar } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import { Sidebar, drawerWidth, collapsedDrawerWidth, mainMenuItems } from './Sidebar';
+import { Sidebar } from './Sidebar';
+import { drawerWidth, collapsedDrawerWidth, mainMenuItems } from './sidebarConfig';
 import { Header } from './Header';
 import { useSidebar } from '../../contexts/SidebarContext';
 

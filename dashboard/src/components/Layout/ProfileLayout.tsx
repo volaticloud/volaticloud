@@ -6,7 +6,8 @@ import {
   Devices as DevicesIcon,
   Security as SecurityIcon,
 } from '@mui/icons-material';
-import { Sidebar, drawerWidth, collapsedDrawerWidth, MenuItem } from './Sidebar';
+import { Sidebar } from './Sidebar';
+import { drawerWidth, collapsedDrawerWidth, type MenuItem } from './sidebarConfig';
 import { Header } from './Header';
 import { useSidebar } from '../../contexts/SidebarContext';
 
