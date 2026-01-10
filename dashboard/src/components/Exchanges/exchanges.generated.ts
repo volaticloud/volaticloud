@@ -107,6 +107,9 @@ export function useGetExchangesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetExchangesQuery, GetExchangesQueryVariables>(GetExchangesDocument, options);
         }
+// @ts-ignore
+export function useGetExchangesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetExchangesQuery, GetExchangesQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesQuery, GetExchangesQueryVariables>;
+export function useGetExchangesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesQuery, GetExchangesQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesQuery | undefined, GetExchangesQueryVariables>;
 export function useGetExchangesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesQuery, GetExchangesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetExchangesQuery, GetExchangesQueryVariables>(GetExchangesDocument, options);
@@ -163,6 +166,9 @@ export function useGetExchangeLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetExchangeQuery, GetExchangeQueryVariables>(GetExchangeDocument, options);
         }
+// @ts-ignore
+export function useGetExchangeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetExchangeQuery, GetExchangeQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangeQuery, GetExchangeQueryVariables>;
+export function useGetExchangeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangeQuery, GetExchangeQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangeQuery | undefined, GetExchangeQueryVariables>;
 export function useGetExchangeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangeQuery, GetExchangeQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetExchangeQuery, GetExchangeQueryVariables>(GetExchangeDocument, options);

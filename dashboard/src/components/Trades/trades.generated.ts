@@ -87,6 +87,9 @@ export function useGetTradesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetTradesQuery, GetTradesQueryVariables>(GetTradesDocument, options);
         }
+// @ts-ignore
+export function useGetTradesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTradesQuery, GetTradesQueryVariables>): Apollo.UseSuspenseQueryResult<GetTradesQuery, GetTradesQueryVariables>;
+export function useGetTradesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTradesQuery, GetTradesQueryVariables>): Apollo.UseSuspenseQueryResult<GetTradesQuery | undefined, GetTradesQueryVariables>;
 export function useGetTradesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTradesQuery, GetTradesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetTradesQuery, GetTradesQueryVariables>(GetTradesDocument, options);
@@ -159,6 +162,9 @@ export function useGetTradeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetTradeQuery, GetTradeQueryVariables>(GetTradeDocument, options);
         }
+// @ts-ignore
+export function useGetTradeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTradeQuery, GetTradeQueryVariables>): Apollo.UseSuspenseQueryResult<GetTradeQuery, GetTradeQueryVariables>;
+export function useGetTradeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTradeQuery, GetTradeQueryVariables>): Apollo.UseSuspenseQueryResult<GetTradeQuery | undefined, GetTradeQueryVariables>;
 export function useGetTradeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTradeQuery, GetTradeQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetTradeQuery, GetTradeQueryVariables>(GetTradeDocument, options);

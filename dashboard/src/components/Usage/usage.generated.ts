@@ -83,6 +83,9 @@ export function useGetOrganizationUsageLazyQuery(baseOptions?: Apollo.LazyQueryH
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetOrganizationUsageQuery, GetOrganizationUsageQueryVariables>(GetOrganizationUsageDocument, options);
         }
+// @ts-ignore
+export function useGetOrganizationUsageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOrganizationUsageQuery, GetOrganizationUsageQueryVariables>): Apollo.UseSuspenseQueryResult<GetOrganizationUsageQuery, GetOrganizationUsageQueryVariables>;
+export function useGetOrganizationUsageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrganizationUsageQuery, GetOrganizationUsageQueryVariables>): Apollo.UseSuspenseQueryResult<GetOrganizationUsageQuery | undefined, GetOrganizationUsageQueryVariables>;
 export function useGetOrganizationUsageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrganizationUsageQuery, GetOrganizationUsageQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetOrganizationUsageQuery, GetOrganizationUsageQueryVariables>(GetOrganizationUsageDocument, options);
@@ -130,6 +133,9 @@ export function useGetEstimatedCostLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetEstimatedCostQuery, GetEstimatedCostQueryVariables>(GetEstimatedCostDocument, options);
         }
+// @ts-ignore
+export function useGetEstimatedCostSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEstimatedCostQuery, GetEstimatedCostQueryVariables>): Apollo.UseSuspenseQueryResult<GetEstimatedCostQuery, GetEstimatedCostQueryVariables>;
+export function useGetEstimatedCostSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEstimatedCostQuery, GetEstimatedCostQueryVariables>): Apollo.UseSuspenseQueryResult<GetEstimatedCostQuery | undefined, GetEstimatedCostQueryVariables>;
 export function useGetEstimatedCostSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEstimatedCostQuery, GetEstimatedCostQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetEstimatedCostQuery, GetEstimatedCostQueryVariables>(GetEstimatedCostDocument, options);
@@ -193,6 +199,9 @@ export function useGetUsageDashboardLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetUsageDashboardQuery, GetUsageDashboardQueryVariables>(GetUsageDashboardDocument, options);
         }
+// @ts-ignore
+export function useGetUsageDashboardSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUsageDashboardQuery, GetUsageDashboardQueryVariables>): Apollo.UseSuspenseQueryResult<GetUsageDashboardQuery, GetUsageDashboardQueryVariables>;
+export function useGetUsageDashboardSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUsageDashboardQuery, GetUsageDashboardQueryVariables>): Apollo.UseSuspenseQueryResult<GetUsageDashboardQuery | undefined, GetUsageDashboardQueryVariables>;
 export function useGetUsageDashboardSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUsageDashboardQuery, GetUsageDashboardQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetUsageDashboardQuery, GetUsageDashboardQueryVariables>(GetUsageDashboardDocument, options);

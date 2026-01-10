@@ -1,0 +1,391 @@
+package keycloak
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+
+	"volaticloud/internal/auth"
+
+	"github.com/Nerzal/gocloak/v13"
+)
+
+// AdminClient handles Keycloak Admin API operations using gocloak
+type AdminClient struct {
+	client *gocloak.GoCloak
+	config auth.KeycloakConfig
+}
+
+// OrganizationUser represents a user in the organization
+type OrganizationUser struct {
+	ID            string
+	Username      string
+	Email         string
+	EmailVerified bool
+	FirstName     string
+	LastName      string
+	Enabled       bool
+	CreatedAt     int64
+}
+
+// GroupNode represents a node in the group hierarchy tree
+type GroupNode struct {
+	ID       string
+	Name     string
+	Path     string
+	Type     string // "resource" or "role"
+	Title    string // Display title from GROUP_TITLE attribute
+	Children []*GroupNode
+}
+
+// NewAdminClient creates a new Keycloak admin API client
+func NewAdminClient(config auth.KeycloakConfig) *AdminClient {
+	client := gocloak.NewClient(config.URL)
+	return &AdminClient{
+		client: client,
+		config: config,
+	}
+}
+
+// GetGroupUsers fetches all users from a Keycloak group including subgroups
+// organizationID is the UUID identifying the organization (from JWT groups claim)
+func (a *AdminClient) GetGroupUsers(ctx context.Context, organizationID string) ([]OrganizationUser, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Try to get the group directly by ID first (if organizationID is the Keycloak group ID)
+	// This will include full group representation with subgroups
+	group, err := a.client.GetGroup(ctx, token.AccessToken, a.config.Realm, organizationID)
+	if err != nil {
+		// If direct lookup fails, try to find by path
+		groupPath := "/" + organizationID
+
+		// Get all groups with full representation (including subgroups)
+		full := true
+		groups, err := a.client.GetGroups(ctx, token.AccessToken, a.config.Realm, gocloak.GetGroupsParams{
+			Full: &full, // Ensure we get full representation with subgroups
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list groups: %w", err)
+		}
+
+		// Find the group with matching path
+		var targetGroup *gocloak.Group
+		for _, g := range groups {
+			if g.Path != nil && *g.Path == groupPath {
+				targetGroup = g
+				break
+			}
+		}
+
+		if targetGroup == nil {
+			return nil, fmt.Errorf("group not found with ID or path: %s", organizationID)
+		}
+
+		// If we found by path, reload with GetGroup to ensure we have full details including all subgroups
+		if targetGroup.ID != nil {
+			group, err = a.client.GetGroup(ctx, token.AccessToken, a.config.Realm, *targetGroup.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reload group with full details: %w", err)
+			}
+		} else {
+			group = targetGroup
+		}
+	}
+
+	if group.ID == nil {
+		return nil, fmt.Errorf("group found but has no ID")
+	}
+
+	// Get all members including subgroups
+	users, err := a.getGroupMembersRecursive(ctx, token.AccessToken, *group.ID, group)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group members: %w", err)
+	}
+
+	return users, nil
+}
+
+// getGroupMembersRecursive gets all members from a group and its subgroups
+func (a *AdminClient) getGroupMembersRecursive(ctx context.Context, token, groupID string, group *gocloak.Group) ([]OrganizationUser, error) {
+	var allUsers []OrganizationUser
+	seenUsers := make(map[string]bool) // Deduplicate users
+
+	// Get direct members of this group
+	members, err := a.client.GetGroupMembers(ctx, token, a.config.Realm, groupID, gocloak.GetGroupsParams{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group members for %s: %w", groupID, err)
+	}
+
+	// Add direct members
+	for _, user := range members {
+		if user.ID != nil && !seenUsers[*user.ID] {
+			allUsers = append(allUsers, a.convertUser(user))
+			seenUsers[*user.ID] = true
+		}
+	}
+
+	// Recursively get members from subgroups
+	if group.SubGroups != nil {
+		for _, subGroup := range *group.SubGroups {
+			if subGroup.ID == nil {
+				continue
+			}
+
+			// Fetch full subgroup details to get its subgroups
+			fullSubGroup, err := a.client.GetGroup(ctx, token, a.config.Realm, *subGroup.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get subgroup %s: %w", *subGroup.ID, err)
+			}
+
+			subMembers, err := a.getGroupMembersRecursive(ctx, token, *subGroup.ID, fullSubGroup)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, user := range subMembers {
+				if !seenUsers[user.ID] {
+					allUsers = append(allUsers, user)
+					seenUsers[user.ID] = true
+				}
+			}
+		}
+	}
+
+	return allUsers, nil
+}
+
+// convertUser converts gocloak.User to OrganizationUser
+func (a *AdminClient) convertUser(user *gocloak.User) OrganizationUser {
+	orgUser := OrganizationUser{
+		Enabled: user.Enabled != nil && *user.Enabled,
+	}
+
+	if user.ID != nil {
+		orgUser.ID = *user.ID
+	}
+	if user.Username != nil {
+		orgUser.Username = *user.Username
+	}
+	if user.Email != nil {
+		orgUser.Email = *user.Email
+	}
+	if user.EmailVerified != nil {
+		orgUser.EmailVerified = *user.EmailVerified
+	}
+	if user.FirstName != nil {
+		orgUser.FirstName = *user.FirstName
+	}
+	if user.LastName != nil {
+		orgUser.LastName = *user.LastName
+	}
+	if user.CreatedTimestamp != nil {
+		orgUser.CreatedAt = *user.CreatedTimestamp
+	}
+
+	return orgUser
+}
+
+// GetGroupTree fetches the hierarchical group tree for an organization
+// Returns the root organization group with all subgroups
+func (a *AdminClient) GetGroupTree(ctx context.Context, organizationID string) (*GroupNode, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Get the root organization group
+	// Try by ID first
+	group, err := a.client.GetGroup(ctx, token.AccessToken, a.config.Realm, organizationID)
+	if err != nil {
+		// If ID lookup fails, try to find by path
+		groupPath := "/" + organizationID
+
+		allGroups, err := a.client.GetGroups(ctx, token.AccessToken, a.config.Realm, gocloak.GetGroupsParams{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list groups: %w", err)
+		}
+
+		// Find the group with matching path
+		var targetGroup *gocloak.Group
+		for _, g := range allGroups {
+			if g.Path != nil && *g.Path == groupPath {
+				targetGroup = g
+				break
+			}
+		}
+
+		if targetGroup == nil {
+			return nil, fmt.Errorf("group not found with ID or path: %s", organizationID)
+		}
+
+		// Reload with GetGroup to get group ID
+		if targetGroup.ID != nil {
+			group, err = a.client.GetGroup(ctx, token.AccessToken, a.config.Realm, *targetGroup.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reload group: %w", err)
+			}
+		} else {
+			group = targetGroup
+		}
+	}
+
+	if group.ID == nil {
+		return nil, fmt.Errorf("group found but has no ID")
+	}
+
+	// Build the tree recursively by fetching children for each group using the /children endpoint
+	return a.buildGroupTreeRecursive(ctx, token.AccessToken, group)
+}
+
+// getGroupChildren fetches direct children of a group using the Keycloak Admin API /children endpoint
+// This method handles pagination automatically to fetch all children
+func (a *AdminClient) getGroupChildren(ctx context.Context, token, groupID string) ([]*gocloak.Group, error) {
+	// Keycloak's GetGroup doesn't populate SubGroups, so we need to use the /children endpoint
+	// GET /admin/realms/{realm}/groups/{id}/children
+	// Supports pagination with ?first={offset}&max={limit}
+
+	var allChildren []*gocloak.Group
+	const pageSize = 100 // Fetch 100 children per request
+	offset := 0
+
+	client := &http.Client{}
+
+	for {
+		// Build URL with pagination parameters
+		url := fmt.Sprintf("%s/admin/realms/%s/groups/%s/children?first=%d&max=%d",
+			a.config.URL, a.config.Realm, groupID, offset, pageSize)
+
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch group children: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			return nil, fmt.Errorf("failed to get group children (status %d): %s", resp.StatusCode, string(body))
+		}
+
+		var children []*gocloak.Group
+		if err := json.NewDecoder(resp.Body).Decode(&children); err != nil {
+			resp.Body.Close()
+			return nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+		resp.Body.Close()
+
+		// Add this page of children to the result
+		allChildren = append(allChildren, children...)
+
+		// If we got fewer results than the page size, we've reached the end
+		if len(children) < pageSize {
+			break
+		}
+
+		// Move to the next page
+		offset += pageSize
+	}
+
+	return allChildren, nil
+}
+
+// buildGroupTreeRecursive builds a group tree by recursively fetching children
+// This is necessary because Keycloak doesn't populate SubGroups in a single call
+func (a *AdminClient) buildGroupTreeRecursive(ctx context.Context, token string, group *gocloak.Group) (*GroupNode, error) {
+	if group == nil {
+		return nil, nil
+	}
+
+	// Create the node
+	node := &GroupNode{
+		Children: []*GroupNode{},
+	}
+
+	if group.ID != nil {
+		node.ID = *group.ID
+	}
+	if group.Name != nil {
+		node.Name = *group.Name
+	}
+	if group.Path != nil {
+		node.Path = *group.Path
+	}
+
+	// Extract title from GROUP_TITLE attribute
+	if group.Attributes != nil {
+		if titleAttr, ok := (*group.Attributes)["GROUP_TITLE"]; ok && len(titleAttr) > 0 {
+			node.Title = titleAttr[0]
+		}
+	}
+	// If no title attribute, fall back to name
+	if node.Title == "" {
+		node.Title = node.Name
+	}
+
+	// Determine type: "role" if name starts with "role:", otherwise "resource"
+	if len(node.Name) > 5 && node.Name[:5] == "role:" {
+		node.Type = "role"
+	} else {
+		node.Type = "resource"
+	}
+
+	// Fetch children using the /children endpoint
+	if group.ID != nil {
+		children, err := a.getGroupChildren(ctx, token, *group.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get children for group %s: %w", *group.ID, err)
+		}
+
+		// Recursively process each child
+		for _, child := range children {
+			childNode, err := a.buildGroupTreeRecursive(ctx, token, child)
+			if err != nil {
+				return nil, err
+			}
+
+			if childNode != nil {
+				node.Children = append(node.Children, childNode)
+			}
+		}
+	}
+
+	return node, nil
+}
+
+// GetGroupMembers fetches users from a specific group (non-recursive)
+// groupID is the Keycloak group ID
+func (a *AdminClient) GetGroupMembers(ctx context.Context, groupID string) ([]OrganizationUser, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Get direct members of this group only (non-recursive)
+	members, err := a.client.GetGroupMembers(ctx, token.AccessToken, a.config.Realm, groupID, gocloak.GetGroupsParams{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group members: %w", err)
+	}
+
+	// Convert to OrganizationUser
+	users := make([]OrganizationUser, 0, len(members))
+	for _, user := range members {
+		users = append(users, a.convertUser(user))
+	}
+
+	return users, nil
+}

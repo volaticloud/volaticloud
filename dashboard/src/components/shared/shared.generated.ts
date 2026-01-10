@@ -171,6 +171,9 @@ export function useGetRunnersForSelectorLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>(GetRunnersForSelectorDocument, options);
         }
+// @ts-ignore
+export function useGetRunnersForSelectorSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>;
+export function useGetRunnersForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnersForSelectorQuery | undefined, GetRunnersForSelectorQueryVariables>;
 export function useGetRunnersForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>(GetRunnersForSelectorDocument, options);
@@ -217,6 +220,9 @@ export function useGetRunnerByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetRunnerByIdQuery, GetRunnerByIdQueryVariables>(GetRunnerByIdDocument, options);
         }
+// @ts-ignore
+export function useGetRunnerByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRunnerByIdQuery, GetRunnerByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnerByIdQuery, GetRunnerByIdQueryVariables>;
+export function useGetRunnerByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnerByIdQuery, GetRunnerByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnerByIdQuery | undefined, GetRunnerByIdQueryVariables>;
 export function useGetRunnerByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnerByIdQuery, GetRunnerByIdQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetRunnerByIdQuery, GetRunnerByIdQueryVariables>(GetRunnerByIdDocument, options);
@@ -297,6 +303,9 @@ export function useGetBotsForSelectorLazyQuery(baseOptions?: Apollo.LazyQueryHoo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>(GetBotsForSelectorDocument, options);
         }
+// @ts-ignore
+export function useGetBotsForSelectorSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>;
+export function useGetBotsForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotsForSelectorQuery | undefined, GetBotsForSelectorQueryVariables>;
 export function useGetBotsForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>(GetBotsForSelectorDocument, options);
@@ -342,6 +351,9 @@ export function useGetBotByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotByIdQuery, GetBotByIdQueryVariables>(GetBotByIdDocument, options);
         }
+// @ts-ignore
+export function useGetBotByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotByIdQuery, GetBotByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotByIdQuery, GetBotByIdQueryVariables>;
+export function useGetBotByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotByIdQuery, GetBotByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotByIdQuery | undefined, GetBotByIdQueryVariables>;
 export function useGetBotByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotByIdQuery, GetBotByIdQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotByIdQuery, GetBotByIdQueryVariables>(GetBotByIdDocument, options);
@@ -425,6 +437,9 @@ export function useGetStrategiesForSelectorLazyQuery(baseOptions?: Apollo.LazyQu
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>(GetStrategiesForSelectorDocument, options);
         }
+// @ts-ignore
+export function useGetStrategiesForSelectorSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>;
+export function useGetStrategiesForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategiesForSelectorQuery | undefined, GetStrategiesForSelectorQueryVariables>;
 export function useGetStrategiesForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>(GetStrategiesForSelectorDocument, options);
@@ -471,6 +486,9 @@ export function useGetStrategyForSelectorLazyQuery(baseOptions?: Apollo.LazyQuer
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetStrategyForSelectorQuery, GetStrategyForSelectorQueryVariables>(GetStrategyForSelectorDocument, options);
         }
+// @ts-ignore
+export function useGetStrategyForSelectorSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStrategyForSelectorQuery, GetStrategyForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategyForSelectorQuery, GetStrategyForSelectorQueryVariables>;
+export function useGetStrategyForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyForSelectorQuery, GetStrategyForSelectorQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategyForSelectorQuery | undefined, GetStrategyForSelectorQueryVariables>;
 export function useGetStrategyForSelectorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyForSelectorQuery, GetStrategyForSelectorQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetStrategyForSelectorQuery, GetStrategyForSelectorQueryVariables>(GetStrategyForSelectorDocument, options);

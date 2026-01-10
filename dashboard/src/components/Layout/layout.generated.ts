@@ -45,6 +45,9 @@ export function useGetBotsCountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotsCountQuery, GetBotsCountQueryVariables>(GetBotsCountDocument, options);
         }
+// @ts-ignore
+export function useGetBotsCountSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotsCountQuery, GetBotsCountQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotsCountQuery, GetBotsCountQueryVariables>;
+export function useGetBotsCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotsCountQuery, GetBotsCountQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotsCountQuery | undefined, GetBotsCountQueryVariables>;
 export function useGetBotsCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotsCountQuery, GetBotsCountQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotsCountQuery, GetBotsCountQueryVariables>(GetBotsCountDocument, options);
@@ -90,6 +93,9 @@ export function useGetExchangesForLayoutLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetExchangesForLayoutQuery, GetExchangesForLayoutQueryVariables>(GetExchangesForLayoutDocument, options);
         }
+// @ts-ignore
+export function useGetExchangesForLayoutSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetExchangesForLayoutQuery, GetExchangesForLayoutQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesForLayoutQuery, GetExchangesForLayoutQueryVariables>;
+export function useGetExchangesForLayoutSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesForLayoutQuery, GetExchangesForLayoutQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesForLayoutQuery | undefined, GetExchangesForLayoutQueryVariables>;
 export function useGetExchangesForLayoutSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesForLayoutQuery, GetExchangesForLayoutQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetExchangesForLayoutQuery, GetExchangesForLayoutQueryVariables>(GetExchangesForLayoutDocument, options);

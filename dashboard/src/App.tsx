@@ -99,6 +99,7 @@ function App() {
                   >
                     <Route path="details" element={<OrganizationDetailsPage />} />
                     <Route path="users" element={<OrganizationUsersPage />} />
+                    <Route path="users/:resourceGroupId" element={<OrganizationUsersPage />} />
                     <Route path="usage" element={<OrganizationUsagePage />} />
                     <Route path="billing" element={<OrganizationBillingPage />} />
                   </Route>
