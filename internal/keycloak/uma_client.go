@@ -13,6 +13,7 @@ import (
 type UMAClientInterface interface {
 	CheckPermission(ctx context.Context, token, resourceID, scope string) (bool, error)
 	CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error
+	GetResource(ctx context.Context, resourceID string) (*gocloak.ResourceRepresentation, error)
 	UpdateResource(ctx context.Context, resourceID string, attributes map[string][]string) error
 	SyncResourceScopes(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error
 	DeleteResource(ctx context.Context, resourceID string) error
@@ -112,6 +113,29 @@ func (u *UMAClient) DeleteResource(ctx context.Context, resourceID string) error
 
 	log.Printf("Deleted Keycloak resource: %s", resourceID)
 	return nil
+}
+
+// GetResource retrieves a resource by ID from Keycloak
+// Returns the resource representation or an error if not found
+func (u *UMAClient) GetResource(ctx context.Context, resourceID string) (*gocloak.ResourceRepresentation, error) {
+	token, err := u.getClientToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use UMA Protection API to get resource by name (which is the resource ID)
+	resources, err := u.client.GetResourcesClient(ctx, token, u.realm, gocloak.GetResourceParams{
+		Name: gocloak.StringP(resourceID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get resource: %w", err)
+	}
+
+	if len(resources) == 0 {
+		return nil, fmt.Errorf("resource not found: %s", resourceID)
+	}
+
+	return resources[0], nil
 }
 
 // UpdateResource updates the attributes of an existing resource in Keycloak

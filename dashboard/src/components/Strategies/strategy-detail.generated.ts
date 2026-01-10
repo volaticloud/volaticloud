@@ -92,6 +92,9 @@ export function useGetStrategyDetailLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetStrategyDetailQuery, GetStrategyDetailQueryVariables>(GetStrategyDetailDocument, options);
         }
+// @ts-ignore
+export function useGetStrategyDetailSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStrategyDetailQuery, GetStrategyDetailQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategyDetailQuery, GetStrategyDetailQueryVariables>;
+export function useGetStrategyDetailSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyDetailQuery, GetStrategyDetailQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategyDetailQuery | undefined, GetStrategyDetailQueryVariables>;
 export function useGetStrategyDetailSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyDetailQuery, GetStrategyDetailQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetStrategyDetailQuery, GetStrategyDetailQueryVariables>(GetStrategyDetailDocument, options);
@@ -153,6 +156,9 @@ export function useGetStrategyVersionsLazyQuery(baseOptions?: Apollo.LazyQueryHo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetStrategyVersionsQuery, GetStrategyVersionsQueryVariables>(GetStrategyVersionsDocument, options);
         }
+// @ts-ignore
+export function useGetStrategyVersionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetStrategyVersionsQuery, GetStrategyVersionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategyVersionsQuery, GetStrategyVersionsQueryVariables>;
+export function useGetStrategyVersionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyVersionsQuery, GetStrategyVersionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetStrategyVersionsQuery | undefined, GetStrategyVersionsQueryVariables>;
 export function useGetStrategyVersionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetStrategyVersionsQuery, GetStrategyVersionsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetStrategyVersionsQuery, GetStrategyVersionsQueryVariables>(GetStrategyVersionsDocument, options);

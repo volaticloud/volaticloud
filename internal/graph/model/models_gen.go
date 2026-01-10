@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 	"volaticloud/internal/enum"
 
+	"entgo.io/contrib/entgql"
 	"github.com/google/uuid"
 )
 
@@ -107,6 +109,15 @@ type FreqtradeToken struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+type GroupNode struct {
+	ID       uuid.UUID    `json:"id"`
+	Name     string       `json:"name"`
+	Path     string       `json:"path"`
+	Type     string       `json:"type"`
+	Title    string       `json:"title"`
+	Children []*GroupNode `json:"children"`
+}
+
 type KrakenConfigInput struct {
 	APIKey    string `json:"apiKey"`
 	APISecret string `json:"apiSecret"`
@@ -127,6 +138,46 @@ type KubernetesConfigInput struct {
 
 type LocalConfigInput struct {
 	BasePath *string `json:"basePath,omitempty"`
+}
+
+// User information for resource group members
+type MemberUser struct {
+	// User ID (Keycloak UUID)
+	ID uuid.UUID `json:"id"`
+	// Username
+	Username string `json:"username"`
+	// Email address
+	Email *string `json:"email,omitempty"`
+	// Whether the email is verified
+	EmailVerified bool `json:"emailVerified"`
+	// First name
+	FirstName *string `json:"firstName,omitempty"`
+	// Last name
+	LastName *string `json:"lastName,omitempty"`
+	// Whether the user account is enabled
+	Enabled bool `json:"enabled"`
+	// User creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// User in the organization (from Keycloak)
+type OrganizationUser struct {
+	// User ID (Keycloak UUID)
+	ID uuid.UUID `json:"id"`
+	// Username
+	Username string `json:"username"`
+	// Email address
+	Email *string `json:"email,omitempty"`
+	// Whether the email is verified
+	EmailVerified bool `json:"emailVerified"`
+	// First name
+	FirstName *string `json:"firstName,omitempty"`
+	// Last name
+	LastName *string `json:"lastName,omitempty"`
+	// Whether the user account is enabled
+	Enabled bool `json:"enabled"`
+	// User creation timestamp (Unix milliseconds)
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type PassphraseExchangeConfigInput struct {
@@ -157,6 +208,111 @@ type RegistryAuthInput struct {
 	Username      string  `json:"username"`
 	Password      string  `json:"password"`
 	ServerAddress *string `json:"serverAddress,omitempty"`
+}
+
+// Resource group with normalized role data
+// Represents strategies, bots, and other resources under an organization
+type ResourceGroup struct {
+	// Resource group name (our resource UUID)
+	Name string `json:"name"`
+	// Resource group path (hierarchical)
+	Path string `json:"path"`
+	// Display title (from GROUP_TITLE attribute)
+	Title string `json:"title"`
+	// List of roles with member counts
+	Roles []*RoleInfo `json:"roles"`
+	// Total number of members across all roles
+	TotalMembers int `json:"totalMembers"`
+	// Whether this resource group has child resource groups
+	HasChildren bool `json:"hasChildren"`
+}
+
+// Paginated resource group connection
+type ResourceGroupConnection struct {
+	// Resource group edges
+	Edges []*ResourceGroupEdge `json:"edges"`
+	// Total count of resource groups (before pagination)
+	TotalCount int `json:"totalCount"`
+	// Pagination info
+	PageInfo *entgql.PageInfo[uuid.UUID] `json:"pageInfo"`
+}
+
+// Edge for resource group connection
+type ResourceGroupEdge struct {
+	// Resource group node
+	Node *ResourceGroup `json:"node"`
+	// Cursor for pagination
+	Cursor string `json:"cursor"`
+}
+
+// Resource group member with role information
+type ResourceGroupMember struct {
+	// User information
+	User *MemberUser `json:"user"`
+	// All roles the user has in this resource group
+	Roles []string `json:"roles"`
+	// Primary role (highest priority: owner > admin > editor > viewer)
+	PrimaryRole string `json:"primaryRole"`
+}
+
+// Paginated resource group member connection
+type ResourceGroupMemberConnection struct {
+	// Resource group member edges
+	Edges []*ResourceGroupMemberEdge `json:"edges"`
+	// Total count of members (before pagination)
+	TotalCount int `json:"totalCount"`
+	// Pagination info
+	PageInfo *entgql.PageInfo[uuid.UUID] `json:"pageInfo"`
+}
+
+// Edge for resource group member connection
+type ResourceGroupMemberEdge struct {
+	// Resource group member node
+	Node *ResourceGroupMember `json:"node"`
+	// Cursor for pagination
+	Cursor string `json:"cursor"`
+}
+
+// Order input for resource group members
+type ResourceGroupMemberOrder struct {
+	// Field to order by
+	Field ResourceGroupMemberOrderField `json:"field"`
+	// Order direction
+	Direction entgql.OrderDirection `json:"direction"`
+}
+
+// Filter input for resource group members
+type ResourceGroupMemberWhereInput struct {
+	// Filter by roles (user must have at least one of these roles)
+	RoleIn []string `json:"roleIn,omitempty"`
+	// Search by username, email, firstName, lastName (case-insensitive)
+	SearchContainsFold *string `json:"searchContainsFold,omitempty"`
+	// Filter by enabled status
+	Enabled *bool `json:"enabled,omitempty"`
+	// Filter by email verified status
+	EmailVerified *bool `json:"emailVerified,omitempty"`
+}
+
+// Order input for resource groups
+type ResourceGroupOrder struct {
+	// Field to order by
+	Field ResourceGroupOrderField `json:"field"`
+	// Order direction
+	Direction entgql.OrderDirection `json:"direction"`
+}
+
+// Filter input for resource groups
+type ResourceGroupWhereInput struct {
+	// Search by title (case-insensitive substring match)
+	TitleContainsFold *string `json:"titleContainsFold,omitempty"`
+}
+
+// Role information with member count
+type RoleInfo struct {
+	// Role name (e.g., "admin", "viewer")
+	Name string `json:"name"`
+	// Number of members with this role
+	MemberCount int `json:"memberCount"`
 }
 
 type RunnerConfigInput struct {
@@ -263,6 +419,126 @@ func (e *ConditionFieldType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ConditionFieldType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Resource group member order fields
+type ResourceGroupMemberOrderField string
+
+const (
+	ResourceGroupMemberOrderFieldUsername    ResourceGroupMemberOrderField = "USERNAME"
+	ResourceGroupMemberOrderFieldEmail       ResourceGroupMemberOrderField = "EMAIL"
+	ResourceGroupMemberOrderFieldFirstName   ResourceGroupMemberOrderField = "FIRST_NAME"
+	ResourceGroupMemberOrderFieldLastName    ResourceGroupMemberOrderField = "LAST_NAME"
+	ResourceGroupMemberOrderFieldCreatedAt   ResourceGroupMemberOrderField = "CREATED_AT"
+	ResourceGroupMemberOrderFieldPrimaryRole ResourceGroupMemberOrderField = "PRIMARY_ROLE"
+)
+
+var AllResourceGroupMemberOrderField = []ResourceGroupMemberOrderField{
+	ResourceGroupMemberOrderFieldUsername,
+	ResourceGroupMemberOrderFieldEmail,
+	ResourceGroupMemberOrderFieldFirstName,
+	ResourceGroupMemberOrderFieldLastName,
+	ResourceGroupMemberOrderFieldCreatedAt,
+	ResourceGroupMemberOrderFieldPrimaryRole,
+}
+
+func (e ResourceGroupMemberOrderField) IsValid() bool {
+	switch e {
+	case ResourceGroupMemberOrderFieldUsername, ResourceGroupMemberOrderFieldEmail, ResourceGroupMemberOrderFieldFirstName, ResourceGroupMemberOrderFieldLastName, ResourceGroupMemberOrderFieldCreatedAt, ResourceGroupMemberOrderFieldPrimaryRole:
+		return true
+	}
+	return false
+}
+
+func (e ResourceGroupMemberOrderField) String() string {
+	return string(e)
+}
+
+func (e *ResourceGroupMemberOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ResourceGroupMemberOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ResourceGroupMemberOrderField", str)
+	}
+	return nil
+}
+
+func (e ResourceGroupMemberOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ResourceGroupMemberOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ResourceGroupMemberOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Resource group order fields
+type ResourceGroupOrderField string
+
+const (
+	ResourceGroupOrderFieldTitle        ResourceGroupOrderField = "TITLE"
+	ResourceGroupOrderFieldTotalMembers ResourceGroupOrderField = "TOTAL_MEMBERS"
+)
+
+var AllResourceGroupOrderField = []ResourceGroupOrderField{
+	ResourceGroupOrderFieldTitle,
+	ResourceGroupOrderFieldTotalMembers,
+}
+
+func (e ResourceGroupOrderField) IsValid() bool {
+	switch e {
+	case ResourceGroupOrderFieldTitle, ResourceGroupOrderFieldTotalMembers:
+		return true
+	}
+	return false
+}
+
+func (e ResourceGroupOrderField) String() string {
+	return string(e)
+}
+
+func (e *ResourceGroupOrderField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ResourceGroupOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ResourceGroupOrderField", str)
+	}
+	return nil
+}
+
+func (e ResourceGroupOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ResourceGroupOrderField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ResourceGroupOrderField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

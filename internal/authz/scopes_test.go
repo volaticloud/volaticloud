@@ -15,31 +15,31 @@ func TestGetScopesForType(t *testing.T) {
 		{
 			name:         "Strategy scopes",
 			resourceType: ResourceTypeStrategy,
-			wantLen:      11, // view, edit, delete, run-backtest, stop-backtest, delete-backtest, make-public + 4 alert scopes
+			wantLen:      12, // view, edit, delete, run-backtest, stop-backtest, delete-backtest, make-public, view-users + 4 alert scopes
 			wantContains: "run-backtest",
 		},
 		{
 			name:         "Bot scopes",
 			resourceType: ResourceTypeBot,
-			wantLen:      12, // view, view-secrets, run, stop, delete, edit, freqtrade-api, make-public + 4 alert scopes
+			wantLen:      13, // view, view-secrets, run, stop, delete, edit, freqtrade-api, make-public, view-users + 4 alert scopes
 			wantContains: "freqtrade-api",
 		},
 		{
 			name:         "Exchange scopes",
 			resourceType: ResourceTypeExchange,
-			wantLen:      4, // view, view-secrets, edit, delete (no alert scopes)
+			wantLen:      5, // view, view-secrets, edit, delete, view-users
 			wantContains: "view-secrets",
 		},
 		{
 			name:         "BotRunner scopes",
 			resourceType: ResourceTypeBotRunner,
-			wantLen:      9, // view, view-secrets, edit, delete, make-public + 4 alert scopes
+			wantLen:      10, // view, view-secrets, edit, delete, make-public, view-users + 4 alert scopes
 			wantContains: "make-public",
 		},
 		{
 			name:         "Group scopes",
 			resourceType: ResourceTypeGroup,
-			wantLen:      8, // view, edit, delete, mark-alert-as-read + 4 alert scopes
+			wantLen:      9, // view, edit, delete, mark-alert-as-read, view-users + 4 alert scopes
 			wantContains: "mark-alert-as-read",
 		},
 		{

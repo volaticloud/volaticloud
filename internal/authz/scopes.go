@@ -25,30 +25,31 @@ var AlertRuleScopes = []string{"create-alert-rule", "update-alert-rule", "delete
 // because backtests don't have their own Keycloak resources
 // Alert rule scopes are included for strategy-level alerts
 var StrategyScopes = []string{"view", "edit", "delete", "run-backtest", "stop-backtest", "delete-backtest", "make-public",
-	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules", "view-users"}
 
 // BotScopes defines the available permission scopes for Bot resources
 // view-secrets is for sensitive config fields (API keys, trading params)
 // freqtrade-api is for obtaining Freqtrade API tokens (used by FreqUI)
 // Alert rule scopes are included for bot-level alerts
 var BotScopes = []string{"view", "view-secrets", "run", "stop", "delete", "edit", "freqtrade-api", "make-public",
-	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules", "view-users"}
 
 // ExchangeScopes defines the available permission scopes for Exchange resources
 // view-secrets is for sensitive config fields (API keys, secrets)
-var ExchangeScopes = []string{"view", "view-secrets", "edit", "delete"}
+var ExchangeScopes = []string{"view", "view-secrets", "edit", "delete", "view-users"}
 
 // BotRunnerScopes defines the available permission scopes for BotRunner resources
 // view-secrets is for sensitive config fields (connection credentials)
 // Alert rule scopes are included for runner-level alerts
 var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-public",
-	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules", "view-users"}
 
 // GroupScopes defines the available permission scopes for Group (organization) resources
 // Groups are managed by Keycloak, not in the ENT database
 // mark-alert-as-read is for marking alert events as read
+// view-users is for viewing organization members
 // Alert rule scopes are included for organization-wide alerts
-var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read",
+var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read", "view-users",
 	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // GetScopesForType returns the permission scopes for a given resource type

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,6 +36,11 @@ func (m *mockUMAClient) CheckPermission(ctx context.Context, token, resourceID, 
 
 func (m *mockUMAClient) CreateResource(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error {
 	return nil
+}
+
+func (m *mockUMAClient) GetResource(ctx context.Context, resourceID string) (*gocloak.ResourceRepresentation, error) {
+	// Return error to simulate resource not found (Keycloak behavior)
+	return nil, fmt.Errorf("resource not found")
 }
 
 func (m *mockUMAClient) UpdateResource(ctx context.Context, resourceID string, attributes map[string][]string) error {

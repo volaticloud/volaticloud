@@ -131,6 +131,9 @@ export function useGetRunnersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetRunnersQuery, GetRunnersQueryVariables>(GetRunnersDocument, options);
         }
+// @ts-ignore
+export function useGetRunnersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRunnersQuery, GetRunnersQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnersQuery, GetRunnersQueryVariables>;
+export function useGetRunnersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnersQuery, GetRunnersQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnersQuery | undefined, GetRunnersQueryVariables>;
 export function useGetRunnersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnersQuery, GetRunnersQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetRunnersQuery, GetRunnersQueryVariables>(GetRunnersDocument, options);
@@ -196,6 +199,9 @@ export function useGetRunnerWithSecretsLazyQuery(baseOptions?: Apollo.LazyQueryH
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>(GetRunnerWithSecretsDocument, options);
         }
+// @ts-ignore
+export function useGetRunnerWithSecretsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>;
+export function useGetRunnerWithSecretsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>): Apollo.UseSuspenseQueryResult<GetRunnerWithSecretsQuery | undefined, GetRunnerWithSecretsQueryVariables>;
 export function useGetRunnerWithSecretsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetRunnerWithSecretsQuery, GetRunnerWithSecretsQueryVariables>(GetRunnerWithSecretsDocument, options);

@@ -44,6 +44,17 @@ public class TenantSystemEventListener implements EventListenerProvider {
     private static final String GROUP_TYPE_NONE = "none";
     private static final String RESOURCE_TYPE_TENANT = "urn:volaticloud:resources:tenant";
 
+    /**
+     * Group/Organization resource scopes.
+     * These must match GroupScopes in Go backend (internal/authz/scopes.go).
+     * Includes: basic permissions, alert management, and user management.
+     */
+    private static final String[] GROUP_SCOPES = {
+        "view", "edit", "delete",
+        "mark-alert-as-read", "view-users",
+        "create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"
+    };
+
     private final KeycloakSession session;
 
     @Override
@@ -259,10 +270,10 @@ public class TenantSystemEventListener implements EventListenerProvider {
                 return existing;
             }
 
-            // Get or create scopes (view, edit, manage)
+            // Get or create scopes (matching GroupScopes from Go backend)
             ScopeStore scopeStore = authz.getStoreFactory().getScopeStore();
             Set<Scope> scopes = new HashSet<>();
-            for (String scopeName : new String[]{"view", "edit", "manage"}) {
+            for (String scopeName : GROUP_SCOPES) {
                 Scope scope = scopeStore.findByName(resourceServer, scopeName);
                 if (scope == null) {
                     scope = scopeStore.create(resourceServer, scopeName);
@@ -472,6 +483,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
 
     /**
      * Creates a new group with role subgroups and GROUP_TYPE attribute.
+     * Also creates a corresponding UMA resource with proper attributes.
      * Returns the created or existing group.
      */
     private GroupModel createGroupWithRoles(RealmModel realm, String groupName, GroupModel parentGroup, String groupType) {
@@ -490,6 +502,9 @@ public class TenantSystemEventListener implements EventListenerProvider {
                 log.infof("Set GROUP_TYPE=%s for existing group: %s", groupType, groupName);
             }
 
+            // Ensure UMA resource exists for this group
+            ensureUMAResourceExists(realm, groupName, parentGroup);
+
             return existingGroup;
         }
 
@@ -504,6 +519,9 @@ public class TenantSystemEventListener implements EventListenerProvider {
 
         // Create role subgroups
         createRoleSubgroups(realm, group);
+
+        // Create UMA resource for this group
+        createUMAResourceForGroup(realm, groupName, parentGroup);
 
         return group;
     }
@@ -536,6 +554,110 @@ public class TenantSystemEventListener implements EventListenerProvider {
         if (viewerGroup == null) {
             session.groups().createGroup(realm, ROLE_VIEWER, parentGroup);
             log.infof("Created missing subgroup: %s under %s", ROLE_VIEWER, parentGroup.getName());
+        }
+    }
+
+    /**
+     * Ensures a UMA resource exists for the given group.
+     * If resource doesn't exist, creates it with proper attributes.
+     * This is used when groups already exist but their UMA resources might be missing.
+     */
+    private void ensureUMAResourceExists(RealmModel realm, String groupName, GroupModel parentGroup) {
+        try {
+            ClientModel client = realm.getClientByClientId(VOLATICLOUD_CLIENT);
+            if (client == null) {
+                log.warnf("Client '%s' not found, cannot ensure UMA resource", VOLATICLOUD_CLIENT);
+                return;
+            }
+
+            AuthorizationProvider authz = session.getProvider(AuthorizationProvider.class);
+            ResourceServer resourceServer = authz.getStoreFactory().getResourceServerStore()
+                .findByClient(client);
+
+            if (resourceServer == null) {
+                log.warnf("Resource server not found for client '%s'", VOLATICLOUD_CLIENT);
+                return;
+            }
+
+            ResourceStore resourceStore = authz.getStoreFactory().getResourceStore();
+
+            // Check if resource already exists
+            Resource existing = resourceStore.findByName(resourceServer, groupName);
+            if (existing != null) {
+                log.infof("UMA resource '%s' already exists", groupName);
+                return;
+            }
+
+            // Create the resource
+            createUMAResourceForGroup(realm, groupName, parentGroup);
+        } catch (Exception e) {
+            log.errorf(e, "Error ensuring UMA resource exists for group: %s", groupName);
+        }
+    }
+
+    /**
+     * Creates a UMA resource for a child group/organization.
+     * Sets proper attributes including ownerId (parent group ID).
+     * This enables permission checks on child groups.
+     */
+    private void createUMAResourceForGroup(RealmModel realm, String groupName, GroupModel parentGroup) {
+        try {
+            ClientModel client = realm.getClientByClientId(VOLATICLOUD_CLIENT);
+            if (client == null) {
+                log.errorf("Client '%s' not found, cannot create UMA resource", VOLATICLOUD_CLIENT);
+                return;
+            }
+
+            AuthorizationProvider authz = session.getProvider(AuthorizationProvider.class);
+            ResourceServer resourceServer = authz.getStoreFactory().getResourceServerStore()
+                .findByClient(client);
+
+            if (resourceServer == null) {
+                log.errorf("Resource server not found for client '%s'", VOLATICLOUD_CLIENT);
+                return;
+            }
+
+            ResourceStore resourceStore = authz.getStoreFactory().getResourceStore();
+
+            // Check if resource already exists
+            Resource existing = resourceStore.findByName(resourceServer, groupName);
+            if (existing != null) {
+                log.infof("UMA resource '%s' already exists, skipping creation", groupName);
+                return;
+            }
+
+            // Get or create scopes
+            ScopeStore scopeStore = authz.getStoreFactory().getScopeStore();
+            Set<Scope> scopes = new HashSet<>();
+            for (String scopeName : GROUP_SCOPES) {
+                Scope scope = scopeStore.findByName(resourceServer, scopeName);
+                if (scope == null) {
+                    scope = scopeStore.create(resourceServer, scopeName);
+                    log.infof("Created scope: %s", scopeName);
+                }
+                scopes.add(scope);
+            }
+
+            // Create resource
+            Resource resource = resourceStore.create(resourceServer, groupName, resourceServer.getClientId());
+
+            // Set resource type
+            resource.setType(RESOURCE_TYPE_TENANT);
+
+            // Set scopes
+            resource.updateScopes(scopes);
+
+            // Set attributes - include ownerId if this is a child group
+            if (parentGroup != null) {
+                resource.setAttribute("ownerId", java.util.Collections.singletonList(parentGroup.getName()));
+                log.infof("Created UMA resource '%s' with ownerId=%s", groupName, parentGroup.getName());
+            } else {
+                log.infof("Created UMA resource '%s' at root level (no parent)", groupName);
+            }
+
+            log.infof("Created UMA resource for group: %s with type=%s", groupName, RESOURCE_TYPE_TENANT);
+        } catch (Exception e) {
+            log.errorf(e, "Error creating UMA resource for group: %s", groupName);
         }
     }
 

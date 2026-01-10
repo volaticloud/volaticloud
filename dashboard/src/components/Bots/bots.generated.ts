@@ -162,6 +162,9 @@ export function useGetBotsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotsQuery, GetBotsQueryVariables>(GetBotsDocument, options);
         }
+// @ts-ignore
+export function useGetBotsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotsQuery, GetBotsQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotsQuery, GetBotsQueryVariables>;
+export function useGetBotsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotsQuery, GetBotsQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotsQuery | undefined, GetBotsQueryVariables>;
 export function useGetBotsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotsQuery, GetBotsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotsQuery, GetBotsQueryVariables>(GetBotsDocument, options);
@@ -266,6 +269,9 @@ export function useGetBotLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Get
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotQuery, GetBotQueryVariables>(GetBotDocument, options);
         }
+// @ts-ignore
+export function useGetBotSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotQuery, GetBotQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotQuery, GetBotQueryVariables>;
+export function useGetBotSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotQuery, GetBotQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotQuery | undefined, GetBotQueryVariables>;
 export function useGetBotSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotQuery, GetBotQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotQuery, GetBotQueryVariables>(GetBotDocument, options);
@@ -317,6 +323,9 @@ export function useGetBotRunnerStatusLazyQuery(baseOptions?: Apollo.LazyQueryHoo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotRunnerStatusQuery, GetBotRunnerStatusQueryVariables>(GetBotRunnerStatusDocument, options);
         }
+// @ts-ignore
+export function useGetBotRunnerStatusSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotRunnerStatusQuery, GetBotRunnerStatusQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotRunnerStatusQuery, GetBotRunnerStatusQueryVariables>;
+export function useGetBotRunnerStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotRunnerStatusQuery, GetBotRunnerStatusQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotRunnerStatusQuery | undefined, GetBotRunnerStatusQueryVariables>;
 export function useGetBotRunnerStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotRunnerStatusQuery, GetBotRunnerStatusQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotRunnerStatusQuery, GetBotRunnerStatusQueryVariables>(GetBotRunnerStatusDocument, options);
@@ -659,6 +668,9 @@ export function useGetBotUsageHistoryLazyQuery(baseOptions?: Apollo.LazyQueryHoo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>(GetBotUsageHistoryDocument, options);
         }
+// @ts-ignore
+export function useGetBotUsageHistorySuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>;
+export function useGetBotUsageHistorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>): Apollo.UseSuspenseQueryResult<GetBotUsageHistoryQuery | undefined, GetBotUsageHistoryQueryVariables>;
 export function useGetBotUsageHistorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>(GetBotUsageHistoryDocument, options);

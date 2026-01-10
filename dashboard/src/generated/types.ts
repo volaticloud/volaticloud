@@ -2225,6 +2225,16 @@ export type FreqtradeToken = {
   username: Scalars['String']['output'];
 };
 
+export type GroupNode = {
+  __typename?: 'GroupNode';
+  children: Array<GroupNode>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type KrakenConfigInput = {
   apiKey: Scalars['String']['input'];
   apiSecret: Scalars['String']['input'];
@@ -2245,6 +2255,27 @@ export type KubernetesConfigInput = {
 
 export type LocalConfigInput = {
   basePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** User information for resource group members */
+export type MemberUser = {
+  __typename?: 'MemberUser';
+  /** User creation timestamp */
+  createdAt: Scalars['Time']['output'];
+  /** Email address */
+  email?: Maybe<Scalars['String']['output']>;
+  /** Whether the email is verified */
+  emailVerified: Scalars['Boolean']['output'];
+  /** Whether the user account is enabled */
+  enabled: Scalars['Boolean']['output'];
+  /** First name */
+  firstName?: Maybe<Scalars['String']['output']>;
+  /** User ID (Keycloak UUID) */
+  id: Scalars['ID']['output'];
+  /** Last name */
+  lastName?: Maybe<Scalars['String']['output']>;
+  /** Username */
+  username: Scalars['String']['output'];
 };
 
 export type Mutation = {
@@ -2534,6 +2565,27 @@ export enum OrderDirection {
   Desc = 'DESC'
 }
 
+/** User in the organization (from Keycloak) */
+export type OrganizationUser = {
+  __typename?: 'OrganizationUser';
+  /** User creation timestamp (Unix milliseconds) */
+  createdAt: Scalars['Time']['output'];
+  /** Email address */
+  email?: Maybe<Scalars['String']['output']>;
+  /** Whether the email is verified */
+  emailVerified: Scalars['Boolean']['output'];
+  /** Whether the user account is enabled */
+  enabled: Scalars['Boolean']['output'];
+  /** First name */
+  firstName?: Maybe<Scalars['String']['output']>;
+  /** User ID (Keycloak UUID) */
+  id: Scalars['ID']['output'];
+  /** Last name */
+  lastName?: Maybe<Scalars['String']['output']>;
+  /** Username */
+  username: Scalars['String']['output'];
+};
+
 /**
  * Information about pagination in a connection.
  * https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
@@ -2607,15 +2659,45 @@ export type Query = {
   estimatedCost: UsageCost;
   exchanges: ExchangeConnection;
   getBotRunnerStatus?: Maybe<BotStatus>;
+  /**
+   * Get users in a specific group (non-recursive)
+   * Used to fetch members when a role group is selected in the tree
+   * Requires view-users permission on the organization resource
+   */
+  groupMembers: Array<OrganizationUser>;
   /** Fetches an object given its ID. */
   node?: Maybe<Node>;
   /** Lookup nodes by a list of IDs. */
   nodes: Array<Maybe<Node>>;
   /**
+   * Get the hierarchical group tree for an organization
+   * Returns resource groups (inactive) and role subgroups (active)
+   * Requires view-users permission on the organization resource
+   */
+  organizationGroupTree: GroupNode;
+  /**
    * Get total usage for an organization over a time range
    * Aggregates all resources (bots and backtests) owned by the organization
    */
   organizationUsage?: Maybe<ResourceUsageAggregation>;
+  /**
+   * Get all users in the organization
+   * Fetches users from Keycloak group (including subgroups)
+   * Requires view-users permission on the organization resource
+   */
+  organizationUsers: Array<OrganizationUser>;
+  /**
+   * Get paginated members for a resource group
+   * Uses Keycloak extension endpoint for efficient server-side filtering, sorting, and pagination
+   * Requires view-users permission on the organization resource
+   */
+  resourceGroupMembers: ResourceGroupMemberConnection;
+  /**
+   * Get paginated resource groups for an organization
+   * Uses Keycloak extension endpoint for efficient server-side filtering, sorting, and pagination
+   * Requires view-users permission on the organization resource
+   */
+  resourceGroups: ResourceGroupConnection;
   resourceUsageAggregations: Array<ResourceUsageAggregation>;
   resourceUsageSamples: Array<ResourceUsageSample>;
   strategies: StrategyConnection;
@@ -2710,6 +2792,12 @@ export type QueryGetBotRunnerStatusArgs = {
 };
 
 
+export type QueryGroupMembersArgs = {
+  groupId: Scalars['String']['input'];
+  organizationId: Scalars['String']['input'];
+};
+
+
 export type QueryNodeArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2720,10 +2808,39 @@ export type QueryNodesArgs = {
 };
 
 
+export type QueryOrganizationGroupTreeArgs = {
+  organizationId: Scalars['String']['input'];
+};
+
+
 export type QueryOrganizationUsageArgs = {
   end: Scalars['Time']['input'];
   ownerID: Scalars['String']['input'];
   start: Scalars['Time']['input'];
+};
+
+
+export type QueryOrganizationUsersArgs = {
+  organizationId: Scalars['String']['input'];
+};
+
+
+export type QueryResourceGroupMembersArgs = {
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<ResourceGroupMemberOrder>;
+  organizationId: Scalars['String']['input'];
+  resourceGroupId: Scalars['String']['input'];
+  where?: InputMaybe<ResourceGroupMemberWhereInput>;
+};
+
+
+export type QueryResourceGroupsArgs = {
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<ResourceGroupOrder>;
+  organizationId: Scalars['String']['input'];
+  where?: InputMaybe<ResourceGroupWhereInput>;
 };
 
 
@@ -2754,6 +2871,127 @@ export type RegistryAuthInput = {
   password: Scalars['String']['input'];
   serverAddress?: InputMaybe<Scalars['String']['input']>;
   username: Scalars['String']['input'];
+};
+
+/**
+ * Resource group with normalized role data
+ * Represents strategies, bots, and other resources under an organization
+ */
+export type ResourceGroup = {
+  __typename?: 'ResourceGroup';
+  /** Whether this resource group has child resource groups */
+  hasChildren: Scalars['Boolean']['output'];
+  /** Resource group name (our resource UUID) */
+  name: Scalars['String']['output'];
+  /** Resource group path (hierarchical) */
+  path: Scalars['String']['output'];
+  /** List of roles with member counts */
+  roles: Array<RoleInfo>;
+  /** Display title (from GROUP_TITLE attribute) */
+  title: Scalars['String']['output'];
+  /** Total number of members across all roles */
+  totalMembers: Scalars['Int']['output'];
+};
+
+/** Paginated resource group connection */
+export type ResourceGroupConnection = {
+  __typename?: 'ResourceGroupConnection';
+  /** Resource group edges */
+  edges: Array<ResourceGroupEdge>;
+  /** Pagination info */
+  pageInfo: PageInfo;
+  /** Total count of resource groups (before pagination) */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Edge for resource group connection */
+export type ResourceGroupEdge = {
+  __typename?: 'ResourceGroupEdge';
+  /** Cursor for pagination */
+  cursor: Scalars['String']['output'];
+  /** Resource group node */
+  node: ResourceGroup;
+};
+
+/** Resource group member with role information */
+export type ResourceGroupMember = {
+  __typename?: 'ResourceGroupMember';
+  /** Primary role (highest priority: owner > admin > editor > viewer) */
+  primaryRole: Scalars['String']['output'];
+  /** All roles the user has in this resource group */
+  roles: Array<Scalars['String']['output']>;
+  /** User information */
+  user: MemberUser;
+};
+
+/** Paginated resource group member connection */
+export type ResourceGroupMemberConnection = {
+  __typename?: 'ResourceGroupMemberConnection';
+  /** Resource group member edges */
+  edges: Array<ResourceGroupMemberEdge>;
+  /** Pagination info */
+  pageInfo: PageInfo;
+  /** Total count of members (before pagination) */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Edge for resource group member connection */
+export type ResourceGroupMemberEdge = {
+  __typename?: 'ResourceGroupMemberEdge';
+  /** Cursor for pagination */
+  cursor: Scalars['String']['output'];
+  /** Resource group member node */
+  node: ResourceGroupMember;
+};
+
+/** Order input for resource group members */
+export type ResourceGroupMemberOrder = {
+  /** Order direction */
+  direction: OrderDirection;
+  /** Field to order by */
+  field: ResourceGroupMemberOrderField;
+};
+
+/** Resource group member order fields */
+export enum ResourceGroupMemberOrderField {
+  CreatedAt = 'CREATED_AT',
+  Email = 'EMAIL',
+  FirstName = 'FIRST_NAME',
+  LastName = 'LAST_NAME',
+  PrimaryRole = 'PRIMARY_ROLE',
+  Username = 'USERNAME'
+}
+
+/** Filter input for resource group members */
+export type ResourceGroupMemberWhereInput = {
+  /** Filter by email verified status */
+  emailVerified?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by enabled status */
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by roles (user must have at least one of these roles) */
+  roleIn?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Search by username, email, firstName, lastName (case-insensitive) */
+  searchContainsFold?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Order input for resource groups */
+export type ResourceGroupOrder = {
+  /** Order direction */
+  direction: OrderDirection;
+  /** Field to order by */
+  field: ResourceGroupOrderField;
+};
+
+/** Resource group order fields */
+export enum ResourceGroupOrderField {
+  Title = 'TITLE',
+  TotalMembers = 'TOTAL_MEMBERS'
+}
+
+/** Filter input for resource groups */
+export type ResourceGroupWhereInput = {
+  /** Search by title (case-insensitive substring match) */
+  titleContainsFold?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ResourceUsageAggregation = Node & {
@@ -3183,6 +3421,15 @@ export type ResourceUsageSampleWhereInput = {
   sampledAtLTE?: InputMaybe<Scalars['Time']['input']>;
   sampledAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   sampledAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
+};
+
+/** Role information with member count */
+export type RoleInfo = {
+  __typename?: 'RoleInfo';
+  /** Number of members with this role */
+  memberCount: Scalars['Int']['output'];
+  /** Role name (e.g., "admin", "viewer") */
+  name: Scalars['String']['output'];
 };
 
 export type RunnerConfigInput = {

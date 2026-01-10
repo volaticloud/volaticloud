@@ -124,12 +124,24 @@ func (k *KeycloakClient) VerifyToken(ctx context.Context, tokenString string) (*
 		}
 	}
 
+	// Extract groups from JWT claims
+	// Groups format: ["/uuid/resource/role:admin", "/uuid/role:admin"]
+	var groups []string
+	if groupsInterface, ok := claims["groups"].([]interface{}); ok {
+		for _, group := range groupsInterface {
+			if groupStr, ok := group.(string); ok {
+				groups = append(groups, groupStr)
+			}
+		}
+	}
+
 	// Build user context
 	userCtx := &UserContext{
 		UserID:            oidcClaims.Sub,
 		Email:             oidcClaims.Email,
 		PreferredUsername: oidcClaims.PreferredUsername,
 		Roles:             roles,
+		Groups:            groups,
 		RawToken:          tokenString,
 	}
 
@@ -159,4 +171,9 @@ func (k *KeycloakClient) GetIssuerURL() string {
 // GetRealm returns the configured realm name
 func (k *KeycloakClient) GetRealm() string {
 	return k.config.Realm
+}
+
+// GetConfig returns the Keycloak configuration
+func (k *KeycloakClient) GetConfig() KeycloakConfig {
+	return k.config
 }

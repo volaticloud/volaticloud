@@ -7,7 +7,7 @@ import {
   ShowChart as TradeIcon,
   Storage as RuntimeIcon,
   NotificationsActive as AlertsIcon,
-  DataUsage as UsageIcon,
+  Business as OrganizationIcon,
 } from '@mui/icons-material';
 
 export const drawerWidth = 260;
@@ -33,5 +33,5 @@ export const mainMenuItems: MenuItem[] = [
   { text: 'Trades', icon: <TradeIcon />, path: '/trades' },
   { text: 'Runners', icon: <RuntimeIcon />, path: '/runners' },
   { text: 'Alerts', icon: <AlertsIcon />, path: '/alerts' },
-  { text: 'Usage', icon: <UsageIcon />, path: '/usage' },
+  { text: 'Organization', icon: <OrganizationIcon />, path: '/organization/details' },
 ];

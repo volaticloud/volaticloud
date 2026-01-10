@@ -1,0 +1,137 @@
+query OrganizationUsers($organizationId: String!) {
+  organizationUsers(organizationId: $organizationId) {
+    id
+    username
+    email
+    emailVerified
+    firstName
+    lastName
+    enabled
+    createdAt
+  }
+}
+
+query OrganizationGroupTree($organizationId: String!) {
+  organizationGroupTree(organizationId: $organizationId) {
+    id
+    name
+    path
+    type
+    title
+    children {
+      id
+      name
+      path
+      type
+      title
+      children {
+        id
+        name
+        path
+        type
+        title
+        children {
+          id
+          name
+          path
+          type
+          title
+        }
+      }
+    }
+  }
+}
+
+query GroupMembers($organizationId: String!, $groupId: String!) {
+  groupMembers(organizationId: $organizationId, groupId: $groupId) {
+    id
+    username
+    email
+    emailVerified
+    firstName
+    lastName
+    enabled
+    createdAt
+  }
+}
+
+query ResourceGroups(
+  $organizationId: String!
+  $where: ResourceGroupWhereInput
+  $orderBy: ResourceGroupOrder
+  $first: Int
+  $offset: Int
+) {
+  resourceGroups(
+    organizationId: $organizationId
+    where: $where
+    orderBy: $orderBy
+    first: $first
+    offset: $offset
+  ) {
+    edges {
+      node {
+        name
+        path
+        title
+        roles {
+          name
+          memberCount
+        }
+        totalMembers
+        hasChildren
+      }
+      cursor
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query ResourceGroupMembers(
+  $organizationId: String!
+  $resourceGroupId: String!
+  $where: ResourceGroupMemberWhereInput
+  $orderBy: ResourceGroupMemberOrder
+  $first: Int
+  $offset: Int
+) {
+  resourceGroupMembers(
+    organizationId: $organizationId
+    resourceGroupId: $resourceGroupId
+    where: $where
+    orderBy: $orderBy
+    first: $first
+    offset: $offset
+  ) {
+    edges {
+      node {
+        user {
+          id
+          username
+          email
+          emailVerified
+          firstName
+          lastName
+          enabled
+          createdAt
+        }
+        roles
+        primaryRole
+      }
+      cursor
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
