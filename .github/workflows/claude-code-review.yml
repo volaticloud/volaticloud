@@ -46,6 +46,9 @@ jobs:
             - Performance considerations
             - Security concerns
             - Test coverage
+            - Reusability of created components
+            - Following project ADRs and standards
+            - Documentations and ADRs update/create and consistency
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
