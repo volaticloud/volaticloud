@@ -1370,8 +1370,14 @@ func (r *queryResolver) GroupMembers(ctx context.Context, organizationID string,
 }
 
 func (r *queryResolver) ResourceGroups(ctx context.Context, organizationID string, where *model.ResourceGroupWhereInput, orderBy *model.ResourceGroupOrder, first *int, offset *int) (*model.ResourceGroupConnection, error) {
-	// Create admin client
-	adminClient := keycloak.NewAdminClient(r.auth.GetConfig())
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
 
 	// Set defaults for pagination
 	pageSize := 20
@@ -1388,8 +1394,14 @@ func (r *queryResolver) ResourceGroups(ctx context.Context, organizationID strin
 }
 
 func (r *queryResolver) ResourceGroupMembers(ctx context.Context, organizationID string, resourceGroupID string, where *model.ResourceGroupMemberWhereInput, orderBy *model.ResourceGroupMemberOrder, first *int, offset *int) (*model.ResourceGroupMemberConnection, error) {
-	// Create admin client
-	adminClient := keycloak.NewAdminClient(r.auth.GetConfig())
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
 
 	// Set defaults for pagination
 	pageSize := 50

@@ -3,6 +3,7 @@ package organization
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -145,9 +146,13 @@ func buildResourceGroupConnection(
 		// Parse the name (our resource UUID) for the cursor
 		if startID, err := uuid.Parse(edges[0].Node.Name); err == nil {
 			startCursor = &ent.Cursor{ID: startID}
+		} else {
+			log.Printf("Warning: invalid UUID for resource group cursor (start): %s - %v", edges[0].Node.Name, err)
 		}
 		if endID, err := uuid.Parse(edges[len(edges)-1].Node.Name); err == nil {
 			endCursor = &ent.Cursor{ID: endID}
+		} else {
+			log.Printf("Warning: invalid UUID for resource group cursor (end): %s - %v", edges[len(edges)-1].Node.Name, err)
 		}
 	}
 
@@ -174,7 +179,9 @@ func buildResourceGroupMemberConnection(
 		// Parse user ID
 		userID, err := uuid.Parse(item.User.ID)
 		if err != nil {
-			// Skip invalid IDs (shouldn't happen)
+			// Skip invalid IDs (shouldn't happen with Keycloak UUIDs)
+			log.Printf("Warning: skipping resource group member with invalid UUID: %s (username: %s) - %v",
+				item.User.ID, item.User.Username, err)
 			continue
 		}
 

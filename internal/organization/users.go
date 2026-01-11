@@ -5,6 +5,7 @@ package organization
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -76,6 +77,8 @@ func convertGroupNode(node *keycloak.GroupNode) *model.GroupNode {
 	groupID, err := uuid.Parse(node.ID)
 	if err != nil {
 		// If ID is invalid, return nil (shouldn't happen with Keycloak UUIDs)
+		log.Printf("Warning: skipping group node with invalid UUID: %s (name: %s, path: %s) - %v",
+			node.ID, node.Name, node.Path, err)
 		return nil
 	}
 
