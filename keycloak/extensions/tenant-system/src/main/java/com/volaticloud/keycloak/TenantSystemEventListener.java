@@ -190,20 +190,18 @@ public class TenantSystemEventListener implements EventListenerProvider {
         }
         log.infof("Created organization resource for user: %s", userId);
 
-        // Step 2: Create group structure (same logic as handleResourceCreation)
-        createHierarchicalGroupStructure(realm, userId, null, GROUP_TYPE_ORGANIZATION);
+        // Step 2: Generate organization title
+        String organizationTitle = generateOrganizationTitle(user);
 
-        // Step 3: Add user to admin role subgroup
+        // Step 3: Create group structure (same logic as handleResourceCreation)
+        createHierarchicalGroupStructure(realm, userId, null, GROUP_TYPE_ORGANIZATION, organizationTitle);
+
+        // Step 4: Add user to admin role subgroup
         GroupModel userGroup = session.groups().getGroupByName(realm, null, userId);
         if (userGroup == null) {
             log.errorf("Could not find tenant group for user: %s", userId);
             return;
         }
-
-        // Step 4: Set GROUP_TITLE attribute based on user's name or email
-        String organizationTitle = generateOrganizationTitle(user);
-        userGroup.setSingleAttribute(GROUP_TITLE_ATTRIBUTE, organizationTitle);
-        log.infof("Set GROUP_TITLE=%s for organization group: %s", organizationTitle, userId);
 
         GroupModel adminRole = session.groups().getGroupByName(realm, userGroup, ROLE_ADMIN);
         if (adminRole != null) {
@@ -319,13 +317,19 @@ public class TenantSystemEventListener implements EventListenerProvider {
 
         String ownerId = extractOwnerIdFromAttributes(representation);
         String resourceType = extractTypeFromAttributes(representation);
+        String resourceTitle = extractTitleFromAttributes(representation);
 
         // If resource doesn't have type attribute, set to "none"
         if (resourceType == null || resourceType.isEmpty()) {
             resourceType = GROUP_TYPE_NONE;
         }
 
-        log.infof("Processing resource: name=%s, ownerId=%s, type=%s", resourceName, ownerId, resourceType);
+        // Use resource name as title fallback if title not provided
+        if (resourceTitle == null || resourceTitle.isEmpty()) {
+            resourceTitle = resourceName;
+        }
+
+        log.infof("Processing resource: name=%s, ownerId=%s, type=%s, title=%s", resourceName, ownerId, resourceType, resourceTitle);
 
         // Get the realm
         RealmModel realm = session.getContext().getRealm();
@@ -335,7 +339,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
         }
 
         // Create hierarchical group structure
-        createHierarchicalGroupStructure(realm, resourceName, ownerId, resourceType);
+        createHierarchicalGroupStructure(realm, resourceName, ownerId, resourceType, resourceTitle);
 
         log.infof("Successfully created group structure for resource: %s", resourceName);
     }
@@ -420,7 +424,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
      * Creates hierarchical group structure.
      * If parent group doesn't exist, creates it automatically with role subgroups.
      */
-    private void createHierarchicalGroupStructure(RealmModel realm, String resourceName, String ownerId, String resourceType) {
+    private void createHierarchicalGroupStructure(RealmModel realm, String resourceName, String ownerId, String resourceType, String resourceTitle) {
         GroupModel parentGroup = null;
 
         // If ownerId is provided, get or create parent group
@@ -432,7 +436,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
                 // Parent group doesn't exist - create it with role subgroups
                 // Use GROUP_TYPE_NONE for auto-created parent groups (owner resource not yet created)
                 log.infof("Parent group '%s' not found, creating it automatically", ownerId);
-                parentGroup = createGroupWithRoles(realm, ownerId, null, GROUP_TYPE_NONE);
+                parentGroup = createGroupWithRoles(realm, ownerId, null, GROUP_TYPE_NONE, ownerId);
                 log.infof("Created parent group: %s", ownerId);
             } else {
                 log.infof("Found existing parent group: %s", ownerId);
@@ -450,7 +454,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
         }
 
         // Create resource group under parent (or at root if no parent)
-        createGroupWithRoles(realm, resourceName, parentGroup, resourceType);
+        createGroupWithRoles(realm, resourceName, parentGroup, resourceType, resourceTitle);
     }
 
     /**
@@ -482,11 +486,11 @@ public class TenantSystemEventListener implements EventListenerProvider {
     }
 
     /**
-     * Creates a new group with role subgroups and GROUP_TYPE attribute.
+     * Creates a new group with role subgroups, GROUP_TYPE and GROUP_TITLE attributes.
      * Also creates a corresponding UMA resource with proper attributes.
      * Returns the created or existing group.
      */
-    private GroupModel createGroupWithRoles(RealmModel realm, String groupName, GroupModel parentGroup, String groupType) {
+    private GroupModel createGroupWithRoles(RealmModel realm, String groupName, GroupModel parentGroup, String groupType, String groupTitle) {
         // Check if group already exists
         GroupModel existingGroup = session.groups().getGroupByName(realm, parentGroup, groupName);
 
@@ -502,8 +506,14 @@ public class TenantSystemEventListener implements EventListenerProvider {
                 log.infof("Set GROUP_TYPE=%s for existing group: %s", groupType, groupName);
             }
 
+            // Update GROUP_TITLE attribute if not set
+            if (!existingGroup.getAttributes().containsKey(GROUP_TITLE_ATTRIBUTE)) {
+                existingGroup.setSingleAttribute(GROUP_TITLE_ATTRIBUTE, groupTitle);
+                log.infof("Set GROUP_TITLE=%s for existing group: %s", groupTitle, groupName);
+            }
+
             // Ensure UMA resource exists for this group
-            ensureUMAResourceExists(realm, groupName, parentGroup);
+            ensureUMAResourceExists(realm, groupName, parentGroup, groupTitle);
 
             return existingGroup;
         }
@@ -514,14 +524,17 @@ public class TenantSystemEventListener implements EventListenerProvider {
         // Set GROUP_TYPE attribute
         group.setSingleAttribute(GROUP_TYPE_ATTRIBUTE, groupType);
 
-        log.infof("Created group: %s under parent: %s with GROUP_TYPE=%s",
-                 groupName, parentGroup != null ? parentGroup.getName() : "root", groupType);
+        // Set GROUP_TITLE attribute
+        group.setSingleAttribute(GROUP_TITLE_ATTRIBUTE, groupTitle);
+
+        log.infof("Created group: %s under parent: %s with GROUP_TYPE=%s, GROUP_TITLE=%s",
+                 groupName, parentGroup != null ? parentGroup.getName() : "root", groupType, groupTitle);
 
         // Create role subgroups
         createRoleSubgroups(realm, group);
 
         // Create UMA resource for this group
-        createUMAResourceForGroup(realm, groupName, parentGroup);
+        createUMAResourceForGroup(realm, groupName, parentGroup, groupTitle);
 
         return group;
     }
@@ -562,7 +575,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
      * If resource doesn't exist, creates it with proper attributes.
      * This is used when groups already exist but their UMA resources might be missing.
      */
-    private void ensureUMAResourceExists(RealmModel realm, String groupName, GroupModel parentGroup) {
+    private void ensureUMAResourceExists(RealmModel realm, String groupName, GroupModel parentGroup, String groupTitle) {
         try {
             ClientModel client = realm.getClientByClientId(VOLATICLOUD_CLIENT);
             if (client == null) {
@@ -589,7 +602,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
             }
 
             // Create the resource
-            createUMAResourceForGroup(realm, groupName, parentGroup);
+            createUMAResourceForGroup(realm, groupName, parentGroup, groupTitle);
         } catch (Exception e) {
             log.errorf(e, "Error ensuring UMA resource exists for group: %s", groupName);
         }
@@ -597,10 +610,10 @@ public class TenantSystemEventListener implements EventListenerProvider {
 
     /**
      * Creates a UMA resource for a child group/organization.
-     * Sets proper attributes including ownerId (parent group ID).
+     * Sets proper attributes including ownerId (parent group ID) and title.
      * This enables permission checks on child groups.
      */
-    private void createUMAResourceForGroup(RealmModel realm, String groupName, GroupModel parentGroup) {
+    private void createUMAResourceForGroup(RealmModel realm, String groupName, GroupModel parentGroup, String groupTitle) {
         try {
             ClientModel client = realm.getClientByClientId(VOLATICLOUD_CLIENT);
             if (client == null) {
@@ -647,15 +660,18 @@ public class TenantSystemEventListener implements EventListenerProvider {
             // Set scopes
             resource.updateScopes(scopes);
 
-            // Set attributes - include ownerId if this is a child group
+            // Set attributes - include ownerId if this is a child group, and title
             if (parentGroup != null) {
                 resource.setAttribute("ownerId", java.util.Collections.singletonList(parentGroup.getName()));
-                log.infof("Created UMA resource '%s' with ownerId=%s", groupName, parentGroup.getName());
-            } else {
-                log.infof("Created UMA resource '%s' at root level (no parent)", groupName);
             }
 
-            log.infof("Created UMA resource for group: %s with type=%s", groupName, RESOURCE_TYPE_TENANT);
+            // Set title attribute on UMA resource for consistency
+            if (groupTitle != null && !groupTitle.isEmpty()) {
+                resource.setAttribute("title", java.util.Collections.singletonList(groupTitle));
+            }
+
+            log.infof("Created UMA resource '%s' with ownerId=%s, title=%s", groupName,
+                     parentGroup != null ? parentGroup.getName() : "none", groupTitle);
         } catch (Exception e) {
             log.errorf(e, "Error creating UMA resource for group: %s", groupName);
         }
@@ -768,6 +784,47 @@ public class TenantSystemEventListener implements EventListenerProvider {
             return jsonRepresentation.substring(valueStart + 1, valueEnd);
         } catch (Exception e) {
             log.errorf(e, "Error parsing type from attributes: %s", jsonRepresentation);
+            return null;
+        }
+    }
+
+    /**
+     * Extracts title from resource attributes.
+     * Example JSON: {"attributes":{"title":["My Strategy (v1)"]}}
+     */
+    private String extractTitleFromAttributes(String jsonRepresentation) {
+        try {
+            // Look for "attributes" object
+            int attributesStart = jsonRepresentation.indexOf("\"attributes\"");
+            if (attributesStart == -1) {
+                return null;
+            }
+
+            // Look for "title" within attributes
+            int titleStart = jsonRepresentation.indexOf("\"title\"", attributesStart);
+            if (titleStart == -1) {
+                return null;
+            }
+
+            // title is an array, get first element: ["value"]
+            int arrayStart = jsonRepresentation.indexOf("[", titleStart);
+            if (arrayStart == -1) {
+                return null;
+            }
+
+            int valueStart = jsonRepresentation.indexOf("\"", arrayStart);
+            if (valueStart == -1) {
+                return null;
+            }
+
+            int valueEnd = jsonRepresentation.indexOf("\"", valueStart + 1);
+            if (valueEnd == -1) {
+                return null;
+            }
+
+            return jsonRepresentation.substring(valueStart + 1, valueEnd);
+        } catch (Exception e) {
+            log.errorf(e, "Error parsing title from attributes: %s", jsonRepresentation);
             return null;
         }
     }

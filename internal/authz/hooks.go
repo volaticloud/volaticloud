@@ -73,6 +73,7 @@ func strategyCreateHook() ent.Hook {
 					"ownerId": {strategy.OwnerID},
 					"type":    {string(ResourceTypeStrategy)},
 					"public":  {fmt.Sprintf("%t", strategy.Public)},
+					"title":   {resourceName}, // For GROUP_TITLE attribute
 				}
 
 				err = umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, scopes, attributes)
@@ -161,6 +162,7 @@ func botCreateHook() ent.Hook {
 					"ownerId": {bot.OwnerID},
 					"type":    {string(ResourceTypeBot)},
 					"public":  {fmt.Sprintf("%t", bot.Public)},
+					"title":   {bot.Name}, // For GROUP_TITLE attribute
 				}
 
 				err = umaClient.CreateResource(ctx, bot.ID.String(), bot.Name, scopes, attributes)
@@ -248,6 +250,7 @@ func exchangeCreateHook() ent.Hook {
 				attributes := map[string][]string{
 					"ownerId": {exchange.OwnerID},
 					"type":    {string(ResourceTypeExchange)},
+					"title":   {exchange.Name}, // For GROUP_TITLE attribute
 				}
 
 				err = umaClient.CreateResource(ctx, exchange.ID.String(), exchange.Name, scopes, attributes)
@@ -336,6 +339,7 @@ func botRunnerCreateHook() ent.Hook {
 					"ownerId": {runner.OwnerID},
 					"type":    {string(ResourceTypeBotRunner)},
 					"public":  {fmt.Sprintf("%t", runner.Public)},
+					"title":   {runner.Name}, // For GROUP_TITLE attribute
 				}
 
 				err = umaClient.CreateResource(ctx, runner.ID.String(), runner.Name, scopes, attributes)
