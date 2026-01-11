@@ -150,7 +150,7 @@ export const ResourceGroupMembersTable = ({
               label="Roles"
               renderValue={(selected) => selected.join(', ')}
             >
-              {availableRoles.map((role) => (
+              {availableRoles.map((role: string) => (
                 <MenuItem key={role} value={role}>
                   <Checkbox checked={selectedRoles.indexOf(role) > -1} />
                   {role}

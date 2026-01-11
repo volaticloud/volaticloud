@@ -94,7 +94,7 @@ const TreeNode = ({ node, level, selectedGroupId, onGroupSelect }: TreeNodeProps
             {node.children!.map((child) => (
               <TreeNode
                 key={child.id}
-                node={child}
+                node={child as GroupNode}
                 level={level + 1}
                 selectedGroupId={selectedGroupId}
                 onGroupSelect={onGroupSelect}
