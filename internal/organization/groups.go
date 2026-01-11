@@ -71,7 +71,7 @@ func GetResourceGroupMembers(
 	var enabled, emailVerified *bool
 
 	if where != nil {
-		if where.RoleIn != nil && len(where.RoleIn) > 0 {
+		if len(where.RoleIn) > 0 {
 			roleFilter = where.RoleIn
 		}
 		if where.SearchContainsFold != nil {
