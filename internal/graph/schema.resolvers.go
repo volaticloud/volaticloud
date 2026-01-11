@@ -25,7 +25,9 @@ import (
 	"volaticloud/internal/enum"
 	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/graph/model"
+	"volaticloud/internal/keycloak"
 	"volaticloud/internal/monitor"
+	"volaticloud/internal/organization"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
 	strategy1 "volaticloud/internal/strategy"
@@ -1299,6 +1301,120 @@ func (r *queryResolver) CheckPermissions(ctx context.Context, permissions []*mod
 	}
 
 	return results, nil
+}
+
+func (r *queryResolver) OrganizationUsers(ctx context.Context, organizationID string) ([]*model.OrganizationUser, error) {
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Create admin client
+	adminClient := keycloak.NewAdminClient(r.auth.GetConfig())
+
+	// Get organization users from Keycloak
+	// organizationID is the group UUID in Keycloak
+	kcUsers, err := adminClient.GetGroupUsers(ctx, organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch organization users: %w", err)
+	}
+
+	// Convert keycloak.OrganizationUser to model.OrganizationUser
+	users := make([]*model.OrganizationUser, len(kcUsers))
+	for i, kcUser := range kcUsers {
+		// Parse Keycloak user ID (UUID string) to uuid.UUID
+		userID, err := uuid.Parse(kcUser.ID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid user ID format for user %s: %w", kcUser.Username, err)
+		}
+
+		users[i] = &model.OrganizationUser{
+			ID:            userID,
+			Username:      kcUser.Username,
+			Email:         &kcUser.Email,
+			EmailVerified: kcUser.EmailVerified,
+			FirstName:     &kcUser.FirstName,
+			LastName:      &kcUser.LastName,
+			Enabled:       kcUser.Enabled,
+			CreatedAt:     time.UnixMilli(kcUser.CreatedAt),
+		}
+	}
+
+	return users, nil
+}
+
+func (r *queryResolver) OrganizationGroupTree(ctx context.Context, organizationID string) (*model.GroupNode, error) {
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Delegate to organization package (business logic layer)
+	return organization.GetGroupTree(ctx, adminClient, organizationID)
+}
+
+func (r *queryResolver) GroupMembers(ctx context.Context, organizationID string, groupID string) ([]*model.OrganizationUser, error) {
+	// Authorization is handled by @hasScope directive on organizationId
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Delegate to organization package (business logic layer)
+	return organization.GetGroupMembers(ctx, adminClient, groupID)
+}
+
+func (r *queryResolver) ResourceGroups(ctx context.Context, organizationID string, where *model.ResourceGroupWhereInput, orderBy *model.ResourceGroupOrder, first *int, offset *int) (*model.ResourceGroupConnection, error) {
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Set defaults for pagination
+	pageSize := 20
+	pageOffset := 0
+	if first != nil && *first > 0 {
+		pageSize = *first
+	}
+	if offset != nil && *offset > 0 {
+		pageOffset = *offset
+	}
+
+	// Call organization package (thin wrapper to Keycloak extension)
+	return organization.GetResourceGroups(ctx, adminClient, organizationID, where, orderBy, pageSize, pageOffset)
+}
+
+func (r *queryResolver) ResourceGroupMembers(ctx context.Context, organizationID string, resourceGroupID string, where *model.ResourceGroupMemberWhereInput, orderBy *model.ResourceGroupMemberOrder, first *int, offset *int) (*model.ResourceGroupMemberConnection, error) {
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has view-users permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Set defaults for pagination
+	pageSize := 50
+	pageOffset := 0
+	if first != nil && *first > 0 {
+		pageSize = *first
+	}
+	if offset != nil && *offset > 0 {
+		pageOffset = *offset
+	}
+
+	// Call organization package (thin wrapper to Keycloak extension)
+	return organization.GetResourceGroupMembers(ctx, adminClient, organizationID, resourceGroupID, where, orderBy, pageSize, pageOffset)
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

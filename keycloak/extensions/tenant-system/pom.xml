@@ -60,6 +60,14 @@
             <version>${keycloak.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- JAX-RS API for REST endpoints -->
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

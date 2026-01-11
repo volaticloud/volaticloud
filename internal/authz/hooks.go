@@ -160,6 +160,7 @@ func botCreateHook() ent.Hook {
 				attributes := map[string][]string{
 					"ownerId": {bot.OwnerID},
 					"type":    {string(ResourceTypeBot)},
+					"public":  {fmt.Sprintf("%t", bot.Public)},
 				}
 
 				err = umaClient.CreateResource(ctx, bot.ID.String(), bot.Name, scopes, attributes)
@@ -334,6 +335,7 @@ func botRunnerCreateHook() ent.Hook {
 				attributes := map[string][]string{
 					"ownerId": {runner.OwnerID},
 					"type":    {string(ResourceTypeBotRunner)},
+					"public":  {fmt.Sprintf("%t", runner.Public)},
 				}
 
 				err = umaClient.CreateResource(ctx, runner.ID.String(), runner.Name, scopes, attributes)

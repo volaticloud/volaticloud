@@ -45,6 +45,9 @@ export function useCheckPermissionsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<CheckPermissionsQuery, CheckPermissionsQueryVariables>(CheckPermissionsDocument, options);
         }
+// @ts-ignore
+export function useCheckPermissionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CheckPermissionsQuery, CheckPermissionsQueryVariables>): Apollo.UseSuspenseQueryResult<CheckPermissionsQuery, CheckPermissionsQueryVariables>;
+export function useCheckPermissionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CheckPermissionsQuery, CheckPermissionsQueryVariables>): Apollo.UseSuspenseQueryResult<CheckPermissionsQuery | undefined, CheckPermissionsQueryVariables>;
 export function useCheckPermissionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CheckPermissionsQuery, CheckPermissionsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<CheckPermissionsQuery, CheckPermissionsQueryVariables>(CheckPermissionsDocument, options);

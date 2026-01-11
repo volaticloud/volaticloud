@@ -86,10 +86,30 @@ func SyncResourcePermissions(
 
 // syncGroupResource syncs scopes for a Group/Organization resource.
 // Groups exist in Keycloak but not in our ENT database.
+// Preserves existing ownerId attribute from the resource.
 func syncGroupResource(ctx context.Context, umaClient keycloak.UMAClientInterface, resourceID string) error {
 	scopes := GetScopesForType(ResourceTypeGroup)
+
+	// Get existing resource to preserve ownerId attribute
+	resource, err := umaClient.GetResource(ctx, resourceID)
+	if err != nil {
+		// Resource doesn't exist yet - create it without ownerId (root-level organization)
+		return umaClient.SyncResourceScopes(ctx, resourceID, fmt.Sprintf("Group: %s", resourceID),
+			scopes, map[string][]string{
+				"type": {string(ResourceTypeGroup)},
+			})
+	}
+
+	// Preserve existing ownerId if present
+	attributes := map[string][]string{
+		"type": {string(ResourceTypeGroup)},
+	}
+	if resource.Attributes != nil {
+		if ownerID, exists := (*resource.Attributes)["ownerId"]; exists && len(ownerID) > 0 {
+			attributes["ownerId"] = ownerID
+		}
+	}
+
 	return umaClient.SyncResourceScopes(ctx, resourceID, fmt.Sprintf("Group: %s", resourceID),
-		scopes, map[string][]string{
-			"type": {string(ResourceTypeGroup)},
-		})
+		scopes, attributes)
 }

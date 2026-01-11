@@ -237,6 +237,10 @@ func runServer(c *cli.Context) error {
 	)
 	log.Println("✓ Keycloak UMA 2.0 authorization enabled")
 
+	// Initialize Admin client for Keycloak group/user management
+	adminClient := keycloak.NewAdminClient(keycloakConfig)
+	log.Println("✓ Keycloak Admin API client initialized")
+
 	// Register ENT hooks for automatic Keycloak resource sync
 	// This ensures resources are created/deleted in Keycloak when entities are created/deleted
 	authz.RegisterKeycloakHooks(client)
@@ -354,6 +358,8 @@ func runServer(c *cli.Context) error {
 			ctx = graph.SetUMAClientInContext(ctx, umaClient)
 			// Inject UMA client for ENT hooks (authz package uses its own context key)
 			ctx = authz.SetUMAClientInContext(ctx, umaClient)
+			// Inject Admin client (for organization/user management)
+			ctx = graph.SetAdminClientInContext(ctx, adminClient)
 			// Inject alert service (always available)
 			ctx = alert.SetServiceInContext(ctx, alertService)
 			// Inject alert manager (only if configured)

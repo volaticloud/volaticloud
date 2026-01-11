@@ -597,3 +597,350 @@ extend type Query {
   """
   checkPermissions(permissions: [PermissionCheckInput!]!): [PermissionCheckResult!]! @isAuthenticated
 }
+
+# Organization User Management
+# Uses Keycloak Admin API to fetch users from organization groups
+
+"""
+User in the organization (from Keycloak)
+"""
+type OrganizationUser {
+  """
+  User ID (Keycloak UUID)
+  """
+  id: ID!
+  """
+  Username
+  """
+  username: String!
+  """
+  Email address
+  """
+  email: String
+  """
+  Whether the email is verified
+  """
+  emailVerified: Boolean!
+  """
+  First name
+  """
+  firstName: String
+  """
+  Last name
+  """
+  lastName: String
+  """
+  Whether the user account is enabled
+  """
+  enabled: Boolean!
+  """
+  User creation timestamp (Unix milliseconds)
+  """
+  createdAt: Time!
+}
+
+type GroupNode {
+  id: ID!
+  name: String!
+  path: String!
+  type: String!
+  title: String!
+  children: [GroupNode!]!
+}
+
+# Resource Group Management (uses Keycloak extension endpoints)
+
+"""
+Role information with member count
+"""
+type RoleInfo {
+  """
+  Role name (e.g., "admin", "viewer")
+  """
+  name: String!
+  """
+  Number of members with this role
+  """
+  memberCount: Int!
+}
+
+"""
+Resource group with normalized role data
+Represents strategies, bots, and other resources under an organization
+"""
+type ResourceGroup {
+  """
+  Resource group name (our resource UUID)
+  """
+  name: String!
+  """
+  Resource group path (hierarchical)
+  """
+  path: String!
+  """
+  Display title (from GROUP_TITLE attribute)
+  """
+  title: String!
+  """
+  List of roles with member counts
+  """
+  roles: [RoleInfo!]!
+  """
+  Total number of members across all roles
+  """
+  totalMembers: Int!
+  """
+  Whether this resource group has child resource groups
+  """
+  hasChildren: Boolean!
+}
+
+"""
+Edge for resource group connection
+"""
+type ResourceGroupEdge {
+  """
+  Resource group node
+  """
+  node: ResourceGroup!
+  """
+  Cursor for pagination
+  """
+  cursor: String!
+}
+
+"""
+Paginated resource group connection
+"""
+type ResourceGroupConnection {
+  """
+  Resource group edges
+  """
+  edges: [ResourceGroupEdge!]!
+  """
+  Total count of resource groups (before pagination)
+  """
+  totalCount: Int!
+  """
+  Pagination info
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+User information for resource group members
+"""
+type MemberUser {
+  """
+  User ID (Keycloak UUID)
+  """
+  id: ID!
+  """
+  Username
+  """
+  username: String!
+  """
+  Email address
+  """
+  email: String
+  """
+  Whether the email is verified
+  """
+  emailVerified: Boolean!
+  """
+  First name
+  """
+  firstName: String
+  """
+  Last name
+  """
+  lastName: String
+  """
+  Whether the user account is enabled
+  """
+  enabled: Boolean!
+  """
+  User creation timestamp
+  """
+  createdAt: Time!
+}
+
+"""
+Resource group member with role information
+"""
+type ResourceGroupMember {
+  """
+  User information
+  """
+  user: MemberUser!
+  """
+  All roles the user has in this resource group
+  """
+  roles: [String!]!
+  """
+  Primary role (highest priority: owner > admin > editor > viewer)
+  """
+  primaryRole: String!
+}
+
+"""
+Edge for resource group member connection
+"""
+type ResourceGroupMemberEdge {
+  """
+  Resource group member node
+  """
+  node: ResourceGroupMember!
+  """
+  Cursor for pagination
+  """
+  cursor: String!
+}
+
+"""
+Paginated resource group member connection
+"""
+type ResourceGroupMemberConnection {
+  """
+  Resource group member edges
+  """
+  edges: [ResourceGroupMemberEdge!]!
+  """
+  Total count of members (before pagination)
+  """
+  totalCount: Int!
+  """
+  Pagination info
+  """
+  pageInfo: PageInfo!
+}
+
+"""
+Filter input for resource groups
+"""
+input ResourceGroupWhereInput {
+  """
+  Search by title (case-insensitive substring match)
+  """
+  titleContainsFold: String
+}
+
+"""
+Order input for resource groups
+"""
+input ResourceGroupOrder {
+  """
+  Field to order by
+  """
+  field: ResourceGroupOrderField!
+  """
+  Order direction
+  """
+  direction: OrderDirection!
+}
+
+"""
+Resource group order fields
+"""
+enum ResourceGroupOrderField {
+  TITLE
+  TOTAL_MEMBERS
+}
+
+"""
+Filter input for resource group members
+"""
+input ResourceGroupMemberWhereInput {
+  """
+  Filter by roles (user must have at least one of these roles)
+  """
+  roleIn: [String!]
+  """
+  Search by username, email, firstName, lastName (case-insensitive)
+  """
+  searchContainsFold: String
+  """
+  Filter by enabled status
+  """
+  enabled: Boolean
+  """
+  Filter by email verified status
+  """
+  emailVerified: Boolean
+}
+
+"""
+Order input for resource group members
+"""
+input ResourceGroupMemberOrder {
+  """
+  Field to order by
+  """
+  field: ResourceGroupMemberOrderField!
+  """
+  Order direction
+  """
+  direction: OrderDirection!
+}
+
+"""
+Resource group member order fields
+"""
+enum ResourceGroupMemberOrderField {
+  USERNAME
+  EMAIL
+  FIRST_NAME
+  LAST_NAME
+  CREATED_AT
+  PRIMARY_ROLE
+}
+
+extend type Query {
+  """
+  Get all users in the organization
+  Fetches users from Keycloak group (including subgroups)
+  Requires view-users permission on the organization resource
+  """
+  organizationUsers(organizationId: String!): [OrganizationUser!]! @hasScope(resource: "organizationId", scope: "view-users")
+
+  """
+  Get the hierarchical group tree for an organization
+  Returns resource groups (inactive) and role subgroups (active)
+  Requires view-users permission on the organization resource
+  """
+  organizationGroupTree(organizationId: String!): GroupNode! @hasScope(resource: "organizationId", scope: "view-users")
+
+  """
+  Get users in a specific group (non-recursive)
+  Used to fetch members when a role group is selected in the tree
+  Requires view-users permission on the organization resource
+  """
+  groupMembers(organizationId: String!, groupId: String!): [OrganizationUser!]! @hasScope(resource: "organizationId", scope: "view-users")
+
+  """
+  Get paginated resource groups for an organization
+  Uses Keycloak extension endpoint for efficient server-side filtering, sorting, and pagination
+  Requires view-users permission on the organization resource
+  """
+  resourceGroups(
+    organizationId: String!
+    where: ResourceGroupWhereInput
+    orderBy: ResourceGroupOrder
+    first: Int = 20
+    offset: Int = 0
+  ): ResourceGroupConnection! @hasScope(resource: "organizationId", scope: "view-users")
+
+  """
+  Get paginated members for a resource group
+  Uses Keycloak extension endpoint for efficient server-side filtering, sorting, and pagination
+  Requires view-users permission on the organization resource
+  """
+  resourceGroupMembers(
+    organizationId: String!
+    resourceGroupId: String!
+    where: ResourceGroupMemberWhereInput
+    orderBy: ResourceGroupMemberOrder
+    first: Int = 50
+    offset: Int = 0
+  ): ResourceGroupMemberConnection! @hasScope(resource: "organizationId", scope: "view-users")
+}

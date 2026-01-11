@@ -1,5 +1,5 @@
 import { UsageDashboard } from '../../components/Usage/UsageDashboard';
 
-export const UsagePage = () => {
+export const OrganizationUsagePage = () => {
   return <UsageDashboard />;
 };

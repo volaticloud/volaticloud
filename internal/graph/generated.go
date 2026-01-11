@@ -355,6 +355,26 @@ type ComplexityRoot struct {
 		Username     func(childComplexity int) int
 	}
 
+	GroupNode struct {
+		Children func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Name     func(childComplexity int) int
+		Path     func(childComplexity int) int
+		Title    func(childComplexity int) int
+		Type     func(childComplexity int) int
+	}
+
+	MemberUser struct {
+		CreatedAt     func(childComplexity int) int
+		Email         func(childComplexity int) int
+		EmailVerified func(childComplexity int) int
+		Enabled       func(childComplexity int) int
+		FirstName     func(childComplexity int) int
+		ID            func(childComplexity int) int
+		LastName      func(childComplexity int) int
+		Username      func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateAlertRule          func(childComplexity int, input ent.CreateAlertRuleInput) int
 		CreateBot                func(childComplexity int, input ent.CreateBotInput) int
@@ -393,6 +413,17 @@ type ComplexityRoot struct {
 		UpdateTrade              func(childComplexity int, id uuid.UUID, input ent.UpdateTradeInput) int
 	}
 
+	OrganizationUser struct {
+		CreatedAt     func(childComplexity int) int
+		Email         func(childComplexity int) int
+		EmailVerified func(childComplexity int) int
+		Enabled       func(childComplexity int) int
+		FirstName     func(childComplexity int) int
+		ID            func(childComplexity int) int
+		LastName      func(childComplexity int) int
+		Username      func(childComplexity int) int
+	}
+
 	PageInfo struct {
 		EndCursor       func(childComplexity int) int
 		HasNextPage     func(childComplexity int) int
@@ -419,14 +450,56 @@ type ComplexityRoot struct {
 		EstimatedCost             func(childComplexity int, ownerID string, start time.Time, end time.Time) int
 		Exchanges                 func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.ExchangeWhereInput) int
 		GetBotRunnerStatus        func(childComplexity int, id uuid.UUID) int
+		GroupMembers              func(childComplexity int, organizationID string, groupID string) int
 		Node                      func(childComplexity int, id uuid.UUID) int
 		Nodes                     func(childComplexity int, ids []uuid.UUID) int
+		OrganizationGroupTree     func(childComplexity int, organizationID string) int
 		OrganizationUsage         func(childComplexity int, ownerID string, start time.Time, end time.Time) int
+		OrganizationUsers         func(childComplexity int, organizationID string) int
+		ResourceGroupMembers      func(childComplexity int, organizationID string, resourceGroupID string, where *model.ResourceGroupMemberWhereInput, orderBy *model.ResourceGroupMemberOrder, first *int, offset *int) int
+		ResourceGroups            func(childComplexity int, organizationID string, where *model.ResourceGroupWhereInput, orderBy *model.ResourceGroupOrder, first *int, offset *int) int
 		ResourceUsageAggregations func(childComplexity int) int
 		ResourceUsageSamples      func(childComplexity int) int
 		Strategies                func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.StrategyWhereInput) int
 		StrategyVersions          func(childComplexity int, name string) int
 		Trades                    func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, orderBy *ent.TradeOrder, where *ent.TradeWhereInput) int
+	}
+
+	ResourceGroup struct {
+		HasChildren  func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Path         func(childComplexity int) int
+		Roles        func(childComplexity int) int
+		Title        func(childComplexity int) int
+		TotalMembers func(childComplexity int) int
+	}
+
+	ResourceGroupConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ResourceGroupEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	ResourceGroupMember struct {
+		PrimaryRole func(childComplexity int) int
+		Roles       func(childComplexity int) int
+		User        func(childComplexity int) int
+	}
+
+	ResourceGroupMemberConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ResourceGroupMemberEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	ResourceUsageAggregation struct {
@@ -470,6 +543,11 @@ type ComplexityRoot struct {
 		Runner          func(childComplexity int) int
 		RunnerID        func(childComplexity int) int
 		SampledAt       func(childComplexity int) int
+	}
+
+	RoleInfo struct {
+		MemberCount func(childComplexity int) int
+		Name        func(childComplexity int) int
 	}
 
 	SelectOption struct {
@@ -617,6 +695,11 @@ type QueryResolver interface {
 	BotUsageHistory(ctx context.Context, botID uuid.UUID, start time.Time, end time.Time) ([]*ent.ResourceUsageAggregation, error)
 	AlertTypesForResource(ctx context.Context, resourceType enum.AlertResourceType, resourceID *uuid.UUID) ([]*model.AlertTypeInfo, error)
 	CheckPermissions(ctx context.Context, permissions []*model.PermissionCheckInput) ([]*model.PermissionCheckResult, error)
+	OrganizationUsers(ctx context.Context, organizationID string) ([]*model.OrganizationUser, error)
+	OrganizationGroupTree(ctx context.Context, organizationID string) (*model.GroupNode, error)
+	GroupMembers(ctx context.Context, organizationID string, groupID string) ([]*model.OrganizationUser, error)
+	ResourceGroups(ctx context.Context, organizationID string, where *model.ResourceGroupWhereInput, orderBy *model.ResourceGroupOrder, first *int, offset *int) (*model.ResourceGroupConnection, error)
+	ResourceGroupMembers(ctx context.Context, organizationID string, resourceGroupID string, where *model.ResourceGroupMemberWhereInput, orderBy *model.ResourceGroupMemberOrder, first *int, offset *int) (*model.ResourceGroupMemberConnection, error)
 }
 
 type executableSchema struct {
@@ -2008,6 +2091,92 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.FreqtradeToken.Username(childComplexity), true
 
+	case "GroupNode.children":
+		if e.complexity.GroupNode.Children == nil {
+			break
+		}
+
+		return e.complexity.GroupNode.Children(childComplexity), true
+	case "GroupNode.id":
+		if e.complexity.GroupNode.ID == nil {
+			break
+		}
+
+		return e.complexity.GroupNode.ID(childComplexity), true
+	case "GroupNode.name":
+		if e.complexity.GroupNode.Name == nil {
+			break
+		}
+
+		return e.complexity.GroupNode.Name(childComplexity), true
+	case "GroupNode.path":
+		if e.complexity.GroupNode.Path == nil {
+			break
+		}
+
+		return e.complexity.GroupNode.Path(childComplexity), true
+	case "GroupNode.title":
+		if e.complexity.GroupNode.Title == nil {
+			break
+		}
+
+		return e.complexity.GroupNode.Title(childComplexity), true
+	case "GroupNode.type":
+		if e.complexity.GroupNode.Type == nil {
+			break
+		}
+
+		return e.complexity.GroupNode.Type(childComplexity), true
+
+	case "MemberUser.createdAt":
+		if e.complexity.MemberUser.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.CreatedAt(childComplexity), true
+	case "MemberUser.email":
+		if e.complexity.MemberUser.Email == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.Email(childComplexity), true
+	case "MemberUser.emailVerified":
+		if e.complexity.MemberUser.EmailVerified == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.EmailVerified(childComplexity), true
+	case "MemberUser.enabled":
+		if e.complexity.MemberUser.Enabled == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.Enabled(childComplexity), true
+	case "MemberUser.firstName":
+		if e.complexity.MemberUser.FirstName == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.FirstName(childComplexity), true
+	case "MemberUser.id":
+		if e.complexity.MemberUser.ID == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.ID(childComplexity), true
+	case "MemberUser.lastName":
+		if e.complexity.MemberUser.LastName == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.LastName(childComplexity), true
+	case "MemberUser.username":
+		if e.complexity.MemberUser.Username == nil {
+			break
+		}
+
+		return e.complexity.MemberUser.Username(childComplexity), true
+
 	case "Mutation.createAlertRule":
 		if e.complexity.Mutation.CreateAlertRule == nil {
 			break
@@ -2394,6 +2563,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UpdateTrade(childComplexity, args["id"].(uuid.UUID), args["input"].(ent.UpdateTradeInput)), true
 
+	case "OrganizationUser.createdAt":
+		if e.complexity.OrganizationUser.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.CreatedAt(childComplexity), true
+	case "OrganizationUser.email":
+		if e.complexity.OrganizationUser.Email == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.Email(childComplexity), true
+	case "OrganizationUser.emailVerified":
+		if e.complexity.OrganizationUser.EmailVerified == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.EmailVerified(childComplexity), true
+	case "OrganizationUser.enabled":
+		if e.complexity.OrganizationUser.Enabled == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.Enabled(childComplexity), true
+	case "OrganizationUser.firstName":
+		if e.complexity.OrganizationUser.FirstName == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.FirstName(childComplexity), true
+	case "OrganizationUser.id":
+		if e.complexity.OrganizationUser.ID == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.ID(childComplexity), true
+	case "OrganizationUser.lastName":
+		if e.complexity.OrganizationUser.LastName == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.LastName(childComplexity), true
+	case "OrganizationUser.username":
+		if e.complexity.OrganizationUser.Username == nil {
+			break
+		}
+
+		return e.complexity.OrganizationUser.Username(childComplexity), true
+
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
 			break
@@ -2565,6 +2783,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.GetBotRunnerStatus(childComplexity, args["id"].(uuid.UUID)), true
+	case "Query.groupMembers":
+		if e.complexity.Query.GroupMembers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_groupMembers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GroupMembers(childComplexity, args["organizationId"].(string), args["groupId"].(string)), true
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -2587,6 +2816,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Nodes(childComplexity, args["ids"].([]uuid.UUID)), true
+	case "Query.organizationGroupTree":
+		if e.complexity.Query.OrganizationGroupTree == nil {
+			break
+		}
+
+		args, err := ec.field_Query_organizationGroupTree_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OrganizationGroupTree(childComplexity, args["organizationId"].(string)), true
 	case "Query.organizationUsage":
 		if e.complexity.Query.OrganizationUsage == nil {
 			break
@@ -2598,6 +2838,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.OrganizationUsage(childComplexity, args["ownerID"].(string), args["start"].(time.Time), args["end"].(time.Time)), true
+	case "Query.organizationUsers":
+		if e.complexity.Query.OrganizationUsers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_organizationUsers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OrganizationUsers(childComplexity, args["organizationId"].(string)), true
+	case "Query.resourceGroupMembers":
+		if e.complexity.Query.ResourceGroupMembers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_resourceGroupMembers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ResourceGroupMembers(childComplexity, args["organizationId"].(string), args["resourceGroupId"].(string), args["where"].(*model.ResourceGroupMemberWhereInput), args["orderBy"].(*model.ResourceGroupMemberOrder), args["first"].(*int), args["offset"].(*int)), true
+	case "Query.resourceGroups":
+		if e.complexity.Query.ResourceGroups == nil {
+			break
+		}
+
+		args, err := ec.field_Query_resourceGroups_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ResourceGroups(childComplexity, args["organizationId"].(string), args["where"].(*model.ResourceGroupWhereInput), args["orderBy"].(*model.ResourceGroupOrder), args["first"].(*int), args["offset"].(*int)), true
 	case "Query.resourceUsageAggregations":
 		if e.complexity.Query.ResourceUsageAggregations == nil {
 			break
@@ -2643,6 +2916,126 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Trades(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["orderBy"].(*ent.TradeOrder), args["where"].(*ent.TradeWhereInput)), true
+
+	case "ResourceGroup.hasChildren":
+		if e.complexity.ResourceGroup.HasChildren == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.HasChildren(childComplexity), true
+	case "ResourceGroup.name":
+		if e.complexity.ResourceGroup.Name == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.Name(childComplexity), true
+	case "ResourceGroup.path":
+		if e.complexity.ResourceGroup.Path == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.Path(childComplexity), true
+	case "ResourceGroup.roles":
+		if e.complexity.ResourceGroup.Roles == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.Roles(childComplexity), true
+	case "ResourceGroup.title":
+		if e.complexity.ResourceGroup.Title == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.Title(childComplexity), true
+	case "ResourceGroup.totalMembers":
+		if e.complexity.ResourceGroup.TotalMembers == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.TotalMembers(childComplexity), true
+
+	case "ResourceGroupConnection.edges":
+		if e.complexity.ResourceGroupConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupConnection.Edges(childComplexity), true
+	case "ResourceGroupConnection.pageInfo":
+		if e.complexity.ResourceGroupConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupConnection.PageInfo(childComplexity), true
+	case "ResourceGroupConnection.totalCount":
+		if e.complexity.ResourceGroupConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupConnection.TotalCount(childComplexity), true
+
+	case "ResourceGroupEdge.cursor":
+		if e.complexity.ResourceGroupEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupEdge.Cursor(childComplexity), true
+	case "ResourceGroupEdge.node":
+		if e.complexity.ResourceGroupEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupEdge.Node(childComplexity), true
+
+	case "ResourceGroupMember.primaryRole":
+		if e.complexity.ResourceGroupMember.PrimaryRole == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMember.PrimaryRole(childComplexity), true
+	case "ResourceGroupMember.roles":
+		if e.complexity.ResourceGroupMember.Roles == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMember.Roles(childComplexity), true
+	case "ResourceGroupMember.user":
+		if e.complexity.ResourceGroupMember.User == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMember.User(childComplexity), true
+
+	case "ResourceGroupMemberConnection.edges":
+		if e.complexity.ResourceGroupMemberConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMemberConnection.Edges(childComplexity), true
+	case "ResourceGroupMemberConnection.pageInfo":
+		if e.complexity.ResourceGroupMemberConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMemberConnection.PageInfo(childComplexity), true
+	case "ResourceGroupMemberConnection.totalCount":
+		if e.complexity.ResourceGroupMemberConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMemberConnection.TotalCount(childComplexity), true
+
+	case "ResourceGroupMemberEdge.cursor":
+		if e.complexity.ResourceGroupMemberEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMemberEdge.Cursor(childComplexity), true
+	case "ResourceGroupMemberEdge.node":
+		if e.complexity.ResourceGroupMemberEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMemberEdge.Node(childComplexity), true
 
 	case "ResourceUsageAggregation.blockReadBytes":
 		if e.complexity.ResourceUsageAggregation.BlockReadBytes == nil {
@@ -2867,6 +3260,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ResourceUsageSample.SampledAt(childComplexity), true
+
+	case "RoleInfo.memberCount":
+		if e.complexity.RoleInfo.MemberCount == nil {
+			break
+		}
+
+		return e.complexity.RoleInfo.MemberCount(childComplexity), true
+	case "RoleInfo.name":
+		if e.complexity.RoleInfo.Name == nil {
+			break
+		}
+
+		return e.complexity.RoleInfo.Name(childComplexity), true
 
 	case "SelectOption.label":
 		if e.complexity.SelectOption.Label == nil {
@@ -3248,6 +3654,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPassphraseExchangeConfigInput,
 		ec.unmarshalInputPermissionCheckInput,
 		ec.unmarshalInputRegistryAuthInput,
+		ec.unmarshalInputResourceGroupMemberOrder,
+		ec.unmarshalInputResourceGroupMemberWhereInput,
+		ec.unmarshalInputResourceGroupOrder,
+		ec.unmarshalInputResourceGroupWhereInput,
 		ec.unmarshalInputResourceUsageAggregationWhereInput,
 		ec.unmarshalInputResourceUsageSampleWhereInput,
 		ec.unmarshalInputRunnerConfigInput,
@@ -4304,6 +4714,22 @@ func (ec *executionContext) field_Query_getBotRunnerStatus_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_groupMembers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "groupId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["groupId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4326,6 +4752,17 @@ func (ec *executionContext) field_Query_nodes_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_organizationGroupTree_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_organizationUsage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4344,6 +4781,84 @@ func (ec *executionContext) field_Query_organizationUsage_args(ctx context.Conte
 		return nil, err
 	}
 	args["end"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_organizationUsers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_resourceGroupMembers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "resourceGroupId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["resourceGroupId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOResourceGroupMemberWhereInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOResourceGroupMemberOrder2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_resourceGroups_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "where", ec.unmarshalOResourceGroupWhereInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupWhereInput)
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOResourceGroupOrder2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg4
 	return args, nil
 }
 
@@ -11977,6 +12492,426 @@ func (ec *executionContext) fieldContext_FreqtradeToken_refreshToken(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _GroupNode_id(ctx context.Context, field graphql.CollectedField, obj *model.GroupNode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupNode_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupNode_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupNode_name(ctx context.Context, field graphql.CollectedField, obj *model.GroupNode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupNode_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupNode_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupNode_path(ctx context.Context, field graphql.CollectedField, obj *model.GroupNode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupNode_path,
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupNode_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupNode_type(ctx context.Context, field graphql.CollectedField, obj *model.GroupNode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupNode_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupNode_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupNode_title(ctx context.Context, field graphql.CollectedField, obj *model.GroupNode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupNode_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupNode_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupNode_children(ctx context.Context, field graphql.CollectedField, obj *model.GroupNode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupNode_children,
+		func(ctx context.Context) (any, error) {
+			return obj.Children, nil
+		},
+		nil,
+		ec.marshalNGroupNode2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐGroupNodeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupNode_children(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_GroupNode_id(ctx, field)
+			case "name":
+				return ec.fieldContext_GroupNode_name(ctx, field)
+			case "path":
+				return ec.fieldContext_GroupNode_path(ctx, field)
+			case "type":
+				return ec.fieldContext_GroupNode_type(ctx, field)
+			case "title":
+				return ec.fieldContext_GroupNode_title(ctx, field)
+			case "children":
+				return ec.fieldContext_GroupNode_children(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GroupNode", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_id(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_username(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_username,
+		func(ctx context.Context) (any, error) {
+			return obj.Username, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_email(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_emailVerified(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_emailVerified,
+		func(ctx context.Context) (any, error) {
+			return obj.EmailVerified, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_emailVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_firstName(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_firstName,
+		func(ctx context.Context) (any, error) {
+			return obj.FirstName, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_firstName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_lastName(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_lastName,
+		func(ctx context.Context) (any, error) {
+			return obj.LastName, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_lastName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_enabled(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_enabled,
+		func(ctx context.Context) (any, error) {
+			return obj.Enabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MemberUser_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.MemberUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MemberUser_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MemberUser_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MemberUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -15073,6 +16008,238 @@ func (ec *executionContext) fieldContext_Mutation_markAllAlertEventsAsRead(ctx c
 	return fc, nil
 }
 
+func (ec *executionContext) _OrganizationUser_id(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_username(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_username,
+		func(ctx context.Context) (any, error) {
+			return obj.Username, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_email(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_emailVerified(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_emailVerified,
+		func(ctx context.Context) (any, error) {
+			return obj.EmailVerified, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_emailVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_firstName(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_firstName,
+		func(ctx context.Context) (any, error) {
+			return obj.FirstName, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_firstName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_lastName(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_lastName,
+		func(ctx context.Context) (any, error) {
+			return obj.LastName, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_lastName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_enabled(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_enabled,
+		func(ctx context.Context) (any, error) {
+			return obj.Enabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrganizationUser_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationUser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrganizationUser_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNTime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrganizationUser_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrganizationUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *entgql.PageInfo[uuid.UUID]) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16557,6 +17724,392 @@ func (ec *executionContext) fieldContext_Query_checkPermissions(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_organizationUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_organizationUsers,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().OrganizationUsers(ctx, fc.Args["organizationId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "organizationId")
+				if err != nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view-users")
+				if err != nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNOrganizationUser2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐOrganizationUserᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_organizationUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_OrganizationUser_id(ctx, field)
+			case "username":
+				return ec.fieldContext_OrganizationUser_username(ctx, field)
+			case "email":
+				return ec.fieldContext_OrganizationUser_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_OrganizationUser_emailVerified(ctx, field)
+			case "firstName":
+				return ec.fieldContext_OrganizationUser_firstName(ctx, field)
+			case "lastName":
+				return ec.fieldContext_OrganizationUser_lastName(ctx, field)
+			case "enabled":
+				return ec.fieldContext_OrganizationUser_enabled(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrganizationUser_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrganizationUser", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_organizationUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_organizationGroupTree(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_organizationGroupTree,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().OrganizationGroupTree(ctx, fc.Args["organizationId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "organizationId")
+				if err != nil {
+					var zeroVal *model.GroupNode
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view-users")
+				if err != nil {
+					var zeroVal *model.GroupNode
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *model.GroupNode
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNGroupNode2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐGroupNode,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_organizationGroupTree(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_GroupNode_id(ctx, field)
+			case "name":
+				return ec.fieldContext_GroupNode_name(ctx, field)
+			case "path":
+				return ec.fieldContext_GroupNode_path(ctx, field)
+			case "type":
+				return ec.fieldContext_GroupNode_type(ctx, field)
+			case "title":
+				return ec.fieldContext_GroupNode_title(ctx, field)
+			case "children":
+				return ec.fieldContext_GroupNode_children(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GroupNode", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_organizationGroupTree_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_groupMembers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_groupMembers,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().GroupMembers(ctx, fc.Args["organizationId"].(string), fc.Args["groupId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "organizationId")
+				if err != nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view-users")
+				if err != nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNOrganizationUser2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐOrganizationUserᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_groupMembers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_OrganizationUser_id(ctx, field)
+			case "username":
+				return ec.fieldContext_OrganizationUser_username(ctx, field)
+			case "email":
+				return ec.fieldContext_OrganizationUser_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_OrganizationUser_emailVerified(ctx, field)
+			case "firstName":
+				return ec.fieldContext_OrganizationUser_firstName(ctx, field)
+			case "lastName":
+				return ec.fieldContext_OrganizationUser_lastName(ctx, field)
+			case "enabled":
+				return ec.fieldContext_OrganizationUser_enabled(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrganizationUser_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrganizationUser", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_groupMembers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_resourceGroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_resourceGroups,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().ResourceGroups(ctx, fc.Args["organizationId"].(string), fc.Args["where"].(*model.ResourceGroupWhereInput), fc.Args["orderBy"].(*model.ResourceGroupOrder), fc.Args["first"].(*int), fc.Args["offset"].(*int))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "organizationId")
+				if err != nil {
+					var zeroVal *model.ResourceGroupConnection
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view-users")
+				if err != nil {
+					var zeroVal *model.ResourceGroupConnection
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *model.ResourceGroupConnection
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNResourceGroupConnection2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_resourceGroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ResourceGroupConnection_edges(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ResourceGroupConnection_totalCount(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ResourceGroupConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceGroupConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_resourceGroups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_resourceGroupMembers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_resourceGroupMembers,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().ResourceGroupMembers(ctx, fc.Args["organizationId"].(string), fc.Args["resourceGroupId"].(string), fc.Args["where"].(*model.ResourceGroupMemberWhereInput), fc.Args["orderBy"].(*model.ResourceGroupMemberOrder), fc.Args["first"].(*int), fc.Args["offset"].(*int))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "organizationId")
+				if err != nil {
+					var zeroVal *model.ResourceGroupMemberConnection
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view-users")
+				if err != nil {
+					var zeroVal *model.ResourceGroupMemberConnection
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *model.ResourceGroupMemberConnection
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNResourceGroupMemberConnection2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_resourceGroupMembers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ResourceGroupMemberConnection_edges(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_ResourceGroupMemberConnection_totalCount(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ResourceGroupMemberConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceGroupMemberConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_resourceGroupMembers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16660,6 +18213,635 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroup_name(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroup_path(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_path,
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroup_title(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroup_roles(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_roles,
+		func(ctx context.Context) (any, error) {
+			return obj.Roles, nil
+		},
+		nil,
+		ec.marshalNRoleInfo2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐRoleInfoᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_roles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_RoleInfo_name(ctx, field)
+			case "memberCount":
+				return ec.fieldContext_RoleInfo_memberCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RoleInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroup_totalMembers(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_totalMembers,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalMembers, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_totalMembers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroup_hasChildren(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_hasChildren,
+		func(ctx context.Context) (any, error) {
+			return obj.HasChildren, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_hasChildren(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNResourceGroupEdge2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_ResourceGroupEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_ResourceGroupEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceGroupEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖentgoᚗioᚋcontribᚋentgqlᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNResourceGroup2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroup,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_ResourceGroup_name(ctx, field)
+			case "path":
+				return ec.fieldContext_ResourceGroup_path(ctx, field)
+			case "title":
+				return ec.fieldContext_ResourceGroup_title(ctx, field)
+			case "roles":
+				return ec.fieldContext_ResourceGroup_roles(ctx, field)
+			case "totalMembers":
+				return ec.fieldContext_ResourceGroup_totalMembers(ctx, field)
+			case "hasChildren":
+				return ec.fieldContext_ResourceGroup_hasChildren(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceGroup", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMember_user(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMember_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalNMemberUser2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐMemberUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMember_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MemberUser_id(ctx, field)
+			case "username":
+				return ec.fieldContext_MemberUser_username(ctx, field)
+			case "email":
+				return ec.fieldContext_MemberUser_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_MemberUser_emailVerified(ctx, field)
+			case "firstName":
+				return ec.fieldContext_MemberUser_firstName(ctx, field)
+			case "lastName":
+				return ec.fieldContext_MemberUser_lastName(ctx, field)
+			case "enabled":
+				return ec.fieldContext_MemberUser_enabled(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_MemberUser_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MemberUser", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMember_roles(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMember_roles,
+		func(ctx context.Context) (any, error) {
+			return obj.Roles, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMember_roles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMember_primaryRole(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMember_primaryRole,
+		func(ctx context.Context) (any, error) {
+			return obj.PrimaryRole, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMember_primaryRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMemberConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMemberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMemberConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNResourceGroupMemberEdge2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMemberConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMemberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_ResourceGroupMemberEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_ResourceGroupMemberEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceGroupMemberEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMemberConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMemberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMemberConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMemberConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMemberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMemberConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMemberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMemberConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖentgoᚗioᚋcontribᚋentgqlᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMemberConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMemberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMemberEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMemberEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMemberEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNResourceGroupMember2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMember,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMemberEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMemberEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "user":
+				return ec.fieldContext_ResourceGroupMember_user(ctx, field)
+			case "roles":
+				return ec.fieldContext_ResourceGroupMember_roles(ctx, field)
+			case "primaryRole":
+				return ec.fieldContext_ResourceGroupMember_primaryRole(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceGroupMember", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMemberEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMemberEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMemberEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMemberEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMemberEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17841,6 +20023,64 @@ func (ec *executionContext) fieldContext_ResourceUsageSample_runner(_ context.Co
 				return ec.fieldContext_BotRunner_backtests(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoleInfo_name(ctx context.Context, field graphql.CollectedField, obj *model.RoleInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RoleInfo_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RoleInfo_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoleInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoleInfo_memberCount(ctx context.Context, field graphql.CollectedField, obj *model.RoleInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RoleInfo_memberCount,
+		func(ctx context.Context) (any, error) {
+			return obj.MemberCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RoleInfo_memberCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoleInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -30173,6 +32413,149 @@ func (ec *executionContext) unmarshalInputRegistryAuthInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputResourceGroupMemberOrder(ctx context.Context, obj any) (model.ResourceGroupMemberOrder, error) {
+	var it model.ResourceGroupMemberOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNResourceGroupMemberOrderField2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputResourceGroupMemberWhereInput(ctx context.Context, obj any) (model.ResourceGroupMemberWhereInput, error) {
+	var it model.ResourceGroupMemberWhereInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"roleIn", "searchContainsFold", "enabled", "emailVerified"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "roleIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoleIn = data
+		case "searchContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("searchContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SearchContainsFold = data
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "emailVerified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailVerified"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailVerified = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputResourceGroupOrder(ctx context.Context, obj any) (model.ResourceGroupOrder, error) {
+	var it model.ResourceGroupOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNResourceGroupOrderField2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2entgoᚗioᚋcontribᚋentgqlᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputResourceGroupWhereInput(ctx context.Context, obj any) (model.ResourceGroupWhereInput, error) {
+	var it model.ResourceGroupWhereInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"titleContainsFold"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "titleContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("titleContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TitleContainsFold = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputResourceUsageAggregationWhereInput(ctx context.Context, obj any) (ent.ResourceUsageAggregationWhereInput, error) {
 	var it ent.ResourceUsageAggregationWhereInput
 	asMap := map[string]any{}
@@ -38170,6 +40553,135 @@ func (ec *executionContext) _FreqtradeToken(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var groupNodeImplementors = []string{"GroupNode"}
+
+func (ec *executionContext) _GroupNode(ctx context.Context, sel ast.SelectionSet, obj *model.GroupNode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, groupNodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GroupNode")
+		case "id":
+			out.Values[i] = ec._GroupNode_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GroupNode_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "path":
+			out.Values[i] = ec._GroupNode_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._GroupNode_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._GroupNode_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "children":
+			out.Values[i] = ec._GroupNode_children(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var memberUserImplementors = []string{"MemberUser"}
+
+func (ec *executionContext) _MemberUser(ctx context.Context, sel ast.SelectionSet, obj *model.MemberUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, memberUserImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MemberUser")
+		case "id":
+			out.Values[i] = ec._MemberUser_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "username":
+			out.Values[i] = ec._MemberUser_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._MemberUser_email(ctx, field, obj)
+		case "emailVerified":
+			out.Values[i] = ec._MemberUser_emailVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "firstName":
+			out.Values[i] = ec._MemberUser_firstName(ctx, field, obj)
+		case "lastName":
+			out.Values[i] = ec._MemberUser_lastName(ctx, field, obj)
+		case "enabled":
+			out.Values[i] = ec._MemberUser_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._MemberUser_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -38431,6 +40943,71 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_markAllAlertEventsAsRead(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var organizationUserImplementors = []string{"OrganizationUser"}
+
+func (ec *executionContext) _OrganizationUser(ctx context.Context, sel ast.SelectionSet, obj *model.OrganizationUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, organizationUserImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrganizationUser")
+		case "id":
+			out.Values[i] = ec._OrganizationUser_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "username":
+			out.Values[i] = ec._OrganizationUser_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._OrganizationUser_email(ctx, field, obj)
+		case "emailVerified":
+			out.Values[i] = ec._OrganizationUser_emailVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "firstName":
+			out.Values[i] = ec._OrganizationUser_firstName(ctx, field, obj)
+		case "lastName":
+			out.Values[i] = ec._OrganizationUser_lastName(ctx, field, obj)
+		case "enabled":
+			out.Values[i] = ec._OrganizationUser_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._OrganizationUser_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -39004,6 +41581,116 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "organizationUsers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_organizationUsers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "organizationGroupTree":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_organizationGroupTree(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "groupMembers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_groupMembers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "resourceGroups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resourceGroups(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "resourceGroupMembers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resourceGroupMembers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -39012,6 +41699,305 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceGroupImplementors = []string{"ResourceGroup"}
+
+func (ec *executionContext) _ResourceGroup(ctx context.Context, sel ast.SelectionSet, obj *model.ResourceGroup) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceGroupImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceGroup")
+		case "name":
+			out.Values[i] = ec._ResourceGroup_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "path":
+			out.Values[i] = ec._ResourceGroup_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._ResourceGroup_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roles":
+			out.Values[i] = ec._ResourceGroup_roles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalMembers":
+			out.Values[i] = ec._ResourceGroup_totalMembers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasChildren":
+			out.Values[i] = ec._ResourceGroup_hasChildren(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceGroupConnectionImplementors = []string{"ResourceGroupConnection"}
+
+func (ec *executionContext) _ResourceGroupConnection(ctx context.Context, sel ast.SelectionSet, obj *model.ResourceGroupConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceGroupConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceGroupConnection")
+		case "edges":
+			out.Values[i] = ec._ResourceGroupConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._ResourceGroupConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ResourceGroupConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceGroupEdgeImplementors = []string{"ResourceGroupEdge"}
+
+func (ec *executionContext) _ResourceGroupEdge(ctx context.Context, sel ast.SelectionSet, obj *model.ResourceGroupEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceGroupEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceGroupEdge")
+		case "node":
+			out.Values[i] = ec._ResourceGroupEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._ResourceGroupEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceGroupMemberImplementors = []string{"ResourceGroupMember"}
+
+func (ec *executionContext) _ResourceGroupMember(ctx context.Context, sel ast.SelectionSet, obj *model.ResourceGroupMember) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceGroupMemberImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceGroupMember")
+		case "user":
+			out.Values[i] = ec._ResourceGroupMember_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roles":
+			out.Values[i] = ec._ResourceGroupMember_roles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "primaryRole":
+			out.Values[i] = ec._ResourceGroupMember_primaryRole(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceGroupMemberConnectionImplementors = []string{"ResourceGroupMemberConnection"}
+
+func (ec *executionContext) _ResourceGroupMemberConnection(ctx context.Context, sel ast.SelectionSet, obj *model.ResourceGroupMemberConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceGroupMemberConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceGroupMemberConnection")
+		case "edges":
+			out.Values[i] = ec._ResourceGroupMemberConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._ResourceGroupMemberConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ResourceGroupMemberConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var resourceGroupMemberEdgeImplementors = []string{"ResourceGroupMemberEdge"}
+
+func (ec *executionContext) _ResourceGroupMemberEdge(ctx context.Context, sel ast.SelectionSet, obj *model.ResourceGroupMemberEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceGroupMemberEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResourceGroupMemberEdge")
+		case "node":
+			out.Values[i] = ec._ResourceGroupMemberEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._ResourceGroupMemberEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -39321,6 +42307,50 @@ func (ec *executionContext) _ResourceUsageSample(ctx context.Context, sel ast.Se
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var roleInfoImplementors = []string{"RoleInfo"}
+
+func (ec *executionContext) _RoleInfo(ctx context.Context, sel ast.SelectionSet, obj *model.RoleInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roleInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoleInfo")
+		case "name":
+			out.Values[i] = ec._RoleInfo_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memberCount":
+			out.Values[i] = ec._RoleInfo_memberCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -40989,6 +44019,64 @@ func (ec *executionContext) marshalNFreqtradeToken2ᚖvolaticloudᚋinternalᚋg
 	return ec._FreqtradeToken(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNGroupNode2volaticloudᚋinternalᚋgraphᚋmodelᚐGroupNode(ctx context.Context, sel ast.SelectionSet, v model.GroupNode) graphql.Marshaler {
+	return ec._GroupNode(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGroupNode2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐGroupNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GroupNode) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGroupNode2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐGroupNode(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGroupNode2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐGroupNode(ctx context.Context, sel ast.SelectionSet, v *model.GroupNode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GroupNode(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v any) (uuid.UUID, error) {
 	res, err := uuidgql.UnmarshalUUID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -41089,6 +44177,16 @@ func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNMemberUser2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐMemberUser(ctx context.Context, sel ast.SelectionSet, v *model.MemberUser) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MemberUser(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNNode2ᚕvolaticloudᚋinternalᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v []ent.Noder) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -41137,8 +44235,72 @@ func (ec *executionContext) marshalNOrderDirection2entgoᚗioᚋcontribᚋentgql
 	return v
 }
 
+func (ec *executionContext) marshalNOrganizationUser2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐOrganizationUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OrganizationUser) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOrganizationUser2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐOrganizationUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNOrganizationUser2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐOrganizationUser(ctx context.Context, sel ast.SelectionSet, v *model.OrganizationUser) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OrganizationUser(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPageInfo2entgoᚗioᚋcontribᚋentgqlᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v entgql.PageInfo[uuid.UUID]) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖentgoᚗioᚋcontribᚋentgqlᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *entgql.PageInfo[uuid.UUID]) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNPermissionCheckInput2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPermissionCheckInputᚄ(ctx context.Context, v any) ([]*model.PermissionCheckInput, error) {
@@ -41213,6 +44375,182 @@ func (ec *executionContext) marshalNPermissionCheckResult2ᚖvolaticloudᚋinter
 		return graphql.Null
 	}
 	return ec._PermissionCheckResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResourceGroup2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroup(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroup) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceGroup(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResourceGroupConnection2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupConnection(ctx context.Context, sel ast.SelectionSet, v model.ResourceGroupConnection) graphql.Marshaler {
+	return ec._ResourceGroupConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNResourceGroupConnection2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupConnection(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroupConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceGroupConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResourceGroupEdge2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ResourceGroupEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceGroupEdge2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNResourceGroupEdge2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupEdge(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroupEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceGroupEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResourceGroupMember2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMember(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroupMember) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceGroupMember(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResourceGroupMemberConnection2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberConnection(ctx context.Context, sel ast.SelectionSet, v model.ResourceGroupMemberConnection) graphql.Marshaler {
+	return ec._ResourceGroupMemberConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNResourceGroupMemberConnection2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberConnection(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroupMemberConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceGroupMemberConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNResourceGroupMemberEdge2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ResourceGroupMemberEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNResourceGroupMemberEdge2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNResourceGroupMemberEdge2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberEdge(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroupMemberEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ResourceGroupMemberEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNResourceGroupMemberOrderField2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberOrderField(ctx context.Context, v any) (model.ResourceGroupMemberOrderField, error) {
+	var res model.ResourceGroupMemberOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNResourceGroupMemberOrderField2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberOrderField(ctx context.Context, sel ast.SelectionSet, v model.ResourceGroupMemberOrderField) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNResourceGroupOrderField2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupOrderField(ctx context.Context, v any) (model.ResourceGroupOrderField, error) {
+	var res model.ResourceGroupOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNResourceGroupOrderField2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupOrderField(ctx context.Context, sel ast.SelectionSet, v model.ResourceGroupOrderField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNResourceUsageAggregation2ᚕᚖvolaticloudᚋinternalᚋentᚐResourceUsageAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.ResourceUsageAggregation) graphql.Marshaler {
@@ -41361,6 +44699,60 @@ func (ec *executionContext) marshalNResourceUsageSampleResourceType2volaticloud�
 func (ec *executionContext) unmarshalNResourceUsageSampleWhereInput2ᚖvolaticloudᚋinternalᚋentᚐResourceUsageSampleWhereInput(ctx context.Context, v any) (*ent.ResourceUsageSampleWhereInput, error) {
 	res, err := ec.unmarshalInputResourceUsageSampleWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRoleInfo2ᚕᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐRoleInfoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RoleInfo) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRoleInfo2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐRoleInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRoleInfo2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐRoleInfo(ctx context.Context, sel ast.SelectionSet, v *model.RoleInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoleInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRunnerConfigInput2volaticloudᚋinternalᚋgraphᚋmodelᚐRunnerConfigInput(ctx context.Context, v any) (model.RunnerConfigInput, error) {
@@ -43921,6 +47313,38 @@ func (ec *executionContext) unmarshalORegistryAuthInput2ᚖvolaticloudᚋinterna
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputRegistryAuthInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOResourceGroupMemberOrder2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberOrder(ctx context.Context, v any) (*model.ResourceGroupMemberOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputResourceGroupMemberOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOResourceGroupMemberWhereInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupMemberWhereInput(ctx context.Context, v any) (*model.ResourceGroupMemberWhereInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputResourceGroupMemberWhereInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOResourceGroupOrder2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupOrder(ctx context.Context, v any) (*model.ResourceGroupOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputResourceGroupOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOResourceGroupWhereInput2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroupWhereInput(ctx context.Context, v any) (*model.ResourceGroupWhereInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputResourceGroupWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

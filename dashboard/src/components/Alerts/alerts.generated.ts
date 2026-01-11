@@ -151,6 +151,9 @@ export function useGetAlertRulesLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetAlertRulesQuery, GetAlertRulesQueryVariables>(GetAlertRulesDocument, options);
         }
+// @ts-ignore
+export function useGetAlertRulesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAlertRulesQuery, GetAlertRulesQueryVariables>): Apollo.UseSuspenseQueryResult<GetAlertRulesQuery, GetAlertRulesQueryVariables>;
+export function useGetAlertRulesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAlertRulesQuery, GetAlertRulesQueryVariables>): Apollo.UseSuspenseQueryResult<GetAlertRulesQuery | undefined, GetAlertRulesQueryVariables>;
 export function useGetAlertRulesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAlertRulesQuery, GetAlertRulesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetAlertRulesQuery, GetAlertRulesQueryVariables>(GetAlertRulesDocument, options);
@@ -398,6 +401,9 @@ export function useGetAlertTypesForResourceLazyQuery(baseOptions?: Apollo.LazyQu
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetAlertTypesForResourceQuery, GetAlertTypesForResourceQueryVariables>(GetAlertTypesForResourceDocument, options);
         }
+// @ts-ignore
+export function useGetAlertTypesForResourceSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAlertTypesForResourceQuery, GetAlertTypesForResourceQueryVariables>): Apollo.UseSuspenseQueryResult<GetAlertTypesForResourceQuery, GetAlertTypesForResourceQueryVariables>;
+export function useGetAlertTypesForResourceSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAlertTypesForResourceQuery, GetAlertTypesForResourceQueryVariables>): Apollo.UseSuspenseQueryResult<GetAlertTypesForResourceQuery | undefined, GetAlertTypesForResourceQueryVariables>;
 export function useGetAlertTypesForResourceSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAlertTypesForResourceQuery, GetAlertTypesForResourceQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetAlertTypesForResourceQuery, GetAlertTypesForResourceQueryVariables>(GetAlertTypesForResourceDocument, options);
@@ -471,6 +477,9 @@ export function useGetAlertEventsLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetAlertEventsQuery, GetAlertEventsQueryVariables>(GetAlertEventsDocument, options);
         }
+// @ts-ignore
+export function useGetAlertEventsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAlertEventsQuery, GetAlertEventsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAlertEventsQuery, GetAlertEventsQueryVariables>;
+export function useGetAlertEventsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAlertEventsQuery, GetAlertEventsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAlertEventsQuery | undefined, GetAlertEventsQueryVariables>;
 export function useGetAlertEventsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAlertEventsQuery, GetAlertEventsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetAlertEventsQuery, GetAlertEventsQueryVariables>(GetAlertEventsDocument, options);
@@ -511,6 +520,9 @@ export function useGetUnreadAlertCountLazyQuery(baseOptions?: Apollo.LazyQueryHo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetUnreadAlertCountQuery, GetUnreadAlertCountQueryVariables>(GetUnreadAlertCountDocument, options);
         }
+// @ts-ignore
+export function useGetUnreadAlertCountSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUnreadAlertCountQuery, GetUnreadAlertCountQueryVariables>): Apollo.UseSuspenseQueryResult<GetUnreadAlertCountQuery, GetUnreadAlertCountQueryVariables>;
+export function useGetUnreadAlertCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUnreadAlertCountQuery, GetUnreadAlertCountQueryVariables>): Apollo.UseSuspenseQueryResult<GetUnreadAlertCountQuery | undefined, GetUnreadAlertCountQueryVariables>;
 export function useGetUnreadAlertCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUnreadAlertCountQuery, GetUnreadAlertCountQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetUnreadAlertCountQuery, GetUnreadAlertCountQueryVariables>(GetUnreadAlertCountDocument, options);
