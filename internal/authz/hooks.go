@@ -30,20 +30,20 @@ func RegisterKeycloakHooks(client *ent.Client) {
 
 	// Bot hooks
 	client.Bot.Use(botCreateHook())
-	client.Bot.Use(botDeleteHook())
 	client.Bot.Use(botUpdateHook())
+	client.Bot.Use(botDeleteHook())
 
 	// Exchange hooks
 	client.Exchange.Use(exchangeCreateHook())
-	client.Exchange.Use(exchangeDeleteHook())
 	client.Exchange.Use(exchangeUpdateHook())
+	client.Exchange.Use(exchangeDeleteHook())
 
 	// BotRunner hooks
 	client.BotRunner.Use(botRunnerCreateHook())
-	client.BotRunner.Use(botRunnerDeleteHook())
 	client.BotRunner.Use(botRunnerUpdateHook())
+	client.BotRunner.Use(botRunnerDeleteHook())
 
-	log.Println("Registered Keycloak resource sync hooks for Strategy, Bot, Exchange, BotRunner (Create, Delete, Update)")
+	log.Println("Registered Keycloak resource sync hooks for Strategy, Bot, Exchange, BotRunner (Create, Update, Delete)")
 }
 
 // ============================================================================
@@ -106,6 +106,8 @@ func strategyUpdateHook() ent.Hook {
 		func(next ent.Mutator) ent.Mutator {
 			return hook.StrategyFunc(func(ctx context.Context, m *ent.StrategyMutation) (ent.Value, error) {
 				// Check if name is being updated
+				// Note: Only name changes need syncing to Keycloak GROUP_TITLE attribute.
+				// Other fields (config, public, etc.) are synced via separate visibility mutations.
 				name, nameExists := m.Name()
 				if !nameExists {
 					// Name not being updated, skip sync

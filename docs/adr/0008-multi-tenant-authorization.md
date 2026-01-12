@@ -317,6 +317,91 @@ private void collectRoleGroupsRecursive(
 - Policy checks traverse up the group hierarchy to find role membership
 - If found in any ancestor group → permission granted
 
+#### 3. ResourceManagementService
+
+**File:** `keycloak/extensions/tenant-system/src/main/java/com/volaticloud/keycloak/tenant/services/ResourceManagementService.java`
+
+**Purpose:** Unified REST API for atomic UMA resource + Keycloak group management (added in PR #112)
+
+**Endpoints:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/realms/{realm}/volaticloud/resources` | POST | Create UMA resource + group atomically |
+| `/realms/{realm}/volaticloud/resources/{id}` | PUT | Update title and attributes, sync to group |
+| `/realms/{realm}/volaticloud/resources/{id}` | GET | Get resource details |
+| `/realms/{realm}/volaticloud/resources/{id}` | DELETE | Delete UMA resource + group atomically |
+
+**Critical Implementation Detail - Global Group Search:**
+
+The service uses `searchForGroupByNameStream(realm, resourceId, true, 0, 1)` instead of `getGroupByName(realm, null, resourceId)` because:
+
+- Resources are nested under organization groups (e.g., `/orgId/strategyId/`)
+- `getGroupByName(realm, null, resourceId)` only searches at root level (parent=null)
+- `searchForGroupByNameStream()` searches globally across all nested hierarchies with exact match
+- Parameters: `(realm, searchString, exact=true, firstResult=0, maxResults=1)`
+
+**Example - Create Resource:**
+
+```java
+// Request
+POST /realms/dev/volaticloud/resources
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "My Trading Strategy",
+  "type": "strategy",
+  "ownerId": "orgId",
+  "scopes": ["view", "edit", "delete"],
+  "attributes": {
+    "public": ["false"]
+  }
+}
+
+// Implementation
+public ResourceResponse createResource(ResourceCreateRequest request) {
+    // 1. Validate inputs (UUID format, title length)
+    // 2. Check resource doesn't already exist
+    // 3. Find parent group by ownerId (global search)
+    // 4. Create group with role subgroups (role:admin, role:viewer)
+    // 5. Create UMA resource with attributes
+    // 6. Sync GROUP_TYPE and GROUP_TITLE attributes
+    return buildResourceResponse(resource, group, parentGroup);
+}
+```
+
+**Example - Update Resource:**
+
+```java
+// Request
+PUT /realms/dev/volaticloud/resources/{id}
+{
+  "title": "Updated Strategy Name"
+}
+
+// Implementation synchronizes:
+// - UMA resource displayName
+// - UMA resource "title" attribute
+// - Keycloak group GROUP_TITLE attribute
+```
+
+**Transaction Boundaries:**
+
+- Operations execute multiple Keycloak API calls within the same session
+- If any step fails, an exception is thrown (caller handles rollback)
+- Updates are applied to both UMA resource and group attributes
+- No explicit transaction management (relies on Keycloak session semantics)
+
+**Input Validation:**
+
+- Resource ID must be valid UUID format
+- Title must not exceed 255 characters
+- Type field is required for create operations
+
+**Used By:**
+
+- `internal/authz/hooks.go` - ENT runtime hooks call `CreateResource()`, `UpdateResource()`, `DeleteResource()`
+- Backend hooks run after database mutations, sync to Keycloak
+
 ### C. UMA 2.0 Resource Protection
 
 **Implementation:** `internal/keycloak/uma_client.go`

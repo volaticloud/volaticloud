@@ -39,6 +39,10 @@ public class ResourceManagementService {
     /**
      * Creates a unified resource (UMA resource + Keycloak group) atomically.
      *
+     * <p><strong>Transaction Boundaries:</strong> This method executes multiple Keycloak API calls
+     * within the same Keycloak session. If any step fails, subsequent steps are skipped and an
+     * exception is thrown. The caller should handle transaction rollback in the database layer.
+     *
      * @param request Resource creation request
      * @return ResourceResponse with created resource details
      * @throws Exception if creation fails
@@ -49,12 +53,22 @@ public class ResourceManagementService {
             throw new Exception("Could not get realm from session context");
         }
 
-        // Validate request
+        // Validate request inputs
         if (request.getId() == null || request.getId().isEmpty()) {
             throw new IllegalArgumentException("Resource ID is required");
         }
+        // Validate UUID format
+        try {
+            java.util.UUID.fromString(request.getId());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Resource ID must be a valid UUID: " + request.getId());
+        }
         if (request.getTitle() == null || request.getTitle().isEmpty()) {
             throw new IllegalArgumentException("Resource title is required");
+        }
+        // Validate title length (max 255 characters)
+        if (request.getTitle().length() > 255) {
+            throw new IllegalArgumentException("Resource title must not exceed 255 characters");
         }
         if (request.getType() == null || request.getType().isEmpty()) {
             throw new IllegalArgumentException("Resource type is required");
@@ -66,7 +80,12 @@ public class ResourceManagementService {
             throw new IllegalStateException("Resource already exists: " + request.getId());
         }
 
-        // Step 2: Get parent group if ownerId is provided (search globally with exact match)
+        // Step 2: Get parent group if ownerId is provided
+        // IMPORTANT: Use searchForGroupByNameStream() with exact=true instead of getGroupByName()
+        // because resources are nested under organization groups, not at root level.
+        // getGroupByName(realm, null, resourceId) only searches at the specified parent level,
+        // which would miss all nested groups. searchForGroupByNameStream() searches globally
+        // across all group hierarchies with exact name matching.
         GroupModel parentGroup = null;
         if (request.getOwnerId() != null && !request.getOwnerId().isEmpty()) {
             parentGroup = session.groups()
@@ -91,6 +110,10 @@ public class ResourceManagementService {
     /**
      * Updates a unified resource (UMA resource + Keycloak group) atomically.
      *
+     * <p><strong>Transaction Boundaries:</strong> Updates are applied to both UMA resource and group
+     * within the same Keycloak session. Partial updates are possible (either title or attributes can
+     * be omitted). If updates fail, an exception is thrown and the caller should handle rollback.
+     *
      * @param resourceId Resource ID to update
      * @param request Update request with fields to change
      * @return ResourceResponse with updated resource details
@@ -102,13 +125,22 @@ public class ResourceManagementService {
             throw new Exception("Could not get realm from session context");
         }
 
+        // Validate title if provided
+        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
+            if (request.getTitle().length() > 255) {
+                throw new IllegalArgumentException("Resource title must not exceed 255 characters");
+            }
+        }
+
         // Step 1: Find UMA resource
         Resource resource = findResourceByName(realm, resourceId);
         if (resource == null) {
             throw new NotFoundException("Resource not found: " + resourceId);
         }
 
-        // Step 2: Find Keycloak group (search globally with exact match)
+        // Step 2: Find Keycloak group
+        // IMPORTANT: Use searchForGroupByNameStream() instead of getGroupByName()
+        // to search globally across all nested group hierarchies (see createResource() for details).
         GroupModel group = session.groups()
             .searchForGroupByNameStream(realm, resourceId, true, 0, 1)
             .findFirst()
