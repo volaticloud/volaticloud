@@ -8,11 +8,13 @@ import (
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/hook"
+	"volaticloud/internal/keycloak"
 )
 
 // RegisterKeycloakHooks registers ENT runtime hooks that sync entity lifecycle with Keycloak UMA resources.
-// These hooks handle Create and Delete operations:
+// These hooks handle Create, Update, and Delete operations:
 //   - On Create: Creates a corresponding Keycloak resource after entity is saved
+//   - On Update: Updates GROUP_TITLE attribute in Keycloak when name is changed
 //   - On Delete: Deletes the Keycloak resource after entity is deleted (best-effort)
 //
 // The hooks run within the transaction, so if Keycloak resource creation fails,
@@ -23,21 +25,25 @@ import (
 func RegisterKeycloakHooks(client *ent.Client) {
 	// Strategy hooks
 	client.Strategy.Use(strategyCreateHook())
+	client.Strategy.Use(strategyUpdateHook())
 	client.Strategy.Use(strategyDeleteHook())
 
 	// Bot hooks
 	client.Bot.Use(botCreateHook())
 	client.Bot.Use(botDeleteHook())
+	client.Bot.Use(botUpdateHook())
 
 	// Exchange hooks
 	client.Exchange.Use(exchangeCreateHook())
 	client.Exchange.Use(exchangeDeleteHook())
+	client.Exchange.Use(exchangeUpdateHook())
 
 	// BotRunner hooks
 	client.BotRunner.Use(botRunnerCreateHook())
 	client.BotRunner.Use(botRunnerDeleteHook())
+	client.BotRunner.Use(botRunnerUpdateHook())
 
-	log.Println("Registered Keycloak resource sync hooks for Strategy, Bot, Exchange, BotRunner")
+	log.Println("Registered Keycloak resource sync hooks for Strategy, Bot, Exchange, BotRunner (Create, Delete, Update)")
 }
 
 // ============================================================================
@@ -54,9 +60,9 @@ func strategyCreateHook() ent.Hook {
 					return nil, err
 				}
 
-				// Get UMA client from context
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient == nil {
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
 					return v, nil
 				}
 
@@ -66,27 +72,87 @@ func strategyCreateHook() ent.Hook {
 					return v, nil
 				}
 
-				// Create Keycloak resource
+				// Create unified resource (UMA + group) via Keycloak extension
 				resourceName := fmt.Sprintf("%s (v%d)", strategy.Name, strategy.VersionNumber)
 				scopes := GetScopesForType(ResourceTypeStrategy)
-				attributes := map[string][]string{
-					"ownerId": {strategy.OwnerID},
-					"type":    {string(ResourceTypeStrategy)},
-					"public":  {fmt.Sprintf("%t", strategy.Public)},
-					"title":   {resourceName}, // For GROUP_TITLE attribute
+
+				request := keycloak.ResourceCreateRequest{
+					ID:      strategy.ID.String(),
+					Title:   resourceName,
+					Type:    string(ResourceTypeStrategy),
+					OwnerID: strategy.OwnerID,
+					Scopes:  scopes,
+					Attributes: map[string][]string{
+						"public": {fmt.Sprintf("%t", strategy.Public)},
+					},
 				}
 
-				err = umaClient.CreateResource(ctx, strategy.ID.String(), resourceName, scopes, attributes)
+				_, err = adminClient.CreateResource(ctx, request)
 				if err != nil {
-					log.Printf("Failed to create Keycloak resource for strategy %s: %v", strategy.ID, err)
+					log.Printf("Failed to create unified Keycloak resource for strategy %s: %v", strategy.ID, err)
 					return nil, fmt.Errorf("failed to create Keycloak resource (transaction will rollback): %w", err)
 				}
 
-				log.Printf("Successfully created strategy %s with Keycloak resource", strategy.ID)
+				log.Printf("Successfully created strategy %s with unified Keycloak resource", strategy.ID)
 				return v, nil
 			})
 		},
 		ent.OpCreate,
+	)
+}
+
+func strategyUpdateHook() ent.Hook {
+	return hook.On(
+		func(next ent.Mutator) ent.Mutator {
+			return hook.StrategyFunc(func(ctx context.Context, m *ent.StrategyMutation) (ent.Value, error) {
+				// Check if name is being updated
+				name, nameExists := m.Name()
+				if !nameExists {
+					// Name not being updated, skip sync
+					return next.Mutate(ctx, m)
+				}
+
+				// Capture ID
+				id, idExists := m.ID()
+				if !idExists {
+					return next.Mutate(ctx, m)
+				}
+
+				// Execute the mutation first
+				v, err := next.Mutate(ctx, m)
+				if err != nil {
+					return nil, err
+				}
+
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
+					return v, nil
+				}
+
+				// Type assert to get version number for title
+				strategy, ok := v.(*ent.Strategy)
+				if !ok {
+					return v, nil
+				}
+
+				// Update unified resource (UMA + group) via Keycloak extension
+				resourceName := fmt.Sprintf("%s (v%d)", name, strategy.VersionNumber)
+				request := keycloak.ResourceUpdateRequest{
+					Title: resourceName,
+				}
+
+				_, err = adminClient.UpdateResource(ctx, id.String(), request)
+				if err != nil {
+					log.Printf("Warning: failed to update unified Keycloak resource for strategy %s: %v", id, err)
+				} else {
+					log.Printf("Successfully updated unified Keycloak resource for strategy %s", id)
+				}
+
+				return v, nil
+			})
+		},
+		ent.OpUpdateOne,
 	)
 }
 
@@ -112,10 +178,10 @@ func strategyDeleteHook() ent.Hook {
 					return nil, err
 				}
 
-				// Clean up Keycloak resource (best-effort)
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient != nil {
-					cleanupErr := umaClient.DeleteResource(ctx, id.String())
+				// Clean up unified Keycloak resource (best-effort)
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient != nil {
+					cleanupErr := adminClient.DeleteResource(ctx, id.String())
 					if cleanupErr != nil {
 						log.Printf("Warning: strategy %s deleted but Keycloak cleanup failed: %v", id, cleanupErr)
 					} else {
@@ -144,9 +210,9 @@ func botCreateHook() ent.Hook {
 					return nil, err
 				}
 
-				// Get UMA client from context
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient == nil {
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
 					return v, nil
 				}
 
@@ -156,22 +222,27 @@ func botCreateHook() ent.Hook {
 					return v, nil
 				}
 
-				// Create Keycloak resource
+				// Create unified resource (UMA + group) via Keycloak extension
 				scopes := GetScopesForType(ResourceTypeBot)
-				attributes := map[string][]string{
-					"ownerId": {bot.OwnerID},
-					"type":    {string(ResourceTypeBot)},
-					"public":  {fmt.Sprintf("%t", bot.Public)},
-					"title":   {bot.Name}, // For GROUP_TITLE attribute
+
+				request := keycloak.ResourceCreateRequest{
+					ID:      bot.ID.String(),
+					Title:   bot.Name,
+					Type:    string(ResourceTypeBot),
+					OwnerID: bot.OwnerID,
+					Scopes:  scopes,
+					Attributes: map[string][]string{
+						"public": {fmt.Sprintf("%t", bot.Public)},
+					},
 				}
 
-				err = umaClient.CreateResource(ctx, bot.ID.String(), bot.Name, scopes, attributes)
+				_, err = adminClient.CreateResource(ctx, request)
 				if err != nil {
-					log.Printf("Failed to create Keycloak resource for bot %s: %v", bot.ID, err)
+					log.Printf("Failed to create unified Keycloak resource for bot %s: %v", bot.ID, err)
 					return nil, fmt.Errorf("failed to create Keycloak resource (transaction will rollback): %w", err)
 				}
 
-				log.Printf("Successfully created bot %s with Keycloak resource", bot.ID)
+				log.Printf("Successfully created bot %s with unified Keycloak resource", bot.ID)
 				return v, nil
 			})
 		},
@@ -201,10 +272,10 @@ func botDeleteHook() ent.Hook {
 					return nil, err
 				}
 
-				// Clean up Keycloak resource (best-effort)
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient != nil {
-					cleanupErr := umaClient.DeleteResource(ctx, id.String())
+				// Clean up unified Keycloak resource (best-effort)
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient != nil {
+					cleanupErr := adminClient.DeleteResource(ctx, id.String())
 					if cleanupErr != nil {
 						log.Printf("Warning: bot %s deleted but Keycloak cleanup failed: %v", id, cleanupErr)
 					} else {
@@ -216,6 +287,54 @@ func botDeleteHook() ent.Hook {
 			})
 		},
 		ent.OpDeleteOne,
+	)
+}
+
+func botUpdateHook() ent.Hook {
+	return hook.On(
+		func(next ent.Mutator) ent.Mutator {
+			return hook.BotFunc(func(ctx context.Context, m *ent.BotMutation) (ent.Value, error) {
+				// Check if name is being updated
+				name, nameExists := m.Name()
+				if !nameExists {
+					// Name not being updated, skip sync
+					return next.Mutate(ctx, m)
+				}
+
+				// Capture ID
+				id, idExists := m.ID()
+				if !idExists {
+					return next.Mutate(ctx, m)
+				}
+
+				// Execute the mutation first
+				v, err := next.Mutate(ctx, m)
+				if err != nil {
+					return nil, err
+				}
+
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
+					return v, nil
+				}
+
+				// Update unified resource (UMA + group) via Keycloak extension
+				request := keycloak.ResourceUpdateRequest{
+					Title: name,
+				}
+
+				_, err = adminClient.UpdateResource(ctx, id.String(), request)
+				if err != nil {
+					log.Printf("Warning: failed to update unified Keycloak resource for bot %s: %v", id, err)
+				} else {
+					log.Printf("Successfully updated unified Keycloak resource for bot %s", id)
+				}
+
+				return v, nil
+			})
+		},
+		ent.OpUpdateOne,
 	)
 }
 
@@ -233,9 +352,9 @@ func exchangeCreateHook() ent.Hook {
 					return nil, err
 				}
 
-				// Get UMA client from context
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient == nil {
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
 					return v, nil
 				}
 
@@ -245,21 +364,24 @@ func exchangeCreateHook() ent.Hook {
 					return v, nil
 				}
 
-				// Create Keycloak resource
+				// Create unified resource (UMA + group) via Keycloak extension
 				scopes := GetScopesForType(ResourceTypeExchange)
-				attributes := map[string][]string{
-					"ownerId": {exchange.OwnerID},
-					"type":    {string(ResourceTypeExchange)},
-					"title":   {exchange.Name}, // For GROUP_TITLE attribute
+
+				request := keycloak.ResourceCreateRequest{
+					ID:      exchange.ID.String(),
+					Title:   exchange.Name,
+					Type:    string(ResourceTypeExchange),
+					OwnerID: exchange.OwnerID,
+					Scopes:  scopes,
 				}
 
-				err = umaClient.CreateResource(ctx, exchange.ID.String(), exchange.Name, scopes, attributes)
+				_, err = adminClient.CreateResource(ctx, request)
 				if err != nil {
-					log.Printf("Failed to create Keycloak resource for exchange %s: %v", exchange.ID, err)
+					log.Printf("Failed to create unified Keycloak resource for exchange %s: %v", exchange.ID, err)
 					return nil, fmt.Errorf("failed to create Keycloak resource (transaction will rollback): %w", err)
 				}
 
-				log.Printf("Successfully created exchange %s with Keycloak resource", exchange.ID)
+				log.Printf("Successfully created exchange %s with unified Keycloak resource", exchange.ID)
 				return v, nil
 			})
 		},
@@ -289,10 +411,10 @@ func exchangeDeleteHook() ent.Hook {
 					return nil, err
 				}
 
-				// Clean up Keycloak resource (best-effort)
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient != nil {
-					cleanupErr := umaClient.DeleteResource(ctx, id.String())
+				// Clean up unified Keycloak resource (best-effort)
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient != nil {
+					cleanupErr := adminClient.DeleteResource(ctx, id.String())
 					if cleanupErr != nil {
 						log.Printf("Warning: exchange %s deleted but Keycloak cleanup failed: %v", id, cleanupErr)
 					} else {
@@ -304,6 +426,54 @@ func exchangeDeleteHook() ent.Hook {
 			})
 		},
 		ent.OpDeleteOne,
+	)
+}
+
+func exchangeUpdateHook() ent.Hook {
+	return hook.On(
+		func(next ent.Mutator) ent.Mutator {
+			return hook.ExchangeFunc(func(ctx context.Context, m *ent.ExchangeMutation) (ent.Value, error) {
+				// Check if name is being updated
+				name, nameExists := m.Name()
+				if !nameExists {
+					// Name not being updated, skip sync
+					return next.Mutate(ctx, m)
+				}
+
+				// Capture ID
+				id, idExists := m.ID()
+				if !idExists {
+					return next.Mutate(ctx, m)
+				}
+
+				// Execute the mutation first
+				v, err := next.Mutate(ctx, m)
+				if err != nil {
+					return nil, err
+				}
+
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
+					return v, nil
+				}
+
+				// Update unified resource (UMA + group) via Keycloak extension
+				request := keycloak.ResourceUpdateRequest{
+					Title: name,
+				}
+
+				_, err = adminClient.UpdateResource(ctx, id.String(), request)
+				if err != nil {
+					log.Printf("Warning: failed to update unified Keycloak resource for exchange %s: %v", id, err)
+				} else {
+					log.Printf("Successfully updated unified Keycloak resource for exchange %s", id)
+				}
+
+				return v, nil
+			})
+		},
+		ent.OpUpdateOne,
 	)
 }
 
@@ -321,9 +491,9 @@ func botRunnerCreateHook() ent.Hook {
 					return nil, err
 				}
 
-				// Get UMA client from context
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient == nil {
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
 					return v, nil
 				}
 
@@ -333,22 +503,27 @@ func botRunnerCreateHook() ent.Hook {
 					return v, nil
 				}
 
-				// Create Keycloak resource
+				// Create unified resource (UMA + group) via Keycloak extension
 				scopes := GetScopesForType(ResourceTypeBotRunner)
-				attributes := map[string][]string{
-					"ownerId": {runner.OwnerID},
-					"type":    {string(ResourceTypeBotRunner)},
-					"public":  {fmt.Sprintf("%t", runner.Public)},
-					"title":   {runner.Name}, // For GROUP_TITLE attribute
+
+				request := keycloak.ResourceCreateRequest{
+					ID:      runner.ID.String(),
+					Title:   runner.Name,
+					Type:    string(ResourceTypeBotRunner),
+					OwnerID: runner.OwnerID,
+					Scopes:  scopes,
+					Attributes: map[string][]string{
+						"public": {fmt.Sprintf("%t", runner.Public)},
+					},
 				}
 
-				err = umaClient.CreateResource(ctx, runner.ID.String(), runner.Name, scopes, attributes)
+				_, err = adminClient.CreateResource(ctx, request)
 				if err != nil {
-					log.Printf("Failed to create Keycloak resource for bot runner %s: %v", runner.ID, err)
+					log.Printf("Failed to create unified Keycloak resource for bot runner %s: %v", runner.ID, err)
 					return nil, fmt.Errorf("failed to create Keycloak resource (transaction will rollback): %w", err)
 				}
 
-				log.Printf("Successfully created bot runner %s with Keycloak resource", runner.ID)
+				log.Printf("Successfully created bot runner %s with unified Keycloak resource", runner.ID)
 				return v, nil
 			})
 		},
@@ -378,10 +553,10 @@ func botRunnerDeleteHook() ent.Hook {
 					return nil, err
 				}
 
-				// Clean up Keycloak resource (best-effort)
-				umaClient := GetUMAClientFromContext(ctx)
-				if umaClient != nil {
-					cleanupErr := umaClient.DeleteResource(ctx, id.String())
+				// Clean up unified Keycloak resource (best-effort)
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient != nil {
+					cleanupErr := adminClient.DeleteResource(ctx, id.String())
 					if cleanupErr != nil {
 						log.Printf("Warning: bot runner %s deleted but Keycloak cleanup failed: %v", id, cleanupErr)
 					} else {
@@ -393,5 +568,53 @@ func botRunnerDeleteHook() ent.Hook {
 			})
 		},
 		ent.OpDeleteOne,
+	)
+}
+
+func botRunnerUpdateHook() ent.Hook {
+	return hook.On(
+		func(next ent.Mutator) ent.Mutator {
+			return hook.BotRunnerFunc(func(ctx context.Context, m *ent.BotRunnerMutation) (ent.Value, error) {
+				// Check if name is being updated
+				name, nameExists := m.Name()
+				if !nameExists {
+					// Name not being updated, skip sync
+					return next.Mutate(ctx, m)
+				}
+
+				// Capture ID
+				id, idExists := m.ID()
+				if !idExists {
+					return next.Mutate(ctx, m)
+				}
+
+				// Execute the mutation first
+				v, err := next.Mutate(ctx, m)
+				if err != nil {
+					return nil, err
+				}
+
+				// Get Admin client from context
+				adminClient := GetAdminClientFromContext(ctx)
+				if adminClient == nil {
+					return v, nil
+				}
+
+				// Update unified resource (UMA + group) via Keycloak extension
+				request := keycloak.ResourceUpdateRequest{
+					Title: name,
+				}
+
+				_, err = adminClient.UpdateResource(ctx, id.String(), request)
+				if err != nil {
+					log.Printf("Warning: failed to update unified Keycloak resource for bot runner %s: %v", id, err)
+				} else {
+					log.Printf("Successfully updated unified Keycloak resource for bot runner %s", id)
+				}
+
+				return v, nil
+			})
+		},
+		ent.OpUpdateOne,
 	)
 }

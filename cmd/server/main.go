@@ -358,6 +358,8 @@ func runServer(c *cli.Context) error {
 			ctx = graph.SetUMAClientInContext(ctx, umaClient)
 			// Inject UMA client for ENT hooks (authz package uses its own context key)
 			ctx = authz.SetUMAClientInContext(ctx, umaClient)
+			// Inject Admin client for ENT hooks (for GROUP_TITLE sync)
+			ctx = authz.SetAdminClientInContext(ctx, adminClient)
 			// Inject Admin client (for organization/user management)
 			ctx = graph.SetAdminClientInContext(ctx, adminClient)
 			// Inject alert service (always available)

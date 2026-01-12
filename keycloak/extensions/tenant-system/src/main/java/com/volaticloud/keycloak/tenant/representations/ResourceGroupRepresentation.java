@@ -17,6 +17,7 @@ public class ResourceGroupRepresentation {
     private String name;
     private String path;
     private String title;
+    private String type;
     private List<RoleInfoRepresentation> roles;
     private int totalMembers;
     private boolean hasChildren;

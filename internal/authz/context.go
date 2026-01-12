@@ -11,8 +11,9 @@ import (
 type contextKey string
 
 const (
-	umaClientKey contextKey = "uma_client"
-	entClientKey contextKey = "ent_client"
+	umaClientKey   contextKey = "uma_client"
+	entClientKey   contextKey = "ent_client"
+	adminClientKey contextKey = "admin_client"
 )
 
 // SetUMAClientInContext stores the UMA client in context
@@ -36,6 +37,19 @@ func SetEntClientInContext(ctx context.Context, client *ent.Client) context.Cont
 // GetEntClientFromContext retrieves the ENT client from context
 func GetEntClientFromContext(ctx context.Context) *ent.Client {
 	if client, ok := ctx.Value(entClientKey).(*ent.Client); ok {
+		return client
+	}
+	return nil
+}
+
+// SetAdminClientInContext stores the Admin client in context
+func SetAdminClientInContext(ctx context.Context, client *keycloak.AdminClient) context.Context {
+	return context.WithValue(ctx, adminClientKey, client)
+}
+
+// GetAdminClientFromContext retrieves the Admin client from context
+func GetAdminClientFromContext(ctx context.Context) *keycloak.AdminClient {
+	if client, ok := ctx.Value(adminClientKey).(*keycloak.AdminClient); ok {
 		return client
 	}
 	return nil

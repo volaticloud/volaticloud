@@ -27,9 +27,11 @@ import java.util.Set;
  * Multi-tenant system event listener that manages hierarchical group structures.
  *
  * Handles the following events:
- * 1. USER creation - Creates tenant group structure for each user
- * 2. AUTHORIZATION_RESOURCE creation - Creates resource groups with owner hierarchy
- * 3. AUTHORIZATION_RESOURCE deletion - Removes groups for tenant resources
+ * 1. USER creation (admin or self-signup) - Creates organization structure for each user
+ *
+ * Note: AUTHORIZATION_RESOURCE creation/deletion is now handled by the unified API
+ * (/realms/{realm}/volaticloud/resources endpoint). This event listener only handles
+ * user organization creation.
  */
 @JBossLog
 @RequiredArgsConstructor
@@ -85,21 +87,14 @@ public class TenantSystemEventListener implements EventListenerProvider {
                     return;
                 }
 
-                // Handle AUTHORIZATION_RESOURCE creation
-                if (event.getResourceType() == ResourceType.AUTHORIZATION_RESOURCE) {
-                    handleResourceCreation(event);
-                    return;
-                }
+                // NOTE: AUTHORIZATION_RESOURCE creation is now handled by the unified API
+                // (/realms/{realm}/volaticloud/resources endpoint)
+                // This event listener only handles user creation events
             }
 
-            // Handle DELETE operations
-            if (event.getOperationType() == OperationType.DELETE) {
-                // Handle AUTHORIZATION_RESOURCE deletion
-                if (event.getResourceType() == ResourceType.AUTHORIZATION_RESOURCE) {
-                    handleResourceDeletion(event);
-                    return;
-                }
-            }
+            // NOTE: AUTHORIZATION_RESOURCE deletion is now handled by the unified API
+            // (/realms/{realm}/volaticloud/resources/{id} DELETE endpoint)
+            // This event listener does not handle resource deletion
         } catch (Exception e) {
             log.errorf(e, "Error processing admin event for tenant system");
         }
@@ -294,104 +289,6 @@ public class TenantSystemEventListener implements EventListenerProvider {
         } catch (Exception e) {
             log.errorf(e, "Error creating organization resource: %s", resourceName);
             return null;
-        }
-    }
-
-    /**
-     * Handles authorization resource creation event.
-     * Creates hierarchical group structure based on ownerId.
-     */
-    private void handleResourceCreation(AdminEvent event) {
-        String representation = event.getRepresentation();
-        if (representation == null) {
-            log.warn("No representation found in resource creation event");
-            return;
-        }
-
-        // Parse the resource name and ownerId from the representation
-        String resourceName = extractFieldValue(representation, "name");
-        if (resourceName == null || resourceName.isEmpty()) {
-            log.warn("Could not extract resource name from event representation");
-            return;
-        }
-
-        String ownerId = extractOwnerIdFromAttributes(representation);
-        String resourceType = extractTypeFromAttributes(representation);
-        String resourceTitle = extractTitleFromAttributes(representation);
-
-        // If resource doesn't have type attribute, set to "none"
-        if (resourceType == null || resourceType.isEmpty()) {
-            resourceType = GROUP_TYPE_NONE;
-        }
-
-        // Use resource name as title fallback if title not provided
-        if (resourceTitle == null || resourceTitle.isEmpty()) {
-            resourceTitle = resourceName;
-        }
-
-        log.infof("Processing resource: name=%s, ownerId=%s, type=%s, title=%s", resourceName, ownerId, resourceType, resourceTitle);
-
-        // Get the realm
-        RealmModel realm = session.getContext().getRealm();
-        if (realm == null) {
-            log.error("Could not get realm from session context");
-            return;
-        }
-
-        // Create hierarchical group structure
-        createHierarchicalGroupStructure(realm, resourceName, ownerId, resourceType, resourceTitle);
-
-        log.infof("Successfully created group structure for resource: %s", resourceName);
-    }
-
-    /**
-     * Handles authorization resource deletion event.
-     * Removes the corresponding group if the resource has type urn:volaticloud:resources:tenant.
-     */
-    private void handleResourceDeletion(AdminEvent event) {
-        String representation = event.getRepresentation();
-        if (representation == null) {
-            log.warn("No representation found in resource deletion event");
-            return;
-        }
-
-        // Parse the resource name and type from the representation
-        String resourceName = extractFieldValue(representation, "name");
-        if (resourceName == null || resourceName.isEmpty()) {
-            log.warn("Could not extract resource name from event representation");
-            return;
-        }
-
-        // Extract resource type from the "type" field (not attribute)
-        String resourceType = extractFieldValue(representation, "type");
-        log.infof("Processing resource deletion: name=%s, type=%s", resourceName, resourceType);
-
-        // Only delete groups for tenant resources
-        if (!RESOURCE_TYPE_TENANT.equals(resourceType)) {
-            log.infof("Resource '%s' is not a tenant resource (type=%s), skipping group deletion", resourceName, resourceType);
-            return;
-        }
-
-        // Get the realm
-        RealmModel realm = session.getContext().getRealm();
-        if (realm == null) {
-            log.error("Could not get realm from session context");
-            return;
-        }
-
-        // Find and delete the group
-        GroupModel group = session.groups().getGroupByName(realm, null, resourceName);
-        if (group == null) {
-            log.warnf("Group '%s' not found, nothing to delete", resourceName);
-            return;
-        }
-
-        // Delete the group (this will also delete subgroups)
-        boolean removed = session.groups().removeGroup(realm, group);
-        if (removed) {
-            log.infof("Successfully deleted group '%s' and its subgroups for tenant resource deletion", resourceName);
-        } else {
-            log.errorf("Failed to delete group '%s'", resourceName);
         }
     }
 
@@ -674,158 +571,6 @@ public class TenantSystemEventListener implements EventListenerProvider {
                      parentGroup != null ? parentGroup.getName() : "none", groupTitle);
         } catch (Exception e) {
             log.errorf(e, "Error creating UMA resource for group: %s", groupName);
-        }
-    }
-
-    /**
-     * Extracts a field value from JSON representation.
-     * Simple JSON parsing without external libraries.
-     */
-    private String extractFieldValue(String jsonRepresentation, String fieldName) {
-        try {
-            String searchPattern = "\"" + fieldName + "\"";
-            int fieldStart = jsonRepresentation.indexOf(searchPattern);
-            if (fieldStart == -1) {
-                return null;
-            }
-
-            int valueStart = jsonRepresentation.indexOf("\"", fieldStart + searchPattern.length());
-            if (valueStart == -1) {
-                return null;
-            }
-
-            int valueEnd = jsonRepresentation.indexOf("\"", valueStart + 1);
-            if (valueEnd == -1) {
-                return null;
-            }
-
-            return jsonRepresentation.substring(valueStart + 1, valueEnd);
-        } catch (Exception e) {
-            log.errorf(e, "Error parsing field %s from JSON: %s", fieldName, jsonRepresentation);
-            return null;
-        }
-    }
-
-    /**
-     * Extracts ownerId from resource attributes.
-     * Example JSON: {"attributes":{"ownerId":["PARENT_RESOURCE"]}}
-     */
-    private String extractOwnerIdFromAttributes(String jsonRepresentation) {
-        try {
-            // Look for "attributes" object
-            int attributesStart = jsonRepresentation.indexOf("\"attributes\"");
-            if (attributesStart == -1) {
-                return null;
-            }
-
-            // Look for "ownerId" within attributes
-            int ownerIdStart = jsonRepresentation.indexOf("\"ownerId\"", attributesStart);
-            if (ownerIdStart == -1) {
-                return null;
-            }
-
-            // ownerId is an array, get first element: ["value"]
-            int arrayStart = jsonRepresentation.indexOf("[", ownerIdStart);
-            if (arrayStart == -1) {
-                return null;
-            }
-
-            int valueStart = jsonRepresentation.indexOf("\"", arrayStart);
-            if (valueStart == -1) {
-                return null;
-            }
-
-            int valueEnd = jsonRepresentation.indexOf("\"", valueStart + 1);
-            if (valueEnd == -1) {
-                return null;
-            }
-
-            return jsonRepresentation.substring(valueStart + 1, valueEnd);
-        } catch (Exception e) {
-            log.errorf(e, "Error parsing ownerId from attributes: %s", jsonRepresentation);
-            return null;
-        }
-    }
-
-    /**
-     * Extracts type from resource attributes.
-     * Example JSON: {"attributes":{"type":["project"]}}
-     */
-    private String extractTypeFromAttributes(String jsonRepresentation) {
-        try {
-            // Look for "attributes" object
-            int attributesStart = jsonRepresentation.indexOf("\"attributes\"");
-            if (attributesStart == -1) {
-                return null;
-            }
-
-            // Look for "type" within attributes
-            int typeStart = jsonRepresentation.indexOf("\"type\"", attributesStart);
-            if (typeStart == -1) {
-                return null;
-            }
-
-            // type is an array, get first element: ["value"]
-            int arrayStart = jsonRepresentation.indexOf("[", typeStart);
-            if (arrayStart == -1) {
-                return null;
-            }
-
-            int valueStart = jsonRepresentation.indexOf("\"", arrayStart);
-            if (valueStart == -1) {
-                return null;
-            }
-
-            int valueEnd = jsonRepresentation.indexOf("\"", valueStart + 1);
-            if (valueEnd == -1) {
-                return null;
-            }
-
-            return jsonRepresentation.substring(valueStart + 1, valueEnd);
-        } catch (Exception e) {
-            log.errorf(e, "Error parsing type from attributes: %s", jsonRepresentation);
-            return null;
-        }
-    }
-
-    /**
-     * Extracts title from resource attributes.
-     * Example JSON: {"attributes":{"title":["My Strategy (v1)"]}}
-     */
-    private String extractTitleFromAttributes(String jsonRepresentation) {
-        try {
-            // Look for "attributes" object
-            int attributesStart = jsonRepresentation.indexOf("\"attributes\"");
-            if (attributesStart == -1) {
-                return null;
-            }
-
-            // Look for "title" within attributes
-            int titleStart = jsonRepresentation.indexOf("\"title\"", attributesStart);
-            if (titleStart == -1) {
-                return null;
-            }
-
-            // title is an array, get first element: ["value"]
-            int arrayStart = jsonRepresentation.indexOf("[", titleStart);
-            if (arrayStart == -1) {
-                return null;
-            }
-
-            int valueStart = jsonRepresentation.indexOf("\"", arrayStart);
-            if (valueStart == -1) {
-                return null;
-            }
-
-            int valueEnd = jsonRepresentation.indexOf("\"", valueStart + 1);
-            if (valueEnd == -1) {
-                return null;
-            }
-
-            return jsonRepresentation.substring(valueStart + 1, valueEnd);
-        } catch (Exception e) {
-            log.errorf(e, "Error parsing title from attributes: %s", jsonRepresentation);
-            return null;
         }
     }
 

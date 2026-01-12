@@ -22,6 +22,7 @@ type ResourceGroupRepresentation struct {
 	Name         string     `json:"name"`
 	Path         string     `json:"path"`
 	Title        string     `json:"title"`
+	Type         string     `json:"type"` // GROUP_TYPE attribute (strategy, bot, exchange, runner, organization, none)
 	Roles        []RoleInfo `json:"roles"`
 	TotalMembers int        `json:"totalMembers"`
 	HasChildren  bool       `json:"hasChildren"`

@@ -128,6 +128,7 @@ func buildResourceGroupConnection(
 			Name:         item.Name,
 			Path:         item.Path,
 			Title:        item.Title,
+			Type:         item.Type,
 			Roles:        roles,
 			TotalMembers: item.TotalMembers,
 			HasChildren:  item.HasChildren,
