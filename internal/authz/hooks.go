@@ -105,12 +105,15 @@ func strategyUpdateHook() ent.Hook {
 	return hook.On(
 		func(next ent.Mutator) ent.Mutator {
 			return hook.StrategyFunc(func(ctx context.Context, m *ent.StrategyMutation) (ent.Value, error) {
-				// Check if name is being updated
-				// Note: Only name changes need syncing to Keycloak GROUP_TITLE attribute.
-				// Other fields (config, public, etc.) are synced via separate visibility mutations.
-				name, nameExists := m.Name()
-				if !nameExists {
-					// Name not being updated, skip sync
+				// Check if name or version number is being updated
+				// Note: Title format is "Name (vX)" so changes to either field need syncing
+				// to Keycloak GROUP_TITLE attribute. Other fields (config, public, etc.)
+				// are synced via separate visibility mutations.
+				_, nameExists := m.Name()
+				_, versionExists := m.VersionNumber()
+
+				if !nameExists && !versionExists {
+					// Neither name nor version being updated, skip sync
 					return next.Mutate(ctx, m)
 				}
 
@@ -132,7 +135,7 @@ func strategyUpdateHook() ent.Hook {
 					return v, nil
 				}
 
-				// Type assert to get version number for title
+				// Type assert to get full entity data for title generation
 				strategy, ok := v.(*ent.Strategy)
 				if !ok {
 					return v, nil
@@ -144,7 +147,8 @@ func strategyUpdateHook() ent.Hook {
 				// - Keycloak sync failures are logged as warnings but don't fail the transaction
 				// - This prevents database rollback from Keycloak being unavailable
 				// - Monitoring/alerting should track sync failures for manual intervention
-				resourceName := fmt.Sprintf("%s (v%d)", name, strategy.VersionNumber)
+				// Build title from entity (handles both name and version changes)
+				resourceName := fmt.Sprintf("%s (v%d)", strategy.Name, strategy.VersionNumber)
 				request := keycloak.ResourceUpdateRequest{
 					Title: resourceName,
 				}
