@@ -139,6 +139,11 @@ func strategyUpdateHook() ent.Hook {
 				}
 
 				// Update unified resource (UMA + group) via Keycloak extension
+				// NOTE: Best-effort synchronization strategy
+				// - Database is the source of truth
+				// - Keycloak sync failures are logged as warnings but don't fail the transaction
+				// - This prevents database rollback from Keycloak being unavailable
+				// - Monitoring/alerting should track sync failures for manual intervention
 				resourceName := fmt.Sprintf("%s (v%d)", name, strategy.VersionNumber)
 				request := keycloak.ResourceUpdateRequest{
 					Title: resourceName,
@@ -147,6 +152,8 @@ func strategyUpdateHook() ent.Hook {
 				_, err = adminClient.UpdateResource(ctx, id.String(), request)
 				if err != nil {
 					log.Printf("Warning: failed to update unified Keycloak resource for strategy %s: %v", id, err)
+					// TODO: Add metrics/alerting for sync failures
+					// TODO: Consider implementing retry mechanism with exponential backoff
 				} else {
 					log.Printf("Successfully updated unified Keycloak resource for strategy %s", id)
 				}

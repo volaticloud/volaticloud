@@ -17,8 +17,17 @@ import java.util.stream.Collectors;
 /**
  * Service for unified resource management (UMA resource + Keycloak group).
  *
- * Provides atomic operations that manage both UMA resources (for authorization)
- * and Keycloak groups (for organizational hierarchy) together.
+ * <p>Provides operations that manage both UMA resources (for authorization)
+ * and Keycloak groups (for organizational hierarchy) together. Operations attempt
+ * to keep both entities synchronized, but <strong>true ACID transactions are not
+ * guaranteed</strong> across Keycloak API calls.
+ *
+ * <p><strong>Consistency Model:</strong> Best-effort synchronization with cleanup on failures.
+ * <ul>
+ *   <li>Create: Group created first, then UMA resource. If UMA fails, group is deleted (cleanup).</li>
+ *   <li>Update: Both entities updated. If either fails, exception thrown (caller handles rollback).</li>
+ *   <li>Delete: Both entities deleted. Warnings logged if one fails, but operation continues.</li>
+ * </ul>
  */
 @JBossLog
 public class ResourceManagementService {
@@ -100,8 +109,22 @@ public class ResourceManagementService {
         // Step 3: Create Keycloak group with role subgroups
         GroupModel group = createGroupWithRoles(realm, request.getId(), parentGroup, request.getType(), request.getTitle());
 
-        // Step 4: Create UMA resource
-        Resource resource = createUMAResource(realm, request, parentGroup);
+        // Step 4: Create UMA resource (with cleanup on failure)
+        Resource resource;
+        try {
+            resource = createUMAResource(realm, request, parentGroup);
+        } catch (Exception e) {
+            // Cleanup: Delete group if UMA resource creation failed
+            // This prevents orphaned groups without corresponding UMA resources
+            log.errorf("UMA resource creation failed, cleaning up group: %s", request.getId());
+            try {
+                session.groups().removeGroup(realm, group);
+                log.infof("Successfully cleaned up orphaned group: %s", request.getId());
+            } catch (Exception cleanupError) {
+                log.errorf(cleanupError, "Failed to cleanup group after UMA resource creation failure: %s", request.getId());
+            }
+            throw e; // Re-throw original exception
+        }
 
         // Step 5: Build response
         return buildResourceResponse(resource, group, parentGroup);
