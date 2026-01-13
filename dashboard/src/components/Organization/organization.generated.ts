@@ -34,7 +34,7 @@ export type ResourceGroupsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ResourceGroupsQuery = { __typename?: 'Query', resourceGroups: { __typename?: 'ResourceGroupConnection', totalCount: number, edges: Array<{ __typename?: 'ResourceGroupEdge', cursor: string, node: { __typename?: 'ResourceGroup', name: string, path: string, title: string, totalMembers: number, hasChildren: boolean, roles: Array<{ __typename?: 'RoleInfo', name: string, memberCount: number }> } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type ResourceGroupsQuery = { __typename?: 'Query', resourceGroups: { __typename?: 'ResourceGroupConnection', totalCount: number, edges: Array<{ __typename?: 'ResourceGroupEdge', cursor: string, node: { __typename?: 'ResourceGroup', name: string, path: string, title: string, type: string, totalMembers: number, hasChildren: boolean, roles: Array<{ __typename?: 'RoleInfo', name: string, memberCount: number }> } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type ResourceGroupMembersQueryVariables = Types.Exact<{
   organizationId: Types.Scalars['String']['input'];
@@ -232,6 +232,7 @@ export const ResourceGroupsDocument = gql`
         name
         path
         title
+        type
         roles {
           name
           memberCount

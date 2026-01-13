@@ -219,6 +219,9 @@ type ResourceGroup struct {
 	Path string `json:"path"`
 	// Display title (from GROUP_TITLE attribute)
 	Title string `json:"title"`
+	// Resource type (from GROUP_TYPE attribute)
+	// Values: "strategy", "bot", "exchange", "runner", "organization", "none"
+	Type string `json:"type"`
 	// List of roles with member counts
 	Roles []*RoleInfo `json:"roles"`
 	// Total number of members across all roles

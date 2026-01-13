@@ -682,6 +682,11 @@ type ResourceGroup {
   """
   title: String!
   """
+  Resource type (from GROUP_TYPE attribute)
+  Values: "strategy", "bot", "exchange", "runner", "organization", "none"
+  """
+  type: String!
+  """
   List of roles with member counts
   """
   roles: [RoleInfo!]!

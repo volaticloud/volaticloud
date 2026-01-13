@@ -2891,6 +2891,11 @@ export type ResourceGroup = {
   title: Scalars['String']['output'];
   /** Total number of members across all roles */
   totalMembers: Scalars['Int']['output'];
+  /**
+   * Resource type (from GROUP_TYPE attribute)
+   * Values: "strategy", "bot", "exchange", "runner", "organization", "none"
+   */
+  type: Scalars['String']['output'];
 };
 
 /** Paginated resource group connection */

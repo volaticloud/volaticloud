@@ -74,6 +74,7 @@ query ResourceGroups(
         name
         path
         title
+        type
         roles {
           name
           memberCount

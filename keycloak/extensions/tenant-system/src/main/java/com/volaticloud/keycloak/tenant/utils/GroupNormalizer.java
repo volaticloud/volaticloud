@@ -38,6 +38,12 @@ public class GroupNormalizer {
             title = name; // Fallback to name
         }
 
+        // Extract type from GROUP_TYPE attribute
+        String type = resourceGroup.getFirstAttribute("GROUP_TYPE");
+        if (type == null || type.isEmpty()) {
+            type = "none"; // Fallback to "none"
+        }
+
         // Fetch role subgroups and normalize
         List<RoleInfoRepresentation> roles = resourceGroup.getSubGroupsStream()
             .filter(g -> g.getName().startsWith("role:"))
@@ -53,7 +59,7 @@ public class GroupNormalizer {
         boolean hasChildren = resourceGroup.getSubGroupsStream()
             .anyMatch(g -> !g.getName().startsWith("role:"));
 
-        return new ResourceGroupRepresentation(name, path, title, roles, totalMembers, hasChildren);
+        return new ResourceGroupRepresentation(name, path, title, type, roles, totalMembers, hasChildren);
     }
 
     /**

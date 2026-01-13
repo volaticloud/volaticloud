@@ -472,6 +472,7 @@ type ComplexityRoot struct {
 		Roles        func(childComplexity int) int
 		Title        func(childComplexity int) int
 		TotalMembers func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	ResourceGroupConnection struct {
@@ -2953,6 +2954,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ResourceGroup.TotalMembers(childComplexity), true
+	case "ResourceGroup.type":
+		if e.complexity.ResourceGroup.Type == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroup.Type(childComplexity), true
 
 	case "ResourceGroupConnection.edges":
 		if e.complexity.ResourceGroupConnection.Edges == nil {
@@ -18305,6 +18312,35 @@ func (ec *executionContext) fieldContext_ResourceGroup_title(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _ResourceGroup_type(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroup_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroup_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroup",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ResourceGroup_roles(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroup) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18531,6 +18567,8 @@ func (ec *executionContext) fieldContext_ResourceGroupEdge_node(_ context.Contex
 				return ec.fieldContext_ResourceGroup_path(ctx, field)
 			case "title":
 				return ec.fieldContext_ResourceGroup_title(ctx, field)
+			case "type":
+				return ec.fieldContext_ResourceGroup_type(ctx, field)
 			case "roles":
 				return ec.fieldContext_ResourceGroup_roles(ctx, field)
 			case "totalMembers":
@@ -41745,6 +41783,11 @@ func (ec *executionContext) _ResourceGroup(ctx context.Context, sel ast.Selectio
 			}
 		case "title":
 			out.Values[i] = ec._ResourceGroup_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._ResourceGroup_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

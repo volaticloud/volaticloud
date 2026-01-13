@@ -24,11 +24,13 @@ public class TenantManagementResource {
     private final KeycloakSession session;
     private final ResourceGroupService resourceGroupService;
     private final ResourceGroupMemberService memberService;
+    private final ResourceManagementService resourceManagementService;
 
     public TenantManagementResource(KeycloakSession session) {
         this.session = session;
         this.resourceGroupService = new ResourceGroupService(session);
         this.memberService = new ResourceGroupMemberService(session);
+        this.resourceManagementService = new ResourceManagementService(session);
     }
 
     /**
@@ -134,6 +136,105 @@ public class TenantManagementResource {
                 enabled, emailVerified, first, offset, orderBy, order
             );
 
+            return Response.ok(response).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * POST /realms/{realm}/volaticloud/resources
+     *
+     * Creates a unified resource (UMA resource + Keycloak group) atomically.
+     * Both the UMA resource and group are created in a single transaction.
+     *
+     * @param request Resource creation request
+     * @return ResourceResponse with created resource details
+     */
+    @POST
+    @Path("/resources")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createResource(ResourceCreateRequest request) {
+        try {
+            ResourceResponse response = resourceManagementService.createResource(request);
+            return Response.status(Response.Status.CREATED).entity(response).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).entity(Map.of("error", e.getMessage())).build();
+        } catch (IllegalStateException e) {
+            return Response.status(409).entity(Map.of("error", e.getMessage())).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * PUT /realms/{realm}/volaticloud/resources/{id}
+     *
+     * Updates a unified resource (UMA resource + Keycloak group) atomically.
+     * Updates both the UMA resource attributes and group attributes in a single transaction.
+     *
+     * @param resourceId Resource ID to update
+     * @param request Update request with fields to change
+     * @return ResourceResponse with updated resource details
+     */
+    @PUT
+    @Path("/resources/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateResource(
+        @PathParam("id") String resourceId,
+        ResourceUpdateRequest request
+    ) {
+        try {
+            ResourceResponse response = resourceManagementService.updateResource(resourceId, request);
+            return Response.ok(response).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * DELETE /realms/{realm}/volaticloud/resources/{id}
+     *
+     * Deletes a unified resource (UMA resource + Keycloak group) atomically.
+     * Removes both the UMA resource and group (including subgroups) in a single transaction.
+     *
+     * @param resourceId Resource ID to delete
+     * @return 204 No Content on success
+     */
+    @DELETE
+    @Path("/resources/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteResource(@PathParam("id") String resourceId) {
+        try {
+            resourceManagementService.deleteResource(resourceId);
+            return Response.noContent().build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * GET /realms/{realm}/volaticloud/resources/{id}
+     *
+     * Gets details of a unified resource.
+     *
+     * @param resourceId Resource ID
+     * @return ResourceResponse with resource details
+     */
+    @GET
+    @Path("/resources/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getResource(@PathParam("id") String resourceId) {
+        try {
+            ResourceResponse response = resourceManagementService.getResource(resourceId);
             return Response.ok(response).build();
         } catch (NotFoundException e) {
             return Response.status(404).entity(Map.of("error", e.getMessage())).build();

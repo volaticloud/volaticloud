@@ -29,6 +29,10 @@ import {
   ArrowUpward,
   ArrowDownward,
   Folder as FolderIcon,
+  SmartToy as BotIcon,
+  AccountTree as StrategyIcon,
+  CurrencyExchange as ExchangeIcon,
+  PlayArrow as RunnerIcon,
 } from '@mui/icons-material';
 import { ResourceGroupsDocument } from './organization.generated';
 import { ResourceGroupOrderField, OrderDirection } from '../../generated/types';
@@ -39,6 +43,24 @@ interface ResourceGroupsTableProps {
   selectedGroupId: string | null;
   initialGroupId?: string;
 }
+
+// Helper function to get icon and label for resource type
+const getTypeInfo = (type: string) => {
+  switch (type) {
+    case 'strategy':
+      return { icon: <StrategyIcon fontSize="small" />, label: 'Strategy', color: 'primary' as const };
+    case 'bot':
+      return { icon: <BotIcon fontSize="small" />, label: 'Bot', color: 'success' as const };
+    case 'exchange':
+      return { icon: <ExchangeIcon fontSize="small" />, label: 'Exchange', color: 'warning' as const };
+    case 'runner':
+      return { icon: <RunnerIcon fontSize="small" />, label: 'Runner', color: 'info' as const };
+    case 'organization':
+      return { icon: <GroupIcon fontSize="small" />, label: 'Organization', color: 'secondary' as const };
+    default:
+      return { icon: <GroupIcon fontSize="small" />, label: 'Resource', color: 'default' as const };
+  }
+};
 
 export const ResourceGroupsTable = ({
   organizationId,
@@ -171,6 +193,7 @@ export const ResourceGroupsTable = ({
             <TableRow>
               <TableCell width="40px"></TableCell>
               <TableCell>Title</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>Roles</TableCell>
               <TableCell align="right">Total Members</TableCell>
             </TableRow>
@@ -178,7 +201,7 @@ export const ResourceGroupsTable = ({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   <Box sx={{ py: 4 }}>
                     <CircularProgress size={40} />
                   </Box>
@@ -186,7 +209,7 @@ export const ResourceGroupsTable = ({
               </TableRow>
             ) : groups.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
                     {searchTerm ? 'No resource groups match your search' : 'No resource groups found'}
                   </Typography>
@@ -197,6 +220,7 @@ export const ResourceGroupsTable = ({
                 const group = edge.node;
                 // Use group.name (resource UUID) for selection comparison
                 const isSelected = selectedGroupId === group.name;
+                const typeInfo = getTypeInfo(group.type);
 
                 return (
                   <TableRow
@@ -222,6 +246,15 @@ export const ResourceGroupsTable = ({
                           <Chip label="Folder" size="small" variant="outlined" />
                         )}
                       </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        icon={typeInfo.icon}
+                        label={typeInfo.label}
+                        size="small"
+                        color={typeInfo.color}
+                        variant="outlined"
+                      />
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>

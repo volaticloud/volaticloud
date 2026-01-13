@@ -1,6 +1,7 @@
 package keycloak
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -38,6 +39,34 @@ type GroupNode struct {
 	Type     string // "resource" or "role"
 	Title    string // Display title from GROUP_TITLE attribute
 	Children []*GroupNode
+}
+
+// ResourceCreateRequest represents a request to create a unified resource (UMA + group)
+type ResourceCreateRequest struct {
+	ID         string              `json:"id"`         // Resource ID (UUID)
+	Title      string              `json:"title"`      // Display title
+	Type       string              `json:"type"`       // Resource type (strategy, bot, exchange, runner)
+	OwnerID    string              `json:"ownerId"`    // Parent resource ID (optional)
+	Scopes     []string            `json:"scopes"`     // Authorization scopes
+	Attributes map[string][]string `json:"attributes"` // Additional attributes (e.g., {"public": ["true"]})
+}
+
+// ResourceUpdateRequest represents a request to update a unified resource
+type ResourceUpdateRequest struct {
+	Title      string              `json:"title,omitempty"`      // Updated title
+	Attributes map[string][]string `json:"attributes,omitempty"` // Updated attributes
+}
+
+// ResourceResponse represents the response from resource operations
+type ResourceResponse struct {
+	ID            string              `json:"id"`            // Resource ID
+	Title         string              `json:"title"`         // Display title
+	Type          string              `json:"type"`          // Resource type
+	OwnerID       string              `json:"ownerId"`       // Parent resource ID
+	GroupID       string              `json:"groupId"`       // Keycloak group ID
+	UMAResourceID string              `json:"umaResourceId"` // UMA resource ID
+	Scopes        []string            `json:"scopes"`        // Authorization scopes
+	Attributes    map[string][]string `json:"attributes"`    // Resource attributes
 }
 
 // NewAdminClient creates a new Keycloak admin API client
@@ -388,4 +417,141 @@ func (a *AdminClient) GetGroupMembers(ctx context.Context, groupID string) ([]Or
 	}
 
 	return users, nil
+}
+
+// CreateResource creates a unified resource (UMA resource + Keycloak group) atomically
+// Uses the Keycloak extension's unified API endpoint
+func (a *AdminClient) CreateResource(ctx context.Context, request ResourceCreateRequest) (*ResourceResponse, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Build URL
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources", a.config.URL, a.config.Realm)
+
+	// Marshal request body
+	body, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusCreated {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to create resource (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode response
+	var response ResourceResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &response, nil
+}
+
+// UpdateResource updates a unified resource (UMA resource + Keycloak group) atomically
+// Uses the Keycloak extension's unified API endpoint
+func (a *AdminClient) UpdateResource(ctx context.Context, resourceID string, request ResourceUpdateRequest) (*ResourceResponse, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Build URL
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s", a.config.URL, a.config.Realm, resourceID)
+
+	// Marshal request body
+	body, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "PUT", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to update resource (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode response
+	var response ResourceResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &response, nil
+}
+
+// DeleteResource deletes a unified resource (UMA resource + Keycloak group) atomically
+// Uses the Keycloak extension's unified API endpoint
+func (a *AdminClient) DeleteResource(ctx context.Context, resourceID string) error {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Build URL
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s", a.config.URL, a.config.Realm, resourceID)
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusNoContent {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to delete resource (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
 }
