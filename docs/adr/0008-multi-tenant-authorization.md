@@ -402,6 +402,50 @@ PUT /realms/dev/volaticloud/resources/{id}
 - `internal/authz/hooks.go` - ENT runtime hooks call `CreateResource()`, `UpdateResource()`, `DeleteResource()`
 - Backend hooks run after database mutations, sync to Keycloak
 
+**Transaction Rollback Strategy:**
+
+The system uses **different consistency models** for create vs update operations:
+
+| Operation | Strategy | Behavior on Keycloak Failure |
+|-----------|----------|------------------------------|
+| **Create** | Atomic (Strong Consistency) | Database transaction rolled back<br>Entity not persisted<br>User sees error |
+| **Update** | Best-Effort (Eventual Consistency) | Database transaction commits<br>Warning logged<br>Keycloak out of sync |
+| **Delete** | Best-Effort | Both deleted independently<br>Warnings logged if either fails |
+
+**Rationale:**
+
+- **Create requires atomicity**: A resource without UMA permissions would be inaccessible (broken state)
+- **Updates tolerate inconsistency**: Database is source of truth. Title mismatches are non-critical.
+- **Availability over strict consistency**: Updates don't fail just because Keycloak is temporarily unavailable
+
+**Sync Failure Recovery:**
+
+- **Monitoring**: Update hooks log warnings with resource IDs (grep for `"Warning: failed to update unified Keycloak resource"`)
+- **Detection**: Compare database entity names with Keycloak GROUP_TITLE attributes
+- **Manual fix**: Use Keycloak Admin Console to update GROUP_TITLE to match database
+- **Future**: Implement reconciliation job with exponential backoff (see TODOs in `internal/authz/hooks.go:155-156`)
+
+**Example Scenarios:**
+
+```
+Scenario 1: Create with Keycloak failure
+1. Database creates Strategy entity
+2. Keycloak CreateResource() fails (network timeout)
+3. Hook returns error → ENT rolls back database transaction
+4. Strategy NOT created in database
+5. User sees error: "failed to create Keycloak resource"
+Result: Consistent state (nothing created)
+
+Scenario 2: Update with Keycloak failure
+1. Database updates Strategy.name = "New Name"
+2. Database transaction commits successfully
+3. Keycloak UpdateResource() fails (Keycloak down)
+4. Hook logs warning, continues execution
+5. Strategy updated in database with new name
+6. Keycloak still has old title (GROUP_TITLE = "Old Name")
+Result: Temporary inconsistency (database ahead of Keycloak)
+```
+
 ### C. UMA 2.0 Resource Protection
 
 **Implementation:** `internal/keycloak/uma_client.go`
