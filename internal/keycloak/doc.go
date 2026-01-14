@@ -279,12 +279,12 @@ assigned the 'viewer' role upon acceptance.
 
 ## Invitation Flow
 
-	1. Admin calls CreateInvitation(ctx, orgID, request)
-	2. Keycloak creates invitation and sends email
-	3. User clicks invitation link
-	4. User registers/logs in via Keycloak
-	5. TenantSystemEventListener assigns viewer role
-	6. User redirected to dashboard with orgId preserved
+ 1. Admin calls CreateInvitation(ctx, orgID, request)
+ 2. Keycloak creates invitation and sends email
+ 3. User clicks invitation link
+ 4. User registers/logs in via Keycloak
+ 5. TenantSystemEventListener assigns viewer role
+ 6. User redirected to dashboard with orgId preserved
 
 ## Usage Example
 
