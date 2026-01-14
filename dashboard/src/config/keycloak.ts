@@ -1,4 +1,5 @@
-import { AuthProviderProps, User } from 'react-oidc-context';
+import { AuthProviderProps } from 'react-oidc-context';
+import { User } from 'oidc-client-ts';
 import { ORG_ID_PARAM } from '../constants/url';
 
 // Custom state passed through OAuth flow

@@ -185,7 +185,7 @@ public class InvitationService {
 
     /**
      * Builds the dashboard redirect URI with the organization selected.
-     * Format: {dashboardBaseUrl}/organizations/{orgAlias}
+     * Format: {dashboardBaseUrl}/?orgId={orgAlias}
      */
     private String buildDashboardRedirectUri(ClientModel dashboardClient, String orgAlias) {
         if (dashboardClient == null) {
@@ -235,8 +235,14 @@ public class InvitationService {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
 
-        // Build URL with organization path
-        String redirectUri = baseUrl + "/organizations/" + orgAlias;
+        // Build URL with orgId query parameter (URL-encoded for safety)
+        String encodedOrgAlias;
+        try {
+            encodedOrgAlias = java.net.URLEncoder.encode(orgAlias, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            encodedOrgAlias = orgAlias;
+        }
+        String redirectUri = baseUrl + "/?orgId=" + encodedOrgAlias;
         log.infof("Built dashboard redirect URI: %s", redirectUri);
         return redirectUri;
     }
