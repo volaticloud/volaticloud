@@ -2295,6 +2295,19 @@ export type MemberUser = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /**
+   * Cancel a pending invitation
+   * Removes the invitation so the user can no longer use the invite link
+   * Requires invite-user permission on the organization
+   */
+  cancelOrganizationInvitation: Scalars['Boolean']['output'];
+  /**
+   * Change a user's role in an organization
+   * Replaces all existing roles with the new role
+   * Users cannot change their own role (returns error)
+   * Requires change-user-roles permission on the organization
+   */
+  changeOrganizationUserRole: Scalars['Boolean']['output'];
   /** Create a new alert rule */
   createAlertRule: AlertRule;
   createBot: Bot;
@@ -2384,6 +2397,19 @@ export type Mutation = {
 };
 
 
+export type MutationCancelOrganizationInvitationArgs = {
+  invitationId: Scalars['ID']['input'];
+  organizationId: Scalars['ID']['input'];
+};
+
+
+export type MutationChangeOrganizationUserRoleArgs = {
+  newRole: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+};
+
+
 export type MutationCreateAlertRuleArgs = {
   input: CreateAlertRuleInput;
 };
@@ -2456,7 +2482,7 @@ export type MutationGetFreqtradeTokenArgs = {
 
 export type MutationInviteOrganizationUserArgs = {
   input: InviteUserInput;
-  organizationId: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
 };
 
 
@@ -2609,9 +2635,18 @@ export type OrganizationInvitation = {
   /** Last name of the invited user */
   lastName?: Maybe<Scalars['String']['output']>;
   /** Organization resource ID */
-  organizationId: Scalars['String']['output'];
+  organizationId: Scalars['ID']['output'];
   /** Invitation status (PENDING, EXPIRED) */
   status: Scalars['String']['output'];
+};
+
+/** Connection type for paginated invitation list */
+export type OrganizationInvitationConnection = {
+  __typename?: 'OrganizationInvitationConnection';
+  /** List of invitations */
+  invitations: Array<OrganizationInvitation>;
+  /** Total count of invitations */
+  totalCount: Scalars['Int']['output'];
 };
 
 /** User in the organization (from Keycloak) */
@@ -2724,6 +2759,12 @@ export type Query = {
    * Requires view-users permission on the organization resource
    */
   organizationGroupTree: GroupNode;
+  /**
+   * List pending invitations for an organization
+   * Returns paginated list of invitations sorted by creation date (newest first)
+   * Requires invite-user permission on the organization
+   */
+  organizationInvitations: OrganizationInvitationConnection;
   /**
    * Get total usage for an organization over a time range
    * Aggregates all resources (bots and backtests) owned by the organization
@@ -2862,6 +2903,13 @@ export type QueryOrganizationGroupTreeArgs = {
 };
 
 
+export type QueryOrganizationInvitationsArgs = {
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  organizationId: Scalars['ID']['input'];
+};
+
+
 export type QueryOrganizationUsageArgs = {
   end: Scalars['Time']['input'];
   ownerID: Scalars['String']['input'];
@@ -2981,6 +3029,11 @@ export type ResourceGroupMember = {
 /** Paginated resource group member connection */
 export type ResourceGroupMemberConnection = {
   __typename?: 'ResourceGroupMemberConnection';
+  /**
+   * Available roles for this resource group (e.g., ["admin", "viewer"])
+   * Used to populate role selection dropdowns
+   */
+  availableRoles: Array<Scalars['String']['output']>;
   /** Resource group member edges */
   edges: Array<ResourceGroupMemberEdge>;
   /** Pagination info */

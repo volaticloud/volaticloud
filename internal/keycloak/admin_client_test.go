@@ -516,3 +516,192 @@ func TestGetDashboardClientID(t *testing.T) {
 		})
 	}
 }
+
+func TestChangeUserRole(t *testing.T) {
+	tests := []struct {
+		name          string
+		resourceID    string
+		userID        string
+		newRole       string
+		removeHandler http.HandlerFunc
+		addHandler    http.HandlerFunc
+		wantErr       bool
+		errContains   string
+		validate      func(t *testing.T, resp *ChangeUserRoleResponse)
+	}{
+		{
+			name:       "successful role change",
+			resourceID: "org-123",
+			userID:     "user-456",
+			newRole:    "admin",
+			removeHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "DELETE", r.Method)
+				assert.Contains(t, r.URL.Path, "/user-456")
+				w.WriteHeader(http.StatusNoContent)
+			},
+			addHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "POST", r.Method)
+
+				var req ChangeUserRoleRequest
+				json.NewDecoder(r.Body).Decode(&req)
+				assert.Equal(t, "user-456", req.UserID)
+				assert.Equal(t, "admin", req.NewRole)
+
+				w.WriteHeader(http.StatusCreated)
+				json.NewEncoder(w).Encode(ChangeUserRoleResponse{
+					UserID:     "user-456",
+					ResourceID: "org-123",
+					Role:       "admin",
+					AddedToOrg: false,
+				})
+			},
+			wantErr: false,
+			validate: func(t *testing.T, resp *ChangeUserRoleResponse) {
+				assert.Equal(t, "user-456", resp.UserID)
+				assert.Equal(t, "org-123", resp.ResourceID)
+				assert.Equal(t, "admin", resp.Role)
+			},
+		},
+		{
+			name:       "role change with 404 on remove (user has no roles yet)",
+			resourceID: "org-123",
+			userID:     "new-user",
+			newRole:    "viewer",
+			removeHandler: func(w http.ResponseWriter, r *http.Request) {
+				// 404 is acceptable - user might not have roles
+				w.WriteHeader(http.StatusNotFound)
+			},
+			addHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+				json.NewEncoder(w).Encode(ChangeUserRoleResponse{
+					UserID:     "new-user",
+					ResourceID: "org-123",
+					Role:       "viewer",
+				})
+			},
+			wantErr: false,
+			validate: func(t *testing.T, resp *ChangeUserRoleResponse) {
+				assert.Equal(t, "viewer", resp.Role)
+			},
+		},
+		{
+			name:       "user not found on add",
+			resourceID: "org-123",
+			userID:     "nonexistent-user",
+			newRole:    "viewer",
+			removeHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			},
+			addHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(`{"error": "User not found"}`))
+			},
+			wantErr:     true,
+			errContains: "status 404",
+		},
+		{
+			name:       "organization not found on add",
+			resourceID: "nonexistent-org",
+			userID:     "user-123",
+			newRole:    "admin",
+			removeHandler: func(w http.ResponseWriter, r *http.Request) {
+				// Remove succeeds (or returns 404 which is OK)
+				w.WriteHeader(http.StatusNoContent)
+			},
+			addHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(`{"error": "Resource not found"}`))
+			},
+			wantErr:     true,
+			errContains: "status 404",
+		},
+		{
+			name:       "forbidden",
+			resourceID: "org-123",
+			userID:     "user-456",
+			newRole:    "owner",
+			removeHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(`{"error": "Insufficient permissions"}`))
+			},
+			addHandler:  nil,
+			wantErr:     true,
+			errContains: "status 403",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requestCount := 0
+			server := mockKeycloakServer(t, map[string]http.HandlerFunc{
+				"/members": func(w http.ResponseWriter, r *http.Request) {
+					requestCount++
+					// First request is DELETE (remove), second is POST (add)
+					if r.Method == "DELETE" {
+						if tt.removeHandler != nil {
+							tt.removeHandler(w, r)
+						}
+					} else if r.Method == "POST" {
+						if tt.addHandler != nil {
+							tt.addHandler(w, r)
+						}
+					}
+				},
+			})
+			defer server.Close()
+
+			client := NewAdminClient(auth.KeycloakConfig{
+				URL:          server.URL,
+				Realm:        "test-realm",
+				ClientID:     "test-client",
+				ClientSecret: "test-secret",
+			})
+
+			resp, err := client.ChangeUserRole(context.Background(), tt.resourceID, tt.userID, tt.newRole)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			if tt.validate != nil {
+				tt.validate(t, resp)
+			}
+		})
+	}
+}
+
+func TestChangeUserRoleRequestValidation(t *testing.T) {
+	// Test that ChangeUserRoleRequest struct properly marshals
+	tests := []struct {
+		name    string
+		request ChangeUserRoleRequest
+	}{
+		{
+			name: "full request",
+			request: ChangeUserRoleRequest{
+				UserID:  "user-123",
+				NewRole: "admin",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.request)
+			require.NoError(t, err)
+
+			var decoded ChangeUserRoleRequest
+			err = json.Unmarshal(data, &decoded)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.request.UserID, decoded.UserID)
+			assert.Equal(t, tt.request.NewRole, decoded.NewRole)
+		})
+	}
+}

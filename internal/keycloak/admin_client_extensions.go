@@ -56,9 +56,10 @@ type ResourceGroupMemberRepresentation struct {
 
 // ResourceGroupMemberListResponse represents paginated member list
 type ResourceGroupMemberListResponse struct {
-	TotalCount int                                 `json:"totalCount"`
-	HasMore    bool                                `json:"hasMore"`
-	Items      []ResourceGroupMemberRepresentation `json:"items"`
+	TotalCount     int                                 `json:"totalCount"`
+	HasMore        bool                                `json:"hasMore"`
+	Items          []ResourceGroupMemberRepresentation `json:"items"`
+	AvailableRoles []string                            `json:"availableRoles"`
 }
 
 // GetResourceGroups calls the Keycloak extension endpoint to fetch resource groups

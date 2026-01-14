@@ -718,3 +718,94 @@ func (a *AdminClient) DeleteInvitation(ctx context.Context, resourceID, invitati
 
 	return nil
 }
+
+// ChangeUserRoleRequest represents a request to change a user's role
+type ChangeUserRoleRequest struct {
+	UserID  string `json:"userId"`
+	NewRole string `json:"role"`
+}
+
+// ChangeUserRoleResponse represents the response from changing a user's role
+type ChangeUserRoleResponse struct {
+	UserID     string `json:"userId"`
+	ResourceID string `json:"resourceId"`
+	Role       string `json:"role"`
+	AddedToOrg bool   `json:"addedToOrg"`
+}
+
+// ChangeUserRole changes a user's role in an organization by removing all existing roles
+// and assigning the new role. This uses the Keycloak extension's member management API.
+func (a *AdminClient) ChangeUserRole(ctx context.Context, resourceID, userID, newRole string) (*ChangeUserRoleResponse, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Step 1: Remove user from all existing roles
+	// DELETE /resources/{resourceId}/members/{userId} (no role param = remove all)
+	removeURL := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s/members/%s",
+		a.config.URL, a.config.Realm, resourceID, userID)
+
+	removeReq, err := http.NewRequestWithContext(ctx, "DELETE", removeURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create remove request: %w", err)
+	}
+	removeReq.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+	removeResp, err := a.httpClient.Do(removeReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove existing roles: %w", err)
+	}
+	defer removeResp.Body.Close()
+
+	// 404 is ok - user might not have any roles yet
+	if removeResp.StatusCode != http.StatusNoContent && removeResp.StatusCode != http.StatusOK && removeResp.StatusCode != http.StatusNotFound {
+		bodyBytes, _ := io.ReadAll(removeResp.Body)
+		return nil, fmt.Errorf("failed to remove existing roles (status %d): %s", removeResp.StatusCode, string(bodyBytes))
+	}
+
+	// Step 2: Add user to the new role
+	// POST /resources/{resourceId}/members
+	addURL := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s/members",
+		a.config.URL, a.config.Realm, resourceID)
+
+	addBody, err := json.Marshal(ChangeUserRoleRequest{
+		UserID:  userID,
+		NewRole: newRole,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal add request: %w", err)
+	}
+
+	addReq, err := http.NewRequestWithContext(ctx, "POST", addURL, bytes.NewReader(addBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create add request: %w", err)
+	}
+	addReq.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	addReq.Header.Set("Content-Type", "application/json")
+
+	addResp, err := a.httpClient.Do(addReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add new role: %w", err)
+	}
+	defer addResp.Body.Close()
+
+	if addResp.StatusCode != http.StatusCreated && addResp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(addResp.Body)
+		return nil, fmt.Errorf("failed to add new role (status %d): %s", addResp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode response
+	var response ChangeUserRoleResponse
+	if err := json.NewDecoder(addResp.Body).Decode(&response); err != nil {
+		// If decoding fails, construct response from inputs
+		response = ChangeUserRoleResponse{
+			UserID:     userID,
+			ResourceID: resourceID,
+			Role:       newRole,
+		}
+	}
+
+	return &response, nil
+}

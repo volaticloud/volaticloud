@@ -818,6 +818,11 @@ type ResourceGroupMemberConnection {
   Pagination info
   """
   pageInfo: PageInfo!
+  """
+  Available roles for this resource group (e.g., ["admin", "viewer"])
+  Used to populate role selection dropdowns
+  """
+  availableRoles: [String!]!
 }
 
 """
@@ -1055,4 +1060,12 @@ extend type Mutation {
   Requires invite-user permission on the organization
   """
   cancelOrganizationInvitation(organizationId: ID!, invitationId: ID!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
+
+  """
+  Change a user's role in an organization
+  Replaces all existing roles with the new role
+  Users cannot change their own role (returns error)
+  Requires change-user-roles permission on the organization
+  """
+  changeOrganizationUserRole(organizationId: ID!, userId: ID!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles")
 }

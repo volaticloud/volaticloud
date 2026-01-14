@@ -65,6 +65,12 @@ public class ResourceGroupMemberService {
             .filter(g -> g.getName().startsWith("role:"))
             .collect(Collectors.toList());
 
+        // Extract all available roles (before filtering)
+        List<String> availableRoles = roleGroups.stream()
+            .map(g -> extractRoleName(g.getName()))
+            .sorted()
+            .collect(Collectors.toList());
+
         for (GroupModel roleGroup : roleGroups) {
             String roleName = extractRoleName(roleGroup.getName()); // "role:admin" -> "admin"
 
@@ -104,7 +110,7 @@ public class ResourceGroupMemberService {
             .limit(first)
             .collect(Collectors.toList());
 
-        return new ResourceGroupMemberListResponse(totalCount, hasMore, page);
+        return new ResourceGroupMemberListResponse(totalCount, hasMore, page, availableRoles);
     }
 
     /**

@@ -217,8 +217,9 @@ func buildResourceGroupMemberConnection(
 	}
 
 	return &model.ResourceGroupMemberConnection{
-		Edges:      edges,
-		TotalCount: response.TotalCount,
+		Edges:          edges,
+		TotalCount:     response.TotalCount,
+		AvailableRoles: response.AvailableRoles,
 		PageInfo: &ent.PageInfo{
 			HasNextPage:     response.HasMore,
 			HasPreviousPage: offset > 0,

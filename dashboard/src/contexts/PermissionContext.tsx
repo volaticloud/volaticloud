@@ -308,9 +308,17 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     }
   }, [apolloClient]);
 
+  // Track if auth was ever authenticated (to detect logout vs initial load)
+  const wasAuthenticated = useRef(false);
+
   // Clear permissions when user logs out (Phase 3: Fix memory leak)
+  // Only clear when transitioning from authenticated to unauthenticated (logout),
+  // not on initial page load when auth is still loading
   useEffect(() => {
-    if (!auth.isAuthenticated) {
+    if (auth.isAuthenticated) {
+      wasAuthenticated.current = true;
+    } else if (wasAuthenticated.current) {
+      // User was authenticated but now isn't - this is a logout
       // Cancel pending batch to prevent race conditions
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current);
@@ -325,6 +333,8 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       setPermissions(new Map());
       setErrors(new Map());
       retryCount.current.clear();
+
+      wasAuthenticated.current = false;
     }
   }, [auth.isAuthenticated]);
 
@@ -333,7 +343,14 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     return () => {
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current);
+        batchTimeoutRef.current = null;
       }
+      // Clear pending requests from requested set so they can be re-scheduled on remount
+      // This is needed for React Strict Mode which unmounts and remounts components
+      for (const key of pendingRequests.current) {
+        requestedPermissions.current.delete(key);
+      }
+      pendingRequests.current = new Set();
       retryCount.current.clear();
     };
   }, []);

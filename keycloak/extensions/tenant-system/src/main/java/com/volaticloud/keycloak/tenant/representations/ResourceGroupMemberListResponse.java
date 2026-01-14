@@ -16,4 +16,9 @@ public class ResourceGroupMemberListResponse {
     private int totalCount;
     private boolean hasMore;
     private List<ResourceGroupMemberRepresentation> items;
+    /**
+     * Available roles for this resource group (e.g., ["admin", "viewer"]).
+     * Extracted from role:* subgroups.
+     */
+    private List<String> availableRoles;
 }
