@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { useInviteOrganizationUserMutation } from './organization.generated';
 import { ORG_ID_PARAM } from '../../constants/url';
+import { isValidEmail } from '../../utils/validation';
 
 interface InviteUserDialogProps {
   open: boolean;
@@ -85,7 +86,7 @@ export const InviteUserDialog = ({
       });
 
       if (result.data?.inviteOrganizationUser) {
-        setSuccessMessage(`Invitation sent to ${email}`);
+        setSuccessMessage(`Invitation sent to ${email}. The invitation link expires in 24 hours.`);
         // Reset form for another invitation
         setEmail('');
         setFirstName('');
@@ -98,10 +99,6 @@ export const InviteUserDialog = ({
       console.error('Failed to invite user:', err);
       // Error will be displayed via the error state from the mutation hook
     }
-  };
-
-  const isValidEmail = (value: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
   return (

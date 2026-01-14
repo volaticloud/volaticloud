@@ -228,7 +228,14 @@ How to verify this decision is being followed:
 
 ## References
 
-- [ADR-0008: Multi-Tenant Authorization](0008-multi-tenant-authorization.md) - Parent authorization architecture
+### Related ADRs
+
+- [ADR-0001: Context-Based Dependency Injection](0001-context-based-dependency-injection.md) - GraphQL context injection pattern used for AdminClient
+- [ADR-0002: ENT ORM with GraphQL](0002-ent-orm-with-graphql.md) - GraphQL schema and resolver patterns
+- [ADR-0008: Multi-Tenant Authorization](0008-multi-tenant-authorization.md) - Parent authorization architecture with UMA 2.0
+
+### External References
+
 - [Keycloak Organization API](https://www.keycloak.org/docs/latest/server_admin/#_organizations)
 - [OAuth 2.0 State Parameter](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1)
 - [InviteOrgActionToken Javadoc](https://www.keycloak.org/docs-api/latest/javadocs/org/keycloak/authentication/actiontoken/inviteorg/InviteOrgActionToken.html)

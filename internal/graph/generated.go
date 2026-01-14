@@ -390,7 +390,7 @@ type ComplexityRoot struct {
 		DeleteStrategy           func(childComplexity int, id uuid.UUID) int
 		DeleteTrade              func(childComplexity int, id uuid.UUID) int
 		GetFreqtradeToken        func(childComplexity int, botID uuid.UUID) int
-		InviteOrganizationUser   func(childComplexity int, organizationID string, input model.InviteUserInput) int
+		InviteOrganizationUser   func(childComplexity int, organizationID uuid.UUID, input model.InviteUserInput) int
 		MarkAlertEventAsRead     func(childComplexity int, id uuid.UUID, ownerID string) int
 		MarkAllAlertEventsAsRead func(childComplexity int, ownerID string) int
 		RefreshRunnerData        func(childComplexity int, id uuid.UUID) int
@@ -686,7 +686,7 @@ type MutationResolver interface {
 	TestAlertRule(ctx context.Context, id uuid.UUID) (bool, error)
 	MarkAlertEventAsRead(ctx context.Context, id uuid.UUID, ownerID string) (*ent.AlertEvent, error)
 	MarkAllAlertEventsAsRead(ctx context.Context, ownerID string) (int, error)
-	InviteOrganizationUser(ctx context.Context, organizationID string, input model.InviteUserInput) (*model.OrganizationInvitation, error)
+	InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id uuid.UUID) (ent.Noder, error)
@@ -2355,7 +2355,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InviteOrganizationUser(childComplexity, args["organizationId"].(string), args["input"].(model.InviteUserInput)), true
+		return e.complexity.Mutation.InviteOrganizationUser(childComplexity, args["organizationId"].(uuid.UUID), args["input"].(model.InviteUserInput)), true
 	case "Mutation.markAlertEventAsRead":
 		if e.complexity.Mutation.MarkAlertEventAsRead == nil {
 			break
@@ -4225,7 +4225,7 @@ func (ec *executionContext) field_Mutation_getFreqtradeToken_args(ctx context.Co
 func (ec *executionContext) field_Mutation_inviteOrganizationUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -16113,7 +16113,7 @@ func (ec *executionContext) _Mutation_inviteOrganizationUser(ctx context.Context
 		ec.fieldContext_Mutation_inviteOrganizationUser,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().InviteOrganizationUser(ctx, fc.Args["organizationId"].(string), fc.Args["input"].(model.InviteUserInput))
+			return ec.resolvers.Mutation().InviteOrganizationUser(ctx, fc.Args["organizationId"].(uuid.UUID), fc.Args["input"].(model.InviteUserInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -16313,7 +16313,7 @@ func (ec *executionContext) _OrganizationInvitation_organizationId(ctx context.C
 			return obj.OrganizationID, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
 		true,
 		true,
 	)
@@ -16326,7 +16326,7 @@ func (ec *executionContext) fieldContext_OrganizationInvitation_organizationId(_
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil

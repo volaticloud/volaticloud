@@ -55,6 +55,25 @@ export const createOidcConfig = (
 /**
  * Builds the state object for signinRedirect, preserving orgId from URL.
  * This is the OIDC-standard way to pass data through the OAuth flow.
+ *
+ * The state parameter is used to maintain application state between the
+ * authorization request and callback. Per OAuth 2.0 RFC 6749, the state
+ * parameter is recommended for CSRF protection and for preserving request context.
+ *
+ * @returns An OAuthState object containing the orgId if present in URL, or undefined
+ *
+ * @example
+ * // When URL contains orgId query parameter:
+ * // URL: https://app.example.com/?orgId=abc-123
+ * const state = buildSigninState();
+ * // state = { orgId: 'abc-123' }
+ *
+ * // When URL has no orgId:
+ * // URL: https://app.example.com/
+ * const state = buildSigninState();
+ * // state = undefined
+ *
+ * @see {@link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1 | OAuth 2.0 State Parameter}
  */
 export function buildSigninState(): OAuthState | undefined {
   const urlParams = new URLSearchParams(window.location.search);

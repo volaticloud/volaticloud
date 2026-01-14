@@ -998,7 +998,7 @@ type OrganizationInvitation {
   """
   Organization resource ID
   """
-  organizationId: String!
+  organizationId: ID!
   """
   Invitation status (PENDING, EXPIRED)
   """
@@ -1020,5 +1020,5 @@ extend type Mutation {
   Invited users are automatically assigned the 'viewer' role upon acceptance
   Requires invite-user permission on the organization
   """
-  inviteOrganizationUser(organizationId: String!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
+  inviteOrganizationUser(organizationId: ID!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
 }

@@ -184,7 +184,7 @@ type OrganizationInvitation struct {
 	// Last name of the invited user
 	LastName *string `json:"lastName,omitempty"`
 	// Organization resource ID
-	OrganizationID string `json:"organizationId"`
+	OrganizationID uuid.UUID `json:"organizationId"`
 	// Invitation status (PENDING, EXPIRED)
 	Status string `json:"status"`
 	// Timestamp when invitation was created (Unix milliseconds)

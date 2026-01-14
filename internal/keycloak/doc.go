@@ -267,8 +267,70 @@ Usage in tests:
 # Files
 
 	uma_client.go      - UMA client implementation
+	admin_client.go    - Admin API client (including invitations)
 	types.go           - Request/response types
 	mock.go            - Mock implementation for testing
+
+# User Invitations
+
+The AdminClient supports inviting users to organizations via Keycloak's
+native invitation system (Keycloak 26+). Invited users are automatically
+assigned the 'viewer' role upon acceptance.
+
+## Invitation Flow
+
+	1. Admin calls CreateInvitation(ctx, orgID, request)
+	2. Keycloak creates invitation and sends email
+	3. User clicks invitation link
+	4. User registers/logs in via Keycloak
+	5. TenantSystemEventListener assigns viewer role
+	6. User redirected to dashboard with orgId preserved
+
+## Usage Example
+
+	request := keycloak.InvitationRequest{
+	    Email:       "user@example.com",
+	    FirstName:   "John",
+	    LastName:    "Doe",
+	    RedirectURL: "https://app.example.com/?orgId=abc-123",
+	    ClientID:    "dashboard",
+	}
+	response, err := adminClient.CreateInvitation(ctx, orgID, request)
+	if err != nil {
+	    return fmt.Errorf("failed to create invitation: %w", err)
+	}
+	fmt.Printf("Invitation created: %s (expires: %d)\n", response.ID, response.ExpiresAt)
+
+## InvitationRequest Fields
+
+	Email:       Required. Email address of the invitee.
+	FirstName:   Optional. Used in invitation email.
+	LastName:    Optional. Used in invitation email.
+	RedirectURL: Optional. URL to redirect after acceptance.
+	ClientID:    Optional. Keycloak client for redirect validation.
+
+## InvitationResponse Fields
+
+	ID:         Invitation UUID
+	Email:      Invitee email address
+	FirstName:  Invitee first name
+	LastName:   Invitee last name
+	ResourceID: Organization resource ID
+	Status:     PENDING or EXPIRED
+	CreatedAt:  Creation timestamp (Unix ms)
+	ExpiresAt:  Expiration timestamp (Unix ms)
+	InviteLink: Full invitation URL
+
+## Security
+
+- Email validation (server-side regex)
+- Redirect URL validation against client's allowed URIs
+- Token expiration using Keycloak's action token lifespan
+- Authorization via 'invite-user' scope
+
+## Related ADR
+
+See docs/adr/0010-organization-invitation-system.md for architectural decisions.
 
 # Related Packages
 

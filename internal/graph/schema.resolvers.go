@@ -1032,7 +1032,7 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
-func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID string, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
+func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
 	// Authorization is handled by @hasScope directive
 	// organizationId is validated by the directive to ensure user has invite-user permission
 
@@ -1050,7 +1050,7 @@ func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizat
 	// Build request
 	request := keycloak.InvitationRequest{
 		Email:    input.Email,
-		ClientID: DefaultDashboardClientID, // Use dashboard client for redirect
+		ClientID: adminClient.GetDashboardClientID(), // Use configured dashboard client for redirect
 	}
 	if input.FirstName != nil {
 		request.FirstName = *input.FirstName
@@ -1063,9 +1063,12 @@ func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizat
 	}
 
 	// Create invitation via Keycloak tenant API
-	response, err := adminClient.CreateInvitation(ctx, organizationID, request)
+	response, err := adminClient.CreateInvitation(ctx, organizationID.String(), request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create invitation for %s to organization %s: %w", input.Email, organizationID, err)
+		// Log detailed error internally for debugging
+		log.Printf("ERROR: failed to create invitation for email=%s org=%s: %v", input.Email, organizationID.String(), err)
+		// Return sanitized error to client to avoid leaking internal details
+		return nil, fmt.Errorf("failed to create invitation: the invitation could not be sent. Please try again or contact support if the issue persists")
 	}
 
 	// Parse invitation ID
@@ -1078,7 +1081,7 @@ func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizat
 	result := &model.OrganizationInvitation{
 		ID:             invitationID,
 		Email:          response.Email,
-		OrganizationID: response.ResourceID,
+		OrganizationID: organizationID, // Use the input UUID directly
 		Status:         response.Status,
 		CreatedAt:      time.UnixMilli(response.CreatedAt),
 		ExpiresAt:      time.UnixMilli(response.ExpiresAt),

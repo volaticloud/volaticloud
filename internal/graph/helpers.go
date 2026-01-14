@@ -18,6 +18,8 @@ import (
 )
 
 // DefaultDashboardClientID is the default Keycloak client ID for invitation redirects
+// Note: The actual client ID should be obtained from AdminClient.GetDashboardClientID()
+// which uses the CLI-configured value. This constant is kept for backward compatibility.
 const DefaultDashboardClientID = "dashboard"
 
 // EmailRegex is a simple email validation pattern for invitation emails

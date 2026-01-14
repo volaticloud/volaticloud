@@ -70,6 +70,9 @@ type ResourceResponse struct {
 	Attributes    map[string][]string `json:"attributes"`    // Resource attributes
 }
 
+// DefaultDashboardClientID is the fallback client ID if not configured
+const DefaultDashboardClientID = "dashboard"
+
 // NewAdminClient creates a new Keycloak admin API client
 func NewAdminClient(config auth.KeycloakConfig) *AdminClient {
 	client := gocloak.NewClient(config.URL)
@@ -78,6 +81,14 @@ func NewAdminClient(config auth.KeycloakConfig) *AdminClient {
 		httpClient: &http.Client{},
 		config:     config,
 	}
+}
+
+// GetDashboardClientID returns the configured dashboard client ID or default
+func (a *AdminClient) GetDashboardClientID() string {
+	if a.config.DashboardClientID != "" {
+		return a.config.DashboardClientID
+	}
+	return DefaultDashboardClientID
 }
 
 // GetGroupUsers fetches all users from a Keycloak group including subgroups

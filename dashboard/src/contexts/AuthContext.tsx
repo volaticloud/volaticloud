@@ -182,11 +182,16 @@ export const AuthProvider: React.FC<AuthProviderWrapperProps> = ({ children }) =
   const redirectUri = useConfigValue('VOLATICLOUD__KEYCLOAK_REDIRECT_URI');
   const postLogoutRedirectUri = useConfigValue('VOLATICLOUD__KEYCLOAK_POST_LOGOUT_REDIRECT_URI');
 
+  // Ref to track if invitation callback has been handled (prevents race conditions)
+  const hasHandledInvitationCallback = useRef(false);
+
   // Handle invitation callback before OIDC initialization
   // This detects when user returns from invitation registration with OAuth params
   // but no stored OIDC state (because login wasn't initiated by our app)
+  // Using ref to ensure single execution and prevent race conditions during redirect
   useEffect(() => {
-    if (isInvitationCallback()) {
+    if (isInvitationCallback() && !hasHandledInvitationCallback.current) {
+      hasHandledInvitationCallback.current = true;
       handleInvitationCallback();
     }
   }, []);
@@ -198,7 +203,8 @@ export const AuthProvider: React.FC<AuthProviderWrapperProps> = ({ children }) =
   );
 
   // If handling invitation callback, show loading while redirecting
-  if (isInvitationCallback()) {
+  // Check both the function and the ref to handle race conditions
+  if (isInvitationCallback() || hasHandledInvitationCallback.current) {
     return <AuthLoading />;
   }
 
