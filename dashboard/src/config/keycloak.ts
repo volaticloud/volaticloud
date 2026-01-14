@@ -1,8 +1,15 @@
 import { AuthProviderProps } from 'react-oidc-context';
+import { User } from 'oidc-client-ts';
+import { ORG_ID_PARAM } from '../constants/url';
+
+// Custom state passed through OAuth flow
+interface OAuthState {
+  orgId?: string;
+}
 
 /**
- * Creates OIDC configuration for Keycloak integration
- * Configuration values are passed from the config context
+ * Creates OIDC configuration for Keycloak integration.
+ * Uses the OIDC state parameter to preserve orgId through the OAuth flow.
  */
 export const createOidcConfig = (
   authority: string,
@@ -19,44 +26,62 @@ export const createOidcConfig = (
     scope: 'openid profile email',
     automaticSilentRenew: true,
     loadUserInfo: true,
-    // Token revocation config (best practice for Keycloak 18+)
     revokeTokensOnSignout: true,
     revokeTokenTypes: ['access_token', 'refresh_token'],
-    onSigninCallback: () => {
-      // Required: Remove OIDC parameters from URL to enable silent token renewal
+    // onSigninCallback receives the User object with our custom state
+    onSigninCallback: (user: User | void) => {
+      // Get orgId from OIDC state (passed via signinRedirect)
+      const state = user ? (user.state as OAuthState | undefined) : undefined;
+      const orgIdFromState = state?.orgId;
+
+      // Also check URL for orgId (invitation flow)
       const urlParams = new URLSearchParams(window.location.search);
+      const orgIdFromUrl = urlParams.get(ORG_ID_PARAM);
 
-      // Get return path from sessionStorage (Keycloak overwrites state parameter)
-      const returnPath = sessionStorage.getItem('kc_return_path') || '/';
-      sessionStorage.removeItem('kc_return_path');
+      // Use state first, then URL fallback
+      const orgId = orgIdFromState || orgIdFromUrl;
 
-      // Security: Validate return path to prevent open redirects
-      const allowedPaths = [
-        '/',
-        '/profile',
-        '/profile/credentials',
-        '/profile/sessions',
-        '/profile/two-factor',
-      ];
-      const safePath = allowedPaths.includes(returnPath) ? returnPath : '/';
+      // Build clean URL with orgId preserved
+      const finalUrl = orgId ? `/?${ORG_ID_PARAM}=${orgId}` : '/';
 
-      // Remove OIDC-specific parameters
-      urlParams.delete('code');
-      urlParams.delete('state');
-      urlParams.delete('session_state');
-      urlParams.delete('iss');
-
-      // Build final URL with validated path and any remaining Keycloak params
-      const finalUrl = urlParams.toString()
-        ? `${safePath}?${urlParams.toString()}`
-        : safePath;
-
-      // Use window.location.replace to actually navigate (triggers React Router)
       window.location.replace(finalUrl);
     },
     onSignoutCallback: () => {
-      // Clean up after logout
       window.history.replaceState({}, document.title, window.location.pathname);
     },
   };
 };
+
+/**
+ * Builds the state object for signinRedirect, preserving orgId from URL.
+ * This is the OIDC-standard way to pass data through the OAuth flow.
+ *
+ * The state parameter is used to maintain application state between the
+ * authorization request and callback. Per OAuth 2.0 RFC 6749, the state
+ * parameter is recommended for CSRF protection and for preserving request context.
+ *
+ * @returns An OAuthState object containing the orgId if present in URL, or undefined
+ *
+ * @example
+ * // When URL contains orgId query parameter:
+ * // URL: https://app.example.com/?orgId=abc-123
+ * const state = buildSigninState();
+ * // state = { orgId: 'abc-123' }
+ *
+ * // When URL has no orgId:
+ * // URL: https://app.example.com/
+ * const state = buildSigninState();
+ * // state = undefined
+ *
+ * @see {@link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1 | OAuth 2.0 State Parameter}
+ */
+export function buildSigninState(): OAuthState | undefined {
+  const urlParams = new URLSearchParams(window.location.search);
+  const orgId = urlParams.get(ORG_ID_PARAM);
+
+  if (orgId) {
+    return { orgId };
+  }
+
+  return undefined;
+}

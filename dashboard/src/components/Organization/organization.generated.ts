@@ -48,6 +48,14 @@ export type ResourceGroupMembersQueryVariables = Types.Exact<{
 
 export type ResourceGroupMembersQuery = { __typename?: 'Query', resourceGroupMembers: { __typename?: 'ResourceGroupMemberConnection', totalCount: number, edges: Array<{ __typename?: 'ResourceGroupMemberEdge', cursor: string, node: { __typename?: 'ResourceGroupMember', roles: Array<string>, primaryRole: string, user: { __typename?: 'MemberUser', id: string, username: string, email?: string | null, emailVerified: boolean, firstName?: string | null, lastName?: string | null, enabled: boolean, createdAt: string } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
+export type InviteOrganizationUserMutationVariables = Types.Exact<{
+  organizationId: Types.Scalars['String']['input'];
+  input: Types.InviteUserInput;
+}>;
+
+
+export type InviteOrganizationUserMutation = { __typename?: 'Mutation', inviteOrganizationUser: { __typename?: 'OrganizationInvitation', id: string, email: string, firstName?: string | null, lastName?: string | null, organizationId: string, status: string, createdAt: string, expiresAt: string } };
+
 
 export const OrganizationUsersDocument = gql`
     query OrganizationUsers($organizationId: String!) {
@@ -370,3 +378,44 @@ export type ResourceGroupMembersQueryHookResult = ReturnType<typeof useResourceG
 export type ResourceGroupMembersLazyQueryHookResult = ReturnType<typeof useResourceGroupMembersLazyQuery>;
 export type ResourceGroupMembersSuspenseQueryHookResult = ReturnType<typeof useResourceGroupMembersSuspenseQuery>;
 export type ResourceGroupMembersQueryResult = Apollo.QueryResult<ResourceGroupMembersQuery, ResourceGroupMembersQueryVariables>;
+export const InviteOrganizationUserDocument = gql`
+    mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInput!) {
+  inviteOrganizationUser(organizationId: $organizationId, input: $input) {
+    id
+    email
+    firstName
+    lastName
+    organizationId
+    status
+    createdAt
+    expiresAt
+  }
+}
+    `;
+export type InviteOrganizationUserMutationFn = Apollo.MutationFunction<InviteOrganizationUserMutation, InviteOrganizationUserMutationVariables>;
+
+/**
+ * __useInviteOrganizationUserMutation__
+ *
+ * To run a mutation, you first call `useInviteOrganizationUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useInviteOrganizationUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [inviteOrganizationUserMutation, { data, loading, error }] = useInviteOrganizationUserMutation({
+ *   variables: {
+ *      organizationId: // value for 'organizationId'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useInviteOrganizationUserMutation(baseOptions?: Apollo.MutationHookOptions<InviteOrganizationUserMutation, InviteOrganizationUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<InviteOrganizationUserMutation, InviteOrganizationUserMutationVariables>(InviteOrganizationUserDocument, options);
+      }
+export type InviteOrganizationUserMutationHookResult = ReturnType<typeof useInviteOrganizationUserMutation>;
+export type InviteOrganizationUserMutationResult = Apollo.MutationResult<InviteOrganizationUserMutation>;
+export type InviteOrganizationUserMutationOptions = Apollo.BaseMutationOptions<InviteOrganizationUserMutation, InviteOrganizationUserMutationVariables>;

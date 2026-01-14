@@ -11,10 +11,11 @@ import (
 
 // KeycloakConfig contains Keycloak client configuration
 type KeycloakConfig struct {
-	URL          string // Keycloak server URL (e.g., https://keycloak.volaticloud.com)
-	Realm        string // Realm name (e.g., volaticloud)
-	ClientID     string // Client ID for this backend API
-	ClientSecret string // Client secret for UMA resource management
+	URL               string // Keycloak server URL (e.g., https://keycloak.volaticloud.com)
+	Realm             string // Realm name (e.g., volaticloud)
+	ClientID          string // Client ID for this backend API
+	ClientSecret      string // Client secret for UMA resource management
+	DashboardClientID string // Client ID for dashboard (used in invitation redirects)
 }
 
 // KeycloakClient handles JWT validation and UMA operations

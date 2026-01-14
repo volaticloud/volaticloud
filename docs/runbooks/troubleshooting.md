@@ -449,6 +449,150 @@ curl -X POST https://keycloak.volaticloud.com/auth/realms/volaticloud/protocol/o
 
 ---
 
+## User Invitation Issues
+
+### Symptom
+
+Invitation emails not sent, users can't join organizations, or role assignment fails
+
+### Diagnosis
+
+```bash
+# Check backend logs for invitation errors
+kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "invitation"
+
+# Check Keycloak logs for email issues
+docker logs volaticloud-keycloak | grep -i "email\|invitation\|smtp"
+
+# Verify organization exists in Keycloak
+curl -s -X GET "https://keycloak.volaticloud.com/realms/volaticloud/volaticloud/resources/<ORG_ID>" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+### Common Causes & Solutions
+
+#### 1. Invitation Email Not Sent
+
+**Error message**: `Failed to send invitation email`
+
+**Check**:
+
+```bash
+# Verify SMTP configuration in Keycloak realm settings
+# Admin Console -> Realm Settings -> Email
+```
+
+**Solutions**:
+
+- Configure SMTP settings in Keycloak realm (Host, Port, From, Auth)
+- Verify SMTP credentials are correct
+- Check network connectivity to SMTP server
+- Check spam/junk folder for invitation emails
+
+#### 2. User Already Invited
+
+**Error message**: `this email address has already been invited`
+
+**Solutions**:
+
+- Use `organizationInvitations` GraphQL query to list pending invitations
+- Use `cancelOrganizationInvitation` mutation to remove stale invitations
+- Wait for invitation to expire (default: 24 hours)
+
+```graphql
+# List pending invitations
+query {
+  organizationInvitations(organizationId: "org-uuid") {
+    invitations {
+      id
+      email
+      status
+      expiresAt
+    }
+    totalCount
+  }
+}
+
+# Cancel an invitation
+mutation {
+  cancelOrganizationInvitation(
+    organizationId: "org-uuid"
+    invitationId: "invitation-uuid"
+  )
+}
+```
+
+#### 3. User Already a Member
+
+**Error message**: `this user is already a member of the organization`
+
+**Check**:
+
+```bash
+# Check user's group membership in Keycloak
+# Admin Console -> Users -> <User> -> Groups
+```
+
+**Solutions**:
+
+- User is already a member - no invitation needed
+- To change role, use the member management endpoint
+
+#### 4. Invalid Redirect URL
+
+**Error message**: `Redirect URL is not allowed for this client`
+
+**Solutions**:
+
+- Add the redirect URL to the dashboard client's valid redirect URIs in Keycloak
+- Verify the URL scheme is http or https
+- Check for typos in the redirect URL
+
+```bash
+# Update client redirect URIs in Keycloak
+# Admin Console -> Clients -> dashboard -> Settings -> Valid redirect URIs
+```
+
+#### 5. User Not Added to Viewer Role
+
+**Symptom**: User accepts invitation but has no permissions
+
+**Check**:
+
+```bash
+# Check user's group membership
+# User should be in: /{org-uuid}/role:viewer
+```
+
+**Solutions**:
+
+- Check TenantSystemEventListener logs for role assignment errors
+- Verify the organization group structure exists (`/{org-uuid}/role:viewer`)
+- Manually add user to role group if needed via Keycloak Admin Console
+
+#### 6. Invitation Link Expired
+
+**Error message**: Keycloak shows "Action expired" when user clicks link
+
+**Solutions**:
+
+- Invitation links expire after 24 hours (default)
+- Create a new invitation for the user
+- To extend expiration, update Keycloak realm settings (Action Token Lifespan)
+
+#### 7. Email Validation Failures
+
+**Error message**: `invalid email format`
+
+**Solutions**:
+
+- Verify email format matches: `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+- TLD must be at least 2 characters
+- No special characters like `<`, `>`, newlines allowed
+- Email validation is consistent across Go, TypeScript, and Java layers
+
+---
+
 ## Test Failures
 
 ### Symptom

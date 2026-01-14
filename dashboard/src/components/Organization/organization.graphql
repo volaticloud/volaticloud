@@ -136,3 +136,16 @@ query ResourceGroupMembers(
     }
   }
 }
+
+mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInput!) {
+  inviteOrganizationUser(organizationId: $organizationId, input: $input) {
+    id
+    email
+    firstName
+    lastName
+    organizationId
+    status
+    createdAt
+    expiresAt
+  }
+}

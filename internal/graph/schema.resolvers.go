@@ -1032,6 +1032,117 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
+func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has invite-user permission
+
+	// Validate email format
+	if !EmailRegex.MatchString(input.Email) {
+		return nil, fmt.Errorf("invalid email format: %s", input.Email)
+	}
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Build request
+	request := keycloak.InvitationRequest{
+		Email:    input.Email,
+		ClientID: adminClient.GetDashboardClientID(), // Use configured dashboard client for redirect
+	}
+	if input.FirstName != nil {
+		request.FirstName = *input.FirstName
+	}
+	if input.LastName != nil {
+		request.LastName = *input.LastName
+	}
+	if input.RedirectURL != nil {
+		request.RedirectURL = *input.RedirectURL
+	}
+
+	// Create invitation via Keycloak tenant API
+	response, err := adminClient.CreateInvitation(ctx, organizationID.String(), request)
+	if err != nil {
+		// Log detailed error internally for debugging
+		log.Printf("ERROR: failed to create invitation for email=%s org=%s: %v", input.Email, organizationID.String(), err)
+
+		// Detect common failures and provide user-friendly messages
+		errStr := err.Error()
+		switch {
+		case strings.Contains(errStr, "already invited") || strings.Contains(errStr, "already exists"):
+			return nil, fmt.Errorf("this email address has already been invited to the organization")
+		case strings.Contains(errStr, "already a member"):
+			return nil, fmt.Errorf("this user is already a member of the organization")
+		case strings.Contains(errStr, "Invalid email") || strings.Contains(errStr, "invalid email"):
+			return nil, fmt.Errorf("invalid email format: please provide a valid email address")
+		case strings.Contains(errStr, "Redirect URL") || strings.Contains(errStr, "redirect"):
+			return nil, fmt.Errorf("invalid redirect URL: the provided URL is not allowed")
+		case strings.Contains(errStr, "not found") || strings.Contains(errStr, "404"):
+			return nil, fmt.Errorf("organization not found or you don't have permission to invite users")
+		case strings.Contains(errStr, "email") && strings.Contains(errStr, "send"):
+			return nil, fmt.Errorf("failed to send invitation email: please verify the email address and try again")
+		default:
+			// Generic error for unrecognized failures
+			return nil, fmt.Errorf("failed to create invitation: the invitation could not be sent. Please try again or contact support if the issue persists")
+		}
+	}
+
+	// Parse invitation ID
+	invitationID, err := uuid.Parse(response.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid invitation ID: %w", err)
+	}
+
+	// Convert to GraphQL model
+	result := &model.OrganizationInvitation{
+		ID:             invitationID,
+		Email:          response.Email,
+		OrganizationID: organizationID, // Use the input UUID directly
+		Status:         response.Status,
+		CreatedAt:      time.UnixMilli(response.CreatedAt),
+		ExpiresAt:      time.UnixMilli(response.ExpiresAt),
+	}
+
+	// Set optional fields
+	if response.FirstName != "" {
+		result.FirstName = &response.FirstName
+	}
+	if response.LastName != "" {
+		result.LastName = &response.LastName
+	}
+
+	return result, nil
+}
+
+func (r *mutationResolver) CancelOrganizationInvitation(ctx context.Context, organizationID uuid.UUID, invitationID uuid.UUID) (bool, error) {
+	// Authorization is handled by @hasScope directive
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return false, fmt.Errorf("admin client not available")
+	}
+
+	// Delete the invitation via Keycloak tenant API
+	err := adminClient.DeleteInvitation(ctx, organizationID.String(), invitationID.String())
+	if err != nil {
+		log.Printf("ERROR: failed to cancel invitation id=%s org=%s: %v", invitationID.String(), organizationID.String(), err)
+
+		// Detect common failures
+		errStr := err.Error()
+		switch {
+		case strings.Contains(errStr, "not found") || strings.Contains(errStr, "404"):
+			return false, fmt.Errorf("invitation not found or already cancelled")
+		default:
+			return false, fmt.Errorf("failed to cancel invitation: please try again or contact support")
+		}
+	}
+
+	return true, nil
+}
+
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {
 	// Load the bot with its runner configuration
 	b, err := r.client.Bot.Query().
@@ -1415,6 +1526,66 @@ func (r *queryResolver) ResourceGroupMembers(ctx context.Context, organizationID
 
 	// Call organization package (thin wrapper to Keycloak extension)
 	return organization.GetResourceGroupMembers(ctx, adminClient, organizationID, resourceGroupID, where, orderBy, pageSize, pageOffset)
+}
+
+func (r *queryResolver) OrganizationInvitations(ctx context.Context, organizationID uuid.UUID, first *int, offset *int) (*model.OrganizationInvitationConnection, error) {
+	// Authorization is handled by @hasScope directive
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Set defaults for pagination
+	pageSize := 20
+	pageOffset := 0
+	if first != nil && *first > 0 {
+		pageSize = *first
+	}
+	if offset != nil && *offset > 0 {
+		pageOffset = *offset
+	}
+
+	// List invitations via Keycloak tenant API
+	response, err := adminClient.ListInvitations(ctx, organizationID.String(), pageOffset, pageSize)
+	if err != nil {
+		log.Printf("ERROR: failed to list invitations for org=%s: %v", organizationID.String(), err)
+		return nil, fmt.Errorf("failed to list invitations: please try again or contact support")
+	}
+
+	// Convert response to GraphQL model
+	invitations := make([]*model.OrganizationInvitation, 0, len(response.Invitations))
+	for _, inv := range response.Invitations {
+		invID, err := uuid.Parse(inv.ID)
+		if err != nil {
+			log.Printf("WARN: invalid invitation ID %s, skipping", inv.ID)
+			continue
+		}
+
+		invitation := &model.OrganizationInvitation{
+			ID:             invID,
+			Email:          inv.Email,
+			OrganizationID: organizationID,
+			Status:         inv.Status,
+			CreatedAt:      time.UnixMilli(inv.CreatedAt),
+			ExpiresAt:      time.UnixMilli(inv.ExpiresAt),
+		}
+
+		if inv.FirstName != "" {
+			invitation.FirstName = &inv.FirstName
+		}
+		if inv.LastName != "" {
+			invitation.LastName = &inv.LastName
+		}
+
+		invitations = append(invitations, invitation)
+	}
+
+	return &model.OrganizationInvitationConnection{
+		Invitations: invitations,
+		TotalCount:  response.Total,
+	}, nil
 }
 
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }

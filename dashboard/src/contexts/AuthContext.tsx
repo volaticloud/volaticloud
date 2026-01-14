@@ -1,8 +1,42 @@
 import React, { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { AuthProvider as OidcAuthProvider, useAuth } from 'react-oidc-context';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { createOidcConfig } from '../config/keycloak';
+import { createOidcConfig, buildSigninState } from '../config/keycloak';
 import { useConfigValue } from './ConfigContext';
+import { ORG_ID_PARAM } from '../constants/url';
+
+/**
+ * Checks if this is an invitation callback (OAuth params without OIDC state parameter).
+ * Returns true if we should skip normal OIDC callback processing.
+ *
+ * The key insight: Normal OIDC callbacks have a 'state' parameter in the URL,
+ * while invitation callbacks from Keycloak registration do not include state.
+ */
+function isInvitationCallback(): boolean {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasCode = urlParams.has('code');
+  const hasOrgId = urlParams.has(ORG_ID_PARAM);
+  const hasState = urlParams.has('state');
+
+  // Invitation callback: has code + orgId but NO state parameter
+  // Normal OIDC callback always includes state parameter
+  return hasCode && hasOrgId && !hasState;
+}
+
+/**
+ * Handles invitation callback by clearing OAuth params and preserving orgId.
+ * The user will then be redirected to login (and auto-logged-in if Keycloak session is active).
+ */
+function handleInvitationCallback(): void {
+  const urlParams = new URLSearchParams(window.location.search);
+  const orgId = urlParams.get(ORG_ID_PARAM);
+
+  // Clear OAuth params, keep orgId
+  const newUrl = orgId ? `/?${ORG_ID_PARAM}=${orgId}` : '/';
+
+  console.log('Detected invitation callback, clearing OAuth params and preserving orgId');
+  window.location.replace(newUrl);
+}
 
 interface AuthProviderWrapperProps {
   children: ReactNode;
@@ -55,8 +89,8 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
         console.log('Token refreshed successfully on page load');
       }).catch((err) => {
         console.error('Failed to refresh token on page load:', err);
-        // If silent refresh fails, redirect to login
-        auth.signinRedirect();
+        // If silent refresh fails, redirect to login with state to preserve orgId
+        auth.signinRedirect({ state: buildSigninState() });
       });
     }
   }, [auth]);
@@ -68,9 +102,9 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
       return;
     }
 
-    // Auto sign-in if not authenticated
+    // Auto sign-in if not authenticated - pass state to preserve orgId
     if (!auth.isAuthenticated && !auth.isLoading && !auth.error) {
-      auth.signinRedirect();
+      auth.signinRedirect({ state: buildSigninState() });
     }
   }, [auth]);
 
@@ -85,7 +119,7 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
     // This happens when Keycloak session is terminated from another source
     if (!auth.isAuthenticated && !auth.error) {
       console.log('Session terminated externally, redirecting to login...');
-      auth.signinRedirect();
+      auth.signinRedirect({ state: buildSigninState() });
     }
   }, [auth.isAuthenticated, auth.isLoading, auth.error, auth]);
 
@@ -94,7 +128,7 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Listen for session terminated event
     const handleUserUnloaded = () => {
       console.log('User session unloaded, redirecting to login...');
-      auth.signinRedirect();
+      auth.signinRedirect({ state: buildSigninState() });
     };
 
     // Subscribe to auth events
@@ -114,7 +148,7 @@ const AuthStateHandler: React.FC<{ children: ReactNode }> = ({ children }) => {
       // Clear error state and redirect to login
       // This handles all auth errors: expired tokens, invalid tokens, network issues, etc.
       void auth.removeUser();
-      void auth.signinRedirect();
+      auth.signinRedirect({ state: buildSigninState() });
     }
   }, [auth.error, auth.isLoading, auth]);
 
@@ -148,11 +182,31 @@ export const AuthProvider: React.FC<AuthProviderWrapperProps> = ({ children }) =
   const redirectUri = useConfigValue('VOLATICLOUD__KEYCLOAK_REDIRECT_URI');
   const postLogoutRedirectUri = useConfigValue('VOLATICLOUD__KEYCLOAK_POST_LOGOUT_REDIRECT_URI');
 
+  // Ref to track if invitation callback has been handled (prevents race conditions)
+  const hasHandledInvitationCallback = useRef(false);
+
+  // Handle invitation callback before OIDC initialization
+  // This detects when user returns from invitation registration with OAuth params
+  // but no stored OIDC state (because login wasn't initiated by our app)
+  // Using ref to ensure single execution and prevent race conditions during redirect
+  useEffect(() => {
+    if (isInvitationCallback() && !hasHandledInvitationCallback.current) {
+      hasHandledInvitationCallback.current = true;
+      handleInvitationCallback();
+    }
+  }, []);
+
   // Create OIDC config with memoization
   const oidcConfig = useMemo(
     () => createOidcConfig(authority, clientId, redirectUri, postLogoutRedirectUri),
     [authority, clientId, redirectUri, postLogoutRedirectUri]
   );
+
+  // If handling invitation callback, show loading while redirecting
+  // Check both the function and the ref to handle race conditions
+  if (isInvitationCallback() || hasHandledInvitationCallback.current) {
+    return <AuthLoading />;
+  }
 
   return (
     <OidcAuthProvider {...oidcConfig}>

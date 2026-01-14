@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import BusinessIcon from '@mui/icons-material/Business';
+import { ORG_ID_PARAM } from '../../constants/url';
 
 export function GroupSwitcher() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export function GroupSwitcher() {
     const newGroupId = event.target.value;
     setActiveGroup(newGroupId);
     // Redirect to home page with the NEW organization (not preserving current)
-    navigate(`/?groupId=${newGroupId}`);
+    navigate(`/?${ORG_ID_PARAM}=${newGroupId}`);
   };
 
   // Don't render if no organizations available

@@ -101,6 +101,12 @@ func main() {
 				Usage:   "Keycloak client secret for UMA resource management",
 				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_CLIENT_SECRET"},
 			},
+			&cli.StringFlag{
+				Name:    "keycloak-dashboard-client-id",
+				Usage:   "Keycloak client ID for the dashboard (used in invitation redirects)",
+				Value:   "dashboard",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_DASHBOARD_CLIENT_ID"},
+			},
 			// Alert configuration
 			&cli.StringFlag{
 				Name:    "sendgrid-api-key",
@@ -212,10 +218,11 @@ func runServer(c *cli.Context) error {
 	// Initialize Keycloak client (REQUIRED in all environments)
 	// Must be initialized before alert manager and monitor manager
 	keycloakConfig := auth.KeycloakConfig{
-		URL:          c.String("keycloak-url"),
-		Realm:        c.String("keycloak-realm"),
-		ClientID:     c.String("keycloak-client-id"),
-		ClientSecret: c.String("keycloak-client-secret"),
+		URL:               c.String("keycloak-url"),
+		Realm:             c.String("keycloak-realm"),
+		ClientID:          c.String("keycloak-client-id"),
+		ClientSecret:      c.String("keycloak-client-secret"),
+		DashboardClientID: c.String("keycloak-dashboard-client-id"),
 	}
 
 	// Validate that Keycloak is configured

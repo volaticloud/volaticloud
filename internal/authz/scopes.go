@@ -48,8 +48,9 @@ var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-p
 // Groups are managed by Keycloak, not in the ENT database
 // mark-alert-as-read is for marking alert events as read
 // view-users is for viewing organization members
+// invite-user is for inviting new users to the organization
 // Alert rule scopes are included for organization-wide alerts
-var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read", "view-users",
+var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user",
 	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // GetScopesForType returns the permission scopes for a given resource type
