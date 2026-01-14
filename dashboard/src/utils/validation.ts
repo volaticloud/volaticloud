@@ -5,13 +5,20 @@
 /**
  * Email validation regex pattern.
  * Matches standard email format: local-part@domain.tld
+ * Aligned with server-side validation (Go and Java).
+ *
+ * Pattern breakdown:
+ * - Local part: alphanumeric plus ._%+-
+ * - @ separator
+ * - Domain: alphanumeric plus .-
+ * - TLD: at least 2 alphabetic characters
  *
  * @example
  * isValidEmail('user@example.com') // true
  * isValidEmail('user.name+tag@example.co.uk') // true
  * isValidEmail('invalid') // false
  */
-export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 /**
  * Validates an email address format.

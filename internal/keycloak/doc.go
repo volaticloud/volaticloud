@@ -321,6 +321,26 @@ assigned the 'viewer' role upon acceptance.
 	ExpiresAt:  Expiration timestamp (Unix ms)
 	InviteLink: Full invitation URL
 
+## Listing Invitations
+
+	// List pending invitations for an organization
+	response, err := adminClient.ListInvitations(ctx, orgID, offset, limit)
+	if err != nil {
+	    return fmt.Errorf("failed to list invitations: %w", err)
+	}
+	for _, inv := range response.Invitations {
+	    fmt.Printf("Invitation: %s -> %s (status: %s)\n", inv.ID, inv.Email, inv.Status)
+	}
+
+## Canceling Invitations
+
+	// Cancel a pending invitation
+	err := adminClient.DeleteInvitation(ctx, orgID, invitationID)
+	if err != nil {
+	    return fmt.Errorf("failed to cancel invitation: %w", err)
+	}
+	fmt.Println("Invitation cancelled successfully")
+
 ## Security
 
 - Email validation (server-side regex)

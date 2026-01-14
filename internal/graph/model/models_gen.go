@@ -193,6 +193,14 @@ type OrganizationInvitation struct {
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
+// Connection type for paginated invitation list
+type OrganizationInvitationConnection struct {
+	// List of invitations
+	Invitations []*OrganizationInvitation `json:"invitations"`
+	// Total count of invitations
+	TotalCount int `json:"totalCount"`
+}
+
 // User in the organization (from Keycloak)
 type OrganizationUser struct {
 	// User ID (Keycloak UUID)

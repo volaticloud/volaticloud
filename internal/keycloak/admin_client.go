@@ -634,3 +634,87 @@ func (a *AdminClient) CreateInvitation(ctx context.Context, resourceID string, r
 
 	return &response, nil
 }
+
+// InvitationListResponse represents the response from list invitations endpoint
+type InvitationListResponse struct {
+	Invitations []InvitationResponse `json:"invitations"`
+	Total       int                  `json:"total"`
+}
+
+// ListInvitations lists pending invitations for an organization
+func (a *AdminClient) ListInvitations(ctx context.Context, resourceID string, first, max int) (*InvitationListResponse, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Build URL with query parameters
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s/invitations?first=%d&max=%d",
+		a.config.URL, a.config.Realm, resourceID, first, max)
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+	// Send request
+	resp, err := a.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to list invitations (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode response
+	var listResponse InvitationListResponse
+	if err := json.NewDecoder(resp.Body).Decode(&listResponse); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &listResponse, nil
+}
+
+// DeleteInvitation cancels/deletes a pending invitation
+func (a *AdminClient) DeleteInvitation(ctx context.Context, resourceID, invitationID string) error {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Build URL
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s/invitations/%s",
+		a.config.URL, a.config.Realm, resourceID, invitationID)
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+	// Send request
+	resp, err := a.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status (204 No Content on success)
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to delete invitation (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}

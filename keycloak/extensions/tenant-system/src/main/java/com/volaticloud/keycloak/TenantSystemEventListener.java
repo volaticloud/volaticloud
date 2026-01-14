@@ -321,6 +321,17 @@ public class TenantSystemEventListener implements EventListenerProvider {
             return;
         }
 
+        // Idempotency check: skip if user already has a role in this organization
+        boolean hasRole = user.getGroupsStream()
+            .anyMatch(g -> g.getParent() != null &&
+                          g.getParent().getName().equals(orgAlias) &&
+                          (g.getName().equals(ROLE_ADMIN) || g.getName().equals(ROLE_VIEWER)));
+
+        if (hasRole) {
+            log.infof("User %s already has a role in organization %s, skipping duplicate assignment", userId, orgAlias);
+            return;
+        }
+
         // Add user to default role subgroup (viewer)
         String roleGroupName = "role:" + DEFAULT_INVITATION_ROLE;
         GroupModel roleGroup = session.groups().getGroupByName(realm, resourceGroup, roleGroupName);

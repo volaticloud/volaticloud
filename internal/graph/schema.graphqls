@@ -1013,6 +1013,33 @@ type OrganizationInvitation {
   expiresAt: Time!
 }
 
+"""
+Connection type for paginated invitation list
+"""
+type OrganizationInvitationConnection {
+  """
+  List of invitations
+  """
+  invitations: [OrganizationInvitation!]!
+  """
+  Total count of invitations
+  """
+  totalCount: Int!
+}
+
+extend type Query {
+  """
+  List pending invitations for an organization
+  Returns paginated list of invitations sorted by creation date (newest first)
+  Requires invite-user permission on the organization
+  """
+  organizationInvitations(
+    organizationId: ID!
+    first: Int = 20
+    offset: Int = 0
+  ): OrganizationInvitationConnection! @hasScope(resource: "organizationId", scope: "invite-user")
+}
+
 extend type Mutation {
   """
   Invite a user to an organization
@@ -1021,4 +1048,11 @@ extend type Mutation {
   Requires invite-user permission on the organization
   """
   inviteOrganizationUser(organizationId: ID!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
+
+  """
+  Cancel a pending invitation
+  Removes the invitation so the user can no longer use the invite link
+  Requires invite-user permission on the organization
+  """
+  cancelOrganizationInvitation(organizationId: ID!, invitationId: ID!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
 }
