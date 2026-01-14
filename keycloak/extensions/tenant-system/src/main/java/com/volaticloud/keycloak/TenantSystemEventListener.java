@@ -51,7 +51,7 @@ public class TenantSystemEventListener implements EventListenerProvider {
      */
     private static final String[] GROUP_SCOPES = {
         "view", "edit", "delete",
-        "mark-alert-as-read", "view-users",
+        "mark-alert-as-read", "view-users", "invite-user",
         "create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"
     };
 

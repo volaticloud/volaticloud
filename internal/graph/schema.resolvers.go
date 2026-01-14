@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 	"volaticloud/internal/alert"
@@ -1033,18 +1032,12 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
-// DefaultDashboardClientID is the default Keycloak client ID for invitation redirects
-const DefaultDashboardClientID = "dashboard"
-
-// emailRegex is a simple email validation pattern
-var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-
 func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID string, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
 	// Authorization is handled by @hasScope directive
 	// organizationId is validated by the directive to ensure user has invite-user permission
 
 	// Validate email format
-	if !emailRegex.MatchString(input.Email) {
+	if !EmailRegex.MatchString(input.Email) {
 		return nil, fmt.Errorf("invalid email format: %s", input.Email)
 	}
 

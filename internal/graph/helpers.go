@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"volaticloud/internal/ent"
@@ -15,6 +16,12 @@ import (
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
 )
+
+// DefaultDashboardClientID is the default Keycloak client ID for invitation redirects
+const DefaultDashboardClientID = "dashboard"
+
+// EmailRegex is a simple email validation pattern for invitation emails
+var EmailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
 // buildBotSpec builds a BotSpec from a Bot entity
 // NO CONFIG MERGING - Each entity keeps its own config.json

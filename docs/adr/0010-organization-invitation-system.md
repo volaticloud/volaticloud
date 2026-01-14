@@ -33,10 +33,12 @@ VolatiCloud needs a way for organization administrators to invite new users to t
 Store invitations in a custom database table, generate tokens manually, and handle acceptance in the Go backend.
 
 **Pros:**
+
 - Full control over invitation logic
 - No Keycloak extension dependencies
 
 **Cons:**
+
 - Reinventing existing Keycloak functionality
 - Must handle token expiration, email sending manually
 - Separate from Keycloak's native organization membership
@@ -47,6 +49,7 @@ Store invitations in a custom database table, generate tokens manually, and hand
 Use Keycloak 26's native `OrganizationProvider.getInvitationManager()` API combined with `InviteOrgActionToken` for invitation links.
 
 **Pros:**
+
 - Uses battle-tested Keycloak code
 - Native organization membership management
 - Built-in token expiration and validation
@@ -54,6 +57,7 @@ Use Keycloak 26's native `OrganizationProvider.getInvitationManager()` API combi
 - Integrates with Keycloak's authentication flows
 
 **Cons:**
+
 - Requires Keycloak extension (Java)
 - Tighter coupling to Keycloak version
 - Must handle OAuth state parameter for orgId preservation
@@ -63,10 +67,12 @@ Use Keycloak 26's native `OrganizationProvider.getInvitationManager()` API combi
 Use Keycloak's Admin REST API to create organization invitations without custom extensions.
 
 **Pros:**
+
 - No Java extension code
 - Standard REST API integration
 
 **Cons:**
+
 - Admin API doesn't provide invitation email sending
 - Would need separate email service
 - Limited customization of invitation flow
@@ -84,6 +90,7 @@ Chosen option: **Keycloak Native InvitationManager**, because it:
 ### Consequences
 
 **Positive:**
+
 - Secure invitation links with automatic expiration
 - Native Keycloak organization membership upon acceptance
 - Event-driven role assignment via `TenantSystemEventListener`
@@ -91,11 +98,13 @@ Chosen option: **Keycloak Native InvitationManager**, because it:
 - Minimal custom code for core invitation logic
 
 **Negative:**
+
 - Java extension code required in Keycloak
 - Must maintain compatibility with Keycloak version upgrades
 - Complex OAuth callback handling for organization context preservation
 
 **Neutral:**
+
 - Invitation acceptance triggers existing event listener for role assignment
 - Uses same group hierarchy as ADR-0008 for permissions
 
