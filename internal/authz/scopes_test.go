@@ -43,6 +43,12 @@ func TestGetScopesForType(t *testing.T) {
 			wantContains: "mark-alert-as-read",
 		},
 		{
+			name:         "Group scopes include invite-user",
+			resourceType: ResourceTypeGroup,
+			wantLen:      10,
+			wantContains: "invite-user",
+		},
+		{
 			name:         "Unknown type returns nil",
 			resourceType: ResourceType("unknown"),
 			wantLen:      0,

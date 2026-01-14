@@ -15,8 +15,9 @@ import (
 
 // AdminClient handles Keycloak Admin API operations using gocloak
 type AdminClient struct {
-	client *gocloak.GoCloak
-	config auth.KeycloakConfig
+	client     *gocloak.GoCloak
+	httpClient *http.Client
+	config     auth.KeycloakConfig
 }
 
 // OrganizationUser represents a user in the organization
@@ -73,8 +74,9 @@ type ResourceResponse struct {
 func NewAdminClient(config auth.KeycloakConfig) *AdminClient {
 	client := gocloak.NewClient(config.URL)
 	return &AdminClient{
-		client: client,
-		config: config,
+		client:     client,
+		httpClient: &http.Client{},
+		config:     config,
 	}
 }
 
@@ -284,8 +286,6 @@ func (a *AdminClient) getGroupChildren(ctx context.Context, token, groupID strin
 	const pageSize = 100 // Fetch 100 children per request
 	offset := 0
 
-	client := &http.Client{}
-
 	for {
 		// Build URL with pagination parameters
 		url := fmt.Sprintf("%s/admin/realms/%s/groups/%s/children?first=%d&max=%d",
@@ -299,7 +299,7 @@ func (a *AdminClient) getGroupChildren(ctx context.Context, token, groupID strin
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := client.Do(req)
+		resp, err := a.httpClient.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch group children: %w", err)
 		}
@@ -447,8 +447,7 @@ func (a *AdminClient) CreateResource(ctx context.Context, request ResourceCreate
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
@@ -497,8 +496,7 @@ func (a *AdminClient) UpdateResource(ctx context.Context, resourceID string, req
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
@@ -540,8 +538,7 @@ func (a *AdminClient) DeleteResource(ctx context.Context, resourceID string) err
 	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
 	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
@@ -606,8 +603,7 @@ func (a *AdminClient) CreateInvitation(ctx context.Context, resourceID string, r
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}

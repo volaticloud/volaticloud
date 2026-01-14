@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -40,6 +40,17 @@ export const InviteUserDialog = ({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [inviteUser, { loading, error, reset }] = useInviteOrganizationUserMutation();
+
+  // Reset form state when dialog opens/closes to prevent stale data
+  useEffect(() => {
+    if (!open) {
+      setEmail('');
+      setFirstName('');
+      setLastName('');
+      setSuccessMessage(null);
+      reset();
+    }
+  }, [open, reset]);
 
   const handleClose = () => {
     // Reset form
