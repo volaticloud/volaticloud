@@ -561,13 +561,13 @@ mutation {
 
 ```bash
 # Check user's group membership
-# User should be in: /<org-uuid>/role:viewer
+# User should be in: /{org-uuid}/role:viewer
 ```
 
 **Solutions**:
 
 - Check TenantSystemEventListener logs for role assignment errors
-- Verify the organization group structure exists (/<org-uuid>/role:viewer)
+- Verify the organization group structure exists (`/{org-uuid}/role:viewer`)
 - Manually add user to role group if needed via Keycloak Admin Console
 
 #### 6. Invitation Link Expired
