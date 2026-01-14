@@ -31,7 +31,7 @@ export const createOidcConfig = (
     // onSigninCallback receives the User object with our custom state
     onSigninCallback: (user: User | void) => {
       // Get orgId from OIDC state (passed via signinRedirect)
-      const state = user?.state as OAuthState | undefined;
+      const state = user ? (user.state as OAuthState | undefined) : undefined;
       const orgIdFromState = state?.orgId;
 
       // Also check URL for orgId (invitation flow)
