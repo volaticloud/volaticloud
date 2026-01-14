@@ -1032,6 +1032,64 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
+func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID string, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
+	// Authorization is handled by @hasScope directive
+	// organizationId is validated by the directive to ensure user has invite-user permission
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Build request
+	request := keycloak.InvitationRequest{
+		Email:    input.Email,
+		ClientID: "dashboard", // Use dashboard client for redirect
+	}
+	if input.FirstName != nil {
+		request.FirstName = *input.FirstName
+	}
+	if input.LastName != nil {
+		request.LastName = *input.LastName
+	}
+	if input.RedirectURL != nil {
+		request.RedirectURL = *input.RedirectURL
+	}
+
+	// Create invitation via Keycloak tenant API
+	response, err := adminClient.CreateInvitation(ctx, organizationID, request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create invitation: %w", err)
+	}
+
+	// Parse invitation ID
+	invitationID, err := uuid.Parse(response.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid invitation ID: %w", err)
+	}
+
+	// Convert to GraphQL model
+	result := &model.OrganizationInvitation{
+		ID:             invitationID,
+		Email:          response.Email,
+		OrganizationID: response.ResourceID,
+		Status:         response.Status,
+		CreatedAt:      time.UnixMilli(response.CreatedAt),
+		ExpiresAt:      time.UnixMilli(response.ExpiresAt),
+	}
+
+	// Set optional fields
+	if response.FirstName != "" {
+		result.FirstName = &response.FirstName
+	}
+	if response.LastName != "" {
+		result.LastName = &response.LastName
+	}
+
+	return result, nil
+}
+
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {
 	// Load the bot with its runner configuration
 	b, err := r.client.Bot.Query().

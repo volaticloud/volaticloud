@@ -949,3 +949,76 @@ extend type Query {
     offset: Int = 0
   ): ResourceGroupMemberConnection! @hasScope(resource: "organizationId", scope: "view-users")
 }
+
+# Organization Invitation Types
+
+"""
+Input for inviting a user to an organization
+"""
+input InviteUserInput {
+  """
+  Email address of the user to invite
+  """
+  email: String!
+  """
+  First name of the user (optional, used in invitation email)
+  """
+  firstName: String
+  """
+  Last name of the user (optional, used in invitation email)
+  """
+  lastName: String
+  """
+  URL to redirect to after invitation acceptance (optional).
+  Should include the organization path, e.g., "http://localhost:5173/organizations/{orgId}"
+  """
+  redirectUrl: String
+}
+
+"""
+Response from invitation operations
+"""
+type OrganizationInvitation {
+  """
+  Invitation ID (UUID)
+  """
+  id: ID!
+  """
+  Email address of the invited user
+  """
+  email: String!
+  """
+  First name of the invited user
+  """
+  firstName: String
+  """
+  Last name of the invited user
+  """
+  lastName: String
+  """
+  Organization resource ID
+  """
+  organizationId: String!
+  """
+  Invitation status (PENDING, EXPIRED)
+  """
+  status: String!
+  """
+  Timestamp when invitation was created (Unix milliseconds)
+  """
+  createdAt: Time!
+  """
+  Timestamp when invitation expires (Unix milliseconds)
+  """
+  expiresAt: Time!
+}
+
+extend type Mutation {
+  """
+  Invite a user to an organization
+  Sends an invitation email with a link to join
+  Invited users are automatically assigned the 'viewer' role upon acceptance
+  Requires invite-user permission on the organization
+  """
+  inviteOrganizationUser(organizationId: String!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
+}

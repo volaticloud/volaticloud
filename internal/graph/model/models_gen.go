@@ -118,6 +118,19 @@ type GroupNode struct {
 	Children []*GroupNode `json:"children"`
 }
 
+// Input for inviting a user to an organization
+type InviteUserInput struct {
+	// Email address of the user to invite
+	Email string `json:"email"`
+	// First name of the user (optional, used in invitation email)
+	FirstName *string `json:"firstName,omitempty"`
+	// Last name of the user (optional, used in invitation email)
+	LastName *string `json:"lastName,omitempty"`
+	// URL to redirect to after invitation acceptance (optional).
+	// Should include the organization path, e.g., "http://localhost:5173/organizations/{orgId}"
+	RedirectURL *string `json:"redirectUrl,omitempty"`
+}
+
 type KrakenConfigInput struct {
 	APIKey    string `json:"apiKey"`
 	APISecret string `json:"apiSecret"`
@@ -158,6 +171,26 @@ type MemberUser struct {
 	Enabled bool `json:"enabled"`
 	// User creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+// Response from invitation operations
+type OrganizationInvitation struct {
+	// Invitation ID (UUID)
+	ID uuid.UUID `json:"id"`
+	// Email address of the invited user
+	Email string `json:"email"`
+	// First name of the invited user
+	FirstName *string `json:"firstName,omitempty"`
+	// Last name of the invited user
+	LastName *string `json:"lastName,omitempty"`
+	// Organization resource ID
+	OrganizationID string `json:"organizationId"`
+	// Invitation status (PENDING, EXPIRED)
+	Status string `json:"status"`
+	// Timestamp when invitation was created (Unix milliseconds)
+	CreatedAt time.Time `json:"createdAt"`
+	// Timestamp when invitation expires (Unix milliseconds)
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 // User in the organization (from Keycloak)

@@ -10,6 +10,7 @@ import org.keycloak.authorization.model.Scope;
 import org.keycloak.authorization.store.ResourceStore;
 import org.keycloak.authorization.store.ScopeStore;
 import org.keycloak.models.*;
+import org.keycloak.organization.OrganizationProvider;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ public class ResourceManagementService {
     private static final String GROUP_TITLE_ATTRIBUTE = "GROUP_TITLE";
     private static final String ROLE_ADMIN = "role:admin";
     private static final String ROLE_VIEWER = "role:viewer";
+    private static final String RESOURCE_TYPE_ORGANIZATION = "organization";
 
     private final KeycloakSession session;
 
@@ -126,7 +128,19 @@ public class ResourceManagementService {
             throw e; // Re-throw original exception
         }
 
-        // Step 5: Build response
+        // Step 5: Create native Keycloak Organization if type is "organization"
+        if (RESOURCE_TYPE_ORGANIZATION.equals(request.getType())) {
+            try {
+                createNativeOrganization(request.getId(), request.getTitle());
+            } catch (Exception e) {
+                // Cleanup: Delete UMA resource and group
+                log.errorf("Native organization creation failed, cleaning up: %s", request.getId());
+                cleanupOnFailure(realm, resource, group);
+                throw e;
+            }
+        }
+
+        // Step 6: Build response
         return buildResourceResponse(resource, group, parentGroup);
     }
 
@@ -207,6 +221,12 @@ public class ResourceManagementService {
             resource.setAttribute("title", Collections.singletonList(request.getTitle()));
             resource.setDisplayName(request.getTitle());
             log.infof("Updated UMA resource displayName for: %s to: %s", resourceId, request.getTitle());
+
+            // Step 4.5: Update native organization name if type is "organization"
+            String groupType = group.getFirstAttribute(GROUP_TYPE_ATTRIBUTE);
+            if (RESOURCE_TYPE_ORGANIZATION.equals(groupType)) {
+                updateNativeOrganizationName(resourceId, request.getTitle());
+            }
         }
 
         // Step 5: Determine parent group for response
@@ -228,6 +248,19 @@ public class ResourceManagementService {
             throw new Exception("Could not get realm from session context");
         }
 
+        // Step 0: Check if this is an organization and delete native org first
+        GroupModel group = session.groups()
+            .searchForGroupByNameStream(realm, resourceId, true, 0, 1)
+            .findFirst()
+            .orElse(null);
+
+        if (group != null) {
+            String groupType = group.getFirstAttribute(GROUP_TYPE_ATTRIBUTE);
+            if (RESOURCE_TYPE_ORGANIZATION.equals(groupType)) {
+                deleteNativeOrganization(resourceId);
+            }
+        }
+
         // Step 1: Find and delete UMA resource
         Resource resource = findResourceByName(realm, resourceId);
         if (resource != null) {
@@ -239,11 +272,7 @@ public class ResourceManagementService {
             log.warnf("UMA resource not found: %s", resourceId);
         }
 
-        // Step 2: Find and delete Keycloak group (search globally with exact match)
-        GroupModel group = session.groups()
-            .searchForGroupByNameStream(realm, resourceId, true, 0, 1)
-            .findFirst()
-            .orElse(null);
+        // Step 2: Delete Keycloak group (already looked up above)
         if (group != null) {
             boolean removed = session.groups().removeGroup(realm, group);
             if (removed) {
@@ -441,5 +470,109 @@ public class ResourceManagementService {
             scopes,                       // scopes
             attributes                    // attributes
         );
+    }
+
+    // ============================================================================
+    // Native Keycloak Organization Methods
+    // ============================================================================
+
+    /**
+     * Creates a native Keycloak organization.
+     *
+     * @param alias Organization alias (unique identifier, typically UUID)
+     * @param name Organization display name
+     * @throws Exception if OrganizationProvider is not available or creation fails
+     */
+    private void createNativeOrganization(String alias, String name) throws Exception {
+        OrganizationProvider orgProvider = session.getProvider(OrganizationProvider.class);
+        if (orgProvider == null) {
+            throw new Exception("OrganizationProvider not available - Organizations feature may not be enabled");
+        }
+
+        OrganizationModel org = orgProvider.create(name, alias);
+        if (org == null) {
+            throw new Exception("Failed to create native organization: " + alias);
+        }
+
+        log.infof("Created native Keycloak organization: name=%s, alias=%s, id=%s", name, alias, org.getId());
+    }
+
+    /**
+     * Updates a native Keycloak organization name.
+     * Best-effort operation - logs warnings on failure but doesn't throw exceptions.
+     *
+     * @param alias Organization alias (unique identifier)
+     * @param newName New organization display name
+     */
+    private void updateNativeOrganizationName(String alias, String newName) {
+        OrganizationProvider orgProvider = session.getProvider(OrganizationProvider.class);
+        if (orgProvider == null) {
+            log.warnf("OrganizationProvider not available, skipping organization name update for: %s", alias);
+            return;
+        }
+
+        OrganizationModel org = orgProvider.getByAlias(alias);
+        if (org == null) {
+            log.warnf("Native organization not found by alias: %s", alias);
+            return;
+        }
+
+        org.setName(newName);
+        log.infof("Updated native organization name: alias=%s, newName=%s", alias, newName);
+    }
+
+    /**
+     * Deletes a native Keycloak organization.
+     * Best-effort operation - logs warnings on failure but doesn't throw exceptions.
+     *
+     * @param alias Organization alias (unique identifier)
+     */
+    private void deleteNativeOrganization(String alias) {
+        OrganizationProvider orgProvider = session.getProvider(OrganizationProvider.class);
+        if (orgProvider == null) {
+            log.warnf("OrganizationProvider not available, skipping organization deletion for: %s", alias);
+            return;
+        }
+
+        OrganizationModel org = orgProvider.getByAlias(alias);
+        if (org == null) {
+            log.warnf("Native organization not found by alias: %s", alias);
+            return;
+        }
+
+        boolean removed = orgProvider.remove(org);
+        if (removed) {
+            log.infof("Deleted native organization: alias=%s", alias);
+        } else {
+            log.warnf("Failed to delete native organization: alias=%s", alias);
+        }
+    }
+
+    /**
+     * Cleanup helper for failed resource creation.
+     * Deletes both UMA resource and Keycloak group.
+     *
+     * @param realm The realm
+     * @param resource The UMA resource to delete
+     * @param group The Keycloak group to delete
+     */
+    private void cleanupOnFailure(RealmModel realm, Resource resource, GroupModel group) {
+        // Delete UMA resource
+        try {
+            AuthorizationProvider authz = session.getProvider(AuthorizationProvider.class);
+            ResourceStore resourceStore = authz.getStoreFactory().getResourceStore();
+            resourceStore.delete(resource.getId());
+            log.infof("Cleanup: deleted UMA resource %s", resource.getName());
+        } catch (Exception e) {
+            log.errorf(e, "Failed to cleanup UMA resource: %s", resource.getName());
+        }
+
+        // Delete group
+        try {
+            session.groups().removeGroup(realm, group);
+            log.infof("Cleanup: deleted group %s", group.getName());
+        } catch (Exception e) {
+            log.errorf(e, "Failed to cleanup group: %s", group.getName());
+        }
     }
 }

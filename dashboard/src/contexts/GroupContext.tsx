@@ -4,6 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { Box, Container, Paper, Typography, Alert } from '@mui/material';
 import { Business as BusinessIcon } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
+import { ORG_ID_PARAM } from '../constants/url';
 
 interface JwtPayload {
   groups?: string[];
@@ -105,19 +106,19 @@ export function GroupProvider({ children }: GroupProviderProps) {
     [auth.user?.access_token, availableGroups]
   );
 
-  // Get groupId from URL parameter
-  const groupIdFromUrl = searchParams.get('groupId');
+  // Get orgId from URL parameter
+  const orgIdFromUrl = searchParams.get(ORG_ID_PARAM);
 
   // Determine active group
   const activeGroupId = useMemo(() => {
-    // If groupId is in URL and valid, use it
-    if (groupIdFromUrl && availableGroups.includes(groupIdFromUrl)) {
-      return groupIdFromUrl;
+    // If orgId is in URL and valid, use it
+    if (orgIdFromUrl && availableGroups.includes(orgIdFromUrl)) {
+      return orgIdFromUrl;
     }
 
     // Otherwise, use the first available group as default
     return availableGroups.length > 0 ? availableGroups[0] : null;
-  }, [groupIdFromUrl, availableGroups]);
+  }, [orgIdFromUrl, availableGroups]);
 
   // Get active organization with title
   const activeOrganization = useMemo(() => {
@@ -132,10 +133,10 @@ export function GroupProvider({ children }: GroupProviderProps) {
       return;
     }
 
-    // If URL doesn't have groupId or has invalid groupId, update it
-    if (!groupIdFromUrl || !availableGroups.includes(groupIdFromUrl)) {
+    // If URL doesn't have orgId or has invalid orgId, update it
+    if (!orgIdFromUrl || !availableGroups.includes(orgIdFromUrl)) {
       const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set('groupId', activeGroupId);
+      newSearchParams.set(ORG_ID_PARAM, activeGroupId);
 
       // Replace history to avoid creating extra navigation entries
       navigate(
@@ -146,7 +147,7 @@ export function GroupProvider({ children }: GroupProviderProps) {
         { replace: true }
       );
     }
-  }, [activeGroupId, groupIdFromUrl, availableGroups, searchParams, navigate, location.pathname]);
+  }, [activeGroupId, orgIdFromUrl, availableGroups, searchParams, navigate, location.pathname]);
 
   // Function to change active group
   const setActiveGroup = (groupId: string) => {
@@ -156,7 +157,7 @@ export function GroupProvider({ children }: GroupProviderProps) {
     }
 
     const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set('groupId', groupId);
+    newSearchParams.set(ORG_ID_PARAM, groupId);
     setSearchParams(newSearchParams);
   };
 
@@ -235,8 +236,8 @@ export function useActiveGroup() {
 }
 
 /**
- * Hook to navigate while preserving the groupId query parameter.
- * Use this instead of useNavigate() to ensure groupId is always in the URL.
+ * Hook to navigate while preserving the orgId query parameter.
+ * Use this instead of useNavigate() to ensure orgId is always in the URL.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useGroupNavigate() {
@@ -245,15 +246,15 @@ export function useGroupNavigate() {
 
   return useCallback(
     (to: string, options?: { replace?: boolean; state?: unknown }) => {
-      const groupId = searchParams.get('groupId');
+      const orgId = searchParams.get(ORG_ID_PARAM);
 
       // Parse the target path to handle paths that might already have query params
       const [pathname, existingSearch] = to.split('?');
       const newParams = new URLSearchParams(existingSearch || '');
 
-      // Preserve groupId if it exists and isn't already in the target URL
-      if (groupId && !newParams.has('groupId')) {
-        newParams.set('groupId', groupId);
+      // Preserve orgId if it exists and isn't already in the target URL
+      if (orgId && !newParams.has(ORG_ID_PARAM)) {
+        newParams.set(ORG_ID_PARAM, orgId);
       }
 
       const search = newParams.toString();

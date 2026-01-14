@@ -2235,6 +2235,21 @@ export type GroupNode = {
   type: Scalars['String']['output'];
 };
 
+/** Input for inviting a user to an organization */
+export type InviteUserInput = {
+  /** Email address of the user to invite */
+  email: Scalars['String']['input'];
+  /** First name of the user (optional, used in invitation email) */
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  /** Last name of the user (optional, used in invitation email) */
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * URL to redirect to after invitation acceptance (optional).
+   * Should include the organization path, e.g., "http://localhost:5173/organizations/{orgId}"
+   */
+  redirectUrl?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type KrakenConfigInput = {
   apiKey: Scalars['String']['input'];
   apiSecret: Scalars['String']['input'];
@@ -2304,6 +2319,13 @@ export type Mutation = {
    * This avoids exposing bot credentials to the frontend
    */
   getFreqtradeToken: FreqtradeToken;
+  /**
+   * Invite a user to an organization
+   * Sends an invitation email with a link to join
+   * Invited users are automatically assigned the 'viewer' role upon acceptance
+   * Requires invite-user permission on the organization
+   */
+  inviteOrganizationUser: OrganizationInvitation;
   /**
    * Mark a single alert event as read
    * Sets readAt to current timestamp
@@ -2429,6 +2451,12 @@ export type MutationDeleteTradeArgs = {
 
 export type MutationGetFreqtradeTokenArgs = {
   botId: Scalars['ID']['input'];
+};
+
+
+export type MutationInviteOrganizationUserArgs = {
+  input: InviteUserInput;
+  organizationId: Scalars['String']['input'];
 };
 
 
@@ -2564,6 +2592,27 @@ export enum OrderDirection {
   /** Specifies a descending order for a given `orderBy` argument. */
   Desc = 'DESC'
 }
+
+/** Response from invitation operations */
+export type OrganizationInvitation = {
+  __typename?: 'OrganizationInvitation';
+  /** Timestamp when invitation was created (Unix milliseconds) */
+  createdAt: Scalars['Time']['output'];
+  /** Email address of the invited user */
+  email: Scalars['String']['output'];
+  /** Timestamp when invitation expires (Unix milliseconds) */
+  expiresAt: Scalars['Time']['output'];
+  /** First name of the invited user */
+  firstName?: Maybe<Scalars['String']['output']>;
+  /** Invitation ID (UUID) */
+  id: Scalars['ID']['output'];
+  /** Last name of the invited user */
+  lastName?: Maybe<Scalars['String']['output']>;
+  /** Organization resource ID */
+  organizationId: Scalars['String']['output'];
+  /** Invitation status (PENDING, EXPIRED) */
+  status: Scalars['String']['output'];
+};
 
 /** User in the organization (from Keycloak) */
 export type OrganizationUser = {

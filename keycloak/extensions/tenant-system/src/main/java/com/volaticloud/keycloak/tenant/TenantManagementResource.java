@@ -2,6 +2,8 @@ package com.volaticloud.keycloak.tenant;
 
 import com.volaticloud.keycloak.tenant.representations.*;
 import com.volaticloud.keycloak.tenant.services.*;
+
+import java.util.List;
 import org.keycloak.models.KeycloakSession;
 
 import jakarta.ws.rs.*;
@@ -25,12 +27,16 @@ public class TenantManagementResource {
     private final ResourceGroupService resourceGroupService;
     private final ResourceGroupMemberService memberService;
     private final ResourceManagementService resourceManagementService;
+    private final MemberManagementService memberManagementService;
+    private final InvitationService invitationService;
 
     public TenantManagementResource(KeycloakSession session) {
         this.session = session;
         this.resourceGroupService = new ResourceGroupService(session);
         this.memberService = new ResourceGroupMemberService(session);
         this.resourceManagementService = new ResourceManagementService(session);
+        this.memberManagementService = new MemberManagementService(session);
+        this.invitationService = new InvitationService(session);
     }
 
     /**
@@ -236,6 +242,180 @@ public class TenantManagementResource {
         try {
             ResourceResponse response = resourceManagementService.getResource(resourceId);
             return Response.ok(response).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    // ============================================================================
+    // Member Management Endpoints
+    // ============================================================================
+
+    /**
+     * POST /realms/{realm}/volaticloud/resources/{resourceId}/members
+     *
+     * Adds a member to a resource with a specified role.
+     * For organization-type resources, also adds the user to the native Keycloak Organization.
+     * Custom roles are created on-demand if they don't exist.
+     *
+     * @param resourceId Resource ID (UUID)
+     * @param request AddMemberRequest with userId and role
+     * @return MemberResponse with operation result
+     */
+    @POST
+    @Path("/resources/{resourceId}/members")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addMember(
+        @PathParam("resourceId") String resourceId,
+        AddMemberRequest request
+    ) {
+        try {
+            // Validate request
+            if (request.getUserId() == null || request.getUserId().isEmpty()) {
+                return Response.status(400).entity(Map.of("error", "userId is required")).build();
+            }
+            if (request.getRole() == null || request.getRole().isEmpty()) {
+                return Response.status(400).entity(Map.of("error", "role is required")).build();
+            }
+
+            MemberResponse response = memberManagementService.addMember(
+                resourceId,
+                request.getUserId(),
+                request.getRole()
+            );
+            return Response.status(Response.Status.CREATED).entity(response).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * DELETE /realms/{realm}/volaticloud/resources/{resourceId}/members/{userId}
+     *
+     * Removes a member from a resource.
+     * If role query parameter is provided, removes only from that specific role.
+     * If no role specified, removes from all roles.
+     * For organization-type resources, also removes from native Keycloak Organization
+     * when the user has no remaining roles.
+     *
+     * @param resourceId Resource ID (UUID)
+     * @param userId User ID (UUID)
+     * @param role Optional role to remove from (if not specified, removes from all roles)
+     * @return 204 No Content on success
+     */
+    @DELETE
+    @Path("/resources/{resourceId}/members/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response removeMember(
+        @PathParam("resourceId") String resourceId,
+        @PathParam("userId") String userId,
+        @QueryParam("role") String role
+    ) {
+        try {
+            if (role != null && !role.isEmpty()) {
+                memberManagementService.removeMemberRole(resourceId, userId, role);
+            } else {
+                memberManagementService.removeMember(resourceId, userId);
+            }
+            return Response.noContent().build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    // ============================================================================
+    // Invitation Management Endpoints
+    // ============================================================================
+
+    /**
+     * POST /realms/{realm}/volaticloud/resources/{resourceId}/invitations
+     *
+     * Creates an invitation for a user to join an organization.
+     * Uses Keycloak's native organization invitation system.
+     * All invited users are assigned the 'viewer' role by default upon acceptance.
+     *
+     * @param resourceId Organization resource ID
+     * @param request InvitationRequest with email, firstName, lastName
+     * @return InvitationResponse with invitation details including invite link
+     */
+    @POST
+    @Path("/resources/{resourceId}/invitations")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createInvitation(
+        @PathParam("resourceId") String resourceId,
+        InvitationRequest request
+    ) {
+        try {
+            if (request.getEmail() == null || request.getEmail().isEmpty()) {
+                return Response.status(400).entity(Map.of("error", "email is required")).build();
+            }
+
+            InvitationResponse response = invitationService.createInvitation(resourceId, request);
+            return Response.status(Response.Status.CREATED).entity(response).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * GET /realms/{realm}/volaticloud/resources/{resourceId}/invitations
+     *
+     * Lists pending invitations for an organization.
+     *
+     * @param resourceId Organization resource ID
+     * @param first Number of invitations to return (default: 20)
+     * @param max Maximum number of invitations (default: 100)
+     * @return InvitationListResponse with list of pending invitations
+     */
+    @GET
+    @Path("/resources/{resourceId}/invitations")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listInvitations(
+        @PathParam("resourceId") String resourceId,
+        @QueryParam("first") @DefaultValue("20") int first,
+        @QueryParam("max") @DefaultValue("100") int max
+    ) {
+        try {
+            List<InvitationResponse> invitations = invitationService.listInvitations(resourceId, first, max);
+            return Response.ok(new InvitationListResponse(invitations, invitations.size())).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
+     * DELETE /realms/{realm}/volaticloud/resources/{resourceId}/invitations/{invitationId}
+     *
+     * Deletes (cancels) an invitation before it's accepted.
+     *
+     * @param resourceId Organization resource ID (for authorization context)
+     * @param invitationId Invitation ID to delete
+     * @return 204 No Content on success
+     */
+    @DELETE
+    @Path("/resources/{resourceId}/invitations/{invitationId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteInvitation(
+        @PathParam("resourceId") String resourceId,
+        @PathParam("invitationId") String invitationId
+    ) {
+        try {
+            invitationService.deleteInvitation(resourceId, invitationId);
+            return Response.noContent().build();
         } catch (NotFoundException e) {
             return Response.status(404).entity(Map.of("error", e.getMessage())).build();
         } catch (Exception e) {

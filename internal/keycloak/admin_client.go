@@ -555,3 +555,75 @@ func (a *AdminClient) DeleteResource(ctx context.Context, resourceID string) err
 
 	return nil
 }
+
+// InvitationRequest represents a request to invite a user to an organization
+type InvitationRequest struct {
+	Email       string `json:"email"`
+	FirstName   string `json:"firstName,omitempty"`
+	LastName    string `json:"lastName,omitempty"`
+	RedirectURL string `json:"redirectUrl,omitempty"` // URL to redirect to after invitation acceptance
+	ClientID    string `json:"clientId,omitempty"`    // Keycloak client ID for the invitation flow
+}
+
+// InvitationResponse represents the response from invitation operations
+type InvitationResponse struct {
+	ID         string `json:"id"`
+	Email      string `json:"email"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	ResourceID string `json:"resourceId"`
+	Status     string `json:"status"`
+	CreatedAt  int64  `json:"createdAt"`
+	ExpiresAt  int64  `json:"expiresAt"`
+	InviteLink string `json:"inviteLink"`
+}
+
+// CreateInvitation creates an invitation for a user to join an organization
+// Uses the Keycloak extension's invitation API endpoint
+func (a *AdminClient) CreateInvitation(ctx context.Context, resourceID string, request InvitationRequest) (*InvitationResponse, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Build URL
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s/invitations", a.config.URL, a.config.Realm, resourceID)
+
+	// Marshal request body
+	body, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusCreated {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to create invitation (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode response
+	var response InvitationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &response, nil
+}

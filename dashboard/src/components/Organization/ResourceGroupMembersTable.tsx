@@ -25,6 +25,7 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  Button,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,9 +34,11 @@ import {
   Cancel as CancelIcon,
   ArrowUpward,
   ArrowDownward,
+  PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
 import { ResourceGroupMembersDocument } from './organization.generated';
 import { ResourceGroupMemberOrderField, OrderDirection } from '../../generated/types';
+import { InviteUserDialog } from './InviteUserDialog';
 
 interface ResourceGroupMembersTableProps {
   organizationId: string;
@@ -58,6 +61,10 @@ export const ResourceGroupMembersTable = ({
     ResourceGroupMemberOrderField.Username
   );
   const [orderDirection, setOrderDirection] = useState<OrderDirection>(OrderDirection.Asc);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+
+  // Show invite button only at organization level
+  const isOrganizationLevel = organizationId === resourceGroupId;
 
   // Query with pagination, search, and filters
   const { data, loading, error } = useQuery(ResourceGroupMembersDocument, {
@@ -115,9 +122,18 @@ export const ResourceGroupMembersTable = ({
   return (
     <Paper>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant="h6" gutterBottom>
-          Members of {resourceGroupName}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="h6">Members of {resourceGroupName}</Typography>
+          {isOrganizationLevel && (
+            <Button
+              variant="contained"
+              startIcon={<PersonAddIcon />}
+              onClick={() => setInviteDialogOpen(true)}
+            >
+              Invite User
+            </Button>
+          )}
+        </Box>
 
         {/* Search and Filters */}
         <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
@@ -332,6 +348,14 @@ export const ResourceGroupMembersTable = ({
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[25, 50, 100]}
+      />
+
+      {/* Invite User Dialog */}
+      <InviteUserDialog
+        open={inviteDialogOpen}
+        onClose={() => setInviteDialogOpen(false)}
+        organizationId={organizationId}
+        organizationName={resourceGroupName}
       />
     </Paper>
   );
