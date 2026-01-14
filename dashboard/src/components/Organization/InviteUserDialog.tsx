@@ -57,9 +57,9 @@ export const InviteUserDialog = ({
     }
 
     try {
-      // Build redirect URL with organization ID as query param
+      // Build redirect URL with organization ID as query param (URL-encoded for safety)
       // The OIDC config dynamically detects this and uses it as redirect_uri
-      const redirectUrl = `${window.location.origin}/?${ORG_ID_PARAM}=${organizationId}`;
+      const redirectUrl = `${window.location.origin}/?${ORG_ID_PARAM}=${encodeURIComponent(organizationId)}`;
 
       const result = await inviteUser({
         variables: {
@@ -117,6 +117,7 @@ export const InviteUserDialog = ({
             placeholder="user@example.com"
             helperText="The user will receive an invitation email with a link to join"
             error={email.length > 0 && !isValidEmail(email)}
+            disabled={loading}
           />
 
           <TextField
@@ -127,6 +128,7 @@ export const InviteUserDialog = ({
             autoComplete="off"
             placeholder="John"
             helperText="Optional - used in the invitation email"
+            disabled={loading}
           />
 
           <TextField
@@ -137,6 +139,7 @@ export const InviteUserDialog = ({
             autoComplete="off"
             placeholder="Doe"
             helperText="Optional - used in the invitation email"
+            disabled={loading}
           />
 
           <Alert severity="info" sx={{ mt: 1 }}>

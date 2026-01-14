@@ -6,24 +6,21 @@ import { useConfigValue } from './ConfigContext';
 import { ORG_ID_PARAM } from '../constants/url';
 
 /**
- * Checks if this is an invitation callback (OAuth params without stored state).
+ * Checks if this is an invitation callback (OAuth params without OIDC state parameter).
  * Returns true if we should skip normal OIDC callback processing.
+ *
+ * The key insight: Normal OIDC callbacks have a 'state' parameter in the URL,
+ * while invitation callbacks from Keycloak registration do not include state.
  */
 function isInvitationCallback(): boolean {
   const urlParams = new URLSearchParams(window.location.search);
   const hasCode = urlParams.has('code');
   const hasOrgId = urlParams.has(ORG_ID_PARAM);
+  const hasState = urlParams.has('state');
 
-  if (!hasCode || !hasOrgId) {
-    return false;
-  }
-
-  // Check if there's a stored state that would match this callback
-  // oidc-client-ts stores state in sessionStorage with prefix "oidc."
-  const hasStoredState = Object.keys(sessionStorage).some(key => key.startsWith('oidc.'));
-
-  // If we have code + orgId but no stored OIDC state, this is likely an invitation callback
-  return !hasStoredState;
+  // Invitation callback: has code + orgId but NO state parameter
+  // Normal OIDC callback always includes state parameter
+  return hasCode && hasOrgId && !hasState;
 }
 
 /**

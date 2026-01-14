@@ -16,7 +16,9 @@ import org.keycloak.services.resources.LoginActionsService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +33,11 @@ public class InvitationService {
     private static final String GROUP_TYPE_ATTRIBUTE = "GROUP_TYPE";
     private static final String RESOURCE_TYPE_ORGANIZATION = "organization";
     private static final String DASHBOARD_CLIENT_ID = "dashboard";
+
+    // RFC 5322 simplified email validation pattern
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    );
 
     private final KeycloakSession session;
 
@@ -55,6 +62,10 @@ public class InvitationService {
         if (realm == null) {
             throw new Exception("Could not get realm from session context");
         }
+
+        // 0. Validate input
+        validateEmail(request.getEmail());
+        validateRedirectUrl(request.getRedirectUrl(), request.getClientId(), realm);
 
         // 1. Find resource group and verify it's an organization
         GroupModel resourceGroup = findResourceGroup(realm, resourceId);
@@ -364,5 +375,89 @@ public class InvitationService {
             .searchForGroupByNameStream(realm, resourceId, true, 0, 1)
             .findFirst()
             .orElse(null);
+    }
+
+    /**
+     * Validates email format and checks for malicious characters.
+     *
+     * @param email The email to validate
+     * @throws IllegalArgumentException if email is invalid
+     */
+    private void validateEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        // Check for potentially malicious characters
+        if (email.contains("<") || email.contains(">") || email.contains("\n") || email.contains("\r")) {
+            throw new IllegalArgumentException("Email contains invalid characters");
+        }
+
+        // Validate email format
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+    }
+
+    /**
+     * Validates redirect URL against the client's allowed redirect URIs.
+     * This prevents open redirect vulnerabilities.
+     *
+     * @param redirectUrl The redirect URL to validate (can be null)
+     * @param clientId The client ID to check against (uses default if null)
+     * @param realm The realm to look up the client
+     * @throws IllegalArgumentException if redirect URL is invalid
+     */
+    private void validateRedirectUrl(String redirectUrl, String clientId, RealmModel realm) {
+        // If no redirect URL provided, it's valid (we'll use defaults)
+        if (redirectUrl == null || redirectUrl.isEmpty()) {
+            return;
+        }
+
+        // Validate URL format
+        try {
+            java.net.URI uri = new java.net.URI(redirectUrl);
+            String scheme = uri.getScheme();
+            if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) {
+                throw new IllegalArgumentException("Redirect URL must use http or https scheme");
+            }
+        } catch (java.net.URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid redirect URL format");
+        }
+
+        // Get the client to validate against
+        String effectiveClientId = (clientId != null && !clientId.isEmpty()) ? clientId : DASHBOARD_CLIENT_ID;
+        ClientModel client = realm.getClientByClientId(effectiveClientId);
+        if (client == null) {
+            // If client doesn't exist, we can't validate - reject the URL
+            throw new IllegalArgumentException("Client not found for redirect URL validation");
+        }
+
+        // Check if redirect URL matches client's allowed redirect URIs
+        Set<String> validUris = client.getRedirectUris();
+        if (validUris == null || validUris.isEmpty()) {
+            throw new IllegalArgumentException("Client has no valid redirect URIs configured");
+        }
+
+        boolean isValid = validUris.stream().anyMatch(validUri -> {
+            if (validUri == null) {
+                return false;
+            }
+            // Handle wildcard patterns
+            if (validUri.endsWith("/*")) {
+                String prefix = validUri.substring(0, validUri.length() - 1);
+                return redirectUrl.startsWith(prefix);
+            }
+            if (validUri.endsWith("*")) {
+                String prefix = validUri.substring(0, validUri.length() - 1);
+                return redirectUrl.startsWith(prefix);
+            }
+            return redirectUrl.equals(validUri);
+        });
+
+        if (!isValid) {
+            log.warnf("Redirect URL '%s' not in client's allowed redirect URIs", redirectUrl);
+            throw new IllegalArgumentException("Redirect URL is not allowed for this client");
+        }
     }
 }
