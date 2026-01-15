@@ -30,6 +30,9 @@ ENV KEYCLOAK_EXTRA_ARGS=$KEYCLOAK_EXTRA_ARGS
 
 COPY --chown=keycloak:root --from=provider-builder /providers/* /opt/keycloak/providers/
 
+# Copy custom VolatiCloud theme
+COPY --chown=keycloak:root themes/volaticloud /opt/keycloak/themes/volaticloud
+
 # Fix file timestamps to avoid provider loading issues (Docker may truncate timestamps)
 # See: https://www.keycloak.org/server/containers
 # Timestamp: 2025-04-01 00:00:00 UTC

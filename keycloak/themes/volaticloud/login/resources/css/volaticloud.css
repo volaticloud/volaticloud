@@ -1,0 +1,613 @@
+/**
+ * VolatiCloud Keycloak Theme
+ * Custom styles extending the base Keycloak theme
+ *
+ * Design tokens from Figma:
+ * - Primary Green: #079211
+ * - Background: #f3f3fa
+ * - Border: #cbcad7
+ * - Text Dark: #100f14
+ * - Text Gray: #49475a
+ * - Text Light: #9794aa
+ * - Text Medium: #686677
+ */
+
+/* ===== CSS Custom Properties ===== */
+:root {
+  --vc-primary: #079211;
+  --vc-primary-hover: #067a0e;
+  --vc-primary-active: #056a0c;
+  --vc-background: #f3f3fa;
+  --vc-white: #ffffff;
+  --vc-border: #cbcad7;
+  --vc-text-dark: #100f14;
+  --vc-text-gray: #49475a;
+  --vc-text-light: #9794aa;
+  --vc-text-medium: #686677;
+  --vc-input-radius: 6px;
+  --vc-button-radius: 8px;
+  --vc-font-family: 'Avenir', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== Base Layout - Split Screen ===== */
+.volaticloud-login {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--vc-background);
+  font-family: var(--vc-font-family);
+}
+
+/* Hide default Keycloak header */
+.volaticloud-login #kc-header {
+  display: none;
+}
+
+/* ===== Left Panel - Form Area ===== */
+.volaticloud-form-card {
+  flex: 0 0 55%;
+  max-width: 55%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 80px;
+  background-color: var(--vc-background);
+  box-shadow: none;
+  border: none;
+}
+
+@media (max-width: 992px) {
+  .volaticloud-form-card {
+    flex: 1;
+    max-width: 100%;
+    padding: 40px 24px;
+  }
+}
+
+/* ===== Logo ===== */
+.volaticloud-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+
+.volaticloud-logo img {
+  height: 40px;
+  width: auto;
+}
+
+.volaticloud-logo-text {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--vc-text-dark);
+}
+
+.volaticloud-logo-text span {
+  color: var(--vc-primary);
+}
+
+/* ===== Header/Title ===== */
+.volaticloud-header {
+  margin-bottom: 8px;
+}
+
+#kc-page-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--vc-text-dark);
+  margin: 0 0 20px 0;
+  line-height: 1.3;
+}
+
+/* ===== Username Display (Password Step) ===== */
+.volaticloud-login #kc-attempted-username {
+  padding-right: 0 !important;
+}
+
+/* ===== Restart Login Link ===== */
+.volaticloud-login #reset-login {
+  display: block;
+  text-align: center;
+  font-size: 14px;
+  color: var(--vc-text-light);
+  text-decoration: none;
+  margin: 4px 0 0 0;
+}
+
+.volaticloud-login #reset-login:hover {
+  color: var(--vc-primary);
+}
+
+.volaticloud-login #reset-login .kc-login-tooltip {
+  display: inline-flex;
+  align-items: center;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Hide the arrow icon */
+.volaticloud-login #reset-login .kc-login-tooltip i,
+.volaticloud-login #reset-login .pficon,
+.volaticloud-login #reset-login i {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  font-size: 0 !important;
+  overflow: hidden !important;
+}
+
+.volaticloud-login #reset-login .pficon::before,
+.volaticloud-login #reset-login i::before {
+  display: none !important;
+  content: none !important;
+}
+
+.volaticloud-login #reset-login .kc-tooltip-text {
+  display: inline !important;
+  position: static !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: none !important;
+  color: inherit !important;
+  padding: 0 !important;
+  font-size: 14px;
+  border: none !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+.volaticloud-login #reset-login .kc-tooltip-text::before,
+.volaticloud-login #reset-login .kc-tooltip-text::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Required field asterisk - inline with label, red color */
+.volaticloud-login .pf-c-form__label-required,
+.volaticloud-login .required {
+  color: #c9190b;
+  font-weight: 600;
+  display: inline;
+  margin-left: 2px;
+}
+
+/* Fix label to keep asterisk inline */
+.volaticloud-login .pf-c-form__label,
+.volaticloud-login label.pf-c-form__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.volaticloud-subtitle {
+  font-size: 16px;
+  color: var(--vc-text-gray);
+  margin-bottom: 32px;
+  letter-spacing: 0.08px;
+}
+
+/* ===== Form Styling ===== */
+.volaticloud-login .form-group {
+  margin-bottom: 24px;
+}
+
+/* Labels */
+.volaticloud-login .pf-c-form__label,
+.volaticloud-login .pf-c-form__label-text,
+.volaticloud-login label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--vc-text-light);
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Input Fields */
+.volaticloud-input,
+.volaticloud-login .pf-c-form-control {
+  width: 100%;
+  height: 64px;
+  padding: 19.5px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--vc-text-medium);
+  background-color: var(--vc-white);
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-input-radius);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.volaticloud-input:focus,
+.volaticloud-login .pf-c-form-control:focus {
+  border-color: var(--vc-primary);
+  box-shadow: 0 0 0 2px rgba(7, 146, 17, 0.1);
+}
+
+.volaticloud-input::placeholder,
+.volaticloud-login .pf-c-form-control::placeholder {
+  color: var(--vc-text-light);
+}
+
+/* Input Group (password with toggle) */
+.volaticloud-login .pf-c-input-group {
+  position: relative;
+}
+
+.volaticloud-login .pf-c-input-group .pf-c-form-control {
+  padding-right: 50px;
+}
+
+.volaticloud-login .pf-c-input-group .pf-c-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--vc-text-light);
+  padding: 8px;
+}
+
+.volaticloud-login .pf-c-input-group .pf-c-button:hover {
+  color: var(--vc-text-medium);
+}
+
+/* ===== Primary Button ===== */
+.volaticloud-btn-primary,
+.volaticloud-login .pf-m-primary {
+  width: 100%;
+  height: 56px;
+  padding: 0 24px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--vc-white);
+  background-color: var(--vc-primary);
+  border: none;
+  border-radius: var(--vc-button-radius);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.volaticloud-btn-primary:hover,
+.volaticloud-login .pf-m-primary:hover {
+  background-color: var(--vc-primary-hover);
+}
+
+.volaticloud-btn-primary:active,
+.volaticloud-login .pf-m-primary:active {
+  background-color: var(--vc-primary-active);
+}
+
+.volaticloud-btn-primary:focus,
+.volaticloud-login .pf-m-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(7, 146, 17, 0.3);
+}
+
+/* ===== Registration/Login Links ===== */
+#kc-registration,
+.volaticloud-login .login-pf-signup {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--vc-text-gray);
+}
+
+#kc-registration a,
+.volaticloud-login .login-pf-signup a {
+  color: var(--vc-primary);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+#kc-registration a:hover,
+.volaticloud-login .login-pf-signup a:hover {
+  color: var(--vc-primary-hover);
+}
+
+/* ===== Back to Login Link (Register Page) ===== */
+.volaticloud-login #kc-info,
+.volaticloud-login .kc-info-area {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.volaticloud-login #kc-info-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.volaticloud-login #kc-info:not(#kc-social-providers) a,
+.volaticloud-login #kc-info-wrapper:not(.volaticloud-social-providers) a {
+  display: block !important;
+  width: 100% !important;
+  max-width: 400px !important;
+  margin: 0 auto !important;
+  padding: 10px 0 !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+  background-color: var(--vc-white) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: #444 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  text-align: center !important;
+  transition: all 0.2s ease !important;
+  box-sizing: border-box !important;
+}
+
+.volaticloud-login #kc-info a:hover,
+.volaticloud-login #kc-info-wrapper a:hover {
+  background-color: #f5f5f5 !important;
+  color: #222 !important;
+}
+
+/* ===== Social Provider Divider ===== */
+.volaticloud-login #kc-social-providers hr {
+  display: none;
+}
+
+.volaticloud-login #kc-social-providers h2,
+.volaticloud-login #kc-social-providers h4 {
+  display: none;
+}
+
+.volaticloud-divider {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  margin: 32px 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.volaticloud-divider::before,
+.volaticloud-divider::after {
+  content: '';
+  flex: 1;
+  height: 1.5px;
+  background-color: var(--vc-border);
+  opacity: 0.8;
+}
+
+.volaticloud-divider span {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--vc-text-medium);
+}
+
+/* ===== Social Buttons ===== */
+.volaticloud-login #kc-social-providers {
+  margin-top: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.volaticloud-login #kc-social-providers ul,
+.volaticloud-login .kc-social-links,
+.volaticloud-login .pf-c-login__main-footer-links {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  gap: 24px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: auto !important;
+}
+
+.volaticloud-login #kc-social-providers li,
+.volaticloud-login .kc-social-links li {
+  list-style: none;
+  display: inline-block !important;
+  width: auto !important;
+}
+
+.volaticloud-login #kc-social-providers a,
+.volaticloud-login .kc-social-links a,
+.volaticloud-login #kc-social-providers a:link,
+.volaticloud-login #kc-social-providers a:visited,
+.volaticloud-login #kc-social-providers a:hover,
+.volaticloud-login #kc-social-providers a:active,
+.volaticloud-login #kc-social-providers a *,
+.volaticloud-login #kc-social-providers a span {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove PatternFly button underlines from social providers */
+.volaticloud-login #kc-social-providers a::after,
+.volaticloud-login #kc-social-providers a::before,
+.volaticloud-login #kc-social-providers .pf-c-button::after,
+.volaticloud-login #kc-social-providers .pf-c-button::before,
+.volaticloud-login #kc-social-providers a.pf-c-button::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  border-bottom: none !important;
+}
+
+.volaticloud-social-btn,
+.volaticloud-login .kc-social-item,
+.volaticloud-login #kc-social-providers a {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--vc-white);
+  border: none !important;
+  border-radius: 50%;
+  transition: opacity 0.2s ease;
+  text-decoration: none;
+}
+
+.volaticloud-social-btn:hover,
+.volaticloud-login .kc-social-item:hover,
+.volaticloud-login #kc-social-providers a:hover {
+  opacity: 0.7;
+  text-decoration: none;
+}
+
+.volaticloud-login .kc-social-provider-name {
+  display: none;
+}
+
+.volaticloud-social-providers {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.volaticloud-social-btn .social-link-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vc-text-dark);
+  white-space: nowrap;
+}
+
+.volaticloud-social-btn i,
+.volaticloud-login #kc-social-providers a i,
+.volaticloud-login #kc-social-providers i {
+  color: var(--vc-primary) !important;
+  font-size: 18px;
+}
+
+/* ===== Checkbox/Remember Me ===== */
+.volaticloud-login .checkbox label,
+.volaticloud-login .pf-c-check__label {
+  font-size: 14px;
+  color: var(--vc-text-medium);
+}
+
+/* ===== Forgot Password ===== */
+.volaticloud-login .login-pf-settings a {
+  font-size: 14px;
+  color: var(--vc-primary);
+}
+
+/* ===== Error Messages ===== */
+.volaticloud-login .pf-c-alert {
+  margin-bottom: 24px;
+  border-radius: var(--vc-input-radius);
+}
+
+.volaticloud-login .pf-m-error .pf-c-form__helper-text,
+.volaticloud-login .kc-feedback-text {
+  color: #c9190b;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* ===== Right Panel - Background Image ===== */
+.volaticloud-image-panel {
+  flex: 0 0 45%;
+  max-width: 45%;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 100px;
+}
+
+@media (max-width: 992px) {
+  .volaticloud-image-panel {
+    display: none;
+  }
+}
+
+/* Glassmorphism overlay */
+.volaticloud-image-overlay {
+  width: 556px;
+  padding: 60px 46px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(38px);
+  -webkit-backdrop-filter: blur(38px);
+}
+
+.volaticloud-image-overlay h2 {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--vc-white);
+  line-height: 1.2;
+  margin: 0 0 24px 0;
+}
+
+.volaticloud-image-overlay p {
+  font-size: 18px;
+  color: #f6f6f8;
+  opacity: 0.9;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 768px) {
+  .volaticloud-form-card {
+    padding: 32px 20px;
+  }
+
+  #kc-page-title {
+    font-size: 24px;
+  }
+
+  .volaticloud-input,
+  .volaticloud-login .pf-c-form-control {
+    height: 56px;
+    padding: 16px;
+  }
+
+  .volaticloud-btn-primary,
+  .volaticloud-login .pf-m-primary {
+    height: 48px;
+    font-size: 16px;
+  }
+}
+
+/* ===== Hide default elements we don't need ===== */
+.volaticloud-login .login-pf-page-header {
+  display: none;
+}
+
+.volaticloud-login .login-pf-header {
+  padding: 0;
+  margin: 0;
+}
+
+/* Locale selector - keep functional but subtle */
+.volaticloud-login #kc-locale {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.volaticloud-login #kc-locale .pf-c-dropdown__toggle {
+  background: transparent;
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-input-radius);
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--vc-text-medium);
+}
