@@ -377,6 +377,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CancelOrganizationInvitation func(childComplexity int, organizationID uuid.UUID, invitationID uuid.UUID) int
+		ChangeOrganizationUserRole   func(childComplexity int, organizationID uuid.UUID, userID uuid.UUID, newRole string) int
 		CreateAlertRule              func(childComplexity int, input ent.CreateAlertRuleInput) int
 		CreateBot                    func(childComplexity int, input ent.CreateBotInput) int
 		CreateBotRunner              func(childComplexity int, input ent.CreateBotRunnerInput) int
@@ -512,9 +513,10 @@ type ComplexityRoot struct {
 	}
 
 	ResourceGroupMemberConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
+		AvailableRoles func(childComplexity int) int
+		Edges          func(childComplexity int) int
+		PageInfo       func(childComplexity int) int
+		TotalCount     func(childComplexity int) int
 	}
 
 	ResourceGroupMemberEdge struct {
@@ -695,6 +697,7 @@ type MutationResolver interface {
 	MarkAllAlertEventsAsRead(ctx context.Context, ownerID string) (int, error)
 	InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error)
 	CancelOrganizationInvitation(ctx context.Context, organizationID uuid.UUID, invitationID uuid.UUID) (bool, error)
+	ChangeOrganizationUserRole(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID, newRole string) (bool, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id uuid.UUID) (ent.Noder, error)
@@ -2211,6 +2214,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CancelOrganizationInvitation(childComplexity, args["organizationId"].(uuid.UUID), args["invitationId"].(uuid.UUID)), true
+	case "Mutation.changeOrganizationUserRole":
+		if e.complexity.Mutation.ChangeOrganizationUserRole == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changeOrganizationUserRole_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangeOrganizationUserRole(childComplexity, args["organizationId"].(uuid.UUID), args["userId"].(uuid.UUID), args["newRole"].(string)), true
 	case "Mutation.createAlertRule":
 		if e.complexity.Mutation.CreateAlertRule == nil {
 			break
@@ -3129,6 +3143,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ResourceGroupMember.User(childComplexity), true
 
+	case "ResourceGroupMemberConnection.availableRoles":
+		if e.complexity.ResourceGroupMemberConnection.AvailableRoles == nil {
+			break
+		}
+
+		return e.complexity.ResourceGroupMemberConnection.AvailableRoles(childComplexity), true
 	case "ResourceGroupMemberConnection.edges":
 		if e.complexity.ResourceGroupMemberConnection.Edges == nil {
 			break
@@ -4125,6 +4145,27 @@ func (ec *executionContext) field_Mutation_cancelOrganizationInvitation_args(ctx
 		return nil, err
 	}
 	args["invitationId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_changeOrganizationUserRole_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "newRole", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["newRole"] = arg2
 	return args, nil
 }
 
@@ -16332,6 +16373,70 @@ func (ec *executionContext) fieldContext_Mutation_cancelOrganizationInvitation(c
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_changeOrganizationUserRole(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_changeOrganizationUserRole,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ChangeOrganizationUserRole(ctx, fc.Args["organizationId"].(uuid.UUID), fc.Args["userId"].(uuid.UUID), fc.Args["newRole"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "organizationId")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "change-user-roles")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_changeOrganizationUserRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_changeOrganizationUserRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OrganizationInvitation_id(ctx context.Context, field graphql.CollectedField, obj *model.OrganizationInvitation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18724,6 +18829,8 @@ func (ec *executionContext) fieldContext_Query_resourceGroupMembers(ctx context.
 				return ec.fieldContext_ResourceGroupMemberConnection_totalCount(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_ResourceGroupMemberConnection_pageInfo(ctx, field)
+			case "availableRoles":
+				return ec.fieldContext_ResourceGroupMemberConnection_availableRoles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResourceGroupMemberConnection", field.Name)
 		},
@@ -19509,6 +19616,35 @@ func (ec *executionContext) fieldContext_ResourceGroupMemberConnection_pageInfo(
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceGroupMemberConnection_availableRoles(ctx context.Context, field graphql.CollectedField, obj *model.ResourceGroupMemberConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ResourceGroupMemberConnection_availableRoles,
+		func(ctx context.Context) (any, error) {
+			return obj.AvailableRoles, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ResourceGroupMemberConnection_availableRoles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceGroupMemberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -41741,6 +41877,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "changeOrganizationUserRole":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_changeOrganizationUserRole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -42885,6 +43028,11 @@ func (ec *executionContext) _ResourceGroupMemberConnection(ctx context.Context, 
 			}
 		case "pageInfo":
 			out.Values[i] = ec._ResourceGroupMemberConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "availableRoles":
+			out.Values[i] = ec._ResourceGroupMemberConnection_availableRoles(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

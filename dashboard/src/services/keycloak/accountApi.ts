@@ -30,7 +30,7 @@ import {
 export class KeycloakAccountApi {
   constructor(
     private baseUrl: string,  // e.g., "https://auth.volaticloud.com"
-    private realm: string,    // e.g., "dev"
+    private realm: string,    // e.g., "volaticloud"
     private getAccessToken: () => string | undefined
   ) {}
 

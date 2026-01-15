@@ -56,9 +56,10 @@ type ResourceGroupMemberRepresentation struct {
 
 // ResourceGroupMemberListResponse represents paginated member list
 type ResourceGroupMemberListResponse struct {
-	TotalCount int                                 `json:"totalCount"`
-	HasMore    bool                                `json:"hasMore"`
-	Items      []ResourceGroupMemberRepresentation `json:"items"`
+	TotalCount     int                                 `json:"totalCount"`
+	HasMore        bool                                `json:"hasMore"`
+	Items          []ResourceGroupMemberRepresentation `json:"items"`
+	AvailableRoles []string                            `json:"availableRoles"`
 }
 
 // GetResourceGroups calls the Keycloak extension endpoint to fetch resource groups
@@ -245,4 +246,15 @@ func (a *AdminClient) GetResourceGroupMembers(
 	}
 
 	return &result, nil
+}
+
+// GetAvailableRoles fetches the list of available roles for an organization.
+// This is a convenience method that calls GetResourceGroupMembers with minimal parameters.
+func (a *AdminClient) GetAvailableRoles(ctx context.Context, organizationID string) ([]string, error) {
+	// Fetch with first=1 to minimize data transfer - we only need availableRoles
+	result, err := a.GetResourceGroupMembers(ctx, organizationID, organizationID, nil, "", nil, nil, 1, 0, "", "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch available roles: %w", err)
+	}
+	return result.AvailableRoles, nil
 }

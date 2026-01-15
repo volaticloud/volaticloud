@@ -45,12 +45,12 @@ export function useKeycloakAccount(): UseKeycloakAccountReturn {
   const authority = useConfigValue('VOLATICLOUD__KEYCLOAK_AUTHORITY');
 
   // Parse authority to extract base URL and realm
-  // Authority format: http://localhost:8180/realms/dev
+  // Authority format: http://localhost:8180/realms/volaticloud
   const { keycloakUrl, realm } = useMemo(() => {
     const authorityUrl = new URL(authority);
     const pathParts = authorityUrl.pathname.split('/');
     const realmIndex = pathParts.indexOf('realms');
-    const realm = realmIndex !== -1 ? pathParts[realmIndex + 1] : 'dev';
+    const realm = realmIndex !== -1 ? pathParts[realmIndex + 1] : 'volaticloud';
     const keycloakUrl = `${authorityUrl.protocol}//${authorityUrl.host}`;
     return { keycloakUrl, realm };
   }, [authority]);

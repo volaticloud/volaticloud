@@ -307,6 +307,9 @@ type ResourceGroupMemberConnection struct {
 	TotalCount int `json:"totalCount"`
 	// Pagination info
 	PageInfo *entgql.PageInfo[uuid.UUID] `json:"pageInfo"`
+	// Available roles for this resource group (e.g., ["admin", "viewer"])
+	// Used to populate role selection dropdowns
+	AvailableRoles []string `json:"availableRoles"`
 }
 
 // Edge for resource group member connection

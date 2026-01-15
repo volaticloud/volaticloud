@@ -128,6 +128,7 @@ query ResourceGroupMembers(
       cursor
     }
     totalCount
+    availableRoles
     pageInfo {
       hasNextPage
       hasPreviousPage
@@ -137,7 +138,7 @@ query ResourceGroupMembers(
   }
 }
 
-mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInput!) {
+mutation InviteOrganizationUser($organizationId: ID!, $input: InviteUserInput!) {
   inviteOrganizationUser(organizationId: $organizationId, input: $input) {
     id
     email
@@ -148,4 +149,8 @@ mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInpu
     createdAt
     expiresAt
   }
+}
+
+mutation ChangeOrganizationUserRole($organizationId: ID!, $userId: ID!, $newRole: String!) {
+  changeOrganizationUserRole(organizationId: $organizationId, userId: $userId, newRole: $newRole)
 }

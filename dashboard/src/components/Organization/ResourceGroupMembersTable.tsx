@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
+import { useAuth } from 'react-oidc-context';
 import {
   Box,
   Paper,
@@ -26,6 +27,10 @@ import {
   FormControlLabel,
   Checkbox,
   Button,
+  Snackbar,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -35,15 +40,25 @@ import {
   ArrowUpward,
   ArrowDownward,
   PersonAdd as PersonAddIcon,
+  MoreVert as MoreVertIcon,
+  SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
-import { ResourceGroupMembersDocument } from './organization.generated';
+import { ResourceGroupMembersDocument, ChangeOrganizationUserRoleDocument } from './organization.generated';
 import { ResourceGroupMemberOrderField, OrderDirection } from '../../generated/types';
 import { InviteUserDialog } from './InviteUserDialog';
+import { ChangeRoleDialog } from './ChangeRoleDialog';
+import { useCanPerform } from '../../hooks/useCanPerform';
 
 interface ResourceGroupMembersTableProps {
   organizationId: string;
   resourceGroupId: string;
   resourceGroupName: string;
+}
+
+interface SelectedUser {
+  id: string;
+  username: string;
+  primaryRole: string;
 }
 
 export const ResourceGroupMembersTable = ({
@@ -62,9 +77,38 @@ export const ResourceGroupMembersTable = ({
   );
   const [orderDirection, setOrderDirection] = useState<OrderDirection>(OrderDirection.Asc);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-  // Show invite button only at organization level
+  // Menu state
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
+
+  // Change role dialog state
+  const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false);
+
+  // Get current user ID from auth context
+  const { user: authUser } = useAuth();
+  const currentUserId = authUser?.profile?.sub;
+
+  // Check if user can change roles
+  const { can: canChangeRolesResult, loading: permissionLoadingResult } = useCanPerform({
+    resourceId: organizationId,
+    scope: 'change-user-roles',
+  });
+
+  // Treat as loading if organizationId is not yet available
+  const canChangeRoles = organizationId ? canChangeRolesResult : false;
+  const permissionLoading = organizationId ? permissionLoadingResult : true;
+
+  // Show invite button and actions column only at organization level
   const isOrganizationLevel = organizationId === resourceGroupId;
+
+  // Always show actions column at organization level - button will be disabled if no permission
+  const showActionsColumn = isOrganizationLevel;
 
   // Query with pagination, search, and filters
   const { data, loading, error } = useQuery(ResourceGroupMembersDocument, {
@@ -86,6 +130,51 @@ export const ResourceGroupMembersTable = ({
     },
     skip: !organizationId || !resourceGroupId,
   });
+
+  // Mutation for changing user roles
+  const [changeUserRole, { loading: changingRole }] = useMutation(ChangeOrganizationUserRoleDocument, {
+    refetchQueries: [ResourceGroupMembersDocument],
+  });
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, user: SelectedUser) => {
+    setMenuAnchor(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
+
+  const handleChangeRoleClick = () => {
+    handleMenuClose();
+    if (availableRoles.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No roles available for this organization',
+        severity: 'error',
+      });
+      return;
+    }
+    setChangeRoleDialogOpen(true);
+  };
+
+  const handleRoleChange = async (newRole: string) => {
+    if (!selectedUser) return;
+
+    await changeUserRole({
+      variables: {
+        organizationId,
+        userId: selectedUser.id,
+        newRole,
+      },
+    });
+
+    setSnackbar({
+      open: true,
+      message: `Successfully changed ${selectedUser.username}'s role to ${newRole}`,
+      severity: 'success',
+    });
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -110,10 +199,8 @@ export const ResourceGroupMembersTable = ({
   const members = data?.resourceGroupMembers?.edges || [];
   const totalCount = data?.resourceGroupMembers?.totalCount || 0;
 
-  // Extract available roles from the first page (for filter options)
-  const availableRoles = Array.from(
-    new Set(members.flatMap((edge) => edge.node.roles))
-  ).sort();
+  // Available roles from API (strict - no fallback)
+  const availableRoles = data?.resourceGroupMembers?.availableRoles || [];
 
   if (error) {
     return <Alert severity="error">Failed to load members: {error.message}</Alert>;
@@ -252,12 +339,13 @@ export const ResourceGroupMembersTable = ({
               <TableCell>Primary Role</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Created</TableCell>
+              {showActionsColumn && <TableCell align="right">Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={showActionsColumn ? 8 : 7} align="center">
                   <Box sx={{ py: 4 }}>
                     <CircularProgress size={40} />
                   </Box>
@@ -265,7 +353,7 @@ export const ResourceGroupMembersTable = ({
               </TableRow>
             ) : members.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={showActionsColumn ? 8 : 7} align="center">
                   <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
                     {searchTerm || selectedRoles.length > 0
                       ? 'No members match your filters'
@@ -277,6 +365,7 @@ export const ResourceGroupMembersTable = ({
               members.map((edge) => {
                 const member = edge.node;
                 const user = member.user;
+                const isCurrentUser = user.id === currentUserId;
 
                 return (
                   <TableRow key={user.id} hover>
@@ -332,6 +421,37 @@ export const ResourceGroupMembersTable = ({
                         day: 'numeric',
                       })}
                     </TableCell>
+                    {showActionsColumn && (
+                      <TableCell align="right">
+                        <Tooltip
+                          title={
+                            permissionLoading
+                              ? 'Loading...'
+                              : !canChangeRoles
+                                ? 'No permission'
+                                : isCurrentUser
+                                  ? 'You cannot change your own role'
+                                  : 'Actions'
+                          }
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={(e) =>
+                                handleMenuOpen(e, {
+                                  id: user.id,
+                                  username: user.username,
+                                  primaryRole: member.primaryRole,
+                                })
+                              }
+                              disabled={isCurrentUser || permissionLoading || !canChangeRoles}
+                            >
+                              <MoreVertIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })
@@ -350,6 +470,22 @@ export const ResourceGroupMembersTable = ({
         rowsPerPageOptions={[25, 50, 100]}
       />
 
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleChangeRoleClick}>
+          <ListItemIcon>
+            <SwapHorizIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Change Role</ListItemText>
+        </MenuItem>
+      </Menu>
+
       {/* Invite User Dialog */}
       <InviteUserDialog
         open={inviteDialogOpen}
@@ -357,6 +493,38 @@ export const ResourceGroupMembersTable = ({
         organizationId={organizationId}
         organizationName={resourceGroupName}
       />
+
+      {/* Change Role Dialog */}
+      {selectedUser && (
+        <ChangeRoleDialog
+          open={changeRoleDialogOpen}
+          onClose={() => {
+            setChangeRoleDialogOpen(false);
+            setSelectedUser(null);
+          }}
+          onConfirm={handleRoleChange}
+          username={selectedUser.username}
+          currentRole={selectedUser.primaryRole}
+          availableRoles={availableRoles}
+          loading={changingRole}
+        />
+      )}
+
+      {/* Snackbar for feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };

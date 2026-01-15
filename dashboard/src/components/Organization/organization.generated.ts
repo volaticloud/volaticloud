@@ -46,15 +46,24 @@ export type ResourceGroupMembersQueryVariables = Types.Exact<{
 }>;
 
 
-export type ResourceGroupMembersQuery = { __typename?: 'Query', resourceGroupMembers: { __typename?: 'ResourceGroupMemberConnection', totalCount: number, edges: Array<{ __typename?: 'ResourceGroupMemberEdge', cursor: string, node: { __typename?: 'ResourceGroupMember', roles: Array<string>, primaryRole: string, user: { __typename?: 'MemberUser', id: string, username: string, email?: string | null, emailVerified: boolean, firstName?: string | null, lastName?: string | null, enabled: boolean, createdAt: string } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type ResourceGroupMembersQuery = { __typename?: 'Query', resourceGroupMembers: { __typename?: 'ResourceGroupMemberConnection', totalCount: number, availableRoles: Array<string>, edges: Array<{ __typename?: 'ResourceGroupMemberEdge', cursor: string, node: { __typename?: 'ResourceGroupMember', roles: Array<string>, primaryRole: string, user: { __typename?: 'MemberUser', id: string, username: string, email?: string | null, emailVerified: boolean, firstName?: string | null, lastName?: string | null, enabled: boolean, createdAt: string } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type InviteOrganizationUserMutationVariables = Types.Exact<{
-  organizationId: Types.Scalars['String']['input'];
+  organizationId: Types.Scalars['ID']['input'];
   input: Types.InviteUserInput;
 }>;
 
 
 export type InviteOrganizationUserMutation = { __typename?: 'Mutation', inviteOrganizationUser: { __typename?: 'OrganizationInvitation', id: string, email: string, firstName?: string | null, lastName?: string | null, organizationId: string, status: string, createdAt: string, expiresAt: string } };
+
+export type ChangeOrganizationUserRoleMutationVariables = Types.Exact<{
+  organizationId: Types.Scalars['ID']['input'];
+  userId: Types.Scalars['ID']['input'];
+  newRole: Types.Scalars['String']['input'];
+}>;
+
+
+export type ChangeOrganizationUserRoleMutation = { __typename?: 'Mutation', changeOrganizationUserRole: boolean };
 
 
 export const OrganizationUsersDocument = gql`
@@ -328,6 +337,7 @@ export const ResourceGroupMembersDocument = gql`
       cursor
     }
     totalCount
+    availableRoles
     pageInfo {
       hasNextPage
       hasPreviousPage
@@ -379,7 +389,7 @@ export type ResourceGroupMembersLazyQueryHookResult = ReturnType<typeof useResou
 export type ResourceGroupMembersSuspenseQueryHookResult = ReturnType<typeof useResourceGroupMembersSuspenseQuery>;
 export type ResourceGroupMembersQueryResult = Apollo.QueryResult<ResourceGroupMembersQuery, ResourceGroupMembersQueryVariables>;
 export const InviteOrganizationUserDocument = gql`
-    mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInput!) {
+    mutation InviteOrganizationUser($organizationId: ID!, $input: InviteUserInput!) {
   inviteOrganizationUser(organizationId: $organizationId, input: $input) {
     id
     email
@@ -419,3 +429,40 @@ export function useInviteOrganizationUserMutation(baseOptions?: Apollo.MutationH
 export type InviteOrganizationUserMutationHookResult = ReturnType<typeof useInviteOrganizationUserMutation>;
 export type InviteOrganizationUserMutationResult = Apollo.MutationResult<InviteOrganizationUserMutation>;
 export type InviteOrganizationUserMutationOptions = Apollo.BaseMutationOptions<InviteOrganizationUserMutation, InviteOrganizationUserMutationVariables>;
+export const ChangeOrganizationUserRoleDocument = gql`
+    mutation ChangeOrganizationUserRole($organizationId: ID!, $userId: ID!, $newRole: String!) {
+  changeOrganizationUserRole(
+    organizationId: $organizationId
+    userId: $userId
+    newRole: $newRole
+  )
+}
+    `;
+export type ChangeOrganizationUserRoleMutationFn = Apollo.MutationFunction<ChangeOrganizationUserRoleMutation, ChangeOrganizationUserRoleMutationVariables>;
+
+/**
+ * __useChangeOrganizationUserRoleMutation__
+ *
+ * To run a mutation, you first call `useChangeOrganizationUserRoleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useChangeOrganizationUserRoleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [changeOrganizationUserRoleMutation, { data, loading, error }] = useChangeOrganizationUserRoleMutation({
+ *   variables: {
+ *      organizationId: // value for 'organizationId'
+ *      userId: // value for 'userId'
+ *      newRole: // value for 'newRole'
+ *   },
+ * });
+ */
+export function useChangeOrganizationUserRoleMutation(baseOptions?: Apollo.MutationHookOptions<ChangeOrganizationUserRoleMutation, ChangeOrganizationUserRoleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ChangeOrganizationUserRoleMutation, ChangeOrganizationUserRoleMutationVariables>(ChangeOrganizationUserRoleDocument, options);
+      }
+export type ChangeOrganizationUserRoleMutationHookResult = ReturnType<typeof useChangeOrganizationUserRoleMutation>;
+export type ChangeOrganizationUserRoleMutationResult = Apollo.MutationResult<ChangeOrganizationUserRoleMutation>;
+export type ChangeOrganizationUserRoleMutationOptions = Apollo.BaseMutationOptions<ChangeOrganizationUserRoleMutation, ChangeOrganizationUserRoleMutationVariables>;

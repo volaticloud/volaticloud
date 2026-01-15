@@ -1143,6 +1143,68 @@ func (r *mutationResolver) CancelOrganizationInvitation(ctx context.Context, org
 	return true, nil
 }
 
+func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID, newRole string) (bool, error) {
+	// Get current user from context
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user context: %w", err)
+	}
+
+	// Prevent users from changing their own role
+	if userCtx.UserID == userID.String() {
+		return false, fmt.Errorf("you cannot change your own role")
+	}
+
+	// Validate role - check for empty or invalid characters
+	if newRole == "" {
+		return false, fmt.Errorf("role cannot be empty")
+	}
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return false, fmt.Errorf("admin client not available")
+	}
+
+	// Validate role against available roles for the organization
+	availableRoles, err := adminClient.GetAvailableRoles(ctx, organizationID.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch available roles: %w", err)
+	}
+
+	roleValid := false
+	for _, validRole := range availableRoles {
+		if validRole == newRole {
+			roleValid = true
+			break
+		}
+	}
+	if !roleValid {
+		return false, fmt.Errorf("invalid role: %s (available roles: %v)", newRole, availableRoles)
+	}
+
+	// Change the user's role
+	_, err = adminClient.ChangeUserRole(ctx, organizationID.String(), userID.String(), newRole)
+	if err != nil {
+		// Detect common failures and provide user-friendly messages
+		errStr := err.Error()
+		switch {
+		case strings.Contains(errStr, "not found") || strings.Contains(errStr, "404"):
+			return false, fmt.Errorf("user or organization not found")
+		case strings.Contains(errStr, "forbidden") || strings.Contains(errStr, "403"):
+			return false, fmt.Errorf("you do not have permission to change roles in this organization")
+		default:
+			return false, fmt.Errorf("failed to change user role: %w", err)
+		}
+	}
+
+	// Audit log for role changes
+	log.Printf("[AUDIT] User %s changed role for user %s to %s in organization %s",
+		userCtx.UserID, userID.String(), newRole, organizationID.String())
+
+	return true, nil
+}
+
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {
 	// Load the bot with its runner configuration
 	b, err := r.client.Bot.Query().

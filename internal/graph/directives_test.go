@@ -340,10 +340,10 @@ func TestEntityScopes(t *testing.T) {
 	})
 
 	t.Run("GroupScopes contains expected values", func(t *testing.T) {
-		expected := []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user",
+		expected := []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user", "change-user-roles",
 			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 		assert.Equal(t, expected, authz.GroupScopes, "GroupScopes should contain the expected values")
-		assert.Len(t, authz.GroupScopes, 10, "GroupScopes should have 10 scopes")
+		assert.Len(t, authz.GroupScopes, 11, "GroupScopes should have 11 scopes")
 	})
 }
 
@@ -529,5 +529,69 @@ func TestDeleteWithResource_Integration(t *testing.T) {
 		// 1. BotRunner is deleted from database
 		// 2. Keycloak resource is deleted
 		// 3. Error handling when runner doesn't exist
+	})
+}
+
+// TestChangeOrganizationUserRole tests the ChangeOrganizationUserRole resolver
+func TestChangeOrganizationUserRole(t *testing.T) {
+	orgID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	userID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	currentUserID := "33333333-3333-3333-3333-333333333333"
+
+	t.Run("prevents self-role-change", func(t *testing.T) {
+		// Create context with user trying to change their own role
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: userID.String(), // Same as target user
+		})
+
+		resolver := &mutationResolver{}
+		result, err := resolver.ChangeOrganizationUserRole(ctx, orgID, userID, "admin")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot change your own role")
+		assert.False(t, result)
+	})
+
+	t.Run("rejects empty role", func(t *testing.T) {
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: currentUserID,
+		})
+
+		resolver := &mutationResolver{}
+		result, err := resolver.ChangeOrganizationUserRole(ctx, orgID, userID, "")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "role cannot be empty")
+		assert.False(t, result)
+	})
+
+	t.Run("requires admin client", func(t *testing.T) {
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: currentUserID,
+		})
+		// No admin client in context
+
+		resolver := &mutationResolver{}
+		result, err := resolver.ChangeOrganizationUserRole(ctx, orgID, userID, "viewer")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "admin client not available")
+		assert.False(t, result)
+	})
+
+	t.Run("validates role against available roles", func(t *testing.T) {
+		t.Skip("Integration test - requires Keycloak mock or interface refactor")
+		// This would test:
+		// 1. Mock admin client returns available roles: ["admin", "viewer"]
+		// 2. Resolver rejects "invalid-role" with helpful error message
+		// 3. Error contains both the invalid role and available roles list
+	})
+
+	t.Run("successful role change", func(t *testing.T) {
+		t.Skip("Integration test - requires Keycloak mock or interface refactor")
+		// This would test:
+		// 1. Mock admin client validates role is in available list
+		// 2. Mock admin client successfully changes role
+		// 3. Resolver returns true on success
 	})
 }

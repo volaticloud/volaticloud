@@ -1674,7 +1674,27 @@ This eliminates the need for manual scope migrations when adding new permissions
 | Strategy | `view`, `edit`, `delete`, `run-backtest`, `stop-backtest`, `delete-backtest`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
 | Exchange | `view`, `view-secrets`, `edit`, `delete` |
 | BotRunner | `view`, `view-secrets`, `edit`, `delete`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
-| Group | `view`, `edit`, `delete`, `mark-alert-as-read`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+| Group | `view`, `edit`, `delete`, `mark-alert-as-read`, `view-users`, `invite-user`, `change-user-roles`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+
+### Organization User Management Scopes
+
+The following scopes control organization user management operations:
+
+| Scope | Description | Security Notes |
+|-------|-------------|----------------|
+| `view-users` | View organization members and their roles | Read-only access to member list |
+| `invite-user` | Invite new users to the organization | Creates pending invitations via email |
+| `change-user-roles` | Change user roles within the organization | Prevents self-role-change for security |
+
+**`change-user-roles` Scope:**
+
+Added in PR #120 to enable organization admins to change member roles.
+
+- **Backend validation:** Role must be in the organization's available roles list
+- **Self-change prevention:** Users cannot change their own role (security measure)
+- **Available roles:** Fetched dynamically from Keycloak (e.g., `admin`, `viewer`)
+- **GraphQL mutation:** `changeOrganizationUserRole(organizationId, userId, newRole)`
+- **Dashboard component:** `ResourceGroupMembersTable` with 3-dot menu
 
 ### Implementation Files
 

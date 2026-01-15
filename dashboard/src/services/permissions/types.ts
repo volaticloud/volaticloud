@@ -50,6 +50,9 @@ export type GroupScope =
   | 'edit'
   | 'delete'
   | 'mark-alert-as-read'
+  | 'view-users'
+  | 'invite-user'
+  | 'change-user-roles'
   | AlertRuleScope;
 
 // Union of all permission scopes

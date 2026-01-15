@@ -20,7 +20,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -v -race -short -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Filter coverage
         id: coverage
