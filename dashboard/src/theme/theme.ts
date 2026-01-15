@@ -1,6 +1,39 @@
 import { createTheme } from '@mui/material/styles';
 import type { ThemeOptions } from '@mui/material/styles';
 
+// VolatiCloud Design System Colors
+const colors = {
+  // Brand colors
+  brand: {
+    primary: '#079211',
+    primaryLight: '#4caf50',
+    primaryDark: '#056a0c',
+  },
+  // Light mode
+  light: {
+    background: '#f8f9fa',
+    paper: '#ffffff',
+    textPrimary: '#1a1a2e',
+    textSecondary: '#6c757d',
+    border: '#e9ecef',
+    divider: '#dee2e6',
+  },
+  // Dark mode
+  dark: {
+    background: '#121212',
+    paper: '#1e1e1e',
+    textPrimary: '#e4e6eb',
+    textSecondary: '#b0b3b8',
+    border: '#3e4042',
+    divider: '#3e4042',
+  },
+  // Semantic colors (shared)
+  success: '#079211',
+  error: '#dc3545',
+  warning: '#ffc107',
+  info: '#0dcaf0',
+};
+
 // Trading-focused color palette
 const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
   palette: {
@@ -9,59 +42,64 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
       ? {
           // Light mode
           primary: {
-            main: '#1976d2',
-            light: '#42a5f5',
-            dark: '#1565c0',
+            main: colors.brand.primary,
+            light: colors.brand.primaryLight,
+            dark: colors.brand.primaryDark,
           },
           secondary: {
-            main: '#9c27b0',
-            light: '#ba68c8',
-            dark: '#7b1fa2',
+            main: '#6c757d',
+            light: '#adb5bd',
+            dark: '#495057',
           },
           success: {
-            main: '#2e7d32', // Profit green
-            light: '#4caf50',
-            dark: '#1b5e20',
+            main: colors.success,
+            light: '#e8f5e9',
+            dark: '#056a0c',
           },
           error: {
-            main: '#d32f2f', // Loss red
-            light: '#ef5350',
-            dark: '#c62828',
+            main: colors.error,
+            light: '#f8d7da',
+            dark: '#b02a37',
           },
           warning: {
-            main: '#ed6c02',
-            light: '#ff9800',
-            dark: '#e65100',
+            main: colors.warning,
+            light: '#fff3cd',
+            dark: '#cc9a06',
           },
           info: {
-            main: '#0288d1',
-            light: '#03a9f4',
-            dark: '#01579b',
+            main: colors.info,
+            light: '#cff4fc',
+            dark: '#0aa2c0',
           },
           background: {
-            default: '#f5f5f5',
-            paper: '#ffffff',
+            default: colors.light.background,
+            paper: colors.light.paper,
           },
+          text: {
+            primary: colors.light.textPrimary,
+            secondary: colors.light.textSecondary,
+          },
+          divider: colors.light.divider,
         }
       : {
           // Dark mode
           primary: {
-            main: '#90caf9',
-            light: '#e3f2fd',
-            dark: '#42a5f5',
+            main: colors.brand.primaryLight,
+            light: '#81c784',
+            dark: colors.brand.primary,
           },
           secondary: {
-            main: '#ce93d8',
-            light: '#f3e5f5',
-            dark: '#ab47bc',
+            main: '#adb5bd',
+            light: '#dee2e6',
+            dark: '#6c757d',
           },
           success: {
-            main: '#66bb6a', // Profit green
+            main: '#66bb6a',
             light: '#81c784',
             dark: '#388e3c',
           },
           error: {
-            main: '#f44336', // Loss red
+            main: '#f44336',
             light: '#e57373',
             dark: '#d32f2f',
           },
@@ -76,9 +114,14 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
             dark: '#0288d1',
           },
           background: {
-            default: '#121212',
-            paper: '#1e1e1e',
+            default: colors.dark.background,
+            paper: colors.dark.paper,
           },
+          text: {
+            primary: colors.dark.textPrimary,
+            secondary: colors.dark.textSecondary,
+          },
+          divider: colors.dark.divider,
         }),
   },
   typography: {
@@ -92,22 +135,48 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
       'sans-serif',
     ].join(','),
     h1: {
+      fontSize: '2rem',
       fontWeight: 600,
     },
     h2: {
+      fontSize: '1.75rem',
       fontWeight: 600,
     },
     h3: {
+      fontSize: '1.5rem',
       fontWeight: 600,
     },
     h4: {
+      fontSize: '1.25rem',
       fontWeight: 600,
     },
     h5: {
+      fontSize: '1.1rem',
       fontWeight: 600,
     },
     h6: {
+      fontSize: '1rem',
       fontWeight: 600,
+    },
+    body1: {
+      fontSize: '0.875rem',
+    },
+    body2: {
+      fontSize: '0.8125rem',
+    },
+    subtitle1: {
+      fontSize: '0.9375rem',
+      fontWeight: 500,
+    },
+    subtitle2: {
+      fontSize: '0.875rem',
+      fontWeight: 500,
+    },
+    caption: {
+      fontSize: '0.75rem',
+    },
+    overline: {
+      fontSize: '0.6875rem',
     },
     button: {
       textTransform: 'none',
@@ -115,13 +184,13 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 4,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 4,
           padding: '8px 16px',
         },
       },
@@ -129,7 +198,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 6,
           boxShadow: mode === 'dark'
             ? '0 4px 6px rgba(0, 0, 0, 0.3)'
             : '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -157,4 +226,4 @@ export const createAppTheme = (mode: 'light' | 'dark') => {
   return createTheme(getDesignTokens(mode));
 };
 
-export default createAppTheme('dark');
+export default createAppTheme('light');

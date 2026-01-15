@@ -15,15 +15,13 @@ import {
   MenuOpen as MenuOpenIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  Settings as SettingsIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Logo } from '../shared/Logo';
-import { GroupSwitcher } from '../shared/GroupSwitcher';
 import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface HeaderProps {
@@ -45,11 +43,7 @@ export const Header = ({
 }: HeaderProps) => {
   const auth = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  // Hide organization switcher on profile pages
-  const isProfilePage = location.pathname.startsWith('/profile');
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -75,8 +69,10 @@ export const Header = ({
       sx={{
         width: { sm: `calc(100% - ${currentDrawerWidth}px)` },
         ml: { sm: `${currentDrawerWidth}px` },
-        backgroundColor: (theme) =>
-          darkMode ? theme.palette.background.paper : theme.palette.primary.main,
+        backgroundColor: (theme) => theme.palette.background.paper,
+        color: (theme) => theme.palette.text.primary,
+        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+        boxShadow: 'none',
         transition: 'width 0.2s ease-in-out, margin-left 0.2s ease-in-out',
       }}
     >
@@ -111,27 +107,8 @@ export const Header = ({
         {/* Spacer for desktop */}
         <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
 
-        {/* Group Switcher - Hidden on profile pages */}
-        {!isProfilePage && (
-          <Box sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-            <GroupSwitcher />
-          </Box>
-        )}
-
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Tooltip title={darkMode ? 'Light mode' : 'Dark mode'}>
-            <IconButton color="inherit" onClick={onToggleDarkMode}>
-              {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
-            </IconButton>
-          </Tooltip>
-
           <NotificationsDropdown />
-
-          <Tooltip title="Settings">
-            <IconButton color="inherit">
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
 
           {/* User menu */}
           <Tooltip title="Account">
@@ -173,6 +150,20 @@ export const Header = ({
               <PersonIcon sx={{ mr: 1 }} fontSize="small" />
               Profile
             </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onToggleDarkMode();
+                handleMenuClose();
+              }}
+            >
+              {darkMode ? (
+                <LightModeIcon sx={{ mr: 1 }} fontSize="small" />
+              ) : (
+                <DarkModeIcon sx={{ mr: 1 }} fontSize="small" />
+              )}
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </MenuItem>
+            <Divider />
             <MenuItem onClick={handleLogout}>
               <LogoutIcon sx={{ mr: 1 }} fontSize="small" />
               Logout

@@ -34,7 +34,7 @@ import { OrganizationUsagePage } from './pages/Organization/OrganizationUsagePag
 import { OrganizationBillingPage } from './pages/Organization/OrganizationBillingPage';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const gatewayUrl = useConfigValue('VOLATICLOUD__GATEWAY_URL');
   const auth = useAuth();
 

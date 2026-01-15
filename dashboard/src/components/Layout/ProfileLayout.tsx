@@ -54,6 +54,7 @@ export const ProfileLayout = ({ darkMode, onToggleDarkMode }: ProfileLayoutProps
         onMobileClose={handleMobileClose}
         collapsed={sidebarCollapsed}
         backButton={{ text: 'Back to Dashboard', path: '/' }}
+        showGroupSwitcher={false}
       />
       <Box
         component="main"
