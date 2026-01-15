@@ -53,19 +53,11 @@ const StrategyDetail = () => {
   }
 
   if (error) {
-    return (
-      <Box p={3}>
-        <Alert severity="error">Error loading strategy: {error.message}</Alert>
-      </Box>
-    );
+    return <Alert severity="error">Error loading strategy: {error.message}</Alert>;
   }
 
   if (!strategy) {
-    return (
-      <Box p={3}>
-        <Alert severity="warning">Strategy not found</Alert>
-      </Box>
-    );
+    return <Alert severity="warning">Strategy not found</Alert>;
   }
 
   return (

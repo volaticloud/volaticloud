@@ -200,7 +200,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           borderRadius: 6,
           boxShadow: mode === 'dark'
-            ? '0 4px 6px rgba(0, 0, 0, 0.3)'
+            ? '0 2px 4px rgba(0, 0, 0, 0.5)'
             : '0 2px 4px rgba(0, 0, 0, 0.1)',
         },
       },

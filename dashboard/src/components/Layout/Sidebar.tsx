@@ -60,6 +60,7 @@ export const Sidebar = ({
         <ListItemButton
           selected={isSelected}
           onClick={() => handleNavigate(item.path)}
+          aria-current={isSelected ? 'page' : undefined}
           sx={{
             minHeight: 40,
             py: 0.5,

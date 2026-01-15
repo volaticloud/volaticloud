@@ -259,20 +259,12 @@ class MyStrategy(IStrategy):
 
   // Error state - only for edit mode
   if (!isCreateMode && error) {
-    return (
-      <Box p={3}>
-        <Alert severity="error">Error loading strategy: {error.message}</Alert>
-      </Box>
-    );
+    return <Alert severity="error">Error loading strategy: {error.message}</Alert>;
   }
 
   // Not found state - only for edit mode
   if (!isCreateMode && !strategy) {
-    return (
-      <Box p={3}>
-        <Alert severity="warning">Strategy not found</Alert>
-      </Box>
-    );
+    return <Alert severity="warning">Strategy not found</Alert>;
   }
 
   return (

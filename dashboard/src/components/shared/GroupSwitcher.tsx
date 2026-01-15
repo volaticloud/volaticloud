@@ -84,6 +84,7 @@ export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
           autoFocus
           placeholder="Search..."
           fullWidth
+          aria-label="Search organizations"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           onKeyDown={(e) => e.stopPropagation()}

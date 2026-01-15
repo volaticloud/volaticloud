@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client/react';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
@@ -34,9 +34,17 @@ import { OrganizationUsagePage } from './pages/Organization/OrganizationUsagePag
 import { OrganizationBillingPage } from './pages/Organization/OrganizationBillingPage';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    if (saved !== null) return JSON.parse(saved);
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const gatewayUrl = useConfigValue('VOLATICLOUD__GATEWAY_URL');
   const auth = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
 
