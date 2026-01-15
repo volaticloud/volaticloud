@@ -247,3 +247,14 @@ func (a *AdminClient) GetResourceGroupMembers(
 
 	return &result, nil
 }
+
+// GetAvailableRoles fetches the list of available roles for an organization.
+// This is a convenience method that calls GetResourceGroupMembers with minimal parameters.
+func (a *AdminClient) GetAvailableRoles(ctx context.Context, organizationID string) ([]string, error) {
+	// Fetch with first=1 to minimize data transfer - we only need availableRoles
+	result, err := a.GetResourceGroupMembers(ctx, organizationID, organizationID, nil, "", nil, nil, 1, 0, "", "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch available roles: %w", err)
+	}
+	return result.AvailableRoles, nil
+}

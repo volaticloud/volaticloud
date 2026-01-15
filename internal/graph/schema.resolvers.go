@@ -1166,6 +1166,23 @@ func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organ
 		return false, fmt.Errorf("admin client not available")
 	}
 
+	// Validate role against available roles for the organization
+	availableRoles, err := adminClient.GetAvailableRoles(ctx, organizationID.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch available roles: %w", err)
+	}
+
+	roleValid := false
+	for _, validRole := range availableRoles {
+		if validRole == newRole {
+			roleValid = true
+			break
+		}
+	}
+	if !roleValid {
+		return false, fmt.Errorf("invalid role: %s (available roles: %v)", newRole, availableRoles)
+	}
+
 	// Change the user's role
 	_, err = adminClient.ChangeUserRole(ctx, organizationID.String(), userID.String(), newRole)
 	if err != nil {
