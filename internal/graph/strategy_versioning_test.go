@@ -172,6 +172,10 @@ func TestUpdateStrategy_MultipleVersions(t *testing.T) {
 }
 
 func TestRunBacktest_ErrorsWhenBacktestExists(t *testing.T) {
+	// Skip this integration test in CI - it requires Docker and can hit rate limits
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
 	resolver, client := setupTestResolver(t)
 	defer client.Close()
 
