@@ -1198,6 +1198,10 @@ func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organ
 		}
 	}
 
+	// Audit log for role changes
+	log.Printf("[AUDIT] User %s changed role for user %s to %s in organization %s",
+		userCtx.UserID, userID.String(), newRole, organizationID.String())
+
 	return true, nil
 }
 

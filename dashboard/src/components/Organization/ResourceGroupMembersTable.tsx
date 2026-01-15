@@ -147,6 +147,14 @@ export const ResourceGroupMembersTable = ({
 
   const handleChangeRoleClick = () => {
     handleMenuClose();
+    if (availableRoles.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No roles available for this organization',
+        severity: 'error',
+      });
+      return;
+    }
     setChangeRoleDialogOpen(true);
   };
 
