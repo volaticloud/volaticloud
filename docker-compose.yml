@@ -46,6 +46,8 @@ services:
     build:
       context: ./keycloak
       dockerfile: Dockerfile
+    volumes:
+      - ./keycloak/themes/volaticloud:/opt/keycloak/themes/volaticloud
     container_name: volaticloud-keycloak
     command: start-dev
     environment:
