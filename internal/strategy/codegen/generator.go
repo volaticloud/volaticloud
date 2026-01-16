@@ -468,6 +468,24 @@ func (g *Generator) generateComputedOperand(op *Operand) (string, error) {
 			return fmt.Sprintf("abs(%s)", operandCodes[0]), nil
 		}
 		return "0", nil
+	case ComputedRound:
+		g.imports["numpy"] = true
+		if len(operandCodes) > 0 {
+			return fmt.Sprintf("np.round(%s)", operandCodes[0]), nil
+		}
+		return "0", nil
+	case ComputedFloor:
+		g.imports["numpy"] = true
+		if len(operandCodes) > 0 {
+			return fmt.Sprintf("np.floor(%s)", operandCodes[0]), nil
+		}
+		return "0", nil
+	case ComputedCeil:
+		g.imports["numpy"] = true
+		if len(operandCodes) > 0 {
+			return fmt.Sprintf("np.ceil(%s)", operandCodes[0]), nil
+		}
+		return "0", nil
 	case ComputedPercentChange:
 		if len(operandCodes) >= 2 {
 			return fmt.Sprintf("((%s - %s) / %s * 100)", operandCodes[0], operandCodes[1], operandCodes[1]), nil

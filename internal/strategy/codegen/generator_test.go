@@ -826,6 +826,39 @@ func TestGenerateOperand_Computed(t *testing.T) {
 			}`,
 			expected: "abs(dataframe['macd_1_histogram'])",
 		},
+		{
+			name: "round",
+			json: `{
+				"type": "COMPUTED",
+				"operation": "round",
+				"operands": [
+					{"type": "INDICATOR", "indicatorId": "rsi_1"}
+				]
+			}`,
+			expected: "np.round(dataframe['rsi_1'])",
+		},
+		{
+			name: "floor",
+			json: `{
+				"type": "COMPUTED",
+				"operation": "floor",
+				"operands": [
+					{"type": "PRICE", "field": "close"}
+				]
+			}`,
+			expected: "np.floor(dataframe['close'])",
+		},
+		{
+			name: "ceil",
+			json: `{
+				"type": "COMPUTED",
+				"operation": "ceil",
+				"operands": [
+					{"type": "INDICATOR", "indicatorId": "atr_14"}
+				]
+			}`,
+			expected: "np.ceil(dataframe['atr_14'])",
+		},
 	}
 
 	for _, tt := range tests {

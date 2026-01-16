@@ -18,8 +18,8 @@ const (
 	OperandCategoryIndicator OperandCategory = "indicator"
 	OperandCategoryPrice     OperandCategory = "price"
 	OperandCategoryTrade     OperandCategory = "trade"
-	OperandCategoryTime     OperandCategory = "time"
-	OperandCategoryExternal OperandCategory = "external"
+	OperandCategoryTime      OperandCategory = "time"
+	OperandCategoryExternal  OperandCategory = "external"
 	OperandCategoryComputed  OperandCategory = "computed"
 	OperandCategoryCustom    OperandCategory = "custom"
 )
@@ -28,14 +28,14 @@ const (
 type ComparisonOperator string
 
 const (
-	OperatorEq      ComparisonOperator = "eq"
-	OperatorNeq     ComparisonOperator = "neq"
-	OperatorGt      ComparisonOperator = "gt"
-	OperatorGte     ComparisonOperator = "gte"
-	OperatorLt      ComparisonOperator = "lt"
+	OperatorEq    ComparisonOperator = "eq"
+	OperatorNeq   ComparisonOperator = "neq"
+	OperatorGt    ComparisonOperator = "gt"
+	OperatorGte   ComparisonOperator = "gte"
+	OperatorLt    ComparisonOperator = "lt"
 	OperatorLte   ComparisonOperator = "lte"
 	OperatorIn    ComparisonOperator = "in"
-	OperatorNotIn   ComparisonOperator = "not_in"
+	OperatorNotIn ComparisonOperator = "not_in"
 )
 
 // ComputedOperation represents arithmetic operations for COMPUTED operands
