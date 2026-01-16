@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
+import { GroupSwitcher } from '../shared/GroupSwitcher';
 import { useGroupNavigate } from '../../contexts/GroupContext';
 import {
   drawerWidth,
@@ -25,18 +26,22 @@ import {
 
 interface SidebarProps {
   menuItems: MenuItem[];
+  settingsMenuItems?: MenuItem[];
   mobileOpen: boolean;
   onMobileClose: () => void;
   collapsed?: boolean;
   backButton?: BackButton;
+  showGroupSwitcher?: boolean;
 }
 
 export const Sidebar = ({
   menuItems,
+  settingsMenuItems,
   mobileOpen,
   onMobileClose,
   collapsed = false,
-  backButton
+  backButton,
+  showGroupSwitcher = true,
 }: SidebarProps) => {
   const groupNavigate = useGroupNavigate();
   const location = useLocation();
@@ -48,11 +53,76 @@ export const Sidebar = ({
 
   const currentWidth = collapsed ? collapsedDrawerWidth : drawerWidth;
 
+  const renderMenuItems = (items: MenuItem[], isCollapsed: boolean) =>
+    items.map((item) => {
+      const isSelected = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+      const listItemButton = (
+        <ListItemButton
+          selected={isSelected}
+          onClick={() => handleNavigate(item.path)}
+          aria-current={isSelected ? 'page' : undefined}
+          sx={{
+            minHeight: 40,
+            py: 0.5,
+            justifyContent: isCollapsed ? 'center' : 'initial',
+            px: isCollapsed ? 1.5 : 2,
+            '&.Mui-selected': {
+              backgroundColor: 'transparent',
+              color: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              },
+              '& .MuiListItemIcon-root': {
+                color: 'primary.main',
+              },
+            },
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              color: 'inherit',
+              minWidth: isCollapsed ? 0 : 32,
+              mr: isCollapsed ? 0 : 1.5,
+              justifyContent: 'center',
+              '& .MuiSvgIcon-root': {
+                fontSize: '1.25rem',
+              },
+            }}
+          >
+            {item.icon}
+          </ListItemIcon>
+          {!isCollapsed && (
+            <ListItemText
+              primary={item.text}
+              primaryTypographyProps={{ fontSize: '0.875rem' }}
+            />
+          )}
+        </ListItemButton>
+      );
+
+      return (
+        <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+          {isCollapsed ? (
+            <Tooltip title={item.text} placement="right" arrow>
+              {listItemButton}
+            </Tooltip>
+          ) : (
+            listItemButton
+          )}
+        </ListItem>
+      );
+    });
+
   const drawerContent = (isCollapsed: boolean) => (
-    <>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar sx={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
         <Logo onClick={() => handleNavigate('/')} variant={isCollapsed ? 'icon' : 'full'} />
       </Toolbar>
+      {showGroupSwitcher && !isCollapsed && (
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <GroupSwitcher fullWidth />
+        </Box>
+      )}
       <Divider />
       {backButton && (
         <>
@@ -116,56 +186,36 @@ export const Sidebar = ({
           <Divider />
         </>
       )}
-      <List>
-        {menuItems.map((item) => {
-          const listItemButton = (
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => handleNavigate(item.path)}
-              sx={{
-                minHeight: 48,
-                justifyContent: isCollapsed ? 'center' : 'initial',
-                px: isCollapsed ? 2 : 2.5,
-                '&.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                  '& .MuiListItemIcon-root': {
-                    color: 'primary.contrastText',
-                  },
-                },
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  color: 'inherit',
-                  minWidth: isCollapsed ? 0 : 40,
-                  mr: isCollapsed ? 0 : 2,
-                  justifyContent: 'center',
-                }}
-              >
-                {item.icon}
-              </ListItemIcon>
-              {!isCollapsed && <ListItemText primary={item.text} />}
-            </ListItemButton>
-          );
 
-          return (
-            <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-              {isCollapsed ? (
-                <Tooltip title={item.text} placement="right" arrow>
-                  {listItemButton}
-                </Tooltip>
-              ) : (
-                listItemButton
-              )}
-            </ListItem>
-          );
-        })}
+      {/* Main menu items */}
+      <List sx={{ flexGrow: 1 }}>
+        {renderMenuItems(menuItems, isCollapsed)}
       </List>
-    </>
+
+      {/* Settings section at bottom */}
+      {settingsMenuItems && settingsMenuItems.length > 0 && (
+        <Box sx={{ pb: 2 }}>
+          <Divider />
+          {!isCollapsed && (
+            <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+              <ListItemText
+                primary="Settings"
+                primaryTypographyProps={{
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              />
+            </Box>
+          )}
+          <List sx={{ py: 0 }}>
+            {renderMenuItems(settingsMenuItems, isCollapsed)}
+          </List>
+        </Box>
+      )}
+    </Box>
   );
 
   return (

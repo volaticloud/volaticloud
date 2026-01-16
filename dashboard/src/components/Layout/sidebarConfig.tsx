@@ -32,6 +32,9 @@ export const mainMenuItems: MenuItem[] = [
   { text: 'Backtests', icon: <BacktestIcon />, path: '/backtests' },
   { text: 'Trades', icon: <TradeIcon />, path: '/trades' },
   { text: 'Runners', icon: <RuntimeIcon />, path: '/runners' },
+];
+
+export const settingsMenuItems: MenuItem[] = [
   { text: 'Alerts', icon: <AlertsIcon />, path: '/alerts' },
   { text: 'Organization', icon: <OrganizationIcon />, path: '/organization/details' },
 ];

@@ -1,27 +1,41 @@
+import { useState, useMemo } from 'react';
 import {
   Select,
   MenuItem,
-  FormControl,
-  InputLabel,
   SelectChangeEvent,
   Box,
   Typography,
+  TextField,
+  InputAdornment,
+  ListSubheader,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useActiveGroup } from '../../contexts/GroupContext';
 import BusinessIcon from '@mui/icons-material/Business';
+import SearchIcon from '@mui/icons-material/Search';
 import { ORG_ID_PARAM } from '../../constants/url';
 
-export function GroupSwitcher() {
+interface GroupSwitcherProps {
+  fullWidth?: boolean;
+}
+
+export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
   const navigate = useNavigate();
   const { activeGroupId, activeOrganization, organizations, setActiveGroup } = useActiveGroup();
+  const [searchText, setSearchText] = useState('');
 
   const handleChange = (event: SelectChangeEvent) => {
     const newGroupId = event.target.value;
     setActiveGroup(newGroupId);
-    // Redirect to home page with the NEW organization (not preserving current)
     navigate(`/?${ORG_ID_PARAM}=${newGroupId}`);
   };
+
+  const filteredOrgs = useMemo(() => {
+    if (!searchText) return organizations;
+    return organizations.filter((org) =>
+      org.title.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [organizations, searchText]);
 
   // Don't render if no organizations available
   if (organizations.length === 0) {
@@ -41,22 +55,63 @@ export function GroupSwitcher() {
   }
 
   return (
-    <FormControl size="small" sx={{ minWidth: 200 }}>
-      <InputLabel id="group-select-label">Organization</InputLabel>
-      <Select
-        labelId="group-select-label"
-        id="group-select"
-        value={activeGroupId || ''}
-        label="Organization"
-        onChange={handleChange}
-        startAdornment={<BusinessIcon fontSize="small" sx={{ mr: 1 }} />}
-      >
-        {organizations.map((org) => (
-          <MenuItem key={org.id} value={org.id}>
-            {org.title}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+    <Select
+      size="small"
+      id="group-select"
+      value={activeGroupId || ''}
+      onChange={handleChange}
+      displayEmpty
+      fullWidth={fullWidth}
+      startAdornment={<BusinessIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />}
+      onClose={() => setSearchText('')}
+      MenuProps={{
+        autoFocus: false,
+        PaperProps: {
+          sx: { maxHeight: 300 },
+        },
+      }}
+      sx={{
+        minWidth: fullWidth ? undefined : 200,
+        '& .MuiSelect-select': {
+          py: 1,
+          fontSize: '0.875rem',
+        },
+      }}
+    >
+      <ListSubheader sx={{ p: 1, lineHeight: 'unset' }}>
+        <TextField
+          size="small"
+          autoFocus
+          placeholder="Search..."
+          fullWidth
+          aria-label="Search organizations"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiInputBase-input': {
+              fontSize: '0.875rem',
+            },
+          }}
+        />
+      </ListSubheader>
+      {filteredOrgs.map((org) => (
+        <MenuItem key={org.id} value={org.id} sx={{ fontSize: '0.875rem' }}>
+          {org.title}
+        </MenuItem>
+      ))}
+      {filteredOrgs.length === 0 && (
+        <MenuItem disabled sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+          No organizations found
+        </MenuItem>
+      )}
+    </Select>
   );
 }

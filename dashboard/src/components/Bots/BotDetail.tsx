@@ -72,21 +72,13 @@ const BotDetail = () => {
   }
 
   if (error) {
-    return (
-      <Box p={3}>
-        <Alert severity="error">Error loading bot: {error.message}</Alert>
-      </Box>
-    );
+    return <Alert severity="error">Error loading bot: {error.message}</Alert>;
   }
 
   const bot = data?.bots?.edges?.[0]?.node;
 
   if (!bot) {
-    return (
-      <Box p={3}>
-        <Alert severity="warning">Bot not found</Alert>
-      </Box>
-    );
+    return <Alert severity="warning">Bot not found</Alert>;
   }
 
   const getStatusColor = (status: string) => {
@@ -124,7 +116,7 @@ const BotDetail = () => {
   };
 
   return (
-    <Box p={3}>
+    <Box>
       {/* Header */}
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Box display="flex" alignItems="center" gap={2}>
