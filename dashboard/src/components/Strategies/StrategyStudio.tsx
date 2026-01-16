@@ -12,6 +12,12 @@ import {
   Divider,
   FormHelperText,
   Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -23,6 +29,9 @@ import {
   CheckCircle,
   Error as ErrorIcon,
   Add as AddIcon,
+  Code,
+  Dashboard,
+  Warning,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
@@ -35,6 +44,8 @@ import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { BacktestResultsDialog } from '../Backtests/BacktestResultsDialog';
 import { useGroupNavigate, useActiveGroup } from '../../contexts/GroupContext';
 import { useSidebar } from '../../contexts/SidebarContext';
+import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
+import { StrategyStrategyBuilderMode } from '../../generated/types';
 
 const StrategyStudio = () => {
   const { id } = useParams<{ id: string }>();
@@ -94,6 +105,15 @@ class MyStrategy(IStrategy):
   const [activeBacktestId, setActiveBacktestId] = useState<string | null>(null);
   const [backtestResultsDialogOpen, setBacktestResultsDialogOpen] = useState(false);
 
+  // UI Builder state
+  const [builderMode, setBuilderMode] = useState<StrategyStrategyBuilderMode>(
+    isCreateMode ? StrategyStrategyBuilderMode.Ui : StrategyStrategyBuilderMode.Code
+  );
+  const [uiBuilderConfig, setUiBuilderConfig] = useState<UIBuilderConfig | null>(
+    isCreateMode ? createDefaultUIBuilderConfig() : null
+  );
+  const [ejectDialogOpen, setEjectDialogOpen] = useState(false);
+
   const { data, loading, error } = useGetStrategyForStudioQuery({
     variables: { id: id! },
     skip: !id || isCreateMode,
@@ -136,12 +156,58 @@ class MyStrategy(IStrategy):
       setDescription(strategy.description || '');
       setCode(strategy.code);
       setConfig(strategy.config || null);
+      setBuilderMode(strategy.builderMode || StrategyStrategyBuilderMode.Code);
+      // Extract ui_builder config from strategy config if available
+      const strategyConfig = strategy.config as Record<string, unknown> | null;
+      if (strategyConfig?.ui_builder) {
+        setUiBuilderConfig(strategyConfig.ui_builder as UIBuilderConfig);
+      } else {
+        setUiBuilderConfig(null);
+      }
       setHasChanges(false);
     }
   }, [strategy]);
 
   const handleChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>) => (value: T) => {
     setter(value);
+    setHasChanges(true);
+  };
+
+  // Handle UI Builder config changes
+  const handleUIBuilderConfigChange = (newConfig: UIBuilderConfig) => {
+    setUiBuilderConfig(newConfig);
+    setHasChanges(true);
+  };
+
+  // Handle mode toggle between UI and Code
+  const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: StrategyStrategyBuilderMode | null) => {
+    if (newMode === null) return;
+
+    // Switching from UI to Code requires ejection confirmation
+    if (builderMode === StrategyStrategyBuilderMode.Ui && newMode === StrategyStrategyBuilderMode.Code) {
+      setEjectDialogOpen(true);
+      return;
+    }
+
+    // Switching from Code to UI is only allowed for new strategies
+    if (builderMode === StrategyStrategyBuilderMode.Code && newMode === StrategyStrategyBuilderMode.Ui) {
+      // Only allow if no code has been written (or it's the default template)
+      if (code !== defaultCode && !isCreateMode) {
+        // Cannot switch existing code-based strategies to UI mode
+        return;
+      }
+      setBuilderMode(newMode);
+      if (!uiBuilderConfig) {
+        setUiBuilderConfig(createDefaultUIBuilderConfig());
+      }
+      setHasChanges(true);
+    }
+  };
+
+  // Confirm eject to code mode
+  const handleConfirmEject = () => {
+    setBuilderMode(StrategyStrategyBuilderMode.Code);
+    setEjectDialogOpen(false);
     setHasChanges(true);
   };
 
@@ -178,6 +244,14 @@ class MyStrategy(IStrategy):
       return;
     }
 
+    // Build the full config object including ui_builder if in UI mode
+    const fullConfig = {
+      ...config,
+      ...(builderMode === StrategyStrategyBuilderMode.Ui && uiBuilderConfig
+        ? { ui_builder: uiBuilderConfig }
+        : {}),
+    };
+
     try {
       if (isCreateMode) {
         // Create new strategy
@@ -192,7 +266,8 @@ class MyStrategy(IStrategy):
               name,
               description: description || undefined,
               code,
-              config,
+              config: fullConfig,
+              builderMode,
               ownerID: activeGroupId,
             },
           },
@@ -219,7 +294,8 @@ class MyStrategy(IStrategy):
               name,
               description: description || undefined,
               code,
-              config: config || undefined,
+              config: fullConfig,
+              builderMode,
             },
           },
         });
@@ -323,6 +399,35 @@ class MyStrategy(IStrategy):
             )}
           </Box>
         </Box>
+
+        {/* Mode Toggle */}
+        <ToggleButtonGroup
+          value={builderMode}
+          exclusive
+          onChange={handleModeChange}
+          size="small"
+        >
+          <ToggleButton
+            value={StrategyStrategyBuilderMode.Ui}
+            disabled={
+              builderMode === StrategyStrategyBuilderMode.Code &&
+              !isCreateMode &&
+              code !== defaultCode
+            }
+          >
+            <Tooltip title="Visual Builder">
+              <Dashboard fontSize="small" sx={{ mr: 0.5 }} />
+            </Tooltip>
+            Builder
+          </ToggleButton>
+          <ToggleButton value={StrategyStrategyBuilderMode.Code}>
+            <Tooltip title="Code Editor">
+              <Code fontSize="small" sx={{ mr: 0.5 }} />
+            </Tooltip>
+            Code
+          </ToggleButton>
+        </ToggleButtonGroup>
+
         {/* Backtest Status Indicator - only in edit mode */}
         {!isCreateMode && activeBacktestId && (
           <>
@@ -427,7 +532,7 @@ class MyStrategy(IStrategy):
 
       {/* Main Content */}
       <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Left Panel - Code Editor */}
+        {/* Left Panel - Code Editor or UI Builder */}
         <Box
           sx={{
             flex: 1,
@@ -440,18 +545,31 @@ class MyStrategy(IStrategy):
         >
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
             <Typography variant="subtitle1" fontWeight={600}>
-              Strategy Code
+              {builderMode === StrategyStrategyBuilderMode.Ui ? 'Strategy Builder' : 'Strategy Code'}
             </Typography>
           </Box>
-          <Box sx={{ flex: 1, position: 'relative' }}>
-            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-              <PythonCodeEditor
-                value={code}
-                onChange={handleChange(setCode)}
-                height="100%"
-                label=""
-              />
-            </Box>
+          <Box sx={{ flex: 1, position: 'relative', minHeight: 0 }}>
+            {builderMode === StrategyStrategyBuilderMode.Ui ? (
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <StrategyBuilder
+                  value={uiBuilderConfig}
+                  onChange={handleUIBuilderConfigChange}
+                  className={toClassName(name)}
+                  timeframe={(config as Record<string, unknown>)?.timeframe as string || '5m'}
+                  stakeCurrency={(config as Record<string, unknown>)?.stake_currency as string || 'USDT'}
+                  stakeAmount={(config as Record<string, unknown>)?.stake_amount as number || 100}
+                />
+              </Box>
+            ) : (
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                <PythonCodeEditor
+                  value={code}
+                  onChange={handleChange(setCode)}
+                  height="100%"
+                  label=""
+                />
+              </Box>
+            )}
           </Box>
         </Box>
 
@@ -557,6 +675,33 @@ class MyStrategy(IStrategy):
           polling={isBacktestRunning}
         />
       )}
+
+      {/* Eject to Code Confirmation Dialog */}
+      <Dialog open={ejectDialogOpen} onClose={() => setEjectDialogOpen(false)}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Warning color="warning" />
+          Eject to Code Mode?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            This will convert your strategy to code-only mode.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Once ejected, you will have full control over the Python code but will no longer be able
+            to edit using the visual builder.
+          </Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            This action cannot be undone. The visual builder configuration will be preserved in the
+            strategy config but can only be edited as code.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEjectDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="warning" onClick={handleConfirmEject}>
+            Eject to Code
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -245,6 +245,16 @@ type PermissionCheckResult struct {
 	Granted bool `json:"granted"`
 }
 
+// Result of strategy code preview generation
+type PreviewCodeResult struct {
+	// Whether the code generation was successful
+	Success bool `json:"success"`
+	// Generated Python code (empty if success is false)
+	Code string `json:"code"`
+	// Error message if generation failed
+	Error *string `json:"error,omitempty"`
+}
+
 type RegistryAuthInput struct {
 	Username      string  `json:"username"`
 	Password      string  `json:"password"`

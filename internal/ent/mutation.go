@@ -14296,6 +14296,7 @@ type StrategyMutation struct {
 	description       *string
 	code              *string
 	_config           *map[string]interface{}
+	builder_mode      *enum.StrategyBuilderMode
 	is_latest         *bool
 	version_number    *int
 	addversion_number *int
@@ -14662,6 +14663,42 @@ func (m *StrategyMutation) OldConfig(ctx context.Context) (v map[string]interfac
 // ResetConfig resets all changes to the "config" field.
 func (m *StrategyMutation) ResetConfig() {
 	m._config = nil
+}
+
+// SetBuilderMode sets the "builder_mode" field.
+func (m *StrategyMutation) SetBuilderMode(ebm enum.StrategyBuilderMode) {
+	m.builder_mode = &ebm
+}
+
+// BuilderMode returns the value of the "builder_mode" field in the mutation.
+func (m *StrategyMutation) BuilderMode() (r enum.StrategyBuilderMode, exists bool) {
+	v := m.builder_mode
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBuilderMode returns the old "builder_mode" field's value of the Strategy entity.
+// If the Strategy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StrategyMutation) OldBuilderMode(ctx context.Context) (v enum.StrategyBuilderMode, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBuilderMode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBuilderMode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBuilderMode: %w", err)
+	}
+	return oldValue.BuilderMode, nil
+}
+
+// ResetBuilderMode resets all changes to the "builder_mode" field.
+func (m *StrategyMutation) ResetBuilderMode() {
+	m.builder_mode = nil
 }
 
 // SetParentID sets the "parent_id" field.
@@ -15121,7 +15158,7 @@ func (m *StrategyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *StrategyMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.public != nil {
 		fields = append(fields, strategy.FieldPublic)
 	}
@@ -15139,6 +15176,9 @@ func (m *StrategyMutation) Fields() []string {
 	}
 	if m._config != nil {
 		fields = append(fields, strategy.FieldConfig)
+	}
+	if m.builder_mode != nil {
+		fields = append(fields, strategy.FieldBuilderMode)
 	}
 	if m.parent != nil {
 		fields = append(fields, strategy.FieldParentID)
@@ -15178,6 +15218,8 @@ func (m *StrategyMutation) Field(name string) (ent.Value, bool) {
 		return m.Code()
 	case strategy.FieldConfig:
 		return m.Config()
+	case strategy.FieldBuilderMode:
+		return m.BuilderMode()
 	case strategy.FieldParentID:
 		return m.ParentID()
 	case strategy.FieldIsLatest:
@@ -15211,6 +15253,8 @@ func (m *StrategyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldCode(ctx)
 	case strategy.FieldConfig:
 		return m.OldConfig(ctx)
+	case strategy.FieldBuilderMode:
+		return m.OldBuilderMode(ctx)
 	case strategy.FieldParentID:
 		return m.OldParentID(ctx)
 	case strategy.FieldIsLatest:
@@ -15273,6 +15317,13 @@ func (m *StrategyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetConfig(v)
+		return nil
+	case strategy.FieldBuilderMode:
+		v, ok := value.(enum.StrategyBuilderMode)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBuilderMode(v)
 		return nil
 	case strategy.FieldParentID:
 		v, ok := value.(uuid.UUID)
@@ -15418,6 +15469,9 @@ func (m *StrategyMutation) ResetField(name string) error {
 		return nil
 	case strategy.FieldConfig:
 		m.ResetConfig()
+		return nil
+	case strategy.FieldBuilderMode:
+		m.ResetBuilderMode()
 		return nil
 	case strategy.FieldParentID:
 		m.ResetParentID()

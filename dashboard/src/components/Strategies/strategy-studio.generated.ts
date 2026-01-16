@@ -8,7 +8,7 @@ export type GetStrategyForStudioQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetStrategyForStudioQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, versionNumber: number, isLatest: boolean, config: Record<string, any>, createdAt: string, updatedAt: string } | null } | null> | null } };
+export type GetStrategyForStudioQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, description?: string | null, code: string, builderMode: Types.StrategyStrategyBuilderMode, versionNumber: number, isLatest: boolean, config: Record<string, any>, createdAt: string, updatedAt: string } | null } | null> | null } };
 
 export type GetStrategyVersionsForStudioQueryVariables = Types.Exact<{
   name: Types.Scalars['String']['input'];
@@ -16,6 +16,14 @@ export type GetStrategyVersionsForStudioQueryVariables = Types.Exact<{
 
 
 export type GetStrategyVersionsForStudioQuery = { __typename?: 'Query', strategyVersions: Array<{ __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean, code: string, createdAt: string }> };
+
+export type PreviewStrategyCodeMutationVariables = Types.Exact<{
+  config: Types.Scalars['Map']['input'];
+  className: Types.Scalars['String']['input'];
+}>;
+
+
+export type PreviewStrategyCodeMutation = { __typename?: 'Mutation', previewStrategyCode: { __typename?: 'PreviewCodeResult', success: boolean, code: string, error?: string | null } };
 
 
 export const GetStrategyForStudioDocument = gql`
@@ -27,6 +35,7 @@ export const GetStrategyForStudioDocument = gql`
         name
         description
         code
+        builderMode
         versionNumber
         isLatest
         config
@@ -121,3 +130,39 @@ export type GetStrategyVersionsForStudioQueryHookResult = ReturnType<typeof useG
 export type GetStrategyVersionsForStudioLazyQueryHookResult = ReturnType<typeof useGetStrategyVersionsForStudioLazyQuery>;
 export type GetStrategyVersionsForStudioSuspenseQueryHookResult = ReturnType<typeof useGetStrategyVersionsForStudioSuspenseQuery>;
 export type GetStrategyVersionsForStudioQueryResult = Apollo.QueryResult<GetStrategyVersionsForStudioQuery, GetStrategyVersionsForStudioQueryVariables>;
+export const PreviewStrategyCodeDocument = gql`
+    mutation PreviewStrategyCode($config: Map!, $className: String!) {
+  previewStrategyCode(config: $config, className: $className) {
+    success
+    code
+    error
+  }
+}
+    `;
+export type PreviewStrategyCodeMutationFn = Apollo.MutationFunction<PreviewStrategyCodeMutation, PreviewStrategyCodeMutationVariables>;
+
+/**
+ * __usePreviewStrategyCodeMutation__
+ *
+ * To run a mutation, you first call `usePreviewStrategyCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePreviewStrategyCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [previewStrategyCodeMutation, { data, loading, error }] = usePreviewStrategyCodeMutation({
+ *   variables: {
+ *      config: // value for 'config'
+ *      className: // value for 'className'
+ *   },
+ * });
+ */
+export function usePreviewStrategyCodeMutation(baseOptions?: Apollo.MutationHookOptions<PreviewStrategyCodeMutation, PreviewStrategyCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PreviewStrategyCodeMutation, PreviewStrategyCodeMutationVariables>(PreviewStrategyCodeDocument, options);
+      }
+export type PreviewStrategyCodeMutationHookResult = ReturnType<typeof usePreviewStrategyCodeMutation>;
+export type PreviewStrategyCodeMutationResult = Apollo.MutationResult<PreviewStrategyCodeMutation>;
+export type PreviewStrategyCodeMutationOptions = Apollo.BaseMutationOptions<PreviewStrategyCodeMutation, PreviewStrategyCodeMutationVariables>;

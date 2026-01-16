@@ -239,6 +239,24 @@ type ConnectionTestResult {
   version: String
 }
 
+"""
+Result of strategy code preview generation
+"""
+type PreviewCodeResult {
+  """
+  Whether the code generation was successful
+  """
+  success: Boolean!
+  """
+  Generated Python code (empty if success is false)
+  """
+  code: String!
+  """
+  Error message if generation failed
+  """
+  error: String
+}
+
 # Freqtrade API token for FreqUI authentication
 # Used to pre-authenticate FreqUI iframe without exposing credentials
 type FreqtradeToken {
@@ -286,6 +304,12 @@ type Mutation {
   createStrategy(input: CreateStrategyInput!): Strategy! @isAuthenticated
   updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit")
   deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+
+  """
+  Preview generated Python code from UI builder configuration
+  Does not save the strategy, just returns the generated code for preview
+  """
+  previewStrategyCode(config: Map!, className: String!): PreviewCodeResult! @isAuthenticated
 
   # Bot mutations
   createBot(input: CreateBotInput!): Bot! @isAuthenticated

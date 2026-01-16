@@ -31,6 +31,7 @@ import (
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
 	strategy1 "volaticloud/internal/strategy"
+	"volaticloud/internal/strategy/codegen"
 	"volaticloud/internal/usage"
 
 	"github.com/google/uuid"
@@ -205,6 +206,31 @@ func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bo
 	// ENT hook handles Keycloak resource cleanup automatically
 	err := strategy1.DeleteAllVersions(ctx, r.client, id)
 	return err == nil, err
+}
+
+func (r *mutationResolver) PreviewStrategyCode(ctx context.Context, config map[string]any, className string) (*model.PreviewCodeResult, error) {
+	// Convert map[string]any to map[string]interface{} for codegen
+	configMap := make(map[string]interface{}, len(config))
+	for k, v := range config {
+		configMap[k] = v
+	}
+
+	// Generate the code
+	code, err := codegen.PreviewStrategyCode(configMap, className)
+	if err != nil {
+		errMsg := err.Error()
+		return &model.PreviewCodeResult{
+			Success: false,
+			Code:    "",
+			Error:   &errMsg,
+		}, nil
+	}
+
+	return &model.PreviewCodeResult{
+		Success: true,
+		Code:    code,
+		Error:   nil,
+	}, nil
 }
 
 func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error) {

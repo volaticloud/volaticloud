@@ -2109,6 +2109,11 @@ func (_q *StrategyQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, strategy.FieldConfig)
 				fieldSeen[strategy.FieldConfig] = struct{}{}
 			}
+		case "builderMode":
+			if _, ok := fieldSeen[strategy.FieldBuilderMode]; !ok {
+				selectedFields = append(selectedFields, strategy.FieldBuilderMode)
+				fieldSeen[strategy.FieldBuilderMode] = struct{}{}
+			}
 		case "parentID":
 			if _, ok := fieldSeen[strategy.FieldParentID]; !ok {
 				selectedFields = append(selectedFields, strategy.FieldParentID)

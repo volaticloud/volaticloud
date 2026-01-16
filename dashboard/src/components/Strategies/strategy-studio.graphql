@@ -6,6 +6,7 @@ query GetStrategyForStudio($id: ID!) {
         name
         description
         code
+        builderMode
         versionNumber
         isLatest
         config
@@ -24,5 +25,13 @@ query GetStrategyVersionsForStudio($name: String!) {
     isLatest
     code
     createdAt
+  }
+}
+
+mutation PreviewStrategyCode($config: Map!, $className: String!) {
+  previewStrategyCode(config: $config, className: $className) {
+    success
+    code
+    error
   }
 }

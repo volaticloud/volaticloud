@@ -9,6 +9,7 @@ import (
 	"time"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -32,6 +33,8 @@ type Strategy struct {
 	Code string `json:"code,omitempty"`
 	// Strategy-specific configuration (config.json) - REQUIRED
 	Config map[string]interface{} `json:"config,omitempty"`
+	// Strategy editing mode: 'ui' for UI builder (code generated from config), 'code' for direct Python editing
+	BuilderMode enum.StrategyBuilderMode `json:"builder_mode,omitempty"`
 	// Parent strategy ID for versioning (null for root v1)
 	ParentID *uuid.UUID `json:"parent_id,omitempty"`
 	// Indicates if this is the latest version of the strategy
@@ -123,7 +126,7 @@ func (*Strategy) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case strategy.FieldVersionNumber:
 			values[i] = new(sql.NullInt64)
-		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode, strategy.FieldOwnerID:
+		case strategy.FieldName, strategy.FieldDescription, strategy.FieldCode, strategy.FieldBuilderMode, strategy.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case strategy.FieldDeletedAt, strategy.FieldCreatedAt, strategy.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -188,6 +191,12 @@ func (_m *Strategy) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Config); err != nil {
 					return fmt.Errorf("unmarshal field config: %w", err)
 				}
+			}
+		case strategy.FieldBuilderMode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field builder_mode", values[i])
+			} else if value.Valid {
+				_m.BuilderMode = enum.StrategyBuilderMode(value.String)
 			}
 		case strategy.FieldParentID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -301,6 +310,9 @@ func (_m *Strategy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("config=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Config))
+	builder.WriteString(", ")
+	builder.WriteString("builder_mode=")
+	builder.WriteString(fmt.Sprintf("%v", _m.BuilderMode))
 	builder.WriteString(", ")
 	if v := _m.ParentID; v != nil {
 		builder.WriteString("parent_id=")
