@@ -182,10 +182,6 @@ func (g *Generator) generateCompare(node *ConditionNode) (string, error) {
 		op = "<"
 	case OperatorLte:
 		op = "<="
-	case OperatorBetween:
-		// For between, rightCode should contain the max value
-		// This is a simplified version; full implementation would need min and max
-		return fmt.Sprintf("(%s >= %s) & (%s <= %s)", leftCode, rightCode, leftCode, rightCode), nil
 	case OperatorIn:
 		return fmt.Sprintf("%s.isin(%s)", leftCode, rightCode), nil
 	case OperatorNotIn:
@@ -287,8 +283,6 @@ func (g *Generator) GenerateOperand(op *Operand) (string, error) {
 		return g.generateTradeContextOperand(op)
 	case OperandTypeTIME:
 		return g.generateTimeOperand(op)
-	case OperandTypeMARKET:
-		return g.generateMarketOperand(op)
 	case OperandTypeCOMPUTED:
 		return g.generateComputedOperand(op)
 	default:
@@ -396,12 +390,6 @@ func (g *Generator) generateTradeContextOperand(op *Operand) (string, error) {
 		return "trade.nr_of_successful_entries", nil
 	case "stake_amount":
 		return "trade.stake_amount", nil
-	case "volume_ratio":
-		// This would need to be calculated from dataframe
-		return "1.0", nil // Placeholder
-	case "spread_pct":
-		// This would need to be calculated from orderbook
-		return "0.0", nil // Placeholder
 	case "pair":
 		return "pair", nil
 	case "is_short":
@@ -434,29 +422,8 @@ func (g *Generator) generateTimeOperand(op *Operand) (string, error) {
 		return "dataframe['date'].dt.month", nil
 	case "is_weekend":
 		return "(dataframe['date'].dt.dayofweek >= 5)", nil
-	case "trading_session":
-		// This would need custom logic for session detection
-		return "'unknown'", nil // Placeholder
 	default:
 		return "", fmt.Errorf("unknown time field: %s", timeOp.Field)
-	}
-}
-
-// generateMarketOperand generates Python code for MARKET operands
-func (g *Generator) generateMarketOperand(op *Operand) (string, error) {
-	marketOp, err := op.AsMarketOperand()
-	if err != nil {
-		return "", err
-	}
-
-	// Market data would need to be fetched externally
-	// For now, return placeholder values
-	switch marketOp.Field {
-	case "btc_dominance", "total_market_cap", "fear_greed_index":
-		return fmt.Sprintf("self.dp.get_analyzed_dataframe('%s', self.timeframe)[0]['%s']",
-			marketOp.Field, marketOp.Field), nil
-	default:
-		return "0", nil // Placeholder
 	}
 }
 

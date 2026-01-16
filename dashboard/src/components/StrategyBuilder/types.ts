@@ -15,7 +15,6 @@ export type OperandCategory =
   | 'price'
   | 'trade'
   | 'time'
-  | 'market'
   | 'external'
   | 'computed'
   | 'custom';
@@ -26,7 +25,6 @@ export type OperandType =
   | 'PRICE'
   | 'TRADE_CONTEXT'
   | 'TIME'
-  | 'MARKET'
   | 'EXTERNAL'
   | 'COMPUTED'
   | 'CUSTOM';
@@ -42,9 +40,9 @@ export type ComparisonOperator =
   | 'gte'     // greater than or equal (>=)
   | 'lt'      // less than (<)
   | 'lte'     // less than or equal (<=)
-  | 'between' // value between min and max
   | 'in'      // value in array
   | 'not_in'; // value not in array
+// Note: For range checks, use IN_RANGE node type instead of 'between' operator
 
 export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {
   eq: 'equals',
@@ -53,7 +51,6 @@ export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {
   gte: 'greater than or equal',
   lt: 'less than',
   lte: 'less than or equal',
-  between: 'between',
   in: 'in',
   not_in: 'not in',
 };
@@ -65,7 +62,6 @@ export const OPERATOR_SYMBOLS: Record<ComparisonOperator, string> = {
   gte: '>=',
   lt: '<',
   lte: '<=',
-  between: '...',
   in: 'in',
   not_in: 'not in',
 };
@@ -153,8 +149,6 @@ export interface TradeContextOperand extends BaseOperand {
     | 'trade_duration'
     | 'nr_of_entries'
     | 'stake_amount'
-    | 'volume_ratio'
-    | 'spread_pct'
     | 'pair'
     | 'is_short';
 }
@@ -168,22 +162,8 @@ export interface TimeOperand extends BaseOperand {
     | 'day_of_month'
     | 'month'
     | 'timestamp'
-    | 'is_weekend'
-    | 'trading_session';
+    | 'is_weekend';
   timezone?: string;
-}
-
-export interface MarketOperand extends BaseOperand {
-  type: 'MARKET';
-  field:
-    | 'btc_dominance'
-    | 'total_market_cap'
-    | 'fear_greed_index'
-    | 'funding_rate'
-    | 'open_interest'
-    | 'long_short_ratio'
-    | 'vix';
-  asset?: string;
 }
 
 export interface ExternalOperand extends BaseOperand {
@@ -212,7 +192,6 @@ export type Operand =
   | PriceOperand
   | TradeContextOperand
   | TimeOperand
-  | MarketOperand
   | ExternalOperand
   | ComputedOperand
   | CustomOperand;

@@ -2,8 +2,8 @@
 //
 // This package converts JSON-based UI builder configurations into valid Python
 // Freqtrade strategy code. It supports:
-// - Condition trees (AND, OR, NOT, IF-THEN-ELSE, COMPARE, CROSSOVER, CROSSUNDER)
-// - Multiple operand types (CONSTANT, INDICATOR, PRICE, TRADE_CONTEXT, TIME, MARKET, COMPUTED)
+// - Condition trees (AND, OR, NOT, IF-THEN-ELSE, COMPARE, CROSSOVER, CROSSUNDER, IN_RANGE)
+// - Multiple operand types (CONSTANT, INDICATOR, PRICE, TRADE_CONTEXT, TIME, COMPUTED)
 // - Technical indicators (RSI, SMA, EMA, MACD, Bollinger Bands, etc.)
 // - Strategy callbacks (custom_stoploss, confirm_entry, DCA, custom_exit)
 package codegen
@@ -18,9 +18,8 @@ const (
 	OperandCategoryIndicator OperandCategory = "indicator"
 	OperandCategoryPrice     OperandCategory = "price"
 	OperandCategoryTrade     OperandCategory = "trade"
-	OperandCategoryTime      OperandCategory = "time"
-	OperandCategoryMarket    OperandCategory = "market"
-	OperandCategoryExternal  OperandCategory = "external"
+	OperandCategoryTime     OperandCategory = "time"
+	OperandCategoryExternal OperandCategory = "external"
 	OperandCategoryComputed  OperandCategory = "computed"
 	OperandCategoryCustom    OperandCategory = "custom"
 )
@@ -34,9 +33,8 @@ const (
 	OperatorGt      ComparisonOperator = "gt"
 	OperatorGte     ComparisonOperator = "gte"
 	OperatorLt      ComparisonOperator = "lt"
-	OperatorLte     ComparisonOperator = "lte"
-	OperatorBetween ComparisonOperator = "between"
-	OperatorIn      ComparisonOperator = "in"
+	OperatorLte   ComparisonOperator = "lte"
+	OperatorIn    ComparisonOperator = "in"
 	OperatorNotIn   ComparisonOperator = "not_in"
 )
 
@@ -116,7 +114,6 @@ const (
 	OperandTypePRICE         OperandType = "PRICE"
 	OperandTypeTRADE_CONTEXT OperandType = "TRADE_CONTEXT"
 	OperandTypeTIME          OperandType = "TIME"
-	OperandTypeMARKET        OperandType = "MARKET"
 	OperandTypeEXTERNAL      OperandType = "EXTERNAL"
 	OperandTypeCOMPUTED      OperandType = "COMPUTED"
 	OperandTypeCUSTOM        OperandType = "CUSTOM"
@@ -367,15 +364,6 @@ func (o *Operand) AsTimeOperand() (*TimeOperand, error) {
 	return &op, nil
 }
 
-// AsMarketOperand parses the operand as a MARKET
-func (o *Operand) AsMarketOperand() (*MarketOperand, error) {
-	var op MarketOperand
-	if err := json.Unmarshal(o.raw, &op); err != nil {
-		return nil, err
-	}
-	return &op, nil
-}
-
 // AsExternalOperand parses the operand as an EXTERNAL
 func (o *Operand) AsExternalOperand() (*ExternalOperand, error) {
 	var op ExternalOperand
@@ -444,13 +432,6 @@ type TimeOperand struct {
 	BaseOperand
 	Field    string `json:"field"`              // hour, day_of_week, trading_session, etc.
 	Timezone string `json:"timezone,omitempty"` // IANA timezone (default: UTC)
-}
-
-// MarketOperand references market-wide data
-type MarketOperand struct {
-	BaseOperand
-	Field string `json:"field"`           // btc_dominance, fear_greed_index, etc.
-	Asset string `json:"asset,omitempty"` // For asset-specific market data
 }
 
 // ExternalOperand references external data sources
