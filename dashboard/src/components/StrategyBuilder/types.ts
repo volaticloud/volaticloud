@@ -1,103 +1,68 @@
 /**
  * Strategy UI Builder Type Definitions
  *
- * These types match the Go structs in internal/strategy/codegen/types.go
- * and follow industry patterns from JSON Logic, React Query Builder, and DMN.
+ * Types are generated from GraphQL schema (single source of truth).
+ * See internal/graph/schema.graphqls for the authoritative definitions.
+ *
+ * This file re-exports generated enums and defines interfaces/helpers
+ * that follow industry patterns from JSON Logic, React Query Builder, and DMN.
  */
 
 // ============================================================================
-// Operand Categories & Types
+// Generated Enums (from GraphQL schema - single source of truth)
 // ============================================================================
 
-export type OperandCategory =
-  | 'constant'
-  | 'indicator'
-  | 'price'
-  | 'trade'
-  | 'time'
-  | 'external'
-  | 'computed'
-  | 'custom';
+// Re-export generated enums for external consumers
+export {
+  ConditionNodeType,
+  OperandType,
+  OperandCategory,
+  ComparisonOperator,
+  ComputedOperation,
+  IndicatorType,
+  PriceField,
+  TradeContextField,
+  TimeField,
+} from '../../generated/types';
 
-export type OperandType =
-  | 'CONSTANT'
-  | 'INDICATOR'
-  | 'PRICE'
-  | 'TRADE_CONTEXT'
-  | 'TIME'
-  | 'EXTERNAL'
-  | 'COMPUTED'
-  | 'CUSTOM';
+// Import for local use (need runtime values for OPERATOR_LABELS/OPERATOR_SYMBOLS)
+import {
+  ConditionNodeType,
+  OperandType,
+  OperandCategory,
+  ComparisonOperator,
+  ComputedOperation,
+  IndicatorType,
+} from '../../generated/types';
+
+// Type alias for backward compatibility
+export type NodeType = ConditionNodeType;
 
 // ============================================================================
-// Comparison Operators
+// Operator Labels & Symbols (for UI display)
 // ============================================================================
-
-export type ComparisonOperator =
-  | 'eq'      // equals (==)
-  | 'neq'     // not equals (!=)
-  | 'gt'      // greater than (>)
-  | 'gte'     // greater than or equal (>=)
-  | 'lt'      // less than (<)
-  | 'lte'     // less than or equal (<=)
-  | 'in'      // value in array
-  | 'not_in'; // value not in array
-// Note: For range checks, use IN_RANGE node type instead of 'between' operator
 
 export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {
-  eq: 'equals',
-  neq: 'not equals',
-  gt: 'greater than',
-  gte: 'greater than or equal',
-  lt: 'less than',
-  lte: 'less than or equal',
-  in: 'in',
-  not_in: 'not in',
+  [ComparisonOperator.Eq]: 'equals',
+  [ComparisonOperator.Neq]: 'not equals',
+  [ComparisonOperator.Gt]: 'greater than',
+  [ComparisonOperator.Gte]: 'greater than or equal',
+  [ComparisonOperator.Lt]: 'less than',
+  [ComparisonOperator.Lte]: 'less than or equal',
+  [ComparisonOperator.In]: 'in',
+  [ComparisonOperator.NotIn]: 'not in',
 };
 
 export const OPERATOR_SYMBOLS: Record<ComparisonOperator, string> = {
-  eq: '=',
-  neq: '!=',
-  gt: '>',
-  gte: '>=',
-  lt: '<',
-  lte: '<=',
-  in: 'in',
-  not_in: 'not in',
+  [ComparisonOperator.Eq]: '=',
+  [ComparisonOperator.Neq]: '!=',
+  [ComparisonOperator.Gt]: '>',
+  [ComparisonOperator.Gte]: '>=',
+  [ComparisonOperator.Lt]: '<',
+  [ComparisonOperator.Lte]: '<=',
+  [ComparisonOperator.In]: 'in',
+  [ComparisonOperator.NotIn]: 'not in',
 };
-
-// ============================================================================
-// Computed Operations
-// ============================================================================
-
-export type ComputedOperation =
-  | 'add'
-  | 'subtract'
-  | 'multiply'
-  | 'divide'
-  | 'min'
-  | 'max'
-  | 'abs'
-  | 'round'
-  | 'floor'
-  | 'ceil'
-  | 'percent_change'
-  | 'average'
-  | 'sum';
-
-// ============================================================================
-// Node Types
-// ============================================================================
-
-export type NodeType =
-  | 'AND'
-  | 'OR'
-  | 'NOT'
-  | 'IF_THEN_ELSE'
-  | 'COMPARE'
-  | 'CROSSOVER'
-  | 'CROSSUNDER'
-  | 'IN_RANGE';
 
 // ============================================================================
 // Base Interfaces
@@ -260,38 +225,8 @@ export type ConditionNode =
   | InRangeNode;
 
 // ============================================================================
-// Indicator Types
+// Indicator Types (IndicatorType enum is exported from generated types above)
 // ============================================================================
-
-export type IndicatorType =
-  | 'RSI'
-  | 'SMA'
-  | 'EMA'
-  | 'WMA'
-  | 'DEMA'
-  | 'TEMA'
-  | 'KAMA'
-  | 'MACD'
-  | 'BB'
-  | 'KC'
-  | 'STOCH'
-  | 'STOCH_RSI'
-  | 'ATR'
-  | 'ADX'
-  | 'CCI'
-  | 'WILLR'
-  | 'MOM'
-  | 'ROC'
-  | 'OBV'
-  | 'MFI'
-  | 'VWAP'
-  | 'CMF'
-  | 'AD'
-  | 'ICHIMOKU'
-  | 'SAR'
-  | 'PIVOT'
-  | 'SUPERTREND'
-  | 'CUSTOM';
 
 export interface IndicatorPlugin {
   source: 'builtin' | 'community' | 'custom';

@@ -252,9 +252,30 @@ func boolToPython(b bool) string {
 	return "False"
 }
 
+// MaxConfigSize is the maximum allowed size for a UI builder config (1MB)
+const MaxConfigSize = 1024 * 1024
+
+// ValidateConfigSize validates that the config doesn't exceed the maximum allowed size.
+// This prevents DoS attacks through excessively large configs.
+func ValidateConfigSize(configMap map[string]interface{}) error {
+	configJSON, err := json.Marshal(configMap)
+	if err != nil {
+		return fmt.Errorf("invalid config: %w", err)
+	}
+	if len(configJSON) > MaxConfigSize {
+		return fmt.Errorf("config too large: %d bytes (max %d bytes)", len(configJSON), MaxConfigSize)
+	}
+	return nil
+}
+
 // PreviewStrategyCode is the main entry point for code preview
 // It parses the config map and generates the full strategy code
 func PreviewStrategyCode(configMap map[string]interface{}, className string) (string, error) {
+	// Validate config size to prevent DoS
+	if err := ValidateConfigSize(configMap); err != nil {
+		return "", err
+	}
+
 	// Parse the config
 	config, err := ParseUIBuilderConfig(configMap)
 	if err != nil {

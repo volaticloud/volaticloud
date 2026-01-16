@@ -423,6 +423,152 @@ type UsageCost struct {
 	Currency string `json:"currency"`
 }
 
+// Comparison operators for COMPARE nodes
+type ComparisonOperator string
+
+const (
+	ComparisonOperatorEq    ComparisonOperator = "eq"
+	ComparisonOperatorNeq   ComparisonOperator = "neq"
+	ComparisonOperatorGt    ComparisonOperator = "gt"
+	ComparisonOperatorGte   ComparisonOperator = "gte"
+	ComparisonOperatorLt    ComparisonOperator = "lt"
+	ComparisonOperatorLte   ComparisonOperator = "lte"
+	ComparisonOperatorIn    ComparisonOperator = "in"
+	ComparisonOperatorNotIn ComparisonOperator = "not_in"
+)
+
+var AllComparisonOperator = []ComparisonOperator{
+	ComparisonOperatorEq,
+	ComparisonOperatorNeq,
+	ComparisonOperatorGt,
+	ComparisonOperatorGte,
+	ComparisonOperatorLt,
+	ComparisonOperatorLte,
+	ComparisonOperatorIn,
+	ComparisonOperatorNotIn,
+}
+
+func (e ComparisonOperator) IsValid() bool {
+	switch e {
+	case ComparisonOperatorEq, ComparisonOperatorNeq, ComparisonOperatorGt, ComparisonOperatorGte, ComparisonOperatorLt, ComparisonOperatorLte, ComparisonOperatorIn, ComparisonOperatorNotIn:
+		return true
+	}
+	return false
+}
+
+func (e ComparisonOperator) String() string {
+	return string(e)
+}
+
+func (e *ComparisonOperator) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ComparisonOperator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ComparisonOperator", str)
+	}
+	return nil
+}
+
+func (e ComparisonOperator) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ComparisonOperator) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ComparisonOperator) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Arithmetic operations for COMPUTED operands
+type ComputedOperation string
+
+const (
+	ComputedOperationAdd           ComputedOperation = "add"
+	ComputedOperationSubtract      ComputedOperation = "subtract"
+	ComputedOperationMultiply      ComputedOperation = "multiply"
+	ComputedOperationDivide        ComputedOperation = "divide"
+	ComputedOperationMin           ComputedOperation = "min"
+	ComputedOperationMax           ComputedOperation = "max"
+	ComputedOperationAbs           ComputedOperation = "abs"
+	ComputedOperationRound         ComputedOperation = "round"
+	ComputedOperationFloor         ComputedOperation = "floor"
+	ComputedOperationCeil          ComputedOperation = "ceil"
+	ComputedOperationPercentChange ComputedOperation = "percent_change"
+	ComputedOperationAverage       ComputedOperation = "average"
+	ComputedOperationSum           ComputedOperation = "sum"
+)
+
+var AllComputedOperation = []ComputedOperation{
+	ComputedOperationAdd,
+	ComputedOperationSubtract,
+	ComputedOperationMultiply,
+	ComputedOperationDivide,
+	ComputedOperationMin,
+	ComputedOperationMax,
+	ComputedOperationAbs,
+	ComputedOperationRound,
+	ComputedOperationFloor,
+	ComputedOperationCeil,
+	ComputedOperationPercentChange,
+	ComputedOperationAverage,
+	ComputedOperationSum,
+}
+
+func (e ComputedOperation) IsValid() bool {
+	switch e {
+	case ComputedOperationAdd, ComputedOperationSubtract, ComputedOperationMultiply, ComputedOperationDivide, ComputedOperationMin, ComputedOperationMax, ComputedOperationAbs, ComputedOperationRound, ComputedOperationFloor, ComputedOperationCeil, ComputedOperationPercentChange, ComputedOperationAverage, ComputedOperationSum:
+		return true
+	}
+	return false
+}
+
+func (e ComputedOperation) String() string {
+	return string(e)
+}
+
+func (e *ComputedOperation) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ComputedOperation(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ComputedOperation", str)
+	}
+	return nil
+}
+
+func (e ComputedOperation) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ComputedOperation) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ComputedOperation) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Type of condition field for alert configuration
 type ConditionFieldType string
 
@@ -476,6 +622,386 @@ func (e *ConditionFieldType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ConditionFieldType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Type of condition node in the strategy builder tree
+type ConditionNodeType string
+
+const (
+	ConditionNodeTypeAnd        ConditionNodeType = "AND"
+	ConditionNodeTypeOr         ConditionNodeType = "OR"
+	ConditionNodeTypeNot        ConditionNodeType = "NOT"
+	ConditionNodeTypeIfThenElse ConditionNodeType = "IF_THEN_ELSE"
+	ConditionNodeTypeCompare    ConditionNodeType = "COMPARE"
+	ConditionNodeTypeCrossover  ConditionNodeType = "CROSSOVER"
+	ConditionNodeTypeCrossunder ConditionNodeType = "CROSSUNDER"
+	ConditionNodeTypeInRange    ConditionNodeType = "IN_RANGE"
+)
+
+var AllConditionNodeType = []ConditionNodeType{
+	ConditionNodeTypeAnd,
+	ConditionNodeTypeOr,
+	ConditionNodeTypeNot,
+	ConditionNodeTypeIfThenElse,
+	ConditionNodeTypeCompare,
+	ConditionNodeTypeCrossover,
+	ConditionNodeTypeCrossunder,
+	ConditionNodeTypeInRange,
+}
+
+func (e ConditionNodeType) IsValid() bool {
+	switch e {
+	case ConditionNodeTypeAnd, ConditionNodeTypeOr, ConditionNodeTypeNot, ConditionNodeTypeIfThenElse, ConditionNodeTypeCompare, ConditionNodeTypeCrossover, ConditionNodeTypeCrossunder, ConditionNodeTypeInRange:
+		return true
+	}
+	return false
+}
+
+func (e ConditionNodeType) String() string {
+	return string(e)
+}
+
+func (e *ConditionNodeType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ConditionNodeType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ConditionNodeType", str)
+	}
+	return nil
+}
+
+func (e ConditionNodeType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ConditionNodeType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ConditionNodeType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Built-in indicator types
+type IndicatorType string
+
+const (
+	IndicatorTypeRsi        IndicatorType = "RSI"
+	IndicatorTypeSma        IndicatorType = "SMA"
+	IndicatorTypeEma        IndicatorType = "EMA"
+	IndicatorTypeWma        IndicatorType = "WMA"
+	IndicatorTypeDema       IndicatorType = "DEMA"
+	IndicatorTypeTema       IndicatorType = "TEMA"
+	IndicatorTypeKama       IndicatorType = "KAMA"
+	IndicatorTypeMacd       IndicatorType = "MACD"
+	IndicatorTypeBb         IndicatorType = "BB"
+	IndicatorTypeKc         IndicatorType = "KC"
+	IndicatorTypeStoch      IndicatorType = "STOCH"
+	IndicatorTypeStochRsi   IndicatorType = "STOCH_RSI"
+	IndicatorTypeAtr        IndicatorType = "ATR"
+	IndicatorTypeAdx        IndicatorType = "ADX"
+	IndicatorTypeCci        IndicatorType = "CCI"
+	IndicatorTypeWillr      IndicatorType = "WILLR"
+	IndicatorTypeMom        IndicatorType = "MOM"
+	IndicatorTypeRoc        IndicatorType = "ROC"
+	IndicatorTypeObv        IndicatorType = "OBV"
+	IndicatorTypeMfi        IndicatorType = "MFI"
+	IndicatorTypeVwap       IndicatorType = "VWAP"
+	IndicatorTypeCmf        IndicatorType = "CMF"
+	IndicatorTypeAd         IndicatorType = "AD"
+	IndicatorTypeIchimoku   IndicatorType = "ICHIMOKU"
+	IndicatorTypeSar        IndicatorType = "SAR"
+	IndicatorTypePivot      IndicatorType = "PIVOT"
+	IndicatorTypeSupertrend IndicatorType = "SUPERTREND"
+	IndicatorTypeCustom     IndicatorType = "CUSTOM"
+)
+
+var AllIndicatorType = []IndicatorType{
+	IndicatorTypeRsi,
+	IndicatorTypeSma,
+	IndicatorTypeEma,
+	IndicatorTypeWma,
+	IndicatorTypeDema,
+	IndicatorTypeTema,
+	IndicatorTypeKama,
+	IndicatorTypeMacd,
+	IndicatorTypeBb,
+	IndicatorTypeKc,
+	IndicatorTypeStoch,
+	IndicatorTypeStochRsi,
+	IndicatorTypeAtr,
+	IndicatorTypeAdx,
+	IndicatorTypeCci,
+	IndicatorTypeWillr,
+	IndicatorTypeMom,
+	IndicatorTypeRoc,
+	IndicatorTypeObv,
+	IndicatorTypeMfi,
+	IndicatorTypeVwap,
+	IndicatorTypeCmf,
+	IndicatorTypeAd,
+	IndicatorTypeIchimoku,
+	IndicatorTypeSar,
+	IndicatorTypePivot,
+	IndicatorTypeSupertrend,
+	IndicatorTypeCustom,
+}
+
+func (e IndicatorType) IsValid() bool {
+	switch e {
+	case IndicatorTypeRsi, IndicatorTypeSma, IndicatorTypeEma, IndicatorTypeWma, IndicatorTypeDema, IndicatorTypeTema, IndicatorTypeKama, IndicatorTypeMacd, IndicatorTypeBb, IndicatorTypeKc, IndicatorTypeStoch, IndicatorTypeStochRsi, IndicatorTypeAtr, IndicatorTypeAdx, IndicatorTypeCci, IndicatorTypeWillr, IndicatorTypeMom, IndicatorTypeRoc, IndicatorTypeObv, IndicatorTypeMfi, IndicatorTypeVwap, IndicatorTypeCmf, IndicatorTypeAd, IndicatorTypeIchimoku, IndicatorTypeSar, IndicatorTypePivot, IndicatorTypeSupertrend, IndicatorTypeCustom:
+		return true
+	}
+	return false
+}
+
+func (e IndicatorType) String() string {
+	return string(e)
+}
+
+func (e *IndicatorType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = IndicatorType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid IndicatorType", str)
+	}
+	return nil
+}
+
+func (e IndicatorType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *IndicatorType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e IndicatorType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Category of operand for UI organization
+type OperandCategory string
+
+const (
+	OperandCategoryConstant  OperandCategory = "constant"
+	OperandCategoryIndicator OperandCategory = "indicator"
+	OperandCategoryPrice     OperandCategory = "price"
+	OperandCategoryTrade     OperandCategory = "trade"
+	OperandCategoryTime      OperandCategory = "time"
+	OperandCategoryExternal  OperandCategory = "external"
+	OperandCategoryComputed  OperandCategory = "computed"
+	OperandCategoryCustom    OperandCategory = "custom"
+)
+
+var AllOperandCategory = []OperandCategory{
+	OperandCategoryConstant,
+	OperandCategoryIndicator,
+	OperandCategoryPrice,
+	OperandCategoryTrade,
+	OperandCategoryTime,
+	OperandCategoryExternal,
+	OperandCategoryComputed,
+	OperandCategoryCustom,
+}
+
+func (e OperandCategory) IsValid() bool {
+	switch e {
+	case OperandCategoryConstant, OperandCategoryIndicator, OperandCategoryPrice, OperandCategoryTrade, OperandCategoryTime, OperandCategoryExternal, OperandCategoryComputed, OperandCategoryCustom:
+		return true
+	}
+	return false
+}
+
+func (e OperandCategory) String() string {
+	return string(e)
+}
+
+func (e *OperandCategory) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OperandCategory(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OperandCategory", str)
+	}
+	return nil
+}
+
+func (e OperandCategory) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *OperandCategory) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e OperandCategory) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Type of operand in a condition
+type OperandType string
+
+const (
+	OperandTypeConstant     OperandType = "CONSTANT"
+	OperandTypeIndicator    OperandType = "INDICATOR"
+	OperandTypePrice        OperandType = "PRICE"
+	OperandTypeTradeContext OperandType = "TRADE_CONTEXT"
+	OperandTypeTime         OperandType = "TIME"
+	OperandTypeExternal     OperandType = "EXTERNAL"
+	OperandTypeComputed     OperandType = "COMPUTED"
+	OperandTypeCustom       OperandType = "CUSTOM"
+)
+
+var AllOperandType = []OperandType{
+	OperandTypeConstant,
+	OperandTypeIndicator,
+	OperandTypePrice,
+	OperandTypeTradeContext,
+	OperandTypeTime,
+	OperandTypeExternal,
+	OperandTypeComputed,
+	OperandTypeCustom,
+}
+
+func (e OperandType) IsValid() bool {
+	switch e {
+	case OperandTypeConstant, OperandTypeIndicator, OperandTypePrice, OperandTypeTradeContext, OperandTypeTime, OperandTypeExternal, OperandTypeComputed, OperandTypeCustom:
+		return true
+	}
+	return false
+}
+
+func (e OperandType) String() string {
+	return string(e)
+}
+
+func (e *OperandType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OperandType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OperandType", str)
+	}
+	return nil
+}
+
+func (e OperandType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *OperandType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e OperandType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Price field options for PRICE operands
+type PriceField string
+
+const (
+	PriceFieldOpen   PriceField = "open"
+	PriceFieldHigh   PriceField = "high"
+	PriceFieldLow    PriceField = "low"
+	PriceFieldClose  PriceField = "close"
+	PriceFieldVolume PriceField = "volume"
+	PriceFieldOhlc4  PriceField = "ohlc4"
+	PriceFieldHlc3   PriceField = "hlc3"
+	PriceFieldHl2    PriceField = "hl2"
+)
+
+var AllPriceField = []PriceField{
+	PriceFieldOpen,
+	PriceFieldHigh,
+	PriceFieldLow,
+	PriceFieldClose,
+	PriceFieldVolume,
+	PriceFieldOhlc4,
+	PriceFieldHlc3,
+	PriceFieldHl2,
+}
+
+func (e PriceField) IsValid() bool {
+	switch e {
+	case PriceFieldOpen, PriceFieldHigh, PriceFieldLow, PriceFieldClose, PriceFieldVolume, PriceFieldOhlc4, PriceFieldHlc3, PriceFieldHl2:
+		return true
+	}
+	return false
+}
+
+func (e PriceField) String() string {
+	return string(e)
+}
+
+func (e *PriceField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PriceField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PriceField", str)
+	}
+	return nil
+}
+
+func (e PriceField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PriceField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PriceField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -596,6 +1122,142 @@ func (e *ResourceGroupOrderField) UnmarshalJSON(b []byte) error {
 }
 
 func (e ResourceGroupOrderField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Time field options for TIME operands
+type TimeField string
+
+const (
+	TimeFieldHour       TimeField = "hour"
+	TimeFieldMinute     TimeField = "minute"
+	TimeFieldDayOfWeek  TimeField = "day_of_week"
+	TimeFieldDayOfMonth TimeField = "day_of_month"
+	TimeFieldMonth      TimeField = "month"
+	TimeFieldTimestamp  TimeField = "timestamp"
+	TimeFieldIsWeekend  TimeField = "is_weekend"
+)
+
+var AllTimeField = []TimeField{
+	TimeFieldHour,
+	TimeFieldMinute,
+	TimeFieldDayOfWeek,
+	TimeFieldDayOfMonth,
+	TimeFieldMonth,
+	TimeFieldTimestamp,
+	TimeFieldIsWeekend,
+}
+
+func (e TimeField) IsValid() bool {
+	switch e {
+	case TimeFieldHour, TimeFieldMinute, TimeFieldDayOfWeek, TimeFieldDayOfMonth, TimeFieldMonth, TimeFieldTimestamp, TimeFieldIsWeekend:
+		return true
+	}
+	return false
+}
+
+func (e TimeField) String() string {
+	return string(e)
+}
+
+func (e *TimeField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TimeField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TimeField", str)
+	}
+	return nil
+}
+
+func (e TimeField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *TimeField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e TimeField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Trade context field options for TRADE_CONTEXT operands
+type TradeContextField string
+
+const (
+	TradeContextFieldCurrentProfit    TradeContextField = "current_profit"
+	TradeContextFieldCurrentProfitPct TradeContextField = "current_profit_pct"
+	TradeContextFieldEntryRate        TradeContextField = "entry_rate"
+	TradeContextFieldCurrentRate      TradeContextField = "current_rate"
+	TradeContextFieldTradeDuration    TradeContextField = "trade_duration"
+	TradeContextFieldNrOfEntries      TradeContextField = "nr_of_entries"
+	TradeContextFieldStakeAmount      TradeContextField = "stake_amount"
+	TradeContextFieldPair             TradeContextField = "pair"
+	TradeContextFieldIsShort          TradeContextField = "is_short"
+)
+
+var AllTradeContextField = []TradeContextField{
+	TradeContextFieldCurrentProfit,
+	TradeContextFieldCurrentProfitPct,
+	TradeContextFieldEntryRate,
+	TradeContextFieldCurrentRate,
+	TradeContextFieldTradeDuration,
+	TradeContextFieldNrOfEntries,
+	TradeContextFieldStakeAmount,
+	TradeContextFieldPair,
+	TradeContextFieldIsShort,
+}
+
+func (e TradeContextField) IsValid() bool {
+	switch e {
+	case TradeContextFieldCurrentProfit, TradeContextFieldCurrentProfitPct, TradeContextFieldEntryRate, TradeContextFieldCurrentRate, TradeContextFieldTradeDuration, TradeContextFieldNrOfEntries, TradeContextFieldStakeAmount, TradeContextFieldPair, TradeContextFieldIsShort:
+		return true
+	}
+	return false
+}
+
+func (e TradeContextField) String() string {
+	return string(e)
+}
+
+func (e *TradeContextField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TradeContextField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TradeContextField", str)
+	}
+	return nil
+}
+
+func (e TradeContextField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *TradeContextField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e TradeContextField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

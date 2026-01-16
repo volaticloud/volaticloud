@@ -30,6 +30,7 @@ import {
   ExpandLess,
   VisibilityOff,
 } from '@mui/icons-material';
+import { CONDITION_DEPTH_COLORS } from '../../theme/theme';
 import {
   ConditionNode as ConditionNodeType,
   IndicatorDefinition,
@@ -70,14 +71,6 @@ interface ConditionNodeProps {
   showTradeContext?: boolean;
 }
 
-const DEPTH_COLORS = [
-  'primary.main',
-  'secondary.main',
-  'success.main',
-  'warning.main',
-  'info.main',
-];
-
 export function ConditionNodeEditor({
   node,
   onChange,
@@ -89,7 +82,7 @@ export function ConditionNodeEditor({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
 
-  const borderColor = DEPTH_COLORS[depth % DEPTH_COLORS.length];
+  const borderColor = CONDITION_DEPTH_COLORS[depth % CONDITION_DEPTH_COLORS.length];
   const isDisabled = node.disabled === true;
 
   const handleToggleDisabled = () => {

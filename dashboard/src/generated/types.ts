@@ -1722,6 +1722,35 @@ export type BybitConfigInput = {
   apiSecret: Scalars['String']['input'];
 };
 
+/** Comparison operators for COMPARE nodes */
+export enum ComparisonOperator {
+  Eq = 'eq',
+  Gt = 'gt',
+  Gte = 'gte',
+  In = 'in',
+  Lt = 'lt',
+  Lte = 'lte',
+  Neq = 'neq',
+  NotIn = 'not_in'
+}
+
+/** Arithmetic operations for COMPUTED operands */
+export enum ComputedOperation {
+  Abs = 'abs',
+  Add = 'add',
+  Average = 'average',
+  Ceil = 'ceil',
+  Divide = 'divide',
+  Floor = 'floor',
+  Max = 'max',
+  Min = 'min',
+  Multiply = 'multiply',
+  PercentChange = 'percent_change',
+  Round = 'round',
+  Subtract = 'subtract',
+  Sum = 'sum'
+}
+
 /** Describes a configurable condition field for an alert type */
 export type ConditionField = {
   __typename?: 'ConditionField';
@@ -1747,6 +1776,18 @@ export enum ConditionFieldType {
   MultiSelect = 'multi_select',
   Number = 'number',
   Select = 'select'
+}
+
+/** Type of condition node in the strategy builder tree */
+export enum ConditionNodeType {
+  And = 'AND',
+  Compare = 'COMPARE',
+  Crossover = 'CROSSOVER',
+  Crossunder = 'CROSSUNDER',
+  IfThenElse = 'IF_THEN_ELSE',
+  InRange = 'IN_RANGE',
+  Not = 'NOT',
+  Or = 'OR'
 }
 
 export type ConnectionTestResult = {
@@ -2237,6 +2278,38 @@ export type GroupNode = {
   type: Scalars['String']['output'];
 };
 
+/** Built-in indicator types */
+export enum IndicatorType {
+  Ad = 'AD',
+  Adx = 'ADX',
+  Atr = 'ATR',
+  Bb = 'BB',
+  Cci = 'CCI',
+  Cmf = 'CMF',
+  Custom = 'CUSTOM',
+  Dema = 'DEMA',
+  Ema = 'EMA',
+  Ichimoku = 'ICHIMOKU',
+  Kama = 'KAMA',
+  Kc = 'KC',
+  Macd = 'MACD',
+  Mfi = 'MFI',
+  Mom = 'MOM',
+  Obv = 'OBV',
+  Pivot = 'PIVOT',
+  Roc = 'ROC',
+  Rsi = 'RSI',
+  Sar = 'SAR',
+  Sma = 'SMA',
+  Stoch = 'STOCH',
+  StochRsi = 'STOCH_RSI',
+  Supertrend = 'SUPERTREND',
+  Tema = 'TEMA',
+  Vwap = 'VWAP',
+  Willr = 'WILLR',
+  Wma = 'WMA'
+}
+
 /** Input for inviting a user to an organization */
 export type InviteUserInput = {
   /** Email address of the user to invite */
@@ -2624,6 +2697,30 @@ export type Node = {
   id: Scalars['ID']['output'];
 };
 
+/** Category of operand for UI organization */
+export enum OperandCategory {
+  Computed = 'computed',
+  Constant = 'constant',
+  Custom = 'custom',
+  External = 'external',
+  Indicator = 'indicator',
+  Price = 'price',
+  Time = 'time',
+  Trade = 'trade'
+}
+
+/** Type of operand in a condition */
+export enum OperandType {
+  Computed = 'COMPUTED',
+  Constant = 'CONSTANT',
+  Custom = 'CUSTOM',
+  External = 'EXTERNAL',
+  Indicator = 'INDICATOR',
+  Price = 'PRICE',
+  Time = 'TIME',
+  TradeContext = 'TRADE_CONTEXT'
+}
+
 /** Possible directions in which to order a list of items when provided an `orderBy` argument. */
 export enum OrderDirection {
   /** Specifies an ascending order for a given `orderBy` argument. */
@@ -2734,6 +2831,18 @@ export type PreviewCodeResult = {
   /** Whether the code generation was successful */
   success: Scalars['Boolean']['output'];
 };
+
+/** Price field options for PRICE operands */
+export enum PriceField {
+  Close = 'close',
+  High = 'high',
+  Hl2 = 'hl2',
+  Hlc3 = 'hlc3',
+  Low = 'low',
+  Ohlc4 = 'ohlc4',
+  Open = 'open',
+  Volume = 'volume'
+}
 
 export type Query = {
   __typename?: 'Query';
@@ -3817,6 +3926,17 @@ export type StrategyWhereInput = {
   versionNumberNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
+/** Time field options for TIME operands */
+export enum TimeField {
+  DayOfMonth = 'day_of_month',
+  DayOfWeek = 'day_of_week',
+  Hour = 'hour',
+  IsWeekend = 'is_weekend',
+  Minute = 'minute',
+  Month = 'month',
+  Timestamp = 'timestamp'
+}
+
 export type Trade = Node & {
   __typename?: 'Trade';
   /** Amount of coins */
@@ -3867,6 +3987,19 @@ export type TradeConnection = {
   /** Identifies the total count of items in the connection. */
   totalCount: Scalars['Int']['output'];
 };
+
+/** Trade context field options for TRADE_CONTEXT operands */
+export enum TradeContextField {
+  CurrentProfit = 'current_profit',
+  CurrentProfitPct = 'current_profit_pct',
+  CurrentRate = 'current_rate',
+  EntryRate = 'entry_rate',
+  IsShort = 'is_short',
+  NrOfEntries = 'nr_of_entries',
+  Pair = 'pair',
+  StakeAmount = 'stake_amount',
+  TradeDuration = 'trade_duration'
+}
 
 /** An edge in a connection. */
 export type TradeEdge = {

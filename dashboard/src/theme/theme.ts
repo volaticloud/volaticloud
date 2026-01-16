@@ -226,4 +226,17 @@ export const createAppTheme = (mode: 'light' | 'dark') => {
   return createTheme(getDesignTokens(mode));
 };
 
+/**
+ * Depth-based colors for nested condition tree visualization.
+ * Used by ConditionNodeEditor to show nesting level via border colors.
+ * Colors cycle through palette semantic colors for visual distinction.
+ */
+export const CONDITION_DEPTH_COLORS = [
+  'primary.main',
+  'secondary.main',
+  'success.main',
+  'warning.main',
+  'info.main',
+] as const;
+
 export default createAppTheme('light');

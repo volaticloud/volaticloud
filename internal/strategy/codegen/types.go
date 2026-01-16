@@ -8,115 +8,112 @@
 // - Strategy callbacks (custom_stoploss, confirm_entry, DCA, custom_exit)
 package codegen
 
-import "encoding/json"
+import (
+	"encoding/json"
 
-// OperandCategory represents the category of an operand for UI organization
-type OperandCategory string
-
-const (
-	OperandCategoryConstant  OperandCategory = "constant"
-	OperandCategoryIndicator OperandCategory = "indicator"
-	OperandCategoryPrice     OperandCategory = "price"
-	OperandCategoryTrade     OperandCategory = "trade"
-	OperandCategoryTime      OperandCategory = "time"
-	OperandCategoryExternal  OperandCategory = "external"
-	OperandCategoryComputed  OperandCategory = "computed"
-	OperandCategoryCustom    OperandCategory = "custom"
+	"volaticloud/internal/graph/model"
 )
 
-// ComparisonOperator represents comparison operators for COMPARE nodes
-type ComparisonOperator string
-
-const (
-	OperatorEq    ComparisonOperator = "eq"
-	OperatorNeq   ComparisonOperator = "neq"
-	OperatorGt    ComparisonOperator = "gt"
-	OperatorGte   ComparisonOperator = "gte"
-	OperatorLt    ComparisonOperator = "lt"
-	OperatorLte   ComparisonOperator = "lte"
-	OperatorIn    ComparisonOperator = "in"
-	OperatorNotIn ComparisonOperator = "not_in"
+// Type aliases for GraphQL generated types
+// These provide backward compatibility and cleaner naming within this package
+type (
+	// NodeType represents the type of a condition node (alias for model.ConditionNodeType)
+	NodeType = model.ConditionNodeType
+	// OperandType represents the type of an operand
+	OperandType = model.OperandType
+	// OperandCategory represents the category of an operand for UI organization
+	OperandCategory = model.OperandCategory
+	// ComparisonOperator represents comparison operators for COMPARE nodes
+	ComparisonOperator = model.ComparisonOperator
+	// ComputedOperation represents arithmetic operations for COMPUTED operands
+	ComputedOperation = model.ComputedOperation
+	// IndicatorType represents built-in indicator types
+	IndicatorType = model.IndicatorType
 )
 
-// ComputedOperation represents arithmetic operations for COMPUTED operands
-type ComputedOperation string
-
+// NodeType constants (aliases for model.ConditionNodeType*)
 const (
-	ComputedAdd           ComputedOperation = "add"
-	ComputedSubtract      ComputedOperation = "subtract"
-	ComputedMultiply      ComputedOperation = "multiply"
-	ComputedDivide        ComputedOperation = "divide"
-	ComputedMin           ComputedOperation = "min"
-	ComputedMax           ComputedOperation = "max"
-	ComputedAbs           ComputedOperation = "abs"
-	ComputedRound         ComputedOperation = "round"
-	ComputedFloor         ComputedOperation = "floor"
-	ComputedCeil          ComputedOperation = "ceil"
-	ComputedPercentChange ComputedOperation = "percent_change"
-	ComputedAverage       ComputedOperation = "average"
-	ComputedSum           ComputedOperation = "sum"
+	NodeTypeAND        = model.ConditionNodeTypeAnd
+	NodeTypeOR         = model.ConditionNodeTypeOr
+	NodeTypeNOT        = model.ConditionNodeTypeNot
+	NodeTypeIfThenElse = model.ConditionNodeTypeIfThenElse
+	NodeTypeCOMPARE    = model.ConditionNodeTypeCompare
+	NodeTypeCROSSOVER  = model.ConditionNodeTypeCrossover
+	NodeTypeCROSSUNDER = model.ConditionNodeTypeCrossunder
+	NodeTypeIN_RANGE   = model.ConditionNodeTypeInRange
 )
 
-// IndicatorType represents built-in indicator types
-type IndicatorType string
-
+// OperandType constants (aliases for model.OperandType*)
 const (
-	IndicatorRSI        IndicatorType = "RSI"
-	IndicatorSMA        IndicatorType = "SMA"
-	IndicatorEMA        IndicatorType = "EMA"
-	IndicatorWMA        IndicatorType = "WMA"
-	IndicatorDEMA       IndicatorType = "DEMA"
-	IndicatorTEMA       IndicatorType = "TEMA"
-	IndicatorKAMA       IndicatorType = "KAMA"
-	IndicatorMACD       IndicatorType = "MACD"
-	IndicatorBB         IndicatorType = "BB"
-	IndicatorKC         IndicatorType = "KC"
-	IndicatorSTOCH      IndicatorType = "STOCH"
-	IndicatorSTOCHRSI   IndicatorType = "STOCH_RSI"
-	IndicatorATR        IndicatorType = "ATR"
-	IndicatorADX        IndicatorType = "ADX"
-	IndicatorCCI        IndicatorType = "CCI"
-	IndicatorWILLR      IndicatorType = "WILLR"
-	IndicatorMOM        IndicatorType = "MOM"
-	IndicatorROC        IndicatorType = "ROC"
-	IndicatorOBV        IndicatorType = "OBV"
-	IndicatorMFI        IndicatorType = "MFI"
-	IndicatorVWAP       IndicatorType = "VWAP"
-	IndicatorCMF        IndicatorType = "CMF"
-	IndicatorAD         IndicatorType = "AD"
-	IndicatorICHIMOKU   IndicatorType = "ICHIMOKU"
-	IndicatorSAR        IndicatorType = "SAR"
-	IndicatorPIVOT      IndicatorType = "PIVOT"
-	IndicatorSUPERTREND IndicatorType = "SUPERTREND"
-	IndicatorCUSTOM     IndicatorType = "CUSTOM"
+	OperandTypeCONSTANT      = model.OperandTypeConstant
+	OperandTypeINDICATOR     = model.OperandTypeIndicator
+	OperandTypePRICE         = model.OperandTypePrice
+	OperandTypeTRADE_CONTEXT = model.OperandTypeTradeContext
+	OperandTypeTIME          = model.OperandTypeTime
+	OperandTypeEXTERNAL      = model.OperandTypeExternal
+	OperandTypeCOMPUTED      = model.OperandTypeComputed
+	OperandTypeCUSTOM        = model.OperandTypeCustom
 )
 
-// NodeType represents the type of a condition node
-type NodeType string
-
+// ComparisonOperator constants (aliases for model.ComparisonOperator*)
 const (
-	NodeTypeAND        NodeType = "AND"
-	NodeTypeOR         NodeType = "OR"
-	NodeTypeNOT        NodeType = "NOT"
-	NodeTypeIfThenElse NodeType = "IF_THEN_ELSE"
-	NodeTypeCOMPARE    NodeType = "COMPARE"
-	NodeTypeCROSSOVER  NodeType = "CROSSOVER"
-	NodeTypeCROSSUNDER NodeType = "CROSSUNDER"
-	NodeTypeIN_RANGE   NodeType = "IN_RANGE"
+	OperatorEq    = model.ComparisonOperatorEq
+	OperatorNeq   = model.ComparisonOperatorNeq
+	OperatorGt    = model.ComparisonOperatorGt
+	OperatorGte   = model.ComparisonOperatorGte
+	OperatorLt    = model.ComparisonOperatorLt
+	OperatorLte   = model.ComparisonOperatorLte
+	OperatorIn    = model.ComparisonOperatorIn
+	OperatorNotIn = model.ComparisonOperatorNotIn
 )
 
-// OperandType represents the type of an operand
-type OperandType string
-
+// ComputedOperation constants (aliases for model.ComputedOperation*)
 const (
-	OperandTypeCONSTANT      OperandType = "CONSTANT"
-	OperandTypeINDICATOR     OperandType = "INDICATOR"
-	OperandTypePRICE         OperandType = "PRICE"
-	OperandTypeTRADE_CONTEXT OperandType = "TRADE_CONTEXT"
-	OperandTypeTIME          OperandType = "TIME"
-	OperandTypeEXTERNAL      OperandType = "EXTERNAL"
-	OperandTypeCOMPUTED      OperandType = "COMPUTED"
-	OperandTypeCUSTOM        OperandType = "CUSTOM"
+	ComputedAdd           = model.ComputedOperationAdd
+	ComputedSubtract      = model.ComputedOperationSubtract
+	ComputedMultiply      = model.ComputedOperationMultiply
+	ComputedDivide        = model.ComputedOperationDivide
+	ComputedMin           = model.ComputedOperationMin
+	ComputedMax           = model.ComputedOperationMax
+	ComputedAbs           = model.ComputedOperationAbs
+	ComputedRound         = model.ComputedOperationRound
+	ComputedFloor         = model.ComputedOperationFloor
+	ComputedCeil          = model.ComputedOperationCeil
+	ComputedPercentChange = model.ComputedOperationPercentChange
+	ComputedAverage       = model.ComputedOperationAverage
+	ComputedSum           = model.ComputedOperationSum
+)
+
+// IndicatorType constants (aliases for model.IndicatorType*)
+const (
+	IndicatorRSI        = model.IndicatorTypeRsi
+	IndicatorSMA        = model.IndicatorTypeSma
+	IndicatorEMA        = model.IndicatorTypeEma
+	IndicatorWMA        = model.IndicatorTypeWma
+	IndicatorDEMA       = model.IndicatorTypeDema
+	IndicatorTEMA       = model.IndicatorTypeTema
+	IndicatorKAMA       = model.IndicatorTypeKama
+	IndicatorMACD       = model.IndicatorTypeMacd
+	IndicatorBB         = model.IndicatorTypeBb
+	IndicatorKC         = model.IndicatorTypeKc
+	IndicatorSTOCH      = model.IndicatorTypeStoch
+	IndicatorSTOCHRSI   = model.IndicatorTypeStochRsi
+	IndicatorATR        = model.IndicatorTypeAtr
+	IndicatorADX        = model.IndicatorTypeAdx
+	IndicatorCCI        = model.IndicatorTypeCci
+	IndicatorWILLR      = model.IndicatorTypeWillr
+	IndicatorMOM        = model.IndicatorTypeMom
+	IndicatorROC        = model.IndicatorTypeRoc
+	IndicatorOBV        = model.IndicatorTypeObv
+	IndicatorMFI        = model.IndicatorTypeMfi
+	IndicatorVWAP       = model.IndicatorTypeVwap
+	IndicatorCMF        = model.IndicatorTypeCmf
+	IndicatorAD         = model.IndicatorTypeAd
+	IndicatorICHIMOKU   = model.IndicatorTypeIchimoku
+	IndicatorSAR        = model.IndicatorTypeSar
+	IndicatorPIVOT      = model.IndicatorTypePivot
+	IndicatorSUPERTREND = model.IndicatorTypeSupertrend
+	IndicatorCUSTOM     = model.IndicatorTypeCustom
 )
 
 // ConditionNode represents any node in the condition tree

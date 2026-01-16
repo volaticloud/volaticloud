@@ -209,25 +209,8 @@ func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bo
 }
 
 func (r *mutationResolver) PreviewStrategyCode(ctx context.Context, config map[string]any, className string) (*model.PreviewCodeResult, error) {
-	// Validate config size to prevent DoS
-	const maxConfigSize = 1024 * 1024 // 1MB max
-	configJSON, err := json.Marshal(config)
-	if err != nil {
-		errMsg := fmt.Sprintf("invalid config: %v", err)
-		return &model.PreviewCodeResult{
-			Success: false,
-			Code:    "",
-			Error:   &errMsg,
-		}, nil
-	}
-	if len(configJSON) > maxConfigSize {
-		errMsg := fmt.Sprintf("config too large: %d bytes (max %d bytes)", len(configJSON), maxConfigSize)
-		return &model.PreviewCodeResult{
-			Success: false,
-			Code:    "",
-			Error:   &errMsg,
-		}, nil
-	}
+	// TODO: Consider adding rate limiting per user/IP to prevent abuse.
+	// Current protection: 1MB config size limit in codegen.ValidateConfigSize()
 
 	// Convert map[string]any to map[string]interface{} for codegen
 	configMap := make(map[string]interface{}, len(config))
@@ -235,7 +218,7 @@ func (r *mutationResolver) PreviewStrategyCode(ctx context.Context, config map[s
 		configMap[k] = v
 	}
 
-	// Generate the code
+	// Generate the code (includes config validation)
 	code, err := codegen.PreviewStrategyCode(configMap, className)
 	if err != nil {
 		errMsg := err.Error()

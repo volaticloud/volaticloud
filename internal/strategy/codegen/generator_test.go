@@ -996,8 +996,10 @@ func TestGenerateCondition_UnknownNodeType(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for unknown node type")
 	}
-	if !strings.Contains(err.Error(), "unknown node type") {
-		t.Errorf("Expected 'unknown node type' error, got: %v", err)
+	// GraphQL generated types validate enum values during JSON unmarshal
+	// Error message is "UNKNOWN_TYPE is not a valid ConditionNodeType"
+	if !strings.Contains(err.Error(), "not a valid ConditionNodeType") && !strings.Contains(err.Error(), "unknown node type") {
+		t.Errorf("Expected 'not a valid ConditionNodeType' or 'unknown node type' error, got: %v", err)
 	}
 }
 
@@ -1011,7 +1013,9 @@ func TestGenerateOperand_UnknownOperandType(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for unknown operand type")
 	}
-	if !strings.Contains(err.Error(), "unsupported operand type") {
-		t.Errorf("Expected 'unsupported operand type' error, got: %v", err)
+	// GraphQL generated types validate enum values during JSON unmarshal
+	// Error message is "UNKNOWN_OPERAND is not a valid OperandType"
+	if !strings.Contains(err.Error(), "not a valid OperandType") && !strings.Contains(err.Error(), "unsupported operand type") {
+		t.Errorf("Expected 'not a valid OperandType' or 'unsupported operand type' error, got: %v", err)
 	}
 }

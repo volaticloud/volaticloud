@@ -38,6 +38,7 @@
 | `bot` | Bot lifecycle, config validation |
 | `backtest` | Backtest execution, result parsing |
 | `strategy` | Strategy versioning |
+| `strategy/codegen` | Strategy code generation from UI Builder |
 | `exchange` | Exchange config validation |
 | `db` | Database transactions |
 
@@ -84,6 +85,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0006](../docs/adr/0006-bot-config-layer-separation.md) - Bot Config Layer Separation
 - [ADR-0007](../docs/adr/0007-kubernetes-deployment-strategy.md) - Kubernetes Deployment
 - [ADR-0008](../docs/adr/0008-multi-tenant-authorization.md) - Multi-Tenant Authorization (UMA 2.0, public/private visibility)
+- [ADR-0011](../docs/adr/0011-strategy-ui-builder.md) - Strategy UI Builder Architecture
 
 ## Project Structure
 
@@ -187,6 +189,37 @@ cd dashboard && npm run codegen
 
 See [ADR-0005](../docs/adr/0005-per-component-graphql-codegen.md) for architecture.
 
+### Type Synchronization (GraphQL as Single Source of Truth)
+
+**Strategy UI Builder types are defined in GraphQL schema and generated for both Go and TypeScript.**
+
+```mermaid
+flowchart TD
+    A[GraphQL Schema<br/>internal/graph/schema.graphqls] --> B[make generate]
+    A --> C[npm run codegen]
+    B --> D[Go Types<br/>internal/graph/model/models_gen.go]
+    D --> E[Type Aliases<br/>internal/strategy/codegen/types.go]
+    C --> F[TypeScript Types<br/>dashboard/src/generated/types.ts]
+    F --> G[Re-exports<br/>StrategyBuilder/types.ts]
+```
+
+**To add/modify UI Builder enums:**
+
+1. Edit `internal/graph/schema.graphqls` (add enum)
+2. Run `make generate` (generates Go types)
+3. Run `cd dashboard && npm run codegen` (generates TypeScript types)
+4. Update type aliases in `codegen/types.go` if needed
+5. Update re-exports in `StrategyBuilder/types.ts` if needed
+
+**Key enums defined in GraphQL:**
+
+- `ConditionNodeType` - AND, OR, NOT, COMPARE, CROSSOVER, etc.
+- `OperandType` - CONSTANT, INDICATOR, PRICE, TRADE_CONTEXT, etc.
+- `ComparisonOperator` - eq, neq, gt, gte, lt, lte, in, not_in
+- `IndicatorType` - RSI, SMA, EMA, MACD, BB, ATR, etc.
+
+See `internal/strategy/doc.go` for detailed type synchronization documentation.
+
 ### Authentication & Authorization
 
 **Keycloak is MANDATORY** - Server won't start without proper configuration.
@@ -260,6 +293,8 @@ make coverage   # Open HTML report
 - `internal/graph/doc.go` - GraphQL resolver architecture
 - `internal/backtest/doc.go` - Backtest result parsing
 - `internal/keycloak/doc.go` - Keycloak UMA 2.0 integration
+- `internal/strategy/doc.go` - Strategy modes, versioning, type synchronization
+- `internal/strategy/codegen/doc.go` - Strategy code generation from UI Builder
 
 **Generated Documentation:**
 

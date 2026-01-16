@@ -2,6 +2,165 @@
 # Note: Scalar declarations (Time, Map, Cursor) are in scalars.graphql
 # which must be loaded first in gqlgen.yml
 
+# ==============================================================================
+# Strategy UI Builder Types
+# These are the single source of truth - Go and TypeScript types are generated
+# ==============================================================================
+
+# --- Enums ---
+
+"""
+Type of condition node in the strategy builder tree
+"""
+enum ConditionNodeType {
+  AND
+  OR
+  NOT
+  IF_THEN_ELSE
+  COMPARE
+  CROSSOVER
+  CROSSUNDER
+  IN_RANGE
+}
+
+"""
+Type of operand in a condition
+"""
+enum OperandType {
+  CONSTANT
+  INDICATOR
+  PRICE
+  TRADE_CONTEXT
+  TIME
+  EXTERNAL
+  COMPUTED
+  CUSTOM
+}
+
+"""
+Category of operand for UI organization
+"""
+enum OperandCategory {
+  constant
+  indicator
+  price
+  trade
+  time
+  external
+  computed
+  custom
+}
+
+"""
+Comparison operators for COMPARE nodes
+"""
+enum ComparisonOperator {
+  eq
+  neq
+  gt
+  gte
+  lt
+  lte
+  in
+  not_in
+}
+
+"""
+Arithmetic operations for COMPUTED operands
+"""
+enum ComputedOperation {
+  add
+  subtract
+  multiply
+  divide
+  min
+  max
+  abs
+  round
+  floor
+  ceil
+  percent_change
+  average
+  sum
+}
+
+"""
+Built-in indicator types
+"""
+enum IndicatorType {
+  RSI
+  SMA
+  EMA
+  WMA
+  DEMA
+  TEMA
+  KAMA
+  MACD
+  BB
+  KC
+  STOCH
+  STOCH_RSI
+  ATR
+  ADX
+  CCI
+  WILLR
+  MOM
+  ROC
+  OBV
+  MFI
+  VWAP
+  CMF
+  AD
+  ICHIMOKU
+  SAR
+  PIVOT
+  SUPERTREND
+  CUSTOM
+}
+
+"""
+Price field options for PRICE operands
+"""
+enum PriceField {
+  open
+  high
+  low
+  close
+  volume
+  ohlc4
+  hlc3
+  hl2
+}
+
+"""
+Trade context field options for TRADE_CONTEXT operands
+"""
+enum TradeContextField {
+  current_profit
+  current_profit_pct
+  entry_rate
+  current_rate
+  trade_duration
+  nr_of_entries
+  stake_amount
+  pair
+  is_short
+}
+
+"""
+Time field options for TIME operands
+"""
+enum TimeField {
+  hour
+  minute
+  day_of_week
+  day_of_month
+  month
+  timestamp
+  is_weekend
+}
+
+# ==============================================================================
 # Authorization directives
 
 """
