@@ -37,7 +37,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     if (saved !== null) return JSON.parse(saved);
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false; // Default to light mode
   });
   const gatewayUrl = useConfigValue('VOLATICLOUD__GATEWAY_URL');
   const auth = useAuth();
