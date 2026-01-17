@@ -66,7 +66,8 @@ func (g *Generator) generateAnd(node *ConditionNode) (string, error) {
 	}
 
 	if len(andNode.Children) == 0 {
-		return "True", nil // Empty AND is always true
+		// Empty AND is always true - use Series comparison to get boolean Series, not scalar
+		return "(dataframe['close'] == dataframe['close'])", nil
 	}
 
 	parts := make([]string, 0, len(andNode.Children))
@@ -89,7 +90,8 @@ func (g *Generator) generateOr(node *ConditionNode) (string, error) {
 	}
 
 	if len(orNode.Children) == 0 {
-		return "False", nil // Empty OR is always false
+		// Empty OR is always false - use Series comparison to get boolean Series, not scalar
+		return "(dataframe['close'] != dataframe['close'])", nil
 	}
 
 	parts := make([]string, 0, len(orNode.Children))
@@ -145,7 +147,8 @@ func (g *Generator) generateIfThenElse(node *ConditionNode) (string, error) {
 			return "", err
 		}
 	} else {
-		elseCode = "False"
+		// Empty else is always false - use Series comparison to get boolean Series, not scalar
+		elseCode = "(dataframe['close'] != dataframe['close'])"
 	}
 
 	// Use np.where for conditional vectorized operations

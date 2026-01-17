@@ -221,6 +221,34 @@ const (
 3. **Flexibility via COMPUTED operand**: Users can compose arithmetic expressions for calculated values
 4. **Server-side generation**: Backend generates Python to ensure security and validation
 
+## Edge Cases
+
+### Empty Conditions
+
+All generated conditions must return pandas Series, not Python scalar booleans. This is critical because Freqtrade calls `.astype(int)` on the result:
+
+```python
+dataframe['enter_long'] = (
+    <generated_condition>
+).astype(int)  # Fails if condition is scalar True/False
+```
+
+| Scenario | Generated Code | Rationale |
+|----------|---------------|-----------|
+| Empty AND | `(dataframe['close'] == dataframe['close'])` | Always-true Series |
+| Empty OR | `(dataframe['close'] != dataframe['close'])` | Always-false Series |
+| IF-THEN-ELSE without else | `np.where(cond, then, (dataframe['close'] != dataframe['close']))` | Else defaults to always-false Series |
+
+**Why not use scalar `True`/`False`?**
+
+```python
+# This fails:
+(True).astype(int)  # AttributeError: 'bool' object has no attribute 'astype'
+
+# This works:
+(dataframe['close'] == dataframe['close']).astype(int)  # Returns Series of 1s
+```
+
 ## Validation
 
 How to verify this decision is being followed:

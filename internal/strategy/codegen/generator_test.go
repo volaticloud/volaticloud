@@ -132,7 +132,8 @@ func TestGenerateCondition_And(t *testing.T) {
 				"type": "AND",
 				"children": []
 			}`,
-			expected: "True",
+			// Returns Series comparison instead of scalar True for pandas compatibility
+			expected: "(dataframe['close'] == dataframe['close'])",
 		},
 		{
 			name: "single child AND",
@@ -208,7 +209,8 @@ func TestGenerateCondition_Or(t *testing.T) {
 				"type": "OR",
 				"children": []
 			}`,
-			expected: "False",
+			// Returns Series comparison instead of scalar False for pandas compatibility
+			expected: "(dataframe['close'] != dataframe['close'])",
 		},
 		{
 			name: "multiple children OR",
@@ -337,7 +339,8 @@ func TestGenerateCondition_IfThenElse(t *testing.T) {
 					"right": {"type": "CONSTANT", "value": 30}
 				}
 			}`,
-			contains: []string{"np.where", "dataframe['adx_1'] > 25", "dataframe['rsi_1'] < 30", "False"},
+			// Empty else returns Series (not scalar) for pandas compatibility
+			contains: []string{"np.where", "dataframe['adx_1'] > 25", "dataframe['rsi_1'] < 30", "(dataframe['close'] != dataframe['close'])"},
 		},
 	}
 
