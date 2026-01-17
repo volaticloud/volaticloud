@@ -372,7 +372,7 @@ func (g *IndicatorGenerator) GetImportStatements() string {
 		imports = append(imports, "import talib.abstract as ta")
 	}
 	if g.imports["qtpylib"] {
-		imports = append(imports, "import freqtrade.vendor.qtpylib.indicators as qtpylib")
+		imports = append(imports, "from technical import qtpylib")
 	}
 	if g.imports["numpy"] {
 		imports = append(imports, "import numpy as np")

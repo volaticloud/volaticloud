@@ -474,7 +474,7 @@ func TestGetImportStatements(t *testing.T) {
 
 	expectedImports := []string{
 		"import talib.abstract as ta",
-		"import freqtrade.vendor.qtpylib.indicators as qtpylib",
+		"from technical import qtpylib",
 	}
 
 	for _, exp := range expectedImports {

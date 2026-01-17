@@ -47,7 +47,7 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 		sb.WriteString("import numpy as np\n")
 	}
 	if g.imports["qtpylib"] {
-		sb.WriteString("import freqtrade.vendor.qtpylib.indicators as qtpylib\n")
+		sb.WriteString("from technical import qtpylib\n")
 	}
 	if g.imports["pandas"] {
 		sb.WriteString("import pandas as pd\n")
