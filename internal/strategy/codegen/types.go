@@ -40,19 +40,19 @@ const (
 	NodeTypeCOMPARE    = model.ConditionNodeTypeCompare
 	NodeTypeCROSSOVER  = model.ConditionNodeTypeCrossover
 	NodeTypeCROSSUNDER = model.ConditionNodeTypeCrossunder
-	NodeTypeIN_RANGE   = model.ConditionNodeTypeInRange
+	NodeTypeInRange    = model.ConditionNodeTypeInRange
 )
 
 // OperandType constants (aliases for model.OperandType*)
 const (
-	OperandTypeCONSTANT      = model.OperandTypeConstant
-	OperandTypeINDICATOR     = model.OperandTypeIndicator
-	OperandTypePRICE         = model.OperandTypePrice
-	OperandTypeTRADE_CONTEXT = model.OperandTypeTradeContext
-	OperandTypeTIME          = model.OperandTypeTime
-	OperandTypeEXTERNAL      = model.OperandTypeExternal
-	OperandTypeCOMPUTED      = model.OperandTypeComputed
-	OperandTypeCUSTOM        = model.OperandTypeCustom
+	OperandTypeCONSTANT     = model.OperandTypeConstant
+	OperandTypeINDICATOR    = model.OperandTypeIndicator
+	OperandTypePRICE        = model.OperandTypePrice
+	OperandTypeTradeContext = model.OperandTypeTradeContext
+	OperandTypeTIME         = model.OperandTypeTime
+	OperandTypeEXTERNAL     = model.OperandTypeExternal
+	OperandTypeCOMPUTED     = model.OperandTypeComputed
+	OperandTypeCUSTOM       = model.OperandTypeCustom
 )
 
 // ComparisonOperator constants (aliases for model.ComparisonOperator*)

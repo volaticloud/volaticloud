@@ -103,7 +103,7 @@ export function ConditionNodeEditor({
         indicators.length > 0
           ? createIndicatorOperand(indicators[0].id)
           : createConstantOperand(0),
-        'gt',
+        ComparisonOperator.Gt,
         createConstantOperand(0)
       ),
       then: node,
@@ -143,7 +143,7 @@ export function ConditionNodeEditor({
 
       const newCondition = createCompareNode(
         defaultOperand,
-        'gt',
+        ComparisonOperator.Gt,
         createConstantOperand(0)
       );
 

@@ -50,7 +50,7 @@ func (g *Generator) GenerateCondition(node *ConditionNode) (string, error) {
 		return g.generateCrossover(node)
 	case NodeTypeCROSSUNDER:
 		return g.generateCrossunder(node)
-	case NodeTypeIN_RANGE:
+	case NodeTypeInRange:
 		return g.generateInRange(node)
 	default:
 		return "", fmt.Errorf("unknown node type: %s", nodeType)
@@ -279,7 +279,7 @@ func (g *Generator) GenerateOperand(op *Operand) (string, error) {
 		return g.generateIndicatorOperand(op)
 	case OperandTypePRICE:
 		return g.generatePriceOperand(op)
-	case OperandTypeTRADE_CONTEXT:
+	case OperandTypeTradeContext:
 		return g.generateTradeContextOperand(op)
 	case OperandTypeTIME:
 		return g.generateTimeOperand(op)

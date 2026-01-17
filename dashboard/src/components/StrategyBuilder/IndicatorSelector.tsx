@@ -40,6 +40,7 @@ import {
 import {
   IndicatorDefinition,
   IndicatorType,
+  IndicatorMeta,
   createId,
 } from './types';
 import {
@@ -47,7 +48,6 @@ import {
   INDICATOR_CATEGORIES,
   getIndicatorsByCategory,
   getDefaultParams,
-  IndicatorMeta,
 } from './indicatorMeta';
 
 const CATEGORY_ICONS = {
