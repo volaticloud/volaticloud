@@ -30,6 +30,8 @@ import {
   createId,
   createCompareNode,
   createConstantOperand,
+  OperandType,
+  ComparisonOperator,
 } from './types';
 import { ConditionNodeEditor } from './ConditionNode';
 
@@ -74,8 +76,8 @@ export function StoplossBuilder({ value, onChange, indicators }: StoplossBuilder
     const newRule: StoplossRule = {
       id: createId(),
       condition: createCompareNode(
-        { type: 'TRADE_CONTEXT', field: 'current_profit' },
-        'gt',
+        { type: OperandType.TradeContext, field: 'current_profit' },
+        ComparisonOperator.Gt,
         createConstantOperand(0.05)
       ),
       stoploss: -0.01,

@@ -41,14 +41,14 @@ import { INDICATORS } from './indicatorMeta';
 // Note: Only implemented operand types are included here
 // MARKET operand is not yet implemented in the backend
 const OPERAND_TYPE_ICONS: Partial<Record<OperandType, React.ElementType>> = {
-  CONSTANT: Functions,
-  INDICATOR: ShowChart,
-  PRICE: AttachMoney,
-  TRADE_CONTEXT: TrendingUp,
-  TIME: AccessTime,
-  EXTERNAL: Functions,
-  COMPUTED: Calculate,
-  CUSTOM: Functions,
+  [OperandType.Constant]: Functions,
+  [OperandType.Indicator]: ShowChart,
+  [OperandType.Price]: AttachMoney,
+  [OperandType.TradeContext]: TrendingUp,
+  [OperandType.Time]: AccessTime,
+  [OperandType.External]: Functions,
+  [OperandType.Computed]: Calculate,
+  [OperandType.Custom]: Functions,
 };
 
 const PRICE_FIELDS = [
@@ -101,26 +101,26 @@ export function OperandEditor({
     setAnchorEl(null);
 
     switch (type) {
-      case 'CONSTANT':
+      case OperandType.Constant:
         onChange(createConstantOperand(0));
         break;
-      case 'INDICATOR':
+      case OperandType.Indicator:
         if (indicators.length > 0) {
           onChange(createIndicatorOperand(indicators[0].id));
         }
         break;
-      case 'PRICE':
+      case OperandType.Price:
         onChange(createPriceOperand('close'));
         break;
-      case 'TRADE_CONTEXT':
+      case OperandType.TradeContext:
         onChange({
-          type: 'TRADE_CONTEXT',
+          type: OperandType.TradeContext,
           field: 'current_profit',
         } as TradeContextOperand);
         break;
-      case 'TIME':
+      case OperandType.Time:
         onChange({
-          type: 'TIME',
+          type: OperandType.Time,
           field: 'hour',
         } as TimeOperand);
         break;
@@ -131,7 +131,7 @@ export function OperandEditor({
 
   const renderEditor = () => {
     switch (value.type) {
-      case 'CONSTANT': {
+      case OperandType.Constant: {
         const constOp = value as ConstantOperand;
         return (
           <TextField
@@ -152,7 +152,7 @@ export function OperandEditor({
         );
       }
 
-      case 'INDICATOR': {
+      case OperandType.Indicator: {
         const indOp = value as IndicatorOperand;
         const selectedInd = indicators.find((i) => i.id === indOp.indicatorId);
         const meta = selectedInd ? INDICATORS[selectedInd.type] : null;
@@ -218,7 +218,7 @@ export function OperandEditor({
         );
       }
 
-      case 'PRICE': {
+      case OperandType.Price: {
         const priceOp = value as PriceOperand;
         return (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -256,7 +256,7 @@ export function OperandEditor({
         );
       }
 
-      case 'TRADE_CONTEXT': {
+      case OperandType.TradeContext: {
         const tradeOp = value as TradeContextOperand;
         return (
           <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -281,7 +281,7 @@ export function OperandEditor({
         );
       }
 
-      case 'TIME': {
+      case OperandType.Time: {
         const timeOp = value as TimeOperand;
         return (
           <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -344,7 +344,7 @@ export function OperandEditor({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <List dense sx={{ minWidth: 200 }}>
-          <ListItemButton onClick={() => handleTypeSelect('CONSTANT')}>
+          <ListItemButton onClick={() => handleTypeSelect(OperandType.Constant)}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <Functions fontSize="small" />
             </ListItemIcon>
@@ -352,7 +352,7 @@ export function OperandEditor({
           </ListItemButton>
 
           {indicators.length > 0 && (
-            <ListItemButton onClick={() => handleTypeSelect('INDICATOR')}>
+            <ListItemButton onClick={() => handleTypeSelect(OperandType.Indicator)}>
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <ShowChart fontSize="small" />
               </ListItemIcon>
@@ -360,7 +360,7 @@ export function OperandEditor({
             </ListItemButton>
           )}
 
-          <ListItemButton onClick={() => handleTypeSelect('PRICE')}>
+          <ListItemButton onClick={() => handleTypeSelect(OperandType.Price)}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <AttachMoney fontSize="small" />
             </ListItemIcon>
@@ -369,7 +369,7 @@ export function OperandEditor({
 
           <Divider />
 
-          <ListItemButton onClick={() => handleTypeSelect('TIME')}>
+          <ListItemButton onClick={() => handleTypeSelect(OperandType.Time)}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <AccessTime fontSize="small" />
             </ListItemIcon>
@@ -377,7 +377,7 @@ export function OperandEditor({
           </ListItemButton>
 
           {showTradeContext && (
-            <ListItemButton onClick={() => handleTypeSelect('TRADE_CONTEXT')}>
+            <ListItemButton onClick={() => handleTypeSelect(OperandType.TradeContext)}>
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <TrendingUp fontSize="small" />
               </ListItemIcon>
