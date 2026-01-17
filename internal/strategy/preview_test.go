@@ -244,3 +244,186 @@ func TestPreviewStrategyCode_ConfigSizeLimit(t *testing.T) {
 		t.Errorf("expected 'too large' error, got: %s", result.Error)
 	}
 }
+
+func TestNameToClassName(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "MyStrategy",
+		},
+		{
+			name:     "simple name no spaces - preserve casing",
+			input:    "NewBuilderStrat",
+			expected: "NewBuilderStrat",
+		},
+		{
+			name:     "camelCase - uppercase first letter only",
+			input:    "myStrategy",
+			expected: "MyStrategy",
+		},
+		{
+			name:     "space separated words",
+			input:    "my strategy",
+			expected: "MyStrategy",
+		},
+		{
+			name:     "multiple spaces",
+			input:    "my  awesome   strategy",
+			expected: "MyAwesomeStrategy",
+		},
+		{
+			name:     "with numbers",
+			input:    "strategy 123",
+			expected: "Strategy123",
+		},
+		{
+			name:     "with special characters - removed",
+			input:    "test-strategy_v2!",
+			expected: "Teststrategyv2",
+		},
+		{
+			name:     "all special characters",
+			input:    "!@#$%",
+			expected: "MyStrategy",
+		},
+		{
+			name:     "mixed case with spaces",
+			input:    "My AWESOME Strategy",
+			expected: "MyAwesomeStrategy",
+		},
+		{
+			name:     "single word uppercase",
+			input:    "STRATEGY",
+			expected: "STRATEGY",
+		},
+		{
+			name:     "single letter",
+			input:    "s",
+			expected: "S",
+		},
+		{
+			name:     "preserves PascalCase without spaces",
+			input:    "MyAwesomeStrategy2024",
+			expected: "MyAwesomeStrategy2024",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := NameToClassName(tt.input)
+			if result != tt.expected {
+				t.Errorf("NameToClassName(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGenerateCodeFromUIBuilder(t *testing.T) {
+	tests := []struct {
+		name        string
+		stratName   string
+		config      map[string]interface{}
+		wantErr     bool
+		errContains string
+		wantClass   string
+	}{
+		{
+			name:        "missing ui_builder config",
+			stratName:   "TestStrategy",
+			config:      map[string]interface{}{"timeframe": "5m"},
+			wantErr:     true,
+			errContains: "missing ui_builder",
+		},
+		{
+			name:      "valid config",
+			stratName: "TestStrategy",
+			config: map[string]interface{}{
+				"timeframe": "5m",
+				"ui_builder": map[string]interface{}{
+					"version":    1,
+					"indicators": []interface{}{},
+					"entry_conditions": map[string]interface{}{
+						"id":       "root",
+						"type":     "COMPARE",
+						"left":     map[string]interface{}{"type": "CONSTANT", "value": 1},
+						"operator": "gt",
+						"right":    map[string]interface{}{"type": "CONSTANT", "value": 0},
+					},
+					"exit_conditions": map[string]interface{}{
+						"id":       "root",
+						"type":     "COMPARE",
+						"left":     map[string]interface{}{"type": "CONSTANT", "value": 0},
+						"operator": "gt",
+						"right":    map[string]interface{}{"type": "CONSTANT", "value": 1},
+					},
+					"parameters": map[string]interface{}{
+						"stoploss":        -0.1,
+						"use_exit_signal": true,
+					},
+				},
+			},
+			wantErr:   false,
+			wantClass: "TestStrategy",
+		},
+		{
+			name:      "name with spaces converted to PascalCase",
+			stratName: "my test strategy",
+			config: map[string]interface{}{
+				"timeframe": "5m",
+				"ui_builder": map[string]interface{}{
+					"version":    1,
+					"indicators": []interface{}{},
+					"entry_conditions": map[string]interface{}{
+						"id":       "root",
+						"type":     "COMPARE",
+						"left":     map[string]interface{}{"type": "CONSTANT", "value": 1},
+						"operator": "gt",
+						"right":    map[string]interface{}{"type": "CONSTANT", "value": 0},
+					},
+					"exit_conditions": map[string]interface{}{
+						"id":       "root",
+						"type":     "COMPARE",
+						"left":     map[string]interface{}{"type": "CONSTANT", "value": 0},
+						"operator": "gt",
+						"right":    map[string]interface{}{"type": "CONSTANT", "value": 1},
+					},
+					"parameters": map[string]interface{}{
+						"stoploss":        -0.1,
+						"use_exit_signal": true,
+					},
+				},
+			},
+			wantErr:   false,
+			wantClass: "MyTestStrategy",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, err := GenerateCodeFromUIBuilder(tt.stratName, tt.config)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+					return
+				}
+				if tt.errContains != "" && !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %q, want error containing %q", err.Error(), tt.errContains)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+					return
+				}
+				if !strings.Contains(code, "class "+tt.wantClass) {
+					t.Errorf("generated code should contain 'class %s', got:\n%s", tt.wantClass, code)
+				}
+			}
+		})
+	}
+}

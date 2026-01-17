@@ -214,13 +214,22 @@ class MyStrategy(IStrategy):
   // Sanitize strategy name to valid Python class name (PascalCase)
   const toClassName = (str: string): string => {
     if (!str) return 'MyStrategy';
-    // Remove invalid characters and convert to PascalCase
-    return str
-      .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special chars
-      .split(/\s+/) // Split by whitespace
+    // Remove invalid characters
+    const sanitized = str.replace(/[^a-zA-Z0-9\s]/g, '');
+    if (!sanitized) return 'MyStrategy';
+
+    // If no spaces, preserve original casing (already PascalCase or camelCase)
+    // Just ensure first char is uppercase
+    if (!sanitized.includes(' ')) {
+      return sanitized.charAt(0).toUpperCase() + sanitized.slice(1);
+    }
+
+    // Convert space-separated words to PascalCase
+    return sanitized
+      .split(/\s+/)
       .filter(Boolean)
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('') || 'MyStrategy';
+      .join('');
   };
 
   // Handle name change with sync to config and code

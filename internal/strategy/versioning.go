@@ -10,6 +10,7 @@ import (
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/mixin"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/enum"
 )
 
 // VersionInput contains optional fields for creating a new strategy version.
@@ -19,12 +20,59 @@ type VersionInput struct {
 	Description *string
 	Code        *string
 	Config      map[string]interface{}
+	BuilderMode *string // Optional: "ui" or "code" - if nil, inherits from parent
+}
+
+// CreateInput contains the required fields for creating a new strategy.
+type CreateInput struct {
+	Name        string
+	Description *string
+	Code        string
+	Config      map[string]interface{}
+	BuilderMode enum.StrategyBuilderMode
+	OwnerID     string
+}
+
+// Create creates a new strategy with the given input.
+// For UI builder mode strategies, code is automatically generated from ui_builder config.
+func Create(ctx context.Context, client *ent.Client, input *CreateInput) (*ent.Strategy, error) {
+	code := input.Code
+
+	// For UI builder mode, generate code from ui_builder config
+	if input.BuilderMode == enum.StrategyBuilderModeUI {
+		if input.Config == nil {
+			return nil, fmt.Errorf("config is required for UI builder mode strategies")
+		}
+		generatedCode, err := GenerateCodeFromUIBuilder(input.Name, input.Config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate strategy code: %w", err)
+		}
+		code = generatedCode
+	}
+
+	// Build the strategy
+	builder := client.Strategy.Create().
+		SetName(input.Name).
+		SetCode(code).
+		SetBuilderMode(input.BuilderMode).
+		SetOwnerID(input.OwnerID)
+
+	if input.Description != nil {
+		builder.SetDescription(*input.Description)
+	}
+
+	if input.Config != nil {
+		builder.SetConfig(input.Config)
+	}
+
+	return builder.Save(ctx)
 }
 
 // CreateVersion creates a new version of an existing strategy.
 // It marks the parent as not latest and creates a new version with incremented version number.
 // If input is nil, all fields are copied from the parent.
 // If input is provided, non-nil fields override parent values.
+// For UI builder mode strategies, code is automatically generated from ui_builder config.
 func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input *VersionInput) (*ent.Strategy, error) {
 	// Mark parent strategy as not latest
 	err := tx.Strategy.UpdateOneID(parent.ID).SetIsLatest(false).Exec(ctx)
@@ -37,6 +85,7 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 	description := parent.Description
 	code := parent.Code
 	config := parent.Config
+	builderMode := parent.BuilderMode
 
 	if input != nil {
 		if input.Name != nil {
@@ -51,6 +100,18 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 		if input.Config != nil {
 			config = input.Config
 		}
+		if input.BuilderMode != nil {
+			builderMode = enum.StrategyBuilderMode(*input.BuilderMode)
+		}
+	}
+
+	// For UI builder mode, generate code from ui_builder config
+	if builderMode == enum.StrategyBuilderModeUI {
+		generatedCode, err := GenerateCodeFromUIBuilder(name, config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate strategy code: %w", err)
+		}
+		code = generatedCode
 	}
 
 	// Create new version with resolved fields
@@ -61,8 +122,9 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 		SetVersionNumber(parent.VersionNumber + 1).
 		SetParentID(parent.ID).
 		SetIsLatest(true).
-		SetOwnerID(parent.OwnerID). // Preserve owner_id from parent
-		SetPublic(parent.Public)    // Preserve public visibility from parent
+		SetOwnerID(parent.OwnerID).  // Preserve owner_id from parent
+		SetPublic(parent.Public).    // Preserve public visibility from parent
+		SetBuilderMode(builderMode)  // Use new builder mode if provided, else preserve parent's
 
 	// Copy config if exists
 	if config != nil {

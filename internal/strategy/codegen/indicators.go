@@ -138,7 +138,7 @@ func (g *IndicatorGenerator) getStringParam(params map[string]interface{}, key s
 func (g *IndicatorGenerator) generateRSI(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 14)
-	return fmt.Sprintf("        dataframe['%s'] = ta.RSI(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.RSI(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // SMA - Simple Moving Average
@@ -146,7 +146,7 @@ func (g *IndicatorGenerator) generateSMA(ind IndicatorDefinition) (string, error
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
 	source := g.getStringParam(ind.Params, "source", "close")
-	return fmt.Sprintf("        dataframe['%s'] = ta.SMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.SMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
 }
 
 // EMA - Exponential Moving Average
@@ -154,7 +154,7 @@ func (g *IndicatorGenerator) generateEMA(ind IndicatorDefinition) (string, error
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
 	source := g.getStringParam(ind.Params, "source", "close")
-	return fmt.Sprintf("        dataframe['%s'] = ta.EMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.EMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
 }
 
 // WMA - Weighted Moving Average
@@ -162,7 +162,7 @@ func (g *IndicatorGenerator) generateWMA(ind IndicatorDefinition) (string, error
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
 	source := g.getStringParam(ind.Params, "source", "close")
-	return fmt.Sprintf("        dataframe['%s'] = ta.WMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.WMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
 }
 
 // DEMA - Double Exponential Moving Average
@@ -170,7 +170,7 @@ func (g *IndicatorGenerator) generateDEMA(ind IndicatorDefinition) (string, erro
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
 	source := g.getStringParam(ind.Params, "source", "close")
-	return fmt.Sprintf("        dataframe['%s'] = ta.DEMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.DEMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
 }
 
 // TEMA - Triple Exponential Moving Average
@@ -178,7 +178,7 @@ func (g *IndicatorGenerator) generateTEMA(ind IndicatorDefinition) (string, erro
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
 	source := g.getStringParam(ind.Params, "source", "close")
-	return fmt.Sprintf("        dataframe['%s'] = ta.TEMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.TEMA(dataframe['%s'], timeperiod=%d)", ind.ID, source, period), nil
 }
 
 // MACD - Moving Average Convergence Divergence
@@ -188,10 +188,10 @@ func (g *IndicatorGenerator) generateMACD(ind IndicatorDefinition) (string, erro
 	slow := g.getIntParam(ind.Params, "slow", 26)
 	signal := g.getIntParam(ind.Params, "signal", 9)
 
-	return fmt.Sprintf(`        macd = ta.MACD(dataframe, fastperiod=%d, slowperiod=%d, signalperiod=%d)
-        dataframe['%s'] = macd['macd']
-        dataframe['%s_signal'] = macd['macdsignal']
-        dataframe['%s_histogram'] = macd['macdhist']`, fast, slow, signal, ind.ID, ind.ID, ind.ID), nil
+	return fmt.Sprintf(`macd = ta.MACD(dataframe, fastperiod=%d, slowperiod=%d, signalperiod=%d)
+dataframe['%s'] = macd['macd']
+dataframe['%s_signal'] = macd['macdsignal']
+dataframe['%s_histogram'] = macd['macdhist']`, fast, slow, signal, ind.ID, ind.ID, ind.ID), nil
 }
 
 // BB - Bollinger Bands
@@ -200,11 +200,11 @@ func (g *IndicatorGenerator) generateBollingerBands(ind IndicatorDefinition) (st
 	period := g.getIntParam(ind.Params, "period", 20)
 	stdDev := g.getFloatParam(ind.Params, "std_dev", 2.0)
 
-	return fmt.Sprintf(`        bollinger = ta.BBANDS(dataframe, timeperiod=%d, nbdevup=%v, nbdevdn=%v, matype=0)
-        dataframe['%s_upper'] = bollinger['upperband']
-        dataframe['%s_middle'] = bollinger['middleband']
-        dataframe['%s_lower'] = bollinger['lowerband']
-        dataframe['%s_width'] = (bollinger['upperband'] - bollinger['lowerband']) / bollinger['middleband']`,
+	return fmt.Sprintf(`bollinger = ta.BBANDS(dataframe, timeperiod=%d, nbdevup=%v, nbdevdn=%v, matype=0)
+dataframe['%s_upper'] = bollinger['upperband']
+dataframe['%s_middle'] = bollinger['middleband']
+dataframe['%s_lower'] = bollinger['lowerband']
+dataframe['%s_width'] = (bollinger['upperband'] - bollinger['lowerband']) / bollinger['middleband']`,
 		period, stdDev, stdDev, ind.ID, ind.ID, ind.ID, ind.ID), nil
 }
 
@@ -215,9 +215,9 @@ func (g *IndicatorGenerator) generateStochastic(ind IndicatorDefinition) (string
 	dPeriod := g.getIntParam(ind.Params, "d", 3)
 	smooth := g.getIntParam(ind.Params, "smooth", 3)
 
-	return fmt.Sprintf(`        stoch = ta.STOCH(dataframe, fastk_period=%d, slowk_period=%d, slowk_matype=0, slowd_period=%d, slowd_matype=0)
-        dataframe['%s_k'] = stoch['slowk']
-        dataframe['%s_d'] = stoch['slowd']`, kPeriod, smooth, dPeriod, ind.ID, ind.ID), nil
+	return fmt.Sprintf(`stoch = ta.STOCH(dataframe, fastk_period=%d, slowk_period=%d, slowk_matype=0, slowd_period=%d, slowd_matype=0)
+dataframe['%s_k'] = stoch['slowk']
+dataframe['%s_d'] = stoch['slowd']`, kPeriod, smooth, dPeriod, ind.ID, ind.ID), nil
 }
 
 // STOCH_RSI - Stochastic RSI
@@ -227,16 +227,16 @@ func (g *IndicatorGenerator) generateStochasticRSI(ind IndicatorDefinition) (str
 	kPeriod := g.getIntParam(ind.Params, "k", 3)
 	dPeriod := g.getIntParam(ind.Params, "d", 3)
 
-	return fmt.Sprintf(`        stochrsi = ta.STOCHRSI(dataframe, timeperiod=%d, fastk_period=%d, fastd_period=%d, fastd_matype=0)
-        dataframe['%s_k'] = stochrsi['fastk']
-        dataframe['%s_d'] = stochrsi['fastd']`, period, kPeriod, dPeriod, ind.ID, ind.ID), nil
+	return fmt.Sprintf(`stochrsi = ta.STOCHRSI(dataframe, timeperiod=%d, fastk_period=%d, fastd_period=%d, fastd_matype=0)
+dataframe['%s_k'] = stochrsi['fastk']
+dataframe['%s_d'] = stochrsi['fastd']`, period, kPeriod, dPeriod, ind.ID, ind.ID), nil
 }
 
 // ATR - Average True Range
 func (g *IndicatorGenerator) generateATR(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 14)
-	return fmt.Sprintf("        dataframe['%s'] = ta.ATR(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.ATR(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // ADX - Average Directional Movement Index
@@ -244,9 +244,9 @@ func (g *IndicatorGenerator) generateADX(ind IndicatorDefinition) (string, error
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 14)
 
-	return fmt.Sprintf(`        dataframe['%s'] = ta.ADX(dataframe, timeperiod=%d)
-        dataframe['%s_plus_di'] = ta.PLUS_DI(dataframe, timeperiod=%d)
-        dataframe['%s_minus_di'] = ta.MINUS_DI(dataframe, timeperiod=%d)`,
+	return fmt.Sprintf(`dataframe['%s'] = ta.ADX(dataframe, timeperiod=%d)
+dataframe['%s_plus_di'] = ta.PLUS_DI(dataframe, timeperiod=%d)
+dataframe['%s_minus_di'] = ta.MINUS_DI(dataframe, timeperiod=%d)`,
 		ind.ID, period, ind.ID, period, ind.ID, period), nil
 }
 
@@ -254,63 +254,63 @@ func (g *IndicatorGenerator) generateADX(ind IndicatorDefinition) (string, error
 func (g *IndicatorGenerator) generateCCI(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
-	return fmt.Sprintf("        dataframe['%s'] = ta.CCI(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.CCI(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // WILLR - Williams %R
 func (g *IndicatorGenerator) generateWilliamsR(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 14)
-	return fmt.Sprintf("        dataframe['%s'] = ta.WILLR(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.WILLR(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // MOM - Momentum
 func (g *IndicatorGenerator) generateMomentum(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 10)
-	return fmt.Sprintf("        dataframe['%s'] = ta.MOM(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.MOM(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // ROC - Rate of Change
 func (g *IndicatorGenerator) generateROC(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 10)
-	return fmt.Sprintf("        dataframe['%s'] = ta.ROC(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.ROC(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // OBV - On Balance Volume
 func (g *IndicatorGenerator) generateOBV(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
-	return fmt.Sprintf("        dataframe['%s'] = ta.OBV(dataframe)", ind.ID), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.OBV(dataframe)", ind.ID), nil
 }
 
 // MFI - Money Flow Index
 func (g *IndicatorGenerator) generateMFI(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
 	period := g.getIntParam(ind.Params, "period", 14)
-	return fmt.Sprintf("        dataframe['%s'] = ta.MFI(dataframe, timeperiod=%d)", ind.ID, period), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.MFI(dataframe, timeperiod=%d)", ind.ID, period), nil
 }
 
 // VWAP - Volume Weighted Average Price
 func (g *IndicatorGenerator) generateVWAP(ind IndicatorDefinition) (string, error) {
 	g.imports["qtpylib"] = true
-	return fmt.Sprintf("        dataframe['%s'] = qtpylib.rolling_vwap(dataframe)", ind.ID), nil
+	return fmt.Sprintf("dataframe['%s'] = qtpylib.rolling_vwap(dataframe)", ind.ID), nil
 }
 
 // CMF - Chaikin Money Flow
 func (g *IndicatorGenerator) generateCMF(ind IndicatorDefinition) (string, error) {
 	g.imports["ta_cmf"] = true
 	period := g.getIntParam(ind.Params, "period", 20)
-	return fmt.Sprintf(`        # Chaikin Money Flow
-        mfv = ((dataframe['close'] - dataframe['low']) - (dataframe['high'] - dataframe['close'])) / (dataframe['high'] - dataframe['low']) * dataframe['volume']
-        dataframe['%s'] = mfv.rolling(%d).sum() / dataframe['volume'].rolling(%d).sum()`,
+	return fmt.Sprintf(`# Chaikin Money Flow
+mfv = ((dataframe['close'] - dataframe['low']) - (dataframe['high'] - dataframe['close'])) / (dataframe['high'] - dataframe['low']) * dataframe['volume']
+dataframe['%s'] = mfv.rolling(%d).sum() / dataframe['volume'].rolling(%d).sum()`,
 		ind.ID, period, period), nil
 }
 
 // AD - Accumulation/Distribution
 func (g *IndicatorGenerator) generateAD(ind IndicatorDefinition) (string, error) {
 	g.imports["talib"] = true
-	return fmt.Sprintf("        dataframe['%s'] = ta.AD(dataframe)", ind.ID), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.AD(dataframe)", ind.ID), nil
 }
 
 // ICHIMOKU - Ichimoku Cloud
@@ -319,11 +319,11 @@ func (g *IndicatorGenerator) generateIchimoku(ind IndicatorDefinition) (string, 
 	basePeriod := g.getIntParam(ind.Params, "base", 26)
 	spanPeriod := g.getIntParam(ind.Params, "span", 52)
 
-	return fmt.Sprintf(`        # Ichimoku Cloud
-        dataframe['%s_tenkan'] = (dataframe['high'].rolling(%d).max() + dataframe['low'].rolling(%d).min()) / 2
-        dataframe['%s_kijun'] = (dataframe['high'].rolling(%d).max() + dataframe['low'].rolling(%d).min()) / 2
-        dataframe['%s_senkou_a'] = ((dataframe['%s_tenkan'] + dataframe['%s_kijun']) / 2).shift(%d)
-        dataframe['%s_senkou_b'] = ((dataframe['high'].rolling(%d).max() + dataframe['low'].rolling(%d).min()) / 2).shift(%d)`,
+	return fmt.Sprintf(`# Ichimoku Cloud
+dataframe['%s_tenkan'] = (dataframe['high'].rolling(%d).max() + dataframe['low'].rolling(%d).min()) / 2
+dataframe['%s_kijun'] = (dataframe['high'].rolling(%d).max() + dataframe['low'].rolling(%d).min()) / 2
+dataframe['%s_senkou_a'] = ((dataframe['%s_tenkan'] + dataframe['%s_kijun']) / 2).shift(%d)
+dataframe['%s_senkou_b'] = ((dataframe['high'].rolling(%d).max() + dataframe['low'].rolling(%d).min()) / 2).shift(%d)`,
 		ind.ID, convPeriod, convPeriod,
 		ind.ID, basePeriod, basePeriod,
 		ind.ID, ind.ID, ind.ID, basePeriod,
@@ -335,7 +335,7 @@ func (g *IndicatorGenerator) generateSAR(ind IndicatorDefinition) (string, error
 	g.imports["talib"] = true
 	acceleration := g.getFloatParam(ind.Params, "acceleration", 0.02)
 	maximum := g.getFloatParam(ind.Params, "maximum", 0.2)
-	return fmt.Sprintf("        dataframe['%s'] = ta.SAR(dataframe, acceleration=%v, maximum=%v)", ind.ID, acceleration, maximum), nil
+	return fmt.Sprintf("dataframe['%s'] = ta.SAR(dataframe, acceleration=%v, maximum=%v)", ind.ID, acceleration, maximum), nil
 }
 
 // SUPERTREND
@@ -343,11 +343,11 @@ func (g *IndicatorGenerator) generateSupertrend(ind IndicatorDefinition) (string
 	period := g.getIntParam(ind.Params, "period", 10)
 	multiplier := g.getFloatParam(ind.Params, "multiplier", 3.0)
 
-	return fmt.Sprintf(`        # Supertrend
-        atr = ta.ATR(dataframe, timeperiod=%d)
-        hl2 = (dataframe['high'] + dataframe['low']) / 2
-        dataframe['%s_upper'] = hl2 + (%v * atr)
-        dataframe['%s_lower'] = hl2 - (%v * atr)`,
+	return fmt.Sprintf(`# Supertrend
+atr = ta.ATR(dataframe, timeperiod=%d)
+hl2 = (dataframe['high'] + dataframe['low']) / 2
+dataframe['%s_upper'] = hl2 + (%v * atr)
+dataframe['%s_lower'] = hl2 - (%v * atr)`,
 		period, ind.ID, multiplier, ind.ID, multiplier), nil
 }
 
@@ -361,7 +361,7 @@ func (g *IndicatorGenerator) generateCustom(ind IndicatorDefinition) (string, er
 		// Return the custom Python code as-is
 		return ind.Plugin.PythonCode, nil
 	}
-	return fmt.Sprintf("        # Custom indicator '%s' - no code provided", ind.ID), nil
+	return fmt.Sprintf("# Custom indicator '%s' - no code provided", ind.ID), nil
 }
 
 // GetImportStatements returns Python import statements for the required libraries
