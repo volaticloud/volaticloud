@@ -412,7 +412,7 @@ export function createNotNode(child: ConditionNode): NotNode {
 
 export function createConstantOperand(value: number | string | boolean | null): ConstantOperand {
   return {
-    type: 'CONSTANT',
+    type: OperandType.Constant,
     value,
   };
 }
@@ -423,7 +423,7 @@ export function createIndicatorOperand(
   offset?: number
 ): IndicatorOperand {
   return {
-    type: 'INDICATOR',
+    type: OperandType.Indicator,
     indicatorId,
     field,
     offset,
@@ -435,7 +435,7 @@ export function createPriceOperand(
   offset?: number
 ): PriceOperand {
   return {
-    type: 'PRICE',
+    type: OperandType.Price,
     field,
     offset,
   };

@@ -20,7 +20,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   // Trend Indicators
   // ============================================================================
   SMA: {
-    type: 'SMA',
+    type: IndicatorType.Sma,
     name: 'Simple Moving Average',
     description: 'Average price over a specified number of periods',
     category: 'trend',
@@ -43,7 +43,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   EMA: {
-    type: 'EMA',
+    type: IndicatorType.Ema,
     name: 'Exponential Moving Average',
     description: 'Weighted average giving more weight to recent prices',
     category: 'trend',
@@ -66,7 +66,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   WMA: {
-    type: 'WMA',
+    type: IndicatorType.Wma,
     name: 'Weighted Moving Average',
     description: 'Moving average with linearly weighted periods',
     category: 'trend',
@@ -89,7 +89,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   DEMA: {
-    type: 'DEMA',
+    type: IndicatorType.Dema,
     name: 'Double Exponential Moving Average',
     description: 'Faster EMA with reduced lag',
     category: 'trend',
@@ -112,7 +112,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   TEMA: {
-    type: 'TEMA',
+    type: IndicatorType.Tema,
     name: 'Triple Exponential Moving Average',
     description: 'Even faster EMA with further reduced lag',
     category: 'trend',
@@ -135,7 +135,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   KAMA: {
-    type: 'KAMA',
+    type: IndicatorType.Kama,
     name: 'Kaufman Adaptive Moving Average',
     description: 'Moving average that adapts to market noise',
     category: 'trend',
@@ -146,7 +146,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   MACD: {
-    type: 'MACD',
+    type: IndicatorType.Macd,
     name: 'Moving Average Convergence Divergence',
     description: 'Shows relationship between two EMAs',
     category: 'trend',
@@ -163,7 +163,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   ADX: {
-    type: 'ADX',
+    type: IndicatorType.Adx,
     name: 'Average Directional Index',
     description: 'Measures trend strength regardless of direction',
     category: 'trend',
@@ -178,7 +178,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   ICHIMOKU: {
-    type: 'ICHIMOKU',
+    type: IndicatorType.Ichimoku,
     name: 'Ichimoku Cloud',
     description: 'Comprehensive indicator showing support/resistance and momentum',
     category: 'trend',
@@ -196,7 +196,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   SAR: {
-    type: 'SAR',
+    type: IndicatorType.Sar,
     name: 'Parabolic SAR',
     description: 'Trailing stop and reversal indicator',
     category: 'trend',
@@ -208,7 +208,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   SUPERTREND: {
-    type: 'SUPERTREND',
+    type: IndicatorType.Supertrend,
     name: 'Supertrend',
     description: 'Trend-following indicator based on ATR',
     category: 'trend',
@@ -226,7 +226,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   // Momentum Indicators
   // ============================================================================
   RSI: {
-    type: 'RSI',
+    type: IndicatorType.Rsi,
     name: 'Relative Strength Index',
     description: 'Measures overbought/oversold conditions (0-100)',
     category: 'momentum',
@@ -237,7 +237,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   STOCH: {
-    type: 'STOCH',
+    type: IndicatorType.Stoch,
     name: 'Stochastic Oscillator',
     description: 'Compares closing price to price range',
     category: 'momentum',
@@ -253,7 +253,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   STOCH_RSI: {
-    type: 'STOCH_RSI',
+    type: IndicatorType.StochRsi,
     name: 'Stochastic RSI',
     description: 'RSI applied to stochastic formula',
     category: 'momentum',
@@ -269,7 +269,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   CCI: {
-    type: 'CCI',
+    type: IndicatorType.Cci,
     name: 'Commodity Channel Index',
     description: 'Measures price deviation from statistical mean',
     category: 'momentum',
@@ -280,7 +280,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   WILLR: {
-    type: 'WILLR',
+    type: IndicatorType.Willr,
     name: 'Williams %R',
     description: 'Overbought/oversold indicator (-100 to 0)',
     category: 'momentum',
@@ -291,7 +291,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   MOM: {
-    type: 'MOM',
+    type: IndicatorType.Mom,
     name: 'Momentum',
     description: 'Rate of change in price',
     category: 'momentum',
@@ -302,7 +302,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   ROC: {
-    type: 'ROC',
+    type: IndicatorType.Roc,
     name: 'Rate of Change',
     description: 'Percentage change over N periods',
     category: 'momentum',
@@ -316,7 +316,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   // Volatility Indicators
   // ============================================================================
   ATR: {
-    type: 'ATR',
+    type: IndicatorType.Atr,
     name: 'Average True Range',
     description: 'Measures market volatility',
     category: 'volatility',
@@ -327,7 +327,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   BB: {
-    type: 'BB',
+    type: IndicatorType.Bb,
     name: 'Bollinger Bands',
     description: 'Volatility bands around a moving average',
     category: 'volatility',
@@ -344,7 +344,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   KC: {
-    type: 'KC',
+    type: IndicatorType.Kc,
     name: 'Keltner Channels',
     description: 'Volatility channels based on ATR',
     category: 'volatility',
@@ -364,7 +364,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   // Volume Indicators
   // ============================================================================
   OBV: {
-    type: 'OBV',
+    type: IndicatorType.Obv,
     name: 'On Balance Volume',
     description: 'Cumulative volume based on price direction',
     category: 'volume',
@@ -373,7 +373,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   MFI: {
-    type: 'MFI',
+    type: IndicatorType.Mfi,
     name: 'Money Flow Index',
     description: 'Volume-weighted RSI',
     category: 'volume',
@@ -384,7 +384,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   VWAP: {
-    type: 'VWAP',
+    type: IndicatorType.Vwap,
     name: 'Volume Weighted Average Price',
     description: 'Average price weighted by volume',
     category: 'volume',
@@ -393,7 +393,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   CMF: {
-    type: 'CMF',
+    type: IndicatorType.Cmf,
     name: 'Chaikin Money Flow',
     description: 'Measures buying/selling pressure',
     category: 'volume',
@@ -404,7 +404,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   AD: {
-    type: 'AD',
+    type: IndicatorType.Ad,
     name: 'Accumulation/Distribution',
     description: 'Cumulative indicator measuring money flow',
     category: 'volume',
@@ -416,7 +416,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   // Placeholder indicators
   // ============================================================================
   PIVOT: {
-    type: 'PIVOT',
+    type: IndicatorType.Pivot,
     name: 'Pivot Points',
     description: 'Support and resistance levels',
     category: 'trend',
@@ -429,7 +429,7 @@ export const INDICATORS: Record<IndicatorType, IndicatorMeta> = {
   },
 
   CUSTOM: {
-    type: 'CUSTOM',
+    type: IndicatorType.Custom,
     name: 'Custom Indicator',
     description: 'User-defined custom indicator',
     category: 'custom',
