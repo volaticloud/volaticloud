@@ -48,10 +48,10 @@ Code mode supports advanced features not available in UI mode.
 
 Ejection converts a UI mode strategy to code mode:
 
-	1. Generate final Python code from UI builder config
-	2. Store code in strategy
-	3. Set builder_mode = "code"
-	4. Clear ui_builder config (optional, can retain for reference)
+ 1. Generate final Python code from UI builder config
+ 2. Store code in strategy
+ 3. Set builder_mode = "code"
+ 4. Clear ui_builder config (optional, can retain for reference)
 
 Ejection is ONE-WAY. Once ejected, the strategy cannot return to UI mode
 because manual code changes cannot be reverse-parsed into UI builder config.
@@ -112,11 +112,11 @@ for both Go and TypeScript:
 
 To add a new enum or type:
 
-	1. Add to internal/graph/schema.graphqls
-	2. Run `make generate` (generates Go types)
-	3. Run `cd dashboard && npm run codegen` (generates TypeScript types)
-	4. Update type aliases in codegen/types.go if needed
-	5. Update re-exports in StrategyBuilder/types.ts if needed
+ 1. Add to internal/graph/schema.graphqls
+ 2. Run `make generate` (generates Go types)
+ 3. Run `cd dashboard && npm run codegen` (generates TypeScript types)
+ 4. Update type aliases in codegen/types.go if needed
+ 5. Update re-exports in StrategyBuilder/types.ts if needed
 
 # Security
 

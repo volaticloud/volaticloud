@@ -38,13 +38,14 @@ import {
 } from './types';
 import { INDICATORS } from './indicatorMeta';
 
-const OPERAND_TYPE_ICONS: Record<OperandType, React.ElementType> = {
+// Note: Only implemented operand types are included here
+// MARKET operand is not yet implemented in the backend
+const OPERAND_TYPE_ICONS: Partial<Record<OperandType, React.ElementType>> = {
   CONSTANT: Functions,
   INDICATOR: ShowChart,
   PRICE: AttachMoney,
   TRADE_CONTEXT: TrendingUp,
   TIME: AccessTime,
-  MARKET: TrendingUp,
   EXTERNAL: Functions,
   COMPUTED: Calculate,
   CUSTOM: Functions,
