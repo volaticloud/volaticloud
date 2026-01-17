@@ -239,10 +239,14 @@ func (r *mutationResolver) PreviewStrategyCode(ctx context.Context, config map[s
 	result := strategy1.PreviewStrategyCode(configMap, className)
 
 	// Convert domain result to GraphQL model
+	var errorPtr *string
+	if result.Error != "" {
+		errorPtr = &result.Error
+	}
 	return &model.PreviewCodeResult{
 		Success: result.Success,
 		Code:    result.Code,
-		Error:   &result.Error,
+		Error:   errorPtr,
 	}, nil
 }
 

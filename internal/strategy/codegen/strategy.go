@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+const (
+	// DefaultTimeframe is the default timeframe used when not specified in config.
+	// 5m is a common choice that balances responsiveness with noise filtering.
+	DefaultTimeframe = "5m"
+)
+
 // GenerateFullStrategy generates a complete Python Freqtrade strategy from UIBuilderConfig
 func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className string, timeframe string) (string, error) {
 	g.ResetImports()
@@ -286,8 +292,10 @@ func PreviewStrategyCode(configMap map[string]interface{}, className string) (st
 		return "", fmt.Errorf("no ui_builder config found in strategy config")
 	}
 
-	// Get timeframe from config
-	timeframe := "5m" // default
+	// Get timeframe from config, defaulting to 5m if not specified.
+	// 5m is a reasonable default for most trading strategies, balancing
+	// between responsiveness and noise filtering.
+	timeframe := DefaultTimeframe
 	if tf, ok := configMap["timeframe"].(string); ok && tf != "" {
 		timeframe = tf
 	}

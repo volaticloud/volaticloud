@@ -813,7 +813,8 @@ func TestGenerateOperand_Computed(t *testing.T) {
 					{"type": "INDICATOR", "indicatorId": "atr_14"}
 				]
 			}`,
-			expected: "(dataframe['macd_1_histogram'] / dataframe['atr_14'])",
+			// Uses np.where to safely handle division by zero
+			expected: "np.where(dataframe['atr_14'] != 0, dataframe['macd_1_histogram'] / dataframe['atr_14'], 0)",
 		},
 		{
 			name: "absolute value",

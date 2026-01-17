@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -456,7 +457,12 @@ func (g *Generator) generateComputedOperand(op *Operand) (string, error) {
 	case ComputedMultiply:
 		return fmt.Sprintf("(%s)", strings.Join(operandCodes, " * ")), nil
 	case ComputedDivide:
-		return fmt.Sprintf("(%s)", strings.Join(operandCodes, " / ")), nil
+		g.imports["numpy"] = true
+		// Use np.where to safely handle division by zero
+		if len(operandCodes) >= 2 {
+			return fmt.Sprintf("np.where(%s != 0, %s / %s, 0)", operandCodes[1], operandCodes[0], operandCodes[1]), nil
+		}
+		return "0", nil
 	case ComputedMin:
 		g.imports["numpy"] = true
 		return fmt.Sprintf("np.minimum(%s)", strings.Join(operandCodes, ", ")), nil
@@ -487,8 +493,10 @@ func (g *Generator) generateComputedOperand(op *Operand) (string, error) {
 		}
 		return "0", nil
 	case ComputedPercentChange:
+		g.imports["numpy"] = true
+		// Use np.where to safely handle division by zero in percent change calculation
 		if len(operandCodes) >= 2 {
-			return fmt.Sprintf("((%s - %s) / %s * 100)", operandCodes[0], operandCodes[1], operandCodes[1]), nil
+			return fmt.Sprintf("np.where(%s != 0, ((%s - %s) / %s * 100), 0)", operandCodes[1], operandCodes[0], operandCodes[1], operandCodes[1]), nil
 		}
 		return "0", nil
 	case ComputedAverage:
@@ -502,11 +510,13 @@ func (g *Generator) generateComputedOperand(op *Operand) (string, error) {
 }
 
 // GetRequiredImports returns the list of imports needed for the generated code
+// Imports are sorted to ensure deterministic output across runs
 func (g *Generator) GetRequiredImports() []string {
 	imports := make([]string, 0, len(g.imports))
 	for imp := range g.imports {
 		imports = append(imports, imp)
 	}
+	sort.Strings(imports)
 	return imports
 }
 
