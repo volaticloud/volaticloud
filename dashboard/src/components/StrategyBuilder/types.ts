@@ -85,27 +85,27 @@ export interface BaseOperand {
 // ============================================================================
 
 export interface ConstantOperand extends BaseOperand {
-  type: 'CONSTANT';
+  type: typeof OperandType.Constant;
   value: number | string | boolean | null;
   valueType?: 'number' | 'percent' | 'string' | 'boolean' | 'duration' | 'currency';
 }
 
 export interface IndicatorOperand extends BaseOperand {
-  type: 'INDICATOR';
+  type: typeof OperandType.Indicator;
   indicatorId: string;
   field?: string;
   offset?: number;
 }
 
 export interface PriceOperand extends BaseOperand {
-  type: 'PRICE';
+  type: typeof OperandType.Price;
   field: 'open' | 'high' | 'low' | 'close' | 'volume' | 'ohlc4' | 'hlc3' | 'hl2';
   offset?: number;
   timeframe?: string;
 }
 
 export interface TradeContextOperand extends BaseOperand {
-  type: 'TRADE_CONTEXT';
+  type: typeof OperandType.TradeContext;
   field:
     | 'current_profit'
     | 'current_profit_pct'
@@ -119,7 +119,7 @@ export interface TradeContextOperand extends BaseOperand {
 }
 
 export interface TimeOperand extends BaseOperand {
-  type: 'TIME';
+  type: typeof OperandType.Time;
   field:
     | 'hour'
     | 'minute'
@@ -132,21 +132,21 @@ export interface TimeOperand extends BaseOperand {
 }
 
 export interface ExternalOperand extends BaseOperand {
-  type: 'EXTERNAL';
+  type: typeof OperandType.External;
   sourceId: string;
   field: string;
   cache_ttl?: number;
 }
 
 export interface ComputedOperand extends BaseOperand {
-  type: 'COMPUTED';
+  type: typeof OperandType.Computed;
   operation: ComputedOperation;
   operands: Operand[];
   precision?: number;
 }
 
 export interface CustomOperand extends BaseOperand {
-  type: 'CUSTOM';
+  type: typeof OperandType.Custom;
   pluginId: string;
   config: Record<string, unknown>;
 }
