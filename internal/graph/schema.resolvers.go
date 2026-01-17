@@ -31,7 +31,6 @@ import (
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
 	strategy1 "volaticloud/internal/strategy"
-	"volaticloud/internal/strategy/codegen"
 	"volaticloud/internal/usage"
 
 	"github.com/google/uuid"
@@ -209,30 +208,20 @@ func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bo
 }
 
 func (r *mutationResolver) PreviewStrategyCode(ctx context.Context, config map[string]any, className string) (*model.PreviewCodeResult, error) {
-	// TODO: Consider adding rate limiting per user/IP to prevent abuse.
-	// Current protection: 1MB config size limit in codegen.ValidateConfigSize()
-
-	// Convert map[string]any to map[string]interface{} for codegen
+	// Convert map[string]any to map[string]interface{} for domain package
 	configMap := make(map[string]interface{}, len(config))
 	for k, v := range config {
 		configMap[k] = v
 	}
 
-	// Generate the code (includes config validation)
-	code, err := codegen.PreviewStrategyCode(configMap, className)
-	if err != nil {
-		errMsg := err.Error()
-		return &model.PreviewCodeResult{
-			Success: false,
-			Code:    "",
-			Error:   &errMsg,
-		}, nil
-	}
+	// Call domain function (handles validation and code generation)
+	result := strategy1.PreviewStrategyCode(configMap, className)
 
+	// Convert domain result to GraphQL model
 	return &model.PreviewCodeResult{
-		Success: true,
-		Code:    code,
-		Error:   nil,
+		Success: result.Success,
+		Code:    result.Code,
+		Error:   &result.Error,
 	}, nil
 }
 
