@@ -6469,6 +6469,12 @@ type StrategyWhereInput struct {
 	CodeEqualFold    *string  `json:"codeEqualFold,omitempty"`
 	CodeContainsFold *string  `json:"codeContainsFold,omitempty"`
 
+	// "builder_mode" field predicates.
+	BuilderMode      *enum.StrategyBuilderMode  `json:"builderMode,omitempty"`
+	BuilderModeNEQ   *enum.StrategyBuilderMode  `json:"builderModeNEQ,omitempty"`
+	BuilderModeIn    []enum.StrategyBuilderMode `json:"builderModeIn,omitempty"`
+	BuilderModeNotIn []enum.StrategyBuilderMode `json:"builderModeNotIn,omitempty"`
+
 	// "parent_id" field predicates.
 	ParentID       *uuid.UUID  `json:"parentID,omitempty"`
 	ParentIDNEQ    *uuid.UUID  `json:"parentIDNEQ,omitempty"`
@@ -6796,6 +6802,18 @@ func (i *StrategyWhereInput) P() (predicate.Strategy, error) {
 	}
 	if i.CodeContainsFold != nil {
 		predicates = append(predicates, strategy.CodeContainsFold(*i.CodeContainsFold))
+	}
+	if i.BuilderMode != nil {
+		predicates = append(predicates, strategy.BuilderModeEQ(*i.BuilderMode))
+	}
+	if i.BuilderModeNEQ != nil {
+		predicates = append(predicates, strategy.BuilderModeNEQ(*i.BuilderModeNEQ))
+	}
+	if len(i.BuilderModeIn) > 0 {
+		predicates = append(predicates, strategy.BuilderModeIn(i.BuilderModeIn...))
+	}
+	if len(i.BuilderModeNotIn) > 0 {
+		predicates = append(predicates, strategy.BuilderModeNotIn(i.BuilderModeNotIn...))
 	}
 	if i.ParentID != nil {
 		predicates = append(predicates, strategy.ParentIDEQ(*i.ParentID))

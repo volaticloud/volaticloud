@@ -11,6 +11,7 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/predicate"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -116,6 +117,20 @@ func (_u *StrategyUpdate) SetNillableCode(v *string) *StrategyUpdate {
 // SetConfig sets the "config" field.
 func (_u *StrategyUpdate) SetConfig(v map[string]interface{}) *StrategyUpdate {
 	_u.mutation.SetConfig(v)
+	return _u
+}
+
+// SetBuilderMode sets the "builder_mode" field.
+func (_u *StrategyUpdate) SetBuilderMode(v enum.StrategyBuilderMode) *StrategyUpdate {
+	_u.mutation.SetBuilderMode(v)
+	return _u
+}
+
+// SetNillableBuilderMode sets the "builder_mode" field if the given value is not nil.
+func (_u *StrategyUpdate) SetNillableBuilderMode(v *enum.StrategyBuilderMode) *StrategyUpdate {
+	if v != nil {
+		_u.SetBuilderMode(*v)
+	}
 	return _u
 }
 
@@ -356,6 +371,11 @@ func (_u *StrategyUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Strategy.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.BuilderMode(); ok {
+		if err := strategy.BuilderModeValidator(v); err != nil {
+			return &ValidationError{Name: "builder_mode", err: fmt.Errorf(`ent: validator failed for field "Strategy.builder_mode": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.OwnerID(); ok {
 		if err := strategy.OwnerIDValidator(v); err != nil {
 			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Strategy.owner_id": %w`, err)}
@@ -399,6 +419,9 @@ func (_u *StrategyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.BuilderMode(); ok {
+		_spec.SetField(strategy.FieldBuilderMode, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.IsLatest(); ok {
 		_spec.SetField(strategy.FieldIsLatest, field.TypeBool, value)
@@ -671,6 +694,20 @@ func (_u *StrategyUpdateOne) SetConfig(v map[string]interface{}) *StrategyUpdate
 	return _u
 }
 
+// SetBuilderMode sets the "builder_mode" field.
+func (_u *StrategyUpdateOne) SetBuilderMode(v enum.StrategyBuilderMode) *StrategyUpdateOne {
+	_u.mutation.SetBuilderMode(v)
+	return _u
+}
+
+// SetNillableBuilderMode sets the "builder_mode" field if the given value is not nil.
+func (_u *StrategyUpdateOne) SetNillableBuilderMode(v *enum.StrategyBuilderMode) *StrategyUpdateOne {
+	if v != nil {
+		_u.SetBuilderMode(*v)
+	}
+	return _u
+}
+
 // SetParentID sets the "parent_id" field.
 func (_u *StrategyUpdateOne) SetParentID(v uuid.UUID) *StrategyUpdateOne {
 	_u.mutation.SetParentID(v)
@@ -921,6 +958,11 @@ func (_u *StrategyUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Strategy.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.BuilderMode(); ok {
+		if err := strategy.BuilderModeValidator(v); err != nil {
+			return &ValidationError{Name: "builder_mode", err: fmt.Errorf(`ent: validator failed for field "Strategy.builder_mode": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.OwnerID(); ok {
 		if err := strategy.OwnerIDValidator(v); err != nil {
 			return &ValidationError{Name: "owner_id", err: fmt.Errorf(`ent: validator failed for field "Strategy.owner_id": %w`, err)}
@@ -981,6 +1023,9 @@ func (_u *StrategyUpdateOne) sqlSave(ctx context.Context) (_node *Strategy, err 
 	}
 	if value, ok := _u.mutation.Config(); ok {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.BuilderMode(); ok {
+		_spec.SetField(strategy.FieldBuilderMode, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.IsLatest(); ok {
 		_spec.SetField(strategy.FieldIsLatest, field.TypeBool, value)

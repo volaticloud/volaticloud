@@ -5,6 +5,7 @@ package strategy
 import (
 	"time"
 	"volaticloud/internal/ent/predicate"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -374,6 +375,36 @@ func CodeEqualFold(v string) predicate.Strategy {
 // CodeContainsFold applies the ContainsFold predicate on the "code" field.
 func CodeContainsFold(v string) predicate.Strategy {
 	return predicate.Strategy(sql.FieldContainsFold(FieldCode, v))
+}
+
+// BuilderModeEQ applies the EQ predicate on the "builder_mode" field.
+func BuilderModeEQ(v enum.StrategyBuilderMode) predicate.Strategy {
+	vc := v
+	return predicate.Strategy(sql.FieldEQ(FieldBuilderMode, vc))
+}
+
+// BuilderModeNEQ applies the NEQ predicate on the "builder_mode" field.
+func BuilderModeNEQ(v enum.StrategyBuilderMode) predicate.Strategy {
+	vc := v
+	return predicate.Strategy(sql.FieldNEQ(FieldBuilderMode, vc))
+}
+
+// BuilderModeIn applies the In predicate on the "builder_mode" field.
+func BuilderModeIn(vs ...enum.StrategyBuilderMode) predicate.Strategy {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Strategy(sql.FieldIn(FieldBuilderMode, v...))
+}
+
+// BuilderModeNotIn applies the NotIn predicate on the "builder_mode" field.
+func BuilderModeNotIn(vs ...enum.StrategyBuilderMode) predicate.Strategy {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Strategy(sql.FieldNotIn(FieldBuilderMode, v...))
 }
 
 // ParentIDEQ applies the EQ predicate on the "parent_id" field.

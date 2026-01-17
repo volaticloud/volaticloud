@@ -10,6 +10,7 @@ import (
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -83,6 +84,20 @@ func (_c *StrategyCreate) SetCode(v string) *StrategyCreate {
 // SetConfig sets the "config" field.
 func (_c *StrategyCreate) SetConfig(v map[string]interface{}) *StrategyCreate {
 	_c.mutation.SetConfig(v)
+	return _c
+}
+
+// SetBuilderMode sets the "builder_mode" field.
+func (_c *StrategyCreate) SetBuilderMode(v enum.StrategyBuilderMode) *StrategyCreate {
+	_c.mutation.SetBuilderMode(v)
+	return _c
+}
+
+// SetNillableBuilderMode sets the "builder_mode" field if the given value is not nil.
+func (_c *StrategyCreate) SetNillableBuilderMode(v *enum.StrategyBuilderMode) *StrategyCreate {
+	if v != nil {
+		_c.SetBuilderMode(*v)
+	}
 	return _c
 }
 
@@ -271,6 +286,10 @@ func (_c *StrategyCreate) defaults() error {
 		v := strategy.DefaultPublic
 		_c.mutation.SetPublic(v)
 	}
+	if _, ok := _c.mutation.BuilderMode(); !ok {
+		v := strategy.DefaultBuilderMode
+		_c.mutation.SetBuilderMode(v)
+	}
 	if _, ok := _c.mutation.IsLatest(); !ok {
 		v := strategy.DefaultIsLatest
 		_c.mutation.SetIsLatest(v)
@@ -321,6 +340,14 @@ func (_c *StrategyCreate) check() error {
 	}
 	if _, ok := _c.mutation.Config(); !ok {
 		return &ValidationError{Name: "config", err: errors.New(`ent: missing required field "Strategy.config"`)}
+	}
+	if _, ok := _c.mutation.BuilderMode(); !ok {
+		return &ValidationError{Name: "builder_mode", err: errors.New(`ent: missing required field "Strategy.builder_mode"`)}
+	}
+	if v, ok := _c.mutation.BuilderMode(); ok {
+		if err := strategy.BuilderModeValidator(v); err != nil {
+			return &ValidationError{Name: "builder_mode", err: fmt.Errorf(`ent: validator failed for field "Strategy.builder_mode": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.IsLatest(); !ok {
 		return &ValidationError{Name: "is_latest", err: errors.New(`ent: missing required field "Strategy.is_latest"`)}
@@ -401,6 +428,10 @@ func (_c *StrategyCreate) createSpec() (*Strategy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Config(); ok {
 		_spec.SetField(strategy.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
+	}
+	if value, ok := _c.mutation.BuilderMode(); ok {
+		_spec.SetField(strategy.FieldBuilderMode, field.TypeEnum, value)
+		_node.BuilderMode = value
 	}
 	if value, ok := _c.mutation.IsLatest(); ok {
 		_spec.SetField(strategy.FieldIsLatest, field.TypeBool, value)
@@ -623,6 +654,18 @@ func (u *StrategyUpsert) UpdateConfig() *StrategyUpsert {
 	return u
 }
 
+// SetBuilderMode sets the "builder_mode" field.
+func (u *StrategyUpsert) SetBuilderMode(v enum.StrategyBuilderMode) *StrategyUpsert {
+	u.Set(strategy.FieldBuilderMode, v)
+	return u
+}
+
+// UpdateBuilderMode sets the "builder_mode" field to the value that was provided on create.
+func (u *StrategyUpsert) UpdateBuilderMode() *StrategyUpsert {
+	u.SetExcluded(strategy.FieldBuilderMode)
+	return u
+}
+
 // SetParentID sets the "parent_id" field.
 func (u *StrategyUpsert) SetParentID(v uuid.UUID) *StrategyUpsert {
 	u.Set(strategy.FieldParentID, v)
@@ -841,6 +884,20 @@ func (u *StrategyUpsertOne) SetConfig(v map[string]interface{}) *StrategyUpsertO
 func (u *StrategyUpsertOne) UpdateConfig() *StrategyUpsertOne {
 	return u.Update(func(s *StrategyUpsert) {
 		s.UpdateConfig()
+	})
+}
+
+// SetBuilderMode sets the "builder_mode" field.
+func (u *StrategyUpsertOne) SetBuilderMode(v enum.StrategyBuilderMode) *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetBuilderMode(v)
+	})
+}
+
+// UpdateBuilderMode sets the "builder_mode" field to the value that was provided on create.
+func (u *StrategyUpsertOne) UpdateBuilderMode() *StrategyUpsertOne {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateBuilderMode()
 	})
 }
 
@@ -1241,6 +1298,20 @@ func (u *StrategyUpsertBulk) SetConfig(v map[string]interface{}) *StrategyUpsert
 func (u *StrategyUpsertBulk) UpdateConfig() *StrategyUpsertBulk {
 	return u.Update(func(s *StrategyUpsert) {
 		s.UpdateConfig()
+	})
+}
+
+// SetBuilderMode sets the "builder_mode" field.
+func (u *StrategyUpsertBulk) SetBuilderMode(v enum.StrategyBuilderMode) *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.SetBuilderMode(v)
+	})
+}
+
+// UpdateBuilderMode sets the "builder_mode" field to the value that was provided on create.
+func (u *StrategyUpsertBulk) UpdateBuilderMode() *StrategyUpsertBulk {
+	return u.Update(func(s *StrategyUpsert) {
+		s.UpdateBuilderMode()
 	})
 }
 

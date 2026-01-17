@@ -395,6 +395,7 @@ type ComplexityRoot struct {
 		InviteOrganizationUser       func(childComplexity int, organizationID uuid.UUID, input model.InviteUserInput) int
 		MarkAlertEventAsRead         func(childComplexity int, id uuid.UUID, ownerID string) int
 		MarkAllAlertEventsAsRead     func(childComplexity int, ownerID string) int
+		PreviewStrategyCode          func(childComplexity int, config map[string]any, className string) int
 		RefreshRunnerData            func(childComplexity int, id uuid.UUID) int
 		RestartBot                   func(childComplexity int, id uuid.UUID) int
 		RunBacktest                  func(childComplexity int, input ent.CreateBacktestInput) int
@@ -454,6 +455,12 @@ type ComplexityRoot struct {
 		Granted    func(childComplexity int) int
 		ResourceID func(childComplexity int) int
 		Scope      func(childComplexity int) int
+	}
+
+	PreviewCodeResult struct {
+		Code    func(childComplexity int) int
+		Error   func(childComplexity int) int
+		Success func(childComplexity int) int
 	}
 
 	Query struct {
@@ -580,6 +587,7 @@ type ComplexityRoot struct {
 	Strategy struct {
 		Backtest      func(childComplexity int) int
 		Bots          func(childComplexity int, after *entgql.Cursor[uuid.UUID], first *int, before *entgql.Cursor[uuid.UUID], last *int, where *ent.BotWhereInput) int
+		BuilderMode   func(childComplexity int) int
 		Children      func(childComplexity int) int
 		Code          func(childComplexity int) int
 		Config        func(childComplexity int) int
@@ -666,6 +674,7 @@ type MutationResolver interface {
 	CreateStrategy(ctx context.Context, input ent.CreateStrategyInput) (*ent.Strategy, error)
 	UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error)
 	DeleteStrategy(ctx context.Context, id uuid.UUID) (bool, error)
+	PreviewStrategyCode(ctx context.Context, config map[string]any, className string) (*model.PreviewCodeResult, error)
 	CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error)
 	UpdateBot(ctx context.Context, id uuid.UUID, input ent.UpdateBotInput) (*ent.Bot, error)
 	DeleteBot(ctx context.Context, id uuid.UUID) (bool, error)
@@ -2412,6 +2421,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.MarkAllAlertEventsAsRead(childComplexity, args["ownerID"].(string)), true
+	case "Mutation.previewStrategyCode":
+		if e.complexity.Mutation.PreviewStrategyCode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_previewStrategyCode_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PreviewStrategyCode(childComplexity, args["config"].(map[string]any), args["className"].(string)), true
 	case "Mutation.refreshRunnerData":
 		if e.complexity.Mutation.RefreshRunnerData == nil {
 			break
@@ -2776,6 +2796,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PermissionCheckResult.Scope(childComplexity), true
+
+	case "PreviewCodeResult.code":
+		if e.complexity.PreviewCodeResult.Code == nil {
+			break
+		}
+
+		return e.complexity.PreviewCodeResult.Code(childComplexity), true
+	case "PreviewCodeResult.error":
+		if e.complexity.PreviewCodeResult.Error == nil {
+			break
+		}
+
+		return e.complexity.PreviewCodeResult.Error(childComplexity), true
+	case "PreviewCodeResult.success":
+		if e.complexity.PreviewCodeResult.Success == nil {
+			break
+		}
+
+		return e.complexity.PreviewCodeResult.Success(childComplexity), true
 
 	case "Query.alertEvents":
 		if e.complexity.Query.AlertEvents == nil {
@@ -3448,6 +3487,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Strategy.Bots(childComplexity, args["after"].(*entgql.Cursor[uuid.UUID]), args["first"].(*int), args["before"].(*entgql.Cursor[uuid.UUID]), args["last"].(*int), args["where"].(*ent.BotWhereInput)), true
+	case "Strategy.builderMode":
+		if e.complexity.Strategy.BuilderMode == nil {
+			break
+		}
+
+		return e.complexity.Strategy.BuilderMode(childComplexity), true
 	case "Strategy.children":
 		if e.complexity.Strategy.Children == nil {
 			break
@@ -4363,6 +4408,22 @@ func (ec *executionContext) field_Mutation_markAllAlertEventsAsRead_args(ctx con
 		return nil, err
 	}
 	args["ownerID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_previewStrategyCode_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "config", ec.unmarshalNMap2map)
+	if err != nil {
+		return nil, err
+	}
+	args["config"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "className", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["className"] = arg1
 	return args, nil
 }
 
@@ -7403,6 +7464,8 @@ func (ec *executionContext) fieldContext_Backtest_strategy(_ context.Context, fi
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -8977,6 +9040,8 @@ func (ec *executionContext) fieldContext_Bot_strategy(_ context.Context, field g
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -13401,6 +13466,8 @@ func (ec *executionContext) fieldContext_Mutation_createStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -13501,6 +13568,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStrategy(ctx context.Con
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -13597,6 +13666,68 @@ func (ec *executionContext) fieldContext_Mutation_deleteStrategy(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteStrategy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_previewStrategyCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_previewStrategyCode,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().PreviewStrategyCode(ctx, fc.Args["config"].(map[string]any), fc.Args["className"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *model.PreviewCodeResult
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNPreviewCodeResult2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPreviewCodeResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_previewStrategyCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_PreviewCodeResult_success(ctx, field)
+			case "code":
+				return ec.fieldContext_PreviewCodeResult_code(ctx, field)
+			case "error":
+				return ec.fieldContext_PreviewCodeResult_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PreviewCodeResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_previewStrategyCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -15331,6 +15462,8 @@ func (ec *executionContext) fieldContext_Mutation_setStrategyVisibility(ctx cont
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -17180,6 +17313,93 @@ func (ec *executionContext) fieldContext_PermissionCheckResult_granted(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _PreviewCodeResult_success(ctx context.Context, field graphql.CollectedField, obj *model.PreviewCodeResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PreviewCodeResult_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PreviewCodeResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PreviewCodeResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PreviewCodeResult_code(ctx context.Context, field graphql.CollectedField, obj *model.PreviewCodeResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PreviewCodeResult_code,
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PreviewCodeResult_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PreviewCodeResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PreviewCodeResult_error(ctx context.Context, field graphql.CollectedField, obj *model.PreviewCodeResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PreviewCodeResult_error,
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PreviewCodeResult_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PreviewCodeResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_node(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18017,6 +18237,8 @@ func (ec *executionContext) fieldContext_Query_strategyVersions(ctx context.Cont
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -21262,6 +21484,35 @@ func (ec *executionContext) fieldContext_Strategy_config(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Strategy_builderMode(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Strategy_builderMode,
+		func(ctx context.Context) (any, error) {
+			return obj.BuilderMode, nil
+		},
+		nil,
+		ec.marshalNStrategyStrategyBuilderMode2volaticloudᚋinternalᚋenumᚐStrategyBuilderMode,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Strategy_builderMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Strategy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StrategyStrategyBuilderMode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Strategy_parentID(ctx context.Context, field graphql.CollectedField, obj *ent.Strategy) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -21588,6 +21839,8 @@ func (ec *executionContext) fieldContext_Strategy_children(_ context.Context, fi
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -21653,6 +21906,8 @@ func (ec *executionContext) fieldContext_Strategy_parent(_ context.Context, fiel
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -21821,6 +22076,8 @@ func (ec *executionContext) fieldContext_StrategyEdge_node(_ context.Context, fi
 				return ec.fieldContext_Strategy_code(ctx, field)
 			case "config":
 				return ec.fieldContext_Strategy_config(ctx, field)
+			case "builderMode":
+				return ec.fieldContext_Strategy_builderMode(ctx, field)
 			case "parentID":
 				return ec.fieldContext_Strategy_parentID(ctx, field)
 			case "isLatest":
@@ -32035,7 +32292,7 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "deletedAt", "name", "description", "code", "config", "isLatest", "versionNumber", "ownerID", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
+	fieldsInOrder := [...]string{"public", "deletedAt", "name", "description", "code", "config", "builderMode", "isLatest", "versionNumber", "ownerID", "createdAt", "updatedAt", "botIDs", "backtestID", "childIDs", "parentID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -32084,6 +32341,13 @@ func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.Config = data
+		case "builderMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("builderMode"))
+			data, err := ec.unmarshalOStrategyStrategyBuilderMode2ᚖvolaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuilderMode = data
 		case "isLatest":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLatest"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -35625,7 +35889,7 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "deletedAtIsNil", "deletedAtNotNil", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "public", "publicNEQ", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "deletedAtIsNil", "deletedAtNotNil", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "code", "codeNEQ", "codeIn", "codeNotIn", "codeGT", "codeGTE", "codeLT", "codeLTE", "codeContains", "codeHasPrefix", "codeHasSuffix", "codeEqualFold", "codeContainsFold", "builderMode", "builderModeNEQ", "builderModeIn", "builderModeNotIn", "parentID", "parentIDNEQ", "parentIDIn", "parentIDNotIn", "parentIDIsNil", "parentIDNotNil", "isLatest", "isLatestNEQ", "versionNumber", "versionNumberNEQ", "versionNumberIn", "versionNumberNotIn", "versionNumberGT", "versionNumberGTE", "versionNumberLT", "versionNumberLTE", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasBots", "hasBotsWith", "hasBacktest", "hasBacktestWith", "hasChildren", "hasChildrenWith", "hasParent", "hasParentWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -36080,6 +36344,34 @@ func (ec *executionContext) unmarshalInputStrategyWhereInput(ctx context.Context
 				return it, err
 			}
 			it.CodeContainsFold = data
+		case "builderMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("builderMode"))
+			data, err := ec.unmarshalOStrategyStrategyBuilderMode2ᚖvolaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuilderMode = data
+		case "builderModeNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("builderModeNEQ"))
+			data, err := ec.unmarshalOStrategyStrategyBuilderMode2ᚖvolaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuilderModeNEQ = data
+		case "builderModeIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("builderModeIn"))
+			data, err := ec.unmarshalOStrategyStrategyBuilderMode2ᚕvolaticloudᚋinternalᚋenumᚐStrategyBuilderModeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuilderModeIn = data
+		case "builderModeNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("builderModeNotIn"))
+			data, err := ec.unmarshalOStrategyStrategyBuilderMode2ᚕvolaticloudᚋinternalᚋenumᚐStrategyBuilderModeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuilderModeNotIn = data
 		case "parentID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -38883,7 +39175,7 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "deletedAt", "clearDeletedAt", "name", "description", "clearDescription", "code", "config", "isLatest", "versionNumber", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
+	fieldsInOrder := [...]string{"public", "deletedAt", "clearDeletedAt", "name", "description", "clearDescription", "code", "config", "builderMode", "isLatest", "versionNumber", "ownerID", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "backtestID", "clearBacktest", "addChildIDs", "removeChildIDs", "clearChildren", "parentID", "clearParent"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -38946,6 +39238,13 @@ func (ec *executionContext) unmarshalInputUpdateStrategyInput(ctx context.Contex
 				return it, err
 			}
 			it.Config = data
+		case "builderMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("builderMode"))
+			data, err := ec.unmarshalOStrategyStrategyBuilderMode2ᚖvolaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuilderMode = data
 		case "isLatest":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLatest"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -41660,6 +41959,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "previewStrategyCode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_previewStrategyCode(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createBot":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createBot(ctx, field)
@@ -42158,6 +42464,52 @@ func (ec *executionContext) _PermissionCheckResult(ctx context.Context, sel ast.
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var previewCodeResultImplementors = []string{"PreviewCodeResult"}
+
+func (ec *executionContext) _PreviewCodeResult(ctx context.Context, sel ast.SelectionSet, obj *model.PreviewCodeResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, previewCodeResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PreviewCodeResult")
+		case "success":
+			out.Values[i] = ec._PreviewCodeResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._PreviewCodeResult_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._PreviewCodeResult_error(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43537,6 +43889,11 @@ func (ec *executionContext) _Strategy(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "config":
 			out.Values[i] = ec._Strategy_config(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "builderMode":
+			out.Values[i] = ec._Strategy_builderMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -45536,6 +45893,20 @@ func (ec *executionContext) marshalNPermissionCheckResult2ᚖvolaticloudᚋinter
 	return ec._PermissionCheckResult(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPreviewCodeResult2volaticloudᚋinternalᚋgraphᚋmodelᚐPreviewCodeResult(ctx context.Context, sel ast.SelectionSet, v model.PreviewCodeResult) graphql.Marshaler {
+	return ec._PreviewCodeResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPreviewCodeResult2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐPreviewCodeResult(ctx context.Context, sel ast.SelectionSet, v *model.PreviewCodeResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PreviewCodeResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNResourceGroup2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceGroup(ctx context.Context, sel ast.SelectionSet, v *model.ResourceGroup) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -46004,6 +46375,16 @@ func (ec *executionContext) marshalNStrategyConnection2ᚖvolaticloudᚋinternal
 		return graphql.Null
 	}
 	return ec._StrategyConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNStrategyStrategyBuilderMode2volaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx context.Context, v any) (enum.StrategyBuilderMode, error) {
+	var res enum.StrategyBuilderMode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStrategyStrategyBuilderMode2volaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx context.Context, sel ast.SelectionSet, v enum.StrategyBuilderMode) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNStrategyWhereInput2ᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInput(ctx context.Context, v any) (*ent.StrategyWhereInput, error) {
@@ -48964,6 +49345,87 @@ func (ec *executionContext) marshalOStrategyEdge2ᚖvolaticloudᚋinternalᚋent
 		return graphql.Null
 	}
 	return ec._StrategyEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOStrategyStrategyBuilderMode2ᚕvolaticloudᚋinternalᚋenumᚐStrategyBuilderModeᚄ(ctx context.Context, v any) ([]enum.StrategyBuilderMode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]enum.StrategyBuilderMode, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNStrategyStrategyBuilderMode2volaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOStrategyStrategyBuilderMode2ᚕvolaticloudᚋinternalᚋenumᚐStrategyBuilderModeᚄ(ctx context.Context, sel ast.SelectionSet, v []enum.StrategyBuilderMode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStrategyStrategyBuilderMode2volaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOStrategyStrategyBuilderMode2ᚖvolaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx context.Context, v any) (*enum.StrategyBuilderMode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(enum.StrategyBuilderMode)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStrategyStrategyBuilderMode2ᚖvolaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx context.Context, sel ast.SelectionSet, v *enum.StrategyBuilderMode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOStrategyWhereInput2ᚕᚖvolaticloudᚋinternalᚋentᚐStrategyWhereInputᚄ(ctx context.Context, v any) ([]*ent.StrategyWhereInput, error) {

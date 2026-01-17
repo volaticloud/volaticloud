@@ -1161,6 +1161,7 @@ type CreateStrategyInput struct {
 	Description   *string
 	Code          string
 	Config        map[string]interface{}
+	BuilderMode   *enum.StrategyBuilderMode
 	IsLatest      *bool
 	VersionNumber *int
 	OwnerID       string
@@ -1187,6 +1188,9 @@ func (i *CreateStrategyInput) Mutate(m *StrategyMutation) {
 	m.SetCode(i.Code)
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
+	}
+	if v := i.BuilderMode; v != nil {
+		m.SetBuilderMode(*v)
 	}
 	if v := i.IsLatest; v != nil {
 		m.SetIsLatest(*v)
@@ -1231,6 +1235,7 @@ type UpdateStrategyInput struct {
 	Description      *string
 	Code             *string
 	Config           map[string]interface{}
+	BuilderMode      *enum.StrategyBuilderMode
 	IsLatest         *bool
 	VersionNumber    *int
 	OwnerID          *string
@@ -1272,6 +1277,9 @@ func (i *UpdateStrategyInput) Mutate(m *StrategyMutation) {
 	}
 	if v := i.Config; v != nil {
 		m.SetConfig(v)
+	}
+	if v := i.BuilderMode; v != nil {
+		m.SetBuilderMode(*v)
 	}
 	if v := i.IsLatest; v != nil {
 		m.SetIsLatest(*v)

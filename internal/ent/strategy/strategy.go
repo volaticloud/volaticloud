@@ -3,11 +3,14 @@
 package strategy
 
 import (
+	"fmt"
 	"time"
+	"volaticloud/internal/enum"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 )
 
@@ -28,6 +31,8 @@ const (
 	FieldCode = "code"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
+	// FieldBuilderMode holds the string denoting the builder_mode field in the database.
+	FieldBuilderMode = "builder_mode"
 	// FieldParentID holds the string denoting the parent_id field in the database.
 	FieldParentID = "parent_id"
 	// FieldIsLatest holds the string denoting the is_latest field in the database.
@@ -83,6 +88,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldCode,
 	FieldConfig,
+	FieldBuilderMode,
 	FieldParentID,
 	FieldIsLatest,
 	FieldVersionNumber,
@@ -129,6 +135,18 @@ var (
 	DefaultID func() uuid.UUID
 )
 
+const DefaultBuilderMode enum.StrategyBuilderMode = "code"
+
+// BuilderModeValidator is a validator for the "builder_mode" field enum values. It is called by the builders before save.
+func BuilderModeValidator(bm enum.StrategyBuilderMode) error {
+	switch bm {
+	case "ui", "code":
+		return nil
+	default:
+		return fmt.Errorf("strategy: invalid enum value for builder_mode field: %q", bm)
+	}
+}
+
 // OrderOption defines the ordering options for the Strategy queries.
 type OrderOption func(*sql.Selector)
 
@@ -160,6 +178,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByCode orders the results by the code field.
 func ByCode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCode, opts...).ToFunc()
+}
+
+// ByBuilderMode orders the results by the builder_mode field.
+func ByBuilderMode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBuilderMode, opts...).ToFunc()
 }
 
 // ByParentID orders the results by the parent_id field.
@@ -261,3 +284,10 @@ func newParentStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, false, ParentTable, ParentColumn),
 	)
 }
+
+var (
+	// enum.StrategyBuilderMode must implement graphql.Marshaler.
+	_ graphql.Marshaler = (*enum.StrategyBuilderMode)(nil)
+	// enum.StrategyBuilderMode must implement graphql.Unmarshaler.
+	_ graphql.Unmarshaler = (*enum.StrategyBuilderMode)(nil)
+)

@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	entmixin "volaticloud/internal/ent/mixin"
+	"volaticloud/internal/enum"
 )
 
 // Strategy holds the schema definition for the Strategy entity.
@@ -40,6 +41,10 @@ func (Strategy) Fields() []ent.Field {
 				entgql.Type("Map"),
 				RequiresPermission("view"),
 			),
+		field.Enum("builder_mode").
+			GoType(enum.StrategyBuilderMode("")).
+			Default(string(enum.StrategyBuilderModeCode)).
+			Comment("Strategy editing mode: 'ui' for UI builder (code generated from config), 'code' for direct Python editing"),
 		// Versioning fields
 		field.UUID("parent_id", uuid.UUID{}).
 			Optional().

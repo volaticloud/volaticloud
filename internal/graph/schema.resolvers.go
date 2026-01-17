@@ -158,9 +158,22 @@ func (r *mutationResolver) CreateStrategy(ctx context.Context, input ent.CreateS
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
-	// Create strategy - ENT hook handles Keycloak resource sync automatically
-	// OwnerID comes from the input and represents the selected group/organization
-	return r.client.Strategy.Create().SetInput(input).Save(ctx)
+	// Determine builder mode (default to "code" if not specified)
+	builderMode := enum.StrategyBuilderModeCode
+	if input.BuilderMode != nil {
+		builderMode = *input.BuilderMode
+	}
+
+	// Create strategy using domain function - handles UI builder code generation
+	// ENT hook handles Keycloak resource sync automatically
+	return strategy1.Create(ctx, r.client, &strategy1.CreateInput{
+		Name:        input.Name,
+		Description: input.Description,
+		Code:        input.Code,
+		Config:      input.Config,
+		BuilderMode: builderMode,
+		OwnerID:     input.OwnerID,
+	})
 }
 
 func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, input ent.UpdateStrategyInput) (*ent.Strategy, error) {
@@ -175,13 +188,21 @@ func (r *mutationResolver) UpdateStrategy(ctx context.Context, id uuid.UUID, inp
 			return fmt.Errorf("failed to load strategy: %w", err)
 		}
 
+		// Convert builder mode to string for VersionInput
+		var builderModeStr *string
+		if input.BuilderMode != nil {
+			s := string(*input.BuilderMode)
+			builderModeStr = &s
+		}
+
 		// Create new version using domain function
-		// Preserves owner_id and public visibility from parent
+		// Domain function handles UI builder code generation automatically
 		versionInput := &strategy1.VersionInput{
 			Name:        input.Name,
 			Description: input.Description,
 			Code:        input.Code,
 			Config:      input.Config,
+			BuilderMode: builderModeStr,
 		}
 
 		result, err = strategy1.CreateVersion(ctx, tx, oldStrategy, versionInput)
@@ -205,6 +226,28 @@ func (r *mutationResolver) DeleteStrategy(ctx context.Context, id uuid.UUID) (bo
 	// ENT hook handles Keycloak resource cleanup automatically
 	err := strategy1.DeleteAllVersions(ctx, r.client, id)
 	return err == nil, err
+}
+
+func (r *mutationResolver) PreviewStrategyCode(ctx context.Context, config map[string]any, className string) (*model.PreviewCodeResult, error) {
+	// Convert map[string]any to map[string]interface{} for domain package
+	configMap := make(map[string]interface{}, len(config))
+	for k, v := range config {
+		configMap[k] = v
+	}
+
+	// Call domain function (handles validation and code generation)
+	result := strategy1.PreviewStrategyCode(configMap, className)
+
+	// Convert domain result to GraphQL model
+	var errorPtr *string
+	if result.Error != "" {
+		errorPtr = &result.Error
+	}
+	return &model.PreviewCodeResult{
+		Success: result.Success,
+		Code:    result.Code,
+		Error:   errorPtr,
+	}, nil
 }
 
 func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInput) (*ent.Bot, error) {

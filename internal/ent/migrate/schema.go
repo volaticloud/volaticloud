@@ -431,6 +431,7 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "code", Type: field.TypeString, Size: 2147483647},
 		{Name: "config", Type: field.TypeJSON},
+		{Name: "builder_mode", Type: field.TypeEnum, Enums: []string{"ui", "code"}, Default: "code"},
 		{Name: "is_latest", Type: field.TypeBool, Default: true},
 		{Name: "version_number", Type: field.TypeInt, Default: 1},
 		{Name: "owner_id", Type: field.TypeString},
@@ -446,7 +447,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "strategies_strategies_parent",
-				Columns:    []*schema.Column{StrategiesColumns[12]},
+				Columns:    []*schema.Column{StrategiesColumns[13]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -455,27 +456,27 @@ var (
 			{
 				Name:    "strategy_name_version_number",
 				Unique:  true,
-				Columns: []*schema.Column{StrategiesColumns[3], StrategiesColumns[8]},
+				Columns: []*schema.Column{StrategiesColumns[3], StrategiesColumns[9]},
 			},
 			{
 				Name:    "strategy_is_latest",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[7]},
+				Columns: []*schema.Column{StrategiesColumns[8]},
 			},
 			{
 				Name:    "strategy_parent_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[12]},
+				Columns: []*schema.Column{StrategiesColumns[13]},
 			},
 			{
 				Name:    "strategy_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[9]},
+				Columns: []*schema.Column{StrategiesColumns[10]},
 			},
 			{
 				Name:    "strategy_owner_id_is_latest",
 				Unique:  false,
-				Columns: []*schema.Column{StrategiesColumns[9], StrategiesColumns[7]},
+				Columns: []*schema.Column{StrategiesColumns[10], StrategiesColumns[8]},
 			},
 		},
 	}

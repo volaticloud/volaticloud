@@ -353,23 +353,23 @@ func init() {
 	// strategy.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	strategy.NameValidator = strategyDescName.Validators[0].(func(string) error)
 	// strategyDescIsLatest is the schema descriptor for is_latest field.
-	strategyDescIsLatest := strategyFields[6].Descriptor()
+	strategyDescIsLatest := strategyFields[7].Descriptor()
 	// strategy.DefaultIsLatest holds the default value on creation for the is_latest field.
 	strategy.DefaultIsLatest = strategyDescIsLatest.Default.(bool)
 	// strategyDescVersionNumber is the schema descriptor for version_number field.
-	strategyDescVersionNumber := strategyFields[7].Descriptor()
+	strategyDescVersionNumber := strategyFields[8].Descriptor()
 	// strategy.DefaultVersionNumber holds the default value on creation for the version_number field.
 	strategy.DefaultVersionNumber = strategyDescVersionNumber.Default.(int)
 	// strategyDescOwnerID is the schema descriptor for owner_id field.
-	strategyDescOwnerID := strategyFields[8].Descriptor()
+	strategyDescOwnerID := strategyFields[9].Descriptor()
 	// strategy.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	strategy.OwnerIDValidator = strategyDescOwnerID.Validators[0].(func(string) error)
 	// strategyDescCreatedAt is the schema descriptor for created_at field.
-	strategyDescCreatedAt := strategyFields[9].Descriptor()
+	strategyDescCreatedAt := strategyFields[10].Descriptor()
 	// strategy.DefaultCreatedAt holds the default value on creation for the created_at field.
 	strategy.DefaultCreatedAt = strategyDescCreatedAt.Default.(func() time.Time)
 	// strategyDescUpdatedAt is the schema descriptor for updated_at field.
-	strategyDescUpdatedAt := strategyFields[10].Descriptor()
+	strategyDescUpdatedAt := strategyFields[11].Descriptor()
 	// strategy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	strategy.DefaultUpdatedAt = strategyDescUpdatedAt.Default.(func() time.Time)
 	// strategy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
