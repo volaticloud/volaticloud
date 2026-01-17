@@ -122,9 +122,9 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 		SetVersionNumber(parent.VersionNumber + 1).
 		SetParentID(parent.ID).
 		SetIsLatest(true).
-		SetOwnerID(parent.OwnerID).  // Preserve owner_id from parent
-		SetPublic(parent.Public).    // Preserve public visibility from parent
-		SetBuilderMode(builderMode)  // Use new builder mode if provided, else preserve parent's
+		SetOwnerID(parent.OwnerID). // Preserve owner_id from parent
+		SetPublic(parent.Public).   // Preserve public visibility from parent
+		SetBuilderMode(builderMode) // Use new builder mode if provided, else preserve parent's
 
 	// Copy config if exists
 	if config != nil {
