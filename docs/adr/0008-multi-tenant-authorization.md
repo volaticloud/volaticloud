@@ -11,7 +11,7 @@ Accepted
 VolatiCloud is a multi-tenant SaaS platform where users create and manage trading strategies, bots, exchanges, and backtests. The platform requires:
 
 - **Fine-grained authorization**: Per-resource permission checks (not just role-based access)
-- **Multi-tenancy**: Automatic organization provisioning per user with data isolation
+- **Multi-tenancy**: Manual organization creation with data isolation
 - **Hierarchical permissions**: Users in parent groups inherit access to child resources
 - **Delegated access**: Users can share resources with others (admin/viewer roles)
 - **Scalability**: Authorization that scales with thousands of users and resources
@@ -21,7 +21,7 @@ VolatiCloud is a multi-tenant SaaS platform where users create and manage tradin
 ## Decision Drivers
 
 - **Resource-level authorization**: Check permissions per strategy/bot/exchange, not just user roles
-- **Automatic tenant provisioning**: Create organization structure on user registration
+- **Manual organization creation**: Users create organizations via GraphQL mutation
 - **Hierarchical inheritance**: Parent group members have access to child resources
 - **Delegated access**: Users can grant admin/viewer permissions to others
 - **Standards-based**: Use established protocols (OAuth 2.0, UMA 2.0)
@@ -71,7 +71,7 @@ Use Keycloak UMA 2.0 for resource protection combined with automatic group hiera
 
 - **Resource-level permissions** - fine-grained per strategy/bot/exchange
 - **Hierarchical inheritance** - organization admins have access to all child resources
-- **Automatic provisioning** - organizations created on user registration
+- **Manual organization creation** - users create organizations via GraphQL mutation or dashboard
 - **Delegation support** - users can add others to resource groups
 - **Standards-based** - UMA 2.0 is OAuth 2.0 extension
 - **Policy flexibility** - group-based, role-based, time-based policies
@@ -88,7 +88,7 @@ Use Keycloak UMA 2.0 for resource protection combined with automatic group hiera
 Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 
 1. **Resource-level authorization** via UMA 2.0 protection API
-2. **Automatic multi-tenancy** via event-driven group creation
+2. **Manual organization creation** with event-driven group creation for sub-resources
 3. **Hierarchical permissions** via parent-child group relationships
 4. **Delegated access** via role subgroups (admin/viewer)
 5. **Standards compliance** with OAuth 2.0 UMA 2.0 spec
@@ -97,7 +97,7 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 
 **Positive:**
 
-- Automatic organization provisioning on user registration
+- Manual organization creation via GraphQL mutation (`createOrganization`)
 - Fine-grained per-resource authorization with < 100ms latency
 - Hierarchical permission inheritance (organization admin → all sub-resources)
 - Users can delegate access by adding others to resource role groups
@@ -122,8 +122,9 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 
 **Organization as Top-Level Tenant:**
 
-- Every user gets an organization on registration (user ID = organization name)
+- Users create organizations manually via the `createOrganization` GraphQL mutation
 - Organization is a UMA resource with type `urn:volaticloud:resources:tenant`
+- Organization creator is automatically added as admin
 - No `ownerId` attribute (root-level resource)
 
 **Hierarchical Group Structure:**

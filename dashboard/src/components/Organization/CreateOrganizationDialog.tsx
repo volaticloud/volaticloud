@@ -29,10 +29,11 @@ export function CreateOrganizationDialog({
   const [error, setError] = useState<string | null>(null);
 
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
-    onCompleted: () => {
+    onCompleted: async () => {
       handleClose();
       // Refresh the token to get the new organization in JWT claims
-      auth.signinSilent();
+      // Await to ensure token is refreshed before calling onSuccess
+      await auth.signinSilent();
       onSuccess?.();
     },
     onError: (err) => {

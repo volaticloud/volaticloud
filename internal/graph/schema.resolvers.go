@@ -1119,10 +1119,13 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, title string)
 	_, err = adminClient.ChangeUserRole(ctx, response.ID, userCtx.UserID, "admin")
 	if err != nil {
 		log.Printf("ERROR: failed to add user as admin: %v", err)
-		// Resource was created but user wasn't added as admin - this is a partial failure
-		// We should still return success since the org was created
-		// The user can be added as admin later
-		log.Printf("WARNING: organization %s created but user %s not added as admin", response.ID, userCtx.UserID)
+		// Rollback: delete the created organization to avoid orphaned resources
+		if deleteErr := adminClient.DeleteResource(ctx, response.ID); deleteErr != nil {
+			log.Printf("ERROR: failed to rollback organization creation: %v", deleteErr)
+		} else {
+			log.Printf("INFO: rolled back organization creation after user role assignment failure")
+		}
+		return nil, fmt.Errorf("failed to add you as organization admin: %w", err)
 	}
 
 	// Parse the response ID
