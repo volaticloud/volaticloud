@@ -1075,6 +1075,28 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
+func (r *mutationResolver) CreateOrganization(ctx context.Context, title string) (*model.CreateOrganizationResponse, error) {
+	// Get user context (already authenticated via @isAuthenticated directive)
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Delegate to organization domain package (DDD compliance)
+	response, err := organization.Create(ctx, organization.CreateRequest{
+		Title:  title,
+		UserID: userCtx.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreateOrganizationResponse{
+		ID:    response.ID,
+		Title: response.Title,
+	}, nil
+}
+
 func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
 	// Authorization is handled by @hasScope directive
 	// organizationId is validated by the directive to ensure user has invite-user permission

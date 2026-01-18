@@ -1,10 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { Box, Container, Paper, Typography, Alert } from '@mui/material';
-import { Business as BusinessIcon } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
 import { ORG_ID_PARAM } from '../constants/url';
+import { NoOrganizationView } from '../components/Organization/NoOrganizationView';
 
 interface JwtPayload {
   groups?: string[];
@@ -169,55 +168,9 @@ export function GroupProvider({ children }: GroupProviderProps) {
     setActiveGroup,
   };
 
-  // Show blocking message if no groups available
+  // Show create organization view if no groups available
   if (availableGroups.length === 0) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: 'background.default',
-        }}
-      >
-        <Container maxWidth="sm">
-          <Paper
-            elevation={3}
-            sx={{
-              p: 4,
-              textAlign: 'center',
-              borderRadius: 2,
-            }}
-          >
-            <BusinessIcon
-              sx={{
-                fontSize: 64,
-                color: 'text.secondary',
-                mb: 2,
-              }}
-            />
-            <Typography variant="h5" gutterBottom fontWeight="bold">
-              No Organization Access
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Your account is not assigned to any organization. Please contact your administrator
-              to get access to an organization.
-            </Typography>
-            <Alert severity="warning" sx={{ mt: 3, textAlign: 'left' }}>
-              <Typography variant="body2">
-                <strong>Why am I seeing this?</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                This application requires you to be a member of at least one organization. The
-                system administrator needs to assign you to an organization before you can access
-                the application.
-              </Typography>
-            </Alert>
-          </Paper>
-        </Container>
-      </Box>
-    );
+    return <NoOrganizationView />;
   }
 
   return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>;
