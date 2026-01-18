@@ -60,7 +60,14 @@ export function NoOrganizationView() {
           </Paper>
         </Container>
       </Box>
-      <CreateOrganizationDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <CreateOrganizationDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSuccess={() => {
+          // Force page reload to ensure all contexts are updated with new organization
+          window.location.reload();
+        }}
+      />
     </>
   );
 }

@@ -61,11 +61,11 @@ export function CreateOrganizationDialog({
 
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      setError('Organization name is required');
+      setError('Organization title is required');
       return;
     }
     if (trimmedTitle.length > 100) {
-      setError('Organization name must be 100 characters or less');
+      setError('Organization title must be 100 characters or less');
       return;
     }
 
@@ -87,7 +87,7 @@ export function CreateOrganizationDialog({
           <TextField
             autoFocus
             fullWidth
-            label="Organization Name"
+            label="Organization Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="My Trading Organization"

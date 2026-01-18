@@ -94,11 +94,11 @@ func TestCreateOrganization(t *testing.T) {
 
 		// Test various control characters
 		testCases := []string{
-			"Test\x00Org",  // null character
-			"Test\x1fOrg",  // unit separator
-			"Test\x7fOrg",  // DEL character
-			"Test\tOrg",    // tab
-			"Test\nOrg",    // newline
+			"Test\x00Org", // null character
+			"Test\x1fOrg", // unit separator
+			"Test\x7fOrg", // DEL character
+			"Test\tOrg",   // tab
+			"Test\nOrg",   // newline
 		}
 
 		resolver := &mutationResolver{}

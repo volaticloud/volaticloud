@@ -15,6 +15,9 @@ import (
 // MaxTitleLength is the maximum allowed length for organization titles
 const MaxTitleLength = 100
 
+// DefaultKeycloakTimeout is the timeout for Keycloak API operations
+const DefaultKeycloakTimeout = 30 * time.Second
+
 // CreateRequest contains the parameters for creating an organization
 type CreateRequest struct {
 	Title  string
@@ -31,6 +34,10 @@ type CreateResponse struct {
 // This function handles validation, Keycloak resource creation, role assignment, and rollback on failure.
 // The admin client is retrieved from context via authz.GetAdminClientFromContext.
 func Create(ctx context.Context, req CreateRequest) (*CreateResponse, error) {
+	// Add timeout to prevent hanging on Keycloak operations
+	ctx, cancel := context.WithTimeout(ctx, DefaultKeycloakTimeout)
+	defer cancel()
+
 	// Validate inputs
 	if err := validateTitle(req.Title); err != nil {
 		return nil, err
@@ -41,10 +48,6 @@ func Create(ctx context.Context, req CreateRequest) (*CreateResponse, error) {
 	if adminClient == nil {
 		return nil, fmt.Errorf("admin client not available")
 	}
-
-	// Add timeout to Keycloak operations to prevent hanging
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 
 	// Generate new UUID for the organization
 	orgID := uuid.New()
@@ -105,9 +108,4 @@ func validateTitle(title string) error {
 		}
 	}
 	return nil
-}
-
-// ValidateTitle is exported for use in tests and other packages
-func ValidateTitle(title string) error {
-	return validateTitle(title)
 }
