@@ -30,10 +30,18 @@ export function CreateOrganizationDialog({
 
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
     onCompleted: async () => {
+      // Refresh token BEFORE closing dialog to ensure JWT has new organization claims
+      try {
+        await auth.signinSilent();
+      } catch (refreshError) {
+        console.error('Failed to refresh token after organization creation:', refreshError);
+        // Organization was created successfully, but token refresh failed
+        // User will need to manually refresh (sign out and back in) to see the new org
+        setError('Organization created, but session refresh failed. Please sign out and sign back in to see your new organization.');
+        return;
+      }
+      // Token refreshed successfully, now close dialog and notify success
       handleClose();
-      // Refresh the token to get the new organization in JWT claims
-      // Await to ensure token is refreshed before calling onSuccess
-      await auth.signinSilent();
       onSuccess?.();
     },
     onError: (err) => {

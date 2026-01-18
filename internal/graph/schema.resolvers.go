@@ -1090,6 +1090,12 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, title string)
 	if len(title) > 100 {
 		return nil, fmt.Errorf("organization title must be 100 characters or less")
 	}
+	// Validate for control characters (security: prevent injection in Keycloak group names)
+	for _, r := range title {
+		if r < 32 || r == 127 {
+			return nil, fmt.Errorf("organization title contains invalid characters")
+		}
+	}
 
 	// Get admin client from context
 	adminClient := GetAdminClientFromContext(ctx)

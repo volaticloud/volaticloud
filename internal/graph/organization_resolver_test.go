@@ -86,6 +86,31 @@ func TestCreateOrganization(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
+	t.Run("rejects title with control characters", func(t *testing.T) {
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: "test-user-id",
+			Email:  "test@example.com",
+		})
+
+		// Test various control characters
+		testCases := []string{
+			"Test\x00Org",  // null character
+			"Test\x1fOrg",  // unit separator
+			"Test\x7fOrg",  // DEL character
+			"Test\tOrg",    // tab
+			"Test\nOrg",    // newline
+		}
+
+		resolver := &mutationResolver{}
+		for _, titleWithControl := range testCases {
+			result, err := resolver.CreateOrganization(ctx, titleWithControl)
+
+			require.Error(t, err, "Expected error for title with control character")
+			assert.Contains(t, err.Error(), "organization title contains invalid characters")
+			assert.Nil(t, result)
+		}
+	})
+
 	t.Run("trims whitespace from title", func(t *testing.T) {
 		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
 			UserID: "test-user-id",
