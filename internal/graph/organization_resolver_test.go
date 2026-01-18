@@ -143,6 +143,7 @@ func TestCreateOrganization(t *testing.T) {
 	})
 
 	t.Run("successful organization creation", func(t *testing.T) {
+		// TODO(#128): Add integration test with Keycloak mock
 		t.Skip("Integration test - requires Keycloak mock or interface refactor")
 		// This would test:
 		// 1. Mock admin client CreateResource returns successfully
@@ -151,6 +152,7 @@ func TestCreateOrganization(t *testing.T) {
 	})
 
 	t.Run("rollback on ChangeUserRole failure", func(t *testing.T) {
+		// TODO(#128): Add integration test with Keycloak mock
 		t.Skip("Integration test - requires Keycloak mock or interface refactor")
 		// This would test:
 		// 1. Mock admin client CreateResource returns successfully
@@ -160,6 +162,7 @@ func TestCreateOrganization(t *testing.T) {
 	})
 
 	t.Run("rollback failure logged on ChangeUserRole failure", func(t *testing.T) {
+		// TODO(#128): Add integration test with Keycloak mock
 		t.Skip("Integration test - requires Keycloak mock or interface refactor")
 		// This would test:
 		// 1. Mock admin client CreateResource returns successfully

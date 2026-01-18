@@ -37,7 +37,7 @@ export function NoOrganizationView() {
               Create Your Organization
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              You don't have any organization yet. Create one to get started with VolatiCloud.
+              You don't have any organizations yet. Create one to get started with VolatiCloud.
             </Typography>
 
             <Button

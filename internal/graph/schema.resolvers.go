@@ -1082,66 +1082,17 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, title string)
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
 
-	// Validate title
-	title = strings.TrimSpace(title)
-	if title == "" {
-		return nil, fmt.Errorf("organization title is required")
-	}
-	if len(title) > 100 {
-		return nil, fmt.Errorf("organization title must be 100 characters or less")
-	}
-	// Validate for control characters (security: prevent injection in Keycloak group names)
-	for _, r := range title {
-		if r < 32 || r == 127 {
-			return nil, fmt.Errorf("organization title contains invalid characters")
-		}
-	}
-
-	// Get admin client from context
-	adminClient := GetAdminClientFromContext(ctx)
-	if adminClient == nil {
-		return nil, fmt.Errorf("admin client not available")
-	}
-
-	// Generate new UUID for the organization
-	orgID := uuid.New()
-
-	// Create organization resource via Keycloak extension API
-	// This creates: UMA resource, group hierarchy with role subgroups
-	request := keycloak.ResourceCreateRequest{
-		ID:     orgID.String(),
+	// Delegate to organization domain package (DDD compliance)
+	response, err := organization.Create(ctx, organization.CreateRequest{
 		Title:  title,
-		Type:   "organization",
-		Scopes: []string{"view", "edit", "delete", "invite-user", "manage-users", "view-secrets"},
-	}
-
-	response, err := adminClient.CreateResource(ctx, request)
+		UserID: userCtx.UserID,
+	})
 	if err != nil {
-		log.Printf("ERROR: failed to create organization resource: %v", err)
-		return nil, fmt.Errorf("failed to create organization: %w", err)
-	}
-
-	// Add the current user as admin of the organization
-	_, err = adminClient.ChangeUserRole(ctx, response.ID, userCtx.UserID, "admin")
-	if err != nil {
-		log.Printf("ERROR: failed to add user as admin: %v", err)
-		// Rollback: delete the created organization to avoid orphaned resources
-		if deleteErr := adminClient.DeleteResource(ctx, response.ID); deleteErr != nil {
-			log.Printf("ERROR: failed to rollback organization creation: %v", deleteErr)
-		} else {
-			log.Printf("INFO: rolled back organization creation after user role assignment failure")
-		}
-		return nil, fmt.Errorf("failed to add you as organization admin: %w", err)
-	}
-
-	// Parse the response ID
-	responseID, err := uuid.Parse(response.ID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid organization ID in response: %w", err)
+		return nil, err
 	}
 
 	return &model.CreateOrganizationResponse{
-		ID:    responseID,
+		ID:    response.ID,
 		Title: response.Title,
 	}, nil
 }
