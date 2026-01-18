@@ -1075,6 +1075,68 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
+func (r *mutationResolver) CreateOrganization(ctx context.Context, title string) (*model.CreateOrganizationResponse, error) {
+	// Get user context (already authenticated via @isAuthenticated directive)
+	userCtx, err := auth.GetUserContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("authentication required: %w", err)
+	}
+
+	// Validate title
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return nil, fmt.Errorf("organization title is required")
+	}
+	if len(title) > 100 {
+		return nil, fmt.Errorf("organization title must be 100 characters or less")
+	}
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return nil, fmt.Errorf("admin client not available")
+	}
+
+	// Generate new UUID for the organization
+	orgID := uuid.New()
+
+	// Create organization resource via Keycloak extension API
+	// This creates: UMA resource, group hierarchy with role subgroups
+	request := keycloak.ResourceCreateRequest{
+		ID:     orgID.String(),
+		Title:  title,
+		Type:   "organization",
+		Scopes: []string{"view", "edit", "delete", "invite-user", "manage-users", "view-secrets"},
+	}
+
+	response, err := adminClient.CreateResource(ctx, request)
+	if err != nil {
+		log.Printf("ERROR: failed to create organization resource: %v", err)
+		return nil, fmt.Errorf("failed to create organization: %w", err)
+	}
+
+	// Add the current user as admin of the organization
+	_, err = adminClient.ChangeUserRole(ctx, response.ID, userCtx.UserID, "admin")
+	if err != nil {
+		log.Printf("ERROR: failed to add user as admin: %v", err)
+		// Resource was created but user wasn't added as admin - this is a partial failure
+		// We should still return success since the org was created
+		// The user can be added as admin later
+		log.Printf("WARNING: organization %s created but user %s not added as admin", response.ID, userCtx.UserID)
+	}
+
+	// Parse the response ID
+	responseID, err := uuid.Parse(response.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid organization ID in response: %w", err)
+	}
+
+	return &model.CreateOrganizationResponse{
+		ID:    responseID,
+		Title: response.Title,
+	}, nil
+}
+
 func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
 	// Authorization is handled by @hasScope directive
 	// organizationId is validated by the directive to ensure user has invite-user permission

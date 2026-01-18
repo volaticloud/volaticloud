@@ -63,6 +63,14 @@ type ConnectionTestResult struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Response from creating an organization
+type CreateOrganizationResponse struct {
+	// The ID of the newly created organization (UUID)
+	ID uuid.UUID `json:"id"`
+	// The title of the organization
+	Title string `json:"title"`
+}
+
 type DataDownloadConfigInput struct {
 	Exchanges []*DataDownloadExchangeConfigInput `json:"exchanges"`
 }

@@ -1228,7 +1228,29 @@ extend type Query {
   ): OrganizationInvitationConnection! @hasScope(resource: "organizationId", scope: "invite-user")
 }
 
+"""
+Response from creating an organization
+"""
+type CreateOrganizationResponse {
+  """
+  The ID of the newly created organization (UUID)
+  """
+  id: ID!
+  """
+  The title of the organization
+  """
+  title: String!
+}
+
 extend type Mutation {
+  """
+  Create a new organization for the current user
+  Creates Keycloak native organization, UMA resource, and group hierarchy
+  The current user is automatically added as an admin of the organization
+  No authorization required - any authenticated user can create an organization
+  """
+  createOrganization(title: String!): CreateOrganizationResponse! @isAuthenticated
+
   """
   Invite a user to an organization
   Sends an invitation email with a link to join

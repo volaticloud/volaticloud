@@ -494,6 +494,11 @@ public class ResourceManagementService {
             throw new Exception("Failed to create native organization: " + alias);
         }
 
+        // Set organization_title attribute for JWT token mappers
+        Map<String, List<String>> attrs = new HashMap<>();
+        attrs.put("organization_title", Collections.singletonList(name));
+        org.setAttributes(attrs);
+
         log.infof("Created native Keycloak organization: name=%s, alias=%s, id=%s", name, alias, org.getId());
     }
 
@@ -518,6 +523,15 @@ public class ResourceManagementService {
         }
 
         org.setName(newName);
+        // Also update the organization_title attribute
+        Map<String, List<String>> attrs = org.getAttributes();
+        if (attrs == null) {
+            attrs = new HashMap<>();
+        } else {
+            attrs = new HashMap<>(attrs); // Make mutable copy
+        }
+        attrs.put("organization_title", Collections.singletonList(newName));
+        org.setAttributes(attrs);
         log.infof("Updated native organization name: alias=%s, newName=%s", alias, newName);
     }
 
