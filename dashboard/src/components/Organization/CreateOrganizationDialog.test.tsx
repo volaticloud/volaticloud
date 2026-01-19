@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider } from '@apollo/client/testing';
 import { CreateOrganizationDialog } from './CreateOrganizationDialog';
@@ -375,6 +375,54 @@ describe('CreateOrganizationDialog', () => {
 
       const submitButton = screen.getByRole('button', { name: /create/i });
       expect(submitButton).toBeDisabled();
+    });
+
+    it('shows error for alias starting with dot', async () => {
+      const user = userEvent.setup();
+      render(
+        <MockedProvider mocks={[]} addTypename={false}>
+          <CreateOrganizationDialog {...defaultProps} />
+        </MockedProvider>
+      );
+
+      // Enter a title first
+      const titleInput = screen.getByLabelText(/organization title/i);
+      await user.type(titleInput, 'My Organization');
+
+      // Open advanced section
+      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      await user.click(customizeButton);
+
+      // Enter alias starting with dot
+      const aliasInput = screen.getByLabelText(/organization alias/i);
+      await user.clear(aliasInput);
+      await user.type(aliasInput, '.hidden');
+
+      expect(screen.getByText(/cannot start with a dot/i)).toBeInTheDocument();
+    });
+
+    it('shows error for alias with path traversal characters', async () => {
+      const user = userEvent.setup();
+      render(
+        <MockedProvider mocks={[]} addTypename={false}>
+          <CreateOrganizationDialog {...defaultProps} />
+        </MockedProvider>
+      );
+
+      // Enter a title first
+      const titleInput = screen.getByLabelText(/organization title/i);
+      await user.type(titleInput, 'My Organization');
+
+      // Open advanced section
+      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      await user.click(customizeButton);
+
+      // Enter alias with forward slash
+      const aliasInput = screen.getByLabelText(/organization alias/i);
+      await user.clear(aliasInput);
+      await user.type(aliasInput, 'my/org');
+
+      expect(screen.getByText(/invalid path characters/i)).toBeInTheDocument();
     });
   });
 

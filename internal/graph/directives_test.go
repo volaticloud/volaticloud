@@ -534,14 +534,14 @@ func TestDeleteWithResource_Integration(t *testing.T) {
 
 // TestChangeOrganizationUserRole tests the ChangeOrganizationUserRole resolver
 func TestChangeOrganizationUserRole(t *testing.T) {
-	orgID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
-	userID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	orgID := "11111111-1111-1111-1111-111111111111"
+	userID := "22222222-2222-2222-2222-222222222222"
 	currentUserID := "33333333-3333-3333-3333-333333333333"
 
 	t.Run("prevents self-role-change", func(t *testing.T) {
 		// Create context with user trying to change their own role
 		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
-			UserID: userID.String(), // Same as target user
+			UserID: userID, // Same as target user
 		})
 
 		resolver := &mutationResolver{}

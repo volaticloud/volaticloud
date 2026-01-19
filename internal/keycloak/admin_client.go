@@ -733,6 +733,84 @@ type ChangeUserRoleResponse struct {
 	AddedToOrg bool   `json:"addedToOrg"`
 }
 
+// DisableOrganization disables an organization (soft delete)
+// Uses the Keycloak extension's unified API endpoint
+func (a *AdminClient) DisableOrganization(ctx context.Context, alias string) error {
+	return a.DeleteResource(ctx, alias)
+}
+
+// EnableOrganization re-enables a disabled organization
+// Uses the Keycloak extension's unified API endpoint
+func (a *AdminClient) EnableOrganization(ctx context.Context, alias string) error {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// POST to the enable endpoint
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s/enable", a.config.URL, a.config.Realm, alias)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := a.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to enable organization (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
+
+// CheckOrganizationAliasExists checks if an organization with the given alias already exists.
+// Returns true if the alias is taken, false if it's available.
+func (a *AdminClient) CheckOrganizationAliasExists(ctx context.Context, alias string) (bool, error) {
+	// Get admin token
+	token, err := a.client.LoginClient(ctx, a.config.ClientID, a.config.ClientSecret, a.config.Realm)
+	if err != nil {
+		return false, fmt.Errorf("failed to login as admin client: %w", err)
+	}
+
+	// Try to GET the resource - if it exists, the alias is taken
+	url := fmt.Sprintf("%s/realms/%s/volaticloud/resources/%s", a.config.URL, a.config.Realm, alias)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+	resp, err := a.httpClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 200 = exists, 404 = doesn't exist
+	if resp.StatusCode == http.StatusOK {
+		return true, nil
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	// Unexpected status code
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	return false, fmt.Errorf("unexpected status code %d checking alias existence: %s", resp.StatusCode, string(bodyBytes))
+}
+
 // ChangeUserRole changes a user's role in an organization by removing all existing roles
 // and assigning the new role. This uses the Keycloak extension's member management API.
 func (a *AdminClient) ChangeUserRole(ctx context.Context, resourceID, userID, newRole string) (*ChangeUserRoleResponse, error) {

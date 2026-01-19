@@ -55,6 +55,7 @@ function generateAliasFromTitle(title: string): string {
  * - Lowercase alphanumeric with hyphens
  * - Cannot start or end with hyphen
  * - Cannot have consecutive hyphens
+ * - Cannot contain path traversal sequences
  */
 function validateAlias(alias: string): string | null {
   if (alias.length < 3) {
@@ -62,6 +63,13 @@ function validateAlias(alias: string): string | null {
   }
   if (alias.length > 50) {
     return 'Alias must be 50 characters or less';
+  }
+  // Security: prevent directory traversal attacks
+  if (alias === '.' || alias === '..' || alias.includes('/') || alias.includes('\\')) {
+    return 'Alias contains invalid path characters';
+  }
+  if (alias.startsWith('.')) {
+    return 'Alias cannot start with a dot';
   }
   if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(alias)) {
     return 'Alias must be lowercase alphanumeric with hyphens, cannot start or end with hyphen';

@@ -78,6 +78,15 @@ func Create(ctx context.Context, req CreateRequest) (*CreateResponse, error) {
 		return nil, fmt.Errorf("admin client not available")
 	}
 
+	// Check if alias already exists (provide user-friendly error message)
+	exists, err := adminClient.CheckOrganizationAliasExists(ctx, alias)
+	if err != nil {
+		log.Printf("WARNING: failed to check alias existence: %v", err)
+		// Continue anyway - Keycloak will reject duplicates
+	} else if exists {
+		return nil, fmt.Errorf("organization alias '%s' already exists", alias)
+	}
+
 	// Create organization resource via Keycloak extension API
 	// The alias is used as the unique identifier for the organization
 	// Creation order: Native Organization → Keycloak Group → UMA Resource
@@ -137,12 +146,20 @@ func validateTitle(title string) error {
 // - Lowercase alphanumeric with hyphens
 // - Cannot start or end with hyphen
 // - Cannot have consecutive hyphens
+// - Cannot contain path traversal sequences
 func ValidateAlias(alias string) error {
 	if len(alias) < MinAliasLength {
 		return fmt.Errorf("organization alias must be at least %d characters", MinAliasLength)
 	}
 	if len(alias) > MaxAliasLength {
 		return fmt.Errorf("organization alias must be %d characters or less", MaxAliasLength)
+	}
+	// Security: prevent directory traversal attacks
+	if alias == "." || alias == ".." || strings.Contains(alias, "/") || strings.Contains(alias, "\\") {
+		return fmt.Errorf("organization alias contains invalid path characters")
+	}
+	if strings.HasPrefix(alias, ".") {
+		return fmt.Errorf("organization alias cannot start with a dot")
 	}
 	if !aliasRegex.MatchString(alias) {
 		return fmt.Errorf("organization alias must be lowercase alphanumeric with hyphens, cannot start or end with hyphen")

@@ -217,6 +217,43 @@ func TestValidateAlias(t *testing.T) {
 			wantErr: true,
 			errMsg:  "organization alias must be lowercase alphanumeric with hyphens",
 		},
+		// Security: directory traversal prevention
+		{
+			name:    "alias with forward slash",
+			alias:   "my/org",
+			wantErr: true,
+			errMsg:  "organization alias contains invalid path characters",
+		},
+		{
+			name:    "alias with backslash",
+			alias:   "my\\org",
+			wantErr: true,
+			errMsg:  "organization alias contains invalid path characters",
+		},
+		{
+			name:    "alias is single dot",
+			alias:   ".",
+			wantErr: true,
+			errMsg:  "organization alias must be at least 3 characters", // Length check happens first
+		},
+		{
+			name:    "alias is double dot",
+			alias:   "..",
+			wantErr: true,
+			errMsg:  "organization alias must be at least 3 characters", // Length check happens first
+		},
+		{
+			name:    "alias starting with dot",
+			alias:   ".hidden",
+			wantErr: true,
+			errMsg:  "organization alias cannot start with a dot",
+		},
+		{
+			name:    "alias with path traversal sequence",
+			alias:   "../admin",
+			wantErr: true,
+			errMsg:  "organization alias contains invalid path characters",
+		},
 	}
 
 	for _, tt := range tests {

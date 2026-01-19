@@ -1184,9 +1184,9 @@ type OrganizationInvitation {
   """
   lastName: String
   """
-  Organization resource ID
+  Organization alias (resource ID)
   """
-  organizationId: ID!
+  organizationId: String!
   """
   Invitation status (PENDING, EXPIRED)
   """
@@ -1222,7 +1222,7 @@ extend type Query {
   Requires invite-user permission on the organization
   """
   organizationInvitations(
-    organizationId: ID!
+    organizationId: String!
     first: Int = 20
     offset: Int = 0
   ): OrganizationInvitationConnection! @hasScope(resource: "organizationId", scope: "invite-user")
@@ -1283,14 +1283,14 @@ extend type Mutation {
   Invited users are automatically assigned the 'viewer' role upon acceptance
   Requires invite-user permission on the organization
   """
-  inviteOrganizationUser(organizationId: ID!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
+  inviteOrganizationUser(organizationId: String!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
 
   """
   Cancel a pending invitation
   Removes the invitation so the user can no longer use the invite link
   Requires invite-user permission on the organization
   """
-  cancelOrganizationInvitation(organizationId: ID!, invitationId: ID!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
+  cancelOrganizationInvitation(organizationId: String!, invitationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
 
   """
   Change a user's role in an organization
@@ -1298,5 +1298,20 @@ extend type Mutation {
   Users cannot change their own role (returns error)
   Requires change-user-roles permission on the organization
   """
-  changeOrganizationUserRole(organizationId: ID!, userId: ID!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles")
+  changeOrganizationUserRole(organizationId: String!, userId: String!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles")
+
+  """
+  Delete an organization (soft delete)
+  Disables the organization instead of permanent deletion.
+  The organization can be re-enabled later using enableOrganization.
+  Requires delete permission on the organization.
+  """
+  deleteOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "delete")
+
+  """
+  Re-enable a previously disabled organization
+  Restores access to the organization after it was soft-deleted.
+  Requires edit permission on the organization.
+  """
+  enableOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "edit")
 }
