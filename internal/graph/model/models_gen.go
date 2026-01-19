@@ -63,12 +63,27 @@ type ConnectionTestResult struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// Input for creating an organization
+type CreateOrganizationInput struct {
+	// The display title of the organization
+	Title string `json:"title"`
+	// The unique alias for the organization (URL-friendly identifier).
+	// If not provided, will be auto-generated from the title.
+	// IMPORTANT: Alias cannot be changed after creation.
+	// Must be lowercase, alphanumeric with hyphens, 3-50 characters.
+	Alias *string `json:"alias,omitempty"`
+}
+
 // Response from creating an organization
 type CreateOrganizationResponse struct {
-	// The ID of the newly created organization (UUID)
-	ID uuid.UUID `json:"id"`
-	// The title of the organization
+	// The unique alias of the organization (immutable identifier).
+	// This is the same as the alias field.
+	ID string `json:"id"`
+	// The display title of the organization
 	Title string `json:"title"`
+	// The unique alias (same as id, included for clarity).
+	// Human-readable URL-friendly identifier that cannot be changed.
+	Alias string `json:"alias"`
 }
 
 type DataDownloadConfigInput struct {
@@ -191,8 +206,8 @@ type OrganizationInvitation struct {
 	FirstName *string `json:"firstName,omitempty"`
 	// Last name of the invited user
 	LastName *string `json:"lastName,omitempty"`
-	// Organization resource ID
-	OrganizationID uuid.UUID `json:"organizationId"`
+	// Organization alias (resource ID)
+	OrganizationID string `json:"organizationId"`
 	// Invitation status (PENDING, EXPIRED)
 	Status string `json:"status"`
 	// Timestamp when invitation was created (Unix milliseconds)

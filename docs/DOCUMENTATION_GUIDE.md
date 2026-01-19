@@ -176,15 +176,14 @@ High-level description of the package's purpose and responsibilities.
 
 # Architecture
 
-ASCII diagram showing component relationships:
+Mermaid diagram showing component relationships:
 
- ┌─────────────────┐
- │   Component A   │
- └────────┬────────┘
-          │
-     ┌────▼────┐
-     │  Core   │
-     └─────────┘
+    ```mermaid
+    flowchart TD
+        A[Component A] --> B[Core]
+        B --> C[Component B]
+        B --> D[Component C]
+    ```
 
 # Core Concepts
 
@@ -342,7 +341,7 @@ touch internal/{package}/doc.go
 **Step 2: Write Documentation**
 
 - Start with package comment block (`/* ... */`)
-- Include architecture diagram (ASCII art)
+- Include architecture diagram (Mermaid syntax - NOT ASCII art)
 - Document core concepts
 - Provide usage examples
 - Explain implementation details
@@ -798,7 +797,7 @@ go list -f '{{.Doc}}' ./internal/{package}
 - ✅ **Write general-purpose docs** - Not AI-specific
 - ✅ **Include code examples** - Runnable, tested examples
 - ✅ **Link related docs** - Create navigation paths
-- ✅ **Use diagrams** - ASCII art or Mermaid
+- ✅ **Use Mermaid diagrams** - All diagrams must use Mermaid syntax (not ASCII art)
 - ✅ **Update CLAUDE.md** - When adding critical notes
 
 ### Don'ts ❌
@@ -808,7 +807,7 @@ go list -f '{{.Doc}}' ./internal/{package}
 - ❌ **Don't duplicate information** - Link to single source of truth
 - ❌ **Don't write AI-specific docs** - Keep docs general-purpose
 - ❌ **Don't skip verification** - CI will catch it anyway
-- ❌ **Don't use images** - Use text-based diagrams (Mermaid, ASCII)
+- ❌ **Don't use images or ASCII art** - Use Mermaid diagrams only
 - ❌ **Don't write obsolete docs** - Remove or mark as deprecated
 
 ---
@@ -833,8 +832,8 @@ A: Yes, in `doc.go` files. Document why things work the way they do, not just wh
 **Q: How often should I regenerate docs?**
 A: Before every commit that changes schemas, dependencies, or GraphQL API.
 
-**Q: Can I use images in documentation?**
-A: Prefer text-based diagrams (Mermaid, ASCII art). Images are harder to version control and review.
+**Q: Can I use images or ASCII art in documentation?**
+A: No. Use Mermaid diagrams only. Images and ASCII art are harder to version control, review, and maintain. Mermaid diagrams are rendered consistently across platforms and can be easily updated.
 
 **Q: What if I disagree with an ADR?**
 A: Create a new ADR proposing the alternative, with full context and justification.

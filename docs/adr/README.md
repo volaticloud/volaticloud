@@ -17,6 +17,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0009](0009-github-actions-architecture.md) | GitHub Actions CI/CD Architecture | Accepted | 2025-12-01 |
 | [0010](0010-organization-invitation-system.md) | Organization User Invitation System | Accepted | 2026-01-14 |
 | [0011](0011-strategy-ui-builder.md) | Strategy UI Builder Architecture | Accepted | 2026-01-16 |
+| [0012](0012-organization-alias-system.md) | Organization Alias System | Accepted | 2026-01-19 |
 
 ## What is an ADR?
 

@@ -155,9 +155,10 @@ mutation ChangeOrganizationUserRole($organizationId: ID!, $userId: ID!, $newRole
   changeOrganizationUserRole(organizationId: $organizationId, userId: $userId, newRole: $newRole)
 }
 
-mutation CreateOrganization($title: String!) {
-  createOrganization(title: $title) {
+mutation CreateOrganization($input: CreateOrganizationInput!) {
+  createOrganization(input: $input) {
     id
     title
+    alias
   }
 }

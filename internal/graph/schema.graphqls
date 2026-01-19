@@ -1184,9 +1184,9 @@ type OrganizationInvitation {
   """
   lastName: String
   """
-  Organization resource ID
+  Organization alias (resource ID)
   """
-  organizationId: ID!
+  organizationId: String!
   """
   Invitation status (PENDING, EXPIRED)
   """
@@ -1222,10 +1222,27 @@ extend type Query {
   Requires invite-user permission on the organization
   """
   organizationInvitations(
-    organizationId: ID!
+    organizationId: String!
     first: Int = 20
     offset: Int = 0
   ): OrganizationInvitationConnection! @hasScope(resource: "organizationId", scope: "invite-user")
+}
+
+"""
+Input for creating an organization
+"""
+input CreateOrganizationInput {
+  """
+  The display title of the organization
+  """
+  title: String!
+  """
+  The unique alias for the organization (URL-friendly identifier).
+  If not provided, will be auto-generated from the title.
+  IMPORTANT: Alias cannot be changed after creation.
+  Must be lowercase, alphanumeric with hyphens, 3-50 characters.
+  """
+  alias: String
 }
 
 """
@@ -1233,13 +1250,19 @@ Response from creating an organization
 """
 type CreateOrganizationResponse {
   """
-  The ID of the newly created organization (UUID)
+  The unique alias of the organization (immutable identifier).
+  This is the same as the alias field.
   """
-  id: ID!
+  id: String!
   """
-  The title of the organization
+  The display title of the organization
   """
   title: String!
+  """
+  The unique alias (same as id, included for clarity).
+  Human-readable URL-friendly identifier that cannot be changed.
+  """
+  alias: String!
 }
 
 extend type Mutation {
@@ -1248,8 +1271,11 @@ extend type Mutation {
   Creates Keycloak native organization, UMA resource, and group hierarchy
   The current user is automatically added as an admin of the organization
   No authorization required - any authenticated user can create an organization
+
+  The alias becomes the permanent identifier for the organization and cannot be changed.
+  If alias is not provided, it will be auto-generated from the title.
   """
-  createOrganization(title: String!): CreateOrganizationResponse! @isAuthenticated
+  createOrganization(input: CreateOrganizationInput!): CreateOrganizationResponse! @isAuthenticated
 
   """
   Invite a user to an organization
@@ -1257,14 +1283,14 @@ extend type Mutation {
   Invited users are automatically assigned the 'viewer' role upon acceptance
   Requires invite-user permission on the organization
   """
-  inviteOrganizationUser(organizationId: ID!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
+  inviteOrganizationUser(organizationId: String!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
 
   """
   Cancel a pending invitation
   Removes the invitation so the user can no longer use the invite link
   Requires invite-user permission on the organization
   """
-  cancelOrganizationInvitation(organizationId: ID!, invitationId: ID!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
+  cancelOrganizationInvitation(organizationId: String!, invitationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
 
   """
   Change a user's role in an organization
@@ -1272,5 +1298,20 @@ extend type Mutation {
   Users cannot change their own role (returns error)
   Requires change-user-roles permission on the organization
   """
-  changeOrganizationUserRole(organizationId: ID!, userId: ID!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles")
+  changeOrganizationUserRole(organizationId: String!, userId: String!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles")
+
+  """
+  Delete an organization (soft delete)
+  Disables the organization instead of permanent deletion.
+  The organization can be re-enabled later using enableOrganization.
+  Requires delete permission on the organization.
+  """
+  deleteOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "delete")
+
+  """
+  Re-enable a previously disabled organization
+  Restores access to the organization after it was soft-deleted.
+  Requires edit permission on the organization.
+  """
+  enableOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "edit")
 }

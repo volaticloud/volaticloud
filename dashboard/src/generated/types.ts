@@ -2024,12 +2024,33 @@ export type CreateExchangeInput = {
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
 };
 
+/** Input for creating an organization */
+export type CreateOrganizationInput = {
+  /**
+   * The unique alias for the organization (URL-friendly identifier).
+   * If not provided, will be auto-generated from the title.
+   * IMPORTANT: Alias cannot be changed after creation.
+   * Must be lowercase, alphanumeric with hyphens, 3-50 characters.
+   */
+  alias?: InputMaybe<Scalars['String']['input']>;
+  /** The display title of the organization */
+  title: Scalars['String']['input'];
+};
+
 /** Response from creating an organization */
 export type CreateOrganizationResponse = {
   __typename?: 'CreateOrganizationResponse';
-  /** The ID of the newly created organization (UUID) */
-  id: Scalars['ID']['output'];
-  /** The title of the organization */
+  /**
+   * The unique alias (same as id, included for clarity).
+   * Human-readable URL-friendly identifier that cannot be changed.
+   */
+  alias: Scalars['String']['output'];
+  /**
+   * The unique alias of the organization (immutable identifier).
+   * This is the same as the alias field.
+   */
+  id: Scalars['String']['output'];
+  /** The display title of the organization */
   title: Scalars['String']['output'];
 };
 
@@ -2402,6 +2423,9 @@ export type Mutation = {
    * Creates Keycloak native organization, UMA resource, and group hierarchy
    * The current user is automatically added as an admin of the organization
    * No authorization required - any authenticated user can create an organization
+   *
+   * The alias becomes the permanent identifier for the organization and cannot be changed.
+   * If alias is not provided, it will be auto-generated from the title.
    */
   createOrganization: CreateOrganizationResponse;
   createStrategy: Strategy;
@@ -2527,7 +2551,7 @@ export type MutationCreateExchangeArgs = {
 
 
 export type MutationCreateOrganizationArgs = {
-  title: Scalars['String']['input'];
+  input: CreateOrganizationInput;
 };
 
 

@@ -37,6 +37,7 @@
 | `authz` | Authorization, UMA resources |
 | `bot` | Bot lifecycle, config validation |
 | `backtest` | Backtest execution, result parsing |
+| `organization` | Organization alias system, creation, soft delete |
 | `strategy` | Strategy versioning |
 | `strategy/codegen` | Strategy code generation from UI Builder |
 | `exchange` | Exchange config validation |
@@ -86,6 +87,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0007](../docs/adr/0007-kubernetes-deployment-strategy.md) - Kubernetes Deployment
 - [ADR-0008](../docs/adr/0008-multi-tenant-authorization.md) - Multi-Tenant Authorization (UMA 2.0, public/private visibility)
 - [ADR-0011](../docs/adr/0011-strategy-ui-builder.md) - Strategy UI Builder Architecture
+- [ADR-0012](../docs/adr/0012-organization-alias-system.md) - Organization Alias System
 
 ## Project Structure
 
@@ -104,12 +106,13 @@ internal/
 ├── graph/         # GraphQL resolvers (THIN) → See doc.go
 ├── keycloak/      # Keycloak UMA client → See doc.go
 ├── monitor/       # Bot/backtest monitoring → See doc.go
+├── organization/  # Organization alias system → See doc.go
 ├── runner/        # Container orchestration → See doc.go
 ├── strategy/      # Strategy versioning
 └── utils/         # Shared utilities
 ```
 
-**Package Documentation:** Each package has comprehensive `doc.go` files with architecture diagrams and usage examples.
+**Package Documentation:** Each package has comprehensive `doc.go` files with Mermaid diagrams (not ASCII art) and usage examples.
 
 ## Quick Commands
 
@@ -293,6 +296,7 @@ make coverage   # Open HTML report
 - `internal/graph/doc.go` - GraphQL resolver architecture
 - `internal/backtest/doc.go` - Backtest result parsing
 - `internal/keycloak/doc.go` - Keycloak UMA 2.0 integration
+- `internal/organization/doc.go` - Organization alias system, dual identifiers
 - `internal/strategy/doc.go` - Strategy modes, versioning, type synchronization
 - `internal/strategy/codegen/doc.go` - Strategy code generation from UI Builder
 

@@ -228,6 +228,31 @@ public class TenantManagementResource {
     }
 
     /**
+     * POST /realms/{realm}/volaticloud/resources/{id}/enable
+     *
+     * Re-enables a previously disabled organization.
+     * Only works for organization-type resources.
+     *
+     * @param resourceId Resource ID (organization alias)
+     * @return 200 OK on success
+     */
+    @POST
+    @Path("/resources/{id}/enable")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response enableResource(@PathParam("id") String resourceId) {
+        try {
+            resourceManagementService.enableOrganization(resourceId);
+            return Response.ok(Map.of("message", "Organization enabled successfully")).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(Map.of("error", e.getMessage())).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            return Response.status(500).entity(Map.of("error", "Internal server error: " + e.getMessage())).build();
+        }
+    }
+
+    /**
      * GET /realms/{realm}/volaticloud/resources/{id}
      *
      * Gets details of a unified resource.

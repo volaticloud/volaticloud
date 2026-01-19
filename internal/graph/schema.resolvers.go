@@ -1075,16 +1075,23 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
-func (r *mutationResolver) CreateOrganization(ctx context.Context, title string) (*model.CreateOrganizationResponse, error) {
+func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.CreateOrganizationResponse, error) {
 	// Get user context (already authenticated via @isAuthenticated directive)
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
 
+	// Get alias from input (optional - will be auto-generated from title if empty)
+	alias := ""
+	if input.Alias != nil {
+		alias = *input.Alias
+	}
+
 	// Delegate to organization domain package (DDD compliance)
 	response, err := organization.Create(ctx, organization.CreateRequest{
-		Title:  title,
+		Title:  input.Title,
+		Alias:  alias,
 		UserID: userCtx.UserID,
 	})
 	if err != nil {
@@ -1092,12 +1099,13 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, title string)
 	}
 
 	return &model.CreateOrganizationResponse{
-		ID:    response.ID,
+		ID:    response.Alias, // Alias is the unique identifier
 		Title: response.Title,
+		Alias: response.Alias,
 	}, nil
 }
 
-func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
+func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizationID string, input model.InviteUserInput) (*model.OrganizationInvitation, error) {
 	// Authorization is handled by @hasScope directive
 	// organizationId is validated by the directive to ensure user has invite-user permission
 
@@ -1128,10 +1136,10 @@ func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizat
 	}
 
 	// Create invitation via Keycloak tenant API
-	response, err := adminClient.CreateInvitation(ctx, organizationID.String(), request)
+	response, err := adminClient.CreateInvitation(ctx, organizationID, request)
 	if err != nil {
 		// Log detailed error internally for debugging
-		log.Printf("ERROR: failed to create invitation for email=%s org=%s: %v", input.Email, organizationID.String(), err)
+		log.Printf("ERROR: failed to create invitation for email=%s org=%s: %v", input.Email, organizationID, err)
 
 		// Detect common failures and provide user-friendly messages
 		errStr := err.Error()
@@ -1181,7 +1189,7 @@ func (r *mutationResolver) InviteOrganizationUser(ctx context.Context, organizat
 	return result, nil
 }
 
-func (r *mutationResolver) CancelOrganizationInvitation(ctx context.Context, organizationID uuid.UUID, invitationID uuid.UUID) (bool, error) {
+func (r *mutationResolver) CancelOrganizationInvitation(ctx context.Context, organizationID string, invitationID string) (bool, error) {
 	// Authorization is handled by @hasScope directive
 
 	// Get admin client from context
@@ -1191,9 +1199,9 @@ func (r *mutationResolver) CancelOrganizationInvitation(ctx context.Context, org
 	}
 
 	// Delete the invitation via Keycloak tenant API
-	err := adminClient.DeleteInvitation(ctx, organizationID.String(), invitationID.String())
+	err := adminClient.DeleteInvitation(ctx, organizationID, invitationID)
 	if err != nil {
-		log.Printf("ERROR: failed to cancel invitation id=%s org=%s: %v", invitationID.String(), organizationID.String(), err)
+		log.Printf("ERROR: failed to cancel invitation id=%s org=%s: %v", invitationID, organizationID, err)
 
 		// Detect common failures
 		errStr := err.Error()
@@ -1208,7 +1216,7 @@ func (r *mutationResolver) CancelOrganizationInvitation(ctx context.Context, org
 	return true, nil
 }
 
-func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID, newRole string) (bool, error) {
+func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organizationID string, userID string, newRole string) (bool, error) {
 	// Get current user from context
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
@@ -1216,7 +1224,7 @@ func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organ
 	}
 
 	// Prevent users from changing their own role
-	if userCtx.UserID == userID.String() {
+	if userCtx.UserID == userID {
 		return false, fmt.Errorf("you cannot change your own role")
 	}
 
@@ -1232,7 +1240,7 @@ func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organ
 	}
 
 	// Validate role against available roles for the organization
-	availableRoles, err := adminClient.GetAvailableRoles(ctx, organizationID.String())
+	availableRoles, err := adminClient.GetAvailableRoles(ctx, organizationID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch available roles: %w", err)
 	}
@@ -1249,7 +1257,7 @@ func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organ
 	}
 
 	// Change the user's role
-	_, err = adminClient.ChangeUserRole(ctx, organizationID.String(), userID.String(), newRole)
+	_, err = adminClient.ChangeUserRole(ctx, organizationID, userID, newRole)
 	if err != nil {
 		// Detect common failures and provide user-friendly messages
 		errStr := err.Error()
@@ -1265,8 +1273,66 @@ func (r *mutationResolver) ChangeOrganizationUserRole(ctx context.Context, organ
 
 	// Audit log for role changes
 	log.Printf("[AUDIT] User %s changed role for user %s to %s in organization %s",
-		userCtx.UserID, userID.String(), newRole, organizationID.String())
+		userCtx.UserID, userID, newRole, organizationID)
 
+	return true, nil
+}
+
+func (r *mutationResolver) DeleteOrganization(ctx context.Context, organizationID string) (bool, error) {
+	// Authorization is handled by @hasScope directive
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return false, fmt.Errorf("admin client not available")
+	}
+
+	// Disable organization (soft delete) via Keycloak admin API
+	err := adminClient.DisableOrganization(ctx, organizationID)
+	if err != nil {
+		log.Printf("ERROR: failed to delete organization %s: %v", organizationID, err)
+
+		// Detect common failures
+		errStr := err.Error()
+		switch {
+		case strings.Contains(errStr, "not found") || strings.Contains(errStr, "404"):
+			return false, fmt.Errorf("organization not found")
+		default:
+			return false, fmt.Errorf("failed to delete organization: please try again or contact support")
+		}
+	}
+
+	log.Printf("[AUDIT] Organization %s was soft-deleted (disabled)", organizationID)
+	return true, nil
+}
+
+func (r *mutationResolver) EnableOrganization(ctx context.Context, organizationID string) (bool, error) {
+	// Authorization is handled by @hasScope directive
+
+	// Get admin client from context
+	adminClient := GetAdminClientFromContext(ctx)
+	if adminClient == nil {
+		return false, fmt.Errorf("admin client not available")
+	}
+
+	// Re-enable organization via Keycloak admin API
+	err := adminClient.EnableOrganization(ctx, organizationID)
+	if err != nil {
+		log.Printf("ERROR: failed to enable organization %s: %v", organizationID, err)
+
+		// Detect common failures
+		errStr := err.Error()
+		switch {
+		case strings.Contains(errStr, "not found") || strings.Contains(errStr, "404"):
+			return false, fmt.Errorf("organization not found")
+		case strings.Contains(errStr, "not an organization") || strings.Contains(errStr, "not organization"):
+			return false, fmt.Errorf("resource is not an organization")
+		default:
+			return false, fmt.Errorf("failed to enable organization: please try again or contact support")
+		}
+	}
+
+	log.Printf("[AUDIT] Organization %s was re-enabled", organizationID)
 	return true, nil
 }
 
@@ -1655,7 +1721,7 @@ func (r *queryResolver) ResourceGroupMembers(ctx context.Context, organizationID
 	return organization.GetResourceGroupMembers(ctx, adminClient, organizationID, resourceGroupID, where, orderBy, pageSize, pageOffset)
 }
 
-func (r *queryResolver) OrganizationInvitations(ctx context.Context, organizationID uuid.UUID, first *int, offset *int) (*model.OrganizationInvitationConnection, error) {
+func (r *queryResolver) OrganizationInvitations(ctx context.Context, organizationID string, first *int, offset *int) (*model.OrganizationInvitationConnection, error) {
 	// Authorization is handled by @hasScope directive
 
 	// Get admin client from context
@@ -1675,9 +1741,9 @@ func (r *queryResolver) OrganizationInvitations(ctx context.Context, organizatio
 	}
 
 	// List invitations via Keycloak tenant API
-	response, err := adminClient.ListInvitations(ctx, organizationID.String(), pageOffset, pageSize)
+	response, err := adminClient.ListInvitations(ctx, organizationID, pageOffset, pageSize)
 	if err != nil {
-		log.Printf("ERROR: failed to list invitations for org=%s: %v", organizationID.String(), err)
+		log.Printf("ERROR: failed to list invitations for org=%s: %v", organizationID, err)
 		return nil, fmt.Errorf("failed to list invitations: please try again or contact support")
 	}
 
