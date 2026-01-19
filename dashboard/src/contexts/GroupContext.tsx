@@ -5,14 +5,26 @@ import { useAuth } from './AuthContext';
 import { ORG_ID_PARAM } from '../constants/url';
 import { NoOrganizationView } from '../components/Organization/NoOrganizationView';
 
+/**
+ * Organization data from Keycloak native organizations claim.
+ * Key is the organization alias, value contains id and optional title.
+ */
+interface OrganizationClaim {
+  id: string;
+  organization_title?: string[];
+}
+
 interface JwtPayload {
   groups?: string[];
   organization_titles?: Record<string, string>;
+  /** Keycloak native organizations claim (Keycloak 26+) */
+  organizations?: Record<string, OrganizationClaim>;
   [key: string]: unknown;
 }
 
 interface Organization {
   id: string;
+  alias: string;
   title: string;
 }
 
@@ -27,60 +39,65 @@ interface GroupContextValue {
 const GroupContext = createContext<GroupContextValue | undefined>(undefined);
 
 /**
- * Extracts organization UUIDs from group paths in JWT token.
- * Groups format: "/uuid/resource/role:admin" or "/uuid/role:admin"
- * We extract only the first UUID (organization/tenant level)
+ * Extracts organizations from Keycloak native organizations claim (Keycloak 26+).
+ * The claim format is:
+ * {
+ *   "alias": { "id": "uuid", "organization_title": ["Title"] },
+ *   ...
+ * }
  */
-function extractGroupsFromToken(token: string | null | undefined): string[] {
+function extractOrganizationsFromToken(token: string | null | undefined): Organization[] {
   if (!token) {
     return [];
   }
 
   try {
     const decoded = jwtDecode<JwtPayload>(token);
-    const groups = decoded.groups || [];
+    const organizationsClaim = decoded.organizations;
 
-    // Extract UUIDs from group paths
-    const uuids = groups
-      .map((groupPath) => {
-        // Split by "/" and get the first non-empty segment (the UUID)
-        const segments = groupPath.split('/').filter(Boolean);
-        return segments.length > 0 ? segments[0] : null;
-      })
-      .filter((uuid): uuid is string => uuid !== null);
+    if (organizationsClaim && Object.keys(organizationsClaim).length > 0) {
+      // Use new Keycloak native organizations claim
+      // Key can be alias or ID, inner object may have 'id' field
+      return Object.entries(organizationsClaim).map(([key, orgData]) => ({
+        // Use nested id if available, otherwise use the key (which is alias or id)
+        id: orgData.id || key,
+        alias: key,
+        // Use first title from array, fallback to key if no title
+        title: orgData.organization_title?.[0] || key,
+      }));
+    }
 
-    // Return unique UUIDs (organization-level groups)
-    return Array.from(new Set(uuids));
+    // Fallback to legacy groups-based extraction for backwards compatibility
+    return extractOrganizationsFromLegacyGroups(decoded);
   } catch (error) {
-    console.error('Failed to decode token:', error);
+    console.error('Failed to extract organizations from token:', error);
     return [];
   }
 }
 
 /**
- * Extracts organizations with their titles from JWT token.
- * Uses organization_titles claim for human-readable names.
+ * Legacy extraction from groups claim for backwards compatibility.
+ * Groups format: "/uuid/resource/role:admin" or "/uuid/role:admin"
  */
-function extractOrganizationsFromToken(
-  token: string | null | undefined,
-  groupIds: string[]
-): Organization[] {
-  if (!token || groupIds.length === 0) {
-    return [];
-  }
+function extractOrganizationsFromLegacyGroups(decoded: JwtPayload): Organization[] {
+  const groups = decoded.groups || [];
+  const organizationTitles = decoded.organization_titles || {};
 
-  try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    const organizationTitles = decoded.organization_titles || {};
+  // Extract unique UUIDs from group paths
+  const uuids = groups
+    .map((groupPath) => {
+      const segments = groupPath.split('/').filter(Boolean);
+      return segments.length > 0 ? segments[0] : null;
+    })
+    .filter((uuid): uuid is string => uuid !== null);
 
-    return groupIds.map((id) => ({
-      id,
-      title: organizationTitles[id] || id, // Fallback to UUID if no title
-    }));
-  } catch (error) {
-    console.error('Failed to extract organization titles:', error);
-    return groupIds.map((id) => ({ id, title: id }));
-  }
+  const uniqueIds = Array.from(new Set(uuids));
+
+  return uniqueIds.map((id) => ({
+    id,
+    alias: id, // Legacy format doesn't have alias, use id
+    title: organizationTitles[id] || id,
+  }));
 }
 
 interface GroupProviderProps {
@@ -93,16 +110,16 @@ export function GroupProvider({ children }: GroupProviderProps) {
   const location = useLocation();
   const auth = useAuth();
 
-  // Extract available groups from token (reactive to token changes)
-  const availableGroups = useMemo(
-    () => extractGroupsFromToken(auth.user?.access_token),
+  // Extract organizations from token (supports both new and legacy formats)
+  const organizations = useMemo(
+    () => extractOrganizationsFromToken(auth.user?.access_token),
     [auth.user?.access_token]
   );
 
-  // Extract organizations with titles from token
-  const organizations = useMemo(
-    () => extractOrganizationsFromToken(auth.user?.access_token, availableGroups),
-    [auth.user?.access_token, availableGroups]
+  // Derive available group IDs from organizations
+  const availableGroups = useMemo(
+    () => organizations.map((org) => org.id),
+    [organizations]
   );
 
   // Get orgId from URL parameter
