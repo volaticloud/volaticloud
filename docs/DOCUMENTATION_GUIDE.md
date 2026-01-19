@@ -178,12 +178,12 @@ High-level description of the package's purpose and responsibilities.
 
 Mermaid diagram showing component relationships:
 
-	```mermaid
-	flowchart TD
-	    A[Component A] --> B[Core]
-	    B --> C[Component B]
-	    B --> D[Component C]
-	```
+    ```mermaid
+    flowchart TD
+        A[Component A] --> B[Core]
+        B --> C[Component B]
+        B --> D[Component C]
+    ```
 
 # Core Concepts
 
