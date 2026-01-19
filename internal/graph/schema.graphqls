@@ -1229,17 +1229,40 @@ extend type Query {
 }
 
 """
+Input for creating an organization
+"""
+input CreateOrganizationInput {
+  """
+  The display title of the organization
+  """
+  title: String!
+  """
+  The unique alias for the organization (URL-friendly identifier).
+  If not provided, will be auto-generated from the title.
+  IMPORTANT: Alias cannot be changed after creation.
+  Must be lowercase, alphanumeric with hyphens, 3-50 characters.
+  """
+  alias: String
+}
+
+"""
 Response from creating an organization
 """
 type CreateOrganizationResponse {
   """
-  The ID of the newly created organization (UUID)
+  The unique alias of the organization (immutable identifier).
+  This is the same as the alias field.
   """
-  id: ID!
+  id: String!
   """
-  The title of the organization
+  The display title of the organization
   """
   title: String!
+  """
+  The unique alias (same as id, included for clarity).
+  Human-readable URL-friendly identifier that cannot be changed.
+  """
+  alias: String!
 }
 
 extend type Mutation {
@@ -1248,8 +1271,11 @@ extend type Mutation {
   Creates Keycloak native organization, UMA resource, and group hierarchy
   The current user is automatically added as an admin of the organization
   No authorization required - any authenticated user can create an organization
+
+  The alias becomes the permanent identifier for the organization and cannot be changed.
+  If alias is not provided, it will be auto-generated from the title.
   """
-  createOrganization(title: String!): CreateOrganizationResponse! @isAuthenticated
+  createOrganization(input: CreateOrganizationInput!): CreateOrganizationResponse! @isAuthenticated
 
   """
   Invite a user to an organization

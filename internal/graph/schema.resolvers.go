@@ -1075,16 +1075,23 @@ func (r *mutationResolver) MarkAllAlertEventsAsRead(ctx context.Context, ownerID
 	return count, nil
 }
 
-func (r *mutationResolver) CreateOrganization(ctx context.Context, title string) (*model.CreateOrganizationResponse, error) {
+func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.CreateOrganizationResponse, error) {
 	// Get user context (already authenticated via @isAuthenticated directive)
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
 
+	// Get alias from input (optional - will be auto-generated from title if empty)
+	alias := ""
+	if input.Alias != nil {
+		alias = *input.Alias
+	}
+
 	// Delegate to organization domain package (DDD compliance)
 	response, err := organization.Create(ctx, organization.CreateRequest{
-		Title:  title,
+		Title:  input.Title,
+		Alias:  alias,
 		UserID: userCtx.UserID,
 	})
 	if err != nil {
@@ -1092,8 +1099,9 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, title string)
 	}
 
 	return &model.CreateOrganizationResponse{
-		ID:    response.ID,
+		ID:    response.Alias, // Alias is the unique identifier
 		Title: response.Title,
+		Alias: response.Alias,
 	}, nil
 }
 

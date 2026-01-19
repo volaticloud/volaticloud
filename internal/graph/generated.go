@@ -327,6 +327,7 @@ type ComplexityRoot struct {
 	}
 
 	CreateOrganizationResponse struct {
+		Alias func(childComplexity int) int
 		ID    func(childComplexity int) int
 		Title func(childComplexity int) int
 	}
@@ -387,7 +388,7 @@ type ComplexityRoot struct {
 		CreateBot                    func(childComplexity int, input ent.CreateBotInput) int
 		CreateBotRunner              func(childComplexity int, input ent.CreateBotRunnerInput) int
 		CreateExchange               func(childComplexity int, input ent.CreateExchangeInput) int
-		CreateOrganization           func(childComplexity int, title string) int
+		CreateOrganization           func(childComplexity int, input model.CreateOrganizationInput) int
 		CreateStrategy               func(childComplexity int, input ent.CreateStrategyInput) int
 		CreateTrade                  func(childComplexity int, input ent.CreateTradeInput) int
 		DeleteAlertRule              func(childComplexity int, id uuid.UUID) int
@@ -710,7 +711,7 @@ type MutationResolver interface {
 	TestAlertRule(ctx context.Context, id uuid.UUID) (bool, error)
 	MarkAlertEventAsRead(ctx context.Context, id uuid.UUID, ownerID string) (*ent.AlertEvent, error)
 	MarkAllAlertEventsAsRead(ctx context.Context, ownerID string) (int, error)
-	CreateOrganization(ctx context.Context, title string) (*model.CreateOrganizationResponse, error)
+	CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.CreateOrganizationResponse, error)
 	InviteOrganizationUser(ctx context.Context, organizationID uuid.UUID, input model.InviteUserInput) (*model.OrganizationInvitation, error)
 	CancelOrganizationInvitation(ctx context.Context, organizationID uuid.UUID, invitationID uuid.UUID) (bool, error)
 	ChangeOrganizationUserRole(ctx context.Context, organizationID uuid.UUID, userID uuid.UUID, newRole string) (bool, error)
@@ -2022,6 +2023,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ConnectionTestResult.Version(childComplexity), true
 
+	case "CreateOrganizationResponse.alias":
+		if e.complexity.CreateOrganizationResponse.Alias == nil {
+			break
+		}
+
+		return e.complexity.CreateOrganizationResponse.Alias(childComplexity), true
 	case "CreateOrganizationResponse.id":
 		if e.complexity.CreateOrganizationResponse.ID == nil {
 			break
@@ -2308,7 +2315,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateOrganization(childComplexity, args["title"].(string)), true
+		return e.complexity.Mutation.CreateOrganization(childComplexity, args["input"].(model.CreateOrganizationInput)), true
 	case "Mutation.createStrategy":
 		if e.complexity.Mutation.CreateStrategy == nil {
 			break
@@ -3861,6 +3868,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateBotMetricsInput,
 		ec.unmarshalInputCreateBotRunnerInput,
 		ec.unmarshalInputCreateExchangeInput,
+		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreateStrategyInput,
 		ec.unmarshalInputCreateTradeInput,
 		ec.unmarshalInputDataDownloadConfigInput,
@@ -4292,11 +4300,11 @@ func (ec *executionContext) field_Mutation_createExchange_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "title", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateOrganizationInput2volaticloudᚋinternalᚋgraphᚋmodelᚐCreateOrganizationInput)
 	if err != nil {
 		return nil, err
 	}
-	args["title"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -12258,7 +12266,7 @@ func (ec *executionContext) _CreateOrganizationResponse_id(ctx context.Context, 
 			return obj.ID, nil
 		},
 		nil,
-		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		ec.marshalNString2string,
 		true,
 		true,
 	)
@@ -12271,7 +12279,7 @@ func (ec *executionContext) fieldContext_CreateOrganizationResponse_id(_ context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12294,6 +12302,35 @@ func (ec *executionContext) _CreateOrganizationResponse_title(ctx context.Contex
 }
 
 func (ec *executionContext) fieldContext_CreateOrganizationResponse_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateOrganizationResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateOrganizationResponse_alias(ctx context.Context, field graphql.CollectedField, obj *model.CreateOrganizationResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateOrganizationResponse_alias,
+		func(ctx context.Context) (any, error) {
+			return obj.Alias, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateOrganizationResponse_alias(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOrganizationResponse",
 		Field:      field,
@@ -16468,7 +16505,7 @@ func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, fi
 		ec.fieldContext_Mutation_createOrganization,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateOrganization(ctx, fc.Args["title"].(string))
+			return ec.resolvers.Mutation().CreateOrganization(ctx, fc.Args["input"].(model.CreateOrganizationInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -16502,6 +16539,8 @@ func (ec *executionContext) fieldContext_Mutation_createOrganization(ctx context
 				return ec.fieldContext_CreateOrganizationResponse_id(ctx, field)
 			case "title":
 				return ec.fieldContext_CreateOrganizationResponse_title(ctx, field)
+			case "alias":
+				return ec.fieldContext_CreateOrganizationResponse_alias(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CreateOrganizationResponse", field.Name)
 		},
@@ -32445,6 +32484,40 @@ func (ec *executionContext) unmarshalInputCreateExchangeInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Context, obj any) (model.CreateOrganizationInput, error) {
+	var it model.CreateOrganizationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "alias"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "alias":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("alias"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Alias = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateStrategyInput(ctx context.Context, obj any) (ent.CreateStrategyInput, error) {
 	var it ent.CreateStrategyInput
 	asMap := map[string]any{}
@@ -41710,6 +41783,11 @@ func (ec *executionContext) _CreateOrganizationResponse(ctx context.Context, sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "alias":
+			out.Values[i] = ec._CreateOrganizationResponse_alias(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -45563,6 +45641,11 @@ func (ec *executionContext) unmarshalNCreateBotRunnerInput2volaticloudᚋinterna
 
 func (ec *executionContext) unmarshalNCreateExchangeInput2volaticloudᚋinternalᚋentᚐCreateExchangeInput(ctx context.Context, v any) (ent.CreateExchangeInput, error) {
 	res, err := ec.unmarshalInputCreateExchangeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateOrganizationInput2volaticloudᚋinternalᚋgraphᚋmodelᚐCreateOrganizationInput(ctx context.Context, v any) (model.CreateOrganizationInput, error) {
+	res, err := ec.unmarshalInputCreateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

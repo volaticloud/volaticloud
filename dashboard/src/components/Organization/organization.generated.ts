@@ -66,11 +66,11 @@ export type ChangeOrganizationUserRoleMutationVariables = Types.Exact<{
 export type ChangeOrganizationUserRoleMutation = { __typename?: 'Mutation', changeOrganizationUserRole: boolean };
 
 export type CreateOrganizationMutationVariables = Types.Exact<{
-  title: Types.Scalars['String']['input'];
+  input: Types.CreateOrganizationInput;
 }>;
 
 
-export type CreateOrganizationMutation = { __typename?: 'Mutation', createOrganization: { __typename?: 'CreateOrganizationResponse', id: string, title: string } };
+export type CreateOrganizationMutation = { __typename?: 'Mutation', createOrganization: { __typename?: 'CreateOrganizationResponse', id: string, title: string, alias: string } };
 
 
 export const OrganizationUsersDocument = gql`
@@ -474,10 +474,11 @@ export type ChangeOrganizationUserRoleMutationHookResult = ReturnType<typeof use
 export type ChangeOrganizationUserRoleMutationResult = Apollo.MutationResult<ChangeOrganizationUserRoleMutation>;
 export type ChangeOrganizationUserRoleMutationOptions = Apollo.BaseMutationOptions<ChangeOrganizationUserRoleMutation, ChangeOrganizationUserRoleMutationVariables>;
 export const CreateOrganizationDocument = gql`
-    mutation CreateOrganization($title: String!) {
-  createOrganization(title: $title) {
+    mutation CreateOrganization($input: CreateOrganizationInput!) {
+  createOrganization(input: $input) {
     id
     title
+    alias
   }
 }
     `;
@@ -496,7 +497,7 @@ export type CreateOrganizationMutationFn = Apollo.MutationFunction<CreateOrganiz
  * @example
  * const [createOrganizationMutation, { data, loading, error }] = useCreateOrganizationMutation({
  *   variables: {
- *      title: // value for 'title'
+ *      input: // value for 'input'
  *   },
  * });
  */

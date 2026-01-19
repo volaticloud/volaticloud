@@ -44,12 +44,12 @@ type GroupNode struct {
 
 // ResourceCreateRequest represents a request to create a unified resource (UMA + group)
 type ResourceCreateRequest struct {
-	ID         string              `json:"id"`         // Resource ID (UUID)
-	Title      string              `json:"title"`      // Display title
-	Type       string              `json:"type"`       // Resource type (strategy, bot, exchange, runner)
-	OwnerID    string              `json:"ownerId"`    // Parent resource ID (optional)
-	Scopes     []string            `json:"scopes"`     // Authorization scopes
-	Attributes map[string][]string `json:"attributes"` // Additional attributes (e.g., {"public": ["true"]})
+	ID         string              `json:"id,omitempty"` // Resource ID (UUID) - optional for organizations, required for other types
+	Title      string              `json:"title"`        // Display title
+	Type       string              `json:"type"`         // Resource type (organization, strategy, bot, exchange, runner)
+	OwnerID    string              `json:"ownerId"`      // Parent resource ID (optional)
+	Scopes     []string            `json:"scopes"`       // Authorization scopes
+	Attributes map[string][]string `json:"attributes"`   // Additional attributes (e.g., {"public": ["true"]})
 }
 
 // ResourceUpdateRequest represents a request to update a unified resource

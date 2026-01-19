@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"volaticloud/internal/auth"
+	"volaticloud/internal/graph/model"
 )
 
 // TestCreateOrganization tests the CreateOrganization resolver
@@ -17,7 +18,7 @@ func TestCreateOrganization(t *testing.T) {
 		ctx := context.Background()
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, "Test Org")
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "Test Org"})
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "authentication required")
@@ -31,7 +32,7 @@ func TestCreateOrganization(t *testing.T) {
 		})
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, "")
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: ""})
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "organization title is required")
@@ -45,7 +46,7 @@ func TestCreateOrganization(t *testing.T) {
 		})
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, "   ")
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "   "})
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "organization title is required")
@@ -61,7 +62,7 @@ func TestCreateOrganization(t *testing.T) {
 		longTitle := strings.Repeat("a", 101)
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, longTitle)
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: longTitle})
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "organization title must be 100 characters or less")
@@ -78,7 +79,7 @@ func TestCreateOrganization(t *testing.T) {
 		exactTitle := strings.Repeat("a", 100)
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, exactTitle)
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: exactTitle})
 
 		// Should fail at admin client, not at validation
 		require.Error(t, err)
@@ -103,7 +104,7 @@ func TestCreateOrganization(t *testing.T) {
 
 		resolver := &mutationResolver{}
 		for _, titleWithControl := range testCases {
-			result, err := resolver.CreateOrganization(ctx, titleWithControl)
+			result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: titleWithControl})
 
 			require.Error(t, err, "Expected error for title with control character")
 			assert.Contains(t, err.Error(), "organization title contains invalid characters")
@@ -119,7 +120,7 @@ func TestCreateOrganization(t *testing.T) {
 		// No admin client - will fail on admin client check
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, "  Test Org  ")
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "  Test Org  "})
 
 		// Should fail at admin client, not at validation (meaning title was trimmed and accepted)
 		require.Error(t, err)
@@ -135,7 +136,7 @@ func TestCreateOrganization(t *testing.T) {
 		// No admin client in context
 
 		resolver := &mutationResolver{}
-		result, err := resolver.CreateOrganization(ctx, "My Organization")
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "My Organization"})
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "admin client not available")
