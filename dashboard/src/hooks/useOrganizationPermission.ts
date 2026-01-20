@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useActiveOrganization } from '../contexts/OrganizationContext';
 import { usePermissionContext } from '../contexts/PermissionContext';
 import { OrganizationScope } from '../services/permissions';
@@ -46,23 +47,25 @@ export function useOrganizationPermission(scope: OrganizationScope): UseOrganiza
   const { activeOrganizationId } = useActiveOrganization();
   const { can, loading, errors } = usePermissionContext();
 
-  if (!activeOrganizationId) {
+  return useMemo(() => {
+    if (!activeOrganizationId) {
+      return {
+        allowed: false,
+        loading: false,
+        error: null,
+        organizationId: null,
+      };
+    }
+
+    const allowed = can(activeOrganizationId, scope);
+    const errorKey = `${activeOrganizationId}:${scope}`;
+    const error = errors.get(errorKey) || null;
+
     return {
-      allowed: false,
-      loading: false,
-      error: null,
-      organizationId: null,
+      allowed,
+      loading,
+      error,
+      organizationId: activeOrganizationId,
     };
-  }
-
-  const allowed = can(activeOrganizationId, scope);
-  const errorKey = `${activeOrganizationId}:${scope}`;
-  const error = errors.get(errorKey) || null;
-
-  return {
-    allowed,
-    loading,
-    error,
-    organizationId: activeOrganizationId,
-  };
+  }, [activeOrganizationId, scope, can, loading, errors]);
 }

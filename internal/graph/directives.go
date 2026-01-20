@@ -40,15 +40,16 @@ func verifyResourcePermission(
 	umaClient keycloak.UMAClientInterface,
 	resourceID, userToken, scope string,
 ) (bool, error) {
-	// Parse resource ID to UUID
-	id, err := uuid.Parse(resourceID)
-	if err != nil {
-		return false, fmt.Errorf("invalid resource ID: %w", err)
-	}
+	// Try to parse resource ID as UUID for entity lookups
+	// If not a valid UUID (e.g., organization alias like "acme-corp"), skip database lookups
+	// and fall through to direct Keycloak UMA check for Group resources
+	id, uuidErr := uuid.Parse(resourceID)
 
-	// Try to find the resource and determine its type
-	// Check Strategy
-	if s, err := client.Strategy.Get(ctx, id); err == nil {
+	// Only do database lookups if resourceID is a valid UUID
+	if uuidErr == nil {
+		// Try to find the resource and determine its type
+		// Check Strategy
+		if s, err := client.Strategy.Get(ctx, id); err == nil {
 		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
 			// Permission denied - try self-healing sync and retry
@@ -109,10 +110,11 @@ func verifyResourcePermission(
 			}
 		}
 		return hasPermission, permErr
-	}
+		}
+	} // End of UUID-based entity lookups
 
-	// If not found in database, it might be a Group resource (managed by Keycloak, not ENT)
-	// Groups are registered as resources in Keycloak but not stored in our database
+	// If not a UUID or not found in database, treat as Group resource (organization alias)
+	// Groups/Organizations are registered as resources in Keycloak but not stored in our database
 	// Check directly with Keycloak UMA
 	if umaClient != nil {
 		hasPermission, permErr := umaClient.CheckPermission(ctx, userToken, resourceID, scope)

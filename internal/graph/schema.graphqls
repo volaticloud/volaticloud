@@ -455,12 +455,12 @@ extend type Query {
 # Mutations for managing entities
 type Mutation {
   # Exchange mutations
-  createExchange(input: CreateExchangeInput!): Exchange! @isAuthenticated
+  createExchange(input: CreateExchangeInput!): Exchange! @hasScope(resource: "input.ownerID", scope: "create-exchange")
   updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange! @hasScope(resource: "id", scope: "edit")
   deleteExchange(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
   # Strategy mutations
-  createStrategy(input: CreateStrategyInput!): Strategy! @isAuthenticated
+  createStrategy(input: CreateStrategyInput!): Strategy! @hasScope(resource: "input.ownerID", scope: "create-strategy")
   updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit")
   deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
@@ -471,7 +471,7 @@ type Mutation {
   previewStrategyCode(config: Map!, className: String!): PreviewCodeResult! @isAuthenticated
 
   # Bot mutations
-  createBot(input: CreateBotInput!): Bot! @isAuthenticated
+  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot")
   updateBot(id: ID!, input: UpdateBotInput!): Bot! @hasScope(resource: "id", scope: "edit")
   deleteBot(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
@@ -481,7 +481,7 @@ type Mutation {
   restartBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run")
 
   # BotRunner mutations
-  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @isAuthenticated
+  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @hasScope(resource: "input.ownerID", scope: "create-runner")
   updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner! @hasScope(resource: "id", scope: "edit")
   deleteBotRunner(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
 
