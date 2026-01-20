@@ -30,14 +30,14 @@ describe('useOrganizationPermission', () => {
   });
 
   describe('when no active organization', () => {
-    it('should return allowed: false when no active organization', () => {
+    it('should return allowed: false with informative error when no active organization', () => {
       mockActiveOrganizationId.mockReturnValue(null);
 
       const { result } = renderHook(() => useOrganizationPermission('create-bot'));
 
       expect(result.current.allowed).toBe(false);
       expect(result.current.loading).toBe(false);
-      expect(result.current.error).toBeNull();
+      expect(result.current.error).toBe('No active organization selected');
       expect(result.current.organizationId).toBeNull();
     });
   });

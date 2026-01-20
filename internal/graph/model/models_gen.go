@@ -1155,12 +1155,12 @@ func (e ResourceGroupOrderField) MarshalJSON() ([]byte, error) {
 type ResourceType string
 
 const (
-	ResourceTypeStrategy  ResourceType = "STRATEGY"
-	ResourceTypeBot       ResourceType = "BOT"
-	ResourceTypeExchange  ResourceType = "EXCHANGE"
-	ResourceTypeBotRunner ResourceType = "BOT_RUNNER"
-	ResourceTypeBacktest  ResourceType = "BACKTEST"
-	ResourceTypeGroup     ResourceType = "GROUP"
+	ResourceTypeStrategy     ResourceType = "STRATEGY"
+	ResourceTypeBot          ResourceType = "BOT"
+	ResourceTypeExchange     ResourceType = "EXCHANGE"
+	ResourceTypeBotRunner    ResourceType = "BOT_RUNNER"
+	ResourceTypeBacktest     ResourceType = "BACKTEST"
+	ResourceTypeOrganization ResourceType = "ORGANIZATION"
 )
 
 var AllResourceType = []ResourceType{
@@ -1169,12 +1169,12 @@ var AllResourceType = []ResourceType{
 	ResourceTypeExchange,
 	ResourceTypeBotRunner,
 	ResourceTypeBacktest,
-	ResourceTypeGroup,
+	ResourceTypeOrganization,
 }
 
 func (e ResourceType) IsValid() bool {
 	switch e {
-	case ResourceTypeStrategy, ResourceTypeBot, ResourceTypeExchange, ResourceTypeBotRunner, ResourceTypeBacktest, ResourceTypeGroup:
+	case ResourceTypeStrategy, ResourceTypeBot, ResourceTypeExchange, ResourceTypeBotRunner, ResourceTypeBacktest, ResourceTypeOrganization:
 		return true
 	}
 	return false

@@ -13410,7 +13410,7 @@ func (ec *executionContext) _Mutation_createExchange(ctx context.Context, field 
 					var zeroVal *ent.Exchange
 					return zeroVal, err
 				}
-				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "GROUP")
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
 				if err != nil {
 					var zeroVal *ent.Exchange
 					return zeroVal, err
@@ -13653,7 +13653,7 @@ func (ec *executionContext) _Mutation_createStrategy(ctx context.Context, field 
 					var zeroVal *ent.Strategy
 					return zeroVal, err
 				}
-				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "GROUP")
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
 				if err != nil {
 					var zeroVal *ent.Strategy
 					return zeroVal, err
@@ -13998,7 +13998,7 @@ func (ec *executionContext) _Mutation_createBot(ctx context.Context, field graph
 					var zeroVal *ent.Bot
 					return zeroVal, err
 				}
-				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "GROUP")
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
 				if err != nil {
 					var zeroVal *ent.Bot
 					return zeroVal, err
@@ -14642,7 +14642,7 @@ func (ec *executionContext) _Mutation_createBotRunner(ctx context.Context, field
 					var zeroVal *ent.BotRunner
 					return zeroVal, err
 				}
-				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "GROUP")
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
 				if err != nil {
 					var zeroVal *ent.BotRunner
 					return zeroVal, err
@@ -16573,11 +16573,16 @@ func (ec *executionContext) _Mutation_markAlertEventAsRead(ctx context.Context, 
 					var zeroVal *ent.AlertEvent
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *ent.AlertEvent
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *ent.AlertEvent
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -16675,11 +16680,16 @@ func (ec *executionContext) _Mutation_markAllAlertEventsAsRead(ctx context.Conte
 					var zeroVal int
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal int
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal int
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -16801,11 +16811,16 @@ func (ec *executionContext) _Mutation_inviteOrganizationUser(ctx context.Context
 					var zeroVal *model.OrganizationInvitation
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *model.OrganizationInvitation
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *model.OrganizationInvitation
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -16883,11 +16898,16 @@ func (ec *executionContext) _Mutation_cancelOrganizationInvitation(ctx context.C
 					var zeroVal bool
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal bool
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -16947,11 +16967,16 @@ func (ec *executionContext) _Mutation_changeOrganizationUserRole(ctx context.Con
 					var zeroVal bool
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal bool
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -17011,11 +17036,16 @@ func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, fi
 					var zeroVal bool
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal bool
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -17075,11 +17105,16 @@ func (ec *executionContext) _Mutation_enableOrganization(ctx context.Context, fi
 					var zeroVal bool
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal bool
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -18664,11 +18699,16 @@ func (ec *executionContext) _Query_getBotRunnerStatus(ctx context.Context, field
 					var zeroVal *runner.BotStatus
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "BOT_RUNNER")
+				if err != nil {
+					var zeroVal *runner.BotStatus
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *runner.BotStatus
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19014,11 +19054,16 @@ func (ec *executionContext) _Query_botUsageHistory(ctx context.Context, field gr
 					var zeroVal []*ent.ResourceUsageAggregation
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "BOT")
+				if err != nil {
+					var zeroVal []*ent.ResourceUsageAggregation
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal []*ent.ResourceUsageAggregation
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19252,11 +19297,16 @@ func (ec *executionContext) _Query_organizationUsers(ctx context.Context, field 
 					var zeroVal []*model.OrganizationUser
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal []*model.OrganizationUser
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19334,11 +19384,16 @@ func (ec *executionContext) _Query_organizationGroupTree(ctx context.Context, fi
 					var zeroVal *model.GroupNode
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *model.GroupNode
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *model.GroupNode
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19412,11 +19467,16 @@ func (ec *executionContext) _Query_groupMembers(ctx context.Context, field graph
 					var zeroVal []*model.OrganizationUser
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal []*model.OrganizationUser
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal []*model.OrganizationUser
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19494,11 +19554,16 @@ func (ec *executionContext) _Query_resourceGroups(ctx context.Context, field gra
 					var zeroVal *model.ResourceGroupConnection
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *model.ResourceGroupConnection
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *model.ResourceGroupConnection
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19566,11 +19631,16 @@ func (ec *executionContext) _Query_resourceGroupMembers(ctx context.Context, fie
 					var zeroVal *model.ResourceGroupMemberConnection
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *model.ResourceGroupMemberConnection
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *model.ResourceGroupMemberConnection
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1
@@ -19640,11 +19710,16 @@ func (ec *executionContext) _Query_organizationInvitations(ctx context.Context, 
 					var zeroVal *model.OrganizationInvitationConnection
 					return zeroVal, err
 				}
+				resourceType, err := ec.unmarshalOResourceType2ᚖvolaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *model.OrganizationInvitationConnection
+					return zeroVal, err
+				}
 				if ec.directives.HasScope == nil {
 					var zeroVal *model.OrganizationInvitationConnection
 					return zeroVal, errors.New("directive hasScope is not implemented")
 				}
-				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, nil)
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType)
 			}
 
 			next = directive1

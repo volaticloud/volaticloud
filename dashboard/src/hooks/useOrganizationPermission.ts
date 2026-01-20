@@ -16,8 +16,8 @@ interface UseOrganizationPermissionResult {
   loading: boolean;
 
   /**
-   * Error message if permission check failed (e.g., network error).
-   * Null if no error occurred.
+   * Error message if permission check failed (e.g., network error)
+   * or if no organization is active. Null if no error occurred.
    */
   error: string | null;
 
@@ -52,7 +52,7 @@ export function useOrganizationPermission(scope: OrganizationScope): UseOrganiza
       return {
         allowed: false,
         loading: false,
-        error: null,
+        error: 'No active organization selected',
         organizationId: null,
       };
     }

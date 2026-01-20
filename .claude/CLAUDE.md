@@ -255,6 +255,20 @@ VOLATICLOUD_KEYCLOAK_CLIENT_SECRET=<secret>
 - `view-secrets` scope: sensitive config (Bot.config, Exchange.config, BotRunner.config)
 - Dashboard uses lazy queries to fetch secrets only when editing
 
+**Organization Permission Scopes:**
+
+Organization-level scopes control what users can do within an organization:
+
+- `create-strategy` - Create new strategies in the organization
+- `create-bot` - Create new bots in the organization
+- `create-exchange` - Create new exchange connections
+- `create-runner` - Create new bot runners
+- `view-users` - View organization members
+- `invite-user` - Invite new users to the organization
+- `change-user-roles` - Modify user roles within the organization
+
+The `@hasScope` directive uses `resourceType: ORGANIZATION` for these scopes to enable O(1) permission lookups.
+
 See `internal/keycloak/doc.go` and `internal/authz/doc.go` for details.
 
 ### Testing

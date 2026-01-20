@@ -127,7 +127,7 @@ func GenerateIdFromTitle(title string) string {
 
 - `dashboard/src/components/Organization/CreateOrganizationDialog.tsx` - UI with ID preview
 - `dashboard/src/components/Organization/CreateOrganizationDialog.test.tsx` - Component tests
-- `dashboard/src/contexts/GroupContext.tsx` - Organization context (ID from token)
+- `dashboard/src/contexts/OrganizationContext.tsx` - Organization context (ID from token)
 
 **Keycloak (Java):**
 

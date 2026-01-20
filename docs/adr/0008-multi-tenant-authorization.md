@@ -1727,3 +1727,25 @@ Added in PR #120 to enable organization admins to change member roles.
 - `internal/graph/schema.graphqls` - `checkPermissions` query definition
 - `internal/graph/schema.resolvers.go` - Query resolver with self-healing
 - `internal/authz/scopes.go` - Scope definitions and self-healing detection
+
+### API Changes
+
+**`PermissionCheckInput.resourceId` type change (PR #134):**
+
+The `resourceId` field in `PermissionCheckInput` was changed from `ID!` to `String!` to support organization aliases (human-readable strings like `acme-corp`) in addition to UUIDs.
+
+```graphql
+# Before (PR #97)
+input PermissionCheckInput {
+  resourceId: ID!    # Only supported UUIDs
+  scope: String!
+}
+
+# After (PR #134)
+input PermissionCheckInput {
+  resourceId: String!  # Supports both UUIDs and organization aliases
+  scope: String!
+}
+```
+
+**Impact:** This is technically a breaking change for GraphQL clients that strictly validate `ID` vs `String` types. In practice, most GraphQL clients treat both as strings, so impact is minimal.

@@ -179,7 +179,7 @@ enum ResourceType {
   EXCHANGE
   BOT_RUNNER
   BACKTEST
-  GROUP
+  ORGANIZATION
 }
 
 """
@@ -462,7 +462,7 @@ type FreqtradeToken {
 
 extend type Query {
   # Get runner status for a bot
-  getBotRunnerStatus(id: ID!): BotStatus @hasScope(resource: "id", scope: "view")
+  getBotRunnerStatus(id: ID!): BotStatus @hasScope(resource: "id", scope: "view", resourceType: BOT_RUNNER)
 
   # Strategy versioning queries
   """
@@ -474,12 +474,12 @@ extend type Query {
 # Mutations for managing entities
 type Mutation {
   # Exchange mutations
-  createExchange(input: CreateExchangeInput!): Exchange! @hasScope(resource: "input.ownerID", scope: "create-exchange", resourceType: GROUP)
+  createExchange(input: CreateExchangeInput!): Exchange! @hasScope(resource: "input.ownerID", scope: "create-exchange", resourceType: ORGANIZATION)
   updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange! @hasScope(resource: "id", scope: "edit", resourceType: EXCHANGE)
   deleteExchange(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: EXCHANGE)
 
   # Strategy mutations
-  createStrategy(input: CreateStrategyInput!): Strategy! @hasScope(resource: "input.ownerID", scope: "create-strategy", resourceType: GROUP)
+  createStrategy(input: CreateStrategyInput!): Strategy! @hasScope(resource: "input.ownerID", scope: "create-strategy", resourceType: ORGANIZATION)
   updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit", resourceType: STRATEGY)
   deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: STRATEGY)
 
@@ -490,7 +490,7 @@ type Mutation {
   previewStrategyCode(config: Map!, className: String!): PreviewCodeResult! @isAuthenticated
 
   # Bot mutations
-  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot", resourceType: GROUP)
+  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot", resourceType: ORGANIZATION)
   updateBot(id: ID!, input: UpdateBotInput!): Bot! @hasScope(resource: "id", scope: "edit", resourceType: BOT)
   deleteBot(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: BOT)
 
@@ -500,7 +500,7 @@ type Mutation {
   restartBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run", resourceType: BOT)
 
   # BotRunner mutations
-  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @hasScope(resource: "input.ownerID", scope: "create-runner", resourceType: GROUP)
+  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @hasScope(resource: "input.ownerID", scope: "create-runner", resourceType: ORGANIZATION)
   updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner! @hasScope(resource: "id", scope: "edit", resourceType: BOT_RUNNER)
   deleteBotRunner(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: BOT_RUNNER)
 
@@ -629,7 +629,7 @@ extend type Query {
   Get usage history for a bot over a time range
   Returns time-series data for charts (granularity depends on aggregation settings)
   """
-  botUsageHistory(botID: ID!, start: Time!, end: Time!): [ResourceUsageAggregation!]! @hasScope(resource: "botID", scope: "view")
+  botUsageHistory(botID: ID!, start: Time!, end: Time!): [ResourceUsageAggregation!]! @hasScope(resource: "botID", scope: "view", resourceType: BOT)
 }
 
 # Alert System Extensions
@@ -672,13 +672,13 @@ extend type Mutation {
   Sets readAt to current timestamp
   Only marks alert if it belongs to the specified organization
   """
-  markAlertEventAsRead(id: ID!, ownerID: String!): AlertEvent! @hasScope(resource: "ownerID", scope: "mark-alert-as-read")
+  markAlertEventAsRead(id: ID!, ownerID: String!): AlertEvent! @hasScope(resource: "ownerID", scope: "mark-alert-as-read", resourceType: ORGANIZATION)
 
   """
   Mark all unread alert events as read for an organization
   Returns the count of events marked as read
   """
-  markAllAlertEventsAsRead(ownerID: String!): Int! @hasScope(resource: "ownerID", scope: "mark-alert-as-read")
+  markAllAlertEventsAsRead(ownerID: String!): Int! @hasScope(resource: "ownerID", scope: "mark-alert-as-read", resourceType: ORGANIZATION)
 }
 
 # Alert Type Metadata Types
@@ -1113,21 +1113,21 @@ extend type Query {
   Fetches users from Keycloak group (including subgroups)
   Requires view-users permission on the organization resource
   """
-  organizationUsers(organizationId: String!): [OrganizationUser!]! @hasScope(resource: "organizationId", scope: "view-users")
+  organizationUsers(organizationId: String!): [OrganizationUser!]! @hasScope(resource: "organizationId", scope: "view-users", resourceType: ORGANIZATION)
 
   """
   Get the hierarchical group tree for an organization
   Returns resource groups (inactive) and role subgroups (active)
   Requires view-users permission on the organization resource
   """
-  organizationGroupTree(organizationId: String!): GroupNode! @hasScope(resource: "organizationId", scope: "view-users")
+  organizationGroupTree(organizationId: String!): GroupNode! @hasScope(resource: "organizationId", scope: "view-users", resourceType: ORGANIZATION)
 
   """
   Get users in a specific group (non-recursive)
   Used to fetch members when a role group is selected in the tree
   Requires view-users permission on the organization resource
   """
-  groupMembers(organizationId: String!, groupId: String!): [OrganizationUser!]! @hasScope(resource: "organizationId", scope: "view-users")
+  groupMembers(organizationId: String!, groupId: String!): [OrganizationUser!]! @hasScope(resource: "organizationId", scope: "view-users", resourceType: ORGANIZATION)
 
   """
   Get paginated resource groups for an organization
@@ -1140,7 +1140,7 @@ extend type Query {
     orderBy: ResourceGroupOrder
     first: Int = 20
     offset: Int = 0
-  ): ResourceGroupConnection! @hasScope(resource: "organizationId", scope: "view-users")
+  ): ResourceGroupConnection! @hasScope(resource: "organizationId", scope: "view-users", resourceType: ORGANIZATION)
 
   """
   Get paginated members for a resource group
@@ -1154,7 +1154,7 @@ extend type Query {
     orderBy: ResourceGroupMemberOrder
     first: Int = 50
     offset: Int = 0
-  ): ResourceGroupMemberConnection! @hasScope(resource: "organizationId", scope: "view-users")
+  ): ResourceGroupMemberConnection! @hasScope(resource: "organizationId", scope: "view-users", resourceType: ORGANIZATION)
 }
 
 # Organization Invitation Types
@@ -1244,7 +1244,7 @@ extend type Query {
     organizationId: String!
     first: Int = 20
     offset: Int = 0
-  ): OrganizationInvitationConnection! @hasScope(resource: "organizationId", scope: "invite-user")
+  ): OrganizationInvitationConnection! @hasScope(resource: "organizationId", scope: "invite-user", resourceType: ORGANIZATION)
 }
 
 """
@@ -1302,14 +1302,14 @@ extend type Mutation {
   Invited users are automatically assigned the 'viewer' role upon acceptance
   Requires invite-user permission on the organization
   """
-  inviteOrganizationUser(organizationId: String!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user")
+  inviteOrganizationUser(organizationId: String!, input: InviteUserInput!): OrganizationInvitation! @hasScope(resource: "organizationId", scope: "invite-user", resourceType: ORGANIZATION)
 
   """
   Cancel a pending invitation
   Removes the invitation so the user can no longer use the invite link
   Requires invite-user permission on the organization
   """
-  cancelOrganizationInvitation(organizationId: String!, invitationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user")
+  cancelOrganizationInvitation(organizationId: String!, invitationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "invite-user", resourceType: ORGANIZATION)
 
   """
   Change a user's role in an organization
@@ -1317,7 +1317,7 @@ extend type Mutation {
   Users cannot change their own role (returns error)
   Requires change-user-roles permission on the organization
   """
-  changeOrganizationUserRole(organizationId: String!, userId: String!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles")
+  changeOrganizationUserRole(organizationId: String!, userId: String!, newRole: String!): Boolean! @hasScope(resource: "organizationId", scope: "change-user-roles", resourceType: ORGANIZATION)
 
   """
   Delete an organization (soft delete)
@@ -1325,12 +1325,12 @@ extend type Mutation {
   The organization can be re-enabled later using enableOrganization.
   Requires delete permission on the organization.
   """
-  deleteOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "delete")
+  deleteOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "delete", resourceType: ORGANIZATION)
 
   """
   Re-enable a previously disabled organization
   Restores access to the organization after it was soft-deleted.
   Requires edit permission on the organization.
   """
-  enableOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "edit")
+  enableOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "edit", resourceType: ORGANIZATION)
 }

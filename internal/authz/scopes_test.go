@@ -55,6 +55,30 @@ func TestGetScopesForType(t *testing.T) {
 			wantContains: "change-user-roles",
 		},
 		{
+			name:         "Group scopes include create-strategy",
+			resourceType: ResourceTypeGroup,
+			wantLen:      15,
+			wantContains: "create-strategy",
+		},
+		{
+			name:         "Group scopes include create-bot",
+			resourceType: ResourceTypeGroup,
+			wantLen:      15,
+			wantContains: "create-bot",
+		},
+		{
+			name:         "Group scopes include create-exchange",
+			resourceType: ResourceTypeGroup,
+			wantLen:      15,
+			wantContains: "create-exchange",
+		},
+		{
+			name:         "Group scopes include create-runner",
+			resourceType: ResourceTypeGroup,
+			wantLen:      15,
+			wantContains: "create-runner",
+		},
+		{
 			name:         "Unknown type returns nil",
 			resourceType: ResourceType("unknown"),
 			wantLen:      0,

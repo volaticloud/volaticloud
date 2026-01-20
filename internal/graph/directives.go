@@ -153,8 +153,8 @@ func verifyResourcePermission(
 		}
 		return hasPermission, permErr
 
-	case model.ResourceTypeGroup:
-		// Groups/Organizations are registered as resources in Keycloak but not stored in our database
+	case model.ResourceTypeOrganization:
+		// Organizations are registered as resources in Keycloak but not stored in our database
 		// Check directly with Keycloak UMA (resourceID can be UUID or alias)
 		if umaClient == nil {
 			return false, fmt.Errorf("UMA client not available for group permission check")
