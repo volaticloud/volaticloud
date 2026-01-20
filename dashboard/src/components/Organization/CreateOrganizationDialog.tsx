@@ -25,15 +25,15 @@ interface CreateOrganizationDialogProps {
 }
 
 /**
- * Generate a URL-friendly alias from a title.
+ * Generate a URL-friendly ID from a title.
  * - Converts to lowercase
  * - Replaces spaces and special characters with hyphens
  * - Removes consecutive hyphens
  * - Trims hyphens from start and end
  * - Truncates to 50 characters
  */
-function generateAliasFromTitle(title: string): string {
-  let alias = title
+function generateIdFromTitle(title: string): string {
+  let id = title
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
@@ -42,40 +42,40 @@ function generateAliasFromTitle(title: string): string {
     .replace(/^-|-$/g, ''); // Trim hyphens from start and end
 
   // Truncate to max length
-  if (alias.length > 50) {
-    alias = alias.substring(0, 50).replace(/-$/, ''); // Remove trailing hyphen after truncation
+  if (id.length > 50) {
+    id = id.substring(0, 50).replace(/-$/, ''); // Remove trailing hyphen after truncation
   }
 
-  return alias;
+  return id;
 }
 
 /**
- * Validate organization alias format.
+ * Validate organization ID format.
  * - Must be 3-50 characters long
  * - Lowercase alphanumeric with hyphens
  * - Cannot start or end with hyphen
  * - Cannot have consecutive hyphens
  * - Cannot contain path traversal sequences
  */
-function validateAlias(alias: string): string | null {
-  if (alias.length < 3) {
-    return 'Alias must be at least 3 characters';
+function validateId(id: string): string | null {
+  if (id.length < 3) {
+    return 'ID must be at least 3 characters';
   }
-  if (alias.length > 50) {
-    return 'Alias must be 50 characters or less';
+  if (id.length > 50) {
+    return 'ID must be 50 characters or less';
   }
   // Security: prevent directory traversal attacks
-  if (alias === '.' || alias === '..' || alias.includes('/') || alias.includes('\\')) {
-    return 'Alias contains invalid path characters';
+  if (id === '.' || id === '..' || id.includes('/') || id.includes('\\')) {
+    return 'ID contains invalid path characters';
   }
-  if (alias.startsWith('.')) {
-    return 'Alias cannot start with a dot';
+  if (id.startsWith('.')) {
+    return 'ID cannot start with a dot';
   }
-  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(alias)) {
-    return 'Alias must be lowercase alphanumeric with hyphens, cannot start or end with hyphen';
+  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(id)) {
+    return 'ID must be lowercase alphanumeric with hyphens, cannot start or end with hyphen';
   }
-  if (/--/.test(alias)) {
-    return 'Alias cannot contain consecutive hyphens';
+  if (/--/.test(id)) {
+    return 'ID cannot contain consecutive hyphens';
   }
   return null;
 }
@@ -87,23 +87,23 @@ export function CreateOrganizationDialog({
 }: CreateOrganizationDialogProps) {
   const auth = useAuth();
   const [title, setTitle] = useState('');
-  const [alias, setAlias] = useState('');
+  const [customId, setCustomId] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-generate alias from title when alias is not manually set
-  const effectiveAlias = useMemo(() => {
-    if (alias.trim()) {
-      return alias.trim();
+  // Auto-generate ID from title when not manually set
+  const effectiveId = useMemo(() => {
+    if (customId.trim()) {
+      return customId.trim();
     }
-    return generateAliasFromTitle(title);
-  }, [title, alias]);
+    return generateIdFromTitle(title);
+  }, [title, customId]);
 
-  // Validate alias
-  const aliasError = useMemo(() => {
-    if (!effectiveAlias) return null;
-    return validateAlias(effectiveAlias);
-  }, [effectiveAlias]);
+  // Validate ID
+  const idError = useMemo(() => {
+    if (!effectiveId) return null;
+    return validateId(effectiveId);
+  }, [effectiveId]);
 
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
     onCompleted: async () => {
@@ -128,7 +128,7 @@ export function CreateOrganizationDialog({
 
   const handleClose = () => {
     setTitle('');
-    setAlias('');
+    setCustomId('');
     setShowAdvanced(false);
     setError(null);
     onClose();
@@ -148,9 +148,9 @@ export function CreateOrganizationDialog({
       return;
     }
 
-    // Validate alias
-    if (aliasError) {
-      setError(aliasError);
+    // Validate ID
+    if (idError) {
+      setError(idError);
       return;
     }
 
@@ -158,7 +158,8 @@ export function CreateOrganizationDialog({
       variables: {
         input: {
           title: trimmedTitle,
-          alias: alias.trim() || undefined, // Only send if manually set
+          // GraphQL API uses 'alias' field name (Keycloak terminology)
+          alias: customId.trim() || undefined,
         },
       },
     });
@@ -185,10 +186,10 @@ export function CreateOrganizationDialog({
             margin="dense"
           />
 
-          {/* Show auto-generated alias preview */}
-          {effectiveAlias && !showAdvanced && (
+          {/* Show auto-generated ID preview */}
+          {effectiveId && !showAdvanced && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              Alias: <strong>{effectiveAlias}</strong>
+              ID: <strong>{effectiveId}</strong>
             </Typography>
           )}
 
@@ -199,28 +200,28 @@ export function CreateOrganizationDialog({
             endIcon={showAdvanced ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             sx={{ mt: 1, textTransform: 'none' }}
           >
-            {showAdvanced ? 'Hide advanced' : 'Customize alias'}
+            {showAdvanced ? 'Hide advanced' : 'Customize ID'}
           </Button>
 
           <Collapse in={showAdvanced}>
             <Box sx={{ mt: 1 }}>
               <TextField
                 fullWidth
-                label="Organization Alias"
-                value={alias}
-                onChange={(e) => setAlias(e.target.value.toLowerCase())}
-                placeholder={generateAliasFromTitle(title) || 'my-organization'}
+                label="Organization ID"
+                value={customId}
+                onChange={(e) => setCustomId(e.target.value.toLowerCase())}
+                placeholder={generateIdFromTitle(title) || 'my-organization'}
                 disabled={loading}
                 margin="dense"
-                error={!!aliasError}
+                error={!!idError}
                 helperText={
-                  aliasError ||
+                  idError ||
                   'URL-friendly identifier (3-50 chars, lowercase, hyphens allowed). Cannot be changed after creation.'
                 }
               />
-              {!alias && title && (
+              {!customId && title && (
                 <Typography variant="caption" color="text.secondary">
-                  Will be auto-generated as: <strong>{effectiveAlias}</strong>
+                  Will be auto-generated as: <strong>{effectiveId}</strong>
                 </Typography>
               )}
             </Box>
@@ -233,7 +234,7 @@ export function CreateOrganizationDialog({
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || !title.trim() || !!aliasError}
+            disabled={loading || !title.trim() || !!idError}
             startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
           >
             {loading ? 'Creating...' : 'Create'}

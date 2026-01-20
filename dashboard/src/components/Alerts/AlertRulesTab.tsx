@@ -27,7 +27,7 @@ import {
 } from './alerts.generated';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { AlertRuleAlertSeverity, AlertRuleAlertType } from '../../generated/types';
 import { AlertRuleDialog } from './AlertRuleDialog';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -79,14 +79,14 @@ export const AlertRulesTab = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'success' });
 
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
 
   // Permission checks via backend proxy (with self-healing)
   // Permissions are auto-fetched when can() is called
   const { can, loading: permissionsLoading } = usePermissions();
 
   // Check if user can create alert rules on the organization - auto-fetched!
-  const canCreateAlertRule = activeGroupId ? can(activeGroupId, 'create-alert-rule') : false;
+  const canCreateAlertRule = activeOrganizationId ? can(activeOrganizationId, 'create-alert-rule') : false;
 
   const showSnackbar = (message: string, severity: 'error' | 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -104,11 +104,11 @@ export const AlertRulesTab = () => {
       first: pagination.pageSize,
       after: pagination.cursor,
       where: {
-        ownerID: activeGroupId || undefined,
+        ownerID: activeOrganizationId || undefined,
         deletedAtIsNil: true,
       },
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   const [toggleRule] = useToggleAlertRuleMutation();
@@ -124,7 +124,7 @@ export const AlertRulesTab = () => {
 
   useEffect(() => {
     reset();
-  }, [activeGroupId, reset]);
+  }, [activeOrganizationId, reset]);
 
   const handleToggle = async (rule: AlertRule) => {
     try {
@@ -167,7 +167,7 @@ export const AlertRulesTab = () => {
       headerName: '',
       width: 60,
       renderCell: (params: GridRenderCellParams<AlertRule>) => {
-        const resourceId = getPermissionResourceId(params.row, activeGroupId || '');
+        const resourceId = getPermissionResourceId(params.row, activeOrganizationId || '');
         const canUpdate = can(resourceId, 'update-alert-rule');
         return (
           <Tooltip title={!canUpdate ? 'No permission to toggle this rule' : ''}>
@@ -236,7 +236,7 @@ export const AlertRulesTab = () => {
       align: 'right',
       headerAlign: 'right',
       renderCell: (params: GridRenderCellParams<AlertRule>) => {
-        const resourceId = getPermissionResourceId(params.row, activeGroupId || '');
+        const resourceId = getPermissionResourceId(params.row, activeOrganizationId || '');
         const canUpdate = can(resourceId, 'update-alert-rule');
         const canDelete = can(resourceId, 'delete-alert-rule');
 

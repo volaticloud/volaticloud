@@ -25,7 +25,7 @@ import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
 import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
@@ -36,11 +36,11 @@ type Strategy = NonNullable<NonNullable<NonNullable<GetStrategiesQuery['strategi
 
 export const StrategiesList = () => {
   const navigate = useGroupNavigate();
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const { can } = usePermissionContext();
 
   // Permission check for creating strategies
-  const canCreateStrategy = activeGroupId ? can(activeGroupId, 'create-strategy') : false;
+  const canCreateStrategy = activeOrganizationId ? can(activeOrganizationId, 'create-strategy') : false;
 
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -67,11 +67,11 @@ export const StrategiesList = () => {
       where: {
         isLatest: true,
         ...(viewMode === 'mine'
-          ? { ownerID: activeGroupId || undefined }
+          ? { ownerID: activeOrganizationId || undefined }
           : { public: true })
       }
     },
-    skip: viewMode === 'mine' && !activeGroupId,
+    skip: viewMode === 'mine' && !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -85,7 +85,7 @@ export const StrategiesList = () => {
   // Reset pagination when view mode changes
   useEffect(() => {
     reset();
-  }, [viewMode, activeGroupId, reset]);
+  }, [viewMode, activeOrganizationId, reset]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));

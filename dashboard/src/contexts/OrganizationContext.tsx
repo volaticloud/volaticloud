@@ -7,10 +7,9 @@ import { NoOrganizationView } from '../components/Organization/NoOrganizationVie
 
 /**
  * Organization data from Keycloak native organizations claim.
- * Key is the organization alias, value contains id and optional title.
+ * The claim key is the organization ID (human-readable string).
  */
 interface OrganizationClaim {
-  id: string;
   organization_title?: string[];
 }
 
@@ -20,31 +19,36 @@ interface JwtPayload {
   [key: string]: unknown;
 }
 
-interface Organization {
+/**
+ * Organization representation in the dashboard.
+ * The ID is a human-readable string (e.g., "acme-corp", "my-team").
+ */
+export interface Organization {
   id: string;
-  alias: string;
   title: string;
 }
 
-interface GroupContextValue {
-  activeGroupId: string | null;
+interface OrganizationContextValue {
+  activeOrganizationId: string | null;
   activeOrganization: Organization | null;
-  availableGroups: string[];
+  availableOrganizationIds: string[];
   organizations: Organization[];
-  setActiveGroup: (groupId: string) => void;
+  setActiveOrganization: (organizationId: string) => void;
 }
 
-const GroupContext = createContext<GroupContextValue | undefined>(undefined);
+const OrganizationContext = createContext<OrganizationContextValue | undefined>(undefined);
 
 /**
  * Extracts organizations from Keycloak native organization claim (Keycloak 26+).
  * The claim format is:
  * {
  *   "organization": {
- *     "alias": { "id": "uuid", "organization_title": ["Title"] },
+ *     "org-id": { "organization_title": ["Title"] },
  *     ...
  *   }
  * }
+ *
+ * The claim key is the organization ID (human-readable string like "acme-corp").
  *
  * SECURITY NOTE: These organizations are extracted for UI display only.
  * All backend operations verify permissions via Keycloak UMA (ADR-0008).
@@ -63,14 +67,10 @@ function extractOrganizationsFromToken(token: string | null | undefined): Organi
       return [];
     }
 
-    // Key is the organization alias, inner object contains id and optional title
-    // NOTE: We use alias as the id because UMA resources are created with alias as their ID
-    return Object.entries(organizationClaim).map(([alias, orgData]) => ({
-      // Use alias as id - UMA resources use alias as resource ID (see internal/organization/create.go)
-      id: alias,
-      alias,
-      // Use first title from array, fallback to alias if no title
-      title: orgData.organization_title?.[0] || alias,
+    // Key is the organization ID, inner object contains optional title
+    return Object.entries(organizationClaim).map(([id, orgData]) => ({
+      id,
+      title: orgData.organization_title?.[0] || id,
     }));
   } catch (error) {
     console.error('Failed to extract organizations from token:', error);
@@ -78,11 +78,11 @@ function extractOrganizationsFromToken(token: string | null | undefined): Organi
   }
 }
 
-interface GroupProviderProps {
+interface OrganizationProviderProps {
   children: React.ReactNode;
 }
 
-export function GroupProvider({ children }: GroupProviderProps) {
+export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -95,8 +95,8 @@ export function GroupProvider({ children }: GroupProviderProps) {
     [auth.user?.access_token]
   );
 
-  // Derive available group IDs from organizations
-  const availableGroups = useMemo(
+  // Derive available organization IDs from organizations
+  const availableOrganizationIds = useMemo(
     () => organizations.map((org) => org.id),
     [organizations]
   );
@@ -104,34 +104,34 @@ export function GroupProvider({ children }: GroupProviderProps) {
   // Get orgId from URL parameter
   const orgIdFromUrl = searchParams.get(ORG_ID_PARAM);
 
-  // Determine active group
-  const activeGroupId = useMemo(() => {
+  // Determine active organization
+  const activeOrganizationId = useMemo(() => {
     // If orgId is in URL and valid, use it
-    if (orgIdFromUrl && availableGroups.includes(orgIdFromUrl)) {
+    if (orgIdFromUrl && availableOrganizationIds.includes(orgIdFromUrl)) {
       return orgIdFromUrl;
     }
 
-    // Otherwise, use the first available group as default
-    return availableGroups.length > 0 ? availableGroups[0] : null;
-  }, [orgIdFromUrl, availableGroups]);
+    // Otherwise, use the first available organization as default
+    return availableOrganizationIds.length > 0 ? availableOrganizationIds[0] : null;
+  }, [orgIdFromUrl, availableOrganizationIds]);
 
   // Get active organization with title
   const activeOrganization = useMemo(() => {
-    if (!activeGroupId) return null;
-    return organizations.find((org) => org.id === activeGroupId) || null;
-  }, [activeGroupId, organizations]);
+    if (!activeOrganizationId) return null;
+    return organizations.find((org) => org.id === activeOrganizationId) || null;
+  }, [activeOrganizationId, organizations]);
 
-  // Sync URL with active group
+  // Sync URL with active organization
   useEffect(() => {
-    if (!activeGroupId) {
-      // No groups available - user might not be authenticated
+    if (!activeOrganizationId) {
+      // No organizations available - user might not be authenticated
       return;
     }
 
     // If URL doesn't have orgId or has invalid orgId, update it
-    if (!orgIdFromUrl || !availableGroups.includes(orgIdFromUrl)) {
+    if (!orgIdFromUrl || !availableOrganizationIds.includes(orgIdFromUrl)) {
       const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set(ORG_ID_PARAM, activeGroupId);
+      newSearchParams.set(ORG_ID_PARAM, activeOrganizationId);
 
       // Replace history to avoid creating extra navigation entries
       navigate(
@@ -142,44 +142,44 @@ export function GroupProvider({ children }: GroupProviderProps) {
         { replace: true }
       );
     }
-  }, [activeGroupId, orgIdFromUrl, availableGroups, searchParams, navigate, location.pathname]);
+  }, [activeOrganizationId, orgIdFromUrl, availableOrganizationIds, searchParams, navigate, location.pathname]);
 
-  // Function to change active group
-  const setActiveGroup = (groupId: string) => {
-    if (!availableGroups.includes(groupId)) {
-      console.warn(`Group ${groupId} is not available for this user`);
+  // Function to change active organization
+  const setActiveOrganization = (organizationId: string) => {
+    if (!availableOrganizationIds.includes(organizationId)) {
+      console.warn(`Organization ${organizationId} is not available for this user`);
       return;
     }
 
     const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set(ORG_ID_PARAM, groupId);
+    newSearchParams.set(ORG_ID_PARAM, organizationId);
     setSearchParams(newSearchParams);
   };
 
-  const value: GroupContextValue = {
-    activeGroupId,
+  const value: OrganizationContextValue = {
+    activeOrganizationId,
     activeOrganization,
-    availableGroups,
+    availableOrganizationIds,
     organizations,
-    setActiveGroup,
+    setActiveOrganization,
   };
 
-  // Show create organization view if no groups available
-  if (availableGroups.length === 0) {
+  // Show create organization view if no organizations available
+  if (availableOrganizationIds.length === 0) {
     return <NoOrganizationView />;
   }
 
-  return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>;
+  return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;
 }
 
 /**
- * Hook to access the active group context
+ * Hook to access the active organization context
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useActiveGroup() {
-  const context = useContext(GroupContext);
+export function useActiveOrganization() {
+  const context = useContext(OrganizationContext);
   if (context === undefined) {
-    throw new Error('useActiveGroup must be used within a GroupProvider');
+    throw new Error('useActiveOrganization must be used within an OrganizationProvider');
   }
   return context;
 }
@@ -189,7 +189,7 @@ export function useActiveGroup() {
  * Use this instead of useNavigate() to ensure orgId is always in the URL.
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useGroupNavigate() {
+export function useOrganizationNavigate() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 

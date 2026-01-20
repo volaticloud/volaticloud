@@ -42,7 +42,7 @@ import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { BacktestResultsDialog } from '../Backtests/BacktestResultsDialog';
-import { useGroupNavigate, useActiveGroup } from '../../contexts/GroupContext';
+import { useGroupNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
 import { StrategyStrategyBuilderMode } from '../../generated/types';
@@ -51,7 +51,7 @@ const StrategyStudio = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useGroupNavigate();
   const { setCollapsed } = useSidebar();
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
 
   // Determine if we're in create mode (new strategy) or edit mode
   // When navigating to /strategies/new, id is undefined (no :id param in route)
@@ -264,7 +264,7 @@ class MyStrategy(IStrategy):
     try {
       if (isCreateMode) {
         // Create new strategy
-        if (!activeGroupId) {
+        if (!activeOrganizationId) {
           console.error('No active group selected');
           return;
         }
@@ -277,7 +277,7 @@ class MyStrategy(IStrategy):
               code,
               config: fullConfig,
               builderMode,
-              ownerID: activeGroupId,
+              ownerID: activeOrganizationId,
             },
           },
         });
@@ -507,7 +507,7 @@ class MyStrategy(IStrategy):
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleSave(true)}
-            disabled={saving || !name || !code || !config || !activeGroupId}
+            disabled={saving || !name || !code || !config || !activeOrganizationId}
           >
             {saving ? 'Creating...' : 'Create Strategy'}
           </Button>

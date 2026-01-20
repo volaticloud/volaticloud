@@ -6,7 +6,7 @@ import { createAppTheme } from './theme/theme';
 import { createApolloClient } from './graphql/client';
 import { useConfigValue } from './contexts/ConfigContext';
 import { useAuth } from './contexts/AuthContext';
-import { GroupProvider } from './contexts/GroupContext';
+import { OrganizationProvider } from './contexts/OrganizationContext';
 import { PermissionProvider } from './contexts/PermissionContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
@@ -70,7 +70,7 @@ function App() {
           }}
         />
         <BrowserRouter>
-          <GroupProvider>
+          <OrganizationProvider>
             <PermissionProvider>
               <SidebarProvider>
                 <Routes>
@@ -114,7 +114,7 @@ function App() {
                 </Routes>
               </SidebarProvider>
             </PermissionProvider>
-          </GroupProvider>
+          </OrganizationProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ApolloProvider>

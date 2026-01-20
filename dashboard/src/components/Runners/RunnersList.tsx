@@ -30,7 +30,7 @@ import { DeleteRunnerDialog } from './DeleteRunnerDialog';
 import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
@@ -52,11 +52,11 @@ export const RunnersList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const { can } = usePermissionContext();
 
   // Permission check for creating runners
-  const canCreateRunner = activeGroupId ? can(activeGroupId, 'create-runner') : false;
+  const canCreateRunner = activeOrganizationId ? can(activeOrganizationId, 'create-runner') : false;
 
   // Pagination hook
   const pagination = useCursorPagination<Runner>({ initialPageSize: 10 });
@@ -68,13 +68,13 @@ export const RunnersList = () => {
       after: pagination.cursor,
       where: {
         ...(viewMode === 'mine'
-          ? { ownerID: activeGroupId || undefined }
+          ? { ownerID: activeOrganizationId || undefined }
           : { public: true })
       }
     },
     pollInterval: 10000,
     fetchPolicy: 'network-only',
-    skip: viewMode === 'mine' && !activeGroupId,
+    skip: viewMode === 'mine' && !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -88,7 +88,7 @@ export const RunnersList = () => {
   // Reset pagination when view mode changes
   useEffect(() => {
     reset();
-  }, [viewMode, activeGroupId, reset]);
+  }, [viewMode, activeOrganizationId, reset]);
 
   const [refreshRunnerData] = useRefreshRunnerDataMutation();
   const [setRunnerVisibility, { loading: visibilityLoading }] = useSetRunnerVisibilityMutation();

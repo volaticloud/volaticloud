@@ -24,7 +24,7 @@ import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
 import { BacktestResults } from '../Backtests/BacktestResults';
-import { useGroupNavigate } from '../../contexts/GroupContext';
+import { useGroupNavigate } from '../../contexts/OrganizationContext';
 
 const StrategyDetail = () => {
   const { id } = useParams<{ id: string }>();

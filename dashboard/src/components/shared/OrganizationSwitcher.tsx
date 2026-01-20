@@ -12,22 +12,23 @@ import {
   Button,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import BusinessIcon from '@mui/icons-material/Business';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import { ORG_ID_PARAM } from '../../constants/url';
 import { CreateOrganizationDialog } from '../Organization/CreateOrganizationDialog';
 
-interface GroupSwitcherProps {
+interface OrganizationSwitcherProps {
   fullWidth?: boolean;
 }
 
 const CREATE_ORG_VALUE = '__create_new_org__';
 
-export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
+export function OrganizationSwitcher({ fullWidth = false }: OrganizationSwitcherProps) {
   const navigate = useNavigate();
-  const { activeGroupId, activeOrganization, organizations, setActiveGroup } = useActiveGroup();
+  const { activeOrganizationId, activeOrganization, organizations, setActiveOrganization } =
+    useActiveOrganization();
   const [searchText, setSearchText] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -39,7 +40,7 @@ export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
       return;
     }
 
-    setActiveGroup(newValue);
+    setActiveOrganization(newValue);
     navigate(`/?${ORG_ID_PARAM}=${newValue}`);
   };
 
@@ -49,7 +50,7 @@ export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
     return organizations.filter(
       (org) =>
         org.title.toLowerCase().includes(searchLower) ||
-        org.alias.toLowerCase().includes(searchLower)
+        org.id.toLowerCase().includes(searchLower)
     );
   }, [organizations, searchText]);
 
@@ -65,7 +66,7 @@ export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2 }}>
           <BusinessIcon fontSize="small" color="action" />
           <Typography variant="body2" color="text.secondary">
-            {activeOrganization?.title || activeGroupId}
+            {activeOrganization?.title || activeOrganizationId}
           </Typography>
           <Button
             size="small"
@@ -88,8 +89,8 @@ export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
     <>
       <Select
         size="small"
-        id="group-select"
-        value={activeGroupId || ''}
+        id="organization-select"
+        value={activeOrganizationId || ''}
         onChange={handleChange}
         displayEmpty
         fullWidth={fullWidth}

@@ -8,7 +8,7 @@ import {
 import { AlertEventOrderField, OrderDirection } from '../../generated/types';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { AlertEventAlertEventStatus, AlertEventAlertSeverity } from '../../generated/types';
 import { AlertDetailDialog } from './AlertDetailDialog';
 
@@ -31,7 +31,7 @@ const severityColors: Record<AlertEventAlertSeverity, 'error' | 'warning' | 'inf
 };
 
 export const AlertHistoryTab = () => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [selectedAlert, setSelectedAlert] = useState<AlertEvent | null>(null);
 
   const pagination = useCursorPagination<AlertEvent>({ initialPageSize: 10 });
@@ -42,14 +42,14 @@ export const AlertHistoryTab = () => {
       first: pagination.pageSize,
       after: pagination.cursor,
       where: {
-        ownerID: activeGroupId || undefined,
+        ownerID: activeOrganizationId || undefined,
       },
       orderBy: {
         direction: OrderDirection.Desc,
         field: AlertEventOrderField.CreatedAt,
       },
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export const AlertHistoryTab = () => {
 
   useEffect(() => {
     reset();
-  }, [activeGroupId, reset]);
+  }, [activeOrganizationId, reset]);
 
   const columns: GridColDef<AlertEvent>[] = [
     {

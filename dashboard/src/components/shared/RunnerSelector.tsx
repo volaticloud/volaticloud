@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGetRunnersForSelectorQuery, useGetRunnerByIdQuery } from './shared.generated';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface RunnerSelectorProps {
@@ -56,7 +56,7 @@ export const RunnerSelector = ({
   dataReadyOnly = false,
   disabled = false,
 }: RunnerSelectorProps) => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [showPublicRunners, setShowPublicRunners] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebouncedValue(searchInput, 300);
@@ -64,13 +64,13 @@ export const RunnerSelector = ({
   // Main query for runner list
   const { data, loading, fetchMore } = useGetRunnersForSelectorQuery({
     variables: {
-      ownerID: activeGroupId || undefined,
+      ownerID: activeOrganizationId || undefined,
       search: debouncedSearch || undefined,
       includePublic: showPublicRunners,
       dataReadyOnly: dataReadyOnly ? true : undefined,
       first: 20,
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   // Query for selected runner (to ensure it's always in the list)

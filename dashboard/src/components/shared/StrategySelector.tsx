@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGetStrategiesForSelectorQuery, useGetStrategyForSelectorQuery } from './shared.generated';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface StrategySelectorProps {
@@ -54,7 +54,7 @@ export const StrategySelector = ({
   disabled = false,
   defaultLatestOnly = true,
 }: StrategySelectorProps) => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [showPublicStrategies, setShowPublicStrategies] = useState(false);
   const [latestOnly, setLatestOnly] = useState(defaultLatestOnly);
   const [searchInput, setSearchInput] = useState('');
@@ -63,13 +63,13 @@ export const StrategySelector = ({
   // Main query for strategy list
   const { data, loading, fetchMore } = useGetStrategiesForSelectorQuery({
     variables: {
-      ownerID: activeGroupId || undefined,
+      ownerID: activeOrganizationId || undefined,
       search: debouncedSearch || undefined,
       includePublic: showPublicStrategies,
       latestOnly: latestOnly ? true : undefined,
       first: 20,
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   // Query for selected strategy (to ensure it's always in the list)

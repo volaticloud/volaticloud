@@ -15,7 +15,7 @@ import {
   CheckCircle as ClosedIcon,
 } from '@mui/icons-material';
 import { useGetTradesQuery, GetTradesQuery } from './trades.generated';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { TradeOrderField, OrderDirection } from '../../generated/types';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
@@ -24,7 +24,7 @@ import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 type Trade = NonNullable<NonNullable<NonNullable<GetTradesQuery['trades']['edges']>[number]>['node']>;
 
 export const TradesList = () => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
 
   const pagination = useCursorPagination<Trade>({
     initialPageSize: 25,
@@ -33,7 +33,7 @@ export const TradesList = () => {
   const { setLoading, updateFromResponse, reset } = pagination;
 
   // Build where clause
-  const whereClause = activeGroupId ? { hasBotWith: [{ ownerID: activeGroupId }] } : {};
+  const whereClause = activeOrganizationId ? { hasBotWith: [{ ownerID: activeOrganizationId }] } : {};
 
   const { data, loading } = useGetTradesQuery({
     variables: {
@@ -46,7 +46,7 @@ export const TradesList = () => {
       },
     },
     pollInterval: 30000,
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const TradesList = () => {
 
   useEffect(() => {
     reset();
-  }, [activeGroupId, reset]);
+  }, [activeOrganizationId, reset]);
 
   // Format duration between two dates
   const formatDuration = (openDate: string, closeDate: string | null | undefined): string => {

@@ -25,7 +25,7 @@ import { useGetBotQuery } from './bots.generated';
 import BotMetrics from './BotMetrics';
 import BotUsageCharts from './BotUsageCharts';
 import BotActionsMenu from './BotActionsMenu';
-import { useGroupNavigate } from '../../contexts/GroupContext';
+import { useGroupNavigate } from '../../contexts/OrganizationContext';
 
 type TabValue = 'overview' | 'usage' | 'trades';
 

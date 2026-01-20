@@ -19,7 +19,7 @@ import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code } from 
 import { useGetBacktestQuery } from './backtests.generated';
 import { BacktestCharts } from './BacktestCharts';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
-import { useGroupNavigate } from '../../contexts/GroupContext';
+import { useGroupNavigate } from '../../contexts/OrganizationContext';
 
 const BacktestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

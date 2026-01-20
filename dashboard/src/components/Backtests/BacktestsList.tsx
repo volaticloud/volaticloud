@@ -22,14 +22,14 @@ import { CreateBacktestDialog } from './CreateBacktestDialog';
 import { DeleteBacktestDialog } from './DeleteBacktestDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
 
 // Extract Backtest type from generated query
 type Backtest = NonNullable<NonNullable<NonNullable<GetBacktestsQuery['backtests']['edges']>[number]>['node']>;
 
 export const BacktestsList = () => {
   const navigate = useGroupNavigate();
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedBacktest, setSelectedBacktest] = useState<{
@@ -51,11 +51,11 @@ export const BacktestsList = () => {
     variables: {
       first: pagination.pageSize,
       after: pagination.cursor,
-      where: activeGroupId ? {
-        hasStrategyWith: [{ ownerID: activeGroupId }]
+      where: activeOrganizationId ? {
+        hasStrategyWith: [{ ownerID: activeOrganizationId }]
       } : undefined
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -66,10 +66,10 @@ export const BacktestsList = () => {
     }
   }, [data, loading, setLoading, updateFromResponse]);
 
-  // Reset pagination when activeGroupId changes
+  // Reset pagination when activeOrganizationId changes
   useEffect(() => {
     reset();
-  }, [activeGroupId, reset]);
+  }, [activeOrganizationId, reset]);
 
   // Mutations
   const [runBacktest] = useRunBacktestMutation({ onCompleted: () => refetch() });

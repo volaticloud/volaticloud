@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Alert, Breadcrumbs, Link } from '@mui/material';
 import { Home as HomeIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon, ChevronRight as ChevronRightIcon } from '@mui/icons-material';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
 import { CollapsibleSidebar } from '../../components/Layout/CollapsibleSidebar';
 import { ResourceGroupsTable } from '../../components/Organization/ResourceGroupsTable';
 import { ResourceGroupMembersTable } from '../../components/Organization/ResourceGroupMembersTable';
@@ -13,27 +13,27 @@ interface BreadcrumbItem {
 }
 
 export const OrganizationUsersPage = () => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const { resourceGroupId } = useParams<{ resourceGroupId?: string }>();
   const navigate = useGroupNavigate();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
-    { id: activeGroupId || '', title: 'Organization' },
+    { id: activeOrganizationId || '', title: 'Organization' },
   ]);
 
   // Update breadcrumbs when resourceGroupId or selectedGroupName changes
   useEffect(() => {
     if (resourceGroupId && selectedGroupName) {
       setBreadcrumbs([
-        { id: activeGroupId || '', title: 'Organization' },
+        { id: activeOrganizationId || '', title: 'Organization' },
         { id: resourceGroupId, title: selectedGroupName },
       ]);
     } else {
-      setBreadcrumbs([{ id: activeGroupId || '', title: 'Organization' }]);
+      setBreadcrumbs([{ id: activeOrganizationId || '', title: 'Organization' }]);
     }
-  }, [resourceGroupId, selectedGroupName, activeGroupId]);
+  }, [resourceGroupId, selectedGroupName, activeOrganizationId]);
 
   // Read resourceGroupId from URL params on mount and when it changes
   useEffect(() => {
@@ -61,7 +61,7 @@ export const OrganizationUsersPage = () => {
     setSelectedGroupName(null);
   };
 
-  if (!activeGroupId) {
+  if (!activeOrganizationId) {
     return (
       <Box>
         <Typography variant="h4" gutterBottom>
@@ -121,8 +121,8 @@ export const OrganizationUsersPage = () => {
       {/* Main content - Members Table */}
       <Box sx={{ mt: 1 }}>
         <ResourceGroupMembersTable
-          organizationId={activeGroupId}
-          resourceGroupId={selectedGroupId || activeGroupId}
+          organizationId={activeOrganizationId}
+          resourceGroupId={selectedGroupId || activeOrganizationId}
           resourceGroupName={selectedGroupName || 'Organization'}
         />
       </Box>
@@ -136,7 +136,7 @@ export const OrganizationUsersPage = () => {
         toggleButtonLabel="Browse resource groups"
       >
         <ResourceGroupsTable
-          organizationId={activeGroupId}
+          organizationId={activeOrganizationId}
           onGroupSelect={handleGroupSelect}
           selectedGroupId={selectedGroupId}
           initialGroupId={resourceGroupId}

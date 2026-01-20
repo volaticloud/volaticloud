@@ -17,7 +17,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
 import { usePermissionContext } from '../../contexts/PermissionContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
@@ -51,11 +51,11 @@ export const BotsList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const { can } = usePermissionContext();
 
   // Permission check for creating bots
-  const canCreateBot = activeGroupId ? can(activeGroupId, 'create-bot') : false;
+  const canCreateBot = activeOrganizationId ? can(activeOrganizationId, 'create-bot') : false;
 
   // Pagination hook
   const pagination = useCursorPagination<Bot>({ initialPageSize: 10 });
@@ -67,12 +67,12 @@ export const BotsList = () => {
       after: pagination.cursor,
       where: {
         ...(viewMode === 'mine'
-          ? { ownerID: activeGroupId || undefined }
+          ? { ownerID: activeOrganizationId || undefined }
           : { public: true })
       }
     },
     pollInterval: 30000,
-    skip: viewMode === 'mine' && !activeGroupId,
+    skip: viewMode === 'mine' && !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -86,7 +86,7 @@ export const BotsList = () => {
   // Reset pagination when view mode changes
   useEffect(() => {
     reset();
-  }, [viewMode, activeGroupId, reset]);
+  }, [viewMode, activeOrganizationId, reset]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
