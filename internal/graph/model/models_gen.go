@@ -1150,6 +1150,71 @@ func (e ResourceGroupOrderField) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Resource type hint for permission checks.
+// Allows direct lookup instead of sequential type detection.
+type ResourceType string
+
+const (
+	ResourceTypeStrategy  ResourceType = "STRATEGY"
+	ResourceTypeBot       ResourceType = "BOT"
+	ResourceTypeExchange  ResourceType = "EXCHANGE"
+	ResourceTypeBotRunner ResourceType = "BOT_RUNNER"
+	ResourceTypeBacktest  ResourceType = "BACKTEST"
+	ResourceTypeGroup     ResourceType = "GROUP"
+)
+
+var AllResourceType = []ResourceType{
+	ResourceTypeStrategy,
+	ResourceTypeBot,
+	ResourceTypeExchange,
+	ResourceTypeBotRunner,
+	ResourceTypeBacktest,
+	ResourceTypeGroup,
+}
+
+func (e ResourceType) IsValid() bool {
+	switch e {
+	case ResourceTypeStrategy, ResourceTypeBot, ResourceTypeExchange, ResourceTypeBotRunner, ResourceTypeBacktest, ResourceTypeGroup:
+		return true
+	}
+	return false
+}
+
+func (e ResourceType) String() string {
+	return string(e)
+}
+
+func (e *ResourceType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ResourceType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ResourceType", str)
+	}
+	return nil
+}
+
+func (e ResourceType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ResourceType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ResourceType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Time field options for TIME operands
 type TimeField string
 

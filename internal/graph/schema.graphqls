@@ -170,6 +170,19 @@ Ensures user context is available in resolver
 directive @isAuthenticated on FIELD_DEFINITION
 
 """
+Resource type hint for permission checks.
+Allows direct lookup instead of sequential type detection.
+"""
+enum ResourceType {
+  STRATEGY
+  BOT
+  EXCHANGE
+  BOT_RUNNER
+  BACKTEST
+  GROUP
+}
+
+"""
 Requires the user to have a specific permission scope on a resource
 Uses Keycloak UMA 2.0 for fine-grained authorization
 """
@@ -183,6 +196,12 @@ directive @hasScope(
   The permission scope to check (e.g., "edit", "delete", "view", "backtest")
   """
   scope: String!
+
+  """
+  Optional resource type hint for O(1) lookup instead of sequential type detection.
+  If not provided, falls back to sequential lookup (Strategy -> Bot -> Exchange -> etc.)
+  """
+  resourceType: ResourceType
 ) on FIELD_DEFINITION
 
 """
@@ -455,14 +474,14 @@ extend type Query {
 # Mutations for managing entities
 type Mutation {
   # Exchange mutations
-  createExchange(input: CreateExchangeInput!): Exchange! @hasScope(resource: "input.ownerID", scope: "create-exchange")
-  updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange! @hasScope(resource: "id", scope: "edit")
-  deleteExchange(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+  createExchange(input: CreateExchangeInput!): Exchange! @hasScope(resource: "input.ownerID", scope: "create-exchange", resourceType: GROUP)
+  updateExchange(id: ID!, input: UpdateExchangeInput!): Exchange! @hasScope(resource: "id", scope: "edit", resourceType: EXCHANGE)
+  deleteExchange(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: EXCHANGE)
 
   # Strategy mutations
-  createStrategy(input: CreateStrategyInput!): Strategy! @hasScope(resource: "input.ownerID", scope: "create-strategy")
-  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit")
-  deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+  createStrategy(input: CreateStrategyInput!): Strategy! @hasScope(resource: "input.ownerID", scope: "create-strategy", resourceType: GROUP)
+  updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy! @hasScope(resource: "id", scope: "edit", resourceType: STRATEGY)
+  deleteStrategy(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: STRATEGY)
 
   """
   Preview generated Python code from UI builder configuration
@@ -471,22 +490,22 @@ type Mutation {
   previewStrategyCode(config: Map!, className: String!): PreviewCodeResult! @isAuthenticated
 
   # Bot mutations
-  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot")
-  updateBot(id: ID!, input: UpdateBotInput!): Bot! @hasScope(resource: "id", scope: "edit")
-  deleteBot(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot", resourceType: GROUP)
+  updateBot(id: ID!, input: UpdateBotInput!): Bot! @hasScope(resource: "id", scope: "edit", resourceType: BOT)
+  deleteBot(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: BOT)
 
   # Bot lifecycle mutations
-  startBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run")
-  stopBot(id: ID!): Bot! @hasScope(resource: "id", scope: "stop")
-  restartBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run")
+  startBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run", resourceType: BOT)
+  stopBot(id: ID!): Bot! @hasScope(resource: "id", scope: "stop", resourceType: BOT)
+  restartBot(id: ID!): Bot! @hasScope(resource: "id", scope: "run", resourceType: BOT)
 
   # BotRunner mutations
-  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @hasScope(resource: "input.ownerID", scope: "create-runner")
-  updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner! @hasScope(resource: "id", scope: "edit")
-  deleteBotRunner(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+  createBotRunner(input: CreateBotRunnerInput!): BotRunner! @hasScope(resource: "input.ownerID", scope: "create-runner", resourceType: GROUP)
+  updateBotRunner(id: ID!, input: UpdateBotRunnerInput!): BotRunner! @hasScope(resource: "id", scope: "edit", resourceType: BOT_RUNNER)
+  deleteBotRunner(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: BOT_RUNNER)
 
   # Runner data management
-  refreshRunnerData(id: ID!): BotRunner! @hasScope(resource: "id", scope: "edit")
+  refreshRunnerData(id: ID!): BotRunner! @hasScope(resource: "id", scope: "edit", resourceType: BOT_RUNNER)
 
   # Runner connection testing
   testRunnerConnection(type: BotRunnerRunnerType!, config: RunnerConfigInput!): ConnectionTestResult! @isAuthenticated
@@ -501,33 +520,33 @@ type Mutation {
   # Backtest mutations
   # Backtests are immutable - only creation is allowed, no updates
   # Authorization is checked via strategy_id (backtests inherit permissions from their parent strategy)
-  runBacktest(input: CreateBacktestInput!): Backtest! @hasScope(resource: "input.strategyID", scope: "run-backtest")
-  stopBacktest(id: ID!): Backtest! @hasScope(resource: "id", scope: "stop-backtest")
-  deleteBacktest(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete-backtest")
+  runBacktest(input: CreateBacktestInput!): Backtest! @hasScope(resource: "input.strategyID", scope: "run-backtest", resourceType: STRATEGY)
+  stopBacktest(id: ID!): Backtest! @hasScope(resource: "id", scope: "stop-backtest", resourceType: BACKTEST)
+  deleteBacktest(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete-backtest", resourceType: BACKTEST)
 
-  # Trade mutations
+  # Trade mutations - Trades are linked to bots, check bot permission
   createTrade(input: CreateTradeInput!): Trade! @isAuthenticated
-  updateTrade(id: ID!, input: UpdateTradeInput!): Trade! @hasScope(resource: "id", scope: "edit")
-  deleteTrade(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete")
+  updateTrade(id: ID!, input: UpdateTradeInput!): Trade! @hasScope(resource: "id", scope: "edit", resourceType: BOT)
+  deleteTrade(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: BOT)
 
   # Visibility mutations
   """
   Toggle strategy visibility (public/private)
   Only the owner can change visibility
   """
-  setStrategyVisibility(id: ID!, public: Boolean!): Strategy! @hasScope(resource: "id", scope: "edit")
+  setStrategyVisibility(id: ID!, public: Boolean!): Strategy! @hasScope(resource: "id", scope: "edit", resourceType: STRATEGY)
 
   """
   Toggle bot visibility (public/private)
   Only the owner can change visibility
   """
-  setBotVisibility(id: ID!, public: Boolean!): Bot! @hasScope(resource: "id", scope: "edit")
+  setBotVisibility(id: ID!, public: Boolean!): Bot! @hasScope(resource: "id", scope: "edit", resourceType: BOT)
 
   """
   Toggle runner visibility (public/private)
   Only the owner can change visibility
   """
-  setRunnerVisibility(id: ID!, public: Boolean!): BotRunner! @hasScope(resource: "id", scope: "edit")
+  setRunnerVisibility(id: ID!, public: Boolean!): BotRunner! @hasScope(resource: "id", scope: "edit", resourceType: BOT_RUNNER)
 
   # FreqUI integration
   """
@@ -535,7 +554,7 @@ type Mutation {
   Backend authenticates with bot API and returns JWT tokens
   This avoids exposing bot credentials to the frontend
   """
-  getFreqtradeToken(botId: ID!): FreqtradeToken! @hasScope(resource: "botId", scope: "freqtrade-api")
+  getFreqtradeToken(botId: ID!): FreqtradeToken! @hasScope(resource: "botId", scope: "freqtrade-api", resourceType: BOT)
 }
 
 # Resource Usage Extensions
