@@ -29,6 +29,11 @@ type (
 	ComputedOperation = model.ComputedOperation
 	// IndicatorType represents built-in indicator types
 	IndicatorType = model.IndicatorType
+	// PositionMode represents the trading direction mode for the strategy
+	PositionMode = model.PositionMode
+	// SignalDirection represents the direction of a signal (LONG or SHORT)
+	// Uses StrategySignalDirection to avoid collision with freqtrade.SignalDirection
+	SignalDirection = model.StrategySignalDirection
 )
 
 // NodeType constants (aliases for model.ConditionNodeType*)
@@ -114,6 +119,19 @@ const (
 	IndicatorPIVOT      = model.IndicatorTypePivot
 	IndicatorSUPERTREND = model.IndicatorTypeSupertrend
 	IndicatorCUSTOM     = model.IndicatorTypeCustom
+)
+
+// PositionMode constants (aliases for model.PositionMode*)
+const (
+	PositionModeLongOnly     = model.PositionModeLongOnly
+	PositionModeShortOnly    = model.PositionModeShortOnly
+	PositionModeLongAndShort = model.PositionModeLongAndShort
+)
+
+// SignalDirection constants (aliases for model.StrategySignalDirection*)
+const (
+	SignalDirectionLong  = model.StrategySignalDirectionLong
+	SignalDirectionShort = model.StrategySignalDirectionShort
 )
 
 // ConditionNode represents any node in the condition tree
@@ -473,15 +491,39 @@ type IndicatorPlugin struct {
 	RequiredImports []string `json:"requiredImports,omitempty"`
 }
 
+// SignalConfig contains entry and exit conditions for a single direction
+type SignalConfig struct {
+	EntryConditions ConditionNode `json:"entry_conditions"`
+	ExitConditions  ConditionNode `json:"exit_conditions"`
+}
+
+// MirrorConfig defines how to auto-generate signals from source to target direction
+type MirrorConfig struct {
+	Enabled           bool            `json:"enabled"`
+	Source            SignalDirection `json:"source"`
+	InvertComparisons bool            `json:"invert_comparisons"`
+	InvertCrossovers  bool            `json:"invert_crossovers"`
+}
+
 // UIBuilderConfig represents the full UI builder configuration
+// Version 2 uses nested SignalConfig for long/short support
 type UIBuilderConfig struct {
-	Version         int                   `json:"version"`
-	SchemaVersion   string                `json:"schema_version,omitempty"`
-	Indicators      []IndicatorDefinition `json:"indicators"`
-	EntryConditions ConditionNode         `json:"entry_conditions"`
-	ExitConditions  ConditionNode         `json:"exit_conditions"`
-	Parameters      StrategyParameters    `json:"parameters"`
-	Callbacks       CallbacksConfig       `json:"callbacks"`
+	Version       int                   `json:"version"`
+	SchemaVersion string                `json:"schema_version,omitempty"`
+	Indicators    []IndicatorDefinition `json:"indicators"`
+	Parameters    StrategyParameters    `json:"parameters"`
+	Callbacks     CallbacksConfig       `json:"callbacks"`
+
+	// Version 2 fields (nested signal config)
+	PositionMode PositionMode  `json:"position_mode,omitempty"`
+	Long         *SignalConfig `json:"long,omitempty"`
+	Short        *SignalConfig `json:"short,omitempty"`
+	MirrorConfig *MirrorConfig `json:"mirror_config,omitempty"`
+
+	// Version 1 fields (deprecated, kept for backwards compatibility)
+	// These are migrated to Long.EntryConditions/ExitConditions during normalization
+	EntryConditions ConditionNode `json:"entry_conditions,omitempty"`
+	ExitConditions  ConditionNode `json:"exit_conditions,omitempty"`
 }
 
 // StrategyParameters contains strategy trading parameters

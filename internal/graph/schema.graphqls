@@ -161,6 +161,79 @@ enum TimeField {
 }
 
 # ==============================================================================
+# Long/Short Signal Support Types
+# ==============================================================================
+
+"""
+Position mode for the strategy - determines which signals are generated
+"""
+enum PositionMode {
+  """
+  Only generate long entry/exit signals (default for backwards compatibility)
+  """
+  LONG_ONLY
+  """
+  Only generate short entry/exit signals
+  """
+  SHORT_ONLY
+  """
+  Generate both long and short entry/exit signals
+  """
+  LONG_AND_SHORT
+}
+
+"""
+Direction for signal configuration in strategy builder
+Named StrategySignalDirection to avoid collision with freqtrade.SignalDirection
+"""
+enum StrategySignalDirection {
+  """
+  Long position direction (buy low, sell high)
+  """
+  LONG
+  """
+  Short position direction (sell high, buy low)
+  """
+  SHORT
+}
+
+"""
+Configuration for auto-mirroring signals from one direction to another
+"""
+input MirrorConfigInput {
+  """
+  Whether mirroring is enabled
+  """
+  enabled: Boolean!
+  """
+  Source direction to mirror from (e.g., LONG to auto-generate SHORT)
+  """
+  source: StrategySignalDirection!
+  """
+  Invert comparison operators (gt becomes lt, gte becomes lte, etc.)
+  """
+  invertComparisons: Boolean!
+  """
+  Convert CROSSOVER to CROSSUNDER and vice versa
+  """
+  invertCrossovers: Boolean!
+}
+
+"""
+Signal configuration for a single direction (entry and exit conditions)
+"""
+input SignalConfigInput {
+  """
+  Conditions that must be true to enter a position
+  """
+  entryConditions: Map!
+  """
+  Conditions that must be true to exit a position
+  """
+  exitConditions: Map!
+}
+
+# ==============================================================================
 # Authorization directives
 
 """

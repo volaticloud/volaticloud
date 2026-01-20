@@ -69,6 +69,8 @@ interface ConditionNodeProps {
   indicators: IndicatorDefinition[];
   depth?: number;
   showTradeContext?: boolean;
+  /** When true, all editing is disabled (used for mirrored signals) */
+  readOnly?: boolean;
 }
 
 export function ConditionNodeEditor({
@@ -78,6 +80,7 @@ export function ConditionNodeEditor({
   indicators,
   depth = 0,
   showTradeContext = false,
+  readOnly = false,
 }: ConditionNodeProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -232,7 +235,7 @@ export function ConditionNodeEditor({
                 else handleConvertToOr();
               }}
               sx={{ fontWeight: 600 }}
-              disabled={isDisabled}
+              disabled={isDisabled || readOnly}
             >
               <MenuItem value="AND">AND</MenuItem>
               <MenuItem value="OR">OR</MenuItem>
@@ -253,9 +256,11 @@ export function ConditionNodeEditor({
 
           <Box sx={{ flex: 1 }} />
 
-          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-            <MoreVert fontSize="small" />
-          </IconButton>
+          {!readOnly && (
+            <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+              <MoreVert fontSize="small" />
+            </IconButton>
+          )}
         </Box>
 
         {/* Collapsible Children */}
@@ -278,59 +283,62 @@ export function ConditionNodeEditor({
                   <ConditionNodeEditor
                     node={child}
                     onChange={(newChild) => handleChildChange(index, newChild)}
-                    onDelete={() => handleChildDelete(index)}
+                    onDelete={readOnly ? undefined : () => handleChildDelete(index)}
                     indicators={indicators}
                     depth={depth + 1}
                     showTradeContext={showTradeContext}
+                    readOnly={readOnly}
                   />
                 </Box>
               </Box>
             ))}
           </Box>
 
-          {/* Add buttons */}
-          <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
-            <Button
-              size="small"
-              startIcon={<Add />}
-              onClick={handleAddCondition}
-              variant="outlined"
-              disabled={isDisabled}
-            >
-              Condition
-            </Button>
-            <Button
-              size="small"
-              startIcon={<Add />}
-              onClick={handleAddGroup}
-              variant="outlined"
-              disabled={isDisabled}
-            >
-              Group
-            </Button>
-            {indicators.length >= 2 && (
-              <>
-                <Button
-                  size="small"
-                  startIcon={<TrendingUp />}
-                  onClick={handleAddCrossover}
-                  variant="outlined"
-                  disabled={isDisabled}
-                >
-                  Crossover
-                </Button>
-                <Button
-                  size="small"
-                  startIcon={<TrendingDown />}
-                  onClick={handleAddCrossunder}
-                  variant="outlined"
-                  disabled={isDisabled}
-                >
-                  Crossunder
-                </Button>
-              </>
-            )}
-          </Box>
+          {/* Add buttons - hidden when readOnly */}
+          {!readOnly && (
+            <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
+              <Button
+                size="small"
+                startIcon={<Add />}
+                onClick={handleAddCondition}
+                variant="outlined"
+                disabled={isDisabled}
+              >
+                Condition
+              </Button>
+              <Button
+                size="small"
+                startIcon={<Add />}
+                onClick={handleAddGroup}
+                variant="outlined"
+                disabled={isDisabled}
+              >
+                Group
+              </Button>
+              {indicators.length >= 2 && (
+                <>
+                  <Button
+                    size="small"
+                    startIcon={<TrendingUp />}
+                    onClick={handleAddCrossover}
+                    variant="outlined"
+                    disabled={isDisabled}
+                  >
+                    Crossover
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<TrendingDown />}
+                    onClick={handleAddCrossunder}
+                    variant="outlined"
+                    disabled={isDisabled}
+                  >
+                    Crossunder
+                  </Button>
+                </>
+              )}
+            </Box>
+          )}
         </Collapse>
 
         {/* Context menu */}
@@ -389,9 +397,11 @@ export function ConditionNodeEditor({
             </Tooltip>
           )}
           <Box sx={{ flex: 1 }} />
-          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-            <MoreVert fontSize="small" />
-          </IconButton>
+          {!readOnly && (
+            <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+              <MoreVert fontSize="small" />
+            </IconButton>
+          )}
         </Box>
 
         <ConditionNodeEditor
@@ -400,6 +410,7 @@ export function ConditionNodeEditor({
           indicators={indicators}
           depth={depth + 1}
           showTradeContext={showTradeContext}
+          readOnly={readOnly}
         />
 
         <Menu
@@ -458,6 +469,7 @@ export function ConditionNodeEditor({
           onChange={(left) => onChange({ ...cmpNode, left })}
           indicators={indicators}
           showTradeContext={showTradeContext}
+          readOnly={readOnly}
         />
 
         <FormControl size="small" sx={{ minWidth: 70 }}>
@@ -466,7 +478,7 @@ export function ConditionNodeEditor({
             onChange={(e) =>
               onChange({ ...cmpNode, operator: e.target.value as ComparisonOperator })
             }
-            disabled={isDisabled}
+            disabled={isDisabled || readOnly}
           >
             {Object.entries(OPERATOR_SYMBOLS).map(([op, symbol]) => (
               <MenuItem key={op} value={op}>
@@ -481,13 +493,16 @@ export function ConditionNodeEditor({
           onChange={(right) => onChange({ ...cmpNode, right })}
           indicators={indicators}
           showTradeContext={showTradeContext}
+          readOnly={readOnly}
         />
 
         <Box sx={{ flex: 1 }} />
 
-        <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-          <MoreVert fontSize="small" />
-        </IconButton>
+        {!readOnly && (
+          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+            <MoreVert fontSize="small" />
+          </IconButton>
+        )}
 
         <Menu
           anchorEl={menuAnchor}
@@ -548,6 +563,7 @@ export function ConditionNodeEditor({
           value={crossNode.series1}
           onChange={(series1) => onChange({ ...crossNode, series1 })}
           indicators={indicators}
+          readOnly={readOnly}
         />
 
         <Tooltip title="Crosses above">
@@ -563,13 +579,16 @@ export function ConditionNodeEditor({
           value={crossNode.series2}
           onChange={(series2) => onChange({ ...crossNode, series2 })}
           indicators={indicators}
+          readOnly={readOnly}
         />
 
         <Box sx={{ flex: 1 }} />
 
-        <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-          <MoreVert fontSize="small" />
-        </IconButton>
+        {!readOnly && (
+          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+            <MoreVert fontSize="small" />
+          </IconButton>
+        )}
 
         <Menu
           anchorEl={menuAnchor}
@@ -633,6 +652,7 @@ export function ConditionNodeEditor({
           value={crossNode.series1}
           onChange={(series1) => onChange({ ...crossNode, series1 })}
           indicators={indicators}
+          readOnly={readOnly}
         />
 
         <Tooltip title="Crosses below">
@@ -648,13 +668,16 @@ export function ConditionNodeEditor({
           value={crossNode.series2}
           onChange={(series2) => onChange({ ...crossNode, series2 })}
           indicators={indicators}
+          readOnly={readOnly}
         />
 
         <Box sx={{ flex: 1 }} />
 
-        <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-          <MoreVert fontSize="small" />
-        </IconButton>
+        {!readOnly && (
+          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+            <MoreVert fontSize="small" />
+          </IconButton>
+        )}
 
         <Menu
           anchorEl={menuAnchor}
@@ -721,9 +744,11 @@ export function ConditionNodeEditor({
             </Tooltip>
           )}
           <Box sx={{ flex: 1 }} />
-          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
-            <MoreVert fontSize="small" />
-          </IconButton>
+          {!readOnly && (
+            <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
+              <MoreVert fontSize="small" />
+            </IconButton>
+          )}
         </Box>
 
         <Collapse in={!collapsed}>
@@ -734,6 +759,7 @@ export function ConditionNodeEditor({
               indicators={indicators}
               depth={depth + 1}
               showTradeContext={showTradeContext}
+              readOnly={readOnly}
             />
           </Box>
 
@@ -748,6 +774,7 @@ export function ConditionNodeEditor({
               indicators={indicators}
               depth={depth + 1}
               showTradeContext={showTradeContext}
+              readOnly={readOnly}
             />
           </Box>
 
@@ -755,13 +782,15 @@ export function ConditionNodeEditor({
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
                 <Chip label="ELSE" size="small" color="warning" />
-                <IconButton
-                  size="small"
-                  onClick={() => onChange({ ...ifNode, else: undefined })}
-                  disabled={isDisabled}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
+                {!readOnly && (
+                  <IconButton
+                    size="small"
+                    onClick={() => onChange({ ...ifNode, else: undefined })}
+                    disabled={isDisabled}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                )}
               </Box>
               <Box sx={{ ml: 2 }}>
                 <ConditionNodeEditor
@@ -770,10 +799,11 @@ export function ConditionNodeEditor({
                   indicators={indicators}
                   depth={depth + 1}
                   showTradeContext={showTradeContext}
+                  readOnly={readOnly}
                 />
               </Box>
             </>
-          ) : (
+          ) : !readOnly && (
             <Button
               size="small"
               startIcon={<Add />}

@@ -2398,6 +2398,18 @@ export type MemberUser = {
   username: Scalars['String']['output'];
 };
 
+/** Configuration for auto-mirroring signals from one direction to another */
+export type MirrorConfigInput = {
+  /** Whether mirroring is enabled */
+  enabled: Scalars['Boolean']['input'];
+  /** Invert comparison operators (gt becomes lt, gte becomes lte, etc.) */
+  invertComparisons: Scalars['Boolean']['input'];
+  /** Convert CROSSOVER to CROSSUNDER and vice versa */
+  invertCrossovers: Scalars['Boolean']['input'];
+  /** Source direction to mirror from (e.g., LONG to auto-generate SHORT) */
+  source: StrategySignalDirection;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /**
@@ -2889,6 +2901,16 @@ export type PermissionCheckResult = {
   scope: Scalars['String']['output'];
 };
 
+/** Position mode for the strategy - determines which signals are generated */
+export enum PositionMode {
+  /** Generate both long and short entry/exit signals */
+  LongAndShort = 'LONG_AND_SHORT',
+  /** Only generate long entry/exit signals (default for backwards compatibility) */
+  LongOnly = 'LONG_ONLY',
+  /** Only generate short entry/exit signals */
+  ShortOnly = 'SHORT_ONLY'
+}
+
 /** Result of strategy code preview generation */
 export type PreviewCodeResult = {
   __typename?: 'PreviewCodeResult';
@@ -3301,6 +3323,19 @@ export type ResourceGroupWhereInput = {
   /** Search by title (case-insensitive substring match) */
   titleContainsFold?: InputMaybe<Scalars['String']['input']>;
 };
+
+/**
+ * Resource type hint for permission checks.
+ * Allows direct lookup instead of sequential type detection.
+ */
+export enum ResourceType {
+  Backtest = 'BACKTEST',
+  Bot = 'BOT',
+  BotRunner = 'BOT_RUNNER',
+  Exchange = 'EXCHANGE',
+  Organization = 'ORGANIZATION',
+  Strategy = 'STRATEGY'
+}
 
 export type ResourceUsageAggregation = Node & {
   __typename?: 'ResourceUsageAggregation';
@@ -3779,6 +3814,14 @@ export type SelectOption = {
   value: Scalars['String']['output'];
 };
 
+/** Signal configuration for a single direction (entry and exit conditions) */
+export type SignalConfigInput = {
+  /** Conditions that must be true to enter a position */
+  entryConditions: Scalars['Map']['input'];
+  /** Conditions that must be true to exit a position */
+  exitConditions: Scalars['Map']['input'];
+};
+
 export type Strategy = Node & {
   __typename?: 'Strategy';
   /** Strategy can have at most one backtest (one-to-one) */
@@ -3842,6 +3885,17 @@ export type StrategyEdge = {
   /** The item at the end of the edge. */
   node?: Maybe<Strategy>;
 };
+
+/**
+ * Direction for signal configuration in strategy builder
+ * Named StrategySignalDirection to avoid collision with freqtrade.SignalDirection
+ */
+export enum StrategySignalDirection {
+  /** Long position direction (buy low, sell high) */
+  Long = 'LONG',
+  /** Short position direction (sell high, buy low) */
+  Short = 'SHORT'
+}
 
 /** StrategyStrategyBuilderMode is enum for the field builder_mode */
 export enum StrategyStrategyBuilderMode {

@@ -3906,6 +3906,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputKrakenConfigInput,
 		ec.unmarshalInputKubernetesConfigInput,
 		ec.unmarshalInputLocalConfigInput,
+		ec.unmarshalInputMirrorConfigInput,
 		ec.unmarshalInputPassphraseExchangeConfigInput,
 		ec.unmarshalInputPermissionCheckInput,
 		ec.unmarshalInputRegistryAuthInput,
@@ -3917,6 +3918,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputResourceUsageSampleWhereInput,
 		ec.unmarshalInputRunnerConfigInput,
 		ec.unmarshalInputS3ConfigInput,
+		ec.unmarshalInputSignalConfigInput,
 		ec.unmarshalInputStrategyWhereInput,
 		ec.unmarshalInputTradeOrder,
 		ec.unmarshalInputTradeWhereInput,
@@ -34132,6 +34134,54 @@ func (ec *executionContext) unmarshalInputLocalConfigInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputMirrorConfigInput(ctx context.Context, obj any) (model.MirrorConfigInput, error) {
+	var it model.MirrorConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"enabled", "source", "invertComparisons", "invertCrossovers"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := ec.unmarshalNStrategySignalDirection2volaticloudᚋinternalᚋgraphᚋmodelᚐStrategySignalDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "invertComparisons":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invertComparisons"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvertComparisons = data
+		case "invertCrossovers":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invertCrossovers"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvertCrossovers = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPassphraseExchangeConfigInput(ctx context.Context, obj any) (model.PassphraseExchangeConfigInput, error) {
 	var it model.PassphraseExchangeConfigInput
 	asMap := map[string]any{}
@@ -36530,6 +36580,40 @@ func (ec *executionContext) unmarshalInputS3ConfigInput(ctx context.Context, obj
 				return it, err
 			}
 			it.UseSsl = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSignalConfigInput(ctx context.Context, obj any) (model.SignalConfigInput, error) {
+	var it model.SignalConfigInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"entryConditions", "exitConditions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "entryConditions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entryConditions"))
+			data, err := ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EntryConditions = data
+		case "exitConditions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exitConditions"))
+			data, err := ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExitConditions = data
 		}
 	}
 
@@ -47118,6 +47202,16 @@ func (ec *executionContext) marshalNStrategyConnection2ᚖvolaticloudᚋinternal
 		return graphql.Null
 	}
 	return ec._StrategyConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNStrategySignalDirection2volaticloudᚋinternalᚋgraphᚋmodelᚐStrategySignalDirection(ctx context.Context, v any) (model.StrategySignalDirection, error) {
+	var res model.StrategySignalDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStrategySignalDirection2volaticloudᚋinternalᚋgraphᚋmodelᚐStrategySignalDirection(ctx context.Context, sel ast.SelectionSet, v model.StrategySignalDirection) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNStrategyStrategyBuilderMode2volaticloudᚋinternalᚋenumᚐStrategyBuilderMode(ctx context.Context, v any) (enum.StrategyBuilderMode, error) {

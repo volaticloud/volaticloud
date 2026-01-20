@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
   Tabs,
   Tab,
   Paper,
-  Alert,
   Chip,
+  Divider,
 } from '@mui/material';
 import {
   ShowChart,
-  Login,
-  Logout,
   TuneOutlined,
   Settings,
   Code,
+  TrendingUp,
+  TrendingDown,
 } from '@mui/icons-material';
 import {
   UIBuilderConfig,
@@ -22,15 +22,26 @@ import {
   IndicatorDefinition,
   StrategyParameters,
   CallbacksConfig,
+  SignalConfig,
+  MirrorConfig,
+  PositionMode,
+  StrategySignalDirection,
   createDefaultUIBuilderConfig,
+  createDefaultSignalConfig,
+  normalizeUIBuilderConfig,
+  applyMirrorConfig,
+  shouldGenerateLongSignals,
+  shouldGenerateShortSignals,
 } from './types';
 import { IndicatorSelector } from './IndicatorSelector';
-import { ConditionNodeEditor } from './ConditionNode';
 import { ParameterEditor } from './ParameterEditor';
 import { StoplossBuilder } from './StoplossBuilder';
 import { DCABuilder } from './DCABuilder';
 import { EntryConfirmBuilder } from './EntryConfirmBuilder';
 import { CodePreview } from './CodePreview';
+import { PositionModeSelector } from './PositionModeSelector';
+import { MirrorToggle } from './MirrorToggle';
+import { SignalEditor } from './SignalEditor';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -80,19 +91,62 @@ export function StrategyBuilder({
 }: StrategyBuilderProps) {
   const [activeTab, setActiveTab] = useState(0);
 
-  // Initialize with default config if null
-  const config = value || createDefaultUIBuilderConfig();
+  // Initialize with default config if null and normalize to v2 format
+  const rawConfig = value || createDefaultUIBuilderConfig();
+  const config = useMemo(() => normalizeUIBuilderConfig(rawConfig), [rawConfig]);
+
+  // Apply mirror config to compute mirrored conditions for display
+  // This is separate from config (source of truth) to show computed mirrored values
+  const displayConfig = useMemo(() => applyMirrorConfig(config), [config]);
+
+  // Determine which signals to show based on position mode
+  const showLong = shouldGenerateLongSignals(config);
+  const showShort = shouldGenerateShortSignals(config);
+
+  // Check if short signals are mirrored
+  const isMirrored = config.mirror_config?.enabled &&
+    config.position_mode === PositionMode.LongAndShort;
+  const isShortMirrored = isMirrored && config.mirror_config?.source === StrategySignalDirection.Long;
+  const isLongMirrored = isMirrored && config.mirror_config?.source === StrategySignalDirection.Short;
 
   const handleIndicatorsChange = (indicators: IndicatorDefinition[]) => {
     onChange({ ...config, indicators });
   };
 
-  const handleEntryConditionsChange = (entryConditions: ConditionNode) => {
-    onChange({ ...config, entry_conditions: entryConditions });
+  const handlePositionModeChange = (positionMode: PositionMode) => {
+    const newConfig = { ...config, position_mode: positionMode };
+
+    // Initialize signal configs if needed
+    if ((positionMode === PositionMode.LongOnly || positionMode === PositionMode.LongAndShort) && !newConfig.long) {
+      newConfig.long = createDefaultSignalConfig();
+    }
+    if ((positionMode === PositionMode.ShortOnly || positionMode === PositionMode.LongAndShort) && !newConfig.short) {
+      newConfig.short = createDefaultSignalConfig();
+    }
+
+    onChange(newConfig);
   };
 
-  const handleExitConditionsChange = (exitConditions: ConditionNode) => {
-    onChange({ ...config, exit_conditions: exitConditions });
+  const handleLongSignalChange = (longConfig: SignalConfig) => {
+    onChange({ ...config, long: longConfig });
+  };
+
+  const handleShortSignalChange = (shortConfig: SignalConfig) => {
+    onChange({ ...config, short: shortConfig });
+  };
+
+  const handleMirrorConfigChange = (mirrorConfig: MirrorConfig | undefined) => {
+    onChange({ ...config, mirror_config: mirrorConfig });
+  };
+
+  const handleDisableMirror = () => {
+    // Disable mirroring - this keeps the current mirrored conditions but allows manual editing
+    onChange({
+      ...config,
+      mirror_config: config.mirror_config
+        ? { ...config.mirror_config, enabled: false }
+        : undefined,
+    });
   };
 
   const handleParametersChange = (parameters: StrategyParameters) => {
@@ -103,7 +157,8 @@ export function StrategyBuilder({
     onChange({ ...config, callbacks });
   };
 
-  const getConditionCount = (node: ConditionNode): number => {
+  const getConditionCount = (node: ConditionNode | undefined): number => {
+    if (!node) return 0;
     if (node.type === 'AND' || node.type === 'OR') {
       return (node as { children: ConditionNode[] }).children.reduce(
         (acc, child) => acc + getConditionCount(child),
@@ -113,8 +168,19 @@ export function StrategyBuilder({
     return 1;
   };
 
-  const entryCount = getConditionCount(config.entry_conditions);
-  const exitCount = getConditionCount(config.exit_conditions);
+  // Count conditions for each signal type (use displayConfig for mirrored signals)
+  const longEntryCount = showLong ? getConditionCount(
+    isLongMirrored ? displayConfig.long?.entry_conditions : config.long?.entry_conditions
+  ) : 0;
+  const longExitCount = showLong ? getConditionCount(
+    isLongMirrored ? displayConfig.long?.exit_conditions : config.long?.exit_conditions
+  ) : 0;
+  const shortEntryCount = showShort ? getConditionCount(
+    isShortMirrored ? displayConfig.short?.entry_conditions : config.short?.entry_conditions
+  ) : 0;
+  const shortExitCount = showShort ? getConditionCount(
+    isShortMirrored ? displayConfig.short?.exit_conditions : config.short?.exit_conditions
+  ) : 0;
 
   // Count active callbacks
   const activeCallbacksCount = [
@@ -123,6 +189,83 @@ export function StrategyBuilder({
     config.callbacks.confirm_entry?.enabled,
   ].filter(Boolean).length;
 
+  // Build dynamic tabs based on position mode
+  type TabConfig = {
+    id: string;
+    icon: React.ReactNode;
+    label: string;
+    badge?: number;
+    badgeColor?: string;
+  };
+
+  const tabs = useMemo<TabConfig[]>(() => {
+    const result: TabConfig[] = [
+      {
+        id: 'indicators',
+        icon: <ShowChart />,
+        label: 'Indicators',
+        badge: config.indicators.length > 0 ? config.indicators.length : undefined,
+        badgeColor: 'primary',
+      },
+      {
+        id: 'settings',
+        icon: <TuneOutlined />,
+        label: 'Settings',
+      },
+    ];
+
+    // Add signal tabs based on position mode
+    if (showLong) {
+      result.push({
+        id: 'long-entry',
+        icon: <TrendingUp sx={{ color: '#4caf50' }} />,
+        label: 'Long Entry',
+        badge: longEntryCount > 0 ? longEntryCount : undefined,
+        badgeColor: '#4caf50',
+      });
+      result.push({
+        id: 'long-exit',
+        icon: <TrendingUp sx={{ color: '#4caf50' }} />,
+        label: 'Long Exit',
+        badge: longExitCount > 0 ? longExitCount : undefined,
+        badgeColor: '#4caf50',
+      });
+    }
+
+    if (showShort) {
+      result.push({
+        id: 'short-entry',
+        icon: <TrendingDown sx={{ color: '#f44336' }} />,
+        label: 'Short Entry',
+        badge: shortEntryCount > 0 ? shortEntryCount : undefined,
+        badgeColor: '#f44336',
+      });
+      result.push({
+        id: 'short-exit',
+        icon: <TrendingDown sx={{ color: '#f44336' }} />,
+        label: 'Short Exit',
+        badge: shortExitCount > 0 ? shortExitCount : undefined,
+        badgeColor: '#f44336',
+      });
+    }
+
+    // Add advanced and preview tabs
+    result.push({
+      id: 'advanced',
+      icon: <Settings />,
+      label: 'Advanced',
+      badge: activeCallbacksCount > 0 ? activeCallbacksCount : undefined,
+      badgeColor: 'info',
+    });
+    result.push({
+      id: 'preview',
+      icon: <Code />,
+      label: 'Preview',
+    });
+
+    return result;
+  }, [showLong, showShort, config.indicators.length, longEntryCount, longExitCount, shortEntryCount, shortExitCount, activeCallbacksCount]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Tabs */}
@@ -130,71 +273,41 @@ export function StrategyBuilder({
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
-          variant="fullWidth"
+          variant="scrollable"
+          scrollButtons="auto"
         >
-          <Tab
-            icon={<ShowChart />}
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Indicators
-                {config.indicators.length > 0 && (
-                  <Chip label={config.indicators.length} size="small" color="primary" />
-                )}
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            icon={<Login />}
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Entry
-                {entryCount > 0 && (
-                  <Chip label={entryCount} size="small" color="success" />
-                )}
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            icon={<Logout />}
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Exit
-                {exitCount > 0 && (
-                  <Chip label={exitCount} size="small" color="error" />
-                )}
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            icon={<TuneOutlined />}
-            label="Parameters"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<Settings />}
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Advanced
-                {activeCallbacksCount > 0 && (
-                  <Chip label={activeCallbacksCount} size="small" color="info" />
-                )}
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            icon={<Code />}
-            label="Preview"
-            iconPosition="start"
-          />
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.id}
+              icon={tab.icon}
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {tab.label}
+                  {tab.badge !== undefined && (
+                    <Chip
+                      label={tab.badge}
+                      size="small"
+                      sx={{
+                        backgroundColor: tab.badgeColor === 'primary' || tab.badgeColor === 'info'
+                          ? undefined
+                          : `${tab.badgeColor}20`,
+                        color: tab.badgeColor === 'primary' || tab.badgeColor === 'info'
+                          ? undefined
+                          : tab.badgeColor,
+                      }}
+                      color={tab.badgeColor === 'primary' ? 'primary' : tab.badgeColor === 'info' ? 'info' : undefined}
+                    />
+                  )}
+                </Box>
+              }
+              iconPosition="start"
+            />
+          ))}
         </Tabs>
       </Paper>
 
       {/* Indicators Tab */}
-      <TabPanel value={activeTab} index={0}>
+      <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'indicators')}>
         <Typography variant="subtitle2" gutterBottom>
           Technical Indicators
         </Typography>
@@ -211,73 +324,39 @@ export function StrategyBuilder({
         </Box>
       </TabPanel>
 
-      {/* Entry Conditions Tab */}
-      <TabPanel value={activeTab} index={1}>
-        <Typography variant="subtitle2" gutterBottom>
-          Entry Conditions
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Define when to open a new trade. All conditions in an AND group must be true.
-          Any condition in an OR group can be true.
-        </Typography>
-
-        {config.indicators.length === 0 ? (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Add indicators first to create conditions based on technical analysis.
-          </Alert>
-        ) : null}
-
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-          <ConditionNodeEditor
-            node={config.entry_conditions}
-            onChange={handleEntryConditionsChange}
-            indicators={config.indicators}
-          />
-        </Box>
-      </TabPanel>
-
-      {/* Exit Conditions Tab */}
-      <TabPanel value={activeTab} index={2}>
-        <Typography variant="subtitle2" gutterBottom>
-          Exit Conditions
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Define when to close an open trade. Exit conditions work together with
-          stoploss and ROI settings.
-        </Typography>
-
-        {!config.parameters.use_exit_signal && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Exit signal is disabled in parameters. These conditions won't trigger exits.
-          </Alert>
-        )}
-
-        {config.indicators.length === 0 ? (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Add indicators first to create exit conditions.
-          </Alert>
-        ) : null}
-
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-          <ConditionNodeEditor
-            node={config.exit_conditions}
-            onChange={handleExitConditionsChange}
-            indicators={config.indicators}
-          />
-        </Box>
-      </TabPanel>
-
-      {/* Parameters Tab */}
-      <TabPanel value={activeTab} index={3}>
+      {/* Settings Tab (Position Mode + Parameters) */}
+      <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'settings')}>
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
           <Typography variant="subtitle2" gutterBottom>
-            Strategy Parameters
+            Strategy Settings
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Configure risk management settings including stoploss, take profit targets,
-            and trailing stop behavior.
+            Configure position mode and risk management settings.
           </Typography>
 
+          {/* Position Mode Selector */}
+          <Box sx={{ mb: 3 }}>
+            <PositionModeSelector
+              value={config.position_mode || PositionMode.LongOnly}
+              onChange={handlePositionModeChange}
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Mirror Toggle (only for Long & Short mode) */}
+          {config.position_mode === PositionMode.LongAndShort && (
+            <Box sx={{ mb: 3 }}>
+              <MirrorToggle
+                value={config.mirror_config}
+                onChange={handleMirrorConfigChange}
+              />
+            </Box>
+          )}
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Parameters */}
           <ParameterEditor
             value={config.parameters}
             onChange={handleParametersChange}
@@ -285,8 +364,70 @@ export function StrategyBuilder({
         </Box>
       </TabPanel>
 
+      {/* Long Entry Tab */}
+      {showLong && (
+        <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'long-entry')}>
+          <SignalEditor
+            direction={StrategySignalDirection.Long}
+            signalType="entry"
+            config={isLongMirrored ? displayConfig.long : config.long}
+            onChange={handleLongSignalChange}
+            indicators={config.indicators}
+            isMirrored={isLongMirrored}
+            onDisableMirror={isLongMirrored ? handleDisableMirror : undefined}
+          />
+        </TabPanel>
+      )}
+
+      {/* Long Exit Tab */}
+      {showLong && (
+        <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'long-exit')}>
+          <SignalEditor
+            direction={StrategySignalDirection.Long}
+            signalType="exit"
+            config={isLongMirrored ? displayConfig.long : config.long}
+            onChange={handleLongSignalChange}
+            indicators={config.indicators}
+            useExitSignal={config.parameters.use_exit_signal}
+            isMirrored={isLongMirrored}
+            onDisableMirror={isLongMirrored ? handleDisableMirror : undefined}
+          />
+        </TabPanel>
+      )}
+
+      {/* Short Entry Tab */}
+      {showShort && (
+        <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'short-entry')}>
+          <SignalEditor
+            direction={StrategySignalDirection.Short}
+            signalType="entry"
+            config={isShortMirrored ? displayConfig.short : config.short}
+            onChange={handleShortSignalChange}
+            indicators={config.indicators}
+            isMirrored={isShortMirrored}
+            onDisableMirror={isShortMirrored ? handleDisableMirror : undefined}
+          />
+        </TabPanel>
+      )}
+
+      {/* Short Exit Tab */}
+      {showShort && (
+        <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'short-exit')}>
+          <SignalEditor
+            direction={StrategySignalDirection.Short}
+            signalType="exit"
+            config={isShortMirrored ? displayConfig.short : config.short}
+            onChange={handleShortSignalChange}
+            indicators={config.indicators}
+            useExitSignal={config.parameters.use_exit_signal}
+            isMirrored={isShortMirrored}
+            onDisableMirror={isShortMirrored ? handleDisableMirror : undefined}
+          />
+        </TabPanel>
+      )}
+
       {/* Advanced/Callbacks Tab */}
-      <TabPanel value={activeTab} index={4}>
+      <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'advanced')}>
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
           <Typography variant="subtitle2" gutterBottom>
             Advanced Features
@@ -324,7 +465,7 @@ export function StrategyBuilder({
       </TabPanel>
 
       {/* Code Preview Tab */}
-      <TabPanel value={activeTab} index={5}>
+      <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'preview')}>
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <CodePreview
             config={config}

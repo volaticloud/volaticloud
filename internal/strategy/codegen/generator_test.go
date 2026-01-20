@@ -1023,3 +1023,178 @@ func TestGenerateOperand_UnknownOperandType(t *testing.T) {
 		t.Errorf("Expected 'not a valid OperandType' or 'unsupported operand type' error, got: %v", err)
 	}
 }
+
+// Tests for Position Mode and Long/Short Signal Generation
+
+func TestGenerateFullStrategy_LongOnly(t *testing.T) {
+	config := &UIBuilderConfig{
+		Version:      2,
+		PositionMode: PositionModeLongOnly,
+		Indicators:   []IndicatorDefinition{},
+		Long: &SignalConfig{
+			EntryConditions: *mustParseCondition(t, `{"type": "AND", "children": []}`),
+			ExitConditions:  *mustParseCondition(t, `{"type": "AND", "children": []}`),
+		},
+		Parameters: StrategyParameters{
+			Stoploss:      -0.10,
+			MinimalROI:    map[string]float64{"0": 0.10},
+			UseExitSignal: true,
+		},
+		Callbacks: CallbacksConfig{},
+	}
+
+	g := NewGenerator()
+	code, err := g.GenerateFullStrategy(config, "TestStrategy", "5m")
+	if err != nil {
+		t.Fatalf("GenerateFullStrategy() error = %v", err)
+	}
+
+	// Should have enter_long and exit_long
+	if !strings.Contains(code, "enter_long") {
+		t.Error("expected enter_long signal in generated code")
+	}
+	if !strings.Contains(code, "exit_long") {
+		t.Error("expected exit_long signal in generated code")
+	}
+
+	// Should NOT have enter_short, exit_short, or can_short
+	if strings.Contains(code, "enter_short") {
+		t.Error("did not expect enter_short signal for LONG_ONLY mode")
+	}
+	if strings.Contains(code, "exit_short") {
+		t.Error("did not expect exit_short signal for LONG_ONLY mode")
+	}
+	if strings.Contains(code, "can_short = True") {
+		t.Error("did not expect can_short = True for LONG_ONLY mode")
+	}
+}
+
+func TestGenerateFullStrategy_ShortOnly(t *testing.T) {
+	config := &UIBuilderConfig{
+		Version:      2,
+		PositionMode: PositionModeShortOnly,
+		Indicators:   []IndicatorDefinition{},
+		Short: &SignalConfig{
+			EntryConditions: *mustParseCondition(t, `{"type": "AND", "children": []}`),
+			ExitConditions:  *mustParseCondition(t, `{"type": "AND", "children": []}`),
+		},
+		Parameters: StrategyParameters{
+			Stoploss:      -0.10,
+			MinimalROI:    map[string]float64{"0": 0.10},
+			UseExitSignal: true,
+		},
+		Callbacks: CallbacksConfig{},
+	}
+
+	g := NewGenerator()
+	code, err := g.GenerateFullStrategy(config, "TestStrategy", "5m")
+	if err != nil {
+		t.Fatalf("GenerateFullStrategy() error = %v", err)
+	}
+
+	// Should have can_short = True
+	if !strings.Contains(code, "can_short = True") {
+		t.Error("expected can_short = True for SHORT_ONLY mode")
+	}
+
+	// Should have enter_short and exit_short
+	if !strings.Contains(code, "enter_short") {
+		t.Error("expected enter_short signal in generated code")
+	}
+	if !strings.Contains(code, "exit_short") {
+		t.Error("expected exit_short signal in generated code")
+	}
+
+	// Should NOT have enter_long or exit_long
+	if strings.Contains(code, "enter_long") {
+		t.Error("did not expect enter_long signal for SHORT_ONLY mode")
+	}
+	if strings.Contains(code, "exit_long") {
+		t.Error("did not expect exit_long signal for SHORT_ONLY mode")
+	}
+}
+
+func TestGenerateFullStrategy_LongAndShort(t *testing.T) {
+	config := &UIBuilderConfig{
+		Version:      2,
+		PositionMode: PositionModeLongAndShort,
+		Indicators:   []IndicatorDefinition{},
+		Long: &SignalConfig{
+			EntryConditions: *mustParseCondition(t, `{"type": "AND", "children": []}`),
+			ExitConditions:  *mustParseCondition(t, `{"type": "AND", "children": []}`),
+		},
+		Short: &SignalConfig{
+			EntryConditions: *mustParseCondition(t, `{"type": "AND", "children": []}`),
+			ExitConditions:  *mustParseCondition(t, `{"type": "AND", "children": []}`),
+		},
+		Parameters: StrategyParameters{
+			Stoploss:      -0.10,
+			MinimalROI:    map[string]float64{"0": 0.10},
+			UseExitSignal: true,
+		},
+		Callbacks: CallbacksConfig{},
+	}
+
+	g := NewGenerator()
+	code, err := g.GenerateFullStrategy(config, "TestStrategy", "5m")
+	if err != nil {
+		t.Fatalf("GenerateFullStrategy() error = %v", err)
+	}
+
+	// Should have can_short = True
+	if !strings.Contains(code, "can_short = True") {
+		t.Error("expected can_short = True for LONG_AND_SHORT mode")
+	}
+
+	// Should have all 4 signals
+	if !strings.Contains(code, "enter_long") {
+		t.Error("expected enter_long signal in generated code")
+	}
+	if !strings.Contains(code, "exit_long") {
+		t.Error("expected exit_long signal in generated code")
+	}
+	if !strings.Contains(code, "enter_short") {
+		t.Error("expected enter_short signal in generated code")
+	}
+	if !strings.Contains(code, "exit_short") {
+		t.Error("expected exit_short signal in generated code")
+	}
+}
+
+func TestGenerateFullStrategy_V1BackwardsCompatibility(t *testing.T) {
+	// V1 config with flat entry/exit conditions should be normalized
+	config := &UIBuilderConfig{
+		Version:         1,
+		Indicators:      []IndicatorDefinition{},
+		EntryConditions: *mustParseCondition(t, `{"type": "AND", "children": []}`),
+		ExitConditions:  *mustParseCondition(t, `{"type": "AND", "children": []}`),
+		Parameters: StrategyParameters{
+			Stoploss:      -0.10,
+			MinimalROI:    map[string]float64{"0": 0.10},
+			UseExitSignal: true,
+		},
+		Callbacks: CallbacksConfig{},
+	}
+
+	g := NewGenerator()
+	code, err := g.GenerateFullStrategy(config, "TestStrategy", "5m")
+	if err != nil {
+		t.Fatalf("GenerateFullStrategy() error = %v", err)
+	}
+
+	// Should be normalized to LONG_ONLY mode
+	if !strings.Contains(code, "enter_long") {
+		t.Error("expected enter_long signal for backwards compatibility")
+	}
+	if !strings.Contains(code, "exit_long") {
+		t.Error("expected exit_long signal for backwards compatibility")
+	}
+
+	// Should NOT have short signals
+	if strings.Contains(code, "enter_short") {
+		t.Error("did not expect enter_short signal for v1 config")
+	}
+	if strings.Contains(code, "can_short = True") {
+		t.Error("did not expect can_short = True for v1 config")
+	}
+}
