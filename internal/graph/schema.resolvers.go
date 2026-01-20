@@ -1572,7 +1572,7 @@ func (r *queryResolver) CheckPermissions(ctx context.Context, permissions []*mod
 	results := make([]*model.PermissionCheckResult, len(permissions))
 
 	for i, perm := range permissions {
-		resourceID := perm.ResourceID.String()
+		resourceID := perm.ResourceID // Now a string (organization alias or entity UUID)
 		scope := perm.Scope
 
 		// Check permission

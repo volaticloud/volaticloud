@@ -94,7 +94,7 @@ func Create(ctx context.Context, req CreateRequest) (*CreateResponse, error) {
 		ID:     alias, // Use alias as the resource ID
 		Title:  strings.TrimSpace(req.Title),
 		Type:   ResourceTypeOrganization,
-		Scopes: []string{"view", "edit", "delete", "invite-user", "manage-users", "view-secrets", "change-user-roles", "view-users", "mark-alert-as-read"},
+		Scopes: authz.GroupScopes, // Use centralized scope definitions
 	}
 
 	response, err := adminClient.CreateResource(ctx, request)

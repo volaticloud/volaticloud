@@ -15,8 +15,8 @@ import {
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
-import { GroupSwitcher } from '../shared/GroupSwitcher';
-import { useGroupNavigate } from '../../contexts/GroupContext';
+import { OrganizationSwitcher } from '../shared/OrganizationSwitcher';
+import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import {
   drawerWidth,
   collapsedDrawerWidth,
@@ -31,7 +31,7 @@ interface SidebarProps {
   onMobileClose: () => void;
   collapsed?: boolean;
   backButton?: BackButton;
-  showGroupSwitcher?: boolean;
+  showOrganizationSwitcher?: boolean;
 }
 
 export const Sidebar = ({
@@ -41,9 +41,9 @@ export const Sidebar = ({
   onMobileClose,
   collapsed = false,
   backButton,
-  showGroupSwitcher = true,
+  showOrganizationSwitcher = true,
 }: SidebarProps) => {
-  const groupNavigate = useGroupNavigate();
+  const groupNavigate = useOrganizationNavigate();
   const location = useLocation();
 
   const handleNavigate = (path: string) => {
@@ -118,9 +118,9 @@ export const Sidebar = ({
       <Toolbar sx={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
         <Logo onClick={() => handleNavigate('/')} variant={isCollapsed ? 'icon' : 'full'} />
       </Toolbar>
-      {showGroupSwitcher && !isCollapsed && (
+      {showOrganizationSwitcher && !isCollapsed && (
         <Box sx={{ px: 2, py: 1.5 }}>
-          <GroupSwitcher fullWidth />
+          <OrganizationSwitcher fullWidth />
         </Box>
       )}
       <Divider />

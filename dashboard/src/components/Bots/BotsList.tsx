@@ -17,7 +17,8 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
+import { useOrganizationPermission } from '../../hooks';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
 import BotActionsMenu from './BotActionsMenu';
@@ -30,7 +31,7 @@ type ViewMode = 'mine' | 'public';
 type Bot = NonNullable<NonNullable<NonNullable<GetBotsQuery['bots']['edges']>[number]>['node']>;
 
 export const BotsList = () => {
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -50,7 +51,8 @@ export const BotsList = () => {
     severity: 'error' | 'success';
   }>({ open: false, message: '', severity: 'error' });
 
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
+  const { allowed: canCreateBot } = useOrganizationPermission('create-bot');
 
   // Pagination hook
   const pagination = useCursorPagination<Bot>({ initialPageSize: 10 });
@@ -62,12 +64,12 @@ export const BotsList = () => {
       after: pagination.cursor,
       where: {
         ...(viewMode === 'mine'
-          ? { ownerID: activeGroupId || undefined }
+          ? { ownerID: activeOrganizationId || undefined }
           : { public: true })
       }
     },
     pollInterval: 30000,
-    skip: viewMode === 'mine' && !activeGroupId,
+    skip: viewMode === 'mine' && !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -81,7 +83,7 @@ export const BotsList = () => {
   // Reset pagination when view mode changes
   useEffect(() => {
     reset();
-  }, [viewMode, activeGroupId, reset]);
+  }, [viewMode, activeOrganizationId, reset]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -241,14 +243,19 @@ export const BotsList = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           {viewMode === 'mine' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setCreateDialogOpen(true)}
-              sx={{ flexShrink: 0 }}
-            >
-              Create Bot
-            </Button>
+            <Tooltip title={!canCreateBot ? 'You do not have permission to create bots' : ''}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setCreateDialogOpen(true)}
+                  disabled={!canCreateBot}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Create Bot
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Box>
       </Box>

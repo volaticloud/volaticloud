@@ -36,7 +36,7 @@ import {
   AlertRuleAlertDeliveryMode,
   AlertRuleAlertBotModeFilter,
 } from '../../generated/types';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { BotSelector } from '../shared/BotSelector';
 import { StrategySelector } from '../shared/StrategySelector';
 import { RunnerSelector } from '../shared/RunnerSelector';
@@ -97,7 +97,7 @@ export const AlertRuleDialog = ({
   onSuccess,
   rule,
 }: AlertRuleDialogProps) => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const isEdit = !!rule;
 
   // Permission checks
@@ -233,15 +233,15 @@ export const AlertRuleDialog = ({
   };
 
   const handleSubmit = async () => {
-    if (!name || !activeGroupId || recipients.length === 0 || !alertType) return;
+    if (!name || !activeOrganizationId || recipients.length === 0 || !alertType) return;
 
     // Require resourceId for non-organization scope
     const requiresResourceIdFlag = resourceType !== AlertRuleAlertResourceType.Organization;
     if (requiresResourceIdFlag && !resourceId) return;
 
-    // Always save resourceID - for organization type, save the activeGroupId
+    // Always save resourceID - for organization type, save the activeOrganizationId
     const effectiveResId = resourceType === AlertRuleAlertResourceType.Organization
-      ? activeGroupId
+      ? activeOrganizationId
       : resourceId;
 
     try {
@@ -287,7 +287,7 @@ export const AlertRuleDialog = ({
               batchIntervalMinutes: deliveryMode === AlertRuleAlertDeliveryMode.Batched ? batchIntervalMinutes : undefined,
               cooldownMinutes,
               recipients,
-              ownerID: activeGroupId,
+              ownerID: activeOrganizationId,
               botModeFilter: isBotRelatedAlert ? botModeFilter : undefined,
             },
           },
@@ -303,13 +303,13 @@ export const AlertRuleDialog = ({
   };
 
   // Determine the effective resource ID for permission checking
-  // For organization type, use activeGroupId; for others, use the selected resourceId
+  // For organization type, use activeOrganizationId; for others, use the selected resourceId
   const effectiveResourceId = useMemo(() => {
     if (resourceType === AlertRuleAlertResourceType.Organization) {
-      return activeGroupId || '';
+      return activeOrganizationId || '';
     }
     return resourceId;
-  }, [resourceType, resourceId, activeGroupId]);
+  }, [resourceType, resourceId, activeOrganizationId]);
 
   // Check if user has permission to create/update alert rule on the selected resource
   const hasAlertPermission = useMemo(() => {

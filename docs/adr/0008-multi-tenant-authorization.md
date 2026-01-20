@@ -1675,7 +1675,20 @@ This eliminates the need for manual scope migrations when adding new permissions
 | Strategy | `view`, `edit`, `delete`, `run-backtest`, `stop-backtest`, `delete-backtest`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
 | Exchange | `view`, `view-secrets`, `edit`, `delete` |
 | BotRunner | `view`, `view-secrets`, `edit`, `delete`, `make-public`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
-| Group | `view`, `edit`, `delete`, `mark-alert-as-read`, `view-users`, `invite-user`, `change-user-roles`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+| Group | `view`, `edit`, `delete`, `mark-alert-as-read`, `view-users`, `invite-user`, `change-user-roles`, `create-strategy`, `create-bot`, `create-exchange`, `create-runner`, `create-alert-rule`, `update-alert-rule`, `delete-alert-rule`, `view-alert-rules` |
+
+### Entity Creation Scopes
+
+The following scopes control entity creation within an organization:
+
+| Scope | Description |
+|-------|-------------|
+| `create-strategy` | Create new strategies within the organization |
+| `create-bot` | Create new bots within the organization |
+| `create-exchange` | Create new exchange connections within the organization |
+| `create-runner` | Create new bot runners within the organization |
+
+These scopes are checked at the organization (Group) level, not at the individual entity level.
 
 ### Organization User Management Scopes
 
@@ -1714,3 +1727,25 @@ Added in PR #120 to enable organization admins to change member roles.
 - `internal/graph/schema.graphqls` - `checkPermissions` query definition
 - `internal/graph/schema.resolvers.go` - Query resolver with self-healing
 - `internal/authz/scopes.go` - Scope definitions and self-healing detection
+
+### API Changes
+
+**`PermissionCheckInput.resourceId` type change (PR #134):**
+
+The `resourceId` field in `PermissionCheckInput` was changed from `ID!` to `String!` to support organization aliases (human-readable strings like `acme-corp`) in addition to UUIDs.
+
+```graphql
+# Before (PR #97)
+input PermissionCheckInput {
+  resourceId: ID!    # Only supported UUIDs
+  scope: String!
+}
+
+# After (PR #134)
+input PermissionCheckInput {
+  resourceId: String!  # Supports both UUIDs and organization aliases
+  scope: String!
+}
+```
+
+**Impact:** This is technically a breaking change for GraphQL clients that strictly validate `ID` vs `String` types. In practice, most GraphQL clients treat both as strings, so impact is minimal.

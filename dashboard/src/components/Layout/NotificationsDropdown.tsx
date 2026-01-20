@@ -28,7 +28,7 @@ import {
   useMarkAlertEventAsReadMutation,
   useMarkAllAlertEventsAsReadMutation,
 } from '../Alerts/alerts.generated';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { OrderDirection, AlertEventOrderField, AlertEventAlertSeverity, AlertEventAlertEventStatus } from '../../generated/types';
 import { formatRelativeTime } from '../shared/charts/utils/formatters';
 
@@ -46,8 +46,8 @@ const statusColors: Record<AlertEventAlertEventStatus, 'success' | 'error' | 'wa
 };
 
 export const NotificationsDropdown = () => {
-  const navigate = useGroupNavigate();
-  const { activeGroupId } = useActiveGroup();
+  const navigate = useOrganizationNavigate();
+  const { activeOrganizationId } = useActiveOrganization();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   // Query for recent alerts (both read and unread)
@@ -55,14 +55,14 @@ export const NotificationsDropdown = () => {
     variables: {
       first: 10,
       where: {
-        ownerID: activeGroupId || undefined,
+        ownerID: activeOrganizationId || undefined,
       },
       orderBy: {
         direction: OrderDirection.Desc,
         field: AlertEventOrderField.CreatedAt,
       },
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
     pollInterval: 30000, // Poll every 30 seconds for new alerts
   });
 
@@ -70,11 +70,11 @@ export const NotificationsDropdown = () => {
   const { data: unreadData, refetch: refetchUnread } = useGetUnreadAlertCountQuery({
     variables: {
       where: {
-        ownerID: activeGroupId || undefined,
+        ownerID: activeOrganizationId || undefined,
         readAtIsNil: true,
       },
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
     pollInterval: 30000,
   });
 
@@ -95,10 +95,10 @@ export const NotificationsDropdown = () => {
   };
 
   const handleMarkAsRead = async (alertId: string) => {
-    if (!activeGroupId) return;
+    if (!activeOrganizationId) return;
     try {
       await markAsRead({
-        variables: { id: alertId, ownerID: activeGroupId },
+        variables: { id: alertId, ownerID: activeOrganizationId },
       });
       refetch();
       refetchUnread();
@@ -108,10 +108,10 @@ export const NotificationsDropdown = () => {
   };
 
   const handleMarkAllAsRead = async () => {
-    if (!activeGroupId) return;
+    if (!activeOrganizationId) return;
     try {
       await markAllAsRead({
-        variables: { ownerID: activeGroupId },
+        variables: { ownerID: activeOrganizationId },
       });
       refetch();
       refetchUnread();

@@ -2,6 +2,7 @@ import {
   Box,
   Typography,
   Button,
+  Tooltip,
 } from '@mui/material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
@@ -15,8 +16,8 @@ import { CreateExchangeDialog } from './CreateExchangeDialog';
 import { EditExchangeDialog } from './EditExchangeDialog';
 import { DeleteExchangeDialog } from './DeleteExchangeDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
-import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useCursorPagination, useOrganizationPermission } from '../../hooks';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 // Extract Exchange type from generated query
@@ -32,7 +33,8 @@ export const ExchangesList = () => {
     config?: Record<string, unknown>;
   } | null>(null);
 
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
+  const { allowed: canCreateExchange } = useOrganizationPermission('create-exchange');
 
   // Pagination hook
   const pagination = useCursorPagination<Exchange>({ initialPageSize: 10 });
@@ -43,10 +45,10 @@ export const ExchangesList = () => {
       first: pagination.pageSize,
       after: pagination.cursor,
       where: {
-        ownerID: activeGroupId || undefined
+        ownerID: activeOrganizationId || undefined
       }
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -57,10 +59,10 @@ export const ExchangesList = () => {
     }
   }, [data, loading, setLoading, updateFromResponse]);
 
-  // Reset pagination when activeGroupId changes
+  // Reset pagination when activeOrganizationId changes
   useEffect(() => {
     reset();
-  }, [activeGroupId, reset]);
+  }, [activeOrganizationId, reset]);
 
   const handleSuccess = () => {
     refetch();
@@ -167,14 +169,19 @@ export const ExchangesList = () => {
             {pagination.totalCount || 0} exchange connections
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-          sx={{ flexShrink: 0 }}
-        >
-          Add Exchange
-        </Button>
+        <Tooltip title={!canCreateExchange ? 'You do not have permission to create exchanges' : ''}>
+          <span>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateDialogOpen(true)}
+              disabled={!canCreateExchange}
+              sx={{ flexShrink: 0 }}
+            >
+              Add Exchange
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
 
       <PaginatedDataGrid<Exchange>

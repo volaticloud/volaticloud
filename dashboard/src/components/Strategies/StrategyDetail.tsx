@@ -24,11 +24,11 @@ import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
 import { BacktestResults } from '../Backtests/BacktestResults';
-import { useGroupNavigate } from '../../contexts/GroupContext';
+import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 
 const StrategyDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 

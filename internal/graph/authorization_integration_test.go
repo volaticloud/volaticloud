@@ -30,7 +30,11 @@ func TestAuthorizationIntegration_IsAuthenticated(t *testing.T) {
 	`
 
 	t.Run("Authenticated_Success", func(t *testing.T) {
-		ctx := env.WithAuth(userID, groupID, nil)
+		// Must grant create-strategy permission on the group
+		permissions := map[string][]string{
+			groupID: {"create-strategy"},
+		}
+		ctx := env.WithAuth(userID, groupID, permissions)
 		var resp struct {
 			CreateStrategy struct {
 				ID   string
@@ -257,7 +261,7 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 	groupID := uuid.NewString()
 
 	t.Run("Exchange_CRUD_WithPermissions", func(t *testing.T) {
-		// Create exchange
+		// Create exchange - must grant create-exchange permission on the group
 		createMutation := `
 			mutation CreateExchange($input: CreateExchangeInput!) {
 				createExchange(input: $input) {
@@ -267,7 +271,10 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 			}
 		`
 
-		ctx := env.WithAuth(userID, groupID, nil)
+		createPermissions := map[string][]string{
+			groupID: {"create-exchange"},
+		}
+		ctx := env.WithAuth(userID, groupID, createPermissions)
 		var createResp struct {
 			CreateExchange struct {
 				ID   string
@@ -364,7 +371,7 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 			Save(env.Context)
 		require.NoError(t, err)
 
-		// Create bot
+		// Create bot - must grant create-bot permission on the group
 		createMutation := `
 			mutation CreateBot($input: CreateBotInput!) {
 				createBot(input: $input) {
@@ -375,7 +382,10 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 			}
 		`
 
-		ctx := env.WithAuth(userID, groupID, nil)
+		permissions := map[string][]string{
+			groupID: {"create-bot"},
+		}
+		ctx := env.WithAuth(userID, groupID, permissions)
 		var createResp struct {
 			CreateBot struct {
 				ID   string

@@ -25,7 +25,7 @@ import { useGetBotQuery } from './bots.generated';
 import BotMetrics from './BotMetrics';
 import BotUsageCharts from './BotUsageCharts';
 import BotActionsMenu from './BotActionsMenu';
-import { useGroupNavigate } from '../../contexts/GroupContext';
+import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 
 type TabValue = 'overview' | 'usage' | 'trades';
 
@@ -33,7 +33,7 @@ const VALID_TABS: TabValue[] = ['overview', 'usage', 'trades'];
 
 const BotDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [snackbar, setSnackbar] = useState<{
     open: boolean;

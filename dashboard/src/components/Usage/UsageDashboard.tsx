@@ -19,7 +19,7 @@ import {
   AttachMoney as CostIcon,
 } from '@mui/icons-material';
 import { useGetUsageDashboardQuery } from './usage.generated';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 
 // Helper to format bytes to human-readable
 const formatBytes = (bytes: number): string => {
@@ -107,18 +107,18 @@ const MetricCard = ({ title, value, subtitle, icon, color, tooltip }: MetricCard
 );
 
 export const UsageDashboard = () => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
 
   const { start, end } = useMemo(() => getTimeRange(timeRange), [timeRange]);
 
   const { data, loading, error } = useGetUsageDashboardQuery({
     variables: {
-      ownerID: activeGroupId || '',
+      ownerID: activeOrganizationId || '',
       start: start.toISOString(),
       end: end.toISOString(),
     },
-    skip: !activeGroupId, // Skip query if no group is selected
+    skip: !activeOrganizationId, // Skip query if no group is selected
     pollInterval: 60000, // Poll every minute for live updates
   });
 

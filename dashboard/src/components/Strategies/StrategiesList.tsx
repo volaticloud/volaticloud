@@ -7,6 +7,7 @@ import {
   Alert,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
 } from '@mui/material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
@@ -23,8 +24,8 @@ import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
-import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { useCursorPagination, useOrganizationPermission } from '../../hooks';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
@@ -33,8 +34,10 @@ type ViewMode = 'mine' | 'public';
 type Strategy = NonNullable<NonNullable<NonNullable<GetStrategiesQuery['strategies']['edges']>[number]>['node']>;
 
 export const StrategiesList = () => {
-  const navigate = useGroupNavigate();
-  const { activeGroupId } = useActiveGroup();
+  const navigate = useOrganizationNavigate();
+  const { activeOrganizationId } = useActiveOrganization();
+  const { allowed: canCreateStrategy } = useOrganizationPermission('create-strategy');
+
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
@@ -60,11 +63,11 @@ export const StrategiesList = () => {
       where: {
         isLatest: true,
         ...(viewMode === 'mine'
-          ? { ownerID: activeGroupId || undefined }
+          ? { ownerID: activeOrganizationId || undefined }
           : { public: true })
       }
     },
-    skip: viewMode === 'mine' && !activeGroupId,
+    skip: viewMode === 'mine' && !activeOrganizationId,
   });
 
   // Sync pagination state with query results
@@ -78,7 +81,7 @@ export const StrategiesList = () => {
   // Reset pagination when view mode changes
   useEffect(() => {
     reset();
-  }, [viewMode, activeGroupId, reset]);
+  }, [viewMode, activeOrganizationId, reset]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -235,14 +238,19 @@ export const StrategiesList = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           {viewMode === 'mine' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/strategies/new')}
-              sx={{ flexShrink: 0 }}
-            >
-              Create Strategy
-            </Button>
+            <Tooltip title={!canCreateStrategy ? 'You do not have permission to create strategies' : ''}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/strategies/new')}
+                  disabled={!canCreateStrategy}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Create Strategy
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Box>
       </Box>

@@ -49,7 +49,7 @@ export type ResourceGroupMembersQueryVariables = Types.Exact<{
 export type ResourceGroupMembersQuery = { __typename?: 'Query', resourceGroupMembers: { __typename?: 'ResourceGroupMemberConnection', totalCount: number, availableRoles: Array<string>, edges: Array<{ __typename?: 'ResourceGroupMemberEdge', cursor: string, node: { __typename?: 'ResourceGroupMember', roles: Array<string>, primaryRole: string, user: { __typename?: 'MemberUser', id: string, username: string, email?: string | null, emailVerified: boolean, firstName?: string | null, lastName?: string | null, enabled: boolean, createdAt: string } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type InviteOrganizationUserMutationVariables = Types.Exact<{
-  organizationId: Types.Scalars['ID']['input'];
+  organizationId: Types.Scalars['String']['input'];
   input: Types.InviteUserInput;
 }>;
 
@@ -57,8 +57,8 @@ export type InviteOrganizationUserMutationVariables = Types.Exact<{
 export type InviteOrganizationUserMutation = { __typename?: 'Mutation', inviteOrganizationUser: { __typename?: 'OrganizationInvitation', id: string, email: string, firstName?: string | null, lastName?: string | null, organizationId: string, status: string, createdAt: string, expiresAt: string } };
 
 export type ChangeOrganizationUserRoleMutationVariables = Types.Exact<{
-  organizationId: Types.Scalars['ID']['input'];
-  userId: Types.Scalars['ID']['input'];
+  organizationId: Types.Scalars['String']['input'];
+  userId: Types.Scalars['String']['input'];
   newRole: Types.Scalars['String']['input'];
 }>;
 
@@ -396,7 +396,7 @@ export type ResourceGroupMembersLazyQueryHookResult = ReturnType<typeof useResou
 export type ResourceGroupMembersSuspenseQueryHookResult = ReturnType<typeof useResourceGroupMembersSuspenseQuery>;
 export type ResourceGroupMembersQueryResult = Apollo.QueryResult<ResourceGroupMembersQuery, ResourceGroupMembersQueryVariables>;
 export const InviteOrganizationUserDocument = gql`
-    mutation InviteOrganizationUser($organizationId: ID!, $input: InviteUserInput!) {
+    mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInput!) {
   inviteOrganizationUser(organizationId: $organizationId, input: $input) {
     id
     email
@@ -437,7 +437,7 @@ export type InviteOrganizationUserMutationHookResult = ReturnType<typeof useInvi
 export type InviteOrganizationUserMutationResult = Apollo.MutationResult<InviteOrganizationUserMutation>;
 export type InviteOrganizationUserMutationOptions = Apollo.BaseMutationOptions<InviteOrganizationUserMutation, InviteOrganizationUserMutationVariables>;
 export const ChangeOrganizationUserRoleDocument = gql`
-    mutation ChangeOrganizationUserRole($organizationId: ID!, $userId: ID!, $newRole: String!) {
+    mutation ChangeOrganizationUserRole($organizationId: String!, $userId: String!, $newRole: String!) {
   changeOrganizationUserRole(
     organizationId: $organizationId
     userId: $userId

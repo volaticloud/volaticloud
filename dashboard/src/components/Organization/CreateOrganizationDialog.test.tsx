@@ -13,13 +13,14 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 
 // Mock successful creation response
+// Note: GraphQL API uses 'alias' field name (Keycloak terminology), but in dashboard we call it "ID"
 const mockSuccessResponse = {
   request: {
     query: CreateOrganizationDocument,
     variables: {
       input: {
         title: 'My Organization',
-        alias: undefined,
+        alias: undefined, // Auto-generated from title
       },
     },
   },
@@ -27,7 +28,7 @@ const mockSuccessResponse = {
     data: {
       createOrganization: {
         __typename: 'CreateOrganizationResponse',
-        id: 'org-uuid',
+        id: 'my-organization', // This is the human-readable ID
         title: 'My Organization',
         alias: 'my-organization',
       },
@@ -35,14 +36,14 @@ const mockSuccessResponse = {
   },
 };
 
-// Mock success with custom alias
+// Mock success with custom ID
 const mockSuccessWithAliasResponse = {
   request: {
     query: CreateOrganizationDocument,
     variables: {
       input: {
         title: 'My Organization',
-        alias: 'custom-alias',
+        alias: 'custom-alias', // GraphQL field name is 'alias'
       },
     },
   },
@@ -50,7 +51,7 @@ const mockSuccessWithAliasResponse = {
     data: {
       createOrganization: {
         __typename: 'CreateOrganizationResponse',
-        id: 'org-uuid',
+        id: 'custom-alias',
         title: 'My Organization',
         alias: 'custom-alias',
       },
@@ -69,7 +70,7 @@ const mockErrorResponse = {
       },
     },
   },
-  error: new Error('Organization with this alias already exists'),
+  error: new Error('Organization with this ID already exists'),
 };
 
 describe('CreateOrganizationDialog', () => {
@@ -115,14 +116,14 @@ describe('CreateOrganizationDialog', () => {
       expect(screen.getByRole('button', { name: /create/i })).toBeInTheDocument();
     });
 
-    it('renders customize alias button', () => {
+    it('renders customize ID button', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
           <CreateOrganizationDialog {...defaultProps} />
         </MockedProvider>
       );
 
-      expect(screen.getByRole('button', { name: /customize alias/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /customize id/i })).toBeInTheDocument();
     });
 
     it('does not render when closed', () => {
@@ -136,8 +137,8 @@ describe('CreateOrganizationDialog', () => {
     });
   });
 
-  describe('alias generation', () => {
-    it('shows auto-generated alias preview when title is entered', async () => {
+  describe('ID generation', () => {
+    it('shows auto-generated ID preview when title is entered', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -148,12 +149,12 @@ describe('CreateOrganizationDialog', () => {
       const titleInput = screen.getByLabelText(/organization title/i);
       await user.type(titleInput, 'My Organization');
 
-      // Check for alias text in a strong element (may appear multiple times during animation)
+      // Check for ID text in a strong element (may appear multiple times during animation)
       const strongElements = screen.getAllByText('my-organization');
       expect(strongElements.length).toBeGreaterThan(0);
     });
 
-    it('generates alias with hyphens for spaces', async () => {
+    it('generates ID with hyphens for spaces', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -168,7 +169,7 @@ describe('CreateOrganizationDialog', () => {
       expect(strongElements.length).toBeGreaterThan(0);
     });
 
-    it('removes special characters from generated alias', async () => {
+    it('removes special characters from generated ID', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -183,7 +184,7 @@ describe('CreateOrganizationDialog', () => {
       expect(strongElements.length).toBeGreaterThan(0);
     });
 
-    it('removes diacritics from generated alias', async () => {
+    it('removes diacritics from generated ID', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -199,8 +200,8 @@ describe('CreateOrganizationDialog', () => {
     });
   });
 
-  describe('custom alias', () => {
-    it('shows alias input when customize alias is clicked', async () => {
+  describe('custom ID', () => {
+    it('shows ID input when customize ID is clicked', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -208,13 +209,13 @@ describe('CreateOrganizationDialog', () => {
         </MockedProvider>
       );
 
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      expect(screen.getByLabelText(/organization alias/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/organization id/i)).toBeInTheDocument();
     });
 
-    it('shows alias input field when advanced section is open', async () => {
+    it('shows ID input field when advanced section is open', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -226,16 +227,16 @@ describe('CreateOrganizationDialog', () => {
       await user.type(titleInput, 'My Organization');
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      // Now the alias input should be visible
-      expect(screen.getByLabelText(/organization alias/i)).toBeInTheDocument();
-      // And helper text should show the auto-generated alias
+      // Now the ID input should be visible
+      expect(screen.getByLabelText(/organization id/i)).toBeInTheDocument();
+      // And helper text should show the auto-generated ID
       expect(screen.getByText(/will be auto-generated as/i)).toBeInTheDocument();
     });
 
-    it('converts custom alias to lowercase', async () => {
+    it('converts custom ID to lowercase', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -244,13 +245,13 @@ describe('CreateOrganizationDialog', () => {
       );
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.type(aliasInput, 'MY-ALIAS');
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.type(idInput, 'MY-ID');
 
-      expect(aliasInput).toHaveValue('my-alias');
+      expect(idInput).toHaveValue('my-id');
     });
   });
 
@@ -281,7 +282,7 @@ describe('CreateOrganizationDialog', () => {
       expect(submitButton).toBeEnabled();
     });
 
-    it('shows error for alias that is too short', async () => {
+    it('shows error for ID that is too short', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -294,18 +295,18 @@ describe('CreateOrganizationDialog', () => {
       await user.type(titleInput, 'My Organization');
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      // Enter short alias
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.clear(aliasInput);
-      await user.type(aliasInput, 'ab');
+      // Enter short ID
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.clear(idInput);
+      await user.type(idInput, 'ab');
 
-      expect(screen.getByText(/alias must be at least 3 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/id must be at least 3 characters/i)).toBeInTheDocument();
     });
 
-    it('shows error for alias with invalid characters', async () => {
+    it('shows error for ID with invalid characters', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -318,18 +319,18 @@ describe('CreateOrganizationDialog', () => {
       await user.type(titleInput, 'My Organization');
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      // Enter alias starting with hyphen
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.clear(aliasInput);
-      await user.type(aliasInput, '-invalid');
+      // Enter ID starting with hyphen
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.clear(idInput);
+      await user.type(idInput, '-invalid');
 
       expect(screen.getByText(/cannot start or end with hyphen/i)).toBeInTheDocument();
     });
 
-    it('shows error for alias with consecutive hyphens', async () => {
+    it('shows error for ID with consecutive hyphens', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -342,18 +343,18 @@ describe('CreateOrganizationDialog', () => {
       await user.type(titleInput, 'My Organization');
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      // Enter alias with consecutive hyphens
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.clear(aliasInput);
-      await user.type(aliasInput, 'my--alias');
+      // Enter ID with consecutive hyphens
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.clear(idInput);
+      await user.type(idInput, 'my--id');
 
       expect(screen.getByText(/cannot contain consecutive hyphens/i)).toBeInTheDocument();
     });
 
-    it('disables submit button when alias has validation error', async () => {
+    it('disables submit button when ID has validation error', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -365,19 +366,19 @@ describe('CreateOrganizationDialog', () => {
       const titleInput = screen.getByLabelText(/organization title/i);
       await user.type(titleInput, 'My Organization');
 
-      // Open advanced section and enter invalid alias
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      // Open advanced section and enter invalid ID
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.clear(aliasInput);
-      await user.type(aliasInput, 'ab');
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.clear(idInput);
+      await user.type(idInput, 'ab');
 
       const submitButton = screen.getByRole('button', { name: /create/i });
       expect(submitButton).toBeDisabled();
     });
 
-    it('shows error for alias starting with dot', async () => {
+    it('shows error for ID starting with dot', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -390,18 +391,18 @@ describe('CreateOrganizationDialog', () => {
       await user.type(titleInput, 'My Organization');
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      // Enter alias starting with dot
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.clear(aliasInput);
-      await user.type(aliasInput, '.hidden');
+      // Enter ID starting with dot
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.clear(idInput);
+      await user.type(idInput, '.hidden');
 
       expect(screen.getByText(/cannot start with a dot/i)).toBeInTheDocument();
     });
 
-    it('shows error for alias with path traversal characters', async () => {
+    it('shows error for ID with path traversal characters', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -414,13 +415,13 @@ describe('CreateOrganizationDialog', () => {
       await user.type(titleInput, 'My Organization');
 
       // Open advanced section
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      // Enter alias with forward slash
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.clear(aliasInput);
-      await user.type(aliasInput, 'my/org');
+      // Enter ID with forward slash
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.clear(idInput);
+      await user.type(idInput, 'my/org');
 
       expect(screen.getByText(/invalid path characters/i)).toBeInTheDocument();
     });
@@ -542,11 +543,11 @@ describe('CreateOrganizationDialog', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/organization with this alias already exists/i)).toBeInTheDocument();
+        expect(screen.getByText(/organization with this id already exists/i)).toBeInTheDocument();
       });
     });
 
-    it('submits with custom alias when provided', async () => {
+    it('submits with custom ID when provided', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[mockSuccessWithAliasResponse]} addTypename={false}>
@@ -557,12 +558,12 @@ describe('CreateOrganizationDialog', () => {
       const titleInput = screen.getByLabelText(/organization title/i);
       await user.type(titleInput, 'My Organization');
 
-      // Open advanced section and enter custom alias
-      const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+      // Open advanced section and enter custom ID
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
       await user.click(customizeButton);
 
-      const aliasInput = screen.getByLabelText(/organization alias/i);
-      await user.type(aliasInput, 'custom-alias');
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.type(idInput, 'custom-alias');
 
       const submitButton = screen.getByRole('button', { name: /create/i });
       await user.click(submitButton);
@@ -604,7 +605,7 @@ describe('CreateOrganizationDialog', () => {
   });
 });
 
-describe('generateAliasFromTitle', () => {
+describe('generateIdFromTitle', () => {
   // These tests verify the function behavior through the component UI
   it('handles empty title', async () => {
     render(
@@ -613,14 +614,14 @@ describe('generateAliasFromTitle', () => {
       </MockedProvider>
     );
 
-    // No alias preview should be shown for empty title
-    expect(screen.queryByText(/alias:/i)).not.toBeInTheDocument();
+    // No ID preview should be shown for empty title
+    expect(screen.queryByText(/^id:/i)).not.toBeInTheDocument();
   });
 });
 
-describe('validateAlias', () => {
+describe('validateId', () => {
   // These tests verify validation through the component UI
-  it('accepts valid alias', async () => {
+  it('accepts valid ID', async () => {
     const user = userEvent.setup();
     render(
       <MockedProvider mocks={[]} addTypename={false}>
@@ -631,16 +632,16 @@ describe('validateAlias', () => {
     const titleInput = screen.getByLabelText(/organization title/i);
     await user.type(titleInput, 'Test');
 
-    // Open advanced and enter valid alias
-    const customizeButton = screen.getByRole('button', { name: /customize alias/i });
+    // Open advanced and enter valid ID
+    const customizeButton = screen.getByRole('button', { name: /customize id/i });
     await user.click(customizeButton);
 
-    const aliasInput = screen.getByLabelText(/organization alias/i);
-    await user.clear(aliasInput);
-    await user.type(aliasInput, 'valid-alias-123');
+    const idInput = screen.getByLabelText(/organization id/i);
+    await user.clear(idInput);
+    await user.type(idInput, 'valid-id-123');
 
     // Should not show any error
-    expect(screen.queryByText(/alias must be/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/id must be/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/cannot start/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/cannot contain consecutive/i)).not.toBeInTheDocument();
   });

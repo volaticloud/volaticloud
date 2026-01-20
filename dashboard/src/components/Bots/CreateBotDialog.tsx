@@ -17,7 +17,7 @@ import { useCreateBotMutation } from './bots.generated';
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { RunnerSelector } from '../shared/RunnerSelector';
 
 // Query to get available exchanges and strategies filtered by owner
@@ -52,7 +52,7 @@ interface CreateBotDialogProps {
 }
 
 export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogProps) => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [name, setName] = useState('');
   const [exchangeID, setExchangeID] = useState('');
   const [strategyID, setStrategyID] = useState('');
@@ -107,14 +107,14 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
 
   const { data: optionsData } = useQuery(GET_BOT_OPTIONS, {
     variables: {
-      ownerID: activeGroupId || undefined,
+      ownerID: activeOrganizationId || undefined,
     },
-    skip: !activeGroupId, // Skip query if no active group
+    skip: !activeOrganizationId, // Skip query if no active group
   });
   const [createBot, { loading, error }] = useCreateBotMutation();
 
   const handleSubmit = async () => {
-    if (!name || !exchangeID || !strategyID || !runnerID || !activeGroupId) {
+    if (!name || !exchangeID || !strategyID || !runnerID || !activeOrganizationId) {
       return;
     }
 
@@ -129,7 +129,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
             mode: mode as any,
             freqtradeVersion: '2025.10',
             config: config || undefined,
-            ownerID: activeGroupId,
+            ownerID: activeOrganizationId,
           },
         },
       });

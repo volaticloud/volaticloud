@@ -12,6 +12,7 @@ import (
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/graph/model"
 	"volaticloud/internal/keycloak"
 )
 
@@ -28,7 +29,26 @@ func IsAuthenticatedDirective(ctx context.Context, obj interface{}, next graphql
 	return next(ctx)
 }
 
-// verifyResourcePermission dynamically determines the resource type and verifies permission
+// getResourceTypeFromObject determines the ResourceType from an ENT entity object
+// Used by RequiresPermissionDirective to get the type hint from the parent object
+func getResourceTypeFromObject(obj interface{}) (model.ResourceType, bool) {
+	switch obj.(type) {
+	case *ent.Strategy:
+		return model.ResourceTypeStrategy, true
+	case *ent.Bot:
+		return model.ResourceTypeBot, true
+	case *ent.Exchange:
+		return model.ResourceTypeExchange, true
+	case *ent.BotRunner:
+		return model.ResourceTypeBotRunner, true
+	case *ent.Backtest:
+		return model.ResourceTypeBacktest, true
+	default:
+		return "", false
+	}
+}
+
+// verifyResourcePermission verifies permission for a resource using the provided type hint for O(1) lookup
 // This is a generic helper that works with all resource types (Strategy, Bot, Exchange, BotRunner, Backtest, Group)
 // For Backtest: permission is checked against the parent Strategy (backtests don't have their own Keycloak resources)
 //
@@ -39,28 +59,35 @@ func verifyResourcePermission(
 	client *ent.Client,
 	umaClient keycloak.UMAClientInterface,
 	resourceID, userToken, scope string,
+	resourceType model.ResourceType,
 ) (bool, error) {
-	// Parse resource ID to UUID
-	id, err := uuid.Parse(resourceID)
-	if err != nil {
-		return false, fmt.Errorf("invalid resource ID: %w", err)
-	}
-
-	// Try to find the resource and determine its type
-	// Check Strategy
-	if s, err := client.Strategy.Get(ctx, id); err == nil {
+	switch resourceType {
+	case model.ResourceTypeStrategy:
+		id, err := uuid.Parse(resourceID)
+		if err != nil {
+			return false, fmt.Errorf("invalid strategy ID: %w", err)
+		}
+		s, err := client.Strategy.Get(ctx, id)
+		if err != nil {
+			return false, fmt.Errorf("strategy not found: %w", err)
+		}
 		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
-			// Permission denied - try self-healing sync and retry
 			if syncAndRetry := trySyncStrategy(ctx, s, umaClient); syncAndRetry {
 				return VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
 			}
 		}
 		return hasPermission, permErr
-	}
 
-	// Check Bot
-	if b, err := client.Bot.Get(ctx, id); err == nil {
+	case model.ResourceTypeBot:
+		id, err := uuid.Parse(resourceID)
+		if err != nil {
+			return false, fmt.Errorf("invalid bot ID: %w", err)
+		}
+		b, err := client.Bot.Get(ctx, id)
+		if err != nil {
+			return false, fmt.Errorf("bot not found: %w", err)
+		}
 		hasPermission, permErr := VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
 			if syncAndRetry := trySyncBot(ctx, b, umaClient); syncAndRetry {
@@ -68,10 +95,16 @@ func verifyResourcePermission(
 			}
 		}
 		return hasPermission, permErr
-	}
 
-	// Check Exchange
-	if e, err := client.Exchange.Get(ctx, id); err == nil {
+	case model.ResourceTypeExchange:
+		id, err := uuid.Parse(resourceID)
+		if err != nil {
+			return false, fmt.Errorf("invalid exchange ID: %w", err)
+		}
+		e, err := client.Exchange.Get(ctx, id)
+		if err != nil {
+			return false, fmt.Errorf("exchange not found: %w", err)
+		}
 		hasPermission, permErr := VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
 			if syncAndRetry := trySyncExchange(ctx, e, umaClient); syncAndRetry {
@@ -79,10 +112,16 @@ func verifyResourcePermission(
 			}
 		}
 		return hasPermission, permErr
-	}
 
-	// Check BotRunner
-	if r, err := client.BotRunner.Get(ctx, id); err == nil {
+	case model.ResourceTypeBotRunner:
+		id, err := uuid.Parse(resourceID)
+		if err != nil {
+			return false, fmt.Errorf("invalid bot runner ID: %w", err)
+		}
+		r, err := client.BotRunner.Get(ctx, id)
+		if err != nil {
+			return false, fmt.Errorf("bot runner not found: %w", err)
+		}
 		hasPermission, permErr := VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
 			if syncAndRetry := trySyncBotRunner(ctx, r, umaClient); syncAndRetry {
@@ -90,18 +129,22 @@ func verifyResourcePermission(
 			}
 		}
 		return hasPermission, permErr
-	}
 
-	// Check Backtest - authorization is delegated to the parent Strategy
-	// Backtests don't have their own Keycloak resources; they inherit permissions from Strategy
-	if bt, err := client.Backtest.Get(ctx, id); err == nil {
-		// Load strategy for potential self-healing
+	case model.ResourceTypeBacktest:
+		id, err := uuid.Parse(resourceID)
+		if err != nil {
+			return false, fmt.Errorf("invalid backtest ID: %w", err)
+		}
+		bt, err := client.Backtest.Get(ctx, id)
+		if err != nil {
+			return false, fmt.Errorf("backtest not found: %w", err)
+		}
+		// Backtests inherit permissions from their parent Strategy
 		strategyID := bt.StrategyID
 		strategy, stratErr := client.Strategy.Get(ctx, strategyID)
 		if stratErr != nil {
 			return false, fmt.Errorf("backtest's strategy not found: %w", stratErr)
 		}
-
 		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, strategyID.String(), userToken, scope)
 		if !hasPermission && permErr == nil {
 			if syncAndRetry := trySyncStrategy(ctx, strategy, umaClient); syncAndRetry {
@@ -109,23 +152,24 @@ func verifyResourcePermission(
 			}
 		}
 		return hasPermission, permErr
-	}
 
-	// If not found in database, it might be a Group resource (managed by Keycloak, not ENT)
-	// Groups are registered as resources in Keycloak but not stored in our database
-	// Check directly with Keycloak UMA
-	if umaClient != nil {
+	case model.ResourceTypeOrganization:
+		// Organizations are registered as resources in Keycloak but not stored in our database
+		// Check directly with Keycloak UMA (resourceID can be UUID or alias)
+		if umaClient == nil {
+			return false, fmt.Errorf("UMA client not available for group permission check")
+		}
 		hasPermission, permErr := umaClient.CheckPermission(ctx, userToken, resourceID, scope)
-		// Self-heal if permission denied or error indicates invalid scope
 		if authz.ShouldTriggerSelfHealing(hasPermission, permErr) {
 			if syncAndRetry := trySyncGroup(ctx, resourceID, umaClient); syncAndRetry {
 				return umaClient.CheckPermission(ctx, userToken, resourceID, scope)
 			}
 		}
 		return hasPermission, permErr
-	}
 
-	return false, fmt.Errorf("resource not found: %s", resourceID)
+	default:
+		return false, fmt.Errorf("unknown resource type: %s", resourceType)
+	}
 }
 
 // ============================================================================
@@ -246,13 +290,20 @@ func trySyncGroup(ctx context.Context, groupID string, umaClient keycloak.UMACli
 // HasScopeDirective checks if the user has a specific permission scope on a resource
 // Uses Keycloak UMA 2.0 for fine-grained authorization
 // Supports nested argument paths like "where.ownerID" for list queries
+// The resourceType parameter is required for O(1) resource lookup
 func HasScopeDirective(
 	ctx context.Context,
 	obj interface{},
 	next graphql.Resolver,
 	resourceArg string, // The argument path containing resource ID (e.g., "id" or "where.ownerID")
 	scope string, // The permission scope to check (e.g., "edit", "delete", "view")
+	resourceType *model.ResourceType, // Required type hint for O(1) lookup (e.g., STRATEGY, BOT, GROUP)
 ) (interface{}, error) {
+	// Validate resourceType is provided
+	if resourceType == nil {
+		return nil, fmt.Errorf("resourceType is required for @hasScope directive")
+	}
+
 	// Get user context (should exist since auth middleware ran)
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
@@ -287,8 +338,8 @@ func HasScopeDirective(
 		return nil, fmt.Errorf("invalid database client type")
 	}
 
-	// Use generic permission verification that supports all resource types
-	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope)
+	// Use permission verification with the provided resource type for O(1) lookup
+	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope, *resourceType)
 	if err != nil {
 		return nil, fmt.Errorf("permission check failed: %w", err)
 	}
@@ -369,7 +420,7 @@ func extractArgumentValue(args map[string]interface{}, path string) (string, err
 
 // RequiresPermissionDirective checks if the user has permission on the parent node/object
 // This is designed for field-level authorization on individual nodes in lists or single queries
-// The key difference from HasScopeDirective: extracts resource ID from parent object (obj), not arguments
+// The key difference from HasScopeDirective: extracts resource ID and type from parent object (obj), not arguments
 func RequiresPermissionDirective(
 	ctx context.Context,
 	obj interface{},
@@ -389,10 +440,16 @@ func RequiresPermissionDirective(
 		idFieldName = *idField
 	}
 
-	// Extract resource ID from the parent object (obj is the Strategy entity)
+	// Extract resource ID from the parent object
 	resourceID, err := extractResourceID(obj, idFieldName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract resource ID: %w", err)
+	}
+
+	// Determine resource type from the parent object (O(1) lookup)
+	resourceType, ok := getResourceTypeFromObject(obj)
+	if !ok {
+		return nil, fmt.Errorf("unsupported object type for permission check: %T", obj)
 	}
 
 	// Get UMA client from context
@@ -412,8 +469,8 @@ func RequiresPermissionDirective(
 		return nil, fmt.Errorf("invalid database client type")
 	}
 
-	// Use generic permission verification that supports all resource types
-	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope)
+	// Use permission verification with the determined resource type
+	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope, resourceType)
 	if err != nil {
 		return nil, fmt.Errorf("permission check failed: %w", err)
 	}

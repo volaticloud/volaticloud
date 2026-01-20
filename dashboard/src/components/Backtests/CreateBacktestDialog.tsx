@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRunBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -54,7 +54,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
 
   // Get active group for filtering strategies and runners
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
 
   const [searchStrategies, { loading: searchLoading }] = useSearchStrategiesLazyQuery();
   const [getStrategyById] = useGetStrategyByIdLazyQuery();
@@ -64,12 +64,12 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
   const debouncedSearch = useMemo(
     () =>
       debounce(async (search: string) => {
-        if (!activeGroupId) return;
+        if (!activeOrganizationId) return;
 
         const { data } = await searchStrategies({
           variables: {
             search: search || undefined,
-            ownerID: activeGroupId,
+            ownerID: activeOrganizationId,
             first: 20,
           },
         });
@@ -86,19 +86,19 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
           return strategies;
         });
       }, 300),
-    [activeGroupId, searchStrategies, selectedStrategy]
+    [activeOrganizationId, searchStrategies, selectedStrategy]
   );
 
   // Load initial strategies when dialog opens
   useEffect(() => {
-    if (open && activeGroupId) {
+    if (open && activeOrganizationId) {
       debouncedSearch('');
     }
-  }, [open, activeGroupId, debouncedSearch]);
+  }, [open, activeOrganizationId, debouncedSearch]);
 
   // Load pre-selected strategy
   useEffect(() => {
-    if (open && preSelectedStrategyId && activeGroupId) {
+    if (open && preSelectedStrategyId && activeOrganizationId) {
       getStrategyById({ variables: { id: preSelectedStrategyId } }).then(({ data }) => {
         const strategy = data?.strategies?.edges?.[0]?.node;
         if (strategy) {
@@ -111,7 +111,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
         }
       });
     }
-  }, [open, preSelectedStrategyId, activeGroupId, getStrategyById]);
+  }, [open, preSelectedStrategyId, activeOrganizationId, getStrategyById]);
 
   // Search when input changes
   const handleStrategyInputChange = useCallback(

@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGetBotsForSelectorQuery, useGetBotByIdQuery } from './shared.generated';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 interface BotSelectorProps {
@@ -50,7 +50,7 @@ export const BotSelector = ({
   error = false,
   disabled = false,
 }: BotSelectorProps) => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [showPublicBots, setShowPublicBots] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebouncedValue(searchInput, 300);
@@ -58,12 +58,12 @@ export const BotSelector = ({
   // Main query for bot list
   const { data, loading, fetchMore } = useGetBotsForSelectorQuery({
     variables: {
-      ownerID: activeGroupId || undefined,
+      ownerID: activeOrganizationId || undefined,
       search: debouncedSearch || undefined,
       includePublic: showPublicBots,
       first: 20,
     },
-    skip: !activeGroupId,
+    skip: !activeOrganizationId,
   });
 
   // Query for selected bot (to ensure it's always in the list)

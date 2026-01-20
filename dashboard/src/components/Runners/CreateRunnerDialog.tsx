@@ -27,7 +27,7 @@ import { useState } from 'react';
 import { useCreateRunnerMutation, useTestRunnerConnectionMutation, useTestS3ConnectionMutation } from './runners.generated';
 import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput, S3ConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
-import { useActiveGroup } from '../../contexts/GroupContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 
 interface BillingConfig {
   billingEnabled: boolean;
@@ -44,7 +44,7 @@ interface CreateRunnerDialogProps {
 }
 
 export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDialogProps) => {
-  const { activeGroupId } = useActiveGroup();
+  const { activeOrganizationId } = useActiveOrganization();
   const [name, setName] = useState('');
   const [type, setType] = useState<'docker' | 'kubernetes' | 'local'>('docker');
 
@@ -164,7 +164,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
   };
 
   const handleSubmit = async () => {
-    if (!name || !activeGroupId) {
+    if (!name || !activeOrganizationId) {
       return;
     }
 
@@ -184,7 +184,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
             config,
             dataDownloadConfig,
             s3Config: s3Enabled ? s3Config : null,
-            ownerID: activeGroupId,
+            ownerID: activeOrganizationId,
             billingEnabled: billingConfig.billingEnabled,
             cpuPricePerCoreHour: billingConfig.billingEnabled ? billingConfig.cpuPricePerCoreHour : null,
             memoryPricePerGBHour: billingConfig.billingEnabled ? billingConfig.memoryPricePerGBHour : null,

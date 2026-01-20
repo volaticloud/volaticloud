@@ -138,7 +138,7 @@ query ResourceGroupMembers(
   }
 }
 
-mutation InviteOrganizationUser($organizationId: ID!, $input: InviteUserInput!) {
+mutation InviteOrganizationUser($organizationId: String!, $input: InviteUserInput!) {
   inviteOrganizationUser(organizationId: $organizationId, input: $input) {
     id
     email
@@ -151,7 +151,7 @@ mutation InviteOrganizationUser($organizationId: ID!, $input: InviteUserInput!) 
   }
 }
 
-mutation ChangeOrganizationUserRole($organizationId: ID!, $userId: ID!, $newRole: String!) {
+mutation ChangeOrganizationUserRole($organizationId: String!, $userId: String!, $newRole: String!) {
   changeOrganizationUserRole(organizationId: $organizationId, userId: $userId, newRole: $newRole)
 }
 
