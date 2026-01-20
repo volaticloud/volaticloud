@@ -16,9 +16,8 @@ import { CreateExchangeDialog } from './CreateExchangeDialog';
 import { EditExchangeDialog } from './EditExchangeDialog';
 import { DeleteExchangeDialog } from './DeleteExchangeDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
-import { useCursorPagination } from '../../hooks/useCursorPagination';
+import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
-import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 // Extract Exchange type from generated query
@@ -35,10 +34,7 @@ export const ExchangesList = () => {
   } | null>(null);
 
   const { activeOrganizationId } = useActiveOrganization();
-  const { can } = usePermissionContext();
-
-  // Permission check for creating exchanges
-  const canCreateExchange = activeOrganizationId ? can(activeOrganizationId, 'create-exchange') : false;
+  const { allowed: canCreateExchange } = useOrganizationPermission('create-exchange');
 
   // Pagination hook
   const pagination = useCursorPagination<Exchange>({ initialPageSize: 10 });

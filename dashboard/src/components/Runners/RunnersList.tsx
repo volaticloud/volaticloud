@@ -29,9 +29,8 @@ import { EditRunnerDialog } from './EditRunnerDialog';
 import { DeleteRunnerDialog } from './DeleteRunnerDialog';
 import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
-import { useCursorPagination } from '../../hooks/useCursorPagination';
+import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
-import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
@@ -53,10 +52,7 @@ export const RunnersList = () => {
   }>({ open: false, message: '', severity: 'error' });
 
   const { activeOrganizationId } = useActiveOrganization();
-  const { can } = usePermissionContext();
-
-  // Permission check for creating runners
-  const canCreateRunner = activeOrganizationId ? can(activeOrganizationId, 'create-runner') : false;
+  const { allowed: canCreateRunner } = useOrganizationPermission('create-runner');
 
   // Pagination hook
   const pagination = useCursorPagination<Runner>({ initialPageSize: 10 });

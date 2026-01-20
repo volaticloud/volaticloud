@@ -5,3 +5,4 @@ export { useDebouncedValue } from './useDebouncedValue';
 export { useFreqtradeSchema } from './useFreqtradeSchema';
 export { usePermissions } from './usePermissions';
 export { useCanPerform } from './useCanPerform';
+export { useOrganizationPermission } from './useOrganizationPermission';

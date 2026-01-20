@@ -24,9 +24,8 @@ import { DeleteStrategyDialog } from './DeleteStrategyDialog';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
-import { useCursorPagination } from '../../hooks/useCursorPagination';
+import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
-import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
@@ -37,10 +36,7 @@ type Strategy = NonNullable<NonNullable<NonNullable<GetStrategiesQuery['strategi
 export const StrategiesList = () => {
   const navigate = useOrganizationNavigate();
   const { activeOrganizationId } = useActiveOrganization();
-  const { can } = usePermissionContext();
-
-  // Permission check for creating strategies
-  const canCreateStrategy = activeOrganizationId ? can(activeOrganizationId, 'create-strategy') : false;
+  const { allowed: canCreateStrategy } = useOrganizationPermission('create-strategy');
 
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

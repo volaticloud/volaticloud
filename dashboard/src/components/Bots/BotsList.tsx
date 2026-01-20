@@ -18,7 +18,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
-import { usePermissionContext } from '../../contexts/PermissionContext';
+import { useOrganizationPermission } from '../../hooks';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
 import BotActionsMenu from './BotActionsMenu';
@@ -52,10 +52,7 @@ export const BotsList = () => {
   }>({ open: false, message: '', severity: 'error' });
 
   const { activeOrganizationId } = useActiveOrganization();
-  const { can } = usePermissionContext();
-
-  // Permission check for creating bots
-  const canCreateBot = activeOrganizationId ? can(activeOrganizationId, 'create-bot') : false;
+  const { allowed: canCreateBot } = useOrganizationPermission('create-bot');
 
   // Pagination hook
   const pagination = useCursorPagination<Bot>({ initialPageSize: 10 });
