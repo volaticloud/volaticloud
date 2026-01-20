@@ -45,6 +45,10 @@ const GroupContext = createContext<GroupContextValue | undefined>(undefined);
  *   "alias": { "id": "uuid", "organization_title": ["Title"] },
  *   ...
  * }
+ *
+ * SECURITY NOTE: These organizations are extracted for UI display only.
+ * All backend operations verify permissions via Keycloak UMA (ADR-0008).
+ * Never trust client-side claims for authorization decisions.
  */
 function extractOrganizationsFromToken(token: string | null | undefined): Organization[] {
   if (!token) {
@@ -111,6 +115,7 @@ export function GroupProvider({ children }: GroupProviderProps) {
   const auth = useAuth();
 
   // Extract organizations from token (supports both new and legacy formats)
+  // Re-extracts automatically when token refreshes via useMemo dependency on access_token
   const organizations = useMemo(
     () => extractOrganizationsFromToken(auth.user?.access_token),
     [auth.user?.access_token]

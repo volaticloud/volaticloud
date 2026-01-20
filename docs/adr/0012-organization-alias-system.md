@@ -244,6 +244,75 @@ How to verify this decision is being followed:
 3. **Manual testing**: Create organization via dashboard, verify alias is auto-generated
 4. **Security testing**: Attempt path traversal aliases, verify rejection
 
+## Token Claim Format (Keycloak 26+)
+
+With Keycloak 26+, organizations are exposed via the native `organizations` claim in JWT tokens.
+This replaces the custom `organization-title-mapper` extension.
+
+### Token Structure
+
+```json
+{
+  "organizations": {
+    "go-gar": {
+      "id": "632bb1f3-e102-486c-952d-7c96cb45dba6",
+      "organization_title": ["Go Gar"]
+    },
+    "acme-corp": {
+      "id": "ac99069f-00c5-4b55-beff-26e014a00e3b"
+    }
+  }
+}
+```
+
+**Claim Structure:**
+
+| Field | Description |
+|-------|-------------|
+| Key (e.g., `go-gar`) | Organization alias (immutable identifier) |
+| `id` | Organization UUID (optional, may be same as alias) |
+| `organization_title` | Array of display titles (optional, falls back to alias) |
+
+### OIDC Scope
+
+To include all user organizations in the token, use the `organization:*` scope:
+
+```typescript
+scope: 'openid organization:* profile email'
+```
+
+### Dashboard Integration
+
+The `GroupContext` extracts organizations from the token:
+
+1. **Primary**: Parses native `organizations` claim (Keycloak 26+)
+2. **Fallback**: Uses legacy `groups` + `organization_titles` claims (backwards compatibility)
+
+```typescript
+// dashboard/src/contexts/GroupContext.tsx
+function extractOrganizationsFromToken(token: string): Organization[] {
+  const decoded = jwtDecode(token);
+
+  // Try native organizations claim first
+  if (decoded.organizations) {
+    return Object.entries(decoded.organizations).map(([alias, data]) => ({
+      id: data.id || alias,
+      alias,
+      title: data.organization_title?.[0] || alias,
+    }));
+  }
+
+  // Fallback to legacy groups claim
+  return extractOrganizationsFromLegacyGroups(decoded);
+}
+```
+
+### Migration Notes
+
+- **Removed**: Custom `organization-title-mapper` Keycloak extension
+- **Added**: `organization:*` scope in OIDC configuration
+- **Preserved**: Backwards compatibility with legacy token format
+
 ## References
 
 ### Related ADRs
