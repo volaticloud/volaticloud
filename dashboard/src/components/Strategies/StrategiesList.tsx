@@ -7,6 +7,7 @@ import {
   Alert,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
 } from '@mui/material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
@@ -25,6 +26,7 @@ import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
@@ -35,6 +37,11 @@ type Strategy = NonNullable<NonNullable<NonNullable<GetStrategiesQuery['strategi
 export const StrategiesList = () => {
   const navigate = useGroupNavigate();
   const { activeGroupId } = useActiveGroup();
+  const { can } = usePermissionContext();
+
+  // Permission check for creating strategies
+  const canCreateStrategy = activeGroupId ? can(activeGroupId, 'create-strategy') : false;
+
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
@@ -235,14 +242,19 @@ export const StrategiesList = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           {viewMode === 'mine' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/strategies/new')}
-              sx={{ flexShrink: 0 }}
-            >
-              Create Strategy
-            </Button>
+            <Tooltip title={!canCreateStrategy ? 'You do not have permission to create strategies' : ''}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/strategies/new')}
+                  disabled={!canCreateStrategy}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Create Strategy
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Box>
       </Box>

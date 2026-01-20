@@ -2439,8 +2439,21 @@ export type Mutation = {
   deleteBot: Scalars['Boolean']['output'];
   deleteBotRunner: Scalars['Boolean']['output'];
   deleteExchange: Scalars['Boolean']['output'];
+  /**
+   * Delete an organization (soft delete)
+   * Disables the organization instead of permanent deletion.
+   * The organization can be re-enabled later using enableOrganization.
+   * Requires delete permission on the organization.
+   */
+  deleteOrganization: Scalars['Boolean']['output'];
   deleteStrategy: Scalars['Boolean']['output'];
   deleteTrade: Scalars['Boolean']['output'];
+  /**
+   * Re-enable a previously disabled organization
+   * Restores access to the organization after it was soft-deleted.
+   * Requires edit permission on the organization.
+   */
+  enableOrganization: Scalars['Boolean']['output'];
   /**
    * Get Freqtrade API token for a bot (for FreqUI authentication)
    * Backend authenticates with bot API and returns JWT tokens
@@ -2518,15 +2531,15 @@ export type Mutation = {
 
 
 export type MutationCancelOrganizationInvitationArgs = {
-  invitationId: Scalars['ID']['input'];
-  organizationId: Scalars['ID']['input'];
+  invitationId: Scalars['String']['input'];
+  organizationId: Scalars['String']['input'];
 };
 
 
 export type MutationChangeOrganizationUserRoleArgs = {
   newRole: Scalars['String']['input'];
-  organizationId: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
+  organizationId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 };
 
 
@@ -2590,6 +2603,11 @@ export type MutationDeleteExchangeArgs = {
 };
 
 
+export type MutationDeleteOrganizationArgs = {
+  organizationId: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteStrategyArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2600,6 +2618,11 @@ export type MutationDeleteTradeArgs = {
 };
 
 
+export type MutationEnableOrganizationArgs = {
+  organizationId: Scalars['String']['input'];
+};
+
+
 export type MutationGetFreqtradeTokenArgs = {
   botId: Scalars['ID']['input'];
 };
@@ -2607,7 +2630,7 @@ export type MutationGetFreqtradeTokenArgs = {
 
 export type MutationInviteOrganizationUserArgs = {
   input: InviteUserInput;
-  organizationId: Scalars['ID']['input'];
+  organizationId: Scalars['String']['input'];
 };
 
 
@@ -2789,8 +2812,8 @@ export type OrganizationInvitation = {
   id: Scalars['ID']['output'];
   /** Last name of the invited user */
   lastName?: Maybe<Scalars['String']['output']>;
-  /** Organization resource ID */
-  organizationId: Scalars['ID']['output'];
+  /** Organization alias (resource ID) */
+  organizationId: Scalars['String']['output'];
   /** Invitation status (PENDING, EXPIRED) */
   status: Scalars['String']['output'];
 };
@@ -2849,8 +2872,8 @@ export type PassphraseExchangeConfigInput = {
 
 /** Input for checking a single permission */
 export type PermissionCheckInput = {
-  /** The resource ID (UUID) to check permission for */
-  resourceId: Scalars['ID']['input'];
+  /** The resource ID (organization alias or entity UUID) to check permission for */
+  resourceId: Scalars['String']['input'];
   /** The scope to check (e.g., "edit", "delete", "run") */
   scope: Scalars['String']['input'];
 };
@@ -2861,7 +2884,7 @@ export type PermissionCheckResult = {
   /** Whether the permission is granted */
   granted: Scalars['Boolean']['output'];
   /** The resource ID that was checked */
-  resourceId: Scalars['ID']['output'];
+  resourceId: Scalars['String']['output'];
   /** The scope that was checked */
   scope: Scalars['String']['output'];
 };
@@ -3084,7 +3107,7 @@ export type QueryOrganizationGroupTreeArgs = {
 export type QueryOrganizationInvitationsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  organizationId: Scalars['ID']['input'];
+  organizationId: Scalars['String']['input'];
 };
 
 

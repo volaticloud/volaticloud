@@ -17611,7 +17611,7 @@ func (ec *executionContext) _PermissionCheckResult_resourceId(ctx context.Contex
 			return obj.ResourceID, nil
 		},
 		nil,
-		ec.marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID,
+		ec.marshalNString2string,
 		true,
 		true,
 	)
@@ -17624,7 +17624,7 @@ func (ec *executionContext) fieldContext_PermissionCheckResult_resourceId(_ cont
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -33944,7 +33944,7 @@ func (ec *executionContext) unmarshalInputPermissionCheckInput(ctx context.Conte
 		switch k {
 		case "resourceId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

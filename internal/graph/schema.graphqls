@@ -745,9 +745,9 @@ Input for checking a single permission
 """
 input PermissionCheckInput {
   """
-  The resource ID (UUID) to check permission for
+  The resource ID (organization alias or entity UUID) to check permission for
   """
-  resourceId: ID!
+  resourceId: String!
   """
   The scope to check (e.g., "edit", "delete", "run")
   """
@@ -761,7 +761,7 @@ type PermissionCheckResult {
   """
   The resource ID that was checked
   """
-  resourceId: ID!
+  resourceId: String!
   """
   The scope that was checked
   """

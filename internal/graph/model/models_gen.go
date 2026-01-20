@@ -252,8 +252,8 @@ type PassphraseExchangeConfigInput struct {
 
 // Input for checking a single permission
 type PermissionCheckInput struct {
-	// The resource ID (UUID) to check permission for
-	ResourceID uuid.UUID `json:"resourceId"`
+	// The resource ID (organization alias or entity UUID) to check permission for
+	ResourceID string `json:"resourceId"`
 	// The scope to check (e.g., "edit", "delete", "run")
 	Scope string `json:"scope"`
 }
@@ -261,7 +261,7 @@ type PermissionCheckInput struct {
 // Result of a permission check
 type PermissionCheckResult struct {
 	// The resource ID that was checked
-	ResourceID uuid.UUID `json:"resourceId"`
+	ResourceID string `json:"resourceId"`
 	// The scope that was checked
 	Scope string `json:"scope"`
 	// Whether the permission is granted

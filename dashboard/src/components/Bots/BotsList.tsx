@@ -18,6 +18,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
 import { useActiveGroup, useGroupNavigate } from '../../contexts/GroupContext';
+import { usePermissionContext } from '../../contexts/PermissionContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
 import BotActionsMenu from './BotActionsMenu';
@@ -51,6 +52,10 @@ export const BotsList = () => {
   }>({ open: false, message: '', severity: 'error' });
 
   const { activeGroupId } = useActiveGroup();
+  const { can } = usePermissionContext();
+
+  // Permission check for creating bots
+  const canCreateBot = activeGroupId ? can(activeGroupId, 'create-bot') : false;
 
   // Pagination hook
   const pagination = useCursorPagination<Bot>({ initialPageSize: 10 });
@@ -241,14 +246,19 @@ export const BotsList = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           {viewMode === 'mine' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setCreateDialogOpen(true)}
-              sx={{ flexShrink: 0 }}
-            >
-              Create Bot
-            </Button>
+            <Tooltip title={!canCreateBot ? 'You do not have permission to create bots' : ''}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setCreateDialogOpen(true)}
+                  disabled={!canCreateBot}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Create Bot
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Box>
       </Box>

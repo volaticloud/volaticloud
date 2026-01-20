@@ -64,9 +64,10 @@ function extractOrganizationsFromToken(token: string | null | undefined): Organi
     }
 
     // Key is the organization alias, inner object contains id and optional title
+    // NOTE: We use alias as the id because UMA resources are created with alias as their ID
     return Object.entries(organizationClaim).map(([alias, orgData]) => ({
-      // Use nested id if available, otherwise use the alias
-      id: orgData.id || alias,
+      // Use alias as id - UMA resources use alias as resource ID (see internal/organization/create.go)
+      id: alias,
       alias,
       // Use first title from array, fallback to alias if no title
       title: orgData.organization_title?.[0] || alias,

@@ -31,6 +31,7 @@ import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
+import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 type ViewMode = 'mine' | 'public';
@@ -52,6 +53,10 @@ export const RunnersList = () => {
   }>({ open: false, message: '', severity: 'error' });
 
   const { activeGroupId } = useActiveGroup();
+  const { can } = usePermissionContext();
+
+  // Permission check for creating runners
+  const canCreateRunner = activeGroupId ? can(activeGroupId, 'create-runner') : false;
 
   // Pagination hook
   const pagination = useCursorPagination<Runner>({ initialPageSize: 10 });
@@ -307,14 +312,19 @@ export const RunnersList = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           {viewMode === 'mine' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setCreateDialogOpen(true)}
-              sx={{ flexShrink: 0 }}
-            >
-              Create Runner
-            </Button>
+            <Tooltip title={!canCreateRunner ? 'You do not have permission to create runners' : ''}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setCreateDialogOpen(true)}
+                  disabled={!canCreateRunner}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Create Runner
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Box>
       </Box>

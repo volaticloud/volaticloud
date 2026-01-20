@@ -2,6 +2,7 @@ import {
   Box,
   Typography,
   Button,
+  Tooltip,
 } from '@mui/material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
@@ -17,6 +18,7 @@ import { DeleteExchangeDialog } from './DeleteExchangeDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveGroup } from '../../contexts/GroupContext';
+import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
 // Extract Exchange type from generated query
@@ -33,6 +35,10 @@ export const ExchangesList = () => {
   } | null>(null);
 
   const { activeGroupId } = useActiveGroup();
+  const { can } = usePermissionContext();
+
+  // Permission check for creating exchanges
+  const canCreateExchange = activeGroupId ? can(activeGroupId, 'create-exchange') : false;
 
   // Pagination hook
   const pagination = useCursorPagination<Exchange>({ initialPageSize: 10 });
@@ -167,14 +173,19 @@ export const ExchangesList = () => {
             {pagination.totalCount || 0} exchange connections
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-          sx={{ flexShrink: 0 }}
-        >
-          Add Exchange
-        </Button>
+        <Tooltip title={!canCreateExchange ? 'You do not have permission to create exchanges' : ''}>
+          <span>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setCreateDialogOpen(true)}
+              disabled={!canCreateExchange}
+              sx={{ flexShrink: 0 }}
+            >
+              Add Exchange
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
 
       <PaginatedDataGrid<Exchange>

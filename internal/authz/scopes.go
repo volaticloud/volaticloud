@@ -50,8 +50,10 @@ var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-p
 // view-users is for viewing organization members
 // invite-user is for inviting new users to the organization
 // change-user-roles is for changing user roles within the organization
+// create-* scopes are for creating new entities within the organization
 // Alert rule scopes are included for organization-wide alerts
 var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user", "change-user-roles",
+	"create-strategy", "create-bot", "create-exchange", "create-runner",
 	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
 
 // GetScopesForType returns the permission scopes for a given resource type

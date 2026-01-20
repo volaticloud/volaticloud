@@ -76,7 +76,7 @@ describe('GroupContext Token Extraction', () => {
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
       expect(decoded.organization['org-alias-as-id'].id).toBeUndefined();
-      // GroupContext uses: id: orgData.id || alias
+      // GroupContext always uses alias as id (UMA resources use alias as resource ID)
     });
 
     it('should handle multiple organizations', () => {
