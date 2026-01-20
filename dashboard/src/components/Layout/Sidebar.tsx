@@ -16,7 +16,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { Logo } from '../shared/Logo';
 import { OrganizationSwitcher } from '../shared/OrganizationSwitcher';
-import { useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import {
   drawerWidth,
   collapsedDrawerWidth,
@@ -43,7 +43,7 @@ export const Sidebar = ({
   backButton,
   showOrganizationSwitcher = true,
 }: SidebarProps) => {
-  const groupNavigate = useGroupNavigate();
+  const groupNavigate = useOrganizationNavigate();
   const location = useLocation();
 
   const handleNavigate = (path: string) => {

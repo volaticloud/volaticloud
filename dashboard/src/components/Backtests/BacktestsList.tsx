@@ -22,13 +22,13 @@ import { CreateBacktestDialog } from './CreateBacktestDialog';
 import { DeleteBacktestDialog } from './DeleteBacktestDialog';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 
 // Extract Backtest type from generated query
 type Backtest = NonNullable<NonNullable<NonNullable<GetBacktestsQuery['backtests']['edges']>[number]>['node']>;
 
 export const BacktestsList = () => {
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const { activeOrganizationId } = useActiveOrganization();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

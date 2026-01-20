@@ -44,8 +44,8 @@ export type BotRunnerScope =
   | 'make-public'
   | AlertRuleScope;
 
-// Group/Organization-specific scopes
-export type GroupScope =
+// Organization-specific scopes
+export type OrganizationScope =
   | 'view'
   | 'edit'
   | 'delete'
@@ -53,6 +53,10 @@ export type GroupScope =
   | 'view-users'
   | 'invite-user'
   | 'change-user-roles'
+  | 'create-strategy'
+  | 'create-bot'
+  | 'create-exchange'
+  | 'create-runner'
   | AlertRuleScope;
 
 // Union of all permission scopes
@@ -61,7 +65,7 @@ export type PermissionScope =
   | StrategyScope
   | ExchangeScope
   | BotRunnerScope
-  | GroupScope;
+  | OrganizationScope;
 
 /**
  * Request to check a permission

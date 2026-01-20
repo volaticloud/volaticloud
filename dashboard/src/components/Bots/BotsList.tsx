@@ -17,7 +17,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
-import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { usePermissionContext } from '../../contexts/PermissionContext';
 import { CreateBotDialog } from './CreateBotDialog';
 import { EditBotDialog } from './EditBotDialog';
@@ -31,7 +31,7 @@ type ViewMode = 'mine' | 'public';
 type Bot = NonNullable<NonNullable<NonNullable<GetBotsQuery['bots']['edges']>[number]>['node']>;
 
 export const BotsList = () => {
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

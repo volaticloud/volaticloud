@@ -25,7 +25,7 @@ import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
-import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { usePermissionContext } from '../../contexts/PermissionContext';
 import { ProtectedIconButton } from '../shared/ProtectedButton';
 
@@ -35,7 +35,7 @@ type ViewMode = 'mine' | 'public';
 type Strategy = NonNullable<NonNullable<NonNullable<GetStrategiesQuery['strategies']['edges']>[number]>['node']>;
 
 export const StrategiesList = () => {
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const { activeOrganizationId } = useActiveOrganization();
   const { can } = usePermissionContext();
 

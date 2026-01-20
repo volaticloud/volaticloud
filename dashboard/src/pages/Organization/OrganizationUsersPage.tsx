@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Alert, Breadcrumbs, Link } from '@mui/material';
 import { Home as HomeIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon, ChevronRight as ChevronRightIcon } from '@mui/icons-material';
-import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { CollapsibleSidebar } from '../../components/Layout/CollapsibleSidebar';
 import { ResourceGroupsTable } from '../../components/Organization/ResourceGroupsTable';
 import { ResourceGroupMembersTable } from '../../components/Organization/ResourceGroupMembersTable';
@@ -15,7 +15,7 @@ interface BreadcrumbItem {
 export const OrganizationUsersPage = () => {
   const { activeOrganizationId } = useActiveOrganization();
   const { resourceGroupId } = useParams<{ resourceGroupId?: string }>();
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);

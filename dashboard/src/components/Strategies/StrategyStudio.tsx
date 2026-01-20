@@ -42,14 +42,14 @@ import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
 import { BacktestResultsDialog } from '../Backtests/BacktestResultsDialog';
-import { useGroupNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
+import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
 import { StrategyStrategyBuilderMode } from '../../generated/types';
 
 const StrategyStudio = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const { setCollapsed } = useSidebar();
   const { activeOrganizationId } = useActiveOrganization();
 

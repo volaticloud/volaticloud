@@ -14,7 +14,7 @@ import {
 import { Close, OpenInNew } from '@mui/icons-material';
 import { useGetBacktestQuery } from './backtests.generated';
 import { BacktestResults } from './BacktestResults';
-import { useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 
 interface BacktestResultsDialogProps {
   open: boolean;
@@ -29,7 +29,7 @@ export const BacktestResultsDialog = ({
   backtestId,
   polling = true,
 }: BacktestResultsDialogProps) => {
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
 
   const { data, loading, error } = useGetBacktestQuery({
     variables: { id: backtestId! },

@@ -28,7 +28,7 @@ import {
   useMarkAlertEventAsReadMutation,
   useMarkAllAlertEventsAsReadMutation,
 } from '../Alerts/alerts.generated';
-import { useActiveOrganization, useGroupNavigate } from '../../contexts/OrganizationContext';
+import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { OrderDirection, AlertEventOrderField, AlertEventAlertSeverity, AlertEventAlertEventStatus } from '../../generated/types';
 import { formatRelativeTime } from '../shared/charts/utils/formatters';
 
@@ -46,7 +46,7 @@ const statusColors: Record<AlertEventAlertEventStatus, 'success' | 'error' | 'wa
 };
 
 export const NotificationsDropdown = () => {
-  const navigate = useGroupNavigate();
+  const navigate = useOrganizationNavigate();
   const { activeOrganizationId } = useActiveOrganization();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
