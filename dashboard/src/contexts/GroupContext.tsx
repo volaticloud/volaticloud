@@ -15,10 +15,8 @@ interface OrganizationClaim {
 }
 
 interface JwtPayload {
-  groups?: string[];
-  organization_titles?: Record<string, string>;
-  /** Keycloak native organizations claim (Keycloak 26+) */
-  organizations?: Record<string, OrganizationClaim>;
+  /** Keycloak native organization claim (Keycloak 26+) */
+  organization?: Record<string, OrganizationClaim>;
   [key: string]: unknown;
 }
 
@@ -39,11 +37,13 @@ interface GroupContextValue {
 const GroupContext = createContext<GroupContextValue | undefined>(undefined);
 
 /**
- * Extracts organizations from Keycloak native organizations claim (Keycloak 26+).
+ * Extracts organizations from Keycloak native organization claim (Keycloak 26+).
  * The claim format is:
  * {
- *   "alias": { "id": "uuid", "organization_title": ["Title"] },
- *   ...
+ *   "organization": {
+ *     "alias": { "id": "uuid", "organization_title": ["Title"] },
+ *     ...
+ *   }
  * }
  *
  * SECURITY NOTE: These organizations are extracted for UI display only.
@@ -57,51 +57,24 @@ function extractOrganizationsFromToken(token: string | null | undefined): Organi
 
   try {
     const decoded = jwtDecode<JwtPayload>(token);
-    const organizationsClaim = decoded.organizations;
+    const organizationClaim = decoded.organization;
 
-    if (organizationsClaim && Object.keys(organizationsClaim).length > 0) {
-      // Use new Keycloak native organizations claim
-      // Key can be alias or ID, inner object may have 'id' field
-      return Object.entries(organizationsClaim).map(([key, orgData]) => ({
-        // Use nested id if available, otherwise use the key (which is alias or id)
-        id: orgData.id || key,
-        alias: key,
-        // Use first title from array, fallback to key if no title
-        title: orgData.organization_title?.[0] || key,
-      }));
+    if (!organizationClaim || Object.keys(organizationClaim).length === 0) {
+      return [];
     }
 
-    // Fallback to legacy groups-based extraction for backwards compatibility
-    return extractOrganizationsFromLegacyGroups(decoded);
+    // Key is the organization alias, inner object contains id and optional title
+    return Object.entries(organizationClaim).map(([alias, orgData]) => ({
+      // Use nested id if available, otherwise use the alias
+      id: orgData.id || alias,
+      alias,
+      // Use first title from array, fallback to alias if no title
+      title: orgData.organization_title?.[0] || alias,
+    }));
   } catch (error) {
     console.error('Failed to extract organizations from token:', error);
     return [];
   }
-}
-
-/**
- * Legacy extraction from groups claim for backwards compatibility.
- * Groups format: "/uuid/resource/role:admin" or "/uuid/role:admin"
- */
-function extractOrganizationsFromLegacyGroups(decoded: JwtPayload): Organization[] {
-  const groups = decoded.groups || [];
-  const organizationTitles = decoded.organization_titles || {};
-
-  // Extract unique UUIDs from group paths
-  const uuids = groups
-    .map((groupPath) => {
-      const segments = groupPath.split('/').filter(Boolean);
-      return segments.length > 0 ? segments[0] : null;
-    })
-    .filter((uuid): uuid is string => uuid !== null);
-
-  const uniqueIds = Array.from(new Set(uuids));
-
-  return uniqueIds.map((id) => ({
-    id,
-    alias: id, // Legacy format doesn't have alias, use id
-    title: organizationTitles[id] || id,
-  }));
 }
 
 interface GroupProviderProps {
@@ -114,7 +87,7 @@ export function GroupProvider({ children }: GroupProviderProps) {
   const location = useLocation();
   const auth = useAuth();
 
-  // Extract organizations from token (supports both new and legacy formats)
+  // Extract organizations from token
   // Re-extracts automatically when token refreshes via useMemo dependency on access_token
   const organizations = useMemo(
     () => extractOrganizationsFromToken(auth.user?.access_token),

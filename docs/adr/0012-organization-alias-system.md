@@ -246,14 +246,14 @@ How to verify this decision is being followed:
 
 ## Token Claim Format (Keycloak 26+)
 
-With Keycloak 26+, organizations are exposed via the native `organizations` claim in JWT tokens.
+With Keycloak 26+, organizations are exposed via the native `organization` claim in JWT tokens.
 This replaces the custom `organization-title-mapper` extension.
 
 ### Token Structure
 
 ```json
 {
-  "organizations": {
+  "organization": {
     "go-gar": {
       "id": "632bb1f3-e102-486c-952d-7c96cb45dba6",
       "organization_title": ["Go Gar"]
@@ -285,25 +285,21 @@ scope: 'openid organization:* profile email'
 
 The `GroupContext` extracts organizations from the token:
 
-1. **Primary**: Parses native `organizations` claim (Keycloak 26+)
-2. **Fallback**: Uses legacy `groups` + `organization_titles` claims (backwards compatibility)
-
 ```typescript
 // dashboard/src/contexts/GroupContext.tsx
 function extractOrganizationsFromToken(token: string): Organization[] {
   const decoded = jwtDecode(token);
+  const organizationClaim = decoded.organization;
 
-  // Try native organizations claim first
-  if (decoded.organizations) {
-    return Object.entries(decoded.organizations).map(([alias, data]) => ({
-      id: data.id || alias,
-      alias,
-      title: data.organization_title?.[0] || alias,
-    }));
+  if (!organizationClaim || Object.keys(organizationClaim).length === 0) {
+    return [];
   }
 
-  // Fallback to legacy groups claim
-  return extractOrganizationsFromLegacyGroups(decoded);
+  return Object.entries(organizationClaim).map(([alias, data]) => ({
+    id: data.id || alias,
+    alias,
+    title: data.organization_title?.[0] || alias,
+  }));
 }
 ```
 
@@ -311,7 +307,6 @@ function extractOrganizationsFromToken(token: string): Organization[] {
 
 - **Removed**: Custom `organization-title-mapper` Keycloak extension
 - **Added**: `organization:*` scope in OIDC configuration
-- **Preserved**: Backwards compatibility with legacy token format
 
 ## References
 

@@ -7,10 +7,6 @@ vi.mock('jwt-decode', () => ({
 
 import { jwtDecode } from 'jwt-decode';
 
-// Import the module to test - we need to extract the functions
-// Since they are not exported, we'll test via the module's behavior
-// For now, we'll create a utility module and test that
-
 /**
  * Test utilities for creating mock JWT tokens.
  * Returns a dummy token string - jwt-decode is mocked so actual encoding isn't needed.
@@ -31,10 +27,10 @@ describe('GroupContext Token Extraction', () => {
     vi.clearAllMocks();
   });
 
-  describe('Native Organizations Claim (Keycloak 26+)', () => {
-    it('should parse organizations claim with id and title', () => {
+  describe('Native Organization Claim (Keycloak 26+)', () => {
+    it('should parse organization claim with id and title', () => {
       const payload = {
-        organizations: {
+        organization: {
           'my-org': {
             id: 'uuid-123',
             organization_title: ['My Organization'],
@@ -46,14 +42,14 @@ describe('GroupContext Token Extraction', () => {
       // The actual extraction happens in GroupContext
       // This test verifies the expected payload structure
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.organizations).toBeDefined();
-      expect(decoded.organizations['my-org'].id).toBe('uuid-123');
-      expect(decoded.organizations['my-org'].organization_title?.[0]).toBe('My Organization');
+      expect(decoded.organization).toBeDefined();
+      expect(decoded.organization['my-org'].id).toBe('uuid-123');
+      expect(decoded.organization['my-org'].organization_title?.[0]).toBe('My Organization');
     });
 
-    it('should handle organizations without title (fallback to alias)', () => {
+    it('should handle organization without title (fallback to alias)', () => {
       const payload = {
-        organizations: {
+        organization: {
           'my-org-alias': {
             id: 'uuid-456',
             // No organization_title
@@ -63,29 +59,29 @@ describe('GroupContext Token Extraction', () => {
       mockJwtDecode(payload);
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.organizations['my-org-alias'].id).toBe('uuid-456');
-      expect(decoded.organizations['my-org-alias'].organization_title).toBeUndefined();
+      expect(decoded.organization['my-org-alias'].id).toBe('uuid-456');
+      expect(decoded.organization['my-org-alias'].organization_title).toBeUndefined();
     });
 
-    it('should handle organizations without nested id (use key as id)', () => {
+    it('should handle organization without nested id (use alias as id)', () => {
       const payload = {
-        organizations: {
-          'org-key-as-id': {
+        organization: {
+          'org-alias-as-id': {
             organization_title: ['Org Title'],
-            // No id field - should use key
+            // No id field - should use alias
           },
         },
       };
       mockJwtDecode(payload);
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.organizations['org-key-as-id'].id).toBeUndefined();
-      // GroupContext uses: id: orgData.id || key
+      expect(decoded.organization['org-alias-as-id'].id).toBeUndefined();
+      // GroupContext uses: id: orgData.id || alias
     });
 
     it('should handle multiple organizations', () => {
       const payload = {
-        organizations: {
+        organization: {
           'org-1': { id: 'id-1', organization_title: ['Org One'] },
           'org-2': { id: 'id-2', organization_title: ['Org Two'] },
           'org-3': { id: 'id-3' }, // No title
@@ -94,12 +90,12 @@ describe('GroupContext Token Extraction', () => {
       mockJwtDecode(payload);
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(Object.keys(decoded.organizations)).toHaveLength(3);
+      expect(Object.keys(decoded.organization)).toHaveLength(3);
     });
 
     it('should handle empty organization_title array (fallback to alias)', () => {
       const payload = {
-        organizations: {
+        organization: {
           'empty-title-org': {
             id: 'uuid-789',
             organization_title: [], // Empty array
@@ -109,77 +105,22 @@ describe('GroupContext Token Extraction', () => {
       mockJwtDecode(payload);
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.organizations['empty-title-org'].organization_title).toEqual([]);
-      // GroupContext uses: title: orgData.organization_title?.[0] || key
-      // Empty array[0] is undefined, so falls back to key
-    });
-  });
-
-  describe('Legacy Groups Claim (Backwards Compatibility)', () => {
-    it('should extract organization IDs from group paths', () => {
-      const payload = {
-        groups: [
-          '/uuid-123/resource/role:admin',
-          '/uuid-123/role:viewer',
-          '/uuid-456/role:admin',
-        ],
-        organization_titles: {
-          'uuid-123': 'First Org',
-          'uuid-456': 'Second Org',
-        },
-      };
-      mockJwtDecode(payload);
-
-      const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.groups).toHaveLength(3);
-      expect(decoded.organization_titles?.['uuid-123']).toBe('First Org');
-    });
-
-    it('should deduplicate organization IDs from multiple groups', () => {
-      const payload = {
-        groups: [
-          '/same-org/role:admin',
-          '/same-org/resource/role:viewer',
-          '/same-org/another/role:editor',
-        ],
-      };
-      mockJwtDecode(payload);
-
-      const decoded = jwtDecode<typeof payload>(createMockToken());
-      // GroupContext extracts first segment and deduplicates
-      // All three should result in single 'same-org'
-      const segments = decoded.groups!.map((g) => g.split('/').filter(Boolean)[0]);
-      const unique = [...new Set(segments)];
-      expect(unique).toHaveLength(1);
-      expect(unique[0]).toBe('same-org');
-    });
-
-    it('should fallback to ID when no organization_titles', () => {
-      const payload = {
-        groups: ['/uuid-no-title/role:admin'],
-        // No organization_titles
-      };
-      mockJwtDecode(payload);
-
-      const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.organization_titles).toBeUndefined();
-      // GroupContext uses: title: organizationTitles[id] || id
+      expect(decoded.organization['empty-title-org'].organization_title).toEqual([]);
+      // GroupContext uses: title: orgData.organization_title?.[0] || alias
+      // Empty array[0] is undefined, so falls back to alias
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty organizations claim (fallback to legacy)', () => {
+    it('should handle empty organization claim (returns empty array)', () => {
       const payload = {
-        organizations: {}, // Empty object
-        groups: ['/fallback-org/role:admin'],
-        organization_titles: { 'fallback-org': 'Fallback Org' },
+        organization: {}, // Empty object
       };
       mockJwtDecode(payload);
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(Object.keys(decoded.organizations!)).toHaveLength(0);
-      // GroupContext checks: Object.keys(organizationsClaim).length > 0
-      // Empty object falls back to legacy extraction
+      expect(Object.keys(decoded.organization!)).toHaveLength(0);
+      // GroupContext returns empty array when organization claim is empty
     });
 
     it('should handle null token gracefully', () => {
@@ -202,16 +143,15 @@ describe('GroupContext Token Extraction', () => {
       expect(() => jwtDecode('invalid')).toThrow('Invalid token');
     });
 
-    it('should handle token with neither organizations nor groups', () => {
+    it('should handle token without organization claim', () => {
       const payload = {
         sub: 'user-123',
-        // No organizations, no groups
+        // No organization claim
       };
       mockJwtDecode(payload);
 
       const decoded = jwtDecode<typeof payload>(createMockToken());
-      expect(decoded.organizations).toBeUndefined();
-      expect(decoded.groups).toBeUndefined();
+      expect(decoded.organization).toBeUndefined();
       // GroupContext returns empty array in this case
     });
   });
