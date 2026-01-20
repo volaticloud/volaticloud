@@ -45,8 +45,11 @@ export function GroupSwitcher({ fullWidth = false }: GroupSwitcherProps) {
 
   const filteredOrgs = useMemo(() => {
     if (!searchText) return organizations;
-    return organizations.filter((org) =>
-      org.title.toLowerCase().includes(searchText.toLowerCase())
+    const searchLower = searchText.toLowerCase();
+    return organizations.filter(
+      (org) =>
+        org.title.toLowerCase().includes(searchLower) ||
+        org.alias.toLowerCase().includes(searchLower)
     );
   }, [organizations, searchText]);
 

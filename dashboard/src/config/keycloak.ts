@@ -23,7 +23,7 @@ export const createOidcConfig = (
     redirect_uri: redirectUri || window.location.origin,
     post_logout_redirect_uri: postLogoutRedirectUri || window.location.origin,
     response_type: 'code',
-    scope: 'openid profile email',
+    scope: 'openid organization:* profile email',
     automaticSilentRenew: true,
     loadUserInfo: true,
     revokeTokensOnSignout: true,

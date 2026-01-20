@@ -18,7 +18,6 @@
         <module>group-resource-policy</module>
         <module>public-resource-policy</module>
         <module>tenant-system</module>
-        <module>organization-title-mapper</module>
     </modules>
 </project>
 
