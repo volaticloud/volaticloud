@@ -37,7 +37,7 @@ import { useState, useEffect } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
 import { useGetBacktestQuery } from '../Backtests/backtests.generated';
-import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
+import { FreqtradeConfigForm, createDefaultFreqtradeConfig } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
@@ -57,13 +57,8 @@ const StrategyStudio = () => {
   // When navigating to /strategies/new, id is undefined (no :id param in route)
   const isCreateMode = !id;
 
-  // Default config for new strategies
-  const defaultConfig = {
-    stake_currency: 'USDT',
-    stake_amount: 100,
-    max_open_trades: 3,
-    timeframe: '5m',
-  };
+  // Default config for new strategies - includes all mandatory Freqtrade fields
+  const defaultConfig = createDefaultFreqtradeConfig();
 
   // Default code template for new strategies
   const defaultCode = `# pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
