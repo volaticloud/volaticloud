@@ -192,7 +192,7 @@ export function StrategyBuilder({
   // Build dynamic tabs based on position mode
   type TabConfig = {
     id: string;
-    icon: React.ReactNode;
+    icon: React.ReactElement;
     label: string;
     badge?: number;
     badgeColor?: string;
