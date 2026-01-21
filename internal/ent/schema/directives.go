@@ -54,6 +54,18 @@ func HasScope(scope string, resourceType string) entgql.Annotation {
 // HasScopeWithField adds the @hasScope directive with a custom ID field
 // Use this when the resource ID is in a different field than "id" (e.g., "strategyID" for Backtest)
 //
+// SECURITY WARNING: This function enables cross-resource permission checking, where Entity A's
+// fields are protected by Entity B's permissions. This pattern should ONLY be used when:
+//   - Entity A has a strong ownership relationship with Entity B (e.g., Backtest belongs to Strategy)
+//   - Entity A does NOT have its own Keycloak resource (to avoid permission confusion)
+//   - The referenced field (idField) is immutable and set at creation time
+//
+// Misuse can lead to permission escalation vulnerabilities. Always verify that granting access
+// to Entity B logically implies access to Entity A's protected fields.
+//
+// Valid use case: Backtest.result protected by Strategy permissions (Backtest is an analysis
+// artifact of Strategy, not an independent resource)
+//
 // Usage:
 //
 //	field.Text("sensitive_data").

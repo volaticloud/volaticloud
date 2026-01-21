@@ -39,7 +39,7 @@ func verifyResourcePermission(
 	ctx context.Context,
 	client *ent.Client,
 	umaClient keycloak.UMAClientInterface,
-	resourceID, userToken, scope string,
+	resourceID, userID, userToken, scope string,
 	resourceType model.ResourceType,
 ) (bool, error) {
 	switch resourceType {
@@ -54,7 +54,7 @@ func verifyResourcePermission(
 		}
 		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
-			if syncAndRetry := trySyncStrategy(ctx, s, umaClient); syncAndRetry {
+			if syncAndRetry := trySyncStrategy(ctx, s, umaClient, userID, scope); syncAndRetry {
 				return VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
 			}
 		}
@@ -71,7 +71,7 @@ func verifyResourcePermission(
 		}
 		hasPermission, permErr := VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
-			if syncAndRetry := trySyncBot(ctx, b, umaClient); syncAndRetry {
+			if syncAndRetry := trySyncBot(ctx, b, umaClient, userID, scope); syncAndRetry {
 				return VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
 			}
 		}
@@ -88,7 +88,7 @@ func verifyResourcePermission(
 		}
 		hasPermission, permErr := VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
-			if syncAndRetry := trySyncExchange(ctx, e, umaClient); syncAndRetry {
+			if syncAndRetry := trySyncExchange(ctx, e, umaClient, userID, scope); syncAndRetry {
 				return VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
 			}
 		}
@@ -105,7 +105,7 @@ func verifyResourcePermission(
 		}
 		hasPermission, permErr := VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
 		if !hasPermission && permErr == nil {
-			if syncAndRetry := trySyncBotRunner(ctx, r, umaClient); syncAndRetry {
+			if syncAndRetry := trySyncBotRunner(ctx, r, umaClient, userID, scope); syncAndRetry {
 				return VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
 			}
 		}
@@ -128,7 +128,7 @@ func verifyResourcePermission(
 		}
 		hasPermission, permErr := VerifyStrategyPermission(ctx, client, umaClient, strategyID.String(), userToken, scope)
 		if !hasPermission && permErr == nil {
-			if syncAndRetry := trySyncStrategy(ctx, strategy, umaClient); syncAndRetry {
+			if syncAndRetry := trySyncStrategy(ctx, strategy, umaClient, userID, scope); syncAndRetry {
 				return VerifyStrategyPermission(ctx, client, umaClient, strategyID.String(), userToken, scope)
 			}
 		}
@@ -142,7 +142,7 @@ func verifyResourcePermission(
 		}
 		hasPermission, permErr := umaClient.CheckPermission(ctx, userToken, resourceID, scope)
 		if authz.ShouldTriggerSelfHealing(hasPermission, permErr) {
-			if syncAndRetry := trySyncGroup(ctx, resourceID, umaClient); syncAndRetry {
+			if syncAndRetry := trySyncGroup(ctx, resourceID, umaClient, userID, scope); syncAndRetry {
 				return umaClient.CheckPermission(ctx, userToken, resourceID, scope)
 			}
 		}
@@ -163,7 +163,7 @@ func verifyResourcePermission(
 // 1. Getting scopes for the resource type
 // 2. Building attributes with ownerId, type, and optionally public flag
 // 3. Calling SyncResourceScopes
-// 4. Logging success/failure
+// 4. Logging success/failure with user context for observability
 //
 // Parameters:
 //   - resourceID: The unique identifier of the resource
@@ -171,6 +171,8 @@ func verifyResourcePermission(
 //   - resourceType: The type of resource (for scopes and attributes)
 //   - ownerID: The owner's ID (empty string for resources without owners like groups)
 //   - public: Whether the resource is public (only used for types that support public visibility)
+//   - userID: The ID of the user who triggered the sync (for audit logging)
+//   - scope: The permission scope being checked (for audit logging)
 func trySyncResource(
 	ctx context.Context,
 	umaClient keycloak.UMAClientInterface,
@@ -178,6 +180,7 @@ func trySyncResource(
 	resourceType authz.ResourceType,
 	ownerID string,
 	public *bool,
+	userID, scope string,
 ) bool {
 	if umaClient == nil {
 		return false
@@ -200,35 +203,37 @@ func trySyncResource(
 
 	err := umaClient.SyncResourceScopes(ctx, resourceID, resourceName, scopes, attributes)
 	if err != nil {
-		log.Printf("Self-healing: failed to sync %s %s scopes: %v", resourceType, resourceID, err)
+		log.Printf("Self-healing: failed to sync %s %s scopes (user=%s, scope=%s): %v",
+			resourceType, resourceID, userID, scope, err)
 		return false
 	}
 
-	log.Printf("Self-healing: synced %s %s scopes, retrying permission check", resourceType, resourceID)
+	log.Printf("Self-healing: synced %s %s scopes (user=%s, scope=%s), retrying permission check",
+		resourceType, resourceID, userID, scope)
 	return true
 }
 
-func trySyncStrategy(ctx context.Context, s *ent.Strategy, umaClient keycloak.UMAClientInterface) bool {
+func trySyncStrategy(ctx context.Context, s *ent.Strategy, umaClient keycloak.UMAClientInterface, userID, scope string) bool {
 	resourceName := fmt.Sprintf("%s (v%d)", s.Name, s.VersionNumber)
-	return trySyncResource(ctx, umaClient, s.ID.String(), resourceName, authz.ResourceTypeStrategy, s.OwnerID, &s.Public)
+	return trySyncResource(ctx, umaClient, s.ID.String(), resourceName, authz.ResourceTypeStrategy, s.OwnerID, &s.Public, userID, scope)
 }
 
-func trySyncBot(ctx context.Context, b *ent.Bot, umaClient keycloak.UMAClientInterface) bool {
-	return trySyncResource(ctx, umaClient, b.ID.String(), b.Name, authz.ResourceTypeBot, b.OwnerID, &b.Public)
+func trySyncBot(ctx context.Context, b *ent.Bot, umaClient keycloak.UMAClientInterface, userID, scope string) bool {
+	return trySyncResource(ctx, umaClient, b.ID.String(), b.Name, authz.ResourceTypeBot, b.OwnerID, &b.Public, userID, scope)
 }
 
-func trySyncExchange(ctx context.Context, e *ent.Exchange, umaClient keycloak.UMAClientInterface) bool {
-	return trySyncResource(ctx, umaClient, e.ID.String(), e.Name, authz.ResourceTypeExchange, e.OwnerID, nil)
+func trySyncExchange(ctx context.Context, e *ent.Exchange, umaClient keycloak.UMAClientInterface, userID, scope string) bool {
+	return trySyncResource(ctx, umaClient, e.ID.String(), e.Name, authz.ResourceTypeExchange, e.OwnerID, nil, userID, scope)
 }
 
-func trySyncBotRunner(ctx context.Context, r *ent.BotRunner, umaClient keycloak.UMAClientInterface) bool {
-	return trySyncResource(ctx, umaClient, r.ID.String(), r.Name, authz.ResourceTypeBotRunner, r.OwnerID, &r.Public)
+func trySyncBotRunner(ctx context.Context, r *ent.BotRunner, umaClient keycloak.UMAClientInterface, userID, scope string) bool {
+	return trySyncResource(ctx, umaClient, r.ID.String(), r.Name, authz.ResourceTypeBotRunner, r.OwnerID, &r.Public, userID, scope)
 }
 
-func trySyncGroup(ctx context.Context, groupID string, umaClient keycloak.UMAClientInterface) bool {
+func trySyncGroup(ctx context.Context, groupID string, umaClient keycloak.UMAClientInterface, userID, scope string) bool {
 	// For groups, we use the groupID as both the resource ID and name
 	// Groups are managed by Keycloak, so we only sync scopes (not create the resource)
-	return trySyncResource(ctx, umaClient, groupID, groupID, authz.ResourceTypeGroup, "", nil)
+	return trySyncResource(ctx, umaClient, groupID, groupID, authz.ResourceTypeGroup, "", nil, userID, scope)
 }
 
 // HasScopeDirective checks if the user has a specific permission scope on a resource
@@ -300,7 +305,7 @@ func HasScopeDirective(
 	}
 
 	// Use permission verification with the provided resource type for O(1) lookup
-	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope, resourceType)
+	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.UserID, userCtx.RawToken, scope, resourceType)
 	if err != nil {
 		return nil, fmt.Errorf("permission check failed: %w", err)
 	}
