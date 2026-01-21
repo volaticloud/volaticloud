@@ -43,9 +43,8 @@ func Setup(t *testing.T) *TestEnv {
 	srv := handler.NewDefaultServer(NewExecutableSchema(Config{
 		Resolvers: NewResolver(entClient, nil, mockUMA),
 		Directives: DirectiveRoot{
-			IsAuthenticated:    IsAuthenticatedDirective,
-			HasScope:           HasScopeDirective,
-			RequiresPermission: RequiresPermissionDirective,
+			IsAuthenticated: IsAuthenticatedDirective,
+			HasScope:        HasScopeDirective,
 		},
 	}))
 

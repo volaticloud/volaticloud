@@ -29,25 +29,6 @@ func IsAuthenticatedDirective(ctx context.Context, obj interface{}, next graphql
 	return next(ctx)
 }
 
-// getResourceTypeFromObject determines the ResourceType from an ENT entity object
-// Used by RequiresPermissionDirective to get the type hint from the parent object
-func getResourceTypeFromObject(obj interface{}) (model.ResourceType, bool) {
-	switch obj.(type) {
-	case *ent.Strategy:
-		return model.ResourceTypeStrategy, true
-	case *ent.Bot:
-		return model.ResourceTypeBot, true
-	case *ent.Exchange:
-		return model.ResourceTypeExchange, true
-	case *ent.BotRunner:
-		return model.ResourceTypeBotRunner, true
-	case *ent.Backtest:
-		return model.ResourceTypeBacktest, true
-	default:
-		return "", false
-	}
-}
-
 // verifyResourcePermission verifies permission for a resource using the provided type hint for O(1) lookup
 // This is a generic helper that works with all resource types (Strategy, Bot, Exchange, BotRunner, Backtest, Group)
 // For Backtest: permission is checked against the parent Strategy (backtests don't have their own Keycloak resources)
@@ -289,39 +270,56 @@ func trySyncGroup(ctx context.Context, groupID string, umaClient keycloak.UMACli
 
 // HasScopeDirective checks if the user has a specific permission scope on a resource
 // Uses Keycloak UMA 2.0 for fine-grained authorization
-// Supports nested argument paths like "where.ownerID" for list queries
+//
+// Two modes of operation:
+// 1. Argument mode (fromParent=false): Extracts resource ID from GraphQL arguments
+//   - Supports nested paths like "where.ownerID" for list queries
+//   - Used for mutations and queries
+//
+// 2. Field mode (fromParent=true): Extracts resource ID from parent object
+//   - Used for field-level permissions on types
+//   - Example: Backtest.result checking permission on parent Strategy
+//
 // The resourceType parameter is required for O(1) resource lookup
 func HasScopeDirective(
 	ctx context.Context,
 	obj interface{},
 	next graphql.Resolver,
-	resourceArg string, // The argument path containing resource ID (e.g., "id" or "where.ownerID")
+	resourceArg string, // The resource ID source (argument path or field name)
 	scope string, // The permission scope to check (e.g., "edit", "delete", "view")
-	resourceType *model.ResourceType, // Required type hint for O(1) lookup (e.g., STRATEGY, BOT, GROUP)
+	resourceType model.ResourceType, // Required type hint for O(1) lookup (e.g., STRATEGY, BOT)
+	fromParent *bool, // If true, extract resource ID from parent object instead of arguments
 ) (interface{}, error) {
-	// Validate resourceType is provided
-	if resourceType == nil {
-		return nil, fmt.Errorf("resourceType is required for @hasScope directive")
-	}
-
 	// Get user context (should exist since auth middleware ran)
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
 
-	// Get resource ID from GraphQL field arguments
-	fc := graphql.GetFieldContext(ctx)
-	if fc == nil {
-		return nil, fmt.Errorf("no field context available")
-	}
+	var resourceID string
 
-	// Extract resource ID from arguments (supports nested paths like "where.ownerID")
-	resourceID, err := extractArgumentValue(fc.Args, resourceArg)
-	if err != nil {
-		// For list queries, if ownerID is not provided, deny access
-		// This ensures users must explicitly specify which group they're querying
-		return nil, fmt.Errorf("resource argument '%s' is required: %w", resourceArg, err)
+	// Determine extraction mode
+	extractFromParent := fromParent != nil && *fromParent
+
+	if extractFromParent {
+		// Field mode: extract resource ID from parent object's field
+		resourceID, err = extractResourceID(obj, resourceArg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract resource ID from parent: %w", err)
+		}
+	} else {
+		// Argument mode: extract resource ID from GraphQL arguments
+		fc := graphql.GetFieldContext(ctx)
+		if fc == nil {
+			return nil, fmt.Errorf("no field context available")
+		}
+
+		resourceID, err = extractArgumentValue(fc.Args, resourceArg)
+		if err != nil {
+			// For list queries, if ownerID is not provided, deny access
+			// This ensures users must explicitly specify which group they're querying
+			return nil, fmt.Errorf("resource argument '%s' is required: %w", resourceArg, err)
+		}
 	}
 
 	// Get UMA client from context
@@ -339,7 +337,7 @@ func HasScopeDirective(
 	}
 
 	// Use permission verification with the provided resource type for O(1) lookup
-	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope, *resourceType)
+	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope, resourceType)
 	if err != nil {
 		return nil, fmt.Errorf("permission check failed: %w", err)
 	}
@@ -416,73 +414,6 @@ func extractArgumentValue(args map[string]interface{}, path string) (string, err
 		}
 		return "", fmt.Errorf("value at path '%s' is not a string (type: %T)", path, current)
 	}
-}
-
-// RequiresPermissionDirective checks if the user has permission on the parent node/object
-// This is designed for field-level authorization on individual nodes in lists or single queries
-// The key difference from HasScopeDirective: extracts resource ID and type from parent object (obj), not arguments
-func RequiresPermissionDirective(
-	ctx context.Context,
-	obj interface{},
-	next graphql.Resolver,
-	scope string, // The permission scope to check (e.g., "view", "edit")
-	idField *string, // Optional field name containing resource ID (defaults to "id")
-) (interface{}, error) {
-	// Get user context
-	userCtx, err := auth.GetUserContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("authentication required: %w", err)
-	}
-
-	// Determine the ID field name
-	idFieldName := "id"
-	if idField != nil {
-		idFieldName = *idField
-	}
-
-	// Extract resource ID from the parent object
-	resourceID, err := extractResourceID(obj, idFieldName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract resource ID: %w", err)
-	}
-
-	// Determine resource type from the parent object (O(1) lookup)
-	resourceType, ok := getResourceTypeFromObject(obj)
-	if !ok {
-		return nil, fmt.Errorf("unsupported object type for permission check: %T", obj)
-	}
-
-	// Get UMA client from context
-	umaClient := GetUMAClientFromContext(ctx)
-	if umaClient == nil {
-		return nil, fmt.Errorf("UMA client not available")
-	}
-
-	// Get ENT client from context
-	clientInterface := GetEntClientFromContext(ctx)
-	if clientInterface == nil {
-		return nil, fmt.Errorf("database client not available")
-	}
-
-	client, ok := clientInterface.(*ent.Client)
-	if !ok {
-		return nil, fmt.Errorf("invalid database client type")
-	}
-
-	// Use permission verification with the determined resource type
-	hasPermission, err := verifyResourcePermission(ctx, client, umaClient, resourceID, userCtx.RawToken, scope, resourceType)
-	if err != nil {
-		return nil, fmt.Errorf("permission check failed: %w", err)
-	}
-
-	if !hasPermission {
-		// Return null for unauthorized nodes (GraphQL standard pattern)
-		// This will show as null in the response with a partial error
-		return nil, fmt.Errorf("you don't have %q access to resource %q", scope, resourceID)
-	}
-
-	// User has permission, proceed with field resolver
-	return next(ctx)
 }
 
 // extractResourceID extracts the resource ID from the parent object using reflection

@@ -360,15 +360,13 @@ export function ConditionNodeEditor({
             <ListItemIcon><CallSplit fontSize="small" /></ListItemIcon>
             <ListItemText>Wrap in IF</ListItemText>
           </MenuItem>
-          {onDelete && (
-            <>
-              <Divider />
-              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }}>
-                <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            </>
-          )}
+          {onDelete && [
+            <Divider key="delete-divider" />,
+            <MenuItem key="delete" onClick={() => { onDelete(); setMenuAnchor(null); }}>
+              <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>,
+          ]}
         </Menu>
       </Paper>
     );
@@ -427,15 +425,13 @@ export function ConditionNodeEditor({
             <ListItemIcon><WrapText fontSize="small" /></ListItemIcon>
             <ListItemText>Remove NOT (unwrap)</ListItemText>
           </MenuItem>
-          {onDelete && (
-            <>
-              <Divider />
-              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }}>
-                <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            </>
-          )}
+          {onDelete && [
+            <Divider key="delete-divider" />,
+            <MenuItem key="delete" onClick={() => { onDelete(); setMenuAnchor(null); }}>
+              <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>,
+          ]}
         </Menu>
       </Paper>
     );
@@ -522,15 +518,13 @@ export function ConditionNodeEditor({
             <ListItemIcon><CallSplit fontSize="small" /></ListItemIcon>
             <ListItemText>Wrap in IF</ListItemText>
           </MenuItem>
-          {onDelete && (
-            <>
-              <Divider />
-              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }}>
-                <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            </>
-          )}
+          {onDelete && [
+            <Divider key="delete-divider" />,
+            <MenuItem key="delete" onClick={() => { onDelete(); setMenuAnchor(null); }}>
+              <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>,
+          ]}
         </Menu>
       </Paper>
     );
@@ -611,15 +605,13 @@ export function ConditionNodeEditor({
             <ListItemIcon><Block fontSize="small" /></ListItemIcon>
             <ListItemText>Wrap in NOT</ListItemText>
           </MenuItem>
-          {onDelete && (
-            <>
-              <Divider />
-              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }}>
-                <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            </>
-          )}
+          {onDelete && [
+            <Divider key="delete-divider" />,
+            <MenuItem key="delete" onClick={() => { onDelete(); setMenuAnchor(null); }}>
+              <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>,
+          ]}
         </Menu>
       </Paper>
     );
@@ -700,15 +692,13 @@ export function ConditionNodeEditor({
             <ListItemIcon><Block fontSize="small" /></ListItemIcon>
             <ListItemText>Wrap in NOT</ListItemText>
           </MenuItem>
-          {onDelete && (
-            <>
-              <Divider />
-              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }}>
-                <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            </>
-          )}
+          {onDelete && [
+            <Divider key="delete-divider" />,
+            <MenuItem key="delete" onClick={() => { onDelete(); setMenuAnchor(null); }}>
+              <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>,
+          ]}
         </Menu>
       </Paper>
     );
@@ -831,15 +821,13 @@ export function ConditionNodeEditor({
             <ListItemIcon><WrapText fontSize="small" /></ListItemIcon>
             <ListItemText>Remove IF (keep THEN)</ListItemText>
           </MenuItem>
-          {onDelete && (
-            <>
-              <Divider />
-              <MenuItem onClick={() => { onDelete(); setMenuAnchor(null); }}>
-                <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
-                <ListItemText>Delete</ListItemText>
-              </MenuItem>
-            </>
-          )}
+          {onDelete && [
+            <Divider key="delete-divider" />,
+            <MenuItem key="delete" onClick={() => { onDelete(); setMenuAnchor(null); }}>
+              <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+              <ListItemText>Delete</ListItemText>
+            </MenuItem>,
+          ]}
         </Menu>
       </Paper>
     );

@@ -34,12 +34,12 @@ func (Strategy) Fields() []ent.Field {
 			Comment("Strategy description"),
 		field.Text("code").
 			Comment("Python strategy code").
-			Annotations(RequiresPermission("view")),
+			Annotations(HasScope("view", "STRATEGY")),
 		field.JSON("config", map[string]interface{}{}).
 			Comment("Strategy-specific configuration (config.json) - REQUIRED").
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermission("view"),
+				HasScope("view", "STRATEGY"),
 			),
 		field.Enum("builder_mode").
 			GoType(enum.StrategyBuilderMode("")).

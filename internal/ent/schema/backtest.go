@@ -34,7 +34,7 @@ func (Backtest) Fields() []ent.Field {
 			Optional().
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermissionWithField("view", "strategyID"),
+				HasScopeWithField("view", "strategyID", "STRATEGY"),
 			).
 			Comment("Backtest result data (metrics, logs, trades, etc.)"),
 		field.JSON("summary", map[string]interface{}{}).
@@ -48,7 +48,7 @@ func (Backtest) Fields() []ent.Field {
 			Comment("Error message if backtest failed"),
 		field.Text("logs").
 			Optional().
-			Annotations(RequiresPermissionWithField("view", "strategyID")).
+			Annotations(HasScopeWithField("view", "strategyID", "STRATEGY")).
 			Comment("Container logs from backtest execution"),
 		field.UUID("strategy_id", uuid.UUID{}).
 			Comment("Foreign key to strategy"),

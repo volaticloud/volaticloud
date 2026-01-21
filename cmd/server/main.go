@@ -326,9 +326,8 @@ func runServer(c *cli.Context) error {
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: graph.NewResolver(client, keycloakClient, umaClient),
 		Directives: graph.DirectiveRoot{
-			IsAuthenticated:    graph.IsAuthenticatedDirective,
-			HasScope:           graph.HasScopeDirective,
-			RequiresPermission: graph.RequiresPermissionDirective,
+			IsAuthenticated: graph.IsAuthenticatedDirective,
+			HasScope:        graph.HasScopeDirective,
 		},
 	}))
 

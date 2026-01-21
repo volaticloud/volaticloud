@@ -258,10 +258,16 @@ enum ResourceType {
 """
 Requires the user to have a specific permission scope on a resource
 Uses Keycloak UMA 2.0 for fine-grained authorization
+
+Two modes of operation:
+1. Argument mode (default): Extracts resource ID from GraphQL arguments (for mutations/queries)
+2. Field mode (fromParent=true): Extracts resource ID from parent object (for field-level permissions)
 """
 directive @hasScope(
   """
-  The resource ID argument name (e.g., "id" for mutations that take an ID)
+  The resource ID source:
+  - In argument mode: The argument path (e.g., "id", "input.strategyID")
+  - In field mode: The field name on parent object (e.g., "strategyID")
   """
   resource: String!
 
@@ -271,27 +277,15 @@ directive @hasScope(
   scope: String!
 
   """
-  Optional resource type hint for O(1) lookup instead of sequential type detection.
-  If not provided, falls back to sequential lookup (Strategy -> Bot -> Exchange -> etc.)
+  Resource type for O(1) lookup. Required for proper permission checking.
   """
-  resourceType: ResourceType
-) on FIELD_DEFINITION
-
-"""
-Requires the user to have a specific permission scope on the parent node/object
-Uses Keycloak UMA 2.0 for node-level field authorization
-This directive inspects the parent object to get the resource ID and checks permission
-"""
-directive @requiresPermission(
-  """
-  The permission scope to check (e.g., "view", "view:code", "edit")
-  """
-  scope: String!
+  resourceType: ResourceType!
 
   """
-  The field name containing the resource ID in the parent object (defaults to "id")
+  If true, extract resource ID from parent object's field instead of arguments.
+  Use this for field-level permissions on types (e.g., Backtest.result checking Strategy permission)
   """
-  idField: String = "id"
+  fromParent: Boolean = false
 ) on FIELD_DEFINITION
 
 # Runner configuration inputs

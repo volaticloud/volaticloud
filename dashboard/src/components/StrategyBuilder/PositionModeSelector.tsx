@@ -72,25 +72,28 @@ export function PositionModeSelector({
       >
         {Object.entries(MODE_INFO).map(([mode, info]) => (
           <Tooltip key={mode} title={info.description} arrow>
-            <ToggleButton
-              value={mode}
-              sx={{
-                '&.Mui-selected': {
-                  backgroundColor: `${info.color}20`,
-                  borderColor: info.color,
-                  color: info.color,
-                  '&:hover': {
-                    backgroundColor: `${info.color}30`,
+            {/* span wrapper needed for Tooltip to work when button is disabled */}
+            <span>
+              <ToggleButton
+                value={mode}
+                sx={{
+                  '&.Mui-selected': {
+                    backgroundColor: `${info.color}20`,
+                    borderColor: info.color,
+                    color: info.color,
+                    '&:hover': {
+                      backgroundColor: `${info.color}30`,
+                    },
                   },
-                },
-                '& .MuiSvgIcon-root': {
-                  mr: 1,
-                },
-              }}
-            >
-              {info.icon}
-              {info.label}
-            </ToggleButton>
+                  '& .MuiSvgIcon-root': {
+                    mr: 1,
+                  },
+                }}
+              >
+                {info.icon}
+                {info.label}
+              </ToggleButton>
+            </span>
           </Tooltip>
         ))}
       </ToggleButtonGroup>
