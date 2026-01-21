@@ -158,114 +158,77 @@ func verifyResourcePermission(
 // These sync resource scopes to Keycloak when permission check fails
 // ============================================================================
 
-func trySyncStrategy(ctx context.Context, s *ent.Strategy, umaClient keycloak.UMAClientInterface) bool {
+// trySyncResource is a generic helper that syncs a resource's scopes to Keycloak.
+// It handles the common pattern of:
+// 1. Getting scopes for the resource type
+// 2. Building attributes with ownerId, type, and optionally public flag
+// 3. Calling SyncResourceScopes
+// 4. Logging success/failure
+//
+// Parameters:
+//   - resourceID: The unique identifier of the resource
+//   - resourceName: Human-readable name for the resource
+//   - resourceType: The type of resource (for scopes and attributes)
+//   - ownerID: The owner's ID (empty string for resources without owners like groups)
+//   - public: Whether the resource is public (only used for types that support public visibility)
+func trySyncResource(
+	ctx context.Context,
+	umaClient keycloak.UMAClientInterface,
+	resourceID, resourceName string,
+	resourceType authz.ResourceType,
+	ownerID string,
+	public *bool,
+) bool {
 	if umaClient == nil {
 		return false
 	}
 
-	resourceName := fmt.Sprintf("%s (v%d)", s.Name, s.VersionNumber)
-	scopes := authz.GetScopesForType(authz.ResourceTypeStrategy)
+	scopes := authz.GetScopesForType(resourceType)
 	attributes := map[string][]string{
-		"ownerId": {s.OwnerID},
-		"type":    {string(authz.ResourceTypeStrategy)},
-		"public":  {fmt.Sprintf("%t", s.Public)},
+		"type": {string(resourceType)},
 	}
 
-	err := umaClient.SyncResourceScopes(ctx, s.ID.String(), resourceName, scopes, attributes)
+	// Add ownerId for resources that have owners
+	if ownerID != "" {
+		attributes["ownerId"] = []string{ownerID}
+	}
+
+	// Add public flag for resources that support visibility
+	if public != nil {
+		attributes["public"] = []string{fmt.Sprintf("%t", *public)}
+	}
+
+	err := umaClient.SyncResourceScopes(ctx, resourceID, resourceName, scopes, attributes)
 	if err != nil {
-		log.Printf("Self-healing: failed to sync strategy %s scopes: %v", s.ID, err)
+		log.Printf("Self-healing: failed to sync %s %s scopes: %v", resourceType, resourceID, err)
 		return false
 	}
 
-	log.Printf("Self-healing: synced strategy %s scopes, retrying permission check", s.ID)
+	log.Printf("Self-healing: synced %s %s scopes, retrying permission check", resourceType, resourceID)
 	return true
+}
+
+func trySyncStrategy(ctx context.Context, s *ent.Strategy, umaClient keycloak.UMAClientInterface) bool {
+	resourceName := fmt.Sprintf("%s (v%d)", s.Name, s.VersionNumber)
+	return trySyncResource(ctx, umaClient, s.ID.String(), resourceName, authz.ResourceTypeStrategy, s.OwnerID, &s.Public)
 }
 
 func trySyncBot(ctx context.Context, b *ent.Bot, umaClient keycloak.UMAClientInterface) bool {
-	if umaClient == nil {
-		return false
-	}
-
-	scopes := authz.GetScopesForType(authz.ResourceTypeBot)
-	attributes := map[string][]string{
-		"ownerId": {b.OwnerID},
-		"type":    {string(authz.ResourceTypeBot)},
-		"public":  {fmt.Sprintf("%t", b.Public)},
-	}
-
-	err := umaClient.SyncResourceScopes(ctx, b.ID.String(), b.Name, scopes, attributes)
-	if err != nil {
-		log.Printf("Self-healing: failed to sync bot %s scopes: %v", b.ID, err)
-		return false
-	}
-
-	log.Printf("Self-healing: synced bot %s scopes, retrying permission check", b.ID)
-	return true
+	return trySyncResource(ctx, umaClient, b.ID.String(), b.Name, authz.ResourceTypeBot, b.OwnerID, &b.Public)
 }
 
 func trySyncExchange(ctx context.Context, e *ent.Exchange, umaClient keycloak.UMAClientInterface) bool {
-	if umaClient == nil {
-		return false
-	}
-
-	scopes := authz.GetScopesForType(authz.ResourceTypeExchange)
-	attributes := map[string][]string{
-		"ownerId": {e.OwnerID},
-		"type":    {string(authz.ResourceTypeExchange)},
-	}
-
-	err := umaClient.SyncResourceScopes(ctx, e.ID.String(), e.Name, scopes, attributes)
-	if err != nil {
-		log.Printf("Self-healing: failed to sync exchange %s scopes: %v", e.ID, err)
-		return false
-	}
-
-	log.Printf("Self-healing: synced exchange %s scopes, retrying permission check", e.ID)
-	return true
+	return trySyncResource(ctx, umaClient, e.ID.String(), e.Name, authz.ResourceTypeExchange, e.OwnerID, nil)
 }
 
 func trySyncBotRunner(ctx context.Context, r *ent.BotRunner, umaClient keycloak.UMAClientInterface) bool {
-	if umaClient == nil {
-		return false
-	}
-
-	scopes := authz.GetScopesForType(authz.ResourceTypeBotRunner)
-	attributes := map[string][]string{
-		"ownerId": {r.OwnerID},
-		"type":    {string(authz.ResourceTypeBotRunner)},
-		"public":  {fmt.Sprintf("%t", r.Public)},
-	}
-
-	err := umaClient.SyncResourceScopes(ctx, r.ID.String(), r.Name, scopes, attributes)
-	if err != nil {
-		log.Printf("Self-healing: failed to sync bot runner %s scopes: %v", r.ID, err)
-		return false
-	}
-
-	log.Printf("Self-healing: synced bot runner %s scopes, retrying permission check", r.ID)
-	return true
+	return trySyncResource(ctx, umaClient, r.ID.String(), r.Name, authz.ResourceTypeBotRunner, r.OwnerID, &r.Public)
 }
 
 func trySyncGroup(ctx context.Context, groupID string, umaClient keycloak.UMAClientInterface) bool {
-	if umaClient == nil {
-		return false
-	}
-
-	scopes := authz.GetScopesForType(authz.ResourceTypeGroup)
-	attributes := map[string][]string{
-		"type": {string(authz.ResourceTypeGroup)},
-	}
-
 	// For groups, we use the groupID as both the resource ID and name
 	// Groups are managed by Keycloak, so we only sync scopes (not create the resource)
-	err := umaClient.SyncResourceScopes(ctx, groupID, groupID, scopes, attributes)
-	if err != nil {
-		log.Printf("Self-healing: failed to sync group %s scopes: %v", groupID, err)
-		return false
-	}
-
-	log.Printf("Self-healing: synced group %s scopes, retrying permission check", groupID)
-	return true
+	return trySyncResource(ctx, umaClient, groupID, groupID, authz.ResourceTypeGroup, "", nil)
 }
 
 // HasScopeDirective checks if the user has a specific permission scope on a resource
