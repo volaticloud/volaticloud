@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +17,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateOrganizationMutation } from './organization.generated';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 interface CreateOrganizationDialogProps {
   open: boolean;
@@ -105,6 +107,27 @@ export function CreateOrganizationDialog({
     return validateId(effectiveId);
   }, [effectiveId]);
 
+  // Track if form has been modified
+  const hasChanges = useMemo(() => {
+    if (title !== '') return true;
+    if (customId !== '') return true;
+    return false;
+  }, [title, customId]);
+
+  // Clear form and close dialog
+  const clearAndClose = useCallback(() => {
+    setTitle('');
+    setCustomId('');
+    setShowAdvanced(false);
+    setError(null);
+    onClose();
+  }, [onClose]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose: clearAndClose,
+  });
+
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
     onCompleted: async () => {
       // Refresh token BEFORE closing dialog to ensure JWT has new organization claims
@@ -118,21 +141,13 @@ export function CreateOrganizationDialog({
         return;
       }
       // Token refreshed successfully, now close dialog and notify success
-      handleClose();
+      clearAndClose();
       onSuccess?.();
     },
     onError: (err) => {
       setError(err.message || 'Failed to create organization');
     },
   });
-
-  const handleClose = () => {
-    setTitle('');
-    setCustomId('');
-    setShowAdvanced(false);
-    setError(null);
-    onClose();
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,6 +181,7 @@ export function CreateOrganizationDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle>Create New Organization</DialogTitle>
@@ -242,5 +258,11 @@ export function CreateOrganizationDialog({
         </DialogActions>
       </form>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 }

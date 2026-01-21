@@ -33,7 +33,7 @@ import {
   Dashboard,
   Warning,
 } from '@mui/icons-material';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
 import { useGetBacktestQuery } from '../Backtests/backtests.generated';
@@ -46,6 +46,7 @@ import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/O
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
 import { StrategyStrategyBuilderMode } from '../../generated/types';
+import { useUnsavedChangesGuard } from '../../hooks';
 
 const StrategyStudio = () => {
   const { id } = useParams<{ id: string }>();
@@ -108,92 +109,17 @@ class MyStrategy(IStrategy):
     isCreateMode ? createDefaultUIBuilderConfig() : null
   );
   const [ejectDialogOpen, setEjectDialogOpen] = useState(false);
-  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
-  const pendingNavigationRef = useRef<string | null>(null);
-  const hasChangesRef = useRef(hasChanges);
 
-  // Keep ref in sync with state for use in event handlers
-  useEffect(() => {
-    hasChangesRef.current = hasChanges;
-  }, [hasChanges]);
-
-  // Block browser refresh/close when there are unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasChangesRef.current) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
-  /**
-   * Navigation Guard for Browser Back/Forward
-   *
-   * Uses history.replaceState to mark current entry, then intercepts popstate
-   * to show confirmation dialog when there are unsaved changes.
-   * Path is calculated fresh in the handler to avoid stale closure issues.
-   */
-  useEffect(() => {
-    // Only add guard state if not already present (prevents pollution on remounts)
-    const currentState = window.history.state;
-    if (!currentState?.preventBack) {
-      const initialPath = window.location.pathname + window.location.search;
-      window.history.replaceState({ preventBack: true, originalState: currentState }, '', initialPath);
-    }
-
-    const handlePopState = (event: PopStateEvent) => {
-      // Calculate current path fresh to avoid stale closure
-      const currentPath = window.location.pathname + window.location.search;
-
-      if (hasChangesRef.current) {
-        // Re-push state to prevent navigation (use replaceState to avoid history buildup)
-        window.history.replaceState({ preventBack: true }, '', currentPath);
-        // Show confirmation dialog
-        setLeaveDialogOpen(true);
-        pendingNavigationRef.current = 'back';
-      } else if (event.state?.preventBack) {
-        // No unsaved changes but we're on our guard state - allow normal back
-        window.history.back();
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
-
-  // Wrapped navigate function that checks for unsaved changes
-  const safeNavigate = useCallback((path: string) => {
-    if (hasChangesRef.current) {
-      pendingNavigationRef.current = path;
-      setLeaveDialogOpen(true);
-    } else {
-      navigate(path);
-    }
-  }, [navigate]);
-
-  // Handle confirmed navigation after dialog
-  const handleConfirmLeave = useCallback(() => {
-    setLeaveDialogOpen(false);
-    setHasChanges(false);
-    if (pendingNavigationRef.current === 'back') {
-      window.history.back(); // Go back (replaceState doesn't add extra entries)
-    } else if (pendingNavigationRef.current) {
-      navigate(pendingNavigationRef.current);
-    }
-    pendingNavigationRef.current = null;
-  }, [navigate]);
-
-  const handleCancelLeave = useCallback(() => {
-    setLeaveDialogOpen(false);
-    pendingNavigationRef.current = null;
-  }, []);
+  // Navigation guard - prevents accidental data loss
+  const {
+    safeNavigate,
+    dialogOpen: leaveDialogOpen,
+    cancelLeave,
+    confirmLeave,
+  } = useUnsavedChangesGuard({
+    hasChanges,
+    navigate,
+  });
 
   const { data, loading, error } = useGetStrategyForStudioQuery({
     variables: { id: id! },
@@ -804,7 +730,7 @@ class MyStrategy(IStrategy):
       </Dialog>
 
       {/* Leave confirmation dialog */}
-      <Dialog open={leaveDialogOpen} onClose={handleCancelLeave}>
+      <Dialog open={leaveDialogOpen} onClose={cancelLeave}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Warning color="warning" />
           Unsaved Changes
@@ -818,10 +744,8 @@ class MyStrategy(IStrategy):
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelLeave}>
-            Cancel
-          </Button>
-          <Button color="error" onClick={handleConfirmLeave}>
+          <Button onClick={cancelLeave}>Cancel</Button>
+          <Button color="error" onClick={() => { setHasChanges(false); confirmLeave(); }}>
             Discard Changes
           </Button>
           <Button
@@ -830,10 +754,11 @@ class MyStrategy(IStrategy):
               const success = await handleSave(false);
               if (success) {
                 // Save succeeded, proceed with navigation
-                handleConfirmLeave();
+                setHasChanges(false);
+                confirmLeave();
               } else {
                 // Save failed, close dialog but stay on page
-                setLeaveDialogOpen(false);
+                cancelLeave();
               }
             }}
           >

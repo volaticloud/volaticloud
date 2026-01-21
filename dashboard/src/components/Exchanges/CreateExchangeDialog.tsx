@@ -9,10 +9,12 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCreateExchangeMutation } from './exchanges.generated';
 import { JSONEditor } from '../JSONEditor';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 interface CreateExchangeDialogProps {
   open: boolean;
@@ -35,6 +37,18 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
   });
 
   const [createExchange, { loading, error }] = useCreateExchangeMutation();
+
+  // Track if form has been modified
+  const hasChanges = useMemo(() => {
+    if (name !== '') return true;
+    // For JSON editor, we can't easily track if user modified it, so check if they touched the name
+    return false;
+  }, [name]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
 
   const handleSubmit = async () => {
     if (!name || !config || !activeOrganizationId) {
@@ -78,7 +92,8 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Add Exchange</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '70vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
@@ -117,7 +132,7 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -127,5 +142,11 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

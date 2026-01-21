@@ -12,13 +12,15 @@ import {
   FormHelperText,
   Box,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCreateBotMutation } from './bots.generated';
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { RunnerSelector } from '../shared/RunnerSelector';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 // Query to get available exchanges and strategies filtered by owner
 // (Runners are fetched by RunnerSelector component)
@@ -113,6 +115,22 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
   });
   const [createBot, { loading, error }] = useCreateBotMutation();
 
+  // Track if form has been modified
+  const hasChanges = useMemo(() => {
+    if (name !== '') return true;
+    if (exchangeID !== '') return true;
+    if (strategyID !== '') return true;
+    if (runnerID !== '') return true;
+    if (mode !== 'dry_run') return true;
+    // Config changes are harder to detect, but if user modified JSON editor, consider it changed
+    return false;
+  }, [name, exchangeID, strategyID, runnerID, mode]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
+
   const handleSubmit = async () => {
     if (!name || !exchangeID || !strategyID || !runnerID || !activeOrganizationId) {
       return;
@@ -158,7 +176,8 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
   const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>Create New Bot</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -249,7 +268,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -259,5 +278,11 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

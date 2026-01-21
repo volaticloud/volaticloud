@@ -7,3 +7,5 @@ export { usePermissions } from './usePermissions';
 export { useCanPerform } from './useCanPerform';
 export { useOrganizationPermission } from './useOrganizationPermission';
 export { useCursorPagination } from './useCursorPagination';
+export { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+export { useDialogUnsavedChanges } from './useDialogUnsavedChanges';

@@ -23,10 +23,12 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUpdateRunnerMutation, useTestRunnerConnectionMutation, useTestS3ConnectionMutation } from './runners.generated';
 import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput, S3ConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 interface BillingConfig {
   billingEnabled: boolean;
@@ -88,6 +90,68 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
 
   // Test connection state
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Track if form has been modified from original runner values
+  const hasChanges = useMemo(() => {
+    if (name !== runner.name) return true;
+    if (type !== runner.type) return true;
+
+    // Compare config based on type
+    const originalConfig = runner.config || {};
+    if (type === 'docker') {
+      const orig = originalConfig.docker || {};
+      if (dockerConfig.host !== (orig.host || 'unix:///var/run/docker.sock')) return true;
+      if (dockerConfig.tlsVerify !== (orig.tlsVerify ?? false)) return true;
+      if (dockerConfig.certPEM !== orig.certPEM) return true;
+      if (dockerConfig.keyPEM !== orig.keyPEM) return true;
+      if (dockerConfig.caPEM !== orig.caPEM) return true;
+      if (dockerConfig.apiVersion !== orig.apiVersion) return true;
+      if (dockerConfig.network !== orig.network) return true;
+    } else if (type === 'kubernetes') {
+      const orig = originalConfig.kubernetes || {};
+      if (kubernetesConfig.namespace !== (orig.namespace || 'volaticloud')) return true;
+      if (kubernetesConfig.kubeconfig !== orig.kubeconfig) return true;
+      if (kubernetesConfig.context !== orig.context) return true;
+      if (kubernetesConfig.freqtradeImage !== orig.freqtradeImage) return true;
+      if (kubernetesConfig.ingressHost !== orig.ingressHost) return true;
+      if (kubernetesConfig.ingressClass !== orig.ingressClass) return true;
+      if ((kubernetesConfig.ingressTls ?? false) !== (orig.ingressTls ?? false)) return true;
+      if (kubernetesConfig.prometheusUrl !== orig.prometheusUrl) return true;
+    } else if (type === 'local') {
+      const orig = originalConfig.local || {};
+      if (localConfig.basePath !== orig.basePath) return true;
+    }
+
+    // Compare data download config
+    if (JSON.stringify(dataDownloadConfig) !== JSON.stringify(runner.dataDownloadConfig || null)) return true;
+
+    // Compare S3 config
+    const hasOriginalS3 = !!runner.s3Config;
+    if (s3Enabled !== hasOriginalS3) return true;
+    if (s3Enabled && runner.s3Config) {
+      if (s3Config.endpoint !== (runner.s3Config.endpoint || '')) return true;
+      if (s3Config.bucket !== (runner.s3Config.bucket || '')) return true;
+      if (s3Config.accessKeyId !== (runner.s3Config.accessKeyId || '')) return true;
+      if (s3Config.secretAccessKey !== (runner.s3Config.secretAccessKey || '')) return true;
+      if (s3Config.region !== (runner.s3Config.region || 'us-east-1')) return true;
+      if (s3Config.forcePathStyle !== (runner.s3Config.forcePathStyle ?? true)) return true;
+      if (s3Config.useSSL !== (runner.s3Config.useSSL ?? true)) return true;
+    }
+
+    // Compare billing config
+    if (billingConfig.billingEnabled !== (runner.billingEnabled ?? false)) return true;
+    if (billingConfig.cpuPricePerCoreHour !== (runner.cpuPricePerCoreHour ?? null)) return true;
+    if (billingConfig.memoryPricePerGBHour !== (runner.memoryPricePerGBHour ?? null)) return true;
+    if (billingConfig.networkPricePerGB !== (runner.networkPricePerGB ?? null)) return true;
+    if (billingConfig.storagePricePerGB !== (runner.storagePricePerGB ?? null)) return true;
+
+    return false;
+  }, [name, type, dockerConfig, kubernetesConfig, localConfig, dataDownloadConfig, s3Enabled, s3Config, billingConfig, runner]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
 
   const [updateRunner, { loading, error }] = useUpdateRunnerMutation({
     refetchQueries: ['GetRunners'],
@@ -263,7 +327,8 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Edit Runner</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '70vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -718,7 +783,7 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleTestConnection}
           disabled={testLoading || loading}
@@ -735,5 +800,11 @@ export const EditRunnerDialog = ({ open, onClose, onSuccess, runner }: EditRunne
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };
