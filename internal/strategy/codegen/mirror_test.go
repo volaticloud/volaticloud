@@ -336,9 +336,9 @@ func TestApplyMirrorConfig_NilMirrorConfig(t *testing.T) {
 func TestApplyMirrorConfig_NilSourceConditions(t *testing.T) {
 	// Test that mirroring returns error when source direction has no conditions
 	tests := []struct {
-		name     string
-		config   *UIBuilderConfig
-		wantErr  string
+		name    string
+		config  *UIBuilderConfig
+		wantErr string
 	}{
 		{
 			name: "LONG source with nil Long",
