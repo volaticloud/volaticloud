@@ -1,12 +1,10 @@
-import { Box, CircularProgress, Alert, ToggleButtonGroup, ToggleButton } from '@mui/material';
-import Form from '@rjsf/mui';
-import validator from '@rjsf/validator-ajv8';
-import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import { Box, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { useState } from 'react';
-import { useFreqtradeSchema } from '../../hooks/useFreqtradeSchema';
 import { JSONEditor } from '../JSONEditor';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import CodeIcon from '@mui/icons-material/Code';
+import { StructuredConfigForm } from './StructuredConfigForm';
+import { FreqtradeConfig, mergeWithDefaults } from './defaultConfig';
 
 interface FreqtradeConfigFormProps {
   value: object | null;
@@ -14,21 +12,18 @@ interface FreqtradeConfigFormProps {
   onSubmit?: (config: object) => void;
   hideSubmitButton?: boolean;
   submitButtonText?: string;
-  uiSchema?: UiSchema;
+  readOnly?: boolean;
 }
 
 /**
  * Reusable Freqtrade configuration form component
  *
- * Uses React JSON Schema Form with Material-UI theme to render
- * a dynamic form based on the official Freqtrade JSON schema.
+ * Provides two editing modes:
+ * - Form mode (default): Structured form with grouped sections for common settings
+ * - JSON mode: Full JSON editor for advanced configuration
  *
- * Features:
- * - Auto-fetches and caches Freqtrade schema
- * - Auto-generates form fields from schema
- * - Auto-generates default values
- * - Client-side validation
- * - Material-UI themed
+ * The form automatically applies sensible defaults for all mandatory Freqtrade
+ * fields, allowing strategies to run backtests without manual configuration.
  *
  * @example
  * ```tsx
@@ -37,71 +32,24 @@ interface FreqtradeConfigFormProps {
  * <FreqtradeConfigForm
  *   value={config}
  *   onChange={setConfig}
- *   onSubmit={(config) => console.log('Submit:', config)}
  * />
  * ```
  */
 export function FreqtradeConfigForm({
   value,
   onChange,
-  onSubmit,
-  hideSubmitButton = false,
-  submitButtonText = 'Generate Config',
-  uiSchema,
+  readOnly = false,
 }: FreqtradeConfigFormProps) {
-  const { schema, loading, error } = useFreqtradeSchema();
-  const [mode, setMode] = useState<'form' | 'json'>('json');
+  // Default to form mode for better UX
+  const [mode, setMode] = useState<'form' | 'json'>('form');
 
-  // Show loading state while fetching schema
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Merge incoming value with defaults to ensure all mandatory fields are present
+  const configWithDefaults = mergeWithDefaults(value as Partial<FreqtradeConfig> | null);
 
-  // Show error if schema fetch failed
-  if (error) {
-    return (
-      <Alert severity="error">
-        Failed to load Freqtrade schema: {error.message}
-      </Alert>
-    );
-  }
-
-  // Schema not loaded yet
-  if (!schema) {
-    return null;
-  }
-
-  // Default UI Schema with better UX
-  const defaultUiSchema: UiSchema = {
-    'ui:submitButtonOptions': {
-      submitText: submitButtonText,
-      norender: hideSubmitButton,
-      props: {
-        variant: 'contained',
-        color: 'primary',
-      },
-    },
-    // Collapse long sections by default
-    exchange: {
-      'ui:collapsed': false,
-    },
-    entry_pricing: {
-      'ui:collapsed': false,
-    },
-    exit_pricing: {
-      'ui:collapsed': false,
-    },
-    pairlists: {
-      'ui:collapsed': false,
-    },
-    max_open_trades: {
-       'ui:title': "Max Open Trades"
-    },
-    ...uiSchema,
+  const handleChange = (newValue: FreqtradeConfig | object | null) => {
+    if (newValue) {
+      onChange(newValue);
+    }
   };
 
   return (
@@ -128,46 +76,44 @@ export function FreqtradeConfigForm({
         </ToggleButtonGroup>
       </Box>
 
-      {/* Form Mode */}
+      {/* Form Mode - Structured fields */}
       {mode === 'form' && (
-        <Box sx={{ '& .MuiFormControl-root': { my: 1 } }}>
-          <Form
-            schema={schema as RJSFSchema}
-            uiSchema={defaultUiSchema}
-            formData={value || undefined}
-            validator={validator}
-            onChange={(e) => {
-              if (e.formData) {
-                onChange(e.formData);
-              }
-            }}
-            onSubmit={(e) => {
-              if (onSubmit && e.formData) {
-                onSubmit(e.formData);
-              }
-            }}
-            showErrorList={false}
-          >
-            {hideSubmitButton && <Box />}
-          </Form>
-        </Box>
+        <StructuredConfigForm
+          value={configWithDefaults}
+          onChange={handleChange}
+          readOnly={readOnly}
+        />
       )}
 
-      {/* JSON Mode */}
+      {/* JSON Mode - Full editor */}
       {mode === 'json' && (
         <JSONEditor
-          value={value}
+          value={configWithDefaults}
           onChange={(newValue) => {
             if (newValue) {
-              onChange(newValue);
+              handleChange(newValue);
             }
           }}
           height="500px"
           placeholder={`{
   "stake_currency": "USDT",
-  "stake_amount": 100,
+  "stake_amount": 10,
   "max_open_trades": 3,
-  "timeframe": "5m"
+  "timeframe": "5m",
+  "entry_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "exit_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "stoploss": -0.10,
+  "minimal_roi": {
+    "0": 0.1
+  }
 }`}
         />
       )}

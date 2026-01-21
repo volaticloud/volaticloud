@@ -196,6 +196,18 @@ type MemberUser struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+// Configuration for auto-mirroring signals from one direction to another
+type MirrorConfigInput struct {
+	// Whether mirroring is enabled
+	Enabled bool `json:"enabled"`
+	// Source direction to mirror from (e.g., LONG to auto-generate SHORT)
+	Source StrategySignalDirection `json:"source"`
+	// Invert comparison operators (gt becomes lt, gte becomes lte, etc.)
+	InvertComparisons bool `json:"invertComparisons"`
+	// Convert CROSSOVER to CROSSUNDER and vice versa
+	InvertCrossovers bool `json:"invertCrossovers"`
+}
+
 // Response from invitation operations
 type OrganizationInvitation struct {
 	// Invitation ID (UUID)
@@ -427,6 +439,14 @@ type S3ConfigInput struct {
 type SelectOption struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
+}
+
+// Signal configuration for a single direction (entry and exit conditions)
+type SignalConfigInput struct {
+	// Conditions that must be true to enter a position
+	EntryConditions map[string]any `json:"entryConditions"`
+	// Conditions that must be true to exit a position
+	ExitConditions map[string]any `json:"exitConditions"`
 }
 
 // Estimated cost breakdown for resource usage
@@ -962,6 +982,67 @@ func (e OperandType) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Position mode for the strategy - determines which signals are generated
+type PositionMode string
+
+const (
+	// Only generate long entry/exit signals (default for backwards compatibility)
+	PositionModeLongOnly PositionMode = "LONG_ONLY"
+	// Only generate short entry/exit signals
+	PositionModeShortOnly PositionMode = "SHORT_ONLY"
+	// Generate both long and short entry/exit signals
+	PositionModeLongAndShort PositionMode = "LONG_AND_SHORT"
+)
+
+var AllPositionMode = []PositionMode{
+	PositionModeLongOnly,
+	PositionModeShortOnly,
+	PositionModeLongAndShort,
+}
+
+func (e PositionMode) IsValid() bool {
+	switch e {
+	case PositionModeLongOnly, PositionModeShortOnly, PositionModeLongAndShort:
+		return true
+	}
+	return false
+}
+
+func (e PositionMode) String() string {
+	return string(e)
+}
+
+func (e *PositionMode) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PositionMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PositionMode", str)
+	}
+	return nil
+}
+
+func (e PositionMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PositionMode) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PositionMode) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Price field options for PRICE operands
 type PriceField string
 
@@ -1210,6 +1291,65 @@ func (e *ResourceType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ResourceType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Direction for signal configuration in strategy builder
+// Named StrategySignalDirection to avoid collision with freqtrade.SignalDirection
+type StrategySignalDirection string
+
+const (
+	// Long position direction (buy low, sell high)
+	StrategySignalDirectionLong StrategySignalDirection = "LONG"
+	// Short position direction (sell high, buy low)
+	StrategySignalDirectionShort StrategySignalDirection = "SHORT"
+)
+
+var AllStrategySignalDirection = []StrategySignalDirection{
+	StrategySignalDirectionLong,
+	StrategySignalDirectionShort,
+}
+
+func (e StrategySignalDirection) IsValid() bool {
+	switch e {
+	case StrategySignalDirectionLong, StrategySignalDirectionShort:
+		return true
+	}
+	return false
+}
+
+func (e StrategySignalDirection) String() string {
+	return string(e)
+}
+
+func (e *StrategySignalDirection) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StrategySignalDirection(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StrategySignalDirection", str)
+	}
+	return nil
+}
+
+func (e StrategySignalDirection) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StrategySignalDirection) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StrategySignalDirection) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -288,11 +288,12 @@ describe('Strategy Builder Types', () => {
     it('creates a valid default config', () => {
       const config = createDefaultUIBuilderConfig();
 
-      expect(config.version).toBe(1);
-      expect(config.schema_version).toBe('1.0.0');
+      expect(config.version).toBe(2);
+      expect(config.schema_version).toBe('2.0.0');
       expect(config.indicators).toEqual([]);
-      expect(config.entry_conditions.type).toBe('AND');
-      expect(config.exit_conditions.type).toBe('AND');
+      expect(config.position_mode).toBe('LONG_ONLY');
+      expect(config.long?.entry_conditions.type).toBe('AND');
+      expect(config.long?.exit_conditions.type).toBe('AND');
     });
 
     it('creates config with correct default parameters', () => {
@@ -318,8 +319,8 @@ describe('Strategy Builder Types', () => {
       const config1 = createDefaultUIBuilderConfig();
       const config2 = createDefaultUIBuilderConfig();
 
-      expect(config1.entry_conditions.id).not.toBe(config2.entry_conditions.id);
-      expect(config1.exit_conditions.id).not.toBe(config2.exit_conditions.id);
+      expect(config1.long?.entry_conditions.id).not.toBe(config2.long?.entry_conditions.id);
+      expect(config1.long?.exit_conditions.id).not.toBe(config2.long?.exit_conditions.id);
     });
   });
 

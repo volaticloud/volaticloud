@@ -23,6 +23,8 @@ export {
   PriceField,
   TradeContextField,
   TimeField,
+  PositionMode,
+  StrategySignalDirection,
 } from '../../generated/types';
 
 // Import for local use (need runtime values for OPERATOR_LABELS/OPERATOR_SYMBOLS)
@@ -33,6 +35,8 @@ import {
   ComparisonOperator,
   ComputedOperation,
   IndicatorType,
+  PositionMode,
+  StrategySignalDirection,
 } from '../../generated/types';
 
 // Type alias for backward compatibility
@@ -340,17 +344,52 @@ export interface StrategyParameters {
 }
 
 // ============================================================================
+// Long/Short Signal Support
+// ============================================================================
+
+/**
+ * Signal configuration for a single direction (entry and exit conditions)
+ */
+export interface SignalConfig {
+  entry_conditions: ConditionNode;
+  exit_conditions: ConditionNode;
+}
+
+/**
+ * Configuration for auto-mirroring signals from one direction to another
+ */
+export interface MirrorConfig {
+  enabled: boolean;
+  source: StrategySignalDirection;
+  invert_comparisons: boolean;
+  invert_crossovers: boolean;
+}
+
+// ============================================================================
 // UI Builder Config
 // ============================================================================
 
+/**
+ * UI Builder configuration (v2 with nested signal config)
+ * For backwards compatibility, version 1 fields are also supported
+ */
 export interface UIBuilderConfig {
   version: number;
   schema_version?: string;
   indicators: IndicatorDefinition[];
-  entry_conditions: ConditionNode;
-  exit_conditions: ConditionNode;
   parameters: StrategyParameters;
   callbacks: CallbacksConfig;
+
+  // Version 2 fields (nested signal config)
+  position_mode?: PositionMode;
+  long?: SignalConfig;
+  short?: SignalConfig;
+  mirror_config?: MirrorConfig;
+
+  // Version 1 fields (deprecated, kept for backwards compatibility)
+  // These are migrated to long.entry_conditions/exit_conditions during normalization
+  entry_conditions?: ConditionNode;
+  exit_conditions?: ConditionNode;
 }
 
 // ============================================================================
@@ -459,14 +498,17 @@ export function createCrossunderNode(series1: Operand, series2: Operand): Crossu
   };
 }
 
-// Default empty UI builder config
+// Default empty UI builder config (v2 format with nested signal config)
 export function createDefaultUIBuilderConfig(): UIBuilderConfig {
   return {
-    version: 1,
-    schema_version: '1.0.0',
+    version: 2,
+    schema_version: '2.0.0',
     indicators: [],
-    entry_conditions: createAndNode([]),
-    exit_conditions: createAndNode([]),
+    position_mode: PositionMode.LongOnly,
+    long: {
+      entry_conditions: createAndNode([]),
+      exit_conditions: createAndNode([]),
+    },
     parameters: {
       stoploss: -0.10,
       minimal_roi: { '0': 0.10, '30': 0.05, '60': 0.02 },
@@ -475,6 +517,70 @@ export function createDefaultUIBuilderConfig(): UIBuilderConfig {
     },
     callbacks: {},
   };
+}
+
+// Default mirror configuration
+export function createDefaultMirrorConfig(): MirrorConfig {
+  return {
+    enabled: false,
+    source: StrategySignalDirection.Long,
+    invert_comparisons: true,
+    invert_crossovers: true,
+  };
+}
+
+// Default signal configuration
+export function createDefaultSignalConfig(): SignalConfig {
+  return {
+    entry_conditions: createAndNode([]),
+    exit_conditions: createAndNode([]),
+  };
+}
+
+/**
+ * Normalize v1 config to v2 format for backwards compatibility
+ * This ensures all configs work with the new UI structure
+ */
+export function normalizeUIBuilderConfig(config: UIBuilderConfig): UIBuilderConfig {
+  // Already v2 format
+  if (config.long || config.short) {
+    return {
+      ...config,
+      position_mode: config.position_mode || PositionMode.LongOnly,
+    };
+  }
+
+  // Migrate v1 → v2
+  const normalized: UIBuilderConfig = {
+    ...config,
+    version: 2,
+    position_mode: PositionMode.LongOnly,
+    long: {
+      entry_conditions: config.entry_conditions || createAndNode([]),
+      exit_conditions: config.exit_conditions || createAndNode([]),
+    },
+    // Clear deprecated fields
+    entry_conditions: undefined,
+    exit_conditions: undefined,
+  };
+
+  return normalized;
+}
+
+/**
+ * Check if long signals should be generated based on position mode
+ */
+export function shouldGenerateLongSignals(config: UIBuilderConfig): boolean {
+  const mode = config.position_mode || PositionMode.LongOnly;
+  return mode === PositionMode.LongOnly || mode === PositionMode.LongAndShort;
+}
+
+/**
+ * Check if short signals should be generated based on position mode
+ */
+export function shouldGenerateShortSignals(config: UIBuilderConfig): boolean {
+  const mode = config.position_mode || PositionMode.LongOnly;
+  return mode === PositionMode.ShortOnly || mode === PositionMode.LongAndShort;
 }
 
 // Type guards
@@ -516,4 +622,147 @@ export function isLogicalNode(node: ConditionNode): node is AndNode | OrNode {
 
 export function hasChildren(node: ConditionNode): node is AndNode | OrNode {
   return isLogicalNode(node);
+}
+
+// ============================================================================
+// Mirror/Inversion Logic (for UI display of mirrored signals)
+// ============================================================================
+
+/**
+ * Invert a comparison operator
+ */
+function invertOperator(op: ComparisonOperator): ComparisonOperator {
+  switch (op) {
+    case ComparisonOperator.Gt:
+      return ComparisonOperator.Lt;
+    case ComparisonOperator.Gte:
+      return ComparisonOperator.Lte;
+    case ComparisonOperator.Lt:
+      return ComparisonOperator.Gt;
+    case ComparisonOperator.Lte:
+      return ComparisonOperator.Gte;
+    // eq, neq, in, not_in stay the same
+    default:
+      return op;
+  }
+}
+
+/**
+ * Recursively invert a condition node based on mirror config
+ */
+function invertConditionNode(
+  node: ConditionNode,
+  invertComparisons: boolean,
+  invertCrossovers: boolean
+): ConditionNode {
+  // Handle AND/OR nodes - recurse into children
+  if (isAndNode(node) || isOrNode(node)) {
+    return {
+      ...node,
+      children: node.children.map((child) =>
+        invertConditionNode(child, invertComparisons, invertCrossovers)
+      ),
+    } as AndNode | OrNode;
+  }
+
+  // Handle NOT node - recurse into child
+  if (isNotNode(node)) {
+    return {
+      ...node,
+      child: invertConditionNode(node.child, invertComparisons, invertCrossovers),
+    } as NotNode;
+  }
+
+  // Handle COMPARE node - invert operator
+  if (isCompareNode(node) && invertComparisons) {
+    return {
+      ...node,
+      operator: invertOperator(node.operator),
+    } as CompareNode;
+  }
+
+  // Handle CROSSOVER/CROSSUNDER - swap types
+  if (isCrossoverNode(node) && invertCrossovers) {
+    return {
+      ...node,
+      type: 'CROSSUNDER',
+    } as CrossunderNode;
+  }
+
+  if (isCrossunderNode(node) && invertCrossovers) {
+    return {
+      ...node,
+      type: 'CROSSOVER',
+    } as CrossoverNode;
+  }
+
+  // Handle IF_THEN_ELSE - recurse into condition, then, else
+  if (isIfThenElseNode(node)) {
+    return {
+      ...node,
+      condition: invertConditionNode(node.condition, invertComparisons, invertCrossovers),
+      then: invertConditionNode(node.then, invertComparisons, invertCrossovers),
+      else: node.else
+        ? invertConditionNode(node.else, invertComparisons, invertCrossovers)
+        : undefined,
+    } as IfThenElseNode;
+  }
+
+  // IN_RANGE and other nodes - return as-is
+  return node;
+}
+
+/**
+ * Apply mirror config to compute the mirrored signal config for UI display
+ */
+export function applyMirrorConfig(config: UIBuilderConfig): UIBuilderConfig {
+  if (!config.mirror_config?.enabled) {
+    return config;
+  }
+
+  const mc = config.mirror_config;
+  const invertComparisons = mc.invert_comparisons ?? true;
+  const invertCrossovers = mc.invert_crossovers ?? true;
+
+  // Mirror Long → Short
+  if (mc.source === StrategySignalDirection.Long && config.long) {
+    const mirroredShort: SignalConfig = {
+      entry_conditions: invertConditionNode(
+        config.long.entry_conditions,
+        invertComparisons,
+        invertCrossovers
+      ),
+      exit_conditions: invertConditionNode(
+        config.long.exit_conditions,
+        invertComparisons,
+        invertCrossovers
+      ),
+    };
+    return {
+      ...config,
+      short: mirroredShort,
+    };
+  }
+
+  // Mirror Short → Long
+  if (mc.source === StrategySignalDirection.Short && config.short) {
+    const mirroredLong: SignalConfig = {
+      entry_conditions: invertConditionNode(
+        config.short.entry_conditions,
+        invertComparisons,
+        invertCrossovers
+      ),
+      exit_conditions: invertConditionNode(
+        config.short.exit_conditions,
+        invertComparisons,
+        invertCrossovers
+      ),
+    };
+    return {
+      ...config,
+      long: mirroredLong,
+    };
+  }
+
+  return config;
 }

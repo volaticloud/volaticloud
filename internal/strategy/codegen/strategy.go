@@ -17,8 +17,46 @@ const (
 func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className string, timeframe string) (string, error) {
 	g.ResetImports()
 
+	// Normalize v1 → v2 config format
+	config = NormalizeUIBuilderConfig(config)
+
+	// Apply mirror config if enabled
+	config, err := ApplyMirrorConfig(config)
+	if err != nil {
+		return "", fmt.Errorf("failed to apply mirror config: %w", err)
+	}
+
 	// Set indicators for reference during generation
 	g.SetIndicators(config.Indicators)
+
+	// Determine which signals to generate
+	generateLong := ShouldGenerateLongSignals(config)
+	generateShort := ShouldGenerateShortSignals(config)
+
+	// Pre-generate conditions to determine required imports
+	var longEntryCode, longExitCode, shortEntryCode, shortExitCode string
+
+	if generateLong && config.Long != nil {
+		longEntryCode, err = g.GenerateCondition(&config.Long.EntryConditions)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate long entry conditions: %w", err)
+		}
+		longExitCode, err = g.GenerateCondition(&config.Long.ExitConditions)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate long exit conditions: %w", err)
+		}
+	}
+
+	if generateShort && config.Short != nil {
+		shortEntryCode, err = g.GenerateCondition(&config.Short.EntryConditions)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate short entry conditions: %w", err)
+		}
+		shortExitCode, err = g.GenerateCondition(&config.Short.ExitConditions)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate short exit conditions: %w", err)
+		}
+	}
 
 	var sb strings.Builder
 
@@ -30,17 +68,6 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 	sb.WriteString("from freqtrade.strategy import IStrategy, IntParameter, DecimalParameter\n")
 	sb.WriteString("from pandas import DataFrame\n")
 	sb.WriteString("import talib.abstract as ta\n")
-
-	// Generate entry/exit conditions to determine required imports
-	entryCode, err := g.GenerateCondition(&config.EntryConditions)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate entry conditions: %w", err)
-	}
-
-	exitCode, err := g.GenerateCondition(&config.ExitConditions)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate exit conditions: %w", err)
-	}
 
 	// Add required imports based on what was used
 	if g.imports["numpy"] {
@@ -61,6 +88,11 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 
 	// Generate strategy properties
 	sb.WriteString(fmt.Sprintf("    timeframe = '%s'\n\n", timeframe))
+
+	// Enable shorting if short signals are generated
+	if generateShort {
+		sb.WriteString("    can_short = True\n\n")
+	}
 
 	// Generate minimal_roi
 	if len(config.Parameters.MinimalROI) > 0 {
@@ -107,12 +139,22 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 
 	// Generate populate_entry_trend
 	sb.WriteString("    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n")
-	sb.WriteString(fmt.Sprintf("        dataframe['enter_long'] = (\n            %s\n        ).astype(int)\n", entryCode))
+	if generateLong && longEntryCode != "" {
+		sb.WriteString(fmt.Sprintf("        dataframe['enter_long'] = (\n            %s\n        ).astype(int)\n", longEntryCode))
+	}
+	if generateShort && shortEntryCode != "" {
+		sb.WriteString(fmt.Sprintf("        dataframe['enter_short'] = (\n            %s\n        ).astype(int)\n", shortEntryCode))
+	}
 	sb.WriteString("        return dataframe\n\n")
 
 	// Generate populate_exit_trend
 	sb.WriteString("    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:\n")
-	sb.WriteString(fmt.Sprintf("        dataframe['exit_long'] = (\n            %s\n        ).astype(int)\n", exitCode))
+	if generateLong && longExitCode != "" {
+		sb.WriteString(fmt.Sprintf("        dataframe['exit_long'] = (\n            %s\n        ).astype(int)\n", longExitCode))
+	}
+	if generateShort && shortExitCode != "" {
+		sb.WriteString(fmt.Sprintf("        dataframe['exit_short'] = (\n            %s\n        ).astype(int)\n", shortExitCode))
+	}
 	sb.WriteString("        return dataframe\n")
 
 	// Generate callbacks if enabled

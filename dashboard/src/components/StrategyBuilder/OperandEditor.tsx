@@ -86,6 +86,8 @@ interface OperandEditorProps {
   indicators: IndicatorDefinition[];
   showTradeContext?: boolean;
   label?: string;
+  /** When true, all editing is disabled (used for mirrored signals) */
+  readOnly?: boolean;
 }
 
 export function OperandEditor({
@@ -94,6 +96,7 @@ export function OperandEditor({
   indicators,
   showTradeContext = false,
   label,
+  readOnly = false,
 }: OperandEditorProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
@@ -145,6 +148,7 @@ export function OperandEditor({
             }
             size="small"
             sx={{ width: 100 }}
+            disabled={readOnly}
             slotProps={{
               htmlInput: { step: 'any' }
             }}
@@ -159,7 +163,7 @@ export function OperandEditor({
 
         return (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ minWidth: 120 }} disabled={readOnly}>
               <InputLabel>Indicator</InputLabel>
               <Select
                 value={indOp.indicatorId}
@@ -180,7 +184,7 @@ export function OperandEditor({
             </FormControl>
 
             {meta && meta.outputs.length > 1 && (
-              <FormControl size="small" sx={{ minWidth: 100 }}>
+              <FormControl size="small" sx={{ minWidth: 100 }} disabled={readOnly}>
                 <InputLabel>Output</InputLabel>
                 <Select
                   value={indOp.field || ''}
@@ -210,6 +214,7 @@ export function OperandEditor({
               size="small"
               sx={{ width: 80 }}
               label="Offset"
+              disabled={readOnly}
               slotProps={{
                 htmlInput: { min: 0, max: 100 }
               }}
@@ -222,7 +227,7 @@ export function OperandEditor({
         const priceOp = value as PriceOperand;
         return (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
+            <FormControl size="small" sx={{ minWidth: 100 }} disabled={readOnly}>
               <InputLabel>Price</InputLabel>
               <Select
                 value={priceOp.field}
@@ -248,6 +253,7 @@ export function OperandEditor({
               size="small"
               sx={{ width: 80 }}
               label="Offset"
+              disabled={readOnly}
               slotProps={{
                 htmlInput: { min: 0, max: 100 }
               }}
@@ -259,7 +265,7 @@ export function OperandEditor({
       case OperandType.TradeContext: {
         const tradeOp = value as TradeContextOperand;
         return (
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }} disabled={readOnly}>
             <InputLabel>Trade Field</InputLabel>
             <Select
               value={tradeOp.field}
@@ -284,7 +290,7 @@ export function OperandEditor({
       case OperandType.Time: {
         const timeOp = value as TimeOperand;
         return (
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }} disabled={readOnly}>
             <InputLabel>Time Field</InputLabel>
             <Select
               value={timeOp.field}
@@ -329,8 +335,9 @@ export function OperandEditor({
         label={value.type.replace('_', ' ')}
         size="small"
         variant="outlined"
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-        sx={{ cursor: 'pointer' }}
+        onClick={readOnly ? undefined : (e) => setAnchorEl(e.currentTarget)}
+        sx={{ cursor: readOnly ? 'default' : 'pointer' }}
+        disabled={readOnly}
       />
 
       {/* Value editor */}
