@@ -779,9 +779,9 @@ func TestHasScopeDirective_CrossResourcePermission(t *testing.T) {
 			ctx,
 			backtest,
 			mockResolver,
-			"strategyID",                // Extract strategyID from Backtest object
-			"view",                      // Check view permission
-			model.ResourceTypeStrategy,  // On the Strategy resource
+			"strategyID",               // Extract strategyID from Backtest object
+			"view",                     // Check view permission
+			model.ResourceTypeStrategy, // On the Strategy resource
 			&fromParent,
 		)
 
@@ -965,7 +965,7 @@ func TestExtractResourceID_CustomFields(t *testing.T) {
 				Name:    "TestStrategy",
 				OwnerID: "group-owner-123",
 			},
-			fieldName: "ownerID", // Ignored by fast path
+			fieldName: "ownerID",           // Ignored by fast path
 			wantID:    strategyID.String(), // Always returns ID
 			wantErr:   false,
 		},
@@ -976,7 +976,7 @@ func TestExtractResourceID_CustomFields(t *testing.T) {
 				Name:    "TestBot",
 				OwnerID: "group-owner-456",
 			},
-			fieldName: "ownerID", // Ignored by fast path
+			fieldName: "ownerID",           // Ignored by fast path
 			wantID:    backtestID.String(), // Always returns ID
 			wantErr:   false,
 		},

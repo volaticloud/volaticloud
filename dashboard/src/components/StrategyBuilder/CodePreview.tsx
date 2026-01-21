@@ -117,6 +117,7 @@ export function CodePreview({
               size="small"
               onClick={handleCopy}
               disabled={!generatedCode}
+              aria-label="Copy code"
             >
               <ContentCopy fontSize="small" />
             </IconButton>
@@ -128,6 +129,7 @@ export function CodePreview({
               size="small"
               onClick={generatePreview}
               disabled={loading}
+              aria-label="Regenerate preview"
             >
               {loading ? <CircularProgress size={18} /> : <Refresh fontSize="small" />}
             </IconButton>
