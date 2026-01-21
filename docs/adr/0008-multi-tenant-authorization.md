@@ -757,6 +757,7 @@ field.JSON("result", map[string]interface{}{}).
 ```
 
 This pattern:
+
 1. Extracts `strategyID` from the Backtest parent object
 2. Checks `view` permission on the Strategy (not Backtest)
 3. Avoids "backtest not found" errors since we never look up Backtest as a UMA resource
