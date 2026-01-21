@@ -22,28 +22,30 @@ interface CreateExchangeDialogProps {
   onSuccess: () => void;
 }
 
+const DEFAULT_EXCHANGE_CONFIG = {
+  exchange: {
+    name: 'binance',
+    key: 'your-api-key',
+    secret: 'your-api-secret',
+    ccxt_config: {},
+    ccxt_async_config: {},
+    pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
+  },
+};
+
 export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchangeDialogProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const [name, setName] = useState('');
-  const [config, setConfig] = useState<object | null>({
-    exchange: {
-      name: 'binance',
-      key: 'your-api-key',
-      secret: 'your-api-secret',
-      ccxt_config: {},
-      ccxt_async_config: {},
-      pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
-    },
-  });
+  const [config, setConfig] = useState<object | null>(DEFAULT_EXCHANGE_CONFIG);
 
   const [createExchange, { loading, error }] = useCreateExchangeMutation();
 
   // Track if form has been modified
   const hasChanges = useMemo(() => {
     if (name !== '') return true;
-    // For JSON editor, we can't easily track if user modified it, so check if they touched the name
+    if (JSON.stringify(config) !== JSON.stringify(DEFAULT_EXCHANGE_CONFIG)) return true;
     return false;
-  }, [name]);
+  }, [name, config]);
 
   const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
     hasChanges,
@@ -70,16 +72,7 @@ export const CreateExchangeDialog = ({ open, onClose, onSuccess }: CreateExchang
       if (result.data?.createExchange) {
         // Reset form
         setName('');
-        setConfig({
-          exchange: {
-            name: 'binance',
-            key: 'your-api-key',
-            secret: 'your-api-secret',
-            ccxt_config: {},
-            ccxt_async_config: {},
-            pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
-          },
-        });
+        setConfig(DEFAULT_EXCHANGE_CONFIG);
 
         onSuccess();
         onClose();

@@ -428,7 +428,7 @@ describe('CreateOrganizationDialog', () => {
   });
 
   describe('form submission', () => {
-    it('calls onClose when Cancel button is clicked', async () => {
+    it('calls onClose when Cancel button is clicked on empty form', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -436,10 +436,32 @@ describe('CreateOrganizationDialog', () => {
         </MockedProvider>
       );
 
+      // Cancel on empty form should close immediately (no unsaved changes)
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await user.click(cancelButton);
 
       expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+
+    it('shows confirmation when Cancel is clicked with unsaved changes', async () => {
+      const user = userEvent.setup();
+      render(
+        <MockedProvider mocks={[]} addTypename={false}>
+          <CreateOrganizationDialog {...defaultProps} />
+        </MockedProvider>
+      );
+
+      // Enter some data to trigger unsaved changes
+      const titleInput = screen.getByLabelText(/organization title/i);
+      await user.type(titleInput, 'Test');
+
+      // Cancel should show confirmation dialog
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await user.click(cancelButton);
+
+      // Should see the unsaved changes dialog with Discard button
+      expect(screen.getByRole('button', { name: /discard changes/i })).toBeInTheDocument();
+      expect(screen.getByText(/will be lost if you leave/i)).toBeInTheDocument();
     });
 
     it('shows loading state during submission', async () => {
@@ -575,7 +597,7 @@ describe('CreateOrganizationDialog', () => {
   });
 
   describe('form reset', () => {
-    it('resets form when dialog closes', async () => {
+    it('resets form when dialog closes after discarding changes', async () => {
       const user = userEvent.setup();
       const { rerender } = render(
         <MockedProvider mocks={[]} addTypename={false}>
@@ -587,9 +609,13 @@ describe('CreateOrganizationDialog', () => {
       const titleInput = screen.getByLabelText(/organization title/i);
       await user.type(titleInput, 'Test Organization');
 
-      // Close dialog via cancel
+      // Click cancel - this shows unsaved changes confirmation
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await user.click(cancelButton);
+
+      // Confirm discard in the unsaved changes dialog
+      const discardButton = screen.getByRole('button', { name: /discard changes/i });
+      await user.click(discardButton);
 
       // Reopen dialog
       rerender(

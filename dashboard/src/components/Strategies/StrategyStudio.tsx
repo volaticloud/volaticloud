@@ -753,8 +753,7 @@ class MyStrategy(IStrategy):
             onClick={async () => {
               const success = await handleSave(false);
               if (success) {
-                // Save succeeded, proceed with navigation
-                setHasChanges(false);
+                // Save succeeded (handleSave already set hasChanges=false), proceed with navigation
                 confirmLeave();
               } else {
                 // Save failed, close dialog but stay on page

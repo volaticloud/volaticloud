@@ -53,6 +53,53 @@ interface CreateBotDialogProps {
   onSuccess: () => void;
 }
 
+const DEFAULT_BOT_CONFIG = {
+  stake_currency: 'USDT',
+  stake_amount: 10,
+  dry_run_wallet: 1000,
+  timeframe: '5m',
+  max_open_trades: 3,
+  unfilledtimeout: {
+    entry: 10,
+    exit: 30,
+  },
+  exit_pricing: {
+    price_side: 'other',
+    use_order_book: true,
+    order_book_top: 1,
+    price_last_balance: 0.0,
+  },
+  entry_pricing: {
+    price_side: 'other',
+    use_order_book: true,
+    order_book_top: 1,
+    price_last_balance: 0.0,
+    check_depth_of_market: {
+      enabled: false,
+      bids_to_ask_delta: 1,
+    },
+  },
+  order_types: {
+    entry: 'limit',
+    exit: 'limit',
+    stoploss: 'market',
+    stoploss_on_exchange: false,
+    stoploss_on_exchange_interval: 60,
+  },
+  order_time_in_force: {
+    entry: 'GTC',
+    exit: 'GTC',
+  },
+  pairlists: [
+    {
+      method: 'StaticPairList',
+    },
+  ],
+  exchange: {
+    pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
+  },
+};
+
 export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const [name, setName] = useState('');
@@ -60,52 +107,7 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
   const [strategyID, setStrategyID] = useState('');
   const [runnerID, setRunnerID] = useState('');
   const [mode, setMode] = useState<'live' | 'dry_run'>('dry_run');
-  const [config, setConfig] = useState<object | null>({
-    stake_currency: 'USDT',
-    stake_amount: 10,
-    dry_run_wallet: 1000,
-    timeframe: '5m',
-    max_open_trades: 3,
-    unfilledtimeout: {
-      entry: 10,
-      exit: 30,
-    },
-    exit_pricing: {
-      price_side: 'other',
-      use_order_book: true,
-      order_book_top: 1,
-      price_last_balance: 0.0,
-    },
-    entry_pricing: {
-      price_side: 'other',
-      use_order_book: true,
-      order_book_top: 1,
-      price_last_balance: 0.0,
-      check_depth_of_market: {
-        enabled: false,
-        bids_to_ask_delta: 1,
-      },
-    },
-    order_types: {
-      entry: 'limit',
-      exit: 'limit',
-      stoploss: 'market',
-      stoploss_on_exchange: false,
-      stoploss_on_exchange_interval: 60,
-    },
-    order_time_in_force: {
-      entry: 'GTC',
-      exit: 'GTC',
-    },
-    pairlists: [
-      {
-        method: 'StaticPairList',
-      },
-    ],
-    exchange: {
-      pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
-    },
-  });
+  const [config, setConfig] = useState<object | null>(DEFAULT_BOT_CONFIG);
 
   const { data: optionsData } = useQuery(GET_BOT_OPTIONS, {
     variables: {
@@ -122,9 +124,9 @@ export const CreateBotDialog = ({ open, onClose, onSuccess }: CreateBotDialogPro
     if (strategyID !== '') return true;
     if (runnerID !== '') return true;
     if (mode !== 'dry_run') return true;
-    // Config changes are harder to detect, but if user modified JSON editor, consider it changed
+    if (JSON.stringify(config) !== JSON.stringify(DEFAULT_BOT_CONFIG)) return true;
     return false;
-  }, [name, exchangeID, strategyID, runnerID, mode]);
+  }, [name, exchangeID, strategyID, runnerID, mode, config]);
 
   const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
     hasChanges,

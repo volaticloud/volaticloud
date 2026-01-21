@@ -17,8 +17,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateOrganizationMutation } from './organization.generated';
-import { useDialogUnsavedChanges } from '../../hooks';
-import { UnsavedChangesDialog } from '../shared';
+import { useDialogUnsavedChanges } from '../../hooks/useDialogUnsavedChanges';
+import { UnsavedChangesDialog } from '../shared/UnsavedChangesDialog';
 
 interface CreateOrganizationDialogProps {
   open: boolean;
