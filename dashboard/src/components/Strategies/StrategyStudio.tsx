@@ -133,17 +133,24 @@ class MyStrategy(IStrategy):
 
   // Block browser back/forward navigation
   useEffect(() => {
-    // Push a dummy state to detect back navigation
     const currentPath = window.location.pathname + window.location.search;
-    window.history.pushState({ preventBack: true }, '', currentPath);
 
-    const handlePopState = () => {
+    // Only add dummy state if not already present (prevents history pollution on remounts)
+    const currentState = window.history.state;
+    if (!currentState?.preventBack) {
+      window.history.replaceState({ preventBack: true, originalState: currentState }, '', currentPath);
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
       if (hasChangesRef.current) {
         // Push state back to prevent navigation
         window.history.pushState({ preventBack: true }, '', currentPath);
         // Show confirmation dialog
         setLeaveDialogOpen(true);
         pendingNavigationRef.current = 'back';
+      } else if (event.state?.preventBack) {
+        // No unsaved changes but we're on our guard state - allow normal back
+        window.history.back();
       }
     };
 
@@ -168,7 +175,7 @@ class MyStrategy(IStrategy):
     setLeaveDialogOpen(false);
     setHasChanges(false);
     if (pendingNavigationRef.current === 'back') {
-      window.history.go(-2); // Go back past our dummy state
+      window.history.back(); // Go back (replaceState doesn't add extra entries)
     } else if (pendingNavigationRef.current) {
       navigate(pendingNavigationRef.current);
     }
@@ -802,8 +809,17 @@ class MyStrategy(IStrategy):
           <Button
             variant="contained"
             onClick={async () => {
-              await handleSave(false);
-              handleConfirmLeave();
+              try {
+                await handleSave(false);
+                // Only navigate if save succeeded (no saveError and hasChanges was reset)
+                // handleSave sets hasChanges=false on success
+                if (!saveError) {
+                  handleConfirmLeave();
+                }
+              } catch {
+                // Save failed, stay on page - dialog will close but user stays
+                setLeaveDialogOpen(false);
+              }
             }}
           >
             Save & Leave
