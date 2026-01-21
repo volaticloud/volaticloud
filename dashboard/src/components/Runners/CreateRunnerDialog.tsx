@@ -23,11 +23,13 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCreateRunnerMutation, useTestRunnerConnectionMutation, useTestS3ConnectionMutation } from './runners.generated';
 import type { DockerConfigInput, KubernetesConfigInput, LocalConfigInput, DataDownloadConfigInput, S3ConfigInput } from '../../generated/types';
 import { DataDownloadConfigEditor } from './DataDownloadConfigEditor';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 interface BillingConfig {
   billingEnabled: boolean;
@@ -89,6 +91,30 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
 
   // Test connection state
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Track if form has been modified
+  const hasChanges = useMemo(() => {
+    // Check if any field differs from initial values
+    if (name !== '') return true;
+    if (type !== 'docker') return true;
+    if (dockerConfig.host !== 'unix:///var/run/docker.sock') return true;
+    if (dockerConfig.tlsVerify || dockerConfig.certPEM || dockerConfig.keyPEM || dockerConfig.caPEM) return true;
+    if (dockerConfig.apiVersion || dockerConfig.network) return true;
+    if (kubernetesConfig.namespace !== 'volaticloud') return true;
+    if (kubernetesConfig.kubeconfig || kubernetesConfig.context || kubernetesConfig.freqtradeImage) return true;
+    if (kubernetesConfig.ingressHost || kubernetesConfig.ingressClass || kubernetesConfig.ingressTls) return true;
+    if (kubernetesConfig.prometheusUrl) return true;
+    if (Object.keys(localConfig).length > 0 && localConfig.basePath) return true;
+    if (dataDownloadConfig !== null) return true;
+    if (s3Enabled) return true;
+    if (billingConfig.billingEnabled) return true;
+    return false;
+  }, [name, type, dockerConfig, kubernetesConfig, localConfig, dataDownloadConfig, s3Enabled, billingConfig]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
 
   const [createRunner, { loading, error }] = useCreateRunnerMutation({
     refetchQueries: ['GetRunners'],
@@ -233,7 +259,8 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Create New Runner</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '70vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -693,7 +720,7 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleTestConnection}
           disabled={testLoading || loading}
@@ -710,5 +737,11 @@ export const CreateRunnerDialog = ({ open, onClose, onSuccess }: CreateRunnerDia
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

@@ -9,9 +9,11 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUpdateExchangeMutation } from './exchanges.generated';
 import { JSONEditor } from '../JSONEditor';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 interface EditExchangeDialogProps {
   open: boolean;
@@ -29,6 +31,19 @@ export const EditExchangeDialog = ({ open, onClose, onSuccess, exchange }: EditE
   const [config, setConfig] = useState<object | null>(null);
 
   const [updateExchange, { loading, error }] = useUpdateExchangeMutation();
+
+  // Track if form has been modified from original exchange values
+  const hasChanges = useMemo(() => {
+    if (!exchange) return false;
+    if (name !== exchange.name) return true;
+    if (JSON.stringify(config) !== JSON.stringify(exchange.config || null)) return true;
+    return false;
+  }, [name, config, exchange]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
 
   // Reset form when exchange changes
   useEffect(() => {
@@ -86,7 +101,8 @@ export const EditExchangeDialog = ({ open, onClose, onSuccess, exchange }: EditE
   if (!exchange) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Edit Exchange</DialogTitle>
       <DialogContent dividers sx={{ maxHeight: '70vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
@@ -124,7 +140,7 @@ export const EditExchangeDialog = ({ open, onClose, onSuccess, exchange }: EditE
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -134,5 +150,11 @@ export const EditExchangeDialog = ({ open, onClose, onSuccess, exchange }: EditE
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

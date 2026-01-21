@@ -41,6 +41,8 @@ import { BotSelector } from '../shared/BotSelector';
 import { StrategySelector } from '../shared/StrategySelector';
 import { RunnerSelector } from '../shared/RunnerSelector';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 type AlertRule = NonNullable<
   NonNullable<NonNullable<GetAlertRulesQuery['alertRules']['edges']>[number]>['node']
@@ -151,6 +153,38 @@ export const AlertRuleDialog = ({
 
   const loading = creating || updating;
   const error = createError || updateError;
+
+  // Track if form has been modified
+  const hasChanges = useMemo(() => {
+    if (isEdit && rule) {
+      // Compare against original values for edit mode
+      if (name !== rule.name) return true;
+      if (resourceType !== rule.resourceType) return true;
+      if (resourceId !== (rule.resourceID || '')) return true;
+      if (alertType !== rule.alertType) return true;
+      if (severity !== rule.severity) return true;
+      if (JSON.stringify(conditions) !== JSON.stringify(rule.conditions || {})) return true;
+      if (enabled !== rule.enabled) return true;
+      if (deliveryMode !== rule.deliveryMode) return true;
+      if (batchIntervalMinutes !== rule.batchIntervalMinutes) return true;
+      if (cooldownMinutes !== rule.cooldownMinutes) return true;
+      if (JSON.stringify(recipients) !== JSON.stringify(rule.recipients || [])) return true;
+      if (botModeFilter !== (rule.botModeFilter || AlertRuleAlertBotModeFilter.All)) return true;
+      return false;
+    }
+    // For create mode, check if any field has been filled
+    if (name !== '') return true;
+    if (resourceId !== '') return true;
+    if (alertType !== '') return true;
+    if (recipients.length > 0) return true;
+    if (Object.keys(conditions).length > 0) return true;
+    return false;
+  }, [isEdit, rule, name, resourceType, resourceId, alertType, severity, conditions, enabled, deliveryMode, batchIntervalMinutes, cooldownMinutes, recipients, botModeFilter]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
 
   // Populate form when editing
   useEffect(() => {
@@ -409,7 +443,8 @@ export const AlertRuleDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>{isEdit ? 'Edit Alert Rule' : 'Create Alert Rule'}</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
@@ -668,7 +703,7 @@ export const AlertRuleDialog = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -678,5 +713,11 @@ export const AlertRuleDialog = ({
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

@@ -46,6 +46,7 @@ import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/O
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
 import { StrategyStrategyBuilderMode } from '../../generated/types';
+import { useUnsavedChangesGuard } from '../../hooks';
 
 const StrategyStudio = () => {
   const { id } = useParams<{ id: string }>();
@@ -108,6 +109,17 @@ class MyStrategy(IStrategy):
     isCreateMode ? createDefaultUIBuilderConfig() : null
   );
   const [ejectDialogOpen, setEjectDialogOpen] = useState(false);
+
+  // Navigation guard - prevents accidental data loss
+  const {
+    safeNavigate,
+    dialogOpen: leaveDialogOpen,
+    cancelLeave,
+    confirmLeave,
+  } = useUnsavedChangesGuard({
+    hasChanges,
+    navigate,
+  });
 
   const { data, loading, error } = useGetStrategyForStudioQuery({
     variables: { id: id! },
@@ -243,9 +255,14 @@ class MyStrategy(IStrategy):
     setCode(prev => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
   };
 
-  const handleSave = async (closeAfterSave = false) => {
+  /**
+   * Save the strategy. Returns true if save succeeded, false otherwise.
+   * @param closeAfterSave - If true, navigates to detail view after save
+   * @returns Promise<boolean> - true if save succeeded
+   */
+  const handleSave = async (closeAfterSave = false): Promise<boolean> => {
     if (!name || !code || !config) {
-      return;
+      return false;
     }
 
     // Build the full config object including ui_builder if in UI mode
@@ -261,7 +278,7 @@ class MyStrategy(IStrategy):
         // Create new strategy
         if (!activeOrganizationId) {
           console.error('No active group selected');
-          return;
+          return false;
         }
 
         const result = await createStrategy({
@@ -286,10 +303,12 @@ class MyStrategy(IStrategy):
             navigate(`/strategies/${newStrategyId}/edit`, { replace: true });
             setHasChanges(false);
           }
+          return true;
         }
+        return false;
       } else {
         // Update existing strategy
-        if (!strategy) return;
+        if (!strategy) return false;
 
         const result = await updateStrategy({
           variables: {
@@ -313,18 +332,21 @@ class MyStrategy(IStrategy):
             navigate(`/strategies/${newStrategyId}/edit`, { replace: true });
             setHasChanges(false);
           }
+          return true;
         }
+        return false;
       }
     } catch (err) {
       console.error('Failed to save strategy:', err);
+      return false;
     }
   };
 
   const handleCancel = () => {
     if (isCreateMode) {
-      navigate('/strategies');
+      safeNavigate('/strategies');
     } else {
-      navigate(`/strategies/${id}`);
+      safeNavigate(`/strategies/${id}`);
     }
   };
 
@@ -703,6 +725,43 @@ class MyStrategy(IStrategy):
           <Button onClick={() => setEjectDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" color="warning" onClick={handleConfirmEject}>
             Eject to Code
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Leave confirmation dialog */}
+      <Dialog open={leaveDialogOpen} onClose={cancelLeave}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Warning color="warning" />
+          Unsaved Changes
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            You have unsaved changes that will be lost if you leave this page.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Do you want to save your changes before leaving?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelLeave}>Cancel</Button>
+          <Button color="error" onClick={() => { setHasChanges(false); confirmLeave(); }}>
+            Discard Changes
+          </Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              const success = await handleSave(false);
+              if (success) {
+                // Save succeeded (handleSave already set hasChanges=false), proceed with navigation
+                confirmLeave();
+              } else {
+                // Save failed, close dialog but stay on page
+                cancelLeave();
+              }
+            }}
+          >
+            Save & Leave
           </Button>
         </DialogActions>
       </Dialog>

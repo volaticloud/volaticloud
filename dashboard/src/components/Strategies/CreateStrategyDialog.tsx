@@ -9,11 +9,13 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCreateStrategyMutation } from './strategies.generated';
 import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { PythonCodeEditor } from './PythonCodeEditor';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 interface CreateStrategyDialogProps {
   open: boolean;
@@ -29,6 +31,20 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
 
   const { activeOrganizationId } = useActiveOrganization();
   const [createStrategy, { loading, error }] = useCreateStrategyMutation();
+
+  // Track if form has been modified
+  const hasChanges = useMemo(() => {
+    if (name !== '') return true;
+    if (description !== '') return true;
+    if (code !== '') return true;
+    if (config !== null) return true;
+    return false;
+  }, [name, description, code, config]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
 
   const handleSubmit = async () => {
     if (!name || !code || !config || !activeOrganizationId) {
@@ -67,7 +83,8 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Create New Strategy</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -116,7 +133,7 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -126,5 +143,11 @@ export const CreateStrategyDialog = ({ open, onClose, onSuccess }: CreateStrateg
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

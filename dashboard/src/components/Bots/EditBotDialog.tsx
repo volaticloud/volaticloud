@@ -12,11 +12,13 @@ import {
   FormHelperText,
   Box,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUpdateBotMutation } from './bots.generated';
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';
+import { useDialogUnsavedChanges } from '../../hooks';
+import { UnsavedChangesDialog } from '../shared';
 
 // Query to get available exchanges, strategies, and runners
 const GET_BOT_OPTIONS = gql`
@@ -75,6 +77,22 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
   const { data: optionsData } = useQuery(GET_BOT_OPTIONS);
   const [updateBot, { loading, error }] = useUpdateBotMutation();
 
+  // Track if form has been modified from original bot values
+  const hasChanges = useMemo(() => {
+    if (name !== bot.name) return true;
+    if (exchangeID !== bot.exchange.id) return true;
+    if (strategyID !== bot.strategy.id) return true;
+    if (runnerID !== bot.runner.id) return true;
+    if (mode !== bot.mode) return true;
+    if (JSON.stringify(config) !== JSON.stringify(bot.config || null)) return true;
+    return false;
+  }, [name, exchangeID, strategyID, runnerID, mode, config, bot]);
+
+  const { handleClose, confirmDialogOpen, cancelClose, confirmClose } = useDialogUnsavedChanges({
+    hasChanges,
+    onClose,
+  });
+
   // Reset form when bot changes
   useEffect(() => {
     setName(bot.name);
@@ -122,7 +140,8 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
   const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>Edit Bot</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -226,7 +245,7 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -236,5 +255,11 @@ export const EditBotDialog = ({ open, onClose, onSuccess, bot }: EditBotDialogPr
         </Button>
       </DialogActions>
     </Dialog>
+    <UnsavedChangesDialog
+      open={confirmDialogOpen}
+      onCancel={cancelClose}
+      onDiscard={confirmClose}
+    />
+    </>
   );
 };

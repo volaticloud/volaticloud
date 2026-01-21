@@ -11,3 +11,4 @@ export { StrategySelector } from './StrategySelector';
 export { FormDialog, ConfirmDialog } from './FormDialog';
 export { PermissionGate } from './PermissionGate';
 export { ProtectedButton, ProtectedIconButton } from './ProtectedButton';
+export { UnsavedChangesDialog } from './UnsavedChangesDialog';
