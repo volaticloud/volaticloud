@@ -131,20 +131,28 @@ class MyStrategy(IStrategy):
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // Block browser back/forward navigation
+  /**
+   * Navigation Guard for Browser Back/Forward
+   *
+   * Uses history.replaceState to mark current entry, then intercepts popstate
+   * to show confirmation dialog when there are unsaved changes.
+   * Path is calculated fresh in the handler to avoid stale closure issues.
+   */
   useEffect(() => {
-    const currentPath = window.location.pathname + window.location.search;
-
-    // Only add dummy state if not already present (prevents history pollution on remounts)
+    // Only add guard state if not already present (prevents pollution on remounts)
     const currentState = window.history.state;
     if (!currentState?.preventBack) {
-      window.history.replaceState({ preventBack: true, originalState: currentState }, '', currentPath);
+      const initialPath = window.location.pathname + window.location.search;
+      window.history.replaceState({ preventBack: true, originalState: currentState }, '', initialPath);
     }
 
     const handlePopState = (event: PopStateEvent) => {
+      // Calculate current path fresh to avoid stale closure
+      const currentPath = window.location.pathname + window.location.search;
+
       if (hasChangesRef.current) {
-        // Push state back to prevent navigation
-        window.history.pushState({ preventBack: true }, '', currentPath);
+        // Re-push state to prevent navigation (use replaceState to avoid history buildup)
+        window.history.replaceState({ preventBack: true }, '', currentPath);
         // Show confirmation dialog
         setLeaveDialogOpen(true);
         pendingNavigationRef.current = 'back';
@@ -321,9 +329,14 @@ class MyStrategy(IStrategy):
     setCode(prev => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
   };
 
-  const handleSave = async (closeAfterSave = false) => {
+  /**
+   * Save the strategy. Returns true if save succeeded, false otherwise.
+   * @param closeAfterSave - If true, navigates to detail view after save
+   * @returns Promise<boolean> - true if save succeeded
+   */
+  const handleSave = async (closeAfterSave = false): Promise<boolean> => {
     if (!name || !code || !config) {
-      return;
+      return false;
     }
 
     // Build the full config object including ui_builder if in UI mode
@@ -339,7 +352,7 @@ class MyStrategy(IStrategy):
         // Create new strategy
         if (!activeOrganizationId) {
           console.error('No active group selected');
-          return;
+          return false;
         }
 
         const result = await createStrategy({
@@ -364,10 +377,12 @@ class MyStrategy(IStrategy):
             navigate(`/strategies/${newStrategyId}/edit`, { replace: true });
             setHasChanges(false);
           }
+          return true;
         }
+        return false;
       } else {
         // Update existing strategy
-        if (!strategy) return;
+        if (!strategy) return false;
 
         const result = await updateStrategy({
           variables: {
@@ -391,10 +406,13 @@ class MyStrategy(IStrategy):
             navigate(`/strategies/${newStrategyId}/edit`, { replace: true });
             setHasChanges(false);
           }
+          return true;
         }
+        return false;
       }
     } catch (err) {
       console.error('Failed to save strategy:', err);
+      return false;
     }
   };
 
@@ -809,15 +827,12 @@ class MyStrategy(IStrategy):
           <Button
             variant="contained"
             onClick={async () => {
-              try {
-                await handleSave(false);
-                // Only navigate if save succeeded (no saveError and hasChanges was reset)
-                // handleSave sets hasChanges=false on success
-                if (!saveError) {
-                  handleConfirmLeave();
-                }
-              } catch {
-                // Save failed, stay on page - dialog will close but user stays
+              const success = await handleSave(false);
+              if (success) {
+                // Save succeeded, proceed with navigation
+                handleConfirmLeave();
+              } else {
+                // Save failed, close dialog but stay on page
                 setLeaveDialogOpen(false);
               }
             }}
