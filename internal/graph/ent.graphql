@@ -713,7 +713,7 @@ type Backtest implements Node {
   """
   Backtest result data (metrics, logs, trades, etc.)
   """
-  result: Map @requiresPermission(scope: "view", idField: "strategyID")
+  result: Map @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
   """
   Error message if backtest failed
   """
@@ -721,7 +721,7 @@ type Backtest implements Node {
   """
   Container logs from backtest execution
   """
-  logs: String @requiresPermission(scope: "view", idField: "strategyID")
+  logs: String @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
   """
   Foreign key to strategy
   """
@@ -973,7 +973,7 @@ type Bot implements Node {
   """
   Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)
   """
-  config: Map @requiresPermission(scope: "view-secrets")
+  config: Map @hasScope(resource: "id", scope: "view-secrets", resourceType: BOT, fromParent: true)
   """
   Freqtrade Docker image version tag
   """
@@ -1552,7 +1552,7 @@ type BotRunner implements Node {
   """
   Runner connection configuration (host, port, credentials, etc.)
   """
-  config: Map @requiresPermission(scope: "view-secrets")
+  config: Map @hasScope(resource: "id", scope: "view-secrets", resourceType: BOT_RUNNER, fromParent: true)
   """
   Whether runner has downloaded historical data for backtesting
   """
@@ -1580,11 +1580,11 @@ type BotRunner implements Node {
   """
   Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}
   """
-  dataDownloadConfig: Map @requiresPermission(scope: "view")
+  dataDownloadConfig: Map @hasScope(resource: "id", scope: "view", resourceType: BOT_RUNNER, fromParent: true)
   """
   S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL}
   """
-  s3Config: Map @requiresPermission(scope: "view-secrets")
+  s3Config: Map @hasScope(resource: "id", scope: "view-secrets", resourceType: BOT_RUNNER, fromParent: true)
   """
   S3 object key: runners/data/{runnerId}.zip
   """
@@ -2696,7 +2696,7 @@ type Exchange implements Node {
   """
   Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)
   """
-  config: Map @requiresPermission(scope: "view-secrets")
+  config: Map @hasScope(resource: "id", scope: "view-secrets", resourceType: EXCHANGE, fromParent: true)
   """
   Group ID (organization) that owns this exchange
   """
@@ -3721,11 +3721,11 @@ type Strategy implements Node {
   """
   Python strategy code
   """
-  code: String! @requiresPermission(scope: "view")
+  code: String! @hasScope(resource: "id", scope: "view", resourceType: STRATEGY, fromParent: true)
   """
   Strategy-specific configuration (config.json) - REQUIRED
   """
-  config: Map! @requiresPermission(scope: "view")
+  config: Map! @hasScope(resource: "id", scope: "view", resourceType: STRATEGY, fromParent: true)
   """
   Strategy editing mode: 'ui' for UI builder (code generated from config), 'code' for direct Python editing
   """

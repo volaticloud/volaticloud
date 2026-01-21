@@ -17,8 +17,6 @@ directives:
     skip_runtime: false
   hasScope:
     skip_runtime: false
-  requiresPermission:
-    skip_runtime: false
 
 # Skip model generation - using ENT models directly
 model:

@@ -10,6 +10,7 @@ import (
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/graph/model"
 	"volaticloud/internal/keycloak"
 )
 
@@ -119,26 +120,28 @@ func mockResolver(ctx context.Context) (interface{}, error) {
 	return "resolved_value", nil
 }
 
-// TestRequiresPermissionDirective tests the RequiresPermissionDirective function
+// TestHasScopeDirective_FromParent tests the HasScopeDirective with fromParent=true (field-level mode)
 // Note: Full testing requires a database and UMA server. These tests focus on error paths.
-func TestRequiresPermissionDirective(t *testing.T) {
+func TestHasScopeDirective_FromParent(t *testing.T) {
 	strategyID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
 	ownerID := "user-123"
 	rawToken := "test-token-123"
+	fromParent := true
 
 	tests := []struct {
 		name         string
 		setupContext func() context.Context
 		obj          interface{}
+		resource     string
 		scope        string
-		idField      *string
+		resourceType model.ResourceType
+		fromParent   *bool
 		wantErr      bool
 		errMsg       string
 	}{
 		{
 			name: "missing authentication",
 			setupContext: func() context.Context {
-				// Return context without user context
 				return context.Background()
 			},
 			obj: &ent.Strategy{
@@ -146,13 +149,15 @@ func TestRequiresPermissionDirective(t *testing.T) {
 				Name:    "TestStrategy",
 				OwnerID: ownerID,
 			},
-			scope:   "view",
-			idField: nil,
-			wantErr: true,
-			errMsg:  "authentication required",
+			resource:     "id",
+			scope:        "view",
+			resourceType: model.ResourceTypeStrategy,
+			fromParent:   &fromParent,
+			wantErr:      true,
+			errMsg:       "authentication required",
 		},
 		{
-			name: "UMA client not available",
+			name: "nil parent object in fromParent mode",
 			setupContext: func() context.Context {
 				ctx := context.Background()
 				ctx = auth.SetUserContext(ctx, &auth.UserContext{
@@ -160,7 +165,27 @@ func TestRequiresPermissionDirective(t *testing.T) {
 					RawToken: rawToken,
 					Email:    "user@test.com",
 				})
-				// Don't add UMA client to context
+				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("", "", "", ""))
+				return ctx
+			},
+			obj:          nil,
+			resource:     "id",
+			scope:        "view",
+			resourceType: model.ResourceTypeStrategy,
+			fromParent:   &fromParent,
+			wantErr:      true,
+			errMsg:       "failed to extract resource ID from parent",
+		},
+		{
+			name: "database client not available",
+			setupContext: func() context.Context {
+				ctx := context.Background()
+				ctx = auth.SetUserContext(ctx, &auth.UserContext{
+					UserID:   ownerID,
+					RawToken: rawToken,
+					Email:    "user@test.com",
+				})
+				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
 				return ctx
 			},
 			obj: &ent.Strategy{
@@ -168,29 +193,12 @@ func TestRequiresPermissionDirective(t *testing.T) {
 				Name:    "TestStrategy",
 				OwnerID: ownerID,
 			},
-			scope:   "view",
-			idField: nil,
-			wantErr: true,
-			errMsg:  "UMA client not available",
-		},
-		{
-			name: "nil parent object",
-			setupContext: func() context.Context {
-				ctx := context.Background()
-				ctx = auth.SetUserContext(ctx, &auth.UserContext{
-					UserID:   ownerID,
-					RawToken: rawToken,
-					Email:    "user@test.com",
-				})
-				// Add minimal UMA client (won't be called due to early error)
-				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("", "", "", ""))
-				return ctx
-			},
-			obj:     nil,
-			scope:   "view",
-			idField: nil,
-			wantErr: true,
-			errMsg:  "failed to extract resource ID",
+			resource:     "id",
+			scope:        "view",
+			resourceType: model.ResourceTypeStrategy,
+			fromParent:   &fromParent,
+			wantErr:      true,
+			errMsg:       "database client not available",
 		},
 	}
 
@@ -198,12 +206,14 @@ func TestRequiresPermissionDirective(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.setupContext()
 
-			result, err := RequiresPermissionDirective(
+			result, err := HasScopeDirective(
 				ctx,
 				tt.obj,
 				mockResolver,
+				tt.resource,
 				tt.scope,
-				tt.idField,
+				tt.resourceType,
+				tt.fromParent,
 			)
 
 			if tt.wantErr {
@@ -219,35 +229,21 @@ func TestRequiresPermissionDirective(t *testing.T) {
 	}
 }
 
-// TestRequiresPermissionDirective_RealScenarios tests real-world scenarios
+// TestHasScopeDirective_RealScenarios tests real-world scenarios
 // Note: These would require a test database setup in a real test suite
-func TestRequiresPermissionDirective_RealScenarios(t *testing.T) {
-	t.Run("code field protection", func(t *testing.T) {
+func TestHasScopeDirective_RealScenarios(t *testing.T) {
+	t.Run("code field protection with fromParent", func(t *testing.T) {
 		// This test would verify that:
 		// 1. Strategy.code field returns null if user lacks "view" permission
 		// 2. Strategy.code field returns value if user has "view" permission
+		// Uses @hasScope(resource: "id", scope: "view", resourceType: STRATEGY, fromParent: true)
 		t.Skip("Requires test database and UMA server setup")
 	})
 
-	t.Run("config field protection", func(t *testing.T) {
+	t.Run("backtest result with cross-resource permission", func(t *testing.T) {
 		// This test would verify that:
-		// 1. Strategy.config field returns null if user lacks "view" permission
-		// 2. Strategy.config field returns value if user has "view" permission
-		t.Skip("Requires test database and UMA server setup")
-	})
-
-	t.Run("nested edge protection", func(t *testing.T) {
-		// This test would verify that:
-		// 1. When querying bot.strategy.code, permission is checked on the strategy
-		// 2. Unauthorized access returns null with partial error
-		t.Skip("Requires test database and UMA server setup")
-	})
-
-	t.Run("list query with mixed permissions", func(t *testing.T) {
-		// This test would verify that:
-		// 1. strategies { edges { node { code } } }
-		// 2. Some strategies return code (authorized), others return null (unauthorized)
-		// 3. Partial errors are returned for unauthorized fields
+		// 1. Backtest.result field checks permission on the parent Strategy
+		// 2. Uses @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
 		t.Skip("Requires test database and UMA server setup")
 	})
 }
@@ -348,10 +344,11 @@ func TestEntityScopes(t *testing.T) {
 	})
 }
 
-// TestRequiresPermissionDirective_AllEntityTypes tests the directive with different entity types
-func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
+// TestHasScopeDirective_AllEntityTypes tests the directive with different entity types
+func TestHasScopeDirective_AllEntityTypes(t *testing.T) {
 	ownerID := "user-123"
 	rawToken := "test-token-123"
+	fromParent := true
 
 	// Base setup context function
 	setupContextWithAuth := func() context.Context {
@@ -367,10 +364,11 @@ func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		obj    interface{}
-		scope  string
-		errMsg string // Expected error (since we don't have a real DB)
+		name         string
+		obj          interface{}
+		scope        string
+		resourceType model.ResourceType
+		errMsg       string // Expected error (since we don't have a real DB)
 	}{
 		{
 			name: "Bot with view scope",
@@ -379,18 +377,9 @@ func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
 				Name:    "TestBot",
 				OwnerID: ownerID,
 			},
-			scope:  "view",
-			errMsg: "database client not available",
-		},
-		{
-			name: "Bot with run scope",
-			obj: &ent.Bot{
-				ID:      uuid.MustParse("22222222-2222-2222-2222-222222222222"),
-				Name:    "TestBot2",
-				OwnerID: ownerID,
-			},
-			scope:  "run",
-			errMsg: "database client not available",
+			scope:        "view",
+			resourceType: model.ResourceTypeBot,
+			errMsg:       "database client not available",
 		},
 		{
 			name: "Exchange with edit scope",
@@ -399,8 +388,9 @@ func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
 				Name:    "TestExchange",
 				OwnerID: ownerID,
 			},
-			scope:  "edit",
-			errMsg: "database client not available",
+			scope:        "edit",
+			resourceType: model.ResourceTypeExchange,
+			errMsg:       "database client not available",
 		},
 		{
 			name: "BotRunner with delete scope",
@@ -409,18 +399,20 @@ func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
 				Name:    "TestRunner",
 				OwnerID: ownerID,
 			},
-			scope:  "delete",
-			errMsg: "database client not available",
+			scope:        "delete",
+			resourceType: model.ResourceTypeBotRunner,
+			errMsg:       "database client not available",
 		},
 		{
-			name: "Strategy with backtest scope",
+			name: "Strategy with view scope",
 			obj: &ent.Strategy{
 				ID:      uuid.MustParse("55555555-5555-5555-5555-555555555555"),
 				Name:    "TestStrategy",
 				OwnerID: ownerID,
 			},
-			scope:  "backtest",
-			errMsg: "database client not available",
+			scope:        "view",
+			resourceType: model.ResourceTypeStrategy,
+			errMsg:       "database client not available",
 		},
 	}
 
@@ -428,12 +420,14 @@ func TestRequiresPermissionDirective_AllEntityTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := setupContextWithAuth()
 
-			_, err := RequiresPermissionDirective(
+			_, err := HasScopeDirective(
 				ctx,
 				tt.obj,
 				mockResolver,
+				"id",
 				tt.scope,
-				nil,
+				tt.resourceType,
+				&fromParent,
 			)
 
 			// All tests should fail with "database client not available" since we don't have a real DB
@@ -531,6 +525,660 @@ func TestDeleteWithResource_Integration(t *testing.T) {
 		// 2. Keycloak resource is deleted
 		// 3. Error handling when runner doesn't exist
 	})
+}
+
+// TestExtractArgumentValue tests the extractArgumentValue helper function
+func TestExtractArgumentValue(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    map[string]interface{}
+		path    string
+		want    string
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "simple path - id",
+			args: map[string]interface{}{
+				"id": "123e4567-e89b-12d3-a456-426614174000",
+			},
+			path:    "id",
+			want:    "123e4567-e89b-12d3-a456-426614174000",
+			wantErr: false,
+		},
+		{
+			name: "nested path - input.strategyID",
+			args: map[string]interface{}{
+				"input": map[string]interface{}{
+					"strategyID": "strategy-uuid-123",
+				},
+			},
+			path:    "input.strategyID",
+			want:    "strategy-uuid-123",
+			wantErr: false,
+		},
+		{
+			name: "nested path - where.ownerID",
+			args: map[string]interface{}{
+				"where": map[string]interface{}{
+					"ownerID": "owner-group-456",
+				},
+			},
+			path:    "where.ownerID",
+			want:    "owner-group-456",
+			wantErr: false,
+		},
+		{
+			name: "deeply nested path",
+			args: map[string]interface{}{
+				"level1": map[string]interface{}{
+					"level2": map[string]interface{}{
+						"level3": "deep-value",
+					},
+				},
+			},
+			path:    "level1.level2.level3",
+			want:    "deep-value",
+			wantErr: false,
+		},
+		{
+			name: "missing simple path",
+			args: map[string]interface{}{
+				"otherId": "some-value",
+			},
+			path:    "id",
+			wantErr: true,
+			errMsg:  "not found",
+		},
+		{
+			name: "missing nested path",
+			args: map[string]interface{}{
+				"input": map[string]interface{}{
+					"otherField": "some-value",
+				},
+			},
+			path:    "input.strategyID",
+			wantErr: true,
+			errMsg:  "not found",
+		},
+		{
+			name: "empty string value",
+			args: map[string]interface{}{
+				"id": "",
+			},
+			path:    "id",
+			wantErr: true,
+			errMsg:  "empty",
+		},
+		{
+			name:    "empty args",
+			args:    map[string]interface{}{},
+			path:    "id",
+			wantErr: true,
+			errMsg:  "not found",
+		},
+		{
+			name: "nil value in path",
+			args: map[string]interface{}{
+				"input": nil,
+			},
+			path:    "input.strategyID",
+			wantErr: true,
+			errMsg:  "type: <nil>", // Nil values can't be navigated
+		},
+		{
+			name: "non-string value",
+			args: map[string]interface{}{
+				"count": 42,
+			},
+			path:    "count",
+			wantErr: true,
+			errMsg:  "not a string",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := extractArgumentValue(tt.args, tt.path)
+
+			if tt.wantErr {
+				require.Error(t, err, "Expected error but got none")
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg, "Error message should contain expected text")
+				}
+			} else {
+				require.NoError(t, err, "Expected no error but got: %v", err)
+				assert.Equal(t, tt.want, result, "Extracted value should match")
+			}
+		})
+	}
+}
+
+// TestHasScopeDirective_ArgumentMode tests HasScopeDirective with fromParent=false (argument mode)
+// This mode extracts resource ID from GraphQL arguments, used for mutations and queries
+func TestHasScopeDirective_ArgumentMode(t *testing.T) {
+	ownerID := "user-123"
+	rawToken := "test-token-123"
+
+	tests := []struct {
+		name         string
+		setupContext func() context.Context
+		obj          interface{}
+		resource     string
+		scope        string
+		resourceType model.ResourceType
+		fromParent   *bool // nil or false for argument mode
+		wantErr      bool
+		errMsg       string
+	}{
+		{
+			name: "missing authentication in argument mode",
+			setupContext: func() context.Context {
+				return context.Background()
+			},
+			obj:          nil,
+			resource:     "id",
+			scope:        "view",
+			resourceType: model.ResourceTypeStrategy,
+			fromParent:   nil, // argument mode
+			wantErr:      true,
+			errMsg:       "authentication required",
+		},
+		{
+			name: "fromParent false - same as nil",
+			setupContext: func() context.Context {
+				return context.Background()
+			},
+			obj:          nil,
+			resource:     "id",
+			scope:        "view",
+			resourceType: model.ResourceTypeBot,
+			fromParent:   func() *bool { b := false; return &b }(),
+			wantErr:      true,
+			errMsg:       "authentication required",
+		},
+		{
+			name: "argument mode with auth but no field context",
+			setupContext: func() context.Context {
+				ctx := context.Background()
+				ctx = auth.SetUserContext(ctx, &auth.UserContext{
+					UserID:   ownerID,
+					RawToken: rawToken,
+					Email:    "user@test.com",
+				})
+				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+				return ctx
+			},
+			obj:          nil,
+			resource:     "id",
+			scope:        "view",
+			resourceType: model.ResourceTypeStrategy,
+			fromParent:   nil,
+			wantErr:      true,
+			errMsg:       "no field context available",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.setupContext()
+
+			_, err := HasScopeDirective(
+				ctx,
+				tt.obj,
+				mockResolver,
+				tt.resource,
+				tt.scope,
+				tt.resourceType,
+				tt.fromParent,
+			)
+
+			if tt.wantErr {
+				require.Error(t, err, "Expected error but got none")
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg, "Error message should contain expected text")
+				}
+			} else {
+				require.NoError(t, err, "Expected no error but got: %v", err)
+			}
+		})
+	}
+}
+
+// TestHasScopeDirective_CrossResourcePermission tests the cross-resource permission scenario
+// where Backtest fields check permission against their parent Strategy
+func TestHasScopeDirective_CrossResourcePermission(t *testing.T) {
+	strategyID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	backtestID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+	ownerID := "user-123"
+	rawToken := "test-token-123"
+	fromParent := true
+
+	setupContextWithAuth := func() context.Context {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		return ctx
+	}
+
+	t.Run("Backtest.result checking Strategy permission via strategyID", func(t *testing.T) {
+		// This tests the real scenario: Backtest.result field has
+		// @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
+		ctx := setupContextWithAuth()
+
+		backtest := &ent.Backtest{
+			ID:         backtestID,
+			StrategyID: strategyID, // The field used for permission check
+		}
+
+		_, err := HasScopeDirective(
+			ctx,
+			backtest,
+			mockResolver,
+			"strategyID",               // Extract strategyID from Backtest object
+			"view",                     // Check view permission
+			model.ResourceTypeStrategy, // On the Strategy resource
+			&fromParent,
+		)
+
+		// Should fail with "database client not available" because we don't have ENT client
+		// but importantly, it should NOT fail with "backtest not found" - that was the bug
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "database client not available")
+		assert.NotContains(t, err.Error(), "backtest not found", "Should not try to find backtest as resource")
+	})
+
+	t.Run("Backtest.logs checking Strategy permission via strategyID", func(t *testing.T) {
+		ctx := setupContextWithAuth()
+
+		backtest := &ent.Backtest{
+			ID:         backtestID,
+			StrategyID: strategyID,
+		}
+
+		_, err := HasScopeDirective(
+			ctx,
+			backtest,
+			mockResolver,
+			"strategyID",
+			"view",
+			model.ResourceTypeStrategy,
+			&fromParent,
+		)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "database client not available")
+	})
+
+	t.Run("Backtest with zero strategyID fails extraction", func(t *testing.T) {
+		ctx := setupContextWithAuth()
+
+		backtest := &ent.Backtest{
+			ID:         backtestID,
+			StrategyID: uuid.Nil, // Zero UUID
+		}
+
+		_, err := HasScopeDirective(
+			ctx,
+			backtest,
+			mockResolver,
+			"strategyID",
+			"view",
+			model.ResourceTypeStrategy,
+			&fromParent,
+		)
+
+		// Zero UUID is still a valid string, so it should pass extraction
+		// but fail on DB lookup
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "database client not available")
+	})
+}
+
+// TestHasScopeDirective_EdgeCases tests edge cases and error conditions
+func TestHasScopeDirective_EdgeCases(t *testing.T) {
+	ownerID := "user-123"
+	rawToken := "test-token-123"
+	fromParent := true
+
+	t.Run("invalid ENT client type", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		// Set a non-*ent.Client value
+		ctx = SetEntClientInContext(ctx, "not-an-ent-client")
+
+		strategy := &ent.Strategy{
+			ID:      uuid.MustParse("11111111-2222-3333-4444-555555555555"),
+			Name:    "TestStrategy",
+			OwnerID: ownerID,
+		}
+
+		_, err := HasScopeDirective(
+			ctx,
+			strategy,
+			mockResolver,
+			"id",
+			"view",
+			model.ResourceTypeStrategy,
+			&fromParent,
+		)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid database client type")
+	})
+
+	t.Run("non-existent field in parent object", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+
+		// Use Backtest because Strategy/Bot/Exchange/BotRunner have fast paths that always return ID
+		backtest := &ent.Backtest{
+			ID:         uuid.MustParse("11111111-2222-3333-4444-555555555555"),
+			StrategyID: uuid.MustParse("22222222-3333-4444-5555-666666666666"),
+		}
+
+		_, err := HasScopeDirective(
+			ctx,
+			backtest,
+			mockResolver,
+			"nonExistentField", // Field doesn't exist on Backtest
+			"view",
+			model.ResourceTypeStrategy,
+			&fromParent,
+		)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to extract resource ID from parent")
+	})
+
+	t.Run("pointer to non-struct object", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+
+		intVal := 42
+		_, err := HasScopeDirective(
+			ctx,
+			&intVal, // Pointer to non-struct
+			mockResolver,
+			"id",
+			"view",
+			model.ResourceTypeStrategy,
+			&fromParent,
+		)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to extract resource ID from parent")
+	})
+}
+
+// TestExtractResourceID_CustomFields tests extractResourceID with various field configurations
+// Note: Strategy, Bot, Exchange, BotRunner have a "fast path" that always returns ID field
+// regardless of fieldName parameter. Only types without fast path (like Backtest) use reflection.
+func TestExtractResourceID_CustomFields(t *testing.T) {
+	strategyID := uuid.MustParse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	backtestID := uuid.MustParse("11111111-2222-3333-4444-555555555555")
+
+	tests := []struct {
+		name      string
+		obj       interface{}
+		fieldName string
+		wantID    string
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name: "extract strategyID from Backtest (uses reflection)",
+			obj: &ent.Backtest{
+				ID:         backtestID,
+				StrategyID: strategyID,
+			},
+			fieldName: "strategyID",
+			wantID:    strategyID.String(),
+			wantErr:   false,
+		},
+		// Note: extracting "id" from Backtest won't work via reflection because
+		// the ENT field is "ID" (all caps) but reflection capitalizes first letter only → "Id"
+		// This is fine since Backtest fields always use strategyID for permission checks
+		{
+			name: "Strategy fast path always returns ID regardless of fieldName",
+			obj: &ent.Strategy{
+				ID:      strategyID,
+				Name:    "TestStrategy",
+				OwnerID: "group-owner-123",
+			},
+			fieldName: "ownerID",           // Ignored by fast path
+			wantID:    strategyID.String(), // Always returns ID
+			wantErr:   false,
+		},
+		{
+			name: "Bot fast path always returns ID regardless of fieldName",
+			obj: &ent.Bot{
+				ID:      backtestID,
+				Name:    "TestBot",
+				OwnerID: "group-owner-456",
+			},
+			fieldName: "ownerID",           // Ignored by fast path
+			wantID:    backtestID.String(), // Always returns ID
+			wantErr:   false,
+		},
+		{
+			name: "field name with wrong case on Backtest (uses reflection)",
+			obj: &ent.Backtest{
+				ID:         backtestID,
+				StrategyID: strategyID,
+			},
+			fieldName: "STRATEGYID", // Wrong case - should fail
+			wantErr:   true,
+			errMsg:    "not found",
+		},
+		{
+			name: "non-existent field on Backtest (uses reflection)",
+			obj: &ent.Backtest{
+				ID:         backtestID,
+				StrategyID: strategyID,
+			},
+			fieldName: "nonExistent",
+			wantErr:   true,
+			errMsg:    "not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			id, err := extractResourceID(tt.obj, tt.fieldName)
+
+			if tt.wantErr {
+				require.Error(t, err, "Expected error but got none")
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg, "Error message should contain expected text")
+				}
+			} else {
+				require.NoError(t, err, "Expected no error but got: %v", err)
+				assert.Equal(t, tt.wantID, id, "Resource ID should match")
+			}
+		})
+	}
+}
+
+// TestHasScopeDirective_AllResourceTypes tests the directive with all supported resource types
+func TestHasScopeDirective_AllResourceTypes(t *testing.T) {
+	ownerID := "user-123"
+	rawToken := "test-token-123"
+	fromParent := true
+
+	setupContextWithAuth := func() context.Context {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		return ctx
+	}
+
+	tests := []struct {
+		name         string
+		resourceType model.ResourceType
+		obj          interface{}
+		scope        string
+	}{
+		{
+			name:         "STRATEGY resource type",
+			resourceType: model.ResourceTypeStrategy,
+			obj: &ent.Strategy{
+				ID:      uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+				Name:    "TestStrategy",
+				OwnerID: ownerID,
+			},
+			scope: "view",
+		},
+		{
+			name:         "BOT resource type",
+			resourceType: model.ResourceTypeBot,
+			obj: &ent.Bot{
+				ID:      uuid.MustParse("22222222-2222-2222-2222-222222222222"),
+				Name:    "TestBot",
+				OwnerID: ownerID,
+			},
+			scope: "view-secrets",
+		},
+		{
+			name:         "EXCHANGE resource type",
+			resourceType: model.ResourceTypeExchange,
+			obj: &ent.Exchange{
+				ID:      uuid.MustParse("33333333-3333-3333-3333-333333333333"),
+				Name:    "TestExchange",
+				OwnerID: ownerID,
+			},
+			scope: "edit",
+		},
+		{
+			name:         "BOT_RUNNER resource type",
+			resourceType: model.ResourceTypeBotRunner,
+			obj: &ent.BotRunner{
+				ID:      uuid.MustParse("44444444-4444-4444-4444-444444444444"),
+				Name:    "TestRunner",
+				OwnerID: ownerID,
+			},
+			scope: "delete",
+		},
+		// Note: Backtest is excluded because it uses strategyID for permissions
+		// and has special handling (checked via parent Strategy)
+		// We test Backtest in TestHasScopeDirective_CrossResourcePermission instead
+		{
+			name:         "ORGANIZATION resource type",
+			resourceType: model.ResourceTypeOrganization,
+			obj: &ent.Strategy{ // Using Strategy as placeholder since Organization isn't an ENT entity
+				ID:      uuid.MustParse("77777777-7777-7777-7777-777777777777"),
+				Name:    "OrgPlaceholder",
+				OwnerID: ownerID,
+			},
+			scope: "view-users",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := setupContextWithAuth()
+
+			_, err := HasScopeDirective(
+				ctx,
+				tt.obj,
+				mockResolver,
+				"id",
+				tt.scope,
+				tt.resourceType,
+				&fromParent,
+			)
+
+			// All should fail with "database client not available" since we don't have ENT client
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "database client not available")
+		})
+	}
+}
+
+// TestHasScopeDirective_ScopeVariations tests various scope values
+func TestHasScopeDirective_ScopeVariations(t *testing.T) {
+	ownerID := "user-123"
+	rawToken := "test-token-123"
+	fromParent := true
+
+	setupContextWithAuth := func() context.Context {
+		ctx := context.Background()
+		ctx = auth.SetUserContext(ctx, &auth.UserContext{
+			UserID:   ownerID,
+			RawToken: rawToken,
+			Email:    "user@test.com",
+		})
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		return ctx
+	}
+
+	strategy := &ent.Strategy{
+		ID:      uuid.MustParse("11111111-2222-3333-4444-555555555555"),
+		Name:    "TestStrategy",
+		OwnerID: ownerID,
+	}
+
+	scopes := []string{
+		"view",
+		"view-secrets",
+		"edit",
+		"delete",
+		"run",
+		"stop",
+		"run-backtest",
+		"stop-backtest",
+		"delete-backtest",
+		"make-public",
+		"freqtrade-api",
+		"create-alert-rule",
+		"view-users",
+		"invite-user",
+		"change-user-roles",
+	}
+
+	for _, scope := range scopes {
+		t.Run("scope_"+scope, func(t *testing.T) {
+			ctx := setupContextWithAuth()
+
+			_, err := HasScopeDirective(
+				ctx,
+				strategy,
+				mockResolver,
+				"id",
+				scope,
+				model.ResourceTypeStrategy,
+				&fromParent,
+			)
+
+			// All should fail with "database client not available"
+			// The point is to verify the directive accepts all scope values
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "database client not available")
+		})
+	}
 }
 
 // TestChangeOrganizationUserRole tests the ChangeOrganizationUserRole resolver

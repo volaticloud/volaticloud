@@ -112,22 +112,28 @@ export function CodePreview({
           </Typography>
         )}
         <Tooltip title="Copy code">
-          <IconButton
-            size="small"
-            onClick={handleCopy}
-            disabled={!generatedCode}
-          >
-            <ContentCopy fontSize="small" />
-          </IconButton>
+          <span>
+            <IconButton
+              size="small"
+              onClick={handleCopy}
+              disabled={!generatedCode}
+              aria-label="Copy code"
+            >
+              <ContentCopy fontSize="small" />
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="Regenerate preview">
-          <IconButton
-            size="small"
-            onClick={generatePreview}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={18} /> : <Refresh fontSize="small" />}
-          </IconButton>
+          <span>
+            <IconButton
+              size="small"
+              onClick={generatePreview}
+              disabled={loading}
+              aria-label="Regenerate preview"
+            >
+              {loading ? <CircularProgress size={18} /> : <Refresh fontSize="small" />}
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
 

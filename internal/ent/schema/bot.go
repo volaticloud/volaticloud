@@ -41,7 +41,7 @@ func (Bot) Fields() []ent.Field {
 			Optional().
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermission("view-secrets"),
+				HasScope("view-secrets", "BOT"),
 			).
 			Comment("Complete freqtrade bot configuration (stake, pairlists, pricing, api_server, etc.)"),
 		field.JSON("secure_config", map[string]interface{}{}).

@@ -37,7 +37,7 @@ func (BotRunner) Fields() []ent.Field {
 			Optional().
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermission("view-secrets"),
+				HasScope("view-secrets", "BOT_RUNNER"),
 			).
 			Comment("Runner connection configuration (host, port, credentials, etc.)"),
 		field.Bool("data_is_ready").
@@ -64,7 +64,7 @@ func (BotRunner) Fields() []ent.Field {
 			Optional().
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermission("view"),
+				HasScope("view", "BOT_RUNNER"),
 			).
 			Comment("Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]}"),
 
@@ -73,7 +73,7 @@ func (BotRunner) Fields() []ent.Field {
 			Optional().
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermission("view-secrets"),
+				HasScope("view-secrets", "BOT_RUNNER"),
 			).
 			Comment("S3 config: {endpoint, bucket, accessKeyId, secretAccessKey, region, forcePathStyle, useSSL}"),
 		field.String("s3_data_key").

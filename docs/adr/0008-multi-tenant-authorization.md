@@ -531,36 +531,54 @@ Ensures user context is available in resolver
 directive @isAuthenticated on FIELD_DEFINITION
 
 """
-Requires the user to have a specific permission scope on a resource
-Uses Keycloak UMA 2.0 for fine-grained authorization
+Unified directive for resource permission checks.
+Uses Keycloak UMA 2.0 for fine-grained authorization.
+
+Two modes of operation:
+1. Argument mode (fromParent=false, default): Extracts resource ID from GraphQL arguments
+   - Used for mutations and queries where ID is passed as argument
+2. Field mode (fromParent=true): Extracts resource ID from parent object
+   - Used for field-level permissions on types
+   - Supports cross-resource permission checks (e.g., Backtest.result checks Strategy permission)
 """
 directive @hasScope(
   """
-  The resource ID argument name (e.g., "id" for mutations that take an ID)
+  Source of the resource ID:
+  - In argument mode: The GraphQL argument name (e.g., "id", "input.strategyID")
+  - In field mode: The field name in parent object (e.g., "id", "strategyID")
   """
   resource: String!
 
   """
-  The permission scope to check (e.g., "edit", "delete", "view", "backtest")
-  """
-  scope: String!
-) on FIELD_DEFINITION
-
-"""
-Requires the user to have a specific permission scope on the parent node/object
-Uses Keycloak UMA 2.0 for node-level field authorization
-"""
-directive @requiresPermission(
-  """
-  The permission scope to check (e.g., "view", "view:code", "edit")
+  The permission scope to check (e.g., "edit", "delete", "view", "run-backtest")
   """
   scope: String!
 
   """
-  The field name containing the resource ID in the parent object (defaults to "id")
+  Required type hint for O(1) resource lookup.
+  Eliminates the need to probe multiple tables to find the resource.
   """
-  idField: String = "id"
+  resourceType: ResourceType!
+
+  """
+  If true, extracts resource ID from parent object instead of GraphQL arguments.
+  Used for field-level permissions. Default: false
+  """
+  fromParent: Boolean = false
 ) on FIELD_DEFINITION
+
+"""
+Resource types for permission checks.
+Used by @hasScope directive for O(1) lookup.
+"""
+enum ResourceType {
+  STRATEGY
+  BOT
+  EXCHANGE
+  BOT_RUNNER
+  BACKTEST
+  ORGANIZATION
+}
 ```
 
 **Usage Examples:**
@@ -572,17 +590,30 @@ type Query {
 }
 
 type Mutation {
-  # Requires authentication + edit permission on strategy
+  # Argument mode: Extract ID from GraphQL args
   updateStrategy(id: ID!, input: UpdateStrategyInput!): Strategy!
-    @hasScope(resource: "id", scope: "edit")
+    @hasScope(resource: "id", scope: "edit", resourceType: STRATEGY)
 
-  # Requires authentication + delete permission
   deleteBot(id: ID!): Boolean!
-    @hasScope(resource: "id", scope: "delete")
+    @hasScope(resource: "id", scope: "delete", resourceType: BOT)
 
-  # Requires authentication + run permission
   startBot(id: ID!): Bot!
-    @hasScope(resource: "id", scope: "run")
+    @hasScope(resource: "id", scope: "run", resourceType: BOT)
+
+  # Nested argument path
+  runBacktest(input: RunBacktestInput!): Backtest!
+    @hasScope(resource: "input.strategyID", scope: "run-backtest", resourceType: STRATEGY)
+}
+
+type Strategy {
+  # Field mode: Extract ID from parent Strategy object
+  code: String @hasScope(resource: "id", scope: "view", resourceType: STRATEGY, fromParent: true)
+}
+
+type Backtest {
+  # Cross-resource permission: Check Strategy permission using strategyID from Backtest
+  result: Map @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
+  logs: String @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
 }
 ```
 
@@ -614,44 +645,59 @@ func HasScopeDirective(
     ctx context.Context,
     obj interface{},
     next graphql.Resolver,
-    resourceArg string,  // Argument containing resource ID
-    scope string,        // Permission scope to check
+    resourceArg string,              // Resource ID source (argument path or field name)
+    scope string,                    // Permission scope to check
+    resourceType model.ResourceType, // Required type hint for O(1) lookup
+    fromParent *bool,                // If true, extract from parent object
 ) (interface{}, error) {
-    // Get user context
     userCtx, err := auth.GetUserContext(ctx)
     if err != nil {
         return nil, fmt.Errorf("authentication required: %w", err)
     }
 
-    // Extract resource ID from GraphQL arguments
-    fc := graphql.GetFieldContext(ctx)
-    resourceID, err := extractArgumentValue(fc.Args, resourceArg)
-    if err != nil {
-        return nil, fmt.Errorf("resource argument '%s' is required: %w", resourceArg, err)
+    var resourceID string
+
+    // Determine extraction mode
+    extractFromParent := fromParent != nil && *fromParent
+
+    if extractFromParent {
+        // Field mode: extract resource ID from parent object's field
+        resourceID, err = extractResourceID(obj, resourceArg)
+        if err != nil {
+            return nil, fmt.Errorf("failed to extract resource ID from parent: %w", err)
+        }
+    } else {
+        // Argument mode: extract resource ID from GraphQL arguments
+        fc := graphql.GetFieldContext(ctx)
+        if fc == nil {
+            return nil, fmt.Errorf("no field context available")
+        }
+        resourceID, err = extractArgumentValue(fc.Args, resourceArg)
+        if err != nil {
+            return nil, fmt.Errorf("resource argument '%s' is required: %w", resourceArg, err)
+        }
     }
 
-    // Get UMA client and ENT client from context
+    // Get clients from context
     umaClient := GetUMAClientFromContext(ctx)
     client := GetEntClientFromContext(ctx).(*ent.Client)
 
-    // Verify permission (automatically detects resource type)
+    // Verify permission with O(1) lookup using resourceType
     hasPermission, err := verifyResourcePermission(
-        ctx, client, umaClient, resourceID, userCtx.RawToken, scope)
+        ctx, client, umaClient, resourceID, userCtx.RawToken, scope, resourceType)
     if err != nil {
         return nil, fmt.Errorf("permission check failed: %w", err)
     }
 
     if !hasPermission {
-        return nil, fmt.Errorf("insufficient permissions: missing '%s' scope on resource %s",
-            scope, resourceID)
+        return nil, fmt.Errorf("you don't have %q access to resource %q", scope, resourceID)
     }
 
-    // User has permission, proceed with resolver
     return next(ctx)
 }
 ```
 
-**Generic Permission Verification:**
+**O(1) Permission Verification with Type Hint:**
 
 ```go
 func verifyResourcePermission(
@@ -659,58 +705,62 @@ func verifyResourcePermission(
     client *ent.Client,
     umaClient keycloak.UMAClientInterface,
     resourceID, userToken, scope string,
+    resourceType model.ResourceType,
 ) (bool, error) {
-    id, err := uuid.Parse(resourceID)
-    if err != nil {
-        return false, fmt.Errorf("invalid resource ID: %w", err)
-    }
-
-    // Automatically detect resource type and verify
-    if _, err := client.Strategy.Get(ctx, id); err == nil {
+    switch resourceType {
+    case model.ResourceTypeStrategy:
+        // Direct lookup - O(1)
         return VerifyStrategyPermission(ctx, client, umaClient, resourceID, userToken, scope)
-    }
-    if _, err := client.Bot.Get(ctx, id); err == nil {
+
+    case model.ResourceTypeBot:
         return VerifyBotPermission(ctx, client, umaClient, resourceID, userToken, scope)
-    }
-    if _, err := client.Exchange.Get(ctx, id); err == nil {
+
+    case model.ResourceTypeExchange:
         return VerifyExchangePermission(ctx, client, umaClient, resourceID, userToken, scope)
-    }
-    if _, err := client.BotRunner.Get(ctx, id); err == nil {
+
+    case model.ResourceTypeBotRunner:
         return VerifyBotRunnerPermission(ctx, client, umaClient, resourceID, userToken, scope)
-    }
 
-    // Not found in database - might be Group resource (Keycloak-only)
-    if umaClient != nil {
+    case model.ResourceTypeBacktest:
+        // Backtests inherit permissions from their parent Strategy
+        bt, err := client.Backtest.Get(ctx, uuid.MustParse(resourceID))
+        if err != nil {
+            return false, fmt.Errorf("backtest not found: %w", err)
+        }
+        return VerifyStrategyPermission(ctx, client, umaClient, bt.StrategyID.String(), userToken, scope)
+
+    case model.ResourceTypeOrganization:
+        // Organizations are Keycloak-only resources
         return umaClient.CheckPermission(ctx, userToken, resourceID, scope)
-    }
 
-    return false, fmt.Errorf("resource not found: %s", resourceID)
+    default:
+        return false, fmt.Errorf("unknown resource type: %s", resourceType)
+    }
 }
 ```
 
-**Resource-Specific Verification:**
+**Cross-Resource Permission Pattern (Backtest → Strategy):**
+
+Backtests don't have their own Keycloak UMA resources. Instead, Backtest fields check permission
+on their parent Strategy using the `strategyID` field:
 
 ```go
-// internal/graph/keycloak_hooks.go
-func VerifyStrategyPermission(
-    ctx context.Context,
-    client *ent.Client,
-    umaClient keycloak.UMAClientInterface,
-    strategyID, userToken, scope string,
-) (bool, error) {
-    if umaClient == nil {
-        return false, fmt.Errorf("UMA client not available - authorization required")
-    }
+// ENT Schema annotation (internal/ent/schema/backtest.go)
+field.JSON("result", map[string]interface{}{}).
+    Annotations(
+        entgql.Type("Map"),
+        HasScopeWithField("view", "strategyID", "STRATEGY"),
+    )
 
-    // Check permission via Keycloak UMA
-    hasPermission, err := umaClient.CheckPermission(ctx, userToken, strategyID, scope)
-    if err != nil {
-        return false, fmt.Errorf("permission check failed: %w", err)
-    }
-
-    return hasPermission, nil
-}
+// Generated GraphQL directive:
+// result: Map @hasScope(resource: "strategyID", scope: "view", resourceType: STRATEGY, fromParent: true)
 ```
+
+This pattern:
+
+1. Extracts `strategyID` from the Backtest parent object
+2. Checks `view` permission on the Strategy (not Backtest)
+3. Avoids "backtest not found" errors since we never look up Backtest as a UMA resource
 
 ### Flow Diagrams
 

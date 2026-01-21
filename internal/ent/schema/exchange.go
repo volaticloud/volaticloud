@@ -32,7 +32,7 @@ func (Exchange) Fields() []ent.Field {
 			Optional().
 			Annotations(
 				entgql.Type("Map"),
-				RequiresPermission("view-secrets"),
+				HasScope("view-secrets", "EXCHANGE"),
 			).
 			Comment("Complete freqtrade exchange configuration (name, key, secret, pair_whitelist, etc.)"),
 		field.String("owner_id").
