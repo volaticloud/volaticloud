@@ -33,7 +33,7 @@ import {
   Dashboard,
   Warning,
 } from '@mui/icons-material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
 import { useGetBacktestQuery } from '../Backtests/backtests.generated';
@@ -108,6 +108,77 @@ class MyStrategy(IStrategy):
     isCreateMode ? createDefaultUIBuilderConfig() : null
   );
   const [ejectDialogOpen, setEjectDialogOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const pendingNavigationRef = useRef<string | null>(null);
+  const hasChangesRef = useRef(hasChanges);
+
+  // Keep ref in sync with state for use in event handlers
+  useEffect(() => {
+    hasChangesRef.current = hasChanges;
+  }, [hasChanges]);
+
+  // Block browser refresh/close when there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChangesRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // Block browser back/forward navigation
+  useEffect(() => {
+    // Push a dummy state to detect back navigation
+    const currentPath = window.location.pathname + window.location.search;
+    window.history.pushState({ preventBack: true }, '', currentPath);
+
+    const handlePopState = () => {
+      if (hasChangesRef.current) {
+        // Push state back to prevent navigation
+        window.history.pushState({ preventBack: true }, '', currentPath);
+        // Show confirmation dialog
+        setLeaveDialogOpen(true);
+        pendingNavigationRef.current = 'back';
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  // Wrapped navigate function that checks for unsaved changes
+  const safeNavigate = useCallback((path: string) => {
+    if (hasChangesRef.current) {
+      pendingNavigationRef.current = path;
+      setLeaveDialogOpen(true);
+    } else {
+      navigate(path);
+    }
+  }, [navigate]);
+
+  // Handle confirmed navigation after dialog
+  const handleConfirmLeave = useCallback(() => {
+    setLeaveDialogOpen(false);
+    setHasChanges(false);
+    if (pendingNavigationRef.current === 'back') {
+      window.history.go(-2); // Go back past our dummy state
+    } else if (pendingNavigationRef.current) {
+      navigate(pendingNavigationRef.current);
+    }
+    pendingNavigationRef.current = null;
+  }, [navigate]);
+
+  const handleCancelLeave = useCallback(() => {
+    setLeaveDialogOpen(false);
+    pendingNavigationRef.current = null;
+  }, []);
 
   const { data, loading, error } = useGetStrategyForStudioQuery({
     variables: { id: id! },
@@ -322,9 +393,9 @@ class MyStrategy(IStrategy):
 
   const handleCancel = () => {
     if (isCreateMode) {
-      navigate('/strategies');
+      safeNavigate('/strategies');
     } else {
-      navigate(`/strategies/${id}`);
+      safeNavigate(`/strategies/${id}`);
     }
   };
 
@@ -703,6 +774,39 @@ class MyStrategy(IStrategy):
           <Button onClick={() => setEjectDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" color="warning" onClick={handleConfirmEject}>
             Eject to Code
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Leave confirmation dialog */}
+      <Dialog open={leaveDialogOpen} onClose={handleCancelLeave}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Warning color="warning" />
+          Unsaved Changes
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            You have unsaved changes that will be lost if you leave this page.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Do you want to save your changes before leaving?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelLeave}>
+            Cancel
+          </Button>
+          <Button color="error" onClick={handleConfirmLeave}>
+            Discard Changes
+          </Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              await handleSave(false);
+              handleConfirmLeave();
+            }}
+          >
+            Save & Leave
           </Button>
         </DialogActions>
       </Dialog>
