@@ -1,16 +1,20 @@
 # ADR-0013: Long/Short Signal Support
 
 ## Status
+
 Accepted
 
 ## Context
+
 The strategy builder originally only supported long positions (buy low, sell high).
 Many trading strategies require short selling capabilities, especially for:
+
 - Hedging positions in volatile markets
 - Profiting from bearish market conditions
 - Implementing market-neutral strategies
 
 We needed to add comprehensive long/short position support while maintaining:
+
 - Full backwards compatibility with existing v1 strategies
 - A clean, intuitive UI for defining entry/exit conditions per direction
 - Optional auto-mirroring to reduce duplicate condition maintenance
@@ -21,7 +25,7 @@ We needed to add comprehensive long/short position support while maintaining:
 
 We chose a nested structure with entry/exit conditions grouped per direction:
 
-```
+```text
 UIBuilderConfig
 ├── position_mode: LONG_ONLY | SHORT_ONLY | LONG_AND_SHORT
 ├── long: SignalConfig
@@ -34,6 +38,7 @@ UIBuilderConfig
 ```
 
 **Rationale:**
+
 - Groups related conditions logically (entry/exit per direction)
 - Allows independent configuration of long and short signals
 - Supports mirror configuration to auto-generate opposite direction
@@ -50,6 +55,7 @@ enum PositionMode {
 ```
 
 **Rationale:**
+
 - Explicit mode makes intent clear
 - Default LONG_ONLY preserves existing behavior
 - UI can conditionally show/hide tabs based on mode
@@ -66,6 +72,7 @@ input MirrorConfigInput {
 ```
 
 **Rationale:**
+
 - Common pattern: short conditions are often inverted long conditions
 - Reduces maintenance burden for symmetric strategies
 - Optional - users can define independent conditions
@@ -106,6 +113,7 @@ The strategy code generator produces different signals based on position mode:
 ## Alternatives Considered
 
 ### 1. Flat Structure with Signal Type Field
+
 ```json
 {
   "signals": [
@@ -115,9 +123,11 @@ The strategy code generator produces different signals based on position mode:
   ]
 }
 ```
+
 **Rejected:** Array-based structure harder to validate and query. Nested structure is more explicit.
 
 ### 2. Separate Fields Without Nesting
+
 ```json
 {
   "long_entry_conditions": {...},
@@ -126,9 +136,11 @@ The strategy code generator produces different signals based on position mode:
   "short_exit_conditions": {...}
 }
 ```
+
 **Rejected:** More verbose, harder to add per-direction metadata in the future.
 
 ### 3. Single Entry/Exit with Direction Flag
+
 ```json
 {
   "entry_conditions": {...},
@@ -137,11 +149,13 @@ The strategy code generator produces different signals based on position mode:
   "invert_for_short": true
 }
 ```
+
 **Rejected:** Limits flexibility - many strategies have fundamentally different long/short conditions.
 
 ## Consequences
 
 ### Positive
+
 - Clean UI with direction-specific tabs
 - Independent control over long and short signals
 - Convenient auto-mirror for symmetric strategies
@@ -149,6 +163,7 @@ The strategy code generator produces different signals based on position mode:
 - Type-safe GraphQL schema
 
 ### Negative
+
 - More complex config structure
 - Need to maintain normalization logic
 - Mirror logic adds complexity for edge cases
@@ -156,6 +171,7 @@ The strategy code generator produces different signals based on position mode:
 ## Implementation Files
 
 ### Backend
+
 - `internal/graph/schema.graphqls` - GraphQL types
 - `internal/strategy/codegen/types.go` - Go type definitions
 - `internal/strategy/codegen/normalize.go` - V1→V2 migration
@@ -163,6 +179,7 @@ The strategy code generator produces different signals based on position mode:
 - `internal/strategy/codegen/strategy.go` - Code generation
 
 ### Frontend
+
 - `dashboard/src/components/StrategyBuilder/types.ts` - TypeScript types
 - `dashboard/src/components/StrategyBuilder/PositionModeSelector.tsx` - Mode selection
 - `dashboard/src/components/StrategyBuilder/MirrorToggle.tsx` - Mirror config
@@ -170,5 +187,6 @@ The strategy code generator produces different signals based on position mode:
 - `dashboard/src/components/StrategyBuilder/StrategyBuilder.tsx` - Main component
 
 ## Related ADRs
+
 - [ADR-0003](./0003-strategy-immutable-versioning.md) - Strategy versioning
 - [ADR-0011](./0011-strategy-ui-builder.md) - UI Builder architecture
