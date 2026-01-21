@@ -88,6 +88,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0008](../docs/adr/0008-multi-tenant-authorization.md) - Multi-Tenant Authorization (UMA 2.0, public/private visibility)
 - [ADR-0011](../docs/adr/0011-strategy-ui-builder.md) - Strategy UI Builder Architecture
 - [ADR-0012](../docs/adr/0012-organization-alias-system.md) - Organization Alias System
+- [ADR-0013](../docs/adr/0013-long-short-signal-support.md) - Long/Short Signal Support with Mirror
 
 ## Project Structure
 

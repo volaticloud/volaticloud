@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // ApplyMirrorConfig generates target direction signals from source direction
@@ -9,33 +10,39 @@ import (
 //
 // If mirroring is enabled and source is LONG, it generates SHORT signals from LONG.
 // If mirroring is enabled and source is SHORT, it generates LONG signals from SHORT.
-func ApplyMirrorConfig(config *UIBuilderConfig) *UIBuilderConfig {
+//
+// Returns the config unchanged if the source direction has no conditions defined.
+func ApplyMirrorConfig(config *UIBuilderConfig) (*UIBuilderConfig, error) {
 	if config == nil || config.MirrorConfig == nil || !config.MirrorConfig.Enabled {
-		return config
+		return config, nil
 	}
 
 	mc := config.MirrorConfig
 
 	switch mc.Source {
 	case SignalDirectionLong:
+		// Validate source has conditions
+		if config.Long == nil {
+			return config, fmt.Errorf("mirror source LONG has no conditions defined")
+		}
 		// Mirror LONG → SHORT
-		if config.Long != nil {
-			config.Short = &SignalConfig{
-				EntryConditions: invertConditionNode(config.Long.EntryConditions, mc),
-				ExitConditions:  invertConditionNode(config.Long.ExitConditions, mc),
-			}
+		config.Short = &SignalConfig{
+			EntryConditions: invertConditionNode(config.Long.EntryConditions, mc),
+			ExitConditions:  invertConditionNode(config.Long.ExitConditions, mc),
 		}
 	case SignalDirectionShort:
+		// Validate source has conditions
+		if config.Short == nil {
+			return config, fmt.Errorf("mirror source SHORT has no conditions defined")
+		}
 		// Mirror SHORT → LONG
-		if config.Short != nil {
-			config.Long = &SignalConfig{
-				EntryConditions: invertConditionNode(config.Short.EntryConditions, mc),
-				ExitConditions:  invertConditionNode(config.Short.ExitConditions, mc),
-			}
+		config.Long = &SignalConfig{
+			EntryConditions: invertConditionNode(config.Short.EntryConditions, mc),
+			ExitConditions:  invertConditionNode(config.Short.ExitConditions, mc),
 		}
 	}
 
-	return config
+	return config, nil
 }
 
 // invertConditionNode recursively inverts a condition tree according to mirror config

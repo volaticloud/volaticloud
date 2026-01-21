@@ -45,7 +45,10 @@ func TestApplyMirrorConfig_Disabled(t *testing.T) {
 		},
 	}
 
-	result := ApplyMirrorConfig(config)
+	result, err := ApplyMirrorConfig(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	// Short should not be created when mirroring is disabled
 	if result.Short != nil {
@@ -79,7 +82,10 @@ func TestApplyMirrorConfig_LongToShort(t *testing.T) {
 		},
 	}
 
-	result := ApplyMirrorConfig(config)
+	result, err := ApplyMirrorConfig(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if result.Short == nil {
 		t.Fatal("expected Short to be created from mirroring")
@@ -130,7 +136,10 @@ func TestApplyMirrorConfig_ShortToLong(t *testing.T) {
 		},
 	}
 
-	result := ApplyMirrorConfig(config)
+	result, err := ApplyMirrorConfig(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if result.Long == nil {
 		t.Fatal("expected Long to be created from mirroring")
@@ -181,7 +190,10 @@ func TestApplyMirrorConfig_NoInversion(t *testing.T) {
 		},
 	}
 
-	result := ApplyMirrorConfig(config)
+	result, err := ApplyMirrorConfig(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if result.Short == nil {
 		t.Fatal("expected Short to be created from mirroring")
@@ -292,7 +304,10 @@ func TestInvertConditionNode_InRange(t *testing.T) {
 }
 
 func TestApplyMirrorConfig_NilConfig(t *testing.T) {
-	result := ApplyMirrorConfig(nil)
+	result, err := ApplyMirrorConfig(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if result != nil {
 		t.Error("expected nil for nil input")
 	}
@@ -307,11 +322,61 @@ func TestApplyMirrorConfig_NilMirrorConfig(t *testing.T) {
 		},
 	}
 
-	result := ApplyMirrorConfig(config)
+	result, err := ApplyMirrorConfig(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	// Should return unchanged
 	if result.Short != nil {
 		t.Error("expected Short to be nil when mirror config is nil")
+	}
+}
+
+func TestApplyMirrorConfig_NilSourceConditions(t *testing.T) {
+	// Test that mirroring returns error when source direction has no conditions
+	tests := []struct {
+		name     string
+		config   *UIBuilderConfig
+		wantErr  string
+	}{
+		{
+			name: "LONG source with nil Long",
+			config: &UIBuilderConfig{
+				PositionMode: PositionModeLongAndShort,
+				Long:         nil, // No conditions
+				MirrorConfig: &MirrorConfig{
+					Enabled: true,
+					Source:  SignalDirectionLong,
+				},
+			},
+			wantErr: "mirror source LONG has no conditions defined",
+		},
+		{
+			name: "SHORT source with nil Short",
+			config: &UIBuilderConfig{
+				PositionMode: PositionModeLongAndShort,
+				Short:        nil, // No conditions
+				MirrorConfig: &MirrorConfig{
+					Enabled: true,
+					Source:  SignalDirectionShort,
+				},
+			},
+			wantErr: "mirror source SHORT has no conditions defined",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ApplyMirrorConfig(tt.config)
+			if err == nil {
+				t.Errorf("expected error but got nil")
+				return
+			}
+			if err.Error() != tt.wantErr {
+				t.Errorf("expected error %q, got %q", tt.wantErr, err.Error())
+			}
+		})
 	}
 }
 

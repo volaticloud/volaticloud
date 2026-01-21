@@ -21,7 +21,10 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 	config = NormalizeUIBuilderConfig(config)
 
 	// Apply mirror config if enabled
-	config = ApplyMirrorConfig(config)
+	config, err := ApplyMirrorConfig(config)
+	if err != nil {
+		return "", fmt.Errorf("failed to apply mirror config: %w", err)
+	}
 
 	// Set indicators for reference during generation
 	g.SetIndicators(config.Indicators)
@@ -32,7 +35,6 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 
 	// Pre-generate conditions to determine required imports
 	var longEntryCode, longExitCode, shortEntryCode, shortExitCode string
-	var err error
 
 	if generateLong && config.Long != nil {
 		longEntryCode, err = g.GenerateCondition(&config.Long.EntryConditions)

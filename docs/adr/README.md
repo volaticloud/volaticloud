@@ -18,6 +18,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0010](0010-organization-invitation-system.md) | Organization User Invitation System | Accepted | 2026-01-14 |
 | [0011](0011-strategy-ui-builder.md) | Strategy UI Builder Architecture | Accepted | 2026-01-16 |
 | [0012](0012-organization-alias-system.md) | Organization Alias System | Accepted | 2026-01-19 |
+| [0013](0013-long-short-signal-support.md) | Long/Short Signal Support with Mirror | Accepted | 2026-01-20 |
 
 ## What is an ADR?
 
