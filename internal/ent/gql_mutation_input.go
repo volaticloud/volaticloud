@@ -778,6 +778,7 @@ type CreateBotRunnerInput struct {
 	S3Config              map[string]interface{}
 	S3DataKey             *string
 	S3DataUploadedAt      *time.Time
+	DataAvailable         map[string]interface{}
 	OwnerID               string
 	BillingEnabled        *bool
 	CPUPricePerCoreHour   *float64
@@ -834,6 +835,9 @@ func (i *CreateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.S3DataUploadedAt; v != nil {
 		m.SetS3DataUploadedAt(*v)
+	}
+	if v := i.DataAvailable; v != nil {
+		m.SetDataAvailable(v)
 	}
 	m.SetOwnerID(i.OwnerID)
 	if v := i.BillingEnabled; v != nil {
@@ -898,6 +902,8 @@ type UpdateBotRunnerInput struct {
 	S3DataKey                  *string
 	ClearS3DataUploadedAt      bool
 	S3DataUploadedAt           *time.Time
+	ClearDataAvailable         bool
+	DataAvailable              map[string]interface{}
 	OwnerID                    *string
 	BillingEnabled             *bool
 	ClearCPUPricePerCoreHour   bool
@@ -993,6 +999,12 @@ func (i *UpdateBotRunnerInput) Mutate(m *BotRunnerMutation) {
 	}
 	if v := i.S3DataUploadedAt; v != nil {
 		m.SetS3DataUploadedAt(*v)
+	}
+	if i.ClearDataAvailable {
+		m.ClearDataAvailable()
+	}
+	if v := i.DataAvailable; v != nil {
+		m.SetDataAvailable(v)
 	}
 	if v := i.OwnerID; v != nil {
 		m.SetOwnerID(*v)

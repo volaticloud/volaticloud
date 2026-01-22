@@ -20,19 +20,7 @@ export type GetRunnerByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRunnerByIdQuery = { __typename?: 'Query', node?:
-    | { __typename?: 'AlertEvent' }
-    | { __typename?: 'AlertRule' }
-    | { __typename?: 'Backtest' }
-    | { __typename?: 'Bot' }
-    | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, public: boolean, dataIsReady: boolean }
-    | { __typename?: 'Exchange' }
-    | { __typename?: 'ResourceUsageAggregation' }
-    | { __typename?: 'ResourceUsageSample' }
-    | { __typename?: 'Strategy' }
-    | { __typename?: 'Trade' }
-   | null };
+export type GetRunnerByIdQuery = { __typename?: 'Query', botRunners: { __typename?: 'BotRunnerConnection', edges?: Array<{ __typename?: 'BotRunnerEdge', node?: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, public: boolean, dataIsReady: boolean, dataAvailable?: Record<string, any> | null } | null } | null> | null } };
 
 export type GetBotsForSelectorQueryVariables = Types.Exact<{
   ownerID?: Types.InputMaybe<Types.Scalars['String']['input']>;
@@ -50,19 +38,7 @@ export type GetBotByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetBotByIdQuery = { __typename?: 'Query', node?:
-    | { __typename?: 'AlertEvent' }
-    | { __typename?: 'AlertRule' }
-    | { __typename?: 'Backtest' }
-    | { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, public: boolean }
-    | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner' }
-    | { __typename?: 'Exchange' }
-    | { __typename?: 'ResourceUsageAggregation' }
-    | { __typename?: 'ResourceUsageSample' }
-    | { __typename?: 'Strategy' }
-    | { __typename?: 'Trade' }
-   | null };
+export type GetBotByIdQuery = { __typename?: 'Query', bots: { __typename?: 'BotConnection', edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, public: boolean } | null } | null> | null } };
 
 export type GetStrategiesForSelectorQueryVariables = Types.Exact<{
   ownerID?: Types.InputMaybe<Types.Scalars['String']['input']>;
@@ -81,19 +57,7 @@ export type GetStrategyForSelectorQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetStrategyForSelectorQuery = { __typename?: 'Query', node?:
-    | { __typename?: 'AlertEvent' }
-    | { __typename?: 'AlertRule' }
-    | { __typename?: 'Backtest' }
-    | { __typename?: 'Bot' }
-    | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner' }
-    | { __typename?: 'Exchange' }
-    | { __typename?: 'ResourceUsageAggregation' }
-    | { __typename?: 'ResourceUsageSample' }
-    | { __typename?: 'Strategy', id: string, name: string, isLatest: boolean, versionNumber: number, public: boolean }
-    | { __typename?: 'Trade' }
-   | null };
+export type GetStrategyForSelectorQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, isLatest: boolean, versionNumber: number, public: boolean } | null } | null> | null } };
 
 
 export const GetRunnersForSelectorDocument = gql`
@@ -184,13 +148,16 @@ export type GetRunnersForSelectorSuspenseQueryHookResult = ReturnType<typeof use
 export type GetRunnersForSelectorQueryResult = Apollo.QueryResult<GetRunnersForSelectorQuery, GetRunnersForSelectorQueryVariables>;
 export const GetRunnerByIdDocument = gql`
     query GetRunnerById($id: ID!) {
-  node(id: $id) {
-    ... on BotRunner {
-      id
-      name
-      type
-      public
-      dataIsReady
+  botRunners(first: 1, where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+        type
+        public
+        dataIsReady
+        dataAvailable
+      }
     }
   }
 }
@@ -316,12 +283,14 @@ export type GetBotsForSelectorSuspenseQueryHookResult = ReturnType<typeof useGet
 export type GetBotsForSelectorQueryResult = Apollo.QueryResult<GetBotsForSelectorQuery, GetBotsForSelectorQueryVariables>;
 export const GetBotByIdDocument = gql`
     query GetBotById($id: ID!) {
-  node(id: $id) {
-    ... on Bot {
-      id
-      name
-      status
-      public
+  bots(first: 1, where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+        status
+        public
+      }
     }
   }
 }
@@ -450,13 +419,15 @@ export type GetStrategiesForSelectorSuspenseQueryHookResult = ReturnType<typeof 
 export type GetStrategiesForSelectorQueryResult = Apollo.QueryResult<GetStrategiesForSelectorQuery, GetStrategiesForSelectorQueryVariables>;
 export const GetStrategyForSelectorDocument = gql`
     query GetStrategyForSelector($id: ID!) {
-  node(id: $id) {
-    ... on Strategy {
-      id
-      name
-      isLatest
-      versionNumber
-      public
+  strategies(first: 1, where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+        isLatest
+        versionNumber
+        public
+      }
     }
   }
 }

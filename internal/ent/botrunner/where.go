@@ -677,6 +677,16 @@ func S3DataUploadedAtNotNil() predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldNotNull(FieldS3DataUploadedAt))
 }
 
+// DataAvailableIsNil applies the IsNil predicate on the "data_available" field.
+func DataAvailableIsNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldIsNull(FieldDataAvailable))
+}
+
+// DataAvailableNotNil applies the NotNil predicate on the "data_available" field.
+func DataAvailableNotNil() predicate.BotRunner {
+	return predicate.BotRunner(sql.FieldNotNull(FieldDataAvailable))
+}
+
 // OwnerIDEQ applies the EQ predicate on the "owner_id" field.
 func OwnerIDEQ(v string) predicate.BotRunner {
 	return predicate.BotRunner(sql.FieldEQ(FieldOwnerID, v))

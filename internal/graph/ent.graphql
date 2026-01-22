@@ -1598,6 +1598,10 @@ type BotRunner implements Node {
   """
   s3DataUploadedAt: Time
   """
+  Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]}
+  """
+  dataAvailable: Map
+  """
   Group ID (organization) that owns this bot runner
   """
   ownerID: String!
@@ -2511,6 +2515,10 @@ input CreateBotRunnerInput {
   When data was last uploaded to S3
   """
   s3DataUploadedAt: Time
+  """
+  Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]}
+  """
+  dataAvailable: Map
   """
   Group ID (organization) that owns this bot runner
   """
@@ -4703,6 +4711,11 @@ input UpdateBotRunnerInput {
   """
   s3DataUploadedAt: Time
   clearS3DataUploadedAt: Boolean
+  """
+  Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]}
+  """
+  dataAvailable: Map
+  clearDataAvailable: Boolean
   """
   Group ID (organization) that owns this bot runner
   """

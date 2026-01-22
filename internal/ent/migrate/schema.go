@@ -265,6 +265,7 @@ var (
 		{Name: "s3_config", Type: field.TypeJSON, Nullable: true},
 		{Name: "s3_data_key", Type: field.TypeString, Nullable: true},
 		{Name: "s3_data_uploaded_at", Type: field.TypeTime, Nullable: true},
+		{Name: "data_available", Type: field.TypeJSON, Nullable: true},
 		{Name: "owner_id", Type: field.TypeString},
 		{Name: "billing_enabled", Type: field.TypeBool, Default: false},
 		{Name: "cpu_price_per_core_hour", Type: field.TypeFloat64, Nullable: true},
@@ -283,7 +284,7 @@ var (
 			{
 				Name:    "botrunner_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{BotRunnersColumns[16]},
+				Columns: []*schema.Column{BotRunnersColumns[17]},
 			},
 		},
 	}

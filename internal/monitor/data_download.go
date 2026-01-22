@@ -2,8 +2,10 @@ package monitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"volaticloud/internal/ent"
@@ -125,17 +127,29 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 			switch status.Status {
 			case enum.DataDownloadStatusCompleted:
 				log.Printf("Runner %s: remote download completed", r.Name)
+
+				// Get logs to extract data availability metadata
+				logs, _ := downloader.GetDownloadLogs(ctx, taskID)
+				dataAvailable := parseDataAvailableFromLogs(logs)
+				if dataAvailable != nil {
+					log.Printf("Runner %s: extracted data availability metadata", r.Name)
+				}
+
 				// Cleanup download task
 				if cleanupErr := downloader.CleanupDownload(ctx, taskID); cleanupErr != nil {
 					log.Printf("Runner %s: failed to cleanup download task: %v", r.Name, cleanupErr)
 				}
-				// Update S3 data key
+
+				// Update S3 data key and data availability
 				now := time.Now()
 				s3DataKey := s3.DataKey(r.ID.String())
-				if _, updateErr := dbClient.BotRunner.UpdateOne(r).
+				update := dbClient.BotRunner.UpdateOne(r).
 					SetS3DataKey(s3DataKey).
-					SetS3DataUploadedAt(now).
-					Save(context.Background()); updateErr != nil {
+					SetS3DataUploadedAt(now)
+				if dataAvailable != nil {
+					update = update.SetDataAvailable(dataAvailable)
+				}
+				if _, updateErr := update.Save(context.Background()); updateErr != nil {
 					log.Printf("Runner %s: failed to update S3 info: %v", r.Name, updateErr)
 				}
 				return nil
@@ -157,6 +171,37 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 			}
 		}
 	}
+}
+
+// parseDataAvailableFromLogs extracts data availability metadata from download logs.
+// The script outputs metadata between ===DATA_AVAILABLE_START=== and ===DATA_AVAILABLE_END=== markers.
+func parseDataAvailableFromLogs(logs string) map[string]interface{} {
+	const startMarker = "===DATA_AVAILABLE_START==="
+	const endMarker = "===DATA_AVAILABLE_END==="
+
+	startIdx := strings.Index(logs, startMarker)
+	if startIdx == -1 {
+		return nil
+	}
+	startIdx += len(startMarker)
+
+	endIdx := strings.Index(logs[startIdx:], endMarker)
+	if endIdx == -1 {
+		return nil
+	}
+
+	jsonStr := strings.TrimSpace(logs[startIdx : startIdx+endIdx])
+	if jsonStr == "" {
+		return nil
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		log.Printf("Failed to parse data availability JSON: %v", err)
+		return nil
+	}
+
+	return result
 }
 
 // parseExchangeConfigs parses the data download config into exchange configs.

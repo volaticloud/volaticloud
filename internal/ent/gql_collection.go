@@ -1354,6 +1354,11 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 				selectedFields = append(selectedFields, botrunner.FieldS3DataUploadedAt)
 				fieldSeen[botrunner.FieldS3DataUploadedAt] = struct{}{}
 			}
+		case "dataAvailable":
+			if _, ok := fieldSeen[botrunner.FieldDataAvailable]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataAvailable)
+				fieldSeen[botrunner.FieldDataAvailable] = struct{}{}
+			}
 		case "ownerID":
 			if _, ok := fieldSeen[botrunner.FieldOwnerID]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldOwnerID)

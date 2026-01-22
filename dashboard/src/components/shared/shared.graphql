@@ -63,13 +63,16 @@ query GetRunnersForSelector(
 
 # Query for a specific runner by ID (to ensure selected value is in list)
 query GetRunnerById($id: ID!) {
-  node(id: $id) {
-    ... on BotRunner {
-      id
-      name
-      type
-      public
-      dataIsReady
+  botRunners(first: 1, where: { id: $id }) {
+    edges {
+      node {
+        id
+        name
+        type
+        public
+        dataIsReady
+        dataAvailable
+      }
     }
   }
 }
@@ -134,12 +137,14 @@ query GetBotsForSelector(
 
 # Query for a specific bot by ID (to ensure selected value is in list)
 query GetBotById($id: ID!) {
-  node(id: $id) {
-    ... on Bot {
-      id
-      name
-      status
-      public
+  bots(first: 1, where: { id: $id }) {
+    edges {
+      node {
+        id
+        name
+        status
+        public
+      }
     }
   }
 }
@@ -209,13 +214,15 @@ query GetStrategiesForSelector(
 
 # Query for a specific strategy by ID (to ensure selected value is in list)
 query GetStrategyForSelector($id: ID!) {
-  node(id: $id) {
-    ... on Strategy {
-      id
-      name
-      isLatest
-      versionNumber
-      public
+  strategies(first: 1, where: { id: $id }) {
+    edges {
+      node {
+        id
+        name
+        isLatest
+        versionNumber
+        public
+      }
     }
   }
 }

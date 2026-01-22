@@ -8315,6 +8315,7 @@ type BotRunnerMutation struct {
 	s3_config                   *map[string]interface{}
 	s3_data_key                 *string
 	s3_data_uploaded_at         *time.Time
+	data_available              *map[string]interface{}
 	owner_id                    *string
 	billing_enabled             *bool
 	cpu_price_per_core_hour     *float64
@@ -9119,6 +9120,55 @@ func (m *BotRunnerMutation) ResetS3DataUploadedAt() {
 	delete(m.clearedFields, botrunner.FieldS3DataUploadedAt)
 }
 
+// SetDataAvailable sets the "data_available" field.
+func (m *BotRunnerMutation) SetDataAvailable(value map[string]interface{}) {
+	m.data_available = &value
+}
+
+// DataAvailable returns the value of the "data_available" field in the mutation.
+func (m *BotRunnerMutation) DataAvailable() (r map[string]interface{}, exists bool) {
+	v := m.data_available
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataAvailable returns the old "data_available" field's value of the BotRunner entity.
+// If the BotRunner object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BotRunnerMutation) OldDataAvailable(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataAvailable is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataAvailable requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataAvailable: %w", err)
+	}
+	return oldValue.DataAvailable, nil
+}
+
+// ClearDataAvailable clears the value of the "data_available" field.
+func (m *BotRunnerMutation) ClearDataAvailable() {
+	m.data_available = nil
+	m.clearedFields[botrunner.FieldDataAvailable] = struct{}{}
+}
+
+// DataAvailableCleared returns if the "data_available" field was cleared in this mutation.
+func (m *BotRunnerMutation) DataAvailableCleared() bool {
+	_, ok := m.clearedFields[botrunner.FieldDataAvailable]
+	return ok
+}
+
+// ResetDataAvailable resets all changes to the "data_available" field.
+func (m *BotRunnerMutation) ResetDataAvailable() {
+	m.data_available = nil
+	delete(m.clearedFields, botrunner.FieldDataAvailable)
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (m *BotRunnerMutation) SetOwnerID(s string) {
 	m.owner_id = &s
@@ -9793,7 +9843,7 @@ func (m *BotRunnerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BotRunnerMutation) Fields() []string {
-	fields := make([]string, 0, 23)
+	fields := make([]string, 0, 24)
 	if m.public != nil {
 		fields = append(fields, botrunner.FieldPublic)
 	}
@@ -9838,6 +9888,9 @@ func (m *BotRunnerMutation) Fields() []string {
 	}
 	if m.s3_data_uploaded_at != nil {
 		fields = append(fields, botrunner.FieldS3DataUploadedAt)
+	}
+	if m.data_available != nil {
+		fields = append(fields, botrunner.FieldDataAvailable)
 	}
 	if m.owner_id != nil {
 		fields = append(fields, botrunner.FieldOwnerID)
@@ -9901,6 +9954,8 @@ func (m *BotRunnerMutation) Field(name string) (ent.Value, bool) {
 		return m.S3DataKey()
 	case botrunner.FieldS3DataUploadedAt:
 		return m.S3DataUploadedAt()
+	case botrunner.FieldDataAvailable:
+		return m.DataAvailable()
 	case botrunner.FieldOwnerID:
 		return m.OwnerID()
 	case botrunner.FieldBillingEnabled:
@@ -9956,6 +10011,8 @@ func (m *BotRunnerMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldS3DataKey(ctx)
 	case botrunner.FieldS3DataUploadedAt:
 		return m.OldS3DataUploadedAt(ctx)
+	case botrunner.FieldDataAvailable:
+		return m.OldDataAvailable(ctx)
 	case botrunner.FieldOwnerID:
 		return m.OldOwnerID(ctx)
 	case botrunner.FieldBillingEnabled:
@@ -10085,6 +10142,13 @@ func (m *BotRunnerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetS3DataUploadedAt(v)
+		return nil
+	case botrunner.FieldDataAvailable:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataAvailable(v)
 		return nil
 	case botrunner.FieldOwnerID:
 		v, ok := value.(string)
@@ -10253,6 +10317,9 @@ func (m *BotRunnerMutation) ClearedFields() []string {
 	if m.FieldCleared(botrunner.FieldS3DataUploadedAt) {
 		fields = append(fields, botrunner.FieldS3DataUploadedAt)
 	}
+	if m.FieldCleared(botrunner.FieldDataAvailable) {
+		fields = append(fields, botrunner.FieldDataAvailable)
+	}
 	if m.FieldCleared(botrunner.FieldCPUPricePerCoreHour) {
 		fields = append(fields, botrunner.FieldCPUPricePerCoreHour)
 	}
@@ -10308,6 +10375,9 @@ func (m *BotRunnerMutation) ClearField(name string) error {
 		return nil
 	case botrunner.FieldS3DataUploadedAt:
 		m.ClearS3DataUploadedAt()
+		return nil
+	case botrunner.FieldDataAvailable:
+		m.ClearDataAvailable()
 		return nil
 	case botrunner.FieldCPUPricePerCoreHour:
 		m.ClearCPUPricePerCoreHour()
@@ -10373,6 +10443,9 @@ func (m *BotRunnerMutation) ResetField(name string) error {
 		return nil
 	case botrunner.FieldS3DataUploadedAt:
 		m.ResetS3DataUploadedAt()
+		return nil
+	case botrunner.FieldDataAvailable:
+		m.ResetDataAvailable()
 		return nil
 	case botrunner.FieldOwnerID:
 		m.ResetOwnerID()

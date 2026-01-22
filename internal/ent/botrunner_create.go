@@ -199,6 +199,12 @@ func (_c *BotRunnerCreate) SetNillableS3DataUploadedAt(v *time.Time) *BotRunnerC
 	return _c
 }
 
+// SetDataAvailable sets the "data_available" field.
+func (_c *BotRunnerCreate) SetDataAvailable(v map[string]interface{}) *BotRunnerCreate {
+	_c.mutation.SetDataAvailable(v)
+	return _c
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_c *BotRunnerCreate) SetOwnerID(v string) *BotRunnerCreate {
 	_c.mutation.SetOwnerID(v)
@@ -603,6 +609,10 @@ func (_c *BotRunnerCreate) createSpec() (*BotRunner, *sqlgraph.CreateSpec) {
 		_spec.SetField(botrunner.FieldS3DataUploadedAt, field.TypeTime, value)
 		_node.S3DataUploadedAt = &value
 	}
+	if value, ok := _c.mutation.DataAvailable(); ok {
+		_spec.SetField(botrunner.FieldDataAvailable, field.TypeJSON, value)
+		_node.DataAvailable = value
+	}
 	if value, ok := _c.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
 		_node.OwnerID = value
@@ -988,6 +998,24 @@ func (u *BotRunnerUpsert) UpdateS3DataUploadedAt() *BotRunnerUpsert {
 // ClearS3DataUploadedAt clears the value of the "s3_data_uploaded_at" field.
 func (u *BotRunnerUpsert) ClearS3DataUploadedAt() *BotRunnerUpsert {
 	u.SetNull(botrunner.FieldS3DataUploadedAt)
+	return u
+}
+
+// SetDataAvailable sets the "data_available" field.
+func (u *BotRunnerUpsert) SetDataAvailable(v map[string]interface{}) *BotRunnerUpsert {
+	u.Set(botrunner.FieldDataAvailable, v)
+	return u
+}
+
+// UpdateDataAvailable sets the "data_available" field to the value that was provided on create.
+func (u *BotRunnerUpsert) UpdateDataAvailable() *BotRunnerUpsert {
+	u.SetExcluded(botrunner.FieldDataAvailable)
+	return u
+}
+
+// ClearDataAvailable clears the value of the "data_available" field.
+func (u *BotRunnerUpsert) ClearDataAvailable() *BotRunnerUpsert {
+	u.SetNull(botrunner.FieldDataAvailable)
 	return u
 }
 
@@ -1451,6 +1479,27 @@ func (u *BotRunnerUpsertOne) UpdateS3DataUploadedAt() *BotRunnerUpsertOne {
 func (u *BotRunnerUpsertOne) ClearS3DataUploadedAt() *BotRunnerUpsertOne {
 	return u.Update(func(s *BotRunnerUpsert) {
 		s.ClearS3DataUploadedAt()
+	})
+}
+
+// SetDataAvailable sets the "data_available" field.
+func (u *BotRunnerUpsertOne) SetDataAvailable(v map[string]interface{}) *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataAvailable(v)
+	})
+}
+
+// UpdateDataAvailable sets the "data_available" field to the value that was provided on create.
+func (u *BotRunnerUpsertOne) UpdateDataAvailable() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataAvailable()
+	})
+}
+
+// ClearDataAvailable clears the value of the "data_available" field.
+func (u *BotRunnerUpsertOne) ClearDataAvailable() *BotRunnerUpsertOne {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataAvailable()
 	})
 }
 
@@ -2103,6 +2152,27 @@ func (u *BotRunnerUpsertBulk) UpdateS3DataUploadedAt() *BotRunnerUpsertBulk {
 func (u *BotRunnerUpsertBulk) ClearS3DataUploadedAt() *BotRunnerUpsertBulk {
 	return u.Update(func(s *BotRunnerUpsert) {
 		s.ClearS3DataUploadedAt()
+	})
+}
+
+// SetDataAvailable sets the "data_available" field.
+func (u *BotRunnerUpsertBulk) SetDataAvailable(v map[string]interface{}) *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.SetDataAvailable(v)
+	})
+}
+
+// UpdateDataAvailable sets the "data_available" field to the value that was provided on create.
+func (u *BotRunnerUpsertBulk) UpdateDataAvailable() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.UpdateDataAvailable()
+	})
+}
+
+// ClearDataAvailable clears the value of the "data_available" field.
+func (u *BotRunnerUpsertBulk) ClearDataAvailable() *BotRunnerUpsertBulk {
+	return u.Update(func(s *BotRunnerUpsert) {
+		s.ClearDataAvailable()
 	})
 }
 

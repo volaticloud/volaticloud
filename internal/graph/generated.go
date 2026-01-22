@@ -259,6 +259,7 @@ type ComplexityRoot struct {
 		CPUPricePerCoreHour   func(childComplexity int) int
 		Config                func(childComplexity int) int
 		CreatedAt             func(childComplexity int) int
+		DataAvailable         func(childComplexity int) int
 		DataDownloadConfig    func(childComplexity int) int
 		DataDownloadProgress  func(childComplexity int) int
 		DataDownloadStartedAt func(childComplexity int) int
@@ -1727,6 +1728,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BotRunner.CreatedAt(childComplexity), true
+	case "BotRunner.dataAvailable":
+		if e.complexity.BotRunner.DataAvailable == nil {
+			break
+		}
+
+		return e.complexity.BotRunner.DataAvailable(childComplexity), true
 	case "BotRunner.dataDownloadConfig":
 		if e.complexity.BotRunner.DataDownloadConfig == nil {
 			break
@@ -7698,6 +7705,8 @@ func (ec *executionContext) fieldContext_Backtest_runner(_ context.Context, fiel
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -9286,6 +9295,8 @@ func (ec *executionContext) fieldContext_Bot_runner(_ context.Context, field gra
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -11121,6 +11132,35 @@ func (ec *executionContext) fieldContext_BotRunner_s3DataUploadedAt(_ context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _BotRunner_dataAvailable(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BotRunner_dataAvailable,
+		func(ctx context.Context) (any, error) {
+			return obj.DataAvailable, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BotRunner_dataAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BotRunner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BotRunner_ownerID(ctx context.Context, field graphql.CollectedField, obj *ent.BotRunner) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11610,6 +11650,8 @@ func (ec *executionContext) fieldContext_BotRunnerEdge_node(_ context.Context, f
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -14866,6 +14908,8 @@ func (ec *executionContext) fieldContext_Mutation_createBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -14994,6 +15038,8 @@ func (ec *executionContext) fieldContext_Mutation_updateBotRunner(ctx context.Co
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -15196,6 +15242,8 @@ func (ec *executionContext) fieldContext_Mutation_refreshRunnerData(ctx context.
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -16264,6 +16312,8 @@ func (ec *executionContext) fieldContext_Mutation_setRunnerVisibility(ctx contex
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -21525,6 +21575,8 @@ func (ec *executionContext) fieldContext_ResourceUsageAggregation_runner(_ conte
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -22014,6 +22066,8 @@ func (ec *executionContext) fieldContext_ResourceUsageSample_runner(_ context.Co
 				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
 			case "s3DataUploadedAt":
 				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
 			case "ownerID":
 				return ec.fieldContext_BotRunner_ownerID(ctx, field)
 			case "billingEnabled":
@@ -32979,7 +33033,7 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "deletedAt", "name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "s3Config", "s3DataKey", "s3DataUploadedAt", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "memoryPricePerGBHour", "networkPricePerGB", "storagePricePerGB", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
+	fieldsInOrder := [...]string{"public", "deletedAt", "name", "type", "config", "dataIsReady", "dataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "dataDownloadProgress", "dataErrorMessage", "dataDownloadConfig", "s3Config", "s3DataKey", "s3DataUploadedAt", "dataAvailable", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "memoryPricePerGBHour", "networkPricePerGB", "storagePricePerGB", "createdAt", "updatedAt", "botIDs", "backtestIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -33091,6 +33145,13 @@ func (ec *executionContext) unmarshalInputCreateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.S3DataUploadedAt = data
+		case "dataAvailable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataAvailable"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataAvailable = data
 		case "ownerID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -39838,7 +39899,7 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"public", "deletedAt", "clearDeletedAt", "name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "clearDataDownloadStartedAt", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "s3Config", "clearS3Config", "s3DataKey", "clearS3DataKey", "s3DataUploadedAt", "clearS3DataUploadedAt", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "clearCPUPricePerCoreHour", "memoryPricePerGBHour", "clearMemoryPricePerGBHour", "networkPricePerGB", "clearNetworkPricePerGB", "storagePricePerGB", "clearStoragePricePerGB", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
+	fieldsInOrder := [...]string{"public", "deletedAt", "clearDeletedAt", "name", "type", "config", "clearConfig", "dataIsReady", "dataLastUpdated", "clearDataLastUpdated", "dataDownloadStatus", "dataDownloadStartedAt", "clearDataDownloadStartedAt", "dataDownloadProgress", "clearDataDownloadProgress", "dataErrorMessage", "clearDataErrorMessage", "dataDownloadConfig", "clearDataDownloadConfig", "s3Config", "clearS3Config", "s3DataKey", "clearS3DataKey", "s3DataUploadedAt", "clearS3DataUploadedAt", "dataAvailable", "clearDataAvailable", "ownerID", "billingEnabled", "cpuPricePerCoreHour", "clearCPUPricePerCoreHour", "memoryPricePerGBHour", "clearMemoryPricePerGBHour", "networkPricePerGB", "clearNetworkPricePerGB", "storagePricePerGB", "clearStoragePricePerGB", "updatedAt", "addBotIDs", "removeBotIDs", "clearBots", "addBacktestIDs", "removeBacktestIDs", "clearBacktests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -40020,6 +40081,20 @@ func (ec *executionContext) unmarshalInputUpdateBotRunnerInput(ctx context.Conte
 				return it, err
 			}
 			it.ClearS3DataUploadedAt = data
+		case "dataAvailable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataAvailable"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataAvailable = data
+		case "clearDataAvailable":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDataAvailable"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDataAvailable = data
 		case "ownerID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -42188,6 +42263,8 @@ func (ec *executionContext) _BotRunner(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._BotRunner_s3DataKey(ctx, field, obj)
 		case "s3DataUploadedAt":
 			out.Values[i] = ec._BotRunner_s3DataUploadedAt(ctx, field, obj)
+		case "dataAvailable":
+			out.Values[i] = ec._BotRunner_dataAvailable(ctx, field, obj)
 		case "ownerID":
 			out.Values[i] = ec._BotRunner_ownerID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

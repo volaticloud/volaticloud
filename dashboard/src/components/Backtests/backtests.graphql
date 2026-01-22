@@ -84,6 +84,7 @@ query SearchStrategies($search: String, $ownerID: String, $first: Int) {
         name
         versionNumber
         isLatest
+        config
       }
     }
   }
@@ -97,6 +98,7 @@ query GetStrategyById($id: ID!) {
         name
         versionNumber
         isLatest
+        config
       }
     }
   }
