@@ -127,6 +127,7 @@ var (
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "start_date", Type: field.TypeTime, Nullable: true},
 		{Name: "end_date", Type: field.TypeTime, Nullable: true},
+		{Name: "config", Type: field.TypeJSON, Nullable: true},
 		{Name: "runner_id", Type: field.TypeUUID},
 		{Name: "strategy_id", Type: field.TypeUUID, Unique: true},
 	}
@@ -138,13 +139,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "backtests_bot_runners_backtests",
-				Columns:    []*schema.Column{BacktestsColumns[12]},
+				Columns:    []*schema.Column{BacktestsColumns[13]},
 				RefColumns: []*schema.Column{BotRunnersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "backtests_strategies_backtest",
-				Columns:    []*schema.Column{BacktestsColumns[13]},
+				Columns:    []*schema.Column{BacktestsColumns[14]},
 				RefColumns: []*schema.Column{StrategiesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

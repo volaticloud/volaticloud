@@ -48,6 +48,8 @@ type Backtest struct {
 	StartDate time.Time `json:"start_date,omitempty"`
 	// Backtest end date (end of time range)
 	EndDate time.Time `json:"end_date,omitempty"`
+	// Backtest-specific configuration overrides (exchange, dry_run, etc.)
+	Config map[string]interface{} `json:"config,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BacktestQuery when eager-loading is set.
 	Edges        BacktestEdges `json:"edges"`
@@ -94,7 +96,7 @@ func (*Backtest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case backtest.FieldResult, backtest.FieldSummary:
+		case backtest.FieldResult, backtest.FieldSummary, backtest.FieldConfig:
 			values[i] = new([]byte)
 		case backtest.FieldStatus, backtest.FieldErrorMessage, backtest.FieldLogs:
 			values[i] = new(sql.NullString)
@@ -206,6 +208,14 @@ func (_m *Backtest) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.EndDate = value.Time
 			}
+		case backtest.FieldConfig:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Config); err != nil {
+					return fmt.Errorf("unmarshal field config: %w", err)
+				}
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -292,6 +302,9 @@ func (_m *Backtest) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("end_date=")
 	builder.WriteString(_m.EndDate.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("config=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Config))
 	builder.WriteByte(')')
 	return builder.String()
 }

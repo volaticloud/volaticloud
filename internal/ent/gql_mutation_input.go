@@ -215,6 +215,7 @@ type CreateBacktestInput struct {
 	CompletedAt  *time.Time
 	StartDate    *time.Time
 	EndDate      *time.Time
+	Config       map[string]interface{}
 	StrategyID   uuid.UUID
 	RunnerID     uuid.UUID
 }
@@ -250,6 +251,9 @@ func (i *CreateBacktestInput) Mutate(m *BacktestMutation) {
 	}
 	if v := i.EndDate; v != nil {
 		m.SetEndDate(*v)
+	}
+	if v := i.Config; v != nil {
+		m.SetConfig(v)
 	}
 	m.SetStrategyID(i.StrategyID)
 	m.SetRunnerID(i.RunnerID)

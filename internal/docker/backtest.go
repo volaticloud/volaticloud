@@ -111,8 +111,11 @@ func (d *BacktestRunner) RunBacktest(ctx context.Context, spec runner.BacktestSp
 	// Build freqtrade command arguments
 	freqtradeArgs := d.buildBacktestCommand(spec)
 
-	// Add config file argument
-	freqtradeArgs = append(freqtradeArgs, "--config", fmt.Sprintf("/freqtrade/user_data/%s/config.json", spec.ID))
+	// Add config file arguments (Freqtrade merges in order, later overrides earlier)
+	freqtradeArgs = append(freqtradeArgs,
+		"--config", fmt.Sprintf("/freqtrade/user_data/%s/config.strategy.json", spec.ID),
+		"--config", fmt.Sprintf("/freqtrade/user_data/%s/config.backtest.json", spec.ID),
+	)
 
 	// Build environment variables
 	env := d.buildEnvironment(spec.Environment)
@@ -604,11 +607,11 @@ func (d *BacktestRunner) ensureImage(ctx context.Context, imageName string) erro
 
 func (d *BacktestRunner) buildBacktestCommand(spec runner.BacktestSpec) []string {
 	// Backtests use JSON config only (like bots), no command-line parameters
-	// Only pass strategy name as it's required
+	// Only pass strategy name as it's required (sanitized for valid Python class name)
 	cmd := []string{"backtesting"}
 
 	if spec.StrategyName != "" {
-		cmd = append(cmd, "--strategy", spec.StrategyName)
+		cmd = append(cmd, "--strategy", runner.SanitizeStrategyFilename(spec.StrategyName))
 	}
 
 	// Use --userdir to isolate each backtest's results (logs, backtest_results)
@@ -628,7 +631,7 @@ func (d *BacktestRunner) buildHyperOptCommand(spec runner.HyperOptSpec) []string
 	cmd := []string{"hyperopt"}
 
 	if spec.StrategyName != "" {
-		cmd = append(cmd, "--strategy", spec.StrategyName)
+		cmd = append(cmd, "--strategy", runner.SanitizeStrategyFilename(spec.StrategyName))
 	}
 
 	if spec.Epochs > 0 {
@@ -910,47 +913,59 @@ type backtestConfigPaths struct {
 func (d *BacktestRunner) createBacktestConfigFiles(spec runner.BacktestSpec) (*backtestConfigPaths, error) {
 	ctx := context.Background()
 
+	// Sanitize strategy name for valid filenames
+	sanitizedStrategyName := runner.SanitizeStrategyFilename(spec.StrategyName)
+
 	paths := &backtestConfigPaths{
 		configFileContainer:   "/freqtrade/user_data/config.json",
-		strategyFileContainer: fmt.Sprintf("/freqtrade/user_data/strategies/%s.py", spec.StrategyName),
+		strategyFileContainer: fmt.Sprintf("/freqtrade/user_data/strategies/%s.py", sanitizedStrategyName),
 		// Store volume name and paths for volume-based configs
 		volumeName:     "volaticloud-freqtrade-userdir",
 		volumeBasePath: spec.ID,
 	}
 
-	// Use spec.Config directly (like bots do) - just write it as-is
-	// No hardcoding! Validation should be done before calling this function
-	if spec.Config == nil {
-		return nil, fmt.Errorf("backtest config is nil - validation should have caught this")
+	// Use split configs (like bots do) - strategy config + backtest config
+	// Validation should be done before calling this function
+	if spec.StrategyConfig == nil {
+		return nil, fmt.Errorf("strategy config is nil - validation should have caught this")
 	}
 
-	// Create a copy to avoid mutating the original
-	config := make(map[string]interface{})
-	for k, v := range spec.Config {
-		config[k] = v
-	}
-
-	// Inject required fields for backtest isolation
-	config["dry_run"] = true
-	// DON'T set user_data_dir or datadir - we mount data to default location /freqtrade/user_data/data
-	// We use --userdir command-line flag to isolate each backtest's results
-
-	// Marshal config to JSON
-	configJSON, err := json.MarshalIndent(config, "", "  ")
+	// Write strategy config file to Docker volume
+	strategyConfigJSON, err := json.MarshalIndent(spec.StrategyConfig, "", "  ")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal config: %w", err)
+		return nil, fmt.Errorf("failed to marshal strategy config: %w", err)
 	}
 
-	// Write config file to Docker volume
-	configPath := filepath.Join(spec.ID, "config.json")
-	if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", configPath, configJSON); err != nil {
+	strategyConfigPath := filepath.Join(spec.ID, "config.strategy.json")
+	if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", strategyConfigPath, strategyConfigJSON); err != nil {
 		d.cleanupBacktestConfigFiles(spec.ID)
-		return nil, fmt.Errorf("failed to write config file to volume: %w", err)
+		return nil, fmt.Errorf("failed to write strategy config file to volume: %w", err)
+	}
+
+	// Create backtest config with dry_run always true
+	backtestConfig := make(map[string]interface{})
+	if spec.BacktestConfig != nil {
+		for k, v := range spec.BacktestConfig {
+			backtestConfig[k] = v
+		}
+	}
+	backtestConfig["dry_run"] = true
+
+	// Write backtest config file to Docker volume
+	backtestConfigJSON, err := json.MarshalIndent(backtestConfig, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal backtest config: %w", err)
+	}
+
+	backtestConfigPath := filepath.Join(spec.ID, "config.backtest.json")
+	if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", backtestConfigPath, backtestConfigJSON); err != nil {
+		d.cleanupBacktestConfigFiles(spec.ID)
+		return nil, fmt.Errorf("failed to write backtest config file to volume: %w", err)
 	}
 
 	// Write strategy Python file to Docker volume (in strategies/ subdirectory)
 	if spec.StrategyCode != "" && spec.StrategyName != "" {
-		strategyPath := filepath.Join(spec.ID, "strategies", spec.StrategyName+".py")
+		strategyPath := filepath.Join(spec.ID, "strategies", sanitizedStrategyName+".py")
 		if err := d.writeFileToVolume(ctx, "volaticloud-freqtrade-userdir", strategyPath, []byte(spec.StrategyCode)); err != nil {
 			d.cleanupBacktestConfigFiles(spec.ID)
 			return nil, fmt.Errorf("failed to write strategy file to volume: %w", err)

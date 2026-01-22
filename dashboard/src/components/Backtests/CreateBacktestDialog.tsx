@@ -15,6 +15,12 @@ import {
   Autocomplete,
   TextField,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRunBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
@@ -24,6 +30,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { RunnerSelector } from '../shared/RunnerSelector';
 import { debounce } from '@mui/material/utils';
 
@@ -44,6 +51,60 @@ interface StrategyOption {
   isLatest: boolean;
 }
 
+const SUPPORTED_EXCHANGES = [
+  { id: 'binance', name: 'Binance' },
+  { id: 'binanceus', name: 'Binance US' },
+  { id: 'kraken', name: 'Kraken' },
+  { id: 'kucoin', name: 'KuCoin' },
+  { id: 'bybit', name: 'Bybit' },
+  { id: 'bitget', name: 'Bitget' },
+  { id: 'gateio', name: 'Gate.io' },
+  { id: 'okx', name: 'OKX' },
+];
+
+// Build config JSON from simple mode inputs
+// Backtest config only contains: exchange selection, pairs, and pairlists method
+// Strategy config (in Strategy entity) should contain: stake_currency, stake_amount, entry_pricing, exit_pricing, timeframe, etc.
+const buildConfigFromSimpleMode = (exchangeName: string, pairs: string): Record<string, unknown> => {
+  const pairWhitelist = pairs
+    .split(/[,\n]+/)
+    .map(p => p.trim().toUpperCase())
+    .filter(p => p.length > 0);
+
+  return {
+    exchange: {
+      name: exchangeName,
+      pair_whitelist: pairWhitelist,
+    },
+    pairlists: [
+      { method: 'StaticPairList' },
+    ],
+  };
+};
+
+// Try to extract simple mode values from config JSON
+const extractSimpleModeFromConfig = (config: Record<string, unknown>): { exchangeName: string; pairs: string } | null => {
+  try {
+    const exchange = config.exchange as Record<string, unknown> | undefined;
+    if (!exchange) return null;
+
+    const name = exchange.name as string | undefined;
+    const pairWhitelist = exchange.pair_whitelist as string[] | undefined;
+
+    if (!name || !pairWhitelist || !Array.isArray(pairWhitelist)) return null;
+
+    // Check if exchange is supported
+    if (!SUPPORTED_EXCHANGES.some(e => e.id === name)) return null;
+
+    return {
+      exchangeName: name,
+      pairs: pairWhitelist.join(', '),
+    };
+  } catch {
+    return null;
+  }
+};
+
 export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreated, preSelectedStrategyId }: CreateBacktestDialogProps) => {
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyOption | null>(null);
   const [strategyInputValue, setStrategyInputValue] = useState('');
@@ -53,12 +114,62 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
 
+  // Config mode state
+  const [advancedMode, setAdvancedMode] = useState(false);
+  const [exchangeName, setExchangeName] = useState('binance');
+  const [pairs, setPairs] = useState('BTC/USDT, ETH/USDT');
+  const [configJson, setConfigJson] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
   // Get active group for filtering strategies and runners
   const { activeOrganizationId } = useActiveOrganization();
 
   const [searchStrategies, { loading: searchLoading }] = useSearchStrategiesLazyQuery();
   const [getStrategyById] = useGetStrategyByIdLazyQuery();
   const [runBacktest, { loading, error }] = useRunBacktestMutation();
+
+  // Sync config JSON when simple mode values change
+  useEffect(() => {
+    if (!advancedMode) {
+      const config = buildConfigFromSimpleMode(exchangeName, pairs);
+      setConfigJson(JSON.stringify(config, null, 2));
+    }
+  }, [advancedMode, exchangeName, pairs]);
+
+  // Handle mode switch
+  const handleModeSwitch = (checked: boolean) => {
+    if (checked) {
+      // Switching to advanced mode - sync current simple mode to JSON
+      const config = buildConfigFromSimpleMode(exchangeName, pairs);
+      setConfigJson(JSON.stringify(config, null, 2));
+      setJsonError(null);
+    } else {
+      // Switching to simple mode - try to extract values from JSON
+      try {
+        const config = JSON.parse(configJson);
+        const extracted = extractSimpleModeFromConfig(config);
+        if (extracted) {
+          setExchangeName(extracted.exchangeName);
+          setPairs(extracted.pairs);
+        }
+        // If extraction fails, keep current simple mode values
+      } catch {
+        // Keep current simple mode values if JSON is invalid
+      }
+    }
+    setAdvancedMode(checked);
+  };
+
+  // Validate JSON when in advanced mode
+  const handleConfigJsonChange = (value: string) => {
+    setConfigJson(value);
+    try {
+      JSON.parse(value);
+      setJsonError(null);
+    } catch (e) {
+      setJsonError(e instanceof Error ? e.message : 'Invalid JSON');
+    }
+  };
 
   // Debounced search function
   const debouncedSearch = useMemo(
@@ -165,6 +276,19 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
       return;
     }
 
+    // Get config from appropriate source
+    let config: Record<string, unknown>;
+    if (advancedMode) {
+      try {
+        config = JSON.parse(configJson);
+      } catch {
+        setJsonError('Invalid JSON');
+        return;
+      }
+    } else {
+      config = buildConfigFromSimpleMode(exchangeName, pairs);
+    }
+
     try {
       const result = await runBacktest({
         variables: {
@@ -173,6 +297,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
             runnerID,
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
+            config,
           },
         },
       });
@@ -189,6 +314,11 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
         setDatePreset('1month');
         setStartDate(dayjs().subtract(1, 'month'));
         setEndDate(dayjs());
+        setAdvancedMode(false);
+        setExchangeName('binance');
+        setPairs('BTC/USDT, ETH/USDT');
+        setConfigJson('');
+        setJsonError(null);
 
         // Call the new callback if provided (for staying in place and tracking)
         if (onBacktestCreated) {
@@ -204,6 +334,8 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
       // Error will be displayed via the error state from the mutation hook
     }
   };
+
+  const isSubmitDisabled = loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate || (advancedMode && !!jsonError);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -274,6 +406,77 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
               required
               dataReadyOnly
             />
+
+            <Divider />
+
+            {/* Config Section */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <SettingsIcon fontSize="small" />
+                  Backtest Configuration
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={advancedMode}
+                      onChange={(e) => handleModeSwitch(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={<Typography variant="body2">Advanced (JSON)</Typography>}
+                />
+              </Box>
+
+              {!advancedMode ? (
+                // Simple Mode
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Exchange</InputLabel>
+                    <Select
+                      value={exchangeName}
+                      onChange={(e) => setExchangeName(e.target.value)}
+                      label="Exchange"
+                    >
+                      {SUPPORTED_EXCHANGES.map((exchange) => (
+                        <MenuItem key={exchange.id} value={exchange.id}>
+                          {exchange.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    label="Trading Pairs"
+                    value={pairs}
+                    onChange={(e) => setPairs(e.target.value)}
+                    multiline
+                    rows={2}
+                    required
+                    placeholder="BTC/USDT, ETH/USDT"
+                    helperText="Comma-separated list of trading pairs (e.g., BTC/USDT, ETH/USDT)"
+                  />
+                </Box>
+              ) : (
+                // Advanced Mode - JSON Editor
+                <TextField
+                  label="Config JSON"
+                  value={configJson}
+                  onChange={(e) => handleConfigJsonChange(e.target.value)}
+                  multiline
+                  rows={8}
+                  fullWidth
+                  error={!!jsonError}
+                  helperText={jsonError || 'Edit the full Freqtrade backtest configuration'}
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.85rem',
+                    },
+                  }}
+                />
+              )}
+            </Box>
 
             <Divider />
 
@@ -349,8 +552,8 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
             </Box>
 
             <Alert severity="info">
-              The backtest will use the strategy's configuration (pairs, timeframe, stake amount, etc.)
-              with the selected date range.
+              The backtest configuration will be merged with the strategy's configuration.
+              Exchange and pair settings here will override the strategy defaults.
             </Alert>
 
             {error && (
@@ -365,7 +568,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate}
+            disabled={isSubmitDisabled}
           >
             {loading ? 'Creating...' : 'Create Backtest'}
           </Button>

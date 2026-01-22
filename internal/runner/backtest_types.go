@@ -1,10 +1,59 @@
 package runner
 
 import (
+	"regexp"
+	"strings"
 	"time"
 
 	"volaticloud/internal/enum"
 )
+
+// sanitizeFilenameRegex matches characters that are not alphanumeric or space
+var sanitizeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
+
+// SanitizeStrategyFilename converts a strategy name to a valid Python class name (PascalCase).
+// This matches the frontend's toClassName function to ensure consistency.
+// Example: "RSI Test Strategy" -> "RsiTestStrategy"
+// The result is used for:
+// - Kubernetes ConfigMap keys (no spaces allowed)
+// - Python file names (no spaces allowed)
+// - Freqtrade --strategy flag (expects Python class name)
+func SanitizeStrategyFilename(name string) string {
+	if name == "" {
+		return "MyStrategy"
+	}
+
+	// Remove invalid characters (keep alphanumeric and spaces)
+	sanitized := sanitizeFilenameRegex.ReplaceAllString(name, "")
+	if sanitized == "" {
+		return "MyStrategy"
+	}
+
+	// If no spaces, preserve original casing but ensure first char is uppercase
+	if !strings.Contains(sanitized, " ") {
+		if len(sanitized) == 0 {
+			return "MyStrategy"
+		}
+		return strings.ToUpper(string(sanitized[0])) + sanitized[1:]
+	}
+
+	// Convert space-separated words to PascalCase
+	words := strings.Fields(sanitized)
+	var result strings.Builder
+	for _, word := range words {
+		if len(word) > 0 {
+			result.WriteString(strings.ToUpper(string(word[0])))
+			if len(word) > 1 {
+				result.WriteString(strings.ToLower(word[1:]))
+			}
+		}
+	}
+
+	if result.Len() == 0 {
+		return "MyStrategy"
+	}
+	return result.String()
+}
 
 // BacktestSpec defines the specification for running a backtest
 type BacktestSpec struct {
@@ -13,11 +62,12 @@ type BacktestSpec struct {
 	StrategyName string
 	StrategyCode string
 
-	// Backtest Configuration
-	// Contains ALL backtest settings: pairs, timeframe, timerange, stake_amount,
-	// stake_currency, max_open_trades, enable_position_stacking, trading_mode, etc.
-	// This is passed directly to Freqtrade as config.json
-	Config map[string]interface{}
+	// Split Configuration (like bots)
+	// StrategyConfig: pairs, timeframe, timerange, stake_amount, stake_currency, etc. (from strategy.Config)
+	// BacktestConfig: exchange, dry_run, and other backtest-specific overrides (from backtest.Config)
+	// Freqtrade merges configs in order via multiple --config flags (later overrides earlier)
+	StrategyConfig map[string]interface{}
+	BacktestConfig map[string]interface{}
 
 	// Runtime Configuration
 	FreqtradeVersion string            // Freqtrade Docker image version

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"volaticloud/internal/ent"
-	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/runner"
 )
 
@@ -16,14 +15,9 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 
 	strategy := bt.Edges.Strategy
 
-	// The strategy config should contain all required fields
+	// Strategy config is optional - Freqtrade will validate at runtime
 	if strategy.Config == nil {
-		return nil, fmt.Errorf("strategy has no config")
-	}
-
-	// Validate config contains all required fields
-	if err := freqtrade.ValidateConfig(strategy.Config); err != nil {
-		return nil, fmt.Errorf("invalid strategy config: %w", err)
+		strategy.Config = make(map[string]interface{})
 	}
 
 	// Extract optional runtime configuration from config
@@ -32,14 +26,14 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		freqtradeVersion = fv
 	}
 
-	// Create a copy of the config to avoid mutating the original
-	config := make(map[string]interface{})
+	// Strategy config (pairs, timeframe, stake_amount, etc.)
+	strategyConfig := make(map[string]interface{})
 	for k, v := range strategy.Config {
-		config[k] = v
+		strategyConfig[k] = v
 	}
 
 	// Set data format to JSON (matching data download format)
-	config["dataformat_ohlcv"] = "json"
+	strategyConfig["dataformat_ohlcv"] = "json"
 
 	// Build timerange from start_date and end_date if provided
 	// Freqtrade expects format: "YYYYMMDD-YYYYMMDD" (e.g., "20240101-20241231")
@@ -47,16 +41,28 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		startStr := bt.StartDate.Format("20060102") // Go time format for YYYYMMDD
 		endStr := bt.EndDate.Format("20060102")
 		timerange := fmt.Sprintf("%s-%s", startStr, endStr)
-		config["timerange"] = timerange
+		strategyConfig["timerange"] = timerange
 	}
 
-	// Build BacktestSpec - config contains everything (pairs, timeframe, stake_amount, etc.)
+	// Backtest config - pass through user-provided config as-is
+	// Freqtrade will validate and merge configs at runtime
+	backtestConfig := make(map[string]interface{})
+	if bt.Config != nil {
+		for k, v := range bt.Config {
+			backtestConfig[k] = v
+		}
+	}
+	// Always set dry_run to true for backtests
+	backtestConfig["dry_run"] = true
+
+	// Build BacktestSpec with split configs (like bots)
 	// DataDownloadURL is set by the caller when executing the backtest (from runner's S3 config)
 	spec := &runner.BacktestSpec{
 		ID:               bt.ID.String(),
 		StrategyName:     strategy.Name,
 		StrategyCode:     strategy.Code,
-		Config:           config,
+		StrategyConfig:   strategyConfig,
+		BacktestConfig:   backtestConfig,
 		FreqtradeVersion: freqtradeVersion,
 		Environment:      make(map[string]string),
 	}

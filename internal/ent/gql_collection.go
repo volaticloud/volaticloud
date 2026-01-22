@@ -550,6 +550,11 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldEndDate)
 				fieldSeen[backtest.FieldEndDate] = struct{}{}
 			}
+		case "config":
+			if _, ok := fieldSeen[backtest.FieldConfig]; !ok {
+				selectedFields = append(selectedFields, backtest.FieldConfig)
+				fieldSeen[backtest.FieldConfig] = struct{}{}
+			}
 		case "id":
 		case "__typename":
 		default:

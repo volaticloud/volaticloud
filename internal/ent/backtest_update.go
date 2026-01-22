@@ -224,6 +224,18 @@ func (_u *BacktestUpdate) ClearEndDate() *BacktestUpdate {
 	return _u
 }
 
+// SetConfig sets the "config" field.
+func (_u *BacktestUpdate) SetConfig(v map[string]interface{}) *BacktestUpdate {
+	_u.mutation.SetConfig(v)
+	return _u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (_u *BacktestUpdate) ClearConfig() *BacktestUpdate {
+	_u.mutation.ClearConfig()
+	return _u
+}
+
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_u *BacktestUpdate) SetStrategy(v *Strategy) *BacktestUpdate {
 	return _u.SetStrategyID(v.ID)
@@ -368,6 +380,12 @@ func (_u *BacktestUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.EndDateCleared() {
 		_spec.ClearField(backtest.FieldEndDate, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Config(); ok {
+		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.ConfigCleared() {
+		_spec.ClearField(backtest.FieldConfig, field.TypeJSON)
 	}
 	if _u.mutation.StrategyCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -639,6 +657,18 @@ func (_u *BacktestUpdateOne) ClearEndDate() *BacktestUpdateOne {
 	return _u
 }
 
+// SetConfig sets the "config" field.
+func (_u *BacktestUpdateOne) SetConfig(v map[string]interface{}) *BacktestUpdateOne {
+	_u.mutation.SetConfig(v)
+	return _u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (_u *BacktestUpdateOne) ClearConfig() *BacktestUpdateOne {
+	_u.mutation.ClearConfig()
+	return _u
+}
+
 // SetStrategy sets the "strategy" edge to the Strategy entity.
 func (_u *BacktestUpdateOne) SetStrategy(v *Strategy) *BacktestUpdateOne {
 	return _u.SetStrategyID(v.ID)
@@ -813,6 +843,12 @@ func (_u *BacktestUpdateOne) sqlSave(ctx context.Context) (_node *Backtest, err 
 	}
 	if _u.mutation.EndDateCleared() {
 		_spec.ClearField(backtest.FieldEndDate, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Config(); ok {
+		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
+	}
+	if _u.mutation.ConfigCleared() {
+		_spec.ClearField(backtest.FieldConfig, field.TypeJSON)
 	}
 	if _u.mutation.StrategyCleared() {
 		edge := &sqlgraph.EdgeSpec{

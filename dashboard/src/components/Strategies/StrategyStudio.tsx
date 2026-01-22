@@ -37,7 +37,7 @@ import { useState, useEffect } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
 import { useGetBacktestQuery } from '../Backtests/backtests.generated';
-import { FreqtradeConfigForm, createDefaultFreqtradeConfig } from '../Freqtrade';
+import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
@@ -162,10 +162,12 @@ class MyStrategy(IStrategy):
       setName(strategy.name);
       setDescription(strategy.description || '');
       setCode(strategy.code);
-      setConfig(strategy.config || null);
+      // Merge existing config with defaults to ensure all required Freqtrade fields are present
+      // This fixes issues with old strategies missing entry_pricing, exit_pricing, etc.
+      const strategyConfig = strategy.config as Record<string, unknown> | null;
+      setConfig(mergeWithDefaults(strategyConfig));
       setBuilderMode(strategy.builderMode || StrategyStrategyBuilderMode.Code);
       // Extract ui_builder config from strategy config if available
-      const strategyConfig = strategy.config as Record<string, unknown> | null;
       if (strategyConfig?.ui_builder) {
         setUiBuilderConfig(strategyConfig.ui_builder as UIBuilderConfig);
       } else {

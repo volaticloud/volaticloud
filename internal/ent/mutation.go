@@ -2829,6 +2829,7 @@ type BacktestMutation struct {
 	completed_at    *time.Time
 	start_date      *time.Time
 	end_date        *time.Time
+	_config         *map[string]interface{}
 	clearedFields   map[string]struct{}
 	strategy        *uuid.UUID
 	clearedstrategy bool
@@ -3515,6 +3516,55 @@ func (m *BacktestMutation) ResetEndDate() {
 	delete(m.clearedFields, backtest.FieldEndDate)
 }
 
+// SetConfig sets the "config" field.
+func (m *BacktestMutation) SetConfig(value map[string]interface{}) {
+	m._config = &value
+}
+
+// Config returns the value of the "config" field in the mutation.
+func (m *BacktestMutation) Config() (r map[string]interface{}, exists bool) {
+	v := m._config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfig returns the old "config" field's value of the Backtest entity.
+// If the Backtest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BacktestMutation) OldConfig(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfig: %w", err)
+	}
+	return oldValue.Config, nil
+}
+
+// ClearConfig clears the value of the "config" field.
+func (m *BacktestMutation) ClearConfig() {
+	m._config = nil
+	m.clearedFields[backtest.FieldConfig] = struct{}{}
+}
+
+// ConfigCleared returns if the "config" field was cleared in this mutation.
+func (m *BacktestMutation) ConfigCleared() bool {
+	_, ok := m.clearedFields[backtest.FieldConfig]
+	return ok
+}
+
+// ResetConfig resets all changes to the "config" field.
+func (m *BacktestMutation) ResetConfig() {
+	m._config = nil
+	delete(m.clearedFields, backtest.FieldConfig)
+}
+
 // ClearStrategy clears the "strategy" edge to the Strategy entity.
 func (m *BacktestMutation) ClearStrategy() {
 	m.clearedstrategy = true
@@ -3603,7 +3653,7 @@ func (m *BacktestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BacktestMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.deleted_at != nil {
 		fields = append(fields, backtest.FieldDeletedAt)
 	}
@@ -3643,6 +3693,9 @@ func (m *BacktestMutation) Fields() []string {
 	if m.end_date != nil {
 		fields = append(fields, backtest.FieldEndDate)
 	}
+	if m._config != nil {
+		fields = append(fields, backtest.FieldConfig)
+	}
 	return fields
 }
 
@@ -3677,6 +3730,8 @@ func (m *BacktestMutation) Field(name string) (ent.Value, bool) {
 		return m.StartDate()
 	case backtest.FieldEndDate:
 		return m.EndDate()
+	case backtest.FieldConfig:
+		return m.Config()
 	}
 	return nil, false
 }
@@ -3712,6 +3767,8 @@ func (m *BacktestMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldStartDate(ctx)
 	case backtest.FieldEndDate:
 		return m.OldEndDate(ctx)
+	case backtest.FieldConfig:
+		return m.OldConfig(ctx)
 	}
 	return nil, fmt.Errorf("unknown Backtest field %s", name)
 }
@@ -3812,6 +3869,13 @@ func (m *BacktestMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetEndDate(v)
 		return nil
+	case backtest.FieldConfig:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfig(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Backtest field %s", name)
 }
@@ -3866,6 +3930,9 @@ func (m *BacktestMutation) ClearedFields() []string {
 	if m.FieldCleared(backtest.FieldEndDate) {
 		fields = append(fields, backtest.FieldEndDate)
 	}
+	if m.FieldCleared(backtest.FieldConfig) {
+		fields = append(fields, backtest.FieldConfig)
+	}
 	return fields
 }
 
@@ -3903,6 +3970,9 @@ func (m *BacktestMutation) ClearField(name string) error {
 		return nil
 	case backtest.FieldEndDate:
 		m.ClearEndDate()
+		return nil
+	case backtest.FieldConfig:
+		m.ClearConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown Backtest nullable field %s", name)
@@ -3950,6 +4020,9 @@ func (m *BacktestMutation) ResetField(name string) error {
 		return nil
 	case backtest.FieldEndDate:
 		m.ResetEndDate()
+		return nil
+	case backtest.FieldConfig:
+		m.ResetConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown Backtest field %s", name)

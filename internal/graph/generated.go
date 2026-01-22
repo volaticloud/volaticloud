@@ -134,6 +134,7 @@ type ComplexityRoot struct {
 
 	Backtest struct {
 		CompletedAt   func(childComplexity int) int
+		Config        func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		DeletedAt     func(childComplexity int) int
 		EndDate       func(childComplexity int) int
@@ -1097,6 +1098,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Backtest.CompletedAt(childComplexity), true
+	case "Backtest.config":
+		if e.complexity.Backtest.Config == nil {
+			break
+		}
+
+		return e.complexity.Backtest.Config(childComplexity), true
 	case "Backtest.createdAt":
 		if e.complexity.Backtest.CreatedAt == nil {
 			break
@@ -7539,6 +7546,35 @@ func (ec *executionContext) fieldContext_Backtest_endDate(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Backtest_config(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Backtest_config,
+		func(ctx context.Context) (any, error) {
+			return obj.Config, nil
+		},
+		nil,
+		ec.marshalOMap2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Backtest_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Backtest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Backtest_strategy(ctx context.Context, field graphql.CollectedField, obj *ent.Backtest) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7986,6 +8022,8 @@ func (ec *executionContext) fieldContext_BacktestEdge_node(_ context.Context, fi
 				return ec.fieldContext_Backtest_startDate(ctx, field)
 			case "endDate":
 				return ec.fieldContext_Backtest_endDate(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -15404,6 +15442,8 @@ func (ec *executionContext) fieldContext_Mutation_runBacktest(ctx context.Contex
 				return ec.fieldContext_Backtest_startDate(ctx, field)
 			case "endDate":
 				return ec.fieldContext_Backtest_endDate(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -15514,6 +15554,8 @@ func (ec *executionContext) fieldContext_Mutation_stopBacktest(ctx context.Conte
 				return ec.fieldContext_Backtest_startDate(ctx, field)
 			case "endDate":
 				return ec.fieldContext_Backtest_endDate(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -22686,6 +22728,8 @@ func (ec *executionContext) fieldContext_Strategy_backtest(_ context.Context, fi
 				return ec.fieldContext_Backtest_startDate(ctx, field)
 			case "endDate":
 				return ec.fieldContext_Backtest_endDate(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
 			case "strategy":
 				return ec.fieldContext_Backtest_strategy(ctx, field)
 			case "runner":
@@ -32490,7 +32534,7 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"deletedAt", "status", "result", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "startDate", "endDate", "strategyID", "runnerID"}
+	fieldsInOrder := [...]string{"deletedAt", "status", "result", "errorMessage", "logs", "createdAt", "updatedAt", "completedAt", "startDate", "endDate", "config", "strategyID", "runnerID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -32567,6 +32611,13 @@ func (ec *executionContext) unmarshalInputCreateBacktestInput(ctx context.Contex
 				return it, err
 			}
 			it.EndDate = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
 		case "strategyID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyID"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -41194,6 +41245,8 @@ func (ec *executionContext) _Backtest(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Backtest_startDate(ctx, field, obj)
 		case "endDate":
 			out.Values[i] = ec._Backtest_endDate(ctx, field, obj)
+		case "config":
+			out.Values[i] = ec._Backtest_config(ctx, field, obj)
 		case "strategy":
 			field := field
 

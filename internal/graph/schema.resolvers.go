@@ -776,13 +776,19 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBack
 		}
 
 		// Create backtest entity with the (possibly new) strategy ID
-		bt, err := tx.Backtest.Create().
+		btCreate := tx.Backtest.Create().
 			SetStrategyID(strategyID).
 			SetRunnerID(input.RunnerID).
 			SetNillableStartDate(input.StartDate).
 			SetNillableEndDate(input.EndDate).
-			SetStatus(enum.TaskStatusPending).
-			Save(ctx)
+			SetStatus(enum.TaskStatusPending)
+
+		// Set config if provided (contains exchange selection and other backtest-specific overrides)
+		if input.Config != nil {
+			btCreate = btCreate.SetConfig(input.Config)
+		}
+
+		bt, err := btCreate.Save(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create backtest: %w", err)
 		}

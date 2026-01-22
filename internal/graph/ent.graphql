@@ -744,6 +744,10 @@ type Backtest implements Node {
   Backtest end date (end of time range)
   """
   endDate: Time
+  """
+  Backtest-specific configuration overrides (exchange, dry_run, etc.)
+  """
+  config: Map
   strategy: Strategy!
   runner: BotRunner!
 }
@@ -2282,6 +2286,10 @@ input CreateBacktestInput {
   Backtest end date (end of time range)
   """
   endDate: Time
+  """
+  Backtest-specific configuration overrides (exchange, dry_run, etc.)
+  """
+  config: Map
   strategyID: ID!
   runnerID: ID!
 }

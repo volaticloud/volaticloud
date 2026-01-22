@@ -114,12 +114,25 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 		code = generatedCode
 	}
 
+	// Query for max version number (including soft-deleted records) to avoid unique constraint violation
+	// The unique constraint on (name, version_number) includes soft-deleted records
+	includeDeletedCtx := mixin.IncludeDeleted(ctx)
+	maxVersion, err := tx.Strategy.Query().
+		Where(strategy.Name(name)).
+		Aggregate(ent.Max(strategy.FieldVersionNumber)).
+		Int(includeDeletedCtx)
+	if err != nil {
+		// If no versions exist, start at 1
+		maxVersion = 0
+	}
+	nextVersion := maxVersion + 1
+
 	// Create new version with resolved fields
 	builder := tx.Strategy.Create().
 		SetName(name).
 		SetDescription(description).
 		SetCode(code).
-		SetVersionNumber(parent.VersionNumber + 1).
+		SetVersionNumber(nextVersion).
 		SetParentID(parent.ID).
 		SetIsLatest(true).
 		SetOwnerID(parent.OwnerID). // Preserve owner_id from parent
