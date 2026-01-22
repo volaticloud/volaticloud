@@ -50,6 +50,8 @@ type BotRunner struct {
 	S3DataKey string `json:"s3_data_key,omitempty"`
 	// When data was last uploaded to S3
 	S3DataUploadedAt *time.Time `json:"s3_data_uploaded_at,omitempty"`
+	// Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]}
+	DataAvailable map[string]interface{} `json:"data_available,omitempty"`
 	// Group ID (organization) that owns this bot runner
 	OwnerID string `json:"owner_id,omitempty"`
 	// Whether usage tracking and billing is enabled for this runner
@@ -135,7 +137,7 @@ func (*BotRunner) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig, botrunner.FieldS3Config:
+		case botrunner.FieldConfig, botrunner.FieldDataDownloadProgress, botrunner.FieldDataDownloadConfig, botrunner.FieldS3Config, botrunner.FieldDataAvailable:
 			values[i] = new([]byte)
 		case botrunner.FieldPublic, botrunner.FieldDataIsReady, botrunner.FieldBillingEnabled:
 			values[i] = new(sql.NullBool)
@@ -268,6 +270,14 @@ func (_m *BotRunner) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.S3DataUploadedAt = new(time.Time)
 				*_m.S3DataUploadedAt = value.Time
+			}
+		case botrunner.FieldDataAvailable:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field data_available", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.DataAvailable); err != nil {
+					return fmt.Errorf("unmarshal field data_available: %w", err)
+				}
 			}
 		case botrunner.FieldOwnerID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -427,6 +437,9 @@ func (_m *BotRunner) String() string {
 		builder.WriteString("s3_data_uploaded_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("data_available=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DataAvailable))
 	builder.WriteString(", ")
 	builder.WriteString("owner_id=")
 	builder.WriteString(_m.OwnerID)

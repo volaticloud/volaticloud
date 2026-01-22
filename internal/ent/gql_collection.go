@@ -550,6 +550,11 @@ func (_q *BacktestQuery) collectField(ctx context.Context, oneNode bool, opCtx *
 				selectedFields = append(selectedFields, backtest.FieldEndDate)
 				fieldSeen[backtest.FieldEndDate] = struct{}{}
 			}
+		case "config":
+			if _, ok := fieldSeen[backtest.FieldConfig]; !ok {
+				selectedFields = append(selectedFields, backtest.FieldConfig)
+				fieldSeen[backtest.FieldConfig] = struct{}{}
+			}
 		case "id":
 		case "__typename":
 		default:
@@ -1348,6 +1353,11 @@ func (_q *BotRunnerQuery) collectField(ctx context.Context, oneNode bool, opCtx 
 			if _, ok := fieldSeen[botrunner.FieldS3DataUploadedAt]; !ok {
 				selectedFields = append(selectedFields, botrunner.FieldS3DataUploadedAt)
 				fieldSeen[botrunner.FieldS3DataUploadedAt] = struct{}{}
+			}
+		case "dataAvailable":
+			if _, ok := fieldSeen[botrunner.FieldDataAvailable]; !ok {
+				selectedFields = append(selectedFields, botrunner.FieldDataAvailable)
+				fieldSeen[botrunner.FieldDataAvailable] = struct{}{}
 			}
 		case "ownerID":
 			if _, ok := fieldSeen[botrunner.FieldOwnerID]; !ok {

@@ -69,6 +69,10 @@ func (Backtest) Fields() []ent.Field {
 		field.Time("end_date").
 			Optional().
 			Comment("Backtest end date (end of time range)"),
+		field.JSON("config", map[string]interface{}{}).
+			Optional().
+			Annotations(entgql.Type("Map")).
+			Comment("Backtest-specific configuration overrides (exchange, dry_run, etc.)"),
 	}
 }
 

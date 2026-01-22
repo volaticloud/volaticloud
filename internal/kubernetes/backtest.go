@@ -692,9 +692,23 @@ func (r *BacktestRunner) populateHyperOptPodMetrics(ctx context.Context, pod *co
 // ==================== Resource Creation ====================
 
 func (r *BacktestRunner) createBacktestConfigMap(ctx context.Context, spec runner.BacktestSpec) (*corev1.ConfigMap, error) {
-	configJSON, err := json.Marshal(spec.Config)
+	strategyConfigJSON, err := json.Marshal(spec.StrategyConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal config: %w", err)
+		return nil, fmt.Errorf("failed to marshal strategy config: %w", err)
+	}
+
+	// Create backtest config with dry_run always true
+	backtestConfig := make(map[string]interface{})
+	if spec.BacktestConfig != nil {
+		for k, v := range spec.BacktestConfig {
+			backtestConfig[k] = v
+		}
+	}
+	backtestConfig["dry_run"] = true
+
+	backtestConfigJSON, err := json.Marshal(backtestConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal backtest config: %w", err)
 	}
 
 	configMap := &corev1.ConfigMap{
@@ -708,7 +722,8 @@ func (r *BacktestRunner) createBacktestConfigMap(ctx context.Context, spec runne
 			},
 		},
 		Data: map[string]string{
-			"config.json": string(configJSON),
+			"config.strategy.json": string(strategyConfigJSON),
+			"config.backtest.json": string(backtestConfigJSON),
 		},
 	}
 
@@ -716,6 +731,8 @@ func (r *BacktestRunner) createBacktestConfigMap(ctx context.Context, spec runne
 }
 
 func (r *BacktestRunner) createBacktestStrategyConfigMap(ctx context.Context, spec runner.BacktestSpec) (*corev1.ConfigMap, error) {
+	// Sanitize strategy name for ConfigMap key (no spaces or special chars allowed)
+	sanitizedName := runner.SanitizeStrategyFilename(spec.StrategyName)
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.getBacktestStrategyConfigMapName(spec.ID),
@@ -727,7 +744,7 @@ func (r *BacktestRunner) createBacktestStrategyConfigMap(ctx context.Context, sp
 			},
 		},
 		Data: map[string]string{
-			fmt.Sprintf("%s.py", spec.StrategyName): spec.StrategyCode,
+			fmt.Sprintf("%s.py", sanitizedName): spec.StrategyCode,
 		},
 	}
 
@@ -740,11 +757,15 @@ func (r *BacktestRunner) createBacktestJob(ctx context.Context, spec runner.Back
 
 	userDataPath := fmt.Sprintf("/freqtrade/user_data/%s", spec.ID)
 
+	// Sanitize strategy name for file paths and Freqtrade command
+	sanitizedStrategyName := runner.SanitizeStrategyFilename(spec.StrategyName)
+
 	// Build command that runs freqtrade and then outputs JSON results
 	// This allows us to capture the actual JSON result from the logs
 	// Uses Python's zipfile module since unzip is not available in freqtrade image
+	// Uses two config files (Freqtrade merges in order, later overrides earlier)
 	backtestResultsDir := fmt.Sprintf("%s/backtest_results", userDataPath)
-	freqtradeCmd := fmt.Sprintf(`freqtrade backtesting --strategy %s --userdir %s --config %s/config.json --data-format-ohlcv json && \
+	freqtradeCmd := fmt.Sprintf(`freqtrade backtesting --strategy %s --userdir %s --config %s/config.strategy.json --config %s/config.backtest.json --data-format-ohlcv json && \
 echo "===BACKTEST_RESULT_JSON_START===" && \
 cat %s/.last_result.json && \
 echo "" && \
@@ -760,7 +781,8 @@ if zf:
         print(z.read(jf).decode())
     print('===BACKTEST_FULL_RESULT_END===')
 "`,
-		spec.StrategyName,
+		sanitizedStrategyName,
+		userDataPath,
 		userDataPath,
 		userDataPath,
 		backtestResultsDir,
@@ -813,19 +835,20 @@ if zf:
 	}
 
 	// Build init container script to setup user_data directory
-	// 1. Copy config.json from ConfigMap
+	// 1. Copy config files from ConfigMap (strategy + backtest configs)
 	// 2. Copy strategy from ConfigMap
 	// 3. Download and extract data from S3 (if URL provided)
 	setupScript := fmt.Sprintf(`set -e
 echo "Setting up user_data directory..."
 mkdir -p /userdata/strategies /userdata/data /userdata/backtest_results /userdata/hyperopts
 
-echo "Copying config..."
-cp /config-source/config.json /userdata/
+echo "Copying configs..."
+cp /config-source/config.strategy.json /userdata/
+cp /config-source/config.backtest.json /userdata/
 
 echo "Copying strategy..."
 cp /strategy-source/%s.py /userdata/strategies/
-`, spec.StrategyName)
+`, sanitizedStrategyName)
 
 	if spec.DataDownloadURL != "" {
 		setupScript += `
@@ -941,6 +964,8 @@ func (r *BacktestRunner) createHyperOptConfigMap(ctx context.Context, spec runne
 }
 
 func (r *BacktestRunner) createHyperOptStrategyConfigMap(ctx context.Context, spec runner.HyperOptSpec) (*corev1.ConfigMap, error) {
+	// Sanitize strategy name for ConfigMap key (no spaces or special chars allowed)
+	sanitizedName := runner.SanitizeStrategyFilename(spec.StrategyName)
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.getHyperOptStrategyConfigMapName(spec.ID),
@@ -952,7 +977,7 @@ func (r *BacktestRunner) createHyperOptStrategyConfigMap(ctx context.Context, sp
 			},
 		},
 		Data: map[string]string{
-			fmt.Sprintf("%s.py", spec.StrategyName): spec.StrategyCode,
+			fmt.Sprintf("%s.py", sanitizedName): spec.StrategyCode,
 		},
 	}
 
@@ -965,10 +990,13 @@ func (r *BacktestRunner) createHyperOptJob(ctx context.Context, spec runner.Hype
 
 	userDataPath := fmt.Sprintf("/freqtrade/user_data/%s", spec.ID)
 
+	// Sanitize strategy name for file paths and Freqtrade command
+	sanitizedStrategyName := runner.SanitizeStrategyFilename(spec.StrategyName)
+
 	// Build freqtrade arguments (image entrypoint is "freqtrade")
 	args := []string{
 		"hyperopt",
-		"--strategy", spec.StrategyName,
+		"--strategy", sanitizedStrategyName,
 		"--userdir", userDataPath,
 		"--config", fmt.Sprintf("%s/config.json", userDataPath),
 		"--epochs", fmt.Sprintf("%d", spec.Epochs),
@@ -1042,7 +1070,7 @@ cp /config-source/config.json /userdata/
 
 echo "Copying strategy..."
 cp /strategy-source/%s.py /userdata/strategies/
-`, spec.StrategyName)
+`, sanitizedStrategyName)
 
 	if spec.DataDownloadURL != "" {
 		setupScript += `

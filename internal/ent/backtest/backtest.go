@@ -45,6 +45,8 @@ const (
 	FieldStartDate = "start_date"
 	// FieldEndDate holds the string denoting the end_date field in the database.
 	FieldEndDate = "end_date"
+	// FieldConfig holds the string denoting the config field in the database.
+	FieldConfig = "config"
 	// EdgeStrategy holds the string denoting the strategy edge name in mutations.
 	EdgeStrategy = "strategy"
 	// EdgeRunner holds the string denoting the runner edge name in mutations.
@@ -83,6 +85,7 @@ var Columns = []string{
 	FieldCompletedAt,
 	FieldStartDate,
 	FieldEndDate,
+	FieldConfig,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -84,6 +84,12 @@ func (BotRunner) Fields() []ent.Field {
 			Nillable().
 			Comment("When data was last uploaded to S3"),
 
+		// Available data metadata (populated after data download completes)
+		field.JSON("data_available", map[string]interface{}{}).
+			Optional().
+			Annotations(entgql.Type("Map")).
+			Comment("Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]}"),
+
 		field.String("owner_id").
 			NotEmpty().
 			Comment("Group ID (organization) that owns this bot runner"),

@@ -775,14 +775,35 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBack
 				newVersion.VersionNumber, newVersion.ID)
 		}
 
+		// Validate date range if provided
+		var startDate, endDate time.Time
+		if input.StartDate != nil {
+			startDate = *input.StartDate
+		}
+		if input.EndDate != nil {
+			endDate = *input.EndDate
+		}
+		if err := backtest1.ValidateDateRange(startDate, endDate); err != nil {
+			return fmt.Errorf("invalid date range: %w", err)
+		}
+
 		// Create backtest entity with the (possibly new) strategy ID
-		bt, err := tx.Backtest.Create().
+		btCreate := tx.Backtest.Create().
 			SetStrategyID(strategyID).
 			SetRunnerID(input.RunnerID).
 			SetNillableStartDate(input.StartDate).
 			SetNillableEndDate(input.EndDate).
-			SetStatus(enum.TaskStatusPending).
-			Save(ctx)
+			SetStatus(enum.TaskStatusPending)
+
+		// Validate and set config if provided (contains exchange selection and other backtest-specific overrides)
+		if input.Config != nil {
+			if err := backtest1.ValidateBacktestConfig(input.Config); err != nil {
+				return fmt.Errorf("invalid backtest config: %w", err)
+			}
+			btCreate = btCreate.SetConfig(input.Config)
+		}
+
+		bt, err := btCreate.Save(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create backtest: %w", err)
 		}
@@ -800,7 +821,7 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBack
 		// Validate by building the backtest spec
 		// This will fail with "pairs not found in strategy config" if validation fails
 		// If this fails, the entire transaction rolls back and no backtest entity is created
-		_, err = buildBacktestSpec(bt)
+		_, err = backtest1.BuildSpec(bt)
 		if err != nil {
 			return fmt.Errorf("failed to build backtest spec: %w", err)
 		}

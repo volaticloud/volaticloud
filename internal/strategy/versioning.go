@@ -114,12 +114,43 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 		code = generatedCode
 	}
 
+	// Query for max version number (including soft-deleted records) to avoid unique constraint violation
+	// The unique constraint on (name, version_number) includes soft-deleted records
+	//
+	// Race Condition Handling:
+	// Race conditions are handled at the database level via the unique constraint.
+	// If two concurrent requests try to insert the same version, one will fail with
+	// a unique constraint violation. The caller should implement retry logic:
+	//
+	//   for attempt := 0; attempt < maxRetries; attempt++ {
+	//       tx, _ := client.Tx(ctx)
+	//       _, err := strategy.CreateVersion(ctx, tx, parent, input)
+	//       if err == nil {
+	//           return tx.Commit()
+	//       }
+	//       tx.Rollback()
+	//       if !ent.IsConstraintError(err) {
+	//           return err // Non-retryable error
+	//       }
+	//       time.Sleep(time.Millisecond * time.Duration(50 << attempt)) // Exponential backoff
+	//   }
+	includeDeletedCtx := mixin.IncludeDeleted(ctx)
+	maxVersion, err := tx.Strategy.Query().
+		Where(strategy.Name(name)).
+		Aggregate(ent.Max(strategy.FieldVersionNumber)).
+		Int(includeDeletedCtx)
+	if err != nil {
+		// If no versions exist, start at 1
+		maxVersion = 0
+	}
+	nextVersion := maxVersion + 1
+
 	// Create new version with resolved fields
 	builder := tx.Strategy.Create().
 		SetName(name).
 		SetDescription(description).
 		SetCode(code).
-		SetVersionNumber(parent.VersionNumber + 1).
+		SetVersionNumber(nextVersion).
 		SetParentID(parent.ID).
 		SetIsLatest(true).
 		SetOwnerID(parent.OwnerID). // Preserve owner_id from parent

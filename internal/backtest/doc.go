@@ -1,12 +1,65 @@
 /*
-Package backtest provides result parsing and summary extraction for Freqtrade backtest outputs.
+Package backtest provides configuration validation and result parsing for Freqtrade backtests.
 
 # Overview
 
-The backtest package extracts typed summaries from Freqtrade backtest results, providing
-type-safe access to key metrics without requiring frontend code to parse complex nested JSON.
+The backtest package handles two main concerns:
 
-# Architecture
+ 1. Configuration Validation: Validates user-provided backtest config (exchange, pairs, dry_run)
+ 2. Result Parsing: Extracts typed summaries from Freqtrade backtest outputs
+
+The configuration validation ensures safety (dry_run always true) and correctness
+(supported exchanges, valid pair format) before backtests are created.
+
+# Configuration Validation
+
+ValidateBacktestConfig ensures user-provided config is safe and valid:
+
+	func ValidateBacktestConfig(config map[string]interface{}) error
+
+## Validation Rules
+
+	Exchange Validation:
+	  - Must be in SupportedExchanges list
+	  - Case-insensitive matching
+	  - Supported: binance, binanceus, kraken, kucoin, bybit, bitget, gateio, okx
+
+	Safety Enforcement:
+	  - dry_run cannot be set to false (backtests must always be dry runs)
+	  - Prevents accidental real trading via backtest system
+
+	Trading Pair Validation:
+	  - Format: BASE/QUOTE (e.g., BTC/USDT, ETH/BTC)
+	  - Alphanumeric characters only
+	  - Non-empty base and quote currencies
+
+## Usage
+
+	// In GraphQL resolver (internal/graph/schema.resolvers.go)
+	if input.Config != nil {
+	    if err := backtest.ValidateBacktestConfig(input.Config); err != nil {
+	        return fmt.Errorf("invalid backtest config: %w", err)
+	    }
+	}
+
+## Example Errors
+
+	"unsupported exchange: coinbase (supported: binance, binanceus, ...)"
+	"dry_run cannot be set to false for backtests"
+	"pair_whitelist[0]: invalid trading pair format \"BTCUSDT\": expected BASE/QUOTE"
+
+# Backtest Config Layer Separation
+
+Backtests use a two-layer config architecture (see ADR-0014):
+
+  - config.strategy.json: From Strategy.Config (pairs, timeframe, etc.)
+  - config.backtest.json: User overrides (exchange, dry_run always true)
+
+Freqtrade merges configs: strategy < backtest (backtest wins conflicts)
+
+This mirrors the bot config pattern (ADR-0006) but simplified for backtesting needs.
+
+# Result Parsing Architecture
 
 Freqtrade produces comprehensive JSON results (103+ fields) after backtest execution.
 This package provides:
@@ -246,9 +299,11 @@ Test coverage: 96.4%
 
 # Files
 
-	summary.go      - Summary extraction and type conversion
-	summary_test.go - Comprehensive test coverage (96.4%)
-	spec.go         - Backtest specification types
+	validation.go      - Config validation (exchange, pairs, dry_run)
+	validation_test.go - Validation test coverage
+	summary.go         - Summary extraction and type conversion
+	summary_test.go    - Comprehensive test coverage (96.4%)
+	spec.go            - Backtest specification types
 
 # Related Packages
 
@@ -259,6 +314,8 @@ Test coverage: 96.4%
 
 # References
 
+  - ADR-0014: Backtest Configuration Layer Separation (docs/adr/0014-backtest-config-layer-separation.md)
+  - ADR-0006: Bot Configuration Layer Separation (docs/adr/0006-bot-config-layer-separation.md)
   - Freqtrade Backtest Documentation: https://www.freqtrade.io/en/stable/backtesting/
   - Dashboard Types: dashboard/src/types/freqtrade.ts
   - GraphQL Schema: internal/graph/schema.graphqls

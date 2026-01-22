@@ -19,6 +19,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0011](0011-strategy-ui-builder.md) | Strategy UI Builder Architecture | Accepted | 2026-01-16 |
 | [0012](0012-organization-alias-system.md) | Organization Alias System | Accepted | 2026-01-19 |
 | [0013](0013-long-short-signal-support.md) | Long/Short Signal Support with Mirror | Accepted | 2026-01-20 |
+| [0014](0014-backtest-config-layer-separation.md) | Backtest Configuration Layer Separation | Accepted | 2026-01-22 |
 
 ## What is an ADR?
 

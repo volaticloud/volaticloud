@@ -562,6 +562,8 @@ export type Backtest = Node & {
   __typename?: 'Backtest';
   /** Completion timestamp */
   completedAt?: Maybe<Scalars['Time']['output']>;
+  /** Backtest-specific configuration overrides (exchange, dry_run, etc.) */
+  config?: Maybe<Scalars['Map']['output']>;
   createdAt: Scalars['Time']['output'];
   /** Soft-delete timestamp. If set, record is considered deleted. */
   deletedAt?: Maybe<Scalars['Time']['output']>;
@@ -1235,6 +1237,8 @@ export type BotRunner = Node & {
   /** Price per core-hour in USD (only used if billing_enabled) */
   cpuPricePerCoreHour?: Maybe<Scalars['Float']['output']>;
   createdAt: Scalars['Time']['output'];
+  /** Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]} */
+  dataAvailable?: Maybe<Scalars['Map']['output']>;
   /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
   dataDownloadConfig?: Maybe<Scalars['Map']['output']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
@@ -1844,6 +1848,8 @@ export type CreateAlertRuleInput = {
 export type CreateBacktestInput = {
   /** Completion timestamp */
   completedAt?: InputMaybe<Scalars['Time']['input']>;
+  /** Backtest-specific configuration overrides (exchange, dry_run, etc.) */
+  config?: InputMaybe<Scalars['Map']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
   /** Soft-delete timestamp. If set, record is considered deleted. */
   deletedAt?: InputMaybe<Scalars['Time']['input']>;
@@ -1967,6 +1973,8 @@ export type CreateBotRunnerInput = {
   /** Price per core-hour in USD (only used if billing_enabled) */
   cpuPricePerCoreHour?: InputMaybe<Scalars['Float']['input']>;
   createdAt?: InputMaybe<Scalars['Time']['input']>;
+  /** Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]} */
+  dataAvailable?: InputMaybe<Scalars['Map']['input']>;
   /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
   dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */
@@ -4528,6 +4536,7 @@ export type UpdateBotRunnerInput = {
   clearBots?: InputMaybe<Scalars['Boolean']['input']>;
   clearCPUPricePerCoreHour?: InputMaybe<Scalars['Boolean']['input']>;
   clearConfig?: InputMaybe<Scalars['Boolean']['input']>;
+  clearDataAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadConfig?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadProgress?: InputMaybe<Scalars['Boolean']['input']>;
   clearDataDownloadStartedAt?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4544,6 +4553,8 @@ export type UpdateBotRunnerInput = {
   config?: InputMaybe<Scalars['Map']['input']>;
   /** Price per core-hour in USD (only used if billing_enabled) */
   cpuPricePerCoreHour?: InputMaybe<Scalars['Float']['input']>;
+  /** Available data metadata: {exchanges: [{name, pairs: [{pair, timeframes: [{timeframe, from, to}]}]}]} */
+  dataAvailable?: InputMaybe<Scalars['Map']['input']>;
   /** Data download configuration: {exchanges: [{name, enabled, timeframes, pairs_pattern, days, trading_mode}]} */
   dataDownloadConfig?: InputMaybe<Scalars['Map']['input']>;
   /** Progress details: {pairs_completed, pairs_total, current_pair, percent_complete} */

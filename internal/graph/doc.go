@@ -251,7 +251,7 @@ Critical Features:
 
 ## BacktestSpec Builder
 
-buildBacktestSpec creates runner.BacktestSpec from Backtest entity:
+backtest.BuildSpec creates runner.BacktestSpec from Backtest entity (see internal/backtest/spec.go):
 
 	Backtest Configuration:
 	  - Strategy code and config

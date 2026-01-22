@@ -72,6 +72,11 @@ export const BotSelector = ({
     skip: !value,
   });
 
+  // Extract selected bot from query result
+  const selectedBot = useMemo(() => {
+    return selectedBotData?.bots?.edges?.[0]?.node ?? null;
+  }, [selectedBotData]);
+
   // Combine and deduplicate bots
   const bots = useMemo((): BotOption[] => {
     const myBots = data?.myBots?.edges
@@ -99,8 +104,7 @@ export const BotSelector = ({
     const allBots = [...myBots, ...publicBots];
 
     // Add selected bot if not in list
-    if (value && selectedBotData?.node?.__typename === 'Bot') {
-      const selectedBot = selectedBotData.node;
+    if (value && selectedBot) {
       const exists = allBots.some(b => b.id === selectedBot.id);
       if (!exists) {
         allBots.unshift({
@@ -114,7 +118,7 @@ export const BotSelector = ({
     }
 
     return allBots;
-  }, [data, value, selectedBotData]);
+  }, [data, value, selectedBot]);
 
   // Handle scroll to load more
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {

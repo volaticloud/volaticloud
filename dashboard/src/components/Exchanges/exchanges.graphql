@@ -24,22 +24,24 @@ query GetExchanges($first: Int, $after: Cursor, $where: ExchangeWhereInput) {
 }
 
 query GetExchange($id: ID!) {
-  node(id: $id) {
-    ... on Exchange {
-      id
-      name
-      config
-      createdAt
-      updatedAt
-      bots(first: 50) {
-        edges {
-          node {
-            id
-            name
-            status
+  exchanges(first: 1, where: { id: $id }) {
+    edges {
+      node {
+        id
+        name
+        config
+        createdAt
+        updatedAt
+        bots(first: 50) {
+          edges {
+            node {
+              id
+              name
+              status
+            }
           }
+          totalCount
         }
-        totalCount
       }
     }
   }

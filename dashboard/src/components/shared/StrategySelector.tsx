@@ -78,6 +78,11 @@ export const StrategySelector = ({
     skip: !value,
   });
 
+  // Extract selected strategy from query result
+  const selectedStrategy = useMemo(() => {
+    return selectedStrategyData?.strategies?.edges?.[0]?.node ?? null;
+  }, [selectedStrategyData]);
+
   // Combine and deduplicate strategies
   const strategies = useMemo((): StrategyOption[] => {
     const myStrategies = data?.myStrategies?.edges
@@ -107,8 +112,7 @@ export const StrategySelector = ({
     const allStrategies = [...myStrategies, ...publicStrategies];
 
     // Add selected strategy if not in list
-    if (value && selectedStrategyData?.node?.__typename === 'Strategy') {
-      const selectedStrategy = selectedStrategyData.node;
+    if (value && selectedStrategy) {
       const exists = allStrategies.some(s => s.id === selectedStrategy.id);
       if (!exists) {
         allStrategies.unshift({
@@ -123,7 +127,7 @@ export const StrategySelector = ({
     }
 
     return allStrategies;
-  }, [data, value, selectedStrategyData]);
+  }, [data, value, selectedStrategy]);
 
   // Handle scroll to load more
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {

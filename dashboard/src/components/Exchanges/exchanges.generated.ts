@@ -17,19 +17,7 @@ export type GetExchangeQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetExchangeQuery = { __typename?: 'Query', node?:
-    | { __typename?: 'AlertEvent' }
-    | { __typename?: 'AlertRule' }
-    | { __typename?: 'Backtest' }
-    | { __typename?: 'Bot' }
-    | { __typename?: 'BotMetrics' }
-    | { __typename?: 'BotRunner' }
-    | { __typename?: 'Exchange', id: string, name: string, config?: Record<string, any> | null, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus } | null } | null> | null } }
-    | { __typename?: 'ResourceUsageAggregation' }
-    | { __typename?: 'ResourceUsageSample' }
-    | { __typename?: 'Strategy' }
-    | { __typename?: 'Trade' }
-   | null };
+export type GetExchangeQuery = { __typename?: 'Query', exchanges: { __typename?: 'ExchangeConnection', edges?: Array<{ __typename?: 'ExchangeEdge', node?: { __typename?: 'Exchange', id: string, name: string, config?: Record<string, any> | null, createdAt: string, updatedAt: string, bots: { __typename?: 'BotConnection', totalCount: number, edges?: Array<{ __typename?: 'BotEdge', node?: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus } | null } | null> | null } } | null } | null> | null } };
 
 export type CreateExchangeMutationVariables = Types.Exact<{
   input: Types.CreateExchangeInput;
@@ -120,22 +108,24 @@ export type GetExchangesSuspenseQueryHookResult = ReturnType<typeof useGetExchan
 export type GetExchangesQueryResult = Apollo.QueryResult<GetExchangesQuery, GetExchangesQueryVariables>;
 export const GetExchangeDocument = gql`
     query GetExchange($id: ID!) {
-  node(id: $id) {
-    ... on Exchange {
-      id
-      name
-      config
-      createdAt
-      updatedAt
-      bots(first: 50) {
-        edges {
-          node {
-            id
-            name
-            status
+  exchanges(first: 1, where: {id: $id}) {
+    edges {
+      node {
+        id
+        name
+        config
+        createdAt
+        updatedAt
+        bots(first: 50) {
+          edges {
+            node {
+              id
+              name
+              status
+            }
           }
+          totalCount
         }
-        totalCount
       }
     }
   }

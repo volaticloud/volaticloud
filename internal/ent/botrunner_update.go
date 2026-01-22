@@ -272,6 +272,18 @@ func (_u *BotRunnerUpdate) ClearS3DataUploadedAt() *BotRunnerUpdate {
 	return _u
 }
 
+// SetDataAvailable sets the "data_available" field.
+func (_u *BotRunnerUpdate) SetDataAvailable(v map[string]interface{}) *BotRunnerUpdate {
+	_u.mutation.SetDataAvailable(v)
+	return _u
+}
+
+// ClearDataAvailable clears the value of the "data_available" field.
+func (_u *BotRunnerUpdate) ClearDataAvailable() *BotRunnerUpdate {
+	_u.mutation.ClearDataAvailable()
+	return _u
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_u *BotRunnerUpdate) SetOwnerID(v string) *BotRunnerUpdate {
 	_u.mutation.SetOwnerID(v)
@@ -716,6 +728,12 @@ func (_u *BotRunnerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.S3DataUploadedAtCleared() {
 		_spec.ClearField(botrunner.FieldS3DataUploadedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.DataAvailable(); ok {
+		_spec.SetField(botrunner.FieldDataAvailable, field.TypeJSON, value)
+	}
+	if _u.mutation.DataAvailableCleared() {
+		_spec.ClearField(botrunner.FieldDataAvailable, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)
@@ -1200,6 +1218,18 @@ func (_u *BotRunnerUpdateOne) ClearS3DataUploadedAt() *BotRunnerUpdateOne {
 	return _u
 }
 
+// SetDataAvailable sets the "data_available" field.
+func (_u *BotRunnerUpdateOne) SetDataAvailable(v map[string]interface{}) *BotRunnerUpdateOne {
+	_u.mutation.SetDataAvailable(v)
+	return _u
+}
+
+// ClearDataAvailable clears the value of the "data_available" field.
+func (_u *BotRunnerUpdateOne) ClearDataAvailable() *BotRunnerUpdateOne {
+	_u.mutation.ClearDataAvailable()
+	return _u
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_u *BotRunnerUpdateOne) SetOwnerID(v string) *BotRunnerUpdateOne {
 	_u.mutation.SetOwnerID(v)
@@ -1674,6 +1704,12 @@ func (_u *BotRunnerUpdateOne) sqlSave(ctx context.Context) (_node *BotRunner, er
 	}
 	if _u.mutation.S3DataUploadedAtCleared() {
 		_spec.ClearField(botrunner.FieldS3DataUploadedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.DataAvailable(); ok {
+		_spec.SetField(botrunner.FieldDataAvailable, field.TypeJSON, value)
+	}
+	if _u.mutation.DataAvailableCleared() {
+		_spec.ClearField(botrunner.FieldDataAvailable, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(botrunner.FieldOwnerID, field.TypeString, value)

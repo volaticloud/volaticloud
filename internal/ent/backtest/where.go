@@ -627,6 +627,16 @@ func EndDateNotNil() predicate.Backtest {
 	return predicate.Backtest(sql.FieldNotNull(FieldEndDate))
 }
 
+// ConfigIsNil applies the IsNil predicate on the "config" field.
+func ConfigIsNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldIsNull(FieldConfig))
+}
+
+// ConfigNotNil applies the NotNil predicate on the "config" field.
+func ConfigNotNil() predicate.Backtest {
+	return predicate.Backtest(sql.FieldNotNull(FieldConfig))
+}
+
 // HasStrategy applies the HasEdge predicate on the "strategy" edge.
 func HasStrategy() predicate.Backtest {
 	return predicate.Backtest(func(s *sql.Selector) {

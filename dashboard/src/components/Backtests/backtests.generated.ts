@@ -33,14 +33,14 @@ export type SearchStrategiesQueryVariables = Types.Exact<{
 }>;
 
 
-export type SearchStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null } };
+export type SearchStrategiesQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean, config: Record<string, any> } | null } | null> | null } };
 
 export type GetStrategyByIdQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetStrategyByIdQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean } | null } | null> | null } };
+export type GetStrategyByIdQuery = { __typename?: 'Query', strategies: { __typename?: 'StrategyConnection', edges?: Array<{ __typename?: 'StrategyEdge', node?: { __typename?: 'Strategy', id: string, name: string, versionNumber: number, isLatest: boolean, config: Record<string, any> } | null } | null> | null } };
 
 export type RunBacktestMutationVariables = Types.Exact<{
   input: Types.CreateBacktestInput;
@@ -258,6 +258,7 @@ export const SearchStrategiesDocument = gql`
         name
         versionNumber
         isLatest
+        config
       }
     }
   }
@@ -310,6 +311,7 @@ export const GetStrategyByIdDocument = gql`
         name
         versionNumber
         isLatest
+        config
       }
     }
   }

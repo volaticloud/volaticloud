@@ -1,10 +1,62 @@
 package runner
 
 import (
+	"regexp"
+	"strings"
 	"time"
 
 	"volaticloud/internal/enum"
 )
+
+// sanitizeFilenameRegex matches characters that are not alphanumeric or space
+var sanitizeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
+
+// DefaultStrategyName is the fallback name used when strategy name is empty or invalid
+const DefaultStrategyName = "MyStrategy"
+
+// SanitizeStrategyFilename converts a strategy name to a valid Python class name (PascalCase).
+// This matches the frontend's toClassName function to ensure consistency.
+// Example: "RSI Test Strategy" -> "RsiTestStrategy"
+// The result is used for:
+// - Kubernetes ConfigMap keys (no spaces allowed)
+// - Python file names (no spaces allowed)
+// - Freqtrade --strategy flag (expects Python class name)
+func SanitizeStrategyFilename(name string) string {
+	if name == "" {
+		return DefaultStrategyName
+	}
+
+	// Remove invalid characters (keep alphanumeric and spaces)
+	sanitized := sanitizeFilenameRegex.ReplaceAllString(name, "")
+	if sanitized == "" {
+		return DefaultStrategyName
+	}
+
+	// If no spaces, preserve original casing but ensure first char is uppercase
+	if !strings.Contains(sanitized, " ") {
+		if len(sanitized) == 0 {
+			return DefaultStrategyName
+		}
+		return strings.ToUpper(string(sanitized[0])) + sanitized[1:]
+	}
+
+	// Convert space-separated words to PascalCase
+	words := strings.Fields(sanitized)
+	var result strings.Builder
+	for _, word := range words {
+		if len(word) > 0 {
+			result.WriteString(strings.ToUpper(string(word[0])))
+			if len(word) > 1 {
+				result.WriteString(strings.ToLower(word[1:]))
+			}
+		}
+	}
+
+	if result.Len() == 0 {
+		return DefaultStrategyName
+	}
+	return result.String()
+}
 
 // BacktestSpec defines the specification for running a backtest
 type BacktestSpec struct {
@@ -13,11 +65,12 @@ type BacktestSpec struct {
 	StrategyName string
 	StrategyCode string
 
-	// Backtest Configuration
-	// Contains ALL backtest settings: pairs, timeframe, timerange, stake_amount,
-	// stake_currency, max_open_trades, enable_position_stacking, trading_mode, etc.
-	// This is passed directly to Freqtrade as config.json
-	Config map[string]interface{}
+	// Split Configuration (like bots)
+	// StrategyConfig: pairs, timeframe, timerange, stake_amount, stake_currency, etc. (from strategy.Config)
+	// BacktestConfig: exchange, dry_run, and other backtest-specific overrides (from backtest.Config)
+	// Freqtrade merges configs in order via multiple --config flags (later overrides earlier)
+	StrategyConfig map[string]interface{}
+	BacktestConfig map[string]interface{}
 
 	// Runtime Configuration
 	FreqtradeVersion string            // Freqtrade Docker image version
@@ -25,7 +78,17 @@ type BacktestSpec struct {
 	ResourceLimits   *ResourceLimits   // CPU/Memory limits
 
 	// S3 Data Configuration
-	DataDownloadURL string // Presigned S3 URL for downloading OHLCV data
+	// DataDownloadURL is a presigned S3 URL for downloading OHLCV data.
+	// This field is set by the caller (runner implementation) when executing the backtest.
+	//
+	// The caller is responsible for:
+	// - Generating a valid presigned URL from the runner's S3 configuration
+	//   (must be set before calling RunBacktest)
+	// - Ensuring the URL has sufficient expiration time (recommended: 24 hours minimum)
+	// - Validating the URL is non-empty before starting the backtest
+	//   (BuildSpec does NOT validate this field - it's set after spec creation)
+	// - Handling S3 errors if the URL is invalid, expired, or inaccessible
+	DataDownloadURL string
 }
 
 // BacktestResult represents the results of a completed backtest

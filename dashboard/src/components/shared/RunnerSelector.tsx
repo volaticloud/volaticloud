@@ -25,6 +25,21 @@ import { useGetRunnersForSelectorQuery, useGetRunnerByIdQuery } from './shared.g
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
+// Type for available data metadata from runner
+export interface RunnerDataAvailable {
+  exchanges?: Array<{
+    name: string;
+    pairs?: Array<{
+      pair: string;
+      timeframes?: Array<{
+        timeframe: string;
+        from?: string | null;
+        to?: string | null;
+      }>;
+    }>;
+  }>;
+}
+
 interface RunnerSelectorProps {
   value: string;
   onChange: (runnerId: string) => void;
@@ -35,6 +50,8 @@ interface RunnerSelectorProps {
   /** Filter to only show runners with data ready (for backtesting) */
   dataReadyOnly?: boolean;
   disabled?: boolean;
+  /** Callback when runner's data availability is loaded */
+  onDataAvailableLoaded?: (data: RunnerDataAvailable | null) => void;
 }
 
 interface RunnerOption {
@@ -55,6 +72,7 @@ export const RunnerSelector = ({
   error = false,
   dataReadyOnly = false,
   disabled = false,
+  onDataAvailableLoaded,
 }: RunnerSelectorProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const [showPublicRunners, setShowPublicRunners] = useState(true);
@@ -78,6 +96,11 @@ export const RunnerSelector = ({
     variables: { id: value },
     skip: !value,
   });
+
+  // Extract selected runner from query result
+  const selectedRunner = useMemo(() => {
+    return selectedRunnerData?.botRunners?.edges?.[0]?.node ?? null;
+  }, [selectedRunnerData]);
 
   // Combine and deduplicate runners
   const runners = useMemo((): RunnerOption[] => {
@@ -108,8 +131,7 @@ export const RunnerSelector = ({
     const allRunners = [...myRunners, ...publicRunners];
 
     // Add selected runner if not in list
-    if (value && selectedRunnerData?.node?.__typename === 'BotRunner') {
-      const selectedRunner = selectedRunnerData.node;
+    if (value && selectedRunner) {
       const exists = allRunners.some(r => r.id === selectedRunner.id);
       if (!exists) {
         allRunners.unshift({
@@ -124,7 +146,7 @@ export const RunnerSelector = ({
     }
 
     return allRunners;
-  }, [data, value, selectedRunnerData]);
+  }, [data, value, selectedRunner]);
 
   // Handle scroll to load more
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
@@ -149,6 +171,16 @@ export const RunnerSelector = ({
   useEffect(() => {
     return () => setSearchInput('');
   }, []);
+
+  // Notify parent when data availability changes
+  useEffect(() => {
+    if (onDataAvailableLoaded && selectedRunner) {
+      const dataAvailable = selectedRunner.dataAvailable as RunnerDataAvailable | null;
+      onDataAvailableLoaded(dataAvailable);
+    } else if (onDataAvailableLoaded && !value) {
+      onDataAvailableLoaded(null);
+    }
+  }, [selectedRunner, value, onDataAvailableLoaded]);
 
   const totalCount = (data?.myRunners?.totalCount ?? 0) +
     (showPublicRunners ? (data?.publicRunners?.totalCount ?? 0) : 0);

@@ -220,3 +220,145 @@ func TestDaysTypeHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDataAvailableFromLogs(t *testing.T) {
+	tests := []struct {
+		name     string
+		logs     string
+		expected map[string]interface{}
+	}{
+		{
+			name: "valid metadata with single exchange",
+			logs: `Downloading data...
+===DATA_AVAILABLE_START===
+{"exchanges":[{"name":"binance","pairs":[{"pair":"BTC/USDT","timeframes":[{"timeframe":"5m","from":"2024-01-01T00:00:00Z","to":"2024-12-01T00:00:00Z"}]}]}]}
+===DATA_AVAILABLE_END===
+Done`,
+			expected: map[string]interface{}{
+				"exchanges": []interface{}{
+					map[string]interface{}{
+						"name": "binance",
+						"pairs": []interface{}{
+							map[string]interface{}{
+								"pair": "BTC/USDT",
+								"timeframes": []interface{}{
+									map[string]interface{}{
+										"timeframe": "5m",
+										"from":      "2024-01-01T00:00:00Z",
+										"to":        "2024-12-01T00:00:00Z",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "metadata with multiple exchanges and pairs",
+			logs: `===DATA_AVAILABLE_START===
+{"exchanges":[{"name":"binance","pairs":[{"pair":"BTC/USDT","timeframes":[{"timeframe":"1h","from":"2024-01-01T00:00:00Z","to":"2024-12-01T00:00:00Z"}]},{"pair":"ETH/USDT","timeframes":[{"timeframe":"1h","from":"2024-01-01T00:00:00Z","to":"2024-12-01T00:00:00Z"}]}]},{"name":"kraken","pairs":[{"pair":"BTC/USD","timeframes":[{"timeframe":"1d","from":"2023-01-01T00:00:00Z","to":"2024-12-01T00:00:00Z"}]}]}]}
+===DATA_AVAILABLE_END===`,
+			expected: map[string]interface{}{
+				"exchanges": []interface{}{
+					map[string]interface{}{
+						"name": "binance",
+						"pairs": []interface{}{
+							map[string]interface{}{
+								"pair": "BTC/USDT",
+								"timeframes": []interface{}{
+									map[string]interface{}{
+										"timeframe": "1h",
+										"from":      "2024-01-01T00:00:00Z",
+										"to":        "2024-12-01T00:00:00Z",
+									},
+								},
+							},
+							map[string]interface{}{
+								"pair": "ETH/USDT",
+								"timeframes": []interface{}{
+									map[string]interface{}{
+										"timeframe": "1h",
+										"from":      "2024-01-01T00:00:00Z",
+										"to":        "2024-12-01T00:00:00Z",
+									},
+								},
+							},
+						},
+					},
+					map[string]interface{}{
+						"name": "kraken",
+						"pairs": []interface{}{
+							map[string]interface{}{
+								"pair": "BTC/USD",
+								"timeframes": []interface{}{
+									map[string]interface{}{
+										"timeframe": "1d",
+										"from":      "2023-01-01T00:00:00Z",
+										"to":        "2024-12-01T00:00:00Z",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:     "no markers in logs",
+			logs:     "Downloading data...\nDone",
+			expected: nil,
+		},
+		{
+			name:     "only start marker",
+			logs:     "===DATA_AVAILABLE_START===\n{\"test\": true}",
+			expected: nil,
+		},
+		{
+			name:     "only end marker",
+			logs:     "{\"test\": true}\n===DATA_AVAILABLE_END===",
+			expected: nil,
+		},
+		{
+			name:     "empty logs",
+			logs:     "",
+			expected: nil,
+		},
+		{
+			name: "invalid JSON between markers",
+			logs: `===DATA_AVAILABLE_START===
+not valid json
+===DATA_AVAILABLE_END===`,
+			expected: nil,
+		},
+		{
+			name: "empty JSON between markers",
+			logs: `===DATA_AVAILABLE_START===
+
+===DATA_AVAILABLE_END===`,
+			expected: nil,
+		},
+		{
+			name: "empty exchanges array",
+			logs: `===DATA_AVAILABLE_START===
+{"exchanges":[]}
+===DATA_AVAILABLE_END===`,
+			expected: map[string]interface{}{
+				"exchanges": []interface{}{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parseDataAvailableFromLogs(tt.logs)
+
+			if tt.expected == nil {
+				assert.Nil(t, result, "Expected nil result")
+			} else {
+				assert.NotNil(t, result, "Expected non-nil result")
+				assert.Equal(t, tt.expected, result, "Parsed metadata should match expected")
+			}
+		})
+	}
+}

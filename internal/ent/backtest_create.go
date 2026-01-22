@@ -177,6 +177,12 @@ func (_c *BacktestCreate) SetNillableEndDate(v *time.Time) *BacktestCreate {
 	return _c
 }
 
+// SetConfig sets the "config" field.
+func (_c *BacktestCreate) SetConfig(v map[string]interface{}) *BacktestCreate {
+	_c.mutation.SetConfig(v)
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *BacktestCreate) SetID(v uuid.UUID) *BacktestCreate {
 	_c.mutation.SetID(v)
@@ -361,6 +367,10 @@ func (_c *BacktestCreate) createSpec() (*Backtest, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.EndDate(); ok {
 		_spec.SetField(backtest.FieldEndDate, field.TypeTime, value)
 		_node.EndDate = value
+	}
+	if value, ok := _c.mutation.Config(); ok {
+		_spec.SetField(backtest.FieldConfig, field.TypeJSON, value)
+		_node.Config = value
 	}
 	if nodes := _c.mutation.StrategyIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -640,6 +650,24 @@ func (u *BacktestUpsert) ClearEndDate() *BacktestUpsert {
 	return u
 }
 
+// SetConfig sets the "config" field.
+func (u *BacktestUpsert) SetConfig(v map[string]interface{}) *BacktestUpsert {
+	u.Set(backtest.FieldConfig, v)
+	return u
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BacktestUpsert) UpdateConfig() *BacktestUpsert {
+	u.SetExcluded(backtest.FieldConfig)
+	return u
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BacktestUpsert) ClearConfig() *BacktestUpsert {
+	u.SetNull(backtest.FieldConfig)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -912,6 +940,27 @@ func (u *BacktestUpsertOne) UpdateEndDate() *BacktestUpsertOne {
 func (u *BacktestUpsertOne) ClearEndDate() *BacktestUpsertOne {
 	return u.Update(func(s *BacktestUpsert) {
 		s.ClearEndDate()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *BacktestUpsertOne) SetConfig(v map[string]interface{}) *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BacktestUpsertOne) UpdateConfig() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BacktestUpsertOne) ClearConfig() *BacktestUpsertOne {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearConfig()
 	})
 }
 
@@ -1354,6 +1403,27 @@ func (u *BacktestUpsertBulk) UpdateEndDate() *BacktestUpsertBulk {
 func (u *BacktestUpsertBulk) ClearEndDate() *BacktestUpsertBulk {
 	return u.Update(func(s *BacktestUpsert) {
 		s.ClearEndDate()
+	})
+}
+
+// SetConfig sets the "config" field.
+func (u *BacktestUpsertBulk) SetConfig(v map[string]interface{}) *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.SetConfig(v)
+	})
+}
+
+// UpdateConfig sets the "config" field to the value that was provided on create.
+func (u *BacktestUpsertBulk) UpdateConfig() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.UpdateConfig()
+	})
+}
+
+// ClearConfig clears the value of the "config" field.
+func (u *BacktestUpsertBulk) ClearConfig() *BacktestUpsertBulk {
+	return u.Update(func(s *BacktestUpsert) {
+		s.ClearConfig()
 	})
 }
 

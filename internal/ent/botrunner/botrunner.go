@@ -49,6 +49,8 @@ const (
 	FieldS3DataKey = "s3_data_key"
 	// FieldS3DataUploadedAt holds the string denoting the s3_data_uploaded_at field in the database.
 	FieldS3DataUploadedAt = "s3_data_uploaded_at"
+	// FieldDataAvailable holds the string denoting the data_available field in the database.
+	FieldDataAvailable = "data_available"
 	// FieldOwnerID holds the string denoting the owner_id field in the database.
 	FieldOwnerID = "owner_id"
 	// FieldBillingEnabled holds the string denoting the billing_enabled field in the database.
@@ -123,6 +125,7 @@ var Columns = []string{
 	FieldS3Config,
 	FieldS3DataKey,
 	FieldS3DataUploadedAt,
+	FieldDataAvailable,
 	FieldOwnerID,
 	FieldBillingEnabled,
 	FieldCPUPricePerCoreHour,
