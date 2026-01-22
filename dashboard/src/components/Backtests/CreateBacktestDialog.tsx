@@ -51,7 +51,7 @@ interface StrategyOption {
   name: string;
   versionNumber: number;
   isLatest: boolean;
-  config?: Record<string, unknown> | null;
+  config: Record<string, unknown>;
 }
 
 // Strategy config fields we care about for inheritance
