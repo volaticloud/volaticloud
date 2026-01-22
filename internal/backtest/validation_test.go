@@ -3,6 +3,7 @@ package backtest
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestValidateBacktestConfig(t *testing.T) {
@@ -113,6 +114,30 @@ func TestValidateBacktestConfig(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "duplicate pairs rejected",
+			config: map[string]interface{}{
+				"pair_whitelist": []interface{}{"BTC/USDT", "ETH/USDT", "BTC/USDT"},
+			},
+			expectError: true,
+			errorMsg:    "duplicate pair",
+		},
+		{
+			name: "duplicate pairs case insensitive",
+			config: map[string]interface{}{
+				"pair_whitelist": []interface{}{"BTC/USDT", "btc/usdt"},
+			},
+			expectError: true,
+			errorMsg:    "duplicate pair",
+		},
+		{
+			name: "duplicate futures pairs rejected",
+			config: map[string]interface{}{
+				"pair_whitelist": []interface{}{"BTC/USDT:USDT", "ETH/USDT", "BTC/USDT:USDT"},
+			},
+			expectError: true,
+			errorMsg:    "duplicate pair",
+		},
 	}
 
 	for _, tt := range tests {
@@ -206,6 +231,85 @@ func TestValidateTradingPair(t *testing.T) {
 			}
 			if !tt.expectError && err != nil {
 				t.Errorf("unexpected error for pair %q: %v", tt.pair, err)
+			}
+		})
+	}
+}
+
+func TestValidateDateRange(t *testing.T) {
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1)
+	tomorrow := now.AddDate(0, 0, 1)
+	nextWeek := now.AddDate(0, 0, 7)
+
+	tests := []struct {
+		name        string
+		startDate   time.Time
+		endDate     time.Time
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "both dates zero is valid",
+			startDate:   time.Time{},
+			endDate:     time.Time{},
+			expectError: false,
+		},
+		{
+			name:        "valid date range",
+			startDate:   yesterday,
+			endDate:     tomorrow,
+			expectError: false,
+		},
+		{
+			name:        "start date equals end date rejected",
+			startDate:   now,
+			endDate:     now,
+			expectError: true,
+			errorMsg:    "must be before end_date",
+		},
+		{
+			name:        "start date after end date rejected",
+			startDate:   nextWeek,
+			endDate:     yesterday,
+			expectError: true,
+			errorMsg:    "must be before end_date",
+		},
+		{
+			name:        "only start date provided rejected",
+			startDate:   yesterday,
+			endDate:     time.Time{},
+			expectError: true,
+			errorMsg:    "end_date is required",
+		},
+		{
+			name:        "only end date provided rejected",
+			startDate:   time.Time{},
+			endDate:     tomorrow,
+			expectError: true,
+			errorMsg:    "start_date is required",
+		},
+		{
+			name:        "far past to far future valid",
+			startDate:   time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			endDate:     time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC),
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDateRange(tt.startDate, tt.endDate)
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error containing %q, got nil", tt.errorMsg)
+				} else if !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("expected error containing %q, got %q", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error, got %v", err)
+				}
 			}
 		})
 	}

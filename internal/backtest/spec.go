@@ -7,10 +7,32 @@ import (
 	"volaticloud/internal/runner"
 )
 
-// BuildSpec builds a BacktestSpec from a Backtest entity
+// Constants for backtest configuration
+const (
+	// DefaultFreqtradeVersion is the default Freqtrade Docker image tag
+	DefaultFreqtradeVersion = "stable"
+
+	// DefaultDataFormatOHLCV is the OHLCV data format used by the data downloader
+	DefaultDataFormatOHLCV = "json"
+
+	// FreqtradeVersionConfigKey is the config key for Freqtrade version
+	FreqtradeVersionConfigKey = "freqtrade_version"
+
+	// DataFormatConfigKey is the config key for OHLCV data format
+	DataFormatConfigKey = "dataformat_ohlcv"
+
+	// TimerangeConfigKey is the config key for backtest time range
+	TimerangeConfigKey = "timerange"
+
+	// DryRunConfigKey is the config key for dry run mode
+	DryRunConfigKey = "dry_run"
+)
+
+// BuildSpec builds a BacktestSpec from a Backtest entity.
+// The bt.Edges.Strategy must be loaded before calling this function.
 func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	if bt.Edges.Strategy == nil {
-		return nil, fmt.Errorf("backtest has no strategy")
+		return nil, fmt.Errorf("backtest %s: strategy edge not loaded", bt.ID)
 	}
 
 	strategy := bt.Edges.Strategy
@@ -21,8 +43,8 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	}
 
 	// Extract optional runtime configuration from config
-	freqtradeVersion := "stable"
-	if fv, ok := strategy.Config["freqtrade_version"].(string); ok && fv != "" {
+	freqtradeVersion := DefaultFreqtradeVersion
+	if fv, ok := strategy.Config[FreqtradeVersionConfigKey].(string); ok && fv != "" {
 		freqtradeVersion = fv
 	}
 
@@ -33,7 +55,7 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	}
 
 	// Set data format to JSON (matching data download format)
-	strategyConfig["dataformat_ohlcv"] = "json"
+	strategyConfig[DataFormatConfigKey] = DefaultDataFormatOHLCV
 
 	// Build timerange from start_date and end_date if provided
 	// Freqtrade expects format: "YYYYMMDD-YYYYMMDD" (e.g., "20240101-20241231")
@@ -41,7 +63,7 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 		startStr := bt.StartDate.Format("20060102") // Go time format for YYYYMMDD
 		endStr := bt.EndDate.Format("20060102")
 		timerange := fmt.Sprintf("%s-%s", startStr, endStr)
-		strategyConfig["timerange"] = timerange
+		strategyConfig[TimerangeConfigKey] = timerange
 	}
 
 	// Backtest config - pass through user-provided config as-is
@@ -52,8 +74,8 @@ func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 			backtestConfig[k] = v
 		}
 	}
-	// Always set dry_run to true for backtests
-	backtestConfig["dry_run"] = true
+	// Always set dry_run to true for backtests (safety measure)
+	backtestConfig[DryRunConfigKey] = true
 
 	// Build BacktestSpec with split configs (like bots)
 	// DataDownloadURL is set by the caller when executing the backtest (from runner's S3 config)

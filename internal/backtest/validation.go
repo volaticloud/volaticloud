@@ -3,6 +3,7 @@ package backtest
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // SupportedExchanges is the whitelist of exchanges that can be used for backtesting.
@@ -45,6 +46,7 @@ func ValidateBacktestConfig(config map[string]interface{}) error {
 
 	// Validate pair_whitelist if provided
 	if pairWhitelist, ok := config["pair_whitelist"].([]interface{}); ok {
+		seen := make(map[string]int) // Track seen pairs with their index for error reporting
 		for i, pair := range pairWhitelist {
 			pairStr, ok := pair.(string)
 			if !ok {
@@ -53,7 +55,36 @@ func ValidateBacktestConfig(config map[string]interface{}) error {
 			if err := validateTradingPair(pairStr); err != nil {
 				return fmt.Errorf("pair_whitelist[%d]: %w", i, err)
 			}
+			// Check for duplicate pairs (case-insensitive)
+			normalizedPair := strings.ToUpper(strings.TrimSpace(pairStr))
+			if firstIdx, exists := seen[normalizedPair]; exists {
+				return fmt.Errorf("pair_whitelist[%d]: duplicate pair %q (first occurrence at index %d)", i, pairStr, firstIdx)
+			}
+			seen[normalizedPair] = i
 		}
+	}
+
+	return nil
+}
+
+// ValidateDateRange validates that start date is before end date and both are valid.
+// Returns nil if validation passes or both dates are zero (optional dates).
+func ValidateDateRange(startDate, endDate time.Time) error {
+	// Both dates must be provided or both must be zero
+	if startDate.IsZero() && endDate.IsZero() {
+		return nil // Optional dates, both empty is valid
+	}
+	if startDate.IsZero() {
+		return fmt.Errorf("start_date is required when end_date is provided")
+	}
+	if endDate.IsZero() {
+		return fmt.Errorf("end_date is required when start_date is provided")
+	}
+
+	// Start date must be before end date
+	if !startDate.Before(endDate) {
+		return fmt.Errorf("start_date (%s) must be before end_date (%s)",
+			startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
 	}
 
 	return nil

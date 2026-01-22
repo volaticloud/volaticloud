@@ -19,7 +19,7 @@ func TestBuildSpec_DryRunAlwaysTrue(t *testing.T) {
 		StartDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 		EndDate:   time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC),
 		Config: map[string]interface{}{
-			"dry_run": false, // User tries to set dry_run to false
+			DryRunConfigKey: false, // User tries to set dry_run to false
 		},
 		Edges: ent.BacktestEdges{
 			Strategy: &ent.Strategy{
@@ -36,7 +36,7 @@ func TestBuildSpec_DryRunAlwaysTrue(t *testing.T) {
 	require.NoError(t, err)
 
 	// dry_run must always be true
-	assert.Equal(t, true, spec.BacktestConfig["dry_run"])
+	assert.Equal(t, true, spec.BacktestConfig[DryRunConfigKey])
 }
 
 func TestBuildSpec_TimerangeFormat(t *testing.T) {
@@ -61,7 +61,7 @@ func TestBuildSpec_TimerangeFormat(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check timerange format
-	assert.Equal(t, "20240115-20240630", spec.StrategyConfig["timerange"])
+	assert.Equal(t, "20240115-20240630", spec.StrategyConfig[TimerangeConfigKey])
 }
 
 func TestBuildSpec_ConfigMerging(t *testing.T) {
@@ -105,20 +105,22 @@ func TestBuildSpec_ConfigMerging(t *testing.T) {
 	assert.Equal(t, "binance", exchange["name"])
 
 	// dry_run should always be true in backtest config
-	assert.Equal(t, true, spec.BacktestConfig["dry_run"])
+	assert.Equal(t, true, spec.BacktestConfig[DryRunConfigKey])
 }
 
 func TestBuildSpec_MissingStrategy(t *testing.T) {
-	// Test that missing strategy returns error
+	// Test that missing strategy returns error with backtest ID
+	backtestID := uuid.New()
 	bt := &ent.Backtest{
-		ID:     uuid.New(),
+		ID:     backtestID,
 		Config: map[string]interface{}{},
 		Edges:  ent.BacktestEdges{}, // No strategy
 	}
 
 	_, err := BuildSpec(bt)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no strategy")
+	assert.Contains(t, err.Error(), backtestID.String(), "error should contain backtest ID")
+	assert.Contains(t, err.Error(), "strategy edge not loaded")
 }
 
 func TestBuildSpec_NilStrategyConfig(t *testing.T) {
@@ -158,7 +160,7 @@ func TestBuildSpec_FreqtradeVersion(t *testing.T) {
 				Code:        "class TestStrategy(IStrategy): pass",
 				BuilderMode: enum.StrategyBuilderModeCode,
 				Config: map[string]interface{}{
-					"freqtrade_version": "2024.1",
+					FreqtradeVersionConfigKey: "2024.1",
 				},
 			},
 		},
@@ -170,7 +172,7 @@ func TestBuildSpec_FreqtradeVersion(t *testing.T) {
 }
 
 func TestBuildSpec_DefaultFreqtradeVersion(t *testing.T) {
-	// Test that default freqtrade_version is "stable"
+	// Test that default freqtrade_version is DefaultFreqtradeVersion constant
 	bt := &ent.Backtest{
 		ID:        uuid.New(),
 		StartDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -189,11 +191,11 @@ func TestBuildSpec_DefaultFreqtradeVersion(t *testing.T) {
 
 	spec, err := BuildSpec(bt)
 	require.NoError(t, err)
-	assert.Equal(t, "stable", spec.FreqtradeVersion)
+	assert.Equal(t, DefaultFreqtradeVersion, spec.FreqtradeVersion)
 }
 
 func TestBuildSpec_DataFormatOHLCV(t *testing.T) {
-	// Test that dataformat_ohlcv is always set to "json"
+	// Test that dataformat_ohlcv is always set to DefaultDataFormatOHLCV constant
 	bt := &ent.Backtest{
 		ID:        uuid.New(),
 		StartDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -212,7 +214,7 @@ func TestBuildSpec_DataFormatOHLCV(t *testing.T) {
 
 	spec, err := BuildSpec(bt)
 	require.NoError(t, err)
-	assert.Equal(t, "json", spec.StrategyConfig["dataformat_ohlcv"])
+	assert.Equal(t, DefaultDataFormatOHLCV, spec.StrategyConfig[DataFormatConfigKey])
 }
 
 func TestBuildSpec_ZeroDates(t *testing.T) {
@@ -234,6 +236,6 @@ func TestBuildSpec_ZeroDates(t *testing.T) {
 
 	spec, err := BuildSpec(bt)
 	require.NoError(t, err)
-	_, hasTimerange := spec.StrategyConfig["timerange"]
+	_, hasTimerange := spec.StrategyConfig[TimerangeConfigKey]
 	assert.False(t, hasTimerange, "timerange should not be set when dates are zero")
 }
