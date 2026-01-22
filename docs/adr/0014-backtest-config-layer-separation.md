@@ -116,18 +116,18 @@ Chosen option: **Two-Layer Config (Strategy + Backtest)**, because:
 **Config Layer Stack:**
 
 ```
-1. config.strategy.json        (from Strategy.Config)
+1. config.strategy.json        (from Strategy.Config + system settings)
    ├─ Pair whitelist
    ├─ Timeframe
    ├─ Stake settings
    ├─ Entry/exit pricing
-   └─ Strategy-specific parameters
+   ├─ Strategy-specific parameters
+   ├─ dataformat_ohlcv: "json"   (system-enforced for data compatibility)
+   └─ timerange                   (computed from start/end dates)
 
 2. config.backtest.json        (from Backtest.Config + enforced settings)
    ├─ exchange.name            (user selected)
-   ├─ dry_run: true            (always enforced)
-   ├─ dataformat_ohlcv: "json" (backtest-specific)
-   └─ timerange                (from start/end dates)
+   └─ dry_run: true            (always enforced)
 
 Freqtrade merge: strategy < backtest (backtest wins conflicts)
 ```
@@ -202,6 +202,9 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
             bt.EndDate.Format("20060102"))
     }
 
+    // Set data format to JSON (matching data download format)
+    strategyConfig["dataformat_ohlcv"] = "json"
+
     // Backtest config (exchange, dry_run, overrides)
     backtestConfig := make(map[string]interface{})
     if bt.Config != nil {
@@ -210,7 +213,6 @@ func buildBacktestSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
         }
     }
     backtestConfig["dry_run"] = true // ALWAYS true for backtests
-    backtestConfig["dataformat_ohlcv"] = "json"
 
     return &runner.BacktestSpec{
         ID:             bt.ID.String(),
@@ -274,7 +276,7 @@ var SupportedExchanges = []string{
 
 ### Example Configs
 
-**1. config.strategy.json (from Strategy entity)**
+**1. config.strategy.json (from Strategy entity + system settings)**
 
 ```json
 {
@@ -287,7 +289,9 @@ var SupportedExchanges = []string{
   },
   "exit_pricing": {
     "price_side": "other"
-  }
+  },
+  "dataformat_ohlcv": "json",
+  "timerange": "20240101-20240131"
 }
 ```
 
@@ -298,9 +302,7 @@ var SupportedExchanges = []string{
   "exchange": {
     "name": "okx"
   },
-  "dry_run": true,
-  "dataformat_ohlcv": "json",
-  "timerange": "20240101-20240131"
+  "dry_run": true
 }
 ```
 
