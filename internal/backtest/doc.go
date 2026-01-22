@@ -52,8 +52,8 @@ ValidateBacktestConfig ensures user-provided config is safe and valid:
 
 Backtests use a two-layer config architecture (see ADR-0014):
 
-	1. config.strategy.json - From Strategy.Config (pairs, timeframe, etc.)
-	2. config.backtest.json - User overrides (exchange, dry_run always true)
+  - config.strategy.json: From Strategy.Config (pairs, timeframe, etc.)
+  - config.backtest.json: User overrides (exchange, dry_run always true)
 
 Freqtrade merges configs: strategy < backtest (backtest wins conflicts)
 

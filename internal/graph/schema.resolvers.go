@@ -809,7 +809,7 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBack
 		// Validate by building the backtest spec
 		// This will fail with "pairs not found in strategy config" if validation fails
 		// If this fails, the entire transaction rolls back and no backtest entity is created
-		_, err = buildBacktestSpec(bt)
+		_, err = backtest1.BuildSpec(bt)
 		if err != nil {
 			return fmt.Errorf("failed to build backtest spec: %w", err)
 		}

@@ -70,6 +70,11 @@ func isValidExchange(name string) bool {
 	return false
 }
 
+// isAlphanumeric checks if a rune is an ASCII letter or digit.
+func isAlphanumeric(c rune) bool {
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+}
+
 // validateTradingPair validates the format of a trading pair.
 // Expected format: BASE/QUOTE (e.g., BTC/USDT, ETH/BTC)
 func validateTradingPair(pair string) error {
@@ -95,12 +100,12 @@ func validateTradingPair(pair string) error {
 
 	// Basic character validation (alphanumeric only)
 	for _, c := range base {
-		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+		if !isAlphanumeric(c) {
 			return fmt.Errorf("invalid trading pair %q: base currency contains invalid character", pair)
 		}
 	}
 	for _, c := range quote {
-		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+		if !isAlphanumeric(c) {
 			return fmt.Errorf("invalid trading pair %q: quote currency contains invalid character", pair)
 		}
 	}
