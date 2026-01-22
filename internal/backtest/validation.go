@@ -79,6 +79,11 @@ func isAlphanumeric(c rune) bool {
 // Supported formats:
 // - Spot: BASE/QUOTE (e.g., BTC/USDT, ETH/BTC)
 // - Futures: BASE/QUOTE:SETTLE (e.g., BTC/USDT:USDT for perpetual futures)
+//
+// IMPORTANT: This validation logic is duplicated in the frontend for client-side validation.
+// If you modify this function, you MUST also update the frontend validation:
+// - Frontend: dashboard/src/components/Backtests/CreateBacktestDialog.tsx (validateTradingPair)
+// Both implementations must stay in sync to ensure consistent behavior.
 func validateTradingPair(pair string) error {
 	pair = strings.TrimSpace(pair)
 	if pair == "" {

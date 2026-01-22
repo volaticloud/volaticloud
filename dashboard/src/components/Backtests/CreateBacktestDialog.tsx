@@ -97,6 +97,11 @@ const SUPPORTED_EXCHANGES = [
 
 // Validates trading pair format: BASE/QUOTE or BASE/QUOTE:SETTLE (e.g., BTC/USDT or BTC/USDT:USDT for futures)
 // Returns null if valid, error message if invalid
+//
+// IMPORTANT: This validation logic is duplicated in the backend for server-side validation.
+// If you modify this function, you MUST also update the backend validation:
+// - Backend: internal/backtest/validation.go (validateTradingPair)
+// Both implementations must stay in sync to ensure consistent behavior.
 const validateTradingPair = (pair: string): string | null => {
   const trimmed = pair.trim();
   if (!trimmed) return 'Empty trading pair';
