@@ -30,9 +30,17 @@ const (
 
 // BuildSpec builds a BacktestSpec from a Backtest entity.
 // The bt.Edges.Strategy must be loaded before calling this function.
+// This function validates the backtest config as a defense-in-depth measure,
+// ensuring safety even if called from non-GraphQL code paths (e.g., monitor, retry logic).
 func BuildSpec(bt *ent.Backtest) (*runner.BacktestSpec, error) {
 	if bt.Edges.Strategy == nil {
 		return nil, fmt.Errorf("backtest %s: strategy edge not loaded", bt.ID)
+	}
+
+	// Validate backtest config (defense in depth - also validated in GraphQL resolver)
+	// This ensures dry_run safety and exchange validation even in non-GraphQL code paths
+	if err := ValidateBacktestConfig(bt.Config); err != nil {
+		return nil, fmt.Errorf("backtest %s: invalid config: %w", bt.ID, err)
 	}
 
 	strategy := bt.Edges.Strategy

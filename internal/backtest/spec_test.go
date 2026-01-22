@@ -13,7 +13,32 @@ import (
 )
 
 func TestBuildSpec_DryRunAlwaysTrue(t *testing.T) {
-	// Test that dry_run is always true even if user provides dry_run: false
+	// Test that dry_run is always set to true in the output config
+	bt := &ent.Backtest{
+		ID:        uuid.New(),
+		StartDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndDate:   time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC),
+		Config:    map[string]interface{}{}, // No dry_run set
+		Edges: ent.BacktestEdges{
+			Strategy: &ent.Strategy{
+				ID:          uuid.New(),
+				Name:        "TestStrategy",
+				Code:        "class TestStrategy(IStrategy): pass",
+				BuilderMode: enum.StrategyBuilderModeCode,
+				Config:      map[string]interface{}{},
+			},
+		},
+	}
+
+	spec, err := BuildSpec(bt)
+	require.NoError(t, err)
+
+	// dry_run must always be true
+	assert.Equal(t, true, spec.BacktestConfig[DryRunConfigKey])
+}
+
+func TestBuildSpec_DryRunFalseRejected(t *testing.T) {
+	// Test that dry_run: false is rejected by validation (defense in depth)
 	bt := &ent.Backtest{
 		ID:        uuid.New(),
 		StartDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -32,11 +57,9 @@ func TestBuildSpec_DryRunAlwaysTrue(t *testing.T) {
 		},
 	}
 
-	spec, err := BuildSpec(bt)
-	require.NoError(t, err)
-
-	// dry_run must always be true
-	assert.Equal(t, true, spec.BacktestConfig[DryRunConfigKey])
+	_, err := BuildSpec(bt)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "dry_run cannot be set to false")
 }
 
 func TestBuildSpec_TimerangeFormat(t *testing.T) {

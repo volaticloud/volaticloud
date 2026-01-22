@@ -11,6 +11,9 @@ import (
 // sanitizeFilenameRegex matches characters that are not alphanumeric or space
 var sanitizeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
 
+// DefaultStrategyName is the fallback name used when strategy name is empty or invalid
+const DefaultStrategyName = "MyStrategy"
+
 // SanitizeStrategyFilename converts a strategy name to a valid Python class name (PascalCase).
 // This matches the frontend's toClassName function to ensure consistency.
 // Example: "RSI Test Strategy" -> "RsiTestStrategy"
@@ -20,19 +23,19 @@ var sanitizeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
 // - Freqtrade --strategy flag (expects Python class name)
 func SanitizeStrategyFilename(name string) string {
 	if name == "" {
-		return "MyStrategy"
+		return DefaultStrategyName
 	}
 
 	// Remove invalid characters (keep alphanumeric and spaces)
 	sanitized := sanitizeFilenameRegex.ReplaceAllString(name, "")
 	if sanitized == "" {
-		return "MyStrategy"
+		return DefaultStrategyName
 	}
 
 	// If no spaces, preserve original casing but ensure first char is uppercase
 	if !strings.Contains(sanitized, " ") {
 		if len(sanitized) == 0 {
-			return "MyStrategy"
+			return DefaultStrategyName
 		}
 		return strings.ToUpper(string(sanitized[0])) + sanitized[1:]
 	}
@@ -50,7 +53,7 @@ func SanitizeStrategyFilename(name string) string {
 	}
 
 	if result.Len() == 0 {
-		return "MyStrategy"
+		return DefaultStrategyName
 	}
 	return result.String()
 }
@@ -77,10 +80,14 @@ type BacktestSpec struct {
 	// S3 Data Configuration
 	// DataDownloadURL is a presigned S3 URL for downloading OHLCV data.
 	// This field is set by the caller (runner implementation) when executing the backtest.
+	//
 	// The caller is responsible for:
 	// - Generating a valid presigned URL from the runner's S3 configuration
-	// - Ensuring the URL has sufficient expiration time for the backtest duration
-	// - Handling errors if the URL is invalid or expired
+	//   (must be set before calling RunBacktest)
+	// - Ensuring the URL has sufficient expiration time (recommended: 24 hours minimum)
+	// - Validating the URL is non-empty before starting the backtest
+	//   (BuildSpec does NOT validate this field - it's set after spec creation)
+	// - Handling S3 errors if the URL is invalid, expired, or inaccessible
 	DataDownloadURL string
 }
 

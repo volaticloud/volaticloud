@@ -31,12 +31,12 @@ func TestSanitizeStrategyFilename(t *testing.T) {
 		{
 			name:     "empty string returns default",
 			input:    "",
-			expected: "MyStrategy",
+			expected: DefaultStrategyName,
 		},
 		{
 			name:     "only special characters returns default",
 			input:    "!!!",
-			expected: "MyStrategy",
+			expected: DefaultStrategyName,
 		},
 		{
 			name:     "single letters become uppercase",
@@ -96,7 +96,7 @@ func TestSanitizeStrategyFilename(t *testing.T) {
 		{
 			name:     "preserves casing when no spaces",
 			input:    "myStrategy",
-			expected: "MyStrategy",
+			expected: DefaultStrategyName,
 		},
 		{
 			name:     "preserves internal casing when no spaces",
