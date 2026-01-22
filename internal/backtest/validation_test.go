@@ -73,6 +73,20 @@ func TestValidateBacktestConfig(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "valid pair_whitelist with futures format",
+			config: map[string]interface{}{
+				"pair_whitelist": []interface{}{"BTC/USDT:USDT", "ETH/USDT:USDT"},
+			},
+			expectError: false,
+		},
+		{
+			name: "valid pair_whitelist mixed spot and futures",
+			config: map[string]interface{}{
+				"pair_whitelist": []interface{}{"BTC/USDT", "ETH/USDT:USDT"},
+			},
+			expectError: false,
+		},
+		{
 			name: "invalid pair format",
 			config: map[string]interface{}{
 				"pair_whitelist": []interface{}{"BTCUSDT"},
@@ -153,20 +167,35 @@ func TestValidateTradingPair(t *testing.T) {
 		pair        string
 		expectError bool
 	}{
+		// Valid spot pairs
 		{"BTC/USDT", false},
 		{"ETH/BTC", false},
 		{"SOL/USDT", false},
 		{"btc/usdt", false},
 		{"BTC123/USDT456", false},
+		// Valid futures pairs (BASE/QUOTE:SETTLE)
+		{"BTC/USDT:USDT", false},
+		{"ETH/USDT:USDT", false},
+		{"SOL/USDT:USDT", false},
+		{"btc/usdt:usdt", false},
+		{"XRP/USD:USD", false},
+		// Invalid empty
 		{"", true},
 		{"  ", true},
+		// Invalid formats
 		{"BTCUSDT", true},
 		{"BTC/", true},
 		{"/USDT", true},
 		{"BTC//USDT", true},
 		{"BTC/USDT/ETH", true},
+		// Invalid special characters
 		{"BTC@/USDT", true},
 		{"BTC/USDT!", true},
+		// Invalid futures formats
+		{"BTC/USDT:", true},
+		{"BTC/:USDT", true},
+		{"BTC/USDT:USDT:EXTRA", true},
+		{"BTC/USDT:@", true},
 	}
 
 	for _, tt := range tests {

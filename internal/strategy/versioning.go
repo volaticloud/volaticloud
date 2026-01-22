@@ -116,6 +116,9 @@ func CreateVersion(ctx context.Context, tx *ent.Tx, parent *ent.Strategy, input 
 
 	// Query for max version number (including soft-deleted records) to avoid unique constraint violation
 	// The unique constraint on (name, version_number) includes soft-deleted records
+	// Note: Race conditions are handled at the database level via the unique constraint.
+	// If two concurrent requests try to insert the same version, one will fail with
+	// a unique constraint violation. The caller should retry with a fresh transaction.
 	includeDeletedCtx := mixin.IncludeDeleted(ctx)
 	maxVersion, err := tx.Strategy.Query().
 		Where(strategy.Name(name)).

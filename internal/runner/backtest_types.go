@@ -75,7 +75,13 @@ type BacktestSpec struct {
 	ResourceLimits   *ResourceLimits   // CPU/Memory limits
 
 	// S3 Data Configuration
-	DataDownloadURL string // Presigned S3 URL for downloading OHLCV data
+	// DataDownloadURL is a presigned S3 URL for downloading OHLCV data.
+	// This field is set by the caller (runner implementation) when executing the backtest.
+	// The caller is responsible for:
+	// - Generating a valid presigned URL from the runner's S3 configuration
+	// - Ensuring the URL has sufficient expiration time for the backtest duration
+	// - Handling errors if the URL is invalid or expired
+	DataDownloadURL string
 }
 
 // BacktestResult represents the results of a completed backtest

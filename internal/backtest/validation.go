@@ -76,7 +76,9 @@ func isAlphanumeric(c rune) bool {
 }
 
 // validateTradingPair validates the format of a trading pair.
-// Expected format: BASE/QUOTE (e.g., BTC/USDT, ETH/BTC)
+// Supported formats:
+// - Spot: BASE/QUOTE (e.g., BTC/USDT, ETH/BTC)
+// - Futures: BASE/QUOTE:SETTLE (e.g., BTC/USDT:USDT for perpetual futures)
 func validateTradingPair(pair string) error {
 	pair = strings.TrimSpace(pair)
 	if pair == "" {
@@ -85,28 +87,60 @@ func validateTradingPair(pair string) error {
 
 	parts := strings.Split(pair, "/")
 	if len(parts) != 2 {
-		return fmt.Errorf("invalid trading pair format %q: expected BASE/QUOTE (e.g., BTC/USDT)", pair)
+		return fmt.Errorf("invalid trading pair format %q: expected BASE/QUOTE (e.g., BTC/USDT) or BASE/QUOTE:SETTLE (e.g., BTC/USDT:USDT)", pair)
 	}
 
 	base := strings.TrimSpace(parts[0])
-	quote := strings.TrimSpace(parts[1])
+	quotePart := strings.TrimSpace(parts[1])
 
 	if base == "" {
 		return fmt.Errorf("invalid trading pair %q: empty base currency", pair)
 	}
-	if quote == "" {
+	if quotePart == "" {
 		return fmt.Errorf("invalid trading pair %q: empty quote currency", pair)
 	}
 
-	// Basic character validation (alphanumeric only)
+	// Basic character validation for base (alphanumeric only)
 	for _, c := range base {
 		if !isAlphanumeric(c) {
 			return fmt.Errorf("invalid trading pair %q: base currency contains invalid character", pair)
 		}
 	}
-	for _, c := range quote {
-		if !isAlphanumeric(c) {
-			return fmt.Errorf("invalid trading pair %q: quote currency contains invalid character", pair)
+
+	// Check if futures format (BASE/QUOTE:SETTLE)
+	if strings.Contains(quotePart, ":") {
+		settleParts := strings.Split(quotePart, ":")
+		if len(settleParts) != 2 {
+			return fmt.Errorf("invalid trading pair format %q: expected BASE/QUOTE:SETTLE for futures", pair)
+		}
+		quote := strings.TrimSpace(settleParts[0])
+		settle := strings.TrimSpace(settleParts[1])
+
+		if quote == "" {
+			return fmt.Errorf("invalid trading pair %q: empty quote currency", pair)
+		}
+		if settle == "" {
+			return fmt.Errorf("invalid trading pair %q: empty settlement currency", pair)
+		}
+
+		// Validate quote currency (alphanumeric only)
+		for _, c := range quote {
+			if !isAlphanumeric(c) {
+				return fmt.Errorf("invalid trading pair %q: quote currency contains invalid character", pair)
+			}
+		}
+		// Validate settlement currency (alphanumeric only)
+		for _, c := range settle {
+			if !isAlphanumeric(c) {
+				return fmt.Errorf("invalid trading pair %q: settlement currency contains invalid character", pair)
+			}
+		}
+	} else {
+		// Spot format: validate quote currency
+		for _, c := range quotePart {
+			if !isAlphanumeric(c) {
+				return fmt.Errorf("invalid trading pair %q: quote currency contains invalid character", pair)
+			}
 		}
 	}
 
