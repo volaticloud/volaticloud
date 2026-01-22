@@ -783,8 +783,11 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBack
 			SetNillableEndDate(input.EndDate).
 			SetStatus(enum.TaskStatusPending)
 
-		// Set config if provided (contains exchange selection and other backtest-specific overrides)
+		// Validate and set config if provided (contains exchange selection and other backtest-specific overrides)
 		if input.Config != nil {
+			if err := backtest1.ValidateBacktestConfig(input.Config); err != nil {
+				return fmt.Errorf("invalid backtest config: %w", err)
+			}
 			btCreate = btCreate.SetConfig(input.Config)
 		}
 

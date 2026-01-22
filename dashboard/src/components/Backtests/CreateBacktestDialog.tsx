@@ -62,6 +62,53 @@ const SUPPORTED_EXCHANGES = [
   { id: 'okx', name: 'OKX' },
 ];
 
+// Validates trading pair format: BASE/QUOTE (e.g., BTC/USDT)
+// Returns null if valid, error message if invalid
+const validateTradingPair = (pair: string): string | null => {
+  const trimmed = pair.trim();
+  if (!trimmed) return 'Empty trading pair';
+
+  const parts = trimmed.split('/');
+  if (parts.length !== 2) {
+    return `Invalid format "${trimmed}": expected BASE/QUOTE (e.g., BTC/USDT)`;
+  }
+
+  const [base, quote] = parts;
+  if (!base || !base.trim()) return `Invalid pair "${trimmed}": empty base currency`;
+  if (!quote || !quote.trim()) return `Invalid pair "${trimmed}": empty quote currency`;
+
+  // Check for alphanumeric only
+  const alphanumeric = /^[A-Za-z0-9]+$/;
+  if (!alphanumeric.test(base.trim())) {
+    return `Invalid pair "${trimmed}": base currency contains invalid characters`;
+  }
+  if (!alphanumeric.test(quote.trim())) {
+    return `Invalid pair "${trimmed}": quote currency contains invalid characters`;
+  }
+
+  return null;
+};
+
+// Validates all trading pairs from comma-separated input
+// Returns null if all valid, first error message if any invalid
+const validateTradingPairs = (pairsInput: string): string | null => {
+  const pairs = pairsInput
+    .split(/[,\n]+/)
+    .map(p => p.trim())
+    .filter(p => p.length > 0);
+
+  if (pairs.length === 0) {
+    return 'At least one trading pair is required';
+  }
+
+  for (const pair of pairs) {
+    const error = validateTradingPair(pair);
+    if (error) return error;
+  }
+
+  return null;
+};
+
 // Build config JSON from simple mode inputs
 // Backtest config only contains: exchange selection, pairs, and pairlists method
 // Strategy config (in Strategy entity) should contain: stake_currency, stake_amount, entry_pricing, exit_pricing, timeframe, etc.
@@ -118,6 +165,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
   const [advancedMode, setAdvancedMode] = useState(false);
   const [exchangeName, setExchangeName] = useState('binance');
   const [pairs, setPairs] = useState('BTC/USDT, ETH/USDT');
+  const [pairsError, setPairsError] = useState<string | null>(null);
   const [configJson, setConfigJson] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
@@ -169,6 +217,13 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
     } catch (e) {
       setJsonError(e instanceof Error ? e.message : 'Invalid JSON');
     }
+  };
+
+  // Validate trading pairs when in simple mode
+  const handlePairsChange = (value: string) => {
+    setPairs(value);
+    const error = validateTradingPairs(value);
+    setPairsError(error);
   };
 
   // Debounced search function
@@ -317,6 +372,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
         setAdvancedMode(false);
         setExchangeName('binance');
         setPairs('BTC/USDT, ETH/USDT');
+        setPairsError(null);
         setConfigJson('');
         setJsonError(null);
 
@@ -335,7 +391,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
     }
   };
 
-  const isSubmitDisabled = loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate || (advancedMode && !!jsonError);
+  const isSubmitDisabled = loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate || (advancedMode && !!jsonError) || (!advancedMode && !!pairsError);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -449,12 +505,13 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
                   <TextField
                     label="Trading Pairs"
                     value={pairs}
-                    onChange={(e) => setPairs(e.target.value)}
+                    onChange={(e) => handlePairsChange(e.target.value)}
                     multiline
                     rows={2}
                     required
                     placeholder="BTC/USDT, ETH/USDT"
-                    helperText="Comma-separated list of trading pairs (e.g., BTC/USDT, ETH/USDT)"
+                    error={!!pairsError}
+                    helperText={pairsError || "Comma-separated list of trading pairs (e.g., BTC/USDT, ETH/USDT)"}
                   />
                 </Box>
               ) : (
