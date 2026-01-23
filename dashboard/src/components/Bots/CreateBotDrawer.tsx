@@ -15,39 +15,12 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useState, useMemo } from 'react';
-import { useCreateBotMutation } from './bots.generated';
-import { useQuery } from '@apollo/client';
-import { gql } from '@apollo/client';
+import { useCreateBotMutation, useGetExchangesForCreateQuery } from './bots.generated';
 import { JSONEditor } from '../JSONEditor';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
-import { RunnerSelector } from '../shared/RunnerSelector';
+import { RunnerSelector, StrategySelector } from '../shared';
 import { useDialogUnsavedChanges } from '../../hooks';
 import { UnsavedChangesDrawer } from '../shared';
-
-// Query to get available exchanges and strategies filtered by owner
-// (Runners are fetched by RunnerSelector component)
-const GET_BOT_OPTIONS = gql`
-  query GetBotOptions($ownerID: String) {
-    exchanges(first: 50, where: { ownerID: $ownerID }) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-    strategies(first: 50, where: { ownerID: $ownerID }) {
-      edges {
-        node {
-          id
-          name
-          versionNumber
-          isLatest
-        }
-      }
-    }
-  }
-`;
 
 interface CreateBotDrawerProps {
   open: boolean;
@@ -111,7 +84,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
   const [mode, setMode] = useState<'live' | 'dry_run'>('dry_run');
   const [config, setConfig] = useState<object | null>(DEFAULT_BOT_CONFIG);
 
-  const { data: optionsData } = useQuery(GET_BOT_OPTIONS, {
+  const { data: optionsData } = useGetExchangesForCreateQuery({
     variables: {
       ownerID: activeOrganizationId || undefined,
     },
@@ -177,7 +150,6 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
   };
 
   const exchanges = optionsData?.exchanges?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
     <>
@@ -264,26 +236,11 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
               )}
             </FormControl>
 
-            <FormControl fullWidth required>
-              <InputLabel>Strategy</InputLabel>
-              <Select
-                value={strategyID}
-                onChange={(e) => setStrategyID(e.target.value)}
-                label="Strategy"
-              >
-                {strategies.map((strategy) => (
-                  <MenuItem key={strategy.id} value={strategy.id}>
-                    {strategy.name} (v{strategy.versionNumber})
-                    {strategy.isLatest && ' - Latest'}
-                  </MenuItem>
-                ))}
-              </Select>
-              {strategies.length === 0 && (
-                <FormHelperText error>
-                  No strategies available. Please add a strategy first.
-                </FormHelperText>
-              )}
-            </FormControl>
+            <StrategySelector
+              value={strategyID}
+              onChange={setStrategyID}
+              required
+            />
 
             <RunnerSelector
               value={runnerID}

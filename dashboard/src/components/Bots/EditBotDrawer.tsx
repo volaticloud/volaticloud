@@ -15,43 +15,10 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useState, useEffect, useMemo } from 'react';
-import { useUpdateBotMutation } from './bots.generated';
-import { useQuery } from '@apollo/client';
-import { gql } from '@apollo/client';
+import { useUpdateBotMutation, useGetExchangesForEditQuery } from './bots.generated';
 import { JSONEditor } from '../JSONEditor';
 import { useDialogUnsavedChanges } from '../../hooks';
-import { UnsavedChangesDrawer } from '../shared';
-
-// Query to get available exchanges, strategies, and runners
-const GET_BOT_OPTIONS = gql`
-  query GetBotOptions {
-    exchanges(first: 50) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-    strategies(first: 50) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-    botRunners(first: 50) {
-      edges {
-        node {
-          id
-          name
-          type
-        }
-      }
-    }
-  }
-`;
+import { UnsavedChangesDrawer, StrategySelector, RunnerSelector } from '../shared';
 
 interface EditBotDrawerProps {
   open: boolean;
@@ -76,7 +43,7 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
   const [mode, setMode] = useState<'live' | 'dry_run'>(bot.mode as 'live' | 'dry_run');
   const [config, setConfig] = useState<object | null>(null);
 
-  const { data: optionsData } = useQuery(GET_BOT_OPTIONS);
+  const { data: optionsData } = useGetExchangesForEditQuery();
   const [updateBot, { loading, error }] = useUpdateBotMutation();
 
   // Track if form has been modified from original bot values
@@ -138,8 +105,6 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
   };
 
   const exchanges = optionsData?.exchanges?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
     <>
@@ -226,45 +191,17 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
               )}
             </FormControl>
 
-            <FormControl fullWidth required>
-              <InputLabel>Strategy</InputLabel>
-              <Select
-                value={strategyID}
-                onChange={(e) => setStrategyID(e.target.value)}
-                label="Strategy"
-              >
-                {strategies.map((strategy) => (
-                  <MenuItem key={strategy.id} value={strategy.id}>
-                    {strategy.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {strategies.length === 0 && (
-                <FormHelperText error>
-                  No strategies available. Please add a strategy first.
-                </FormHelperText>
-              )}
-            </FormControl>
+            <StrategySelector
+              value={strategyID}
+              onChange={setStrategyID}
+              required
+            />
 
-            <FormControl fullWidth required>
-              <InputLabel>Runner</InputLabel>
-              <Select
-                value={runnerID}
-                onChange={(e) => setRunnerID(e.target.value)}
-                label="Runner"
-              >
-                {runners.map((runner) => (
-                  <MenuItem key={runner.id} value={runner.id}>
-                    {runner.name} ({runner.type})
-                  </MenuItem>
-                ))}
-              </Select>
-              {runners.length === 0 && (
-                <FormHelperText error>
-                  No runners configured. Please add a runner first.
-                </FormHelperText>
-              )}
-            </FormControl>
+            <RunnerSelector
+              value={runnerID}
+              onChange={setRunnerID}
+              required
+            />
 
             <Box>
               <JSONEditor

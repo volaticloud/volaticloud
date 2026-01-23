@@ -94,9 +94,9 @@ func TestSanitizeStrategyFilename(t *testing.T) {
 			expected: "A",
 		},
 		{
-			name:     "preserves casing when no spaces",
+			name:     "capitalizes first letter when no spaces",
 			input:    "myStrategy",
-			expected: DefaultStrategyName,
+			expected: "MyStrategy",
 		},
 		{
 			name:     "preserves internal casing when no spaces",

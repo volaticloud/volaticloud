@@ -80,7 +80,7 @@ export const RunnerSelector = ({
   const debouncedSearch = useDebouncedValue(searchInput, 300);
 
   // Main query for runner list
-  const { data, loading, fetchMore } = useGetRunnersForSelectorQuery({
+  const { data, loading, error: queryError, fetchMore } = useGetRunnersForSelectorQuery({
     variables: {
       ownerID: activeOrganizationId || undefined,
       search: debouncedSearch || undefined,
@@ -281,7 +281,12 @@ export const RunnerSelector = ({
           )}
         </Select>
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
-        {runners.length === 0 && !loading && (
+        {queryError && (
+          <FormHelperText error>
+            Failed to load runners: {queryError.message}
+          </FormHelperText>
+        )}
+        {runners.length === 0 && !loading && !queryError && (
           <FormHelperText error>
             No runners available. Please add a runner first.
           </FormHelperText>

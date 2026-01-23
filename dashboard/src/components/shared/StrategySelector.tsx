@@ -61,7 +61,7 @@ export const StrategySelector = ({
   const debouncedSearch = useDebouncedValue(searchInput, 300);
 
   // Main query for strategy list
-  const { data, loading, fetchMore } = useGetStrategiesForSelectorQuery({
+  const { data, loading, error: queryError, fetchMore } = useGetStrategiesForSelectorQuery({
     variables: {
       ownerID: activeOrganizationId || undefined,
       search: debouncedSearch || undefined,
@@ -262,7 +262,12 @@ export const StrategySelector = ({
           )}
         </Select>
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
-        {strategies.length === 0 && !loading && (
+        {queryError && (
+          <FormHelperText error>
+            Failed to load strategies: {queryError.message}
+          </FormHelperText>
+        )}
+        {strategies.length === 0 && !loading && !queryError && (
           <FormHelperText error>
             No strategies available.
           </FormHelperText>

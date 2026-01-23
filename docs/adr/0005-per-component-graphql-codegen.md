@@ -105,6 +105,28 @@ Chosen option: **Near-Operation-File Preset (Per-Component Codegen)**, because i
 - Slightly more complex codegen.ts configuration
 - Must remember to run codegen after schema changes
 
+### Mandatory Rules
+
+**NEVER use inline `gql` tags in component files:**
+
+```typescript
+// ❌ WRONG - Inline gql tag bypasses codegen and loses type safety
+const GET_BOTS = gql`
+  query GetBots { ... }
+`;
+const { data } = useQuery(GET_BOTS);  // data is 'any' type!
+
+// ✅ CORRECT - Define in .graphql file, use generated hook
+import { useGetBotsQuery } from './bots.generated';
+const { data } = useGetBotsQuery();  // data is fully typed!
+```
+
+**All GraphQL operations MUST:**
+
+1. Be defined in a co-located `.graphql` file (e.g., `bots.graphql`)
+2. Use generated hooks from `.generated.ts` files
+3. Never import `gql` from `@apollo/client` for defining operations
+
 **Neutral:**
 
 - Generated files are git-ignored (not committed)

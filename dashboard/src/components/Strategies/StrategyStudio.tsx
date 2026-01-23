@@ -222,6 +222,8 @@ class MyStrategy(IStrategy):
   };
 
   // Sanitize strategy name to valid Python class name (PascalCase)
+  // IMPORTANT: This must match backend runner.SanitizeStrategyFilename (internal/runner/backtest_types.go)
+  // The backend uses this for ConfigMap keys and --strategy flag values
   const toClassName = (str: string): string => {
     if (!str) return 'MyStrategy';
     // Remove invalid characters

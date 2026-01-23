@@ -84,6 +84,18 @@ export type GetFreqtradeTokenMutationVariables = Types.Exact<{
 
 export type GetFreqtradeTokenMutation = { __typename?: 'Mutation', getFreqtradeToken: { __typename?: 'FreqtradeToken', apiUrl: string, username: string, accessToken: string, refreshToken: string } };
 
+export type GetExchangesForCreateQueryVariables = Types.Exact<{
+  ownerID?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
+
+
+export type GetExchangesForCreateQuery = { __typename?: 'Query', exchanges: { __typename?: 'ExchangeConnection', edges?: Array<{ __typename?: 'ExchangeEdge', node?: { __typename?: 'Exchange', id: string, name: string } | null } | null> | null } };
+
+export type GetExchangesForEditQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type GetExchangesForEditQuery = { __typename?: 'Query', exchanges: { __typename?: 'ExchangeConnection', edges?: Array<{ __typename?: 'ExchangeEdge', node?: { __typename?: 'Exchange', id: string, name: string } | null } | null> | null } };
+
 export type GetBotUsageHistoryQueryVariables = Types.Exact<{
   botID: Types.Scalars['ID']['input'];
   start: Types.Scalars['Time']['input'];
@@ -618,6 +630,101 @@ export function useGetFreqtradeTokenMutation(baseOptions?: Apollo.MutationHookOp
 export type GetFreqtradeTokenMutationHookResult = ReturnType<typeof useGetFreqtradeTokenMutation>;
 export type GetFreqtradeTokenMutationResult = Apollo.MutationResult<GetFreqtradeTokenMutation>;
 export type GetFreqtradeTokenMutationOptions = Apollo.BaseMutationOptions<GetFreqtradeTokenMutation, GetFreqtradeTokenMutationVariables>;
+export const GetExchangesForCreateDocument = gql`
+    query GetExchangesForCreate($ownerID: String) {
+  exchanges(first: 50, where: {ownerID: $ownerID}) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetExchangesForCreateQuery__
+ *
+ * To run a query within a React component, call `useGetExchangesForCreateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetExchangesForCreateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetExchangesForCreateQuery({
+ *   variables: {
+ *      ownerID: // value for 'ownerID'
+ *   },
+ * });
+ */
+export function useGetExchangesForCreateQuery(baseOptions?: Apollo.QueryHookOptions<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>(GetExchangesForCreateDocument, options);
+      }
+export function useGetExchangesForCreateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>(GetExchangesForCreateDocument, options);
+        }
+// @ts-ignore
+export function useGetExchangesForCreateSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>;
+export function useGetExchangesForCreateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesForCreateQuery | undefined, GetExchangesForCreateQueryVariables>;
+export function useGetExchangesForCreateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>(GetExchangesForCreateDocument, options);
+        }
+export type GetExchangesForCreateQueryHookResult = ReturnType<typeof useGetExchangesForCreateQuery>;
+export type GetExchangesForCreateLazyQueryHookResult = ReturnType<typeof useGetExchangesForCreateLazyQuery>;
+export type GetExchangesForCreateSuspenseQueryHookResult = ReturnType<typeof useGetExchangesForCreateSuspenseQuery>;
+export type GetExchangesForCreateQueryResult = Apollo.QueryResult<GetExchangesForCreateQuery, GetExchangesForCreateQueryVariables>;
+export const GetExchangesForEditDocument = gql`
+    query GetExchangesForEdit {
+  exchanges(first: 50) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetExchangesForEditQuery__
+ *
+ * To run a query within a React component, call `useGetExchangesForEditQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetExchangesForEditQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetExchangesForEditQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetExchangesForEditQuery(baseOptions?: Apollo.QueryHookOptions<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>(GetExchangesForEditDocument, options);
+      }
+export function useGetExchangesForEditLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>(GetExchangesForEditDocument, options);
+        }
+// @ts-ignore
+export function useGetExchangesForEditSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>;
+export function useGetExchangesForEditSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>): Apollo.UseSuspenseQueryResult<GetExchangesForEditQuery | undefined, GetExchangesForEditQueryVariables>;
+export function useGetExchangesForEditSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>(GetExchangesForEditDocument, options);
+        }
+export type GetExchangesForEditQueryHookResult = ReturnType<typeof useGetExchangesForEditQuery>;
+export type GetExchangesForEditLazyQueryHookResult = ReturnType<typeof useGetExchangesForEditLazyQuery>;
+export type GetExchangesForEditSuspenseQueryHookResult = ReturnType<typeof useGetExchangesForEditSuspenseQuery>;
+export type GetExchangesForEditQueryResult = Apollo.QueryResult<GetExchangesForEditQuery, GetExchangesForEditQueryVariables>;
 export const GetBotUsageHistoryDocument = gql`
     query GetBotUsageHistory($botID: ID!, $start: Time!, $end: Time!) {
   botUsageHistory(botID: $botID, start: $start, end: $end) {

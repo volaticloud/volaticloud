@@ -29,7 +29,7 @@ import {
   useSetBotVisibilityMutation,
 } from './bots.generated';
 import { FreqUIDrawer } from './FreqUIDrawer';
-import { ConfirmDrawer } from '../shared/ConfirmDrawer';
+import { ConfirmDrawer } from '../shared';
 import { usePermissions } from '../../hooks/usePermissions';
 
 export interface BotActionsMenuProps {
@@ -163,6 +163,7 @@ export const BotActionsMenu = ({
       if (result.errors) {
         throw new Error(result.errors[0]?.message || 'Failed to delete bot');
       }
+      refetch?.();
       onSuccess?.('Bot deleted successfully');
       onDeleteSuccess?.();
     } catch (err: any) {
@@ -315,7 +316,7 @@ export const BotActionsMenu = ({
           onConfirm={handleDelete}
           title="Delete Bot"
           message={`Are you sure you want to delete "${botName}"? This action cannot be undone.`}
-          confirmText="Delete"
+          confirmLabel="Delete"
           confirmColor="error"
         />
 
@@ -430,7 +431,7 @@ export const BotActionsMenu = ({
         onConfirm={handleDelete}
         title="Delete Bot"
         message={`Are you sure you want to delete "${botName}"? This action cannot be undone.`}
-        confirmText="Delete"
+        confirmLabel="Delete"
         confirmColor="error"
       />
 
