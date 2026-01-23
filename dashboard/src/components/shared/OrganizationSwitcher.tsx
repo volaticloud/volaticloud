@@ -30,13 +30,13 @@ export function OrganizationSwitcher({ fullWidth = false }: OrganizationSwitcher
   const { activeOrganizationId, activeOrganization, organizations, setActiveOrganization } =
     useActiveOrganization();
   const [searchText, setSearchText] = useState('');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 
   const handleChange = (event: SelectChangeEvent) => {
     const newValue = event.target.value;
 
     if (newValue === CREATE_ORG_VALUE) {
-      setCreateDialogOpen(true);
+      setCreateDrawerOpen(true);
       return;
     }
 
@@ -71,15 +71,15 @@ export function OrganizationSwitcher({ fullWidth = false }: OrganizationSwitcher
           <Button
             size="small"
             startIcon={<AddIcon />}
-            onClick={() => setCreateDialogOpen(true)}
+            onClick={() => setCreateDrawerOpen(true)}
             sx={{ ml: 1, minWidth: 'auto', fontSize: '0.75rem' }}
           >
             New
           </Button>
         </Box>
         <CreateOrganizationDrawer
-          open={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
+          open={createDrawerOpen}
+          onClose={() => setCreateDrawerOpen(false)}
         />
       </>
     );
@@ -151,8 +151,8 @@ export function OrganizationSwitcher({ fullWidth = false }: OrganizationSwitcher
         </MenuItem>
       </Select>
       <CreateOrganizationDrawer
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
       />
     </>
   );

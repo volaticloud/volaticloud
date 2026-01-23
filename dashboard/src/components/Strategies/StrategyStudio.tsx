@@ -42,6 +42,7 @@ import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
+import { ConfirmDrawer } from '../shared/FormDrawer';
 import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
@@ -97,9 +98,9 @@ class MyStrategy(IStrategy):
   const [code, setCode] = useState(isCreateMode ? defaultCode : '');
   const [config, setConfig] = useState<object | null>(isCreateMode ? defaultConfig : null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
+  const [backtestDrawerOpen, setBacktestDrawerOpen] = useState(false);
   const [activeBacktestId, setActiveBacktestId] = useState<string | null>(null);
-  const [backtestResultsDialogOpen, setBacktestResultsDialogOpen] = useState(false);
+  const [backtestResultsDrawerOpen, setBacktestResultsDrawerOpen] = useState(false);
 
   // UI Builder state
   const [builderMode, setBuilderMode] = useState<StrategyStrategyBuilderMode>(
@@ -108,7 +109,7 @@ class MyStrategy(IStrategy):
   const [uiBuilderConfig, setUiBuilderConfig] = useState<UIBuilderConfig | null>(
     isCreateMode ? createDefaultUIBuilderConfig() : null
   );
-  const [ejectDialogOpen, setEjectDialogOpen] = useState(false);
+  const [ejectDrawerOpen, setEjectDrawerOpen] = useState(false);
 
   // Navigation guard - prevents accidental data loss
   const {
@@ -194,7 +195,7 @@ class MyStrategy(IStrategy):
 
     // Switching from UI to Code requires ejection confirmation
     if (builderMode === StrategyStrategyBuilderMode.Ui && newMode === StrategyStrategyBuilderMode.Code) {
-      setEjectDialogOpen(true);
+      setEjectDrawerOpen(true);
       return;
     }
 
@@ -216,7 +217,7 @@ class MyStrategy(IStrategy):
   // Confirm eject to code mode
   const handleConfirmEject = () => {
     setBuilderMode(StrategyStrategyBuilderMode.Code);
-    setEjectDialogOpen(false);
+    setEjectDrawerOpen(false);
     setHasChanges(true);
   };
 
@@ -476,7 +477,7 @@ class MyStrategy(IStrategy):
                   label="Backtest Complete"
                   color="success"
                   size="small"
-                  onClick={() => setBacktestResultsDialogOpen(true)}
+                  onClick={() => setBacktestResultsDrawerOpen(true)}
                   sx={{ cursor: 'pointer' }}
                 />
               </Tooltip>
@@ -488,7 +489,7 @@ class MyStrategy(IStrategy):
                   label="Backtest Failed"
                   color="error"
                   size="small"
-                  onClick={() => setBacktestResultsDialogOpen(true)}
+                  onClick={() => setBacktestResultsDrawerOpen(true)}
                   sx={{ cursor: 'pointer' }}
                 />
               </Tooltip>
@@ -498,7 +499,7 @@ class MyStrategy(IStrategy):
                 variant="outlined"
                 color={isBacktestCompleted ? 'success' : 'error'}
                 startIcon={<Assessment />}
-                onClick={() => setBacktestResultsDialogOpen(true)}
+                onClick={() => setBacktestResultsDrawerOpen(true)}
                 size="small"
               >
                 View Results
@@ -512,7 +513,7 @@ class MyStrategy(IStrategy):
             variant="outlined"
             color="secondary"
             startIcon={<PlayArrow />}
-            onClick={() => setBacktestDialogOpen(true)}
+            onClick={() => setBacktestDrawerOpen(true)}
             disabled={hasChanges || isBacktestRunning}
           >
             {isBacktestRunning ? 'Running...' : 'Run Backtest'}
@@ -682,8 +683,8 @@ class MyStrategy(IStrategy):
       {/* Backtest Drawer - only in edit mode */}
       {!isCreateMode && strategy && (
         <CreateBacktestDrawer
-          open={backtestDialogOpen}
-          onClose={() => setBacktestDialogOpen(false)}
+          open={backtestDrawerOpen}
+          onClose={() => setBacktestDrawerOpen(false)}
           onSuccess={() => {
             // Don't navigate away - stay in studio
           }}
@@ -697,39 +698,37 @@ class MyStrategy(IStrategy):
       {/* Backtest Results Drawer - only in edit mode */}
       {!isCreateMode && (
         <BacktestResultsDrawer
-          open={backtestResultsDialogOpen}
-          onClose={() => setBacktestResultsDialogOpen(false)}
+          open={backtestResultsDrawerOpen}
+          onClose={() => setBacktestResultsDrawerOpen(false)}
           backtestId={activeBacktestId}
           polling={isBacktestRunning}
         />
       )}
 
-      {/* Eject to Code Confirmation Dialog */}
-      <Dialog open={ejectDialogOpen} onClose={() => setEjectDialogOpen(false)}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Warning color="warning" />
-          Eject to Code Mode?
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" gutterBottom>
-            This will convert your strategy to code-only mode.
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Once ejected, you will have full control over the Python code but will no longer be able
-            to edit using the visual builder.
-          </Typography>
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            This action cannot be undone. The visual builder configuration will be preserved in the
-            strategy config but can only be edited as code.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEjectDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" color="warning" onClick={handleConfirmEject}>
-            Eject to Code
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Eject to Code Confirmation Drawer */}
+      <ConfirmDrawer
+        open={ejectDrawerOpen}
+        onClose={() => setEjectDrawerOpen(false)}
+        title="Eject to Code Mode?"
+        message={
+          <Box>
+            <Typography variant="body1" gutterBottom>
+              This will convert your strategy to code-only mode.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Once ejected, you will have full control over the Python code but will no longer be able
+              to edit using the visual builder.
+            </Typography>
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              This action cannot be undone. The visual builder configuration will be preserved in the
+              strategy config but can only be edited as code.
+            </Alert>
+          </Box>
+        }
+        confirmLabel="Eject to Code"
+        confirmColor="warning"
+        onConfirm={handleConfirmEject}
+      />
 
       {/* Leave confirmation dialog */}
       <Dialog open={leaveDialogOpen} onClose={cancelLeave}>

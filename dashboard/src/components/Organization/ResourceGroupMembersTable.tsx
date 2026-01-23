@@ -76,7 +76,7 @@ export const ResourceGroupMembersTable = ({
     ResourceGroupMemberOrderField.Username
   );
   const [orderDirection, setOrderDirection] = useState<OrderDirection>(OrderDirection.Asc);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteDrawerOpen, setInviteDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -88,7 +88,7 @@ export const ResourceGroupMembersTable = ({
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
 
   // Change role dialog state
-  const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false);
+  const [changeRoleDrawerOpen, setChangeRoleDrawerOpen] = useState(false);
 
   // Get current user ID from auth context
   const { user: authUser } = useAuth();
@@ -155,7 +155,7 @@ export const ResourceGroupMembersTable = ({
       });
       return;
     }
-    setChangeRoleDialogOpen(true);
+    setChangeRoleDrawerOpen(true);
   };
 
   const handleRoleChange = async (newRole: string) => {
@@ -215,7 +215,7 @@ export const ResourceGroupMembersTable = ({
             <Button
               variant="contained"
               startIcon={<PersonAddIcon />}
-              onClick={() => setInviteDialogOpen(true)}
+              onClick={() => setInviteDrawerOpen(true)}
             >
               Invite User
             </Button>
@@ -488,8 +488,8 @@ export const ResourceGroupMembersTable = ({
 
       {/* Invite User Drawer */}
       <InviteUserDrawer
-        open={inviteDialogOpen}
-        onClose={() => setInviteDialogOpen(false)}
+        open={inviteDrawerOpen}
+        onClose={() => setInviteDrawerOpen(false)}
         organizationId={organizationId}
         organizationName={resourceGroupName}
       />
@@ -497,9 +497,9 @@ export const ResourceGroupMembersTable = ({
       {/* Change Role Drawer */}
       {selectedUser && (
         <ChangeRoleDrawer
-          open={changeRoleDialogOpen}
+          open={changeRoleDrawerOpen}
           onClose={() => {
-            setChangeRoleDialogOpen(false);
+            setChangeRoleDrawerOpen(false);
             setSelectedUser(null);
           }}
           onConfirm={handleRoleChange}

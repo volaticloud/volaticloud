@@ -18,7 +18,7 @@ export const StrategyVisibilityButton = ({
   isPublic,
   onSuccess,
 }: StrategyVisibilityButtonProps) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -75,7 +75,7 @@ export const StrategyVisibilityButton = ({
           <IconButton
             size="small"
             color={isPublic ? 'info' : 'default'}
-            onClick={() => setDialogOpen(true)}
+            onClick={() => setDrawerOpen(true)}
             disabled={isDisabled}
           >
             {permissionLoading ? (
@@ -90,8 +90,8 @@ export const StrategyVisibilityButton = ({
       </Tooltip>
 
       <VisibilityToggleDrawer
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
         onConfirm={handleConfirm}
         resourceType="strategy"
         resourceName={strategyName}

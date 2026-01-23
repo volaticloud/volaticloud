@@ -30,8 +30,8 @@ type Backtest = NonNullable<NonNullable<NonNullable<GetBacktestsQuery['backtests
 export const BacktestsList = () => {
   const navigate = useOrganizationNavigate();
   const { activeOrganizationId } = useActiveOrganization();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
   const [selectedBacktest, setSelectedBacktest] = useState<{
     id: string;
     strategy: { id: string; name: string };
@@ -265,7 +265,7 @@ export const BacktestsList = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedBacktest(params.row);
-                setDeleteDialogOpen(true);
+                setDeleteDrawerOpen(true);
               }}
             >
               <DeleteIcon fontSize="small" />
@@ -297,7 +297,7 @@ export const BacktestsList = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
+          onClick={() => setCreateDrawerOpen(true)}
           sx={{ flexShrink: 0 }}
         >
           Create Backtest
@@ -312,16 +312,16 @@ export const BacktestsList = () => {
       />
 
       <CreateBacktestDrawer
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedBacktest && (
         <DeleteBacktestDrawer
-          open={deleteDialogOpen}
+          open={deleteDrawerOpen}
           onClose={() => {
-            setDeleteDialogOpen(false);
+            setDeleteDrawerOpen(false);
             setSelectedBacktest(null);
           }}
           onSuccess={() => {

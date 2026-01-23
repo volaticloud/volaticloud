@@ -4,7 +4,7 @@ import { Business as BusinessIcon, Add as AddIcon } from '@mui/icons-material';
 import { CreateOrganizationDrawer } from './CreateOrganizationDrawer';
 
 export function NoOrganizationView() {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <>
@@ -45,7 +45,7 @@ export function NoOrganizationView() {
               size="large"
               fullWidth
               startIcon={<AddIcon />}
-              onClick={() => setDialogOpen(true)}
+              onClick={() => setDrawerOpen(true)}
               sx={{ mt: 2 }}
             >
               Create Organization
@@ -61,8 +61,8 @@ export function NoOrganizationView() {
         </Container>
       </Box>
       <CreateOrganizationDrawer
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
         onSuccess={() => {
           // Force page reload to ensure all contexts are updated with new organization
           window.location.reload();

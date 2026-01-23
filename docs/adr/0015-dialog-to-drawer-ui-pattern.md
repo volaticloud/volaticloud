@@ -1,5 +1,7 @@
 # ADR-0015: Dialog to Drawer UI Pattern
 
+Date: 2026-01-23
+
 ## Status
 
 Accepted
@@ -53,6 +55,17 @@ Replace all Dialog components with Drawer components that slide in from the righ
 | Runners | CreateRunnerDrawer, EditRunnerDrawer, DeleteRunnerDrawer |
 | Strategies | CreateStrategyDrawer, DeleteStrategyDrawer |
 | Shared | FormDrawer, ConfirmDrawer, UnsavedChangesDrawer, VisibilityToggleDrawer |
+
+### Exceptions
+
+The following components intentionally retain Dialog usage:
+
+- **VersionHistoryPanel** (`dashboard/src/components/Strategies/VersionHistoryPanel.tsx`): Uses a full-screen Dialog (`maxWidth="xl"`, `fullWidth`, `90vh` height) for side-by-side code diff comparison using Monaco DiffEditor. A drawer is not suitable here because:
+  - Side-by-side diff views require maximum horizontal space
+  - The diff editor needs near-full-screen real estate for effective code comparison
+  - This is a temporary overlay for viewing differences, not a form workflow
+
+- **StrategyStudio Leave Confirmation** (`dashboard/src/components/Strategies/StrategyStudio.tsx`): Uses Dialog for the unsaved changes navigation guard with 3-button UI (Cancel, Discard Changes, Save & Leave). This is provided by `useUnsavedChangesGuard` hook and requires center-positioned modal with specialized 3-action workflow that doesn't fit the standard drawer confirmation pattern
 
 ## Consequences
 
