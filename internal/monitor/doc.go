@@ -236,6 +236,12 @@ When an instance joins or leaves:
 	RunnerMonitorInterval (time.Duration):
 	  Optional. Runner data monitoring interval (default: 5m)
 
+	DataDownloadTimeout (time.Duration):
+	  Optional. Maximum time allowed for runner data downloads (default: 12h)
+	  Configurable via VOLATICLOUD_DATA_DOWNLOAD_TIMEOUT env var or --data-download-timeout flag.
+	  Used for both automatic refresh (RunnerMonitor) and manual RefreshRunnerData mutations.
+	  Downloads exceeding this timeout are marked as stuck and failed.
+
 	HeartbeatInterval (time.Duration):
 	  Optional. etcd heartbeat interval (default: 10s)
 
