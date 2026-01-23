@@ -122,6 +122,7 @@ const { data } = useGetBotsQuery();  // data is fully typed!
 ```
 
 **All GraphQL operations MUST:**
+
 1. Be defined in a co-located `.graphql` file (e.g., `bots.graphql`)
 2. Use generated hooks from `.generated.ts` files
 3. Never import `gql` from `@apollo/client` for defining operations
