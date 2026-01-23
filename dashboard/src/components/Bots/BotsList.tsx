@@ -33,8 +33,8 @@ type Bot = NonNullable<NonNullable<NonNullable<GetBotsQuery['bots']['edges']>[nu
 export const BotsList = () => {
   const navigate = useOrganizationNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<{
     id: string;
     name: string;
@@ -200,7 +200,7 @@ export const BotsList = () => {
             onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
             onEdit={() => {
               setSelectedBot(params.row);
-              setEditDialogOpen(true);
+              setEditDrawerOpen(true);
             }}
           />
         ) : null
@@ -248,7 +248,7 @@ export const BotsList = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setCreateDialogOpen(true)}
+                  onClick={() => setCreateDrawerOpen(true)}
                   disabled={!canCreateBot}
                   sx={{ flexShrink: 0 }}
                 >
@@ -269,16 +269,16 @@ export const BotsList = () => {
       />
 
       <CreateBotDrawer
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedBot && (
         <EditBotDrawer
-          open={editDialogOpen}
+          open={editDrawerOpen}
           onClose={() => {
-            setEditDialogOpen(false);
+            setEditDrawerOpen(false);
             setSelectedBot(null);
           }}
           onSuccess={() => {

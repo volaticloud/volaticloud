@@ -71,7 +71,7 @@ const getPermissionResourceId = (rule: AlertRule, fallbackGroupId: string): stri
 };
 
 export const AlertRulesTab = () => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<AlertRule | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -260,7 +260,7 @@ export const AlertRulesTab = () => {
                   size="small"
                   onClick={() => {
                     setSelectedRule(params.row);
-                    setDialogOpen(true);
+                    setDrawerOpen(true);
                   }}
                   color="primary"
                   disabled={!canUpdate || permissionsLoading}
@@ -317,7 +317,7 @@ export const AlertRulesTab = () => {
               }
               onClick={() => {
                 setSelectedRule(null);
-                setDialogOpen(true);
+                setDrawerOpen(true);
               }}
               size="small"
               disabled={!canCreateAlertRule || permissionsLoading}
@@ -335,8 +335,8 @@ export const AlertRulesTab = () => {
       />
 
       <AlertRuleDrawer
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
         onSuccess={() => {
           showSnackbar(selectedRule ? 'Rule updated' : 'Rule created', 'success');
           refetch();

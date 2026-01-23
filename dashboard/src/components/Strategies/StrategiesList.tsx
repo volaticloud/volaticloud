@@ -39,8 +39,8 @@ export const StrategiesList = () => {
   const { allowed: canCreateStrategy } = useOrganizationPermission('create-strategy');
 
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+  const [backtestDrawerOpen, setBacktestDrawerOpen] = useState(false);
   const [selectedStrategyForBacktest, setSelectedStrategyForBacktest] = useState<string | null>(null);
   const [selectedStrategy, setSelectedStrategy] = useState<{
     id: string;
@@ -160,7 +160,7 @@ export const StrategiesList = () => {
             color="primary"
             onClick={() => {
               setSelectedStrategyForBacktest(params.row.id);
-              setBacktestDialogOpen(true);
+              setBacktestDrawerOpen(true);
             }}
             deniedTooltip="No permission to run backtest"
           >
@@ -190,7 +190,7 @@ export const StrategiesList = () => {
                 color="error"
                 onClick={() => {
                   setSelectedStrategy(params.row);
-                  setDeleteDialogOpen(true);
+                  setDeleteDrawerOpen(true);
                 }}
                 deniedTooltip="No permission to delete"
               >
@@ -264,9 +264,9 @@ export const StrategiesList = () => {
 
       {selectedStrategy && (
         <DeleteStrategyDrawer
-          open={deleteDialogOpen}
+          open={deleteDrawerOpen}
           onClose={() => {
-            setDeleteDialogOpen(false);
+            setDeleteDrawerOpen(false);
             setSelectedStrategy(null);
           }}
           onSuccess={() => {
@@ -283,13 +283,13 @@ export const StrategiesList = () => {
       )}
 
       <CreateBacktestDrawer
-        open={backtestDialogOpen}
+        open={backtestDrawerOpen}
         onClose={() => {
-          setBacktestDialogOpen(false);
+          setBacktestDrawerOpen(false);
           setSelectedStrategyForBacktest(null);
         }}
         onSuccess={(newStrategyId) => {
-          setBacktestDialogOpen(false);
+          setBacktestDrawerOpen(false);
           setSelectedStrategyForBacktest(null);
           setSnackbar({
             open: true,
