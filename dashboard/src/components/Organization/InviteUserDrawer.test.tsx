@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider } from '@apollo/client/testing';
-import { InviteUserDialog } from './InviteUserDialog';
+import { InviteUserDrawer } from './InviteUserDrawer';
 import { InviteOrganizationUserDocument } from './organization.generated';
 
 // Mock successful invitation response
@@ -52,7 +52,7 @@ const mockErrorResponse = {
   error: new Error('User already invited'),
 };
 
-describe('InviteUserDialog', () => {
+describe('InviteUserDrawer', () => {
   const defaultProps = {
     open: true,
     onClose: vi.fn(),
@@ -68,7 +68,7 @@ describe('InviteUserDialog', () => {
   it('renders dialog with correct title', () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -78,7 +78,7 @@ describe('InviteUserDialog', () => {
   it('renders email input field', () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -88,7 +88,7 @@ describe('InviteUserDialog', () => {
   it('renders first name and last name fields', () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -99,7 +99,7 @@ describe('InviteUserDialog', () => {
   it('displays viewer role info alert', () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -109,7 +109,7 @@ describe('InviteUserDialog', () => {
   it('disables submit button when email is empty', () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -121,7 +121,7 @@ describe('InviteUserDialog', () => {
     const user = userEvent.setup();
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -136,7 +136,7 @@ describe('InviteUserDialog', () => {
     const user = userEvent.setup();
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -151,7 +151,7 @@ describe('InviteUserDialog', () => {
     const user = userEvent.setup();
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -175,12 +175,14 @@ describe('InviteUserDialog', () => {
     const user = userEvent.setup();
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
-    const closeButton = screen.getByRole('button', { name: /close/i });
-    await user.click(closeButton);
+    // Use getAllByRole since there are two close buttons (icon button and text button)
+    const closeButtons = screen.getAllByRole('button', { name: /close/i });
+    // Click the text button (second one in the footer)
+    await user.click(closeButtons[1]);
 
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
@@ -188,7 +190,7 @@ describe('InviteUserDialog', () => {
   it('resets form when dialog closes', async () => {
     const { rerender } = render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -199,14 +201,14 @@ describe('InviteUserDialog', () => {
     // Close dialog
     rerender(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} open={false} />
+        <InviteUserDrawer {...defaultProps} open={false} />
       </MockedProvider>
     );
 
     // Reopen dialog
     rerender(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} open={true} />
+        <InviteUserDrawer {...defaultProps} open={true} />
       </MockedProvider>
     );
 
@@ -226,7 +228,7 @@ describe('InviteUserDialog', () => {
 
     render(
       <MockedProvider mocks={[delayedMock]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -252,7 +254,7 @@ describe('InviteUserDialog', () => {
 
     render(
       <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -277,7 +279,7 @@ describe('InviteUserDialog', () => {
 
     render(
       <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -302,7 +304,7 @@ describe('InviteUserDialog', () => {
 
     render(
       <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -329,7 +331,7 @@ describe('InviteUserDialog', () => {
 
     render(
       <MockedProvider mocks={[mockErrorResponse]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -355,7 +357,7 @@ describe('InviteUserDialog', () => {
 
     render(
       <MockedProvider mocks={[delayedMock]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} />
+        <InviteUserDrawer {...defaultProps} />
       </MockedProvider>
     );
 
@@ -381,7 +383,7 @@ describe('InviteUserDialog', () => {
   it('does not render when closed', () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <InviteUserDialog {...defaultProps} open={false} />
+        <InviteUserDrawer {...defaultProps} open={false} />
       </MockedProvider>
     );
 

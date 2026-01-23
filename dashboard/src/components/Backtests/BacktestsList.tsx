@@ -18,8 +18,8 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation, GetBacktestsQuery } from './backtests.generated';
-import { CreateBacktestDialog } from './CreateBacktestDialog';
-import { DeleteBacktestDialog } from './DeleteBacktestDialog';
+import { CreateBacktestDrawer } from './CreateBacktestDrawer';
+import { DeleteBacktestDrawer } from './DeleteBacktestDrawer';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
@@ -30,8 +30,8 @@ type Backtest = NonNullable<NonNullable<NonNullable<GetBacktestsQuery['backtests
 export const BacktestsList = () => {
   const navigate = useOrganizationNavigate();
   const { activeOrganizationId } = useActiveOrganization();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
   const [selectedBacktest, setSelectedBacktest] = useState<{
     id: string;
     strategy: { id: string; name: string };
@@ -265,7 +265,7 @@ export const BacktestsList = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedBacktest(params.row);
-                setDeleteDialogOpen(true);
+                setDeleteDrawerOpen(true);
               }}
             >
               <DeleteIcon fontSize="small" />
@@ -297,7 +297,7 @@ export const BacktestsList = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
+          onClick={() => setCreateDrawerOpen(true)}
           sx={{ flexShrink: 0 }}
         >
           Create Backtest
@@ -311,17 +311,17 @@ export const BacktestsList = () => {
         onRowClick={(row) => navigate(`/backtests/${row.id}`)}
       />
 
-      <CreateBacktestDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+      <CreateBacktestDrawer
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedBacktest && (
-        <DeleteBacktestDialog
-          open={deleteDialogOpen}
+        <DeleteBacktestDrawer
+          open={deleteDrawerOpen}
           onClose={() => {
-            setDeleteDialogOpen(false);
+            setDeleteDrawerOpen(false);
             setSelectedBacktest(null);
           }}
           onSuccess={() => {

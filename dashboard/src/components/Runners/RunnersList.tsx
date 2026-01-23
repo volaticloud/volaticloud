@@ -24,10 +24,10 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation, GetRunnersQuery } from './runners.generated';
-import { CreateRunnerDialog } from './CreateRunnerDialog';
-import { EditRunnerDialog } from './EditRunnerDialog';
-import { DeleteRunnerDialog } from './DeleteRunnerDialog';
-import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { CreateRunnerDrawer } from './CreateRunnerDrawer';
+import { EditRunnerDrawer } from './EditRunnerDrawer';
+import { DeleteRunnerDrawer } from './DeleteRunnerDrawer';
+import { VisibilityToggleDrawer } from '../shared/VisibilityToggleDrawer';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
@@ -40,10 +40,10 @@ type Runner = NonNullable<NonNullable<NonNullable<GetRunnersQuery['botRunners'][
 
 export const RunnersList = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+  const [visibilityDrawerOpen, setVisibilityDrawerOpen] = useState(false);
   const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -231,7 +231,7 @@ export const RunnersList = () => {
                 color={params.row.public ? 'info' : 'default'}
                 onClick={() => {
                   setSelectedRunner(params.row);
-                  setVisibilityDialogOpen(true);
+                  setVisibilityDrawerOpen(true);
                 }}
                 deniedTooltip="No permission to change visibility"
               >
@@ -246,7 +246,7 @@ export const RunnersList = () => {
                   const runnerData = result.data?.botRunners?.edges?.[0]?.node;
                   if (runnerData) {
                     setSelectedRunner(runnerData as Runner);
-                    setEditDialogOpen(true);
+                    setEditDrawerOpen(true);
                   }
                 }}
                 deniedTooltip="No permission to edit"
@@ -260,7 +260,7 @@ export const RunnersList = () => {
                 color="error"
                 onClick={() => {
                   setSelectedRunner(params.row);
-                  setDeleteDialogOpen(true);
+                  setDeleteDrawerOpen(true);
                 }}
                 deniedTooltip="No permission to delete"
               >
@@ -313,7 +313,7 @@ export const RunnersList = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setCreateDialogOpen(true)}
+                  onClick={() => setCreateDrawerOpen(true)}
                   disabled={!canCreateRunner}
                   sx={{ flexShrink: 0 }}
                 >
@@ -332,18 +332,18 @@ export const RunnersList = () => {
         isPolling={!pagination.loading && data !== undefined}
       />
 
-      <CreateRunnerDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+      <CreateRunnerDrawer
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedRunner && (
         <>
-          <EditRunnerDialog
-            open={editDialogOpen}
+          <EditRunnerDrawer
+            open={editDrawerOpen}
             onClose={() => {
-              setEditDialogOpen(false);
+              setEditDrawerOpen(false);
               setSelectedRunner(null);
             }}
             onSuccess={() => {
@@ -353,10 +353,10 @@ export const RunnersList = () => {
             runner={selectedRunner}
           />
 
-          <DeleteRunnerDialog
-            open={deleteDialogOpen}
+          <DeleteRunnerDrawer
+            open={deleteDrawerOpen}
             onClose={() => {
-              setDeleteDialogOpen(false);
+              setDeleteDrawerOpen(false);
               setSelectedRunner(null);
             }}
             onSuccess={() => {
@@ -366,10 +366,10 @@ export const RunnersList = () => {
             runner={selectedRunner}
           />
 
-          <VisibilityToggleDialog
-            open={visibilityDialogOpen}
+          <VisibilityToggleDrawer
+            open={visibilityDrawerOpen}
             onClose={() => {
-              setVisibilityDialogOpen(false);
+              setVisibilityDrawerOpen(false);
               setSelectedRunner(null);
             }}
             onConfirm={async () => {

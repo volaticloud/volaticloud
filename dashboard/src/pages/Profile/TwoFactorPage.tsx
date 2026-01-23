@@ -17,7 +17,7 @@ import {
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useKeycloakAccount } from '../../hooks/useKeycloakAccount';
-import { ConfirmDialog } from '../../components/shared/FormDialog';
+import { ConfirmDrawer } from '../../components/shared/FormDrawer';
 import { useConfigValue } from '../../contexts/ConfigContext';
 
 export const TwoFactorPage = () => {
@@ -208,8 +208,8 @@ export const TwoFactorPage = () => {
         </Box>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Delete Confirmation Drawer */}
+      <ConfirmDrawer
         open={deleteDialogOpen}
         title="Remove 2FA Device?"
         message="Are you sure you want to remove this device? You will no longer be able to use it for two-factor authentication."

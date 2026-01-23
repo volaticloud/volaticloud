@@ -12,9 +12,9 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetExchangesQuery, GetExchangesQuery } from './exchanges.generated';
-import { CreateExchangeDialog } from './CreateExchangeDialog';
-import { EditExchangeDialog } from './EditExchangeDialog';
-import { DeleteExchangeDialog } from './DeleteExchangeDialog';
+import { CreateExchangeDrawer } from './CreateExchangeDrawer';
+import { EditExchangeDrawer } from './EditExchangeDrawer';
+import { DeleteExchangeDrawer } from './DeleteExchangeDrawer';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
@@ -24,9 +24,9 @@ import { ProtectedIconButton } from '../shared/ProtectedButton';
 type Exchange = NonNullable<NonNullable<NonNullable<GetExchangesQuery['exchanges']['edges']>[number]>['node']>;
 
 export const ExchangesList = () => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
   const [selectedExchange, setSelectedExchange] = useState<{
     id: string;
     name: string;
@@ -126,7 +126,7 @@ export const ExchangesList = () => {
             size="small"
             onClick={() => {
               setSelectedExchange(params.row);
-              setEditDialogOpen(true);
+              setEditDrawerOpen(true);
             }}
             color="primary"
             deniedTooltip="No permission to edit"
@@ -139,7 +139,7 @@ export const ExchangesList = () => {
             size="small"
             onClick={() => {
               setSelectedExchange(params.row);
-              setDeleteDialogOpen(true);
+              setDeleteDrawerOpen(true);
             }}
             color="error"
             deniedTooltip="No permission to delete"
@@ -174,7 +174,7 @@ export const ExchangesList = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setCreateDialogOpen(true)}
+              onClick={() => setCreateDrawerOpen(true)}
               disabled={!canCreateExchange}
               sx={{ flexShrink: 0 }}
             >
@@ -190,26 +190,26 @@ export const ExchangesList = () => {
         emptyMessage="No exchanges configured. Add an exchange to connect to trading platforms."
       />
 
-      <CreateExchangeDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+      <CreateExchangeDrawer
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         onSuccess={handleSuccess}
       />
 
-      <EditExchangeDialog
-        open={editDialogOpen}
+      <EditExchangeDrawer
+        open={editDrawerOpen}
         onClose={() => {
-          setEditDialogOpen(false);
+          setEditDrawerOpen(false);
           setSelectedExchange(null);
         }}
         onSuccess={handleSuccess}
         exchange={selectedExchange}
       />
 
-      <DeleteExchangeDialog
-        open={deleteDialogOpen}
+      <DeleteExchangeDrawer
+        open={deleteDrawerOpen}
         onClose={() => {
-          setDeleteDialogOpen(false);
+          setDeleteDrawerOpen(false);
           setSelectedExchange(null);
         }}
         onSuccess={handleSuccess}

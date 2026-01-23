@@ -1,10 +1,8 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
+  Drawer,
   Box,
   Typography,
+  IconButton,
   Chip,
   Divider,
   Paper,
@@ -17,7 +15,7 @@ type AlertEvent = NonNullable<
   NonNullable<NonNullable<GetAlertEventsQuery['alertEvents']['edges']>[number]>['node']
 >;
 
-interface AlertDetailDialogProps {
+interface AlertDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   alert: AlertEvent | null;
@@ -36,7 +34,7 @@ const severityColors: Record<AlertEventAlertSeverity, 'error' | 'warning' | 'inf
   info: 'info',
 };
 
-export const AlertDetailDialog = ({ open, onClose, alert }: AlertDetailDialogProps) => {
+export const AlertDetailDrawer = ({ open, onClose, alert }: AlertDetailDrawerProps) => {
   if (!alert) return null;
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleString();
@@ -48,8 +46,29 @@ export const AlertDetailDialog = ({ open, onClose, alert }: AlertDetailDialogPro
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: 600 },
+          maxWidth: '100%',
+        },
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="h6">Alert Details</Typography>
           <Chip
@@ -65,12 +84,20 @@ export const AlertDetailDialog = ({ open, onClose, alert }: AlertDetailDialogPro
             variant="outlined"
           />
         </Box>
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" aria-label="close">
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </Box>
 
-      <DialogContent dividers>
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          px: 3,
+          py: 2,
+        }}
+      >
         {/* Subject */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -225,7 +252,7 @@ export const AlertDetailDialog = ({ open, onClose, alert }: AlertDetailDialogPro
             </Box>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 };

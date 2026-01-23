@@ -1,17 +1,19 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
+  Drawer,
+  Box,
   Typography,
+  IconButton,
+  Button,
   Alert,
+  Divider,
+  CircularProgress,
 } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import { useState } from 'react';
 
 export type ResourceType = 'strategy' | 'bot' | 'runner';
 
-interface VisibilityToggleDialogProps {
+interface VisibilityToggleDrawerProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
@@ -27,7 +29,7 @@ const resourceTypeLabels: Record<ResourceType, string> = {
   runner: 'Runner',
 };
 
-export const VisibilityToggleDialog = ({
+export const VisibilityToggleDrawer = ({
   open,
   onClose,
   onConfirm,
@@ -35,7 +37,7 @@ export const VisibilityToggleDialog = ({
   resourceName,
   currentlyPublic,
   loading = false,
-}: VisibilityToggleDialogProps) => {
+}: VisibilityToggleDrawerProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
@@ -61,9 +63,39 @@ export const VisibilityToggleDialog = ({
     : `Make ${resourceLabel} Public`;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: 400 },
+          maxWidth: '100%',
+        },
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+        <IconButton onClick={handleClose} size="small" aria-label="close">
+          <Close />
+        </IconButton>
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ px: 3, py: 2 }}>
         <Typography variant="body1" gutterBottom>
           Are you sure you want to make "{resourceName}" {newVisibility}?
         </Typography>
@@ -84,14 +116,26 @@ export const VisibilityToggleDialog = ({
             {error}
           </Alert>
         )}
-      </DialogContent>
-      <DialogActions>
+      </Box>
+
+      {/* Footer */}
+      <Divider />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 1,
+          px: 3,
+          py: 2,
+        }}
+      >
         <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleConfirm}
           variant="contained"
           color={currentlyPublic ? 'warning' : 'primary'}
           disabled={loading}
+          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           {loading
             ? 'Updating...'
@@ -99,7 +143,7 @@ export const VisibilityToggleDialog = ({
             ? 'Make Private'
             : 'Make Public'}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 };

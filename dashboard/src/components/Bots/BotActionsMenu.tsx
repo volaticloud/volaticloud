@@ -8,12 +8,6 @@ import {
   ListItemText,
   Tooltip,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -34,7 +28,8 @@ import {
   useDeleteBotMutation,
   useSetBotVisibilityMutation,
 } from './bots.generated';
-import FreqUIDialog from './FreqUIDialog';
+import { FreqUIDrawer } from './FreqUIDrawer';
+import { ConfirmDrawer } from '../shared/ConfirmDrawer';
 import { usePermissions } from '../../hooks/usePermissions';
 
 export interface BotActionsMenuProps {
@@ -81,8 +76,8 @@ export const BotActionsMenu = ({
   refetch,
 }: BotActionsMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [frequiDialogOpen, setFrequiDialogOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+  const [frequiDrawerOpen, setFrequiDrawerOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const menuOpen = Boolean(anchorEl);
 
@@ -161,7 +156,7 @@ export const BotActionsMenu = ({
 
   const handleDelete = async () => {
     setActionLoading(true);
-    setDeleteDialogOpen(false);
+    setDeleteDrawerOpen(false);
     handleMenuClose();
     try {
       const result = await deleteBot({ variables: { id: botId } });
@@ -186,7 +181,7 @@ export const BotActionsMenu = ({
 
   const handleOpenFreqUI = () => {
     handleMenuClose();
-    setFrequiDialogOpen(true);
+    setFrequiDrawerOpen(true);
   };
 
   const handleEditClick = () => {
@@ -303,7 +298,7 @@ export const BotActionsMenu = ({
             </MenuItem>
           )}
           <Divider />
-          <MenuItem onClick={() => setDeleteDialogOpen(true)} disabled={!deleteEnabled}>
+          <MenuItem onClick={() => setDeleteDrawerOpen(true)} disabled={!deleteEnabled}>
             <ListItemIcon>
               <Delete fontSize="small" color={deleteEnabled ? 'error' : 'disabled'} />
             </ListItemIcon>
@@ -313,27 +308,22 @@ export const BotActionsMenu = ({
           </MenuItem>
         </Menu>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-          <DialogTitle>Delete Bot</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete "{botName}"? This action cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleDelete} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {/* Delete Confirmation Drawer */}
+        <ConfirmDrawer
+          open={deleteDrawerOpen}
+          onClose={() => setDeleteDrawerOpen(false)}
+          onConfirm={handleDelete}
+          title="Delete Bot"
+          message={`Are you sure you want to delete "${botName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          confirmColor="error"
+        />
 
-        {/* FreqUI Dialog */}
+        {/* FreqUI Drawer */}
         {showFreqUI && (
-          <FreqUIDialog
-            open={frequiDialogOpen}
-            onClose={() => setFrequiDialogOpen(false)}
+          <FreqUIDrawer
+            open={frequiDrawerOpen}
+            onClose={() => setFrequiDrawerOpen(false)}
             botId={botId}
             botName={botName}
           />
@@ -423,7 +413,7 @@ export const BotActionsMenu = ({
           </MenuItem>
         )}
         <Divider />
-        <MenuItem onClick={() => setDeleteDialogOpen(true)} disabled={!deleteEnabled}>
+        <MenuItem onClick={() => setDeleteDrawerOpen(true)} disabled={!deleteEnabled}>
           <ListItemIcon>
             <Delete fontSize="small" color={deleteEnabled ? 'error' : 'disabled'} />
           </ListItemIcon>
@@ -433,27 +423,22 @@ export const BotActionsMenu = ({
         </MenuItem>
       </Menu>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Bot</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete "{botName}"? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Delete Confirmation Drawer */}
+      <ConfirmDrawer
+        open={deleteDrawerOpen}
+        onClose={() => setDeleteDrawerOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Bot"
+        message={`Are you sure you want to delete "${botName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        confirmColor="error"
+      />
 
-      {/* FreqUI Dialog */}
+      {/* FreqUI Drawer */}
       {showFreqUI && (
-        <FreqUIDialog
-          open={frequiDialogOpen}
-          onClose={() => setFrequiDialogOpen(false)}
+        <FreqUIDrawer
+          open={frequiDrawerOpen}
+          onClose={() => setFrequiDrawerOpen(false)}
           botId={botId}
           botName={botName}
         />

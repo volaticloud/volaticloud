@@ -29,7 +29,7 @@ import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { AlertRuleAlertSeverity, AlertRuleAlertType } from '../../generated/types';
-import { AlertRuleDialog } from './AlertRuleDialog';
+import { AlertRuleDrawer } from './AlertRuleDrawer';
 import { usePermissions } from '../../hooks/usePermissions';
 
 // Extract AlertRule type from generated query
@@ -71,7 +71,7 @@ const getPermissionResourceId = (rule: AlertRule, fallbackGroupId: string): stri
 };
 
 export const AlertRulesTab = () => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<AlertRule | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -260,7 +260,7 @@ export const AlertRulesTab = () => {
                   size="small"
                   onClick={() => {
                     setSelectedRule(params.row);
-                    setDialogOpen(true);
+                    setDrawerOpen(true);
                   }}
                   color="primary"
                   disabled={!canUpdate || permissionsLoading}
@@ -317,7 +317,7 @@ export const AlertRulesTab = () => {
               }
               onClick={() => {
                 setSelectedRule(null);
-                setDialogOpen(true);
+                setDrawerOpen(true);
               }}
               size="small"
               disabled={!canCreateAlertRule || permissionsLoading}
@@ -334,9 +334,9 @@ export const AlertRulesTab = () => {
         emptyMessage="No alert rules configured. Add a rule to receive notifications."
       />
 
-      <AlertRuleDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+      <AlertRuleDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
         onSuccess={() => {
           showSnackbar(selectedRule ? 'Rule updated' : 'Rule created', 'success');
           refetch();

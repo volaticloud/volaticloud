@@ -19,8 +19,8 @@ import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { useOrganizationPermission } from '../../hooks';
-import { CreateBotDialog } from './CreateBotDialog';
-import { EditBotDialog } from './EditBotDialog';
+import { CreateBotDrawer } from './CreateBotDrawer';
+import { EditBotDrawer } from './EditBotDrawer';
 import BotActionsMenu from './BotActionsMenu';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
@@ -33,8 +33,8 @@ type Bot = NonNullable<NonNullable<NonNullable<GetBotsQuery['bots']['edges']>[nu
 export const BotsList = () => {
   const navigate = useOrganizationNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<{
     id: string;
     name: string;
@@ -200,7 +200,7 @@ export const BotsList = () => {
             onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
             onEdit={() => {
               setSelectedBot(params.row);
-              setEditDialogOpen(true);
+              setEditDrawerOpen(true);
             }}
           />
         ) : null
@@ -248,7 +248,7 @@ export const BotsList = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setCreateDialogOpen(true)}
+                  onClick={() => setCreateDrawerOpen(true)}
                   disabled={!canCreateBot}
                   sx={{ flexShrink: 0 }}
                 >
@@ -268,17 +268,17 @@ export const BotsList = () => {
         isPolling={!pagination.loading && data !== undefined}
       />
 
-      <CreateBotDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+      <CreateBotDrawer
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedBot && (
-        <EditBotDialog
-          open={editDialogOpen}
+        <EditBotDrawer
+          open={editDrawerOpen}
           onClose={() => {
-            setEditDialogOpen(false);
+            setEditDrawerOpen(false);
             setSelectedBot(null);
           }}
           onSuccess={() => {

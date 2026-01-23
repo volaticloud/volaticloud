@@ -18,8 +18,8 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useGetStrategyDetailQuery, useGetStrategyVersionsQuery } from './strategy-detail.generated';
-import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
-import { DeleteStrategyDialog } from './DeleteStrategyDialog';
+import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
+import { DeleteStrategyDrawer } from './DeleteStrategyDrawer';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
@@ -29,8 +29,8 @@ import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 const StrategyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useOrganizationNavigate();
-  const [backtestDialogOpen, setBacktestDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [backtestDrawerOpen, setBacktestDrawerOpen] = useState(false);
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
 
   const { data, loading, error, refetch } = useGetStrategyDetailQuery({
     variables: { id: id! },
@@ -100,7 +100,7 @@ const StrategyDetail = () => {
         <Button
           variant="contained"
           startIcon={<PlayArrow />}
-          onClick={() => setBacktestDialogOpen(true)}
+          onClick={() => setBacktestDrawerOpen(true)}
         >
           Run Backtest
         </Button>
@@ -123,7 +123,7 @@ const StrategyDetail = () => {
           isPublic={strategy.public}
           onSuccess={() => refetch()}
         />
-        <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
+        <IconButton color="error" onClick={() => setDeleteDrawerOpen(true)}>
           <Delete />
         </IconButton>
       </Box>
@@ -161,12 +161,12 @@ const StrategyDetail = () => {
         )}
       </Box>
 
-      {/* Dialogs */}
-      <CreateBacktestDialog
-        open={backtestDialogOpen}
-        onClose={() => setBacktestDialogOpen(false)}
+      {/* Drawers */}
+      <CreateBacktestDrawer
+        open={backtestDrawerOpen}
+        onClose={() => setBacktestDrawerOpen(false)}
         onSuccess={(newStrategyId) => {
-          setBacktestDialogOpen(false);
+          setBacktestDrawerOpen(false);
           // Navigate to the new strategy version if it's different from current
           if (newStrategyId && newStrategyId !== strategy.id) {
             navigate(`/strategies/${newStrategyId}`);
@@ -177,11 +177,11 @@ const StrategyDetail = () => {
         preSelectedStrategyId={strategy.id}
       />
 
-      <DeleteStrategyDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+      <DeleteStrategyDrawer
+        open={deleteDrawerOpen}
+        onClose={() => setDeleteDrawerOpen(false)}
         onSuccess={() => {
-          setDeleteDialogOpen(false);
+          setDeleteDrawerOpen(false);
           navigate('/strategies');
         }}
         strategy={strategy}

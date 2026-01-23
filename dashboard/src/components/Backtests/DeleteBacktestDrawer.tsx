@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material';
 import { useDeleteBacktestMutation } from './backtests.generated';
-import { ConfirmDialog } from '../shared/FormDialog';
+import { ConfirmDrawer } from '../shared';
 import { useMutationHandler } from '../../hooks';
 
-interface DeleteBacktestDialogProps {
+interface DeleteBacktestDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -13,12 +13,12 @@ interface DeleteBacktestDialogProps {
   };
 }
 
-export const DeleteBacktestDialog = ({
+export const DeleteBacktestDrawer = ({
   open,
   onClose,
   onSuccess,
   backtest,
-}: DeleteBacktestDialogProps) => {
+}: DeleteBacktestDrawerProps) => {
   const [deleteBacktest] = useDeleteBacktestMutation();
 
   const mutation = useMutationHandler(deleteBacktest, {
@@ -35,7 +35,7 @@ export const DeleteBacktestDialog = ({
   };
 
   return (
-    <ConfirmDialog
+    <ConfirmDrawer
       open={open}
       onClose={onClose}
       title="Delete Backtest"

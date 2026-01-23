@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { IconButton, Tooltip, Snackbar, Alert, CircularProgress } from '@mui/material';
 import { Public as PublicIcon, Lock as LockIcon } from '@mui/icons-material';
 import { useSetStrategyVisibilityMutation } from './strategies.generated';
-import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { VisibilityToggleDrawer } from '../shared/VisibilityToggleDrawer';
 import { useCanPerform } from '../../hooks/useCanPerform';
 
 interface StrategyVisibilityButtonProps {
@@ -18,7 +18,7 @@ export const StrategyVisibilityButton = ({
   isPublic,
   onSuccess,
 }: StrategyVisibilityButtonProps) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -75,7 +75,7 @@ export const StrategyVisibilityButton = ({
           <IconButton
             size="small"
             color={isPublic ? 'info' : 'default'}
-            onClick={() => setDialogOpen(true)}
+            onClick={() => setDrawerOpen(true)}
             disabled={isDisabled}
           >
             {permissionLoading ? (
@@ -89,9 +89,9 @@ export const StrategyVisibilityButton = ({
         </span>
       </Tooltip>
 
-      <VisibilityToggleDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+      <VisibilityToggleDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
         onConfirm={handleConfirm}
         resourceType="strategy"
         resourceName={strategyName}

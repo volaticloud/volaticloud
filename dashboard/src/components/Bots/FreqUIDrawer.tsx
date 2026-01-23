@@ -1,11 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
+  Drawer,
   Box,
   Typography,
+  IconButton,
   CircularProgress,
   Alert,
 } from '@mui/material';
@@ -16,7 +14,7 @@ import {
   GetFreqtradeTokenMutation,
 } from './bots.generated';
 
-interface FreqUIDialogProps {
+interface FreqUIDrawerProps {
   open: boolean;
   onClose: () => void;
   botId: string;
@@ -61,11 +59,11 @@ function updateFreqUIAuth(
 }
 
 /**
- * FreqUIDialog displays FreqUI in an iframe within a fullscreen dialog.
+ * FreqUIDrawer displays FreqUI in an iframe within a fullscreen drawer.
  * Before showing the iframe, it authenticates with the bot via backend
  * and pre-populates FreqUI's localStorage with the JWT tokens.
  */
-const FreqUIDialog = ({ open, onClose, botId, botName }: FreqUIDialogProps) => {
+export const FreqUIDrawer = ({ open, onClose, botId, botName }: FreqUIDrawerProps) => {
   const frequiUrl = useConfigValue('VOLATICLOUD__FREQUI_URL');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isReady, setIsReady] = useState(false);
@@ -85,7 +83,7 @@ const FreqUIDialog = ({ open, onClose, botId, botName }: FreqUIDialogProps) => {
     },
   });
 
-  // Fetch token when dialog opens
+  // Fetch token when drawer opens
   useEffect(() => {
     if (open && botId) {
       setIsReady(false);
@@ -94,7 +92,7 @@ const FreqUIDialog = ({ open, onClose, botId, botName }: FreqUIDialogProps) => {
     }
   }, [open, botId, getToken]);
 
-  // Reset state when dialog closes
+  // Reset state when drawer closes
   useEffect(() => {
     if (!open) {
       setIsReady(false);
@@ -112,27 +110,28 @@ const FreqUIDialog = ({ open, onClose, botId, botName }: FreqUIDialogProps) => {
   };
 
   return (
-    <Dialog
+    <Drawer
+      anchor="right"
       open={open}
       onClose={onClose}
-      maxWidth={false}
-      fullWidth
       PaperProps={{
         sx: {
           width: '95vw',
-          height: '90vh',
           maxWidth: '95vw',
-          maxHeight: '90vh',
+          height: '100%',
         },
       }}
     >
-      <DialogTitle
+      {/* Header */}
+      <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          py: 1,
           px: 2,
+          py: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
         }}
       >
         <Box display="flex" alignItems="center" gap={1}>
@@ -154,8 +153,10 @@ const FreqUIDialog = ({ open, onClose, botId, botName }: FreqUIDialogProps) => {
             <Close />
           </IconButton>
         </Box>
-      </DialogTitle>
-      <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
         {loading && (
           <Box
             display="flex"
@@ -215,9 +216,8 @@ const FreqUIDialog = ({ open, onClose, botId, botName }: FreqUIDialogProps) => {
             allow="clipboard-write"
           />
         )}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 };
 
-export default FreqUIDialog;

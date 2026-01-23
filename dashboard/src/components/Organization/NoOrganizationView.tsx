@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Box, Container, Paper, Typography, Button, Alert } from '@mui/material';
 import { Business as BusinessIcon, Add as AddIcon } from '@mui/icons-material';
-import { CreateOrganizationDialog } from './CreateOrganizationDialog';
+import { CreateOrganizationDrawer } from './CreateOrganizationDrawer';
 
 export function NoOrganizationView() {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <>
@@ -45,7 +45,7 @@ export function NoOrganizationView() {
               size="large"
               fullWidth
               startIcon={<AddIcon />}
-              onClick={() => setDialogOpen(true)}
+              onClick={() => setDrawerOpen(true)}
               sx={{ mt: 2 }}
             >
               Create Organization
@@ -60,9 +60,9 @@ export function NoOrganizationView() {
           </Paper>
         </Container>
       </Box>
-      <CreateOrganizationDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+      <CreateOrganizationDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
         onSuccess={() => {
           // Force page reload to ensure all contexts are updated with new organization
           window.location.reload();

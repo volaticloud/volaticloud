@@ -1,23 +1,24 @@
 import { ReactNode } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
   Button,
   Alert,
   CircularProgress,
-  DialogProps,
+  Divider,
 } from '@mui/material';
+import { Close } from '@mui/icons-material';
 
-interface FormDialogProps {
-  /** Whether the dialog is open */
+interface FormDrawerProps {
+  /** Whether the drawer is open */
   open: boolean;
-  /** Called when dialog should close */
+  /** Called when drawer should close */
   onClose: () => void;
-  /** Dialog title */
+  /** Drawer title */
   title: string;
-  /** Dialog content */
+  /** Drawer content */
   children: ReactNode;
   /** Submit button text (default: "Submit") */
   submitLabel?: string;
@@ -35,24 +36,22 @@ interface FormDialogProps {
   submitDisabled?: boolean;
   /** Submit button color (default: "primary") */
   submitColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
-  /** Maximum width of dialog */
-  maxWidth?: DialogProps['maxWidth'];
-  /** Whether dialog takes full width */
-  fullWidth?: boolean;
-  /** Use dividers in DialogContent */
-  dividers?: boolean;
+  /** Drawer width (default: 480) */
+  width?: number | string;
   /** Additional actions to render before cancel button */
   additionalActions?: ReactNode;
+  /** Anchor position (default: "right") */
+  anchor?: 'left' | 'right';
 }
 
 /**
- * Reusable form dialog wrapper with consistent structure and error handling.
+ * Reusable form drawer wrapper with consistent structure and error handling.
  *
  * @example
  * const [name, setName] = useState('');
  * const mutation = useMutationHandler(createBot, { ... });
  *
- * <FormDialog
+ * <FormDrawer
  *   open={open}
  *   onClose={onClose}
  *   title="Create Bot"
@@ -63,9 +62,9 @@ interface FormDialogProps {
  *   onSubmit={() => mutation.execute({ name })}
  * >
  *   <TextField value={name} onChange={(e) => setName(e.target.value)} />
- * </FormDialog>
+ * </FormDrawer>
  */
-export function FormDialog({
+export function FormDrawer({
   open,
   onClose,
   title,
@@ -78,27 +77,79 @@ export function FormDialog({
   error = null,
   submitDisabled = false,
   submitColor = 'primary',
-  maxWidth = 'sm',
-  fullWidth = true,
-  dividers = false,
+  width = 480,
   additionalActions,
-}: FormDialogProps) {
+  anchor = 'right',
+}: FormDrawerProps) {
   const handleSubmit = async () => {
     await onSubmit();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth={fullWidth}>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers={dividers}>
+    <Drawer
+      anchor={anchor}
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: width },
+          maxWidth: '100%',
+        },
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          disabled={loading}
+          size="small"
+          aria-label="close"
+        >
+          <Close />
+        </IconButton>
+      </Box>
+
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          px: 3,
+          py: 2,
+        }}
+      >
         {children}
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
             {error}
           </Alert>
         )}
-      </DialogContent>
-      <DialogActions>
+      </Box>
+
+      {/* Footer */}
+      <Divider />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 1,
+          px: 3,
+          py: 2,
+        }}
+      >
         {additionalActions}
         <Button onClick={onClose} disabled={loading}>
           {cancelLabel}
@@ -112,17 +163,17 @@ export function FormDialog({
         >
           {loading ? submitLoadingLabel : submitLabel}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 }
 
-interface ConfirmDialogProps {
-  /** Whether the dialog is open */
+interface ConfirmDrawerProps {
+  /** Whether the drawer is open */
   open: boolean;
-  /** Called when dialog should close */
+  /** Called when drawer should close */
   onClose: () => void;
-  /** Dialog title */
+  /** Drawer title */
   title: string;
   /** Confirmation message */
   message: ReactNode;
@@ -140,15 +191,17 @@ interface ConfirmDialogProps {
   error?: string | null;
   /** Confirm button color (default: "error") */
   confirmColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
+  /** Drawer width (default: 400) */
+  width?: number | string;
 }
 
 /**
- * Reusable confirmation dialog for destructive actions.
+ * Reusable confirmation drawer for destructive actions.
  *
  * @example
  * const mutation = useMutationHandler(deleteBot, { ... });
  *
- * <ConfirmDialog
+ * <ConfirmDrawer
  *   open={open}
  *   onClose={onClose}
  *   title="Delete Bot"
@@ -159,7 +212,7 @@ interface ConfirmDialogProps {
  *   onConfirm={() => mutation.execute({ id: bot.id })}
  * />
  */
-export function ConfirmDialog({
+export function ConfirmDrawer({
   open,
   onClose,
   title,
@@ -171,9 +224,10 @@ export function ConfirmDialog({
   loading = false,
   error = null,
   confirmColor = 'error',
-}: ConfirmDialogProps) {
+  width = 400,
+}: ConfirmDrawerProps) {
   return (
-    <FormDialog
+    <FormDrawer
       open={open}
       onClose={onClose}
       title={title}
@@ -184,8 +238,11 @@ export function ConfirmDialog({
       loading={loading}
       error={error}
       submitColor={confirmColor}
+      width={width}
     >
-      {typeof message === 'string' ? <span>{message}</span> : message}
-    </FormDialog>
+      <Box sx={{ py: 1 }}>
+        {typeof message === 'string' ? <Typography>{message}</Typography> : message}
+      </Box>
+    </FormDrawer>
   );
 }

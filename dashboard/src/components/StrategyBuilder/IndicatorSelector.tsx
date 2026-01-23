@@ -12,10 +12,8 @@ import {
   Paper,
   Collapse,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  IconButton,
   Button,
   Divider,
   FormControl,
@@ -36,6 +34,7 @@ import {
   Delete,
   Edit,
   Info,
+  Close,
 } from '@mui/icons-material';
 import {
   IndicatorDefinition,
@@ -66,7 +65,7 @@ interface IndicatorSelectorProps {
 export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['trend', 'momentum']));
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingIndicator, setEditingIndicator] = useState<IndicatorDefinition | null>(null);
   const [selectedType, setSelectedType] = useState<IndicatorType | null>(null);
 
@@ -103,13 +102,13 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
       params: getDefaultParams(meta.type),
       label: `${meta.name} ${indicators.filter((i) => i.type === meta.type).length + 1}`,
     });
-    setDialogOpen(true);
+    setDrawerOpen(true);
   };
 
   const handleEditIndicator = (indicator: IndicatorDefinition) => {
     setSelectedType(indicator.type);
     setEditingIndicator({ ...indicator });
-    setDialogOpen(true);
+    setDrawerOpen(true);
   };
 
   const handleDeleteIndicator = (id: string) => {
@@ -127,7 +126,7 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
       // Add new
       onChange([...indicators, editingIndicator]);
     }
-    setDialogOpen(false);
+    setDrawerOpen(false);
     setEditingIndicator(null);
     setSelectedType(null);
   };
@@ -280,21 +279,51 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
         </List>
       </Paper>
 
-      {/* Edit/Add Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingIndicator && indicators.find((i) => i.id === editingIndicator.id)
-            ? 'Edit Indicator'
-            : 'Add Indicator'}
-          {currentMeta && (
-            <Typography variant="body2" color="text.secondary">
-              {currentMeta.name} - {currentMeta.description}
+      {/* Edit/Add Drawer */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 400 },
+            maxWidth: '100%',
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            py: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Box>
+            <Typography variant="h6" component="h2">
+              {editingIndicator && indicators.find((i) => i.id === editingIndicator.id)
+                ? 'Edit Indicator'
+                : 'Add Indicator'}
             </Typography>
-          )}
-        </DialogTitle>
-        <DialogContent>
+            {currentMeta && (
+              <Typography variant="body2" color="text.secondary">
+                {currentMeta.name} - {currentMeta.description}
+              </Typography>
+            )}
+          </Box>
+          <IconButton onClick={() => setDrawerOpen(false)} size="small" aria-label="close">
+            <Close />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ flex: 1, overflow: 'auto', px: 3, py: 2 }}>
           {editingIndicator && currentMeta && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {/* Label */}
               <TextField
                 label="Label"
@@ -378,16 +407,27 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
               )}
             </Box>
           )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+        </Box>
+
+        {/* Footer */}
+        <Divider />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            px: 3,
+            py: 2,
+          }}
+        >
+          <Button onClick={() => setDrawerOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSaveIndicator}>
             {editingIndicator && indicators.find((i) => i.id === editingIndicator.id)
               ? 'Update'
               : 'Add'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 }

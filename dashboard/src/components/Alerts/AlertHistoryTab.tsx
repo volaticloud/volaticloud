@@ -10,7 +10,7 @@ import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { AlertEventAlertEventStatus, AlertEventAlertSeverity } from '../../generated/types';
-import { AlertDetailDialog } from './AlertDetailDialog';
+import { AlertDetailDrawer } from './AlertDetailDrawer';
 
 // Extract AlertEvent type from generated query
 type AlertEvent = NonNullable<
@@ -158,7 +158,7 @@ export const AlertHistoryTab = () => {
         onRowClick={(row) => setSelectedAlert(row)}
       />
 
-      <AlertDetailDialog
+      <AlertDetailDrawer
         open={!!selectedAlert}
         onClose={() => setSelectedAlert(null)}
         alert={selectedAlert}
