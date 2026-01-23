@@ -54,6 +54,10 @@ type Config struct {
 	// LeaseTTL is the TTL for etcd leases in seconds
 	// Default: 15s
 	LeaseTTL int64
+
+	// DataDownloadTimeout is the maximum time allowed for runner data downloads
+	// Default: 12h
+	DataDownloadTimeout time.Duration
 }
 
 // NewManager creates a new monitor manager
@@ -124,6 +128,9 @@ func NewManager(cfg Config) (*Manager, error) {
 	m.runnerMonitor = NewRunnerMonitor(cfg.DatabaseClient, m.coordinator)
 	if cfg.RunnerMonitorInterval > 0 {
 		m.runnerMonitor.SetInterval(cfg.RunnerMonitorInterval)
+	}
+	if cfg.DataDownloadTimeout > 0 {
+		m.runnerMonitor.SetDataDownloadTimeout(cfg.DataDownloadTimeout)
 	}
 
 	// Create backtest monitor (uses same interval as bot monitor)

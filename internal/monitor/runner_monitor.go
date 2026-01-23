@@ -20,13 +20,17 @@ const (
 
 	// DataRefreshInterval is how often data should be refreshed (24 hours)
 	DataRefreshInterval = 24 * time.Hour
+
+	// DefaultDataDownloadTimeout is the maximum time allowed for runner data downloads
+	DefaultDataDownloadTimeout = 12 * time.Hour
 )
 
 // RunnerMonitor periodically checks runner data status and triggers downloads
 type RunnerMonitor struct {
-	dbClient    *ent.Client
-	coordinator *Coordinator
-	interval    time.Duration
+	dbClient            *ent.Client
+	coordinator         *Coordinator
+	interval            time.Duration
+	dataDownloadTimeout time.Duration
 
 	stopChan chan struct{}
 	doneChan chan struct{}
@@ -35,17 +39,28 @@ type RunnerMonitor struct {
 // NewRunnerMonitor creates a new runner monitoring worker
 func NewRunnerMonitor(dbClient *ent.Client, coordinator *Coordinator) *RunnerMonitor {
 	return &RunnerMonitor{
-		dbClient:    dbClient,
-		coordinator: coordinator,
-		interval:    DefaultRunnerMonitorInterval,
-		stopChan:    make(chan struct{}),
-		doneChan:    make(chan struct{}),
+		dbClient:            dbClient,
+		coordinator:         coordinator,
+		interval:            DefaultRunnerMonitorInterval,
+		dataDownloadTimeout: DefaultDataDownloadTimeout,
+		stopChan:            make(chan struct{}),
+		doneChan:            make(chan struct{}),
 	}
 }
 
 // SetInterval sets the monitoring interval
 func (m *RunnerMonitor) SetInterval(interval time.Duration) {
 	m.interval = interval
+}
+
+// SetDataDownloadTimeout sets the maximum time allowed for data downloads
+func (m *RunnerMonitor) SetDataDownloadTimeout(timeout time.Duration) {
+	m.dataDownloadTimeout = timeout
+}
+
+// GetDataDownloadTimeout returns the configured data download timeout
+func (m *RunnerMonitor) GetDataDownloadTimeout() time.Duration {
+	return m.dataDownloadTimeout
 }
 
 // Start begins the monitoring loop
@@ -177,9 +192,9 @@ func (m *RunnerMonitor) isDownloadStuck(ctx context.Context, r *ent.BotRunner) b
 
 	timeSinceStart := time.Since(*r.DataDownloadStartedAt)
 
-	// Downloads taking more than 2 hours are likely stuck
-	if timeSinceStart > 2*time.Hour {
-		log.Printf("Runner %s: download started %v ago, assuming stuck", r.Name, timeSinceStart.Round(time.Second))
+	// Downloads taking more than the configured timeout are likely stuck
+	if timeSinceStart > m.dataDownloadTimeout {
+		log.Printf("Runner %s: download started %v ago (exceeded %v limit), assuming stuck", r.Name, timeSinceStart.Round(time.Second), m.dataDownloadTimeout)
 		return true
 	}
 
@@ -194,16 +209,9 @@ func (m *RunnerMonitor) isDownloadStuck(ctx context.Context, r *ent.BotRunner) b
 		return false
 	}
 
-	// Check if percent complete has changed recently
-	// If downloading/packaging/uploading for more than 30 minutes, likely stuck
-	if timeSinceStart > 30*time.Minute {
-		currentPhase := ""
-		if phase, ok := progress["current_pair"].(string); ok {
-			currentPhase = phase
-		}
-		log.Printf("Runner %s: download at phase '%s' for %v, checking if stuck", r.Name, currentPhase, timeSinceStart.Round(time.Second))
-		return true
-	}
+	// For long-running downloads (up to 12 hours), we only check the hard timeout above.
+	// Progress tracking ensures the download is making forward progress.
+	// We don't consider phase-based stuck detection since large datasets may take hours per phase.
 
 	return false
 }
@@ -241,7 +249,7 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunne
 
 	// Launch data download in a goroutine
 	go func() {
-		downloadCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		downloadCtx, cancel := context.WithTimeout(context.Background(), m.dataDownloadTimeout)
 		defer cancel()
 
 		if err := DownloadRunnerData(downloadCtx, m.dbClient, r); err != nil {
