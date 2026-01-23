@@ -12,10 +12,10 @@ import (
 // Kubernetes ConfigMap keys must match [-._a-zA-Z0-9]+
 func TestStrategyConfigMapKeySanitization(t *testing.T) {
 	tests := []struct {
-		name           string
-		strategyName   string
-		expectedKey    string
-		description    string
+		name         string
+		strategyName string
+		expectedKey  string
+		description  string
 	}{
 		{
 			name:         "spaces are removed and converted to PascalCase",
@@ -115,7 +115,7 @@ func TestStrategyConfigMapKeyValidForKubernetes(t *testing.T) {
 		"EMA 50/200 Crossover",
 		"Bollinger Bands Breakout",
 		"RSI + MACD Combined",
-		"策略测试", // Chinese characters
+		"策略测试",      // Chinese characters
 		"стратегия", // Russian characters
 		"Strategy (v2)",
 		"Strategy [test]",

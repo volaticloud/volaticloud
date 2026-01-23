@@ -15,27 +15,10 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useState, useEffect, useMemo } from 'react';
-import { useUpdateBotMutation } from './bots.generated';
-import { useQuery } from '@apollo/client';
-import { gql } from '@apollo/client';
+import { useUpdateBotMutation, useGetExchangesForEditQuery } from './bots.generated';
 import { JSONEditor } from '../JSONEditor';
 import { useDialogUnsavedChanges } from '../../hooks';
 import { UnsavedChangesDrawer, StrategySelector, RunnerSelector } from '../shared';
-
-// Query to get available exchanges
-// (Strategies and Runners are fetched by their respective selector components)
-const GET_BOT_OPTIONS = gql`
-  query GetBotOptionsForEdit {
-    exchanges(first: 50) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
 
 interface EditBotDrawerProps {
   open: boolean;
@@ -60,7 +43,7 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
   const [mode, setMode] = useState<'live' | 'dry_run'>(bot.mode as 'live' | 'dry_run');
   const [config, setConfig] = useState<object | null>(null);
 
-  const { data: optionsData } = useQuery(GET_BOT_OPTIONS);
+  const { data: optionsData } = useGetExchangesForEditQuery();
   const [updateBot, { loading, error }] = useUpdateBotMutation();
 
   // Track if form has been modified from original bot values

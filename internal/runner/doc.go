@@ -369,6 +369,28 @@ Benefits:
   - Inheritance: Strategy defaults + bot overrides
   - Immutable: Configs mounted read-only
 
+## Strategy Name Sanitization
+
+Strategy names must be sanitized to valid Python class names (PascalCase) because:
+  - Kubernetes ConfigMap keys cannot contain spaces (must match [-._a-zA-Z0-9]+)
+  - Python file names cannot contain spaces
+  - Freqtrade --strategy flag expects a valid Python class name
+
+The SanitizeStrategyFilename function converts user-friendly names to valid identifiers:
+
+	"RSI Test Strategy" → "RsiTestStrategy"
+	"my-strategy"       → "Mystrategy"
+	"Test_Strategy_123" → "TestStrategy123"
+
+This sanitization is applied consistently across:
+  - ConfigMap keys (Kubernetes)
+  - Strategy file names (Docker volumes)
+  - Python class names (strategy codegen)
+  - --strategy command flag (freqtrade)
+
+Frontend Sync: The dashboard uses an equivalent toClassName function.
+Both must produce identical output to ensure the strategy file matches the class name.
+
 # Status and Health Checking
 
 BotStatus represents runtime state:

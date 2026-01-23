@@ -15,29 +15,12 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useState, useMemo } from 'react';
-import { useCreateBotMutation } from './bots.generated';
-import { useQuery } from '@apollo/client';
-import { gql } from '@apollo/client';
+import { useCreateBotMutation, useGetExchangesForCreateQuery } from './bots.generated';
 import { JSONEditor } from '../JSONEditor';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { RunnerSelector, StrategySelector } from '../shared';
 import { useDialogUnsavedChanges } from '../../hooks';
 import { UnsavedChangesDrawer } from '../shared';
-
-// Query to get available exchanges filtered by owner
-// (Strategies and Runners are fetched by their respective selector components)
-const GET_BOT_OPTIONS = gql`
-  query GetBotOptionsForCreate($ownerID: String) {
-    exchanges(first: 50, where: { ownerID: $ownerID }) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
 
 interface CreateBotDrawerProps {
   open: boolean;
@@ -101,7 +84,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
   const [mode, setMode] = useState<'live' | 'dry_run'>('dry_run');
   const [config, setConfig] = useState<object | null>(DEFAULT_BOT_CONFIG);
 
-  const { data: optionsData } = useQuery(GET_BOT_OPTIONS, {
+  const { data: optionsData } = useGetExchangesForCreateQuery({
     variables: {
       ownerID: activeOrganizationId || undefined,
     },

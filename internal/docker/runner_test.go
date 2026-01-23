@@ -67,9 +67,9 @@ func TestStrategyFilenameSanitization(t *testing.T) {
 // is constructed correctly with sanitized names
 func TestStrategyVolumePathConstruction(t *testing.T) {
 	tests := []struct {
-		botID          string
-		strategyName   string
-		expectedPath   string
+		botID        string
+		strategyName string
+		expectedPath string
 	}{
 		{
 			botID:        "bot-123",
@@ -99,9 +99,9 @@ func TestStrategyVolumePathConstruction(t *testing.T) {
 // TestStrategyContainerPathConstruction verifies the container path for strategy files
 func TestStrategyContainerPathConstruction(t *testing.T) {
 	tests := []struct {
-		botID          string
-		strategyName   string
-		expectedPath   string
+		botID        string
+		strategyName string
+		expectedPath string
 	}{
 		{
 			botID:        "bot-123",

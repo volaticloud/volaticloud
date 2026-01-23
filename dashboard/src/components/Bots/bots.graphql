@@ -191,6 +191,30 @@ mutation GetFreqtradeToken($botId: ID!) {
   }
 }
 
+# Query to get exchanges for bot creation (filtered by owner)
+query GetExchangesForCreate($ownerID: String) {
+  exchanges(first: 50, where: { ownerID: $ownerID }) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+
+# Query to get exchanges for bot editing (all accessible)
+query GetExchangesForEdit {
+  exchanges(first: 50) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+
 # Bot resource usage history query - for usage charts
 query GetBotUsageHistory($botID: ID!, $start: Time!, $end: Time!) {
   botUsageHistory(botID: $botID, start: $start, end: $end) {
