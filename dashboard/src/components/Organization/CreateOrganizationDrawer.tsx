@@ -18,7 +18,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateOrganizationMutation } from './organization.generated';
 import { useDialogUnsavedChanges } from '../../hooks/useDialogUnsavedChanges';
-import { UnsavedChangesDrawer } from '../shared';
+import { UnsavedChangesDrawer } from '../shared/UnsavedChangesDrawer';
 
 interface CreateOrganizationDrawerProps {
   open: boolean;
