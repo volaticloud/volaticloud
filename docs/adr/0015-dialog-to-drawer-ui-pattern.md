@@ -7,12 +7,14 @@ Accepted
 ## Context
 
 The dashboard previously used Material-UI Dialog components (modal overlays) for all form interactions including:
+
 - Creating/editing resources (bots, strategies, exchanges, runners)
 - Confirmation dialogs (delete operations)
 - Detail views (alert details, backtest results)
 - User management (invitations, role changes)
 
 Modal dialogs have several UX limitations:
+
 1. **Context loss**: Modals obscure the underlying page, making it harder to reference existing data
 2. **Mobile unfriendliness**: Fixed-position modals can be problematic on mobile devices
 3. **Inconsistent sizing**: Different dialogs had varying widths without clear guidelines
