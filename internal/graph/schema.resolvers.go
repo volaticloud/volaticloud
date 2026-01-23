@@ -624,7 +624,7 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 
 	// Trigger download in background goroutine
 	go func() {
-		downloadCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		downloadCtx, cancel := context.WithTimeout(context.Background(), monitor.DefaultDataDownloadTimeout)
 		defer cancel()
 
 		if err := monitor.DownloadRunnerData(downloadCtx, r.client, runner); err != nil {

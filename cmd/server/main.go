@@ -79,6 +79,12 @@ func main() {
 				Value:   30 * time.Second,
 				EnvVars: []string{"VOLATICLOUD_MONITOR_INTERVAL"},
 			},
+			&cli.DurationFlag{
+				Name:    "data-download-timeout",
+				Usage:   "Maximum time allowed for runner data downloads",
+				Value:   12 * time.Hour,
+				EnvVars: []string{"VOLATICLOUD_DATA_DOWNLOAD_TIMEOUT"},
+			},
 			&cli.StringFlag{
 				Name:    "keycloak-url",
 				Usage:   "Keycloak server URL (e.g., https://keycloak.volaticloud.com)",
@@ -257,9 +263,10 @@ func runServer(c *cli.Context) error {
 	monitorInterval := c.Duration("monitor-interval")
 
 	monitorManager, err := monitor.NewManager(monitor.Config{
-		DatabaseClient:  client,
-		EtcdEndpoints:   etcdEndpoints,
-		MonitorInterval: monitorInterval,
+		DatabaseClient:      client,
+		EtcdEndpoints:       etcdEndpoints,
+		MonitorInterval:     monitorInterval,
+		DataDownloadTimeout: c.Duration("data-download-timeout"),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create monitor manager: %w", err)

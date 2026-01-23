@@ -85,25 +85,18 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	log.Printf("Runner %s: started remote download task %s", r.Name, taskID)
 
 	// Wait for completion (polling)
+	// The context carries the timeout deadline set by the caller
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	timeout := time.After(2 * time.Hour)
 	for {
 		select {
 		case <-ctx.Done():
-			// Try to cancel the download
-			if cancelErr := downloader.CancelDownload(ctx, taskID); cancelErr != nil {
+			// Context cancelled or deadline exceeded - try to cancel the download
+			if cancelErr := downloader.CancelDownload(context.Background(), taskID); cancelErr != nil {
 				log.Printf("Runner %s: failed to cancel download: %v", r.Name, cancelErr)
 			}
-			return ctx.Err()
-
-		case <-timeout:
-			// Timeout - cancel and cleanup
-			if cancelErr := downloader.CancelDownload(ctx, taskID); cancelErr != nil {
-				log.Printf("Runner %s: failed to cancel timed-out download: %v", r.Name, cancelErr)
-			}
-			return fmt.Errorf("download timed out after 2 hours")
+			return fmt.Errorf("download cancelled or timed out: %w", ctx.Err())
 
 		case <-ticker.C:
 			status, err := downloader.GetDownloadStatus(ctx, taskID)
