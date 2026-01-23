@@ -20,33 +20,17 @@ import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { JSONEditor } from '../JSONEditor';
 import { useDialogUnsavedChanges } from '../../hooks';
-import { UnsavedChangesDrawer } from '../shared';
+import { UnsavedChangesDrawer, StrategySelector, RunnerSelector } from '../shared';
 
-// Query to get available exchanges, strategies, and runners
+// Query to get available exchanges
+// (Strategies and Runners are fetched by their respective selector components)
 const GET_BOT_OPTIONS = gql`
-  query GetBotOptions {
+  query GetBotOptionsForEdit {
     exchanges(first: 50) {
       edges {
         node {
           id
           name
-        }
-      }
-    }
-    strategies(first: 50) {
-      edges {
-        node {
-          id
-          name
-        }
-      }
-    }
-    botRunners(first: 50) {
-      edges {
-        node {
-          id
-          name
-          type
         }
       }
     }
@@ -138,8 +122,6 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
   };
 
   const exchanges = optionsData?.exchanges?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const strategies = optionsData?.strategies?.edges?.map(edge => edge?.node).filter(Boolean) || [];
-  const runners = optionsData?.botRunners?.edges?.map(edge => edge?.node).filter(Boolean) || [];
 
   return (
     <>
@@ -226,45 +208,17 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
               )}
             </FormControl>
 
-            <FormControl fullWidth required>
-              <InputLabel>Strategy</InputLabel>
-              <Select
-                value={strategyID}
-                onChange={(e) => setStrategyID(e.target.value)}
-                label="Strategy"
-              >
-                {strategies.map((strategy) => (
-                  <MenuItem key={strategy.id} value={strategy.id}>
-                    {strategy.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {strategies.length === 0 && (
-                <FormHelperText error>
-                  No strategies available. Please add a strategy first.
-                </FormHelperText>
-              )}
-            </FormControl>
+            <StrategySelector
+              value={strategyID}
+              onChange={setStrategyID}
+              required
+            />
 
-            <FormControl fullWidth required>
-              <InputLabel>Runner</InputLabel>
-              <Select
-                value={runnerID}
-                onChange={(e) => setRunnerID(e.target.value)}
-                label="Runner"
-              >
-                {runners.map((runner) => (
-                  <MenuItem key={runner.id} value={runner.id}>
-                    {runner.name} ({runner.type})
-                  </MenuItem>
-                ))}
-              </Select>
-              {runners.length === 0 && (
-                <FormHelperText error>
-                  No runners configured. Please add a runner first.
-                </FormHelperText>
-              )}
-            </FormControl>
+            <RunnerSelector
+              value={runnerID}
+              onChange={setRunnerID}
+              required
+            />
 
             <Box>
               <JSONEditor

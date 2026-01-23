@@ -609,8 +609,10 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 	}
 
 	// Add strategy name and userdir for strategy file lookup
+	// Use sanitized strategy name to match the class name in the strategy file
 	if spec.StrategyName != "" {
-		freqtradeArgs = append(freqtradeArgs, "--strategy", spec.StrategyName)
+		sanitizedName := runner.SanitizeStrategyFilename(spec.StrategyName)
+		freqtradeArgs = append(freqtradeArgs, "--strategy", sanitizedName)
 		// Set userdir so freqtrade can find the strategy file
 		freqtradeArgs = append(freqtradeArgs, "--userdir", fmt.Sprintf("/freqtrade/user_data/%s", configPaths.botID))
 	}
@@ -974,8 +976,10 @@ func (d *Runtime) createConfigFiles(spec runner.BotSpec) (*configFilePaths, erro
 	}
 
 	// Write strategy Python file to Docker volume
+	// Sanitize strategy name to be a valid Python filename (no spaces allowed)
 	if spec.StrategyCode != "" && spec.StrategyName != "" {
-		strategyFileName := spec.StrategyName + ".py"
+		sanitizedName := runner.SanitizeStrategyFilename(spec.StrategyName)
+		strategyFileName := sanitizedName + ".py"
 		volumePath := filepath.Join(spec.ID, "strategies", strategyFileName)
 		if err := d.volumeHelper.WriteFile(ctx, BotConfigVolume, volumePath, []byte(spec.StrategyCode)); err != nil {
 			d.cleanupConfigFiles(spec.ID)

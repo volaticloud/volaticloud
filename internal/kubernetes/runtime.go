@@ -691,6 +691,9 @@ func (r *Runtime) createBotConfigMap(ctx context.Context, spec runner.BotSpec) (
 
 // createStrategyConfigMap creates a ConfigMap with strategy code
 func (r *Runtime) createStrategyConfigMap(ctx context.Context, spec runner.BotSpec) (*corev1.ConfigMap, error) {
+	// Sanitize strategy name to be a valid K8s ConfigMap key and Python filename
+	// ConfigMap keys must match [-._a-zA-Z0-9]+ (no spaces allowed)
+	sanitizedName := runner.SanitizeStrategyFilename(spec.StrategyName)
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.getStrategyConfigMapName(spec.ID),
@@ -702,7 +705,7 @@ func (r *Runtime) createStrategyConfigMap(ctx context.Context, spec runner.BotSp
 			},
 		},
 		Data: map[string]string{
-			fmt.Sprintf("%s.py", spec.StrategyName): spec.StrategyCode,
+			fmt.Sprintf("%s.py", sanitizedName): spec.StrategyCode,
 		},
 	}
 
@@ -756,9 +759,11 @@ func (r *Runtime) createBotDeployment(ctx context.Context, spec runner.BotSpec, 
 	userDataPath := fmt.Sprintf("/freqtrade/user_data/%s", spec.ID)
 
 	// Build command with config layering
+	// Use sanitized strategy name to match the class name in the strategy file
+	sanitizedStrategyName := runner.SanitizeStrategyFilename(spec.StrategyName)
 	cmd := []string{
 		"freqtrade", "trade",
-		"--strategy", spec.StrategyName,
+		"--strategy", sanitizedStrategyName,
 		"--userdir", userDataPath,
 	}
 
@@ -828,6 +833,8 @@ func (r *Runtime) createBotDeployment(ctx context.Context, spec runner.BotSpec, 
 	// 3. Copy strategy from ConfigMap
 	// 4. Copy secrets (exchange/secure config)
 	// 5. Download data from S3 if URL provided
+	// Use sanitized strategy name for file path (matches ConfigMap key)
+	// Note: sanitizedStrategyName was already set earlier for the --strategy flag
 	setupScript := fmt.Sprintf(`set -e
 echo "Setting up user_data directory..."
 mkdir -p /userdata/strategies /userdata/data
@@ -842,7 +849,7 @@ cp /secrets-source/config.secure.json /userdata/ 2>/dev/null || echo "No secure 
 
 echo "Copying strategy..."
 cp /strategy-source/%s.py /userdata/strategies/
-`, spec.StrategyName)
+`, sanitizedStrategyName)
 
 	if spec.DataDownloadURL != "" {
 		// Check if data already exists to handle pod restarts
