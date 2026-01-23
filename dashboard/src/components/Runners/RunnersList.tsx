@@ -24,10 +24,10 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation, GetRunnersQuery } from './runners.generated';
-import { CreateRunnerDialog } from './CreateRunnerDialog';
-import { EditRunnerDialog } from './EditRunnerDialog';
-import { DeleteRunnerDialog } from './DeleteRunnerDialog';
-import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { CreateRunnerDrawer } from './CreateRunnerDrawer';
+import { EditRunnerDrawer } from './EditRunnerDrawer';
+import { DeleteRunnerDrawer } from './DeleteRunnerDrawer';
+import { VisibilityToggleDrawer } from '../shared/VisibilityToggleDrawer';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
@@ -332,7 +332,7 @@ export const RunnersList = () => {
         isPolling={!pagination.loading && data !== undefined}
       />
 
-      <CreateRunnerDialog
+      <CreateRunnerDrawer
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onSuccess={() => refetch()}
@@ -340,7 +340,7 @@ export const RunnersList = () => {
 
       {selectedRunner && (
         <>
-          <EditRunnerDialog
+          <EditRunnerDrawer
             open={editDialogOpen}
             onClose={() => {
               setEditDialogOpen(false);
@@ -353,7 +353,7 @@ export const RunnersList = () => {
             runner={selectedRunner}
           />
 
-          <DeleteRunnerDialog
+          <DeleteRunnerDrawer
             open={deleteDialogOpen}
             onClose={() => {
               setDeleteDialogOpen(false);
@@ -366,7 +366,7 @@ export const RunnersList = () => {
             runner={selectedRunner}
           />
 
-          <VisibilityToggleDialog
+          <VisibilityToggleDrawer
             open={visibilityDialogOpen}
             onClose={() => {
               setVisibilityDialogOpen(false);

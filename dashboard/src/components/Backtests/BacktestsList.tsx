@@ -18,8 +18,8 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetBacktestsQuery, useRunBacktestMutation, useStopBacktestMutation, GetBacktestsQuery } from './backtests.generated';
-import { CreateBacktestDialog } from './CreateBacktestDialog';
-import { DeleteBacktestDialog } from './DeleteBacktestDialog';
+import { CreateBacktestDrawer } from './CreateBacktestDrawer';
+import { DeleteBacktestDrawer } from './DeleteBacktestDrawer';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
@@ -311,14 +311,14 @@ export const BacktestsList = () => {
         onRowClick={(row) => navigate(`/backtests/${row.id}`)}
       />
 
-      <CreateBacktestDialog
+      <CreateBacktestDrawer
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedBacktest && (
-        <DeleteBacktestDialog
+        <DeleteBacktestDrawer
           open={deleteDialogOpen}
           onClose={() => {
             setDeleteDialogOpen(false);

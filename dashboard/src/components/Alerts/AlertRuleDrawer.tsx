@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
   Button,
   TextField,
   FormControl,
@@ -12,16 +12,16 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  Box,
   FormHelperText,
   Chip,
-  Typography,
   CircularProgress,
   Slider,
   Checkbox,
   ListItemText,
   Alert,
+  Divider,
 } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import {
   useCreateAlertRuleMutation,
   useUpdateAlertRuleMutation,
@@ -42,7 +42,7 @@ import { StrategySelector } from '../shared/StrategySelector';
 import { RunnerSelector } from '../shared/RunnerSelector';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useDialogUnsavedChanges } from '../../hooks';
-import { UnsavedChangesDialog } from '../shared';
+import { UnsavedChangesDrawer } from '../shared';
 
 type AlertRule = NonNullable<
   NonNullable<NonNullable<GetAlertRulesQuery['alertRules']['edges']>[number]>['node']
@@ -50,7 +50,7 @@ type AlertRule = NonNullable<
 
 type AlertTypeInfo = GetAlertTypesForResourceQuery['alertTypesForResource'][number];
 
-interface AlertRuleDialogProps {
+interface AlertRuleDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -93,12 +93,12 @@ const botRelatedAlertTypes: AlertRuleAlertType[] = [
   AlertRuleAlertType.ConnectionIssue,
 ];
 
-export const AlertRuleDialog = ({
+export const AlertRuleDrawer = ({
   open,
   onClose,
   onSuccess,
   rule,
-}: AlertRuleDialogProps) => {
+}: AlertRuleDrawerProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const isEdit = !!rule;
 
@@ -444,280 +444,329 @@ export const AlertRuleDialog = ({
 
   return (
     <>
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{isEdit ? 'Edit Alert Rule' : 'Create Alert Rule'}</DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
-          {/* Step 1: Resource Selection */}
-          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
-            1. Select Resource to Monitor
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 500 },
+            maxWidth: '100%',
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            py: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            {isEdit ? 'Edit Alert Rule' : 'Create Alert Rule'}
           </Typography>
+          <IconButton onClick={handleClose} size="small" aria-label="close">
+            <Close />
+          </IconButton>
+        </Box>
 
-          <FormControl fullWidth>
-            <InputLabel>Resource Scope</InputLabel>
-            <Select
-              value={resourceType}
-              label="Resource Scope"
-              onChange={(e) => {
-                setResourceType(e.target.value as AlertRuleAlertResourceType);
-                setResourceId('');
-              }}
-            >
-              {Object.entries(resourceTypeLabels).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>Choose what you want to monitor</FormHelperText>
-          </FormControl>
+        {/* Content */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            px: 3,
+            py: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {/* Step 1: Resource Selection */}
+            <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
+              1. Select Resource to Monitor
+            </Typography>
 
-          {resourceType === 'bot' && (
-            <BotSelector
-              value={resourceId}
-              onChange={setResourceId}
-              label="Select Bot"
-              required
-              helperText="Choose the specific bot to monitor"
-            />
-          )}
-
-          {resourceType === 'strategy' && (
-            <StrategySelector
-              value={resourceId}
-              onChange={setResourceId}
-              label="Select Strategy"
-              required
-              helperText="Monitor all bots using this strategy"
-            />
-          )}
-
-          {resourceType === 'runner' && (
-            <RunnerSelector
-              value={resourceId}
-              onChange={setResourceId}
-              label="Select Runner"
-              required
-              helperText="Monitor connection issues for this runner"
-            />
-          )}
-
-          {/* Step 2: Alert Type Selection */}
-          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600, mt: 1 }}>
-            2. Choose Alert Type
-          </Typography>
-
-          {loadingAlertTypes ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={20} />
-              <Typography variant="body2" color="text.secondary">
-                Loading available alert types...
-              </Typography>
-            </Box>
-          ) : (
-            <FormControl fullWidth required>
-              <InputLabel>Alert Type</InputLabel>
-              <Select
-                value={alertType}
-                label="Alert Type"
-                onChange={(e) => setAlertType(e.target.value as AlertRuleAlertType)}
-              >
-                {availableAlertTypes.map((at) => (
-                  <MenuItem key={at.type} value={at.type}>
-                    <Box>
-                      <Typography>{at.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {at.description}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
-
-          <FormControl fullWidth>
-            <InputLabel>Severity</InputLabel>
-            <Select
-              value={severity}
-              label="Severity"
-              onChange={(e) => setSeverity(e.target.value as AlertRuleAlertSeverity)}
-            >
-              {Object.entries(severityLabels).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Bot Mode Filter - only show for bot-related alert types */}
-          {alertType && botRelatedAlertTypes.includes(alertType as AlertRuleAlertType) && (
             <FormControl fullWidth>
-              <InputLabel>Bot Trading Mode</InputLabel>
+              <InputLabel>Resource Scope</InputLabel>
               <Select
-                value={botModeFilter}
-                label="Bot Trading Mode"
-                onChange={(e) => setBotModeFilter(e.target.value as AlertRuleAlertBotModeFilter)}
+                value={resourceType}
+                label="Resource Scope"
+                onChange={(e) => {
+                  setResourceType(e.target.value as AlertRuleAlertResourceType);
+                  setResourceId('');
+                }}
               >
-                {Object.entries(botModeFilterLabels).map(([value, label]) => (
+                {Object.entries(resourceTypeLabels).map(([value, label]) => (
                   <MenuItem key={value} value={value}>
                     {label}
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>
-                Filter alerts by bot trading mode (live trading vs dry-run)
-              </FormHelperText>
+              <FormHelperText>Choose what you want to monitor</FormHelperText>
             </FormControl>
-          )}
 
-          {/* Condition Fields (dynamic based on alert type) */}
-          {selectedAlertTypeInfo && selectedAlertTypeInfo.conditionFields.length > 0 && (
-            <>
-              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600, mt: 1 }}>
-                3. Configure Conditions
-              </Typography>
-              {selectedAlertTypeInfo.conditionFields.map(renderConditionField)}
-            </>
-          )}
+            {resourceType === 'bot' && (
+              <BotSelector
+                value={resourceId}
+                onChange={setResourceId}
+                label="Select Bot"
+                required
+                helperText="Choose the specific bot to monitor"
+              />
+            )}
 
-          {/* Step 3/4: Delivery Settings */}
-          <Typography
-            variant="subtitle1"
-            color="primary"
-            sx={{ fontWeight: 600, mt: 1 }}
-          >
-            {selectedAlertTypeInfo?.conditionFields.length ? '4' : '3'}. Delivery Settings
-          </Typography>
+            {resourceType === 'strategy' && (
+              <StrategySelector
+                value={resourceId}
+                onChange={setResourceId}
+                label="Select Strategy"
+                required
+                helperText="Monitor all bots using this strategy"
+              />
+            )}
 
-          <TextField
-            label="Rule Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            fullWidth
-            autoComplete="off"
-            placeholder="e.g., Bot Error Alert, Trade Notifications"
-            helperText="A descriptive name for this alert rule"
-          />
+            {resourceType === 'runner' && (
+              <RunnerSelector
+                value={resourceId}
+                onChange={setResourceId}
+                label="Select Runner"
+                required
+                helperText="Monitor connection issues for this runner"
+              />
+            )}
 
-          <FormControl fullWidth>
-            <InputLabel>Delivery Mode</InputLabel>
-            <Select
-              value={deliveryMode}
-              label="Delivery Mode"
-              onChange={(e) => setDeliveryMode(e.target.value as AlertRuleAlertDeliveryMode)}
-            >
-              {Object.entries(deliveryModeLabels).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {deliveryMode === 'batched' && (
-            <TextField
-              label="Batch Interval (minutes)"
-              type="number"
-              value={batchIntervalMinutes}
-              onChange={(e) => setBatchIntervalMinutes(parseInt(e.target.value) || 60)}
-              fullWidth
-              inputProps={{ min: 1 }}
-              helperText="Group alerts into digest emails at this interval"
-            />
-          )}
-
-          <TextField
-            label="Cooldown (minutes)"
-            type="number"
-            value={cooldownMinutes}
-            onChange={(e) => setCooldownMinutes(parseInt(e.target.value) || 0)}
-            fullWidth
-            inputProps={{ min: 0 }}
-            helperText="Minimum time between alerts of the same type (0 = no cooldown)"
-          />
-
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Recipients *
+            {/* Step 2: Alert Type Selection */}
+            <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600, mt: 1 }}>
+              2. Choose Alert Type
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-              <TextField
-                size="small"
-                value={recipientInput}
-                onChange={(e) => setRecipientInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="email@example.com"
-                fullWidth
-                autoComplete="off"
-              />
-              <Button
-                variant="outlined"
-                onClick={handleAddRecipient}
-                disabled={!recipientInput.includes('@')}
-              >
-                Add
-              </Button>
-            </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, minHeight: 32 }}>
-              {recipients.map((email) => (
-                <Chip
-                  key={email}
-                  label={email}
-                  size="small"
-                  onDelete={() => handleRemoveRecipient(email)}
-                />
-              ))}
-              {recipients.length === 0 && (
-                <Typography variant="caption" color="text.secondary">
-                  Add at least one recipient email
+
+            {loadingAlertTypes ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2" color="text.secondary">
+                  Loading available alert types...
                 </Typography>
-              )}
-            </Box>
-          </Box>
+              </Box>
+            ) : (
+              <FormControl fullWidth required>
+                <InputLabel>Alert Type</InputLabel>
+                <Select
+                  value={alertType}
+                  label="Alert Type"
+                  onChange={(e) => setAlertType(e.target.value as AlertRuleAlertType)}
+                >
+                  {availableAlertTypes.map((at) => (
+                    <MenuItem key={at.type} value={at.type}>
+                      <Box>
+                        <Typography>{at.label}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {at.description}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
+            <FormControl fullWidth>
+              <InputLabel>Severity</InputLabel>
+              <Select
+                value={severity}
+                label="Severity"
+                onChange={(e) => setSeverity(e.target.value as AlertRuleAlertSeverity)}
+              >
+                {Object.entries(severityLabels).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Bot Mode Filter - only show for bot-related alert types */}
+            {alertType && botRelatedAlertTypes.includes(alertType as AlertRuleAlertType) && (
+              <FormControl fullWidth>
+                <InputLabel>Bot Trading Mode</InputLabel>
+                <Select
+                  value={botModeFilter}
+                  label="Bot Trading Mode"
+                  onChange={(e) => setBotModeFilter(e.target.value as AlertRuleAlertBotModeFilter)}
+                >
+                  {Object.entries(botModeFilterLabels).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>
+                  Filter alerts by bot trading mode (live trading vs dry-run)
+                </FormHelperText>
+              </FormControl>
+            )}
+
+            {/* Condition Fields (dynamic based on alert type) */}
+            {selectedAlertTypeInfo && selectedAlertTypeInfo.conditionFields.length > 0 && (
+              <>
+                <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600, mt: 1 }}>
+                  3. Configure Conditions
+                </Typography>
+                {selectedAlertTypeInfo.conditionFields.map(renderConditionField)}
+              </>
+            )}
+
+            {/* Step 3/4: Delivery Settings */}
+            <Typography
+              variant="subtitle1"
+              color="primary"
+              sx={{ fontWeight: 600, mt: 1 }}
+            >
+              {selectedAlertTypeInfo?.conditionFields.length ? '4' : '3'}. Delivery Settings
+            </Typography>
+
+            <TextField
+              label="Rule Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              fullWidth
+              autoComplete="off"
+              placeholder="e.g., Bot Error Alert, Trade Notifications"
+              helperText="A descriptive name for this alert rule"
+            />
+
+            <FormControl fullWidth>
+              <InputLabel>Delivery Mode</InputLabel>
+              <Select
+                value={deliveryMode}
+                label="Delivery Mode"
+                onChange={(e) => setDeliveryMode(e.target.value as AlertRuleAlertDeliveryMode)}
+              >
+                {Object.entries(deliveryModeLabels).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {deliveryMode === 'batched' && (
+              <TextField
+                label="Batch Interval (minutes)"
+                type="number"
+                value={batchIntervalMinutes}
+                onChange={(e) => setBatchIntervalMinutes(parseInt(e.target.value) || 60)}
+                fullWidth
+                inputProps={{ min: 1 }}
+                helperText="Group alerts into digest emails at this interval"
               />
-            }
-            label="Enabled"
-          />
+            )}
 
-          {/* Permission warning */}
-          {!permissionsLoading && effectiveResourceId && !hasAlertPermission && (
-            <Alert severity="warning">
-              You don't have permission to {isEdit ? 'update' : 'create'} alert rules on this resource.
-            </Alert>
-          )}
+            <TextField
+              label="Cooldown (minutes)"
+              type="number"
+              value={cooldownMinutes}
+              onChange={(e) => setCooldownMinutes(parseInt(e.target.value) || 0)}
+              fullWidth
+              inputProps={{ min: 0 }}
+              helperText="Minimum time between alerts of the same type (0 = no cooldown)"
+            />
 
-          {error && (
-            <FormHelperText error>
-              Error: {error.message}
-            </FormHelperText>
-          )}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Recipients *
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  size="small"
+                  value={recipientInput}
+                  onChange={(e) => setRecipientInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="email@example.com"
+                  fullWidth
+                  autoComplete="off"
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleAddRecipient}
+                  disabled={!recipientInput.includes('@')}
+                >
+                  Add
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, minHeight: 32 }}>
+                {recipients.map((email) => (
+                  <Chip
+                    key={email}
+                    label={email}
+                    size="small"
+                    onDelete={() => handleRemoveRecipient(email)}
+                  />
+                ))}
+                {recipients.length === 0 && (
+                  <Typography variant="caption" color="text.secondary">
+                    Add at least one recipient email
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={enabled}
+                  onChange={(e) => setEnabled(e.target.checked)}
+                />
+              }
+              label="Enabled"
+            />
+
+            {/* Permission warning */}
+            {!permissionsLoading && effectiveResourceId && !hasAlertPermission && (
+              <Alert severity="warning">
+                You don't have permission to {isEdit ? 'update' : 'create'} alert rules on this resource.
+              </Alert>
+            )}
+
+            {error && (
+              <FormHelperText error>
+                Error: {error.message}
+              </FormHelperText>
+            )}
+          </Box>
         </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading || !canSubmit}
+
+        {/* Footer */}
+        <Divider />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            px: 3,
+            py: 2,
+          }}
         >
-          {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Rule'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-    <UnsavedChangesDialog
-      open={confirmDialogOpen}
-      onCancel={cancelClose}
-      onDiscard={confirmClose}
-    />
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={loading || !canSubmit}
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Rule'}
+          </Button>
+        </Box>
+      </Drawer>
+      <UnsavedChangesDrawer
+        open={confirmDialogOpen}
+        onCancel={cancelClose}
+        onDiscard={confirmClose}
+      />
     </>
   );
 };

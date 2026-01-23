@@ -1,34 +1,32 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
+  Drawer,
   Box,
   Typography,
+  IconButton,
+  Button,
   Chip,
   CircularProgress,
   Alert,
-  IconButton,
+  Divider,
 } from '@mui/material';
 import { Close, OpenInNew } from '@mui/icons-material';
 import { useGetBacktestQuery } from './backtests.generated';
 import { BacktestResults } from './BacktestResults';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 
-interface BacktestResultsDialogProps {
+interface BacktestResultsDrawerProps {
   open: boolean;
   onClose: () => void;
   backtestId: string | null;
   polling?: boolean;
 }
 
-export const BacktestResultsDialog = ({
+export const BacktestResultsDrawer = ({
   open,
   onClose,
   backtestId,
   polling = true,
-}: BacktestResultsDialogProps) => {
+}: BacktestResultsDrawerProps) => {
   const navigate = useOrganizationNavigate();
 
   const { data, loading, error } = useGetBacktestQuery({
@@ -62,34 +60,54 @@ export const BacktestResultsDialog = ({
   };
 
   return (
-    <Dialog
+    <Drawer
+      anchor="right"
       open={open}
       onClose={onClose}
-      maxWidth="lg"
-      fullWidth
       PaperProps={{
-        sx: { minHeight: '60vh', maxHeight: '90vh' },
+        sx: {
+          width: { xs: '100%', sm: '80%', md: '70%', lg: '60%' },
+          maxWidth: '100%',
+          minWidth: { sm: 500 },
+        },
       }}
     >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h6">Backtest Results</Typography>
-            {backtest && (
-              <Chip
-                label={backtest.status}
-                color={getStatusColor(backtest.status)}
-                size="small"
-              />
-            )}
-          </Box>
-          <IconButton onClick={onClose} size="small">
-            <Close />
-          </IconButton>
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="h6">Backtest Results</Typography>
+          {backtest && (
+            <Chip
+              label={backtest.status}
+              color={getStatusColor(backtest.status)}
+              size="small"
+            />
+          )}
         </Box>
-      </DialogTitle>
+        <IconButton onClick={onClose} size="small" aria-label="close">
+          <Close />
+        </IconButton>
+      </Box>
 
-      <DialogContent dividers>
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          px: 3,
+          py: 2,
+        }}
+      >
         {loading && !backtest && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
             <CircularProgress />
@@ -133,9 +151,19 @@ export const BacktestResultsDialog = ({
             No backtest data available
           </Alert>
         )}
-      </DialogContent>
+      </Box>
 
-      <DialogActions>
+      {/* Footer */}
+      <Divider />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 1,
+          px: 3,
+          py: 2,
+        }}
+      >
         <Button onClick={onClose}>Close</Button>
         {backtest && (
           <Button
@@ -146,7 +174,7 @@ export const BacktestResultsDialog = ({
             View Full Details
           </Button>
         )}
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 };

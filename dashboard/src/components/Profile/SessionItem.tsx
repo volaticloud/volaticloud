@@ -7,7 +7,7 @@ import {
   Schedule as ScheduleIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
-import { ConfirmDialog } from '../shared/FormDialog';
+import { ConfirmDrawer } from '../shared/FormDrawer';
 import type { KeycloakSession } from '../../services/keycloak';
 
 interface SessionItemProps {
@@ -115,7 +115,7 @@ export const SessionItem = ({ session, onDelete }: SessionItemProps) => {
         </CardContent>
       </Card>
 
-      <ConfirmDialog
+      <ConfirmDrawer
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         title="Revoke Session"

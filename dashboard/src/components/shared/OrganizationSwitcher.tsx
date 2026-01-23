@@ -17,7 +17,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import { ORG_ID_PARAM } from '../../constants/url';
-import { CreateOrganizationDialog } from '../Organization/CreateOrganizationDialog';
+import { CreateOrganizationDrawer } from '../Organization/CreateOrganizationDrawer';
 
 interface OrganizationSwitcherProps {
   fullWidth?: boolean;
@@ -77,7 +77,7 @@ export function OrganizationSwitcher({ fullWidth = false }: OrganizationSwitcher
             New
           </Button>
         </Box>
-        <CreateOrganizationDialog
+        <CreateOrganizationDrawer
           open={createDialogOpen}
           onClose={() => setCreateDialogOpen(false)}
         />
@@ -150,7 +150,7 @@ export function OrganizationSwitcher({ fullWidth = false }: OrganizationSwitcher
           Create New Organization
         </MenuItem>
       </Select>
-      <CreateOrganizationDialog
+      <CreateOrganizationDrawer
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
       />

@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material';
 import { useDeleteBotMutation } from './bots.generated';
-import { ConfirmDialog } from '../shared/FormDialog';
+import { ConfirmDrawer } from '../shared';
 import { useMutationHandler } from '../../hooks';
 
-interface DeleteBotDialogProps {
+interface DeleteBotDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -13,7 +13,7 @@ interface DeleteBotDialogProps {
   } | null;
 }
 
-export const DeleteBotDialog = ({ open, onClose, onSuccess, bot }: DeleteBotDialogProps) => {
+export const DeleteBotDrawer = ({ open, onClose, onSuccess, bot }: DeleteBotDrawerProps) => {
   const [deleteBot] = useDeleteBotMutation();
 
   const mutation = useMutationHandler(deleteBot, {
@@ -31,7 +31,7 @@ export const DeleteBotDialog = ({ open, onClose, onSuccess, bot }: DeleteBotDial
   };
 
   return (
-    <ConfirmDialog
+    <ConfirmDrawer
       open={open}
       onClose={onClose}
       title="Delete Bot"

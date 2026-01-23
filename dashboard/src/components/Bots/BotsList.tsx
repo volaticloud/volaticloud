@@ -19,8 +19,8 @@ import { useState, useEffect } from 'react';
 import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { useOrganizationPermission } from '../../hooks';
-import { CreateBotDialog } from './CreateBotDialog';
-import { EditBotDialog } from './EditBotDialog';
+import { CreateBotDrawer } from './CreateBotDrawer';
+import { EditBotDrawer } from './EditBotDrawer';
 import BotActionsMenu from './BotActionsMenu';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
@@ -268,14 +268,14 @@ export const BotsList = () => {
         isPolling={!pagination.loading && data !== undefined}
       />
 
-      <CreateBotDialog
+      <CreateBotDrawer
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onSuccess={() => refetch()}
       />
 
       {selectedBot && (
-        <EditBotDialog
+        <EditBotDrawer
           open={editDialogOpen}
           onClose={() => {
             setEditDialogOpen(false);

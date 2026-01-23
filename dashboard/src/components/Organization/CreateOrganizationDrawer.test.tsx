@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider } from '@apollo/client/testing';
-import { CreateOrganizationDialog } from './CreateOrganizationDialog';
+import { CreateOrganizationDrawer } from './CreateOrganizationDrawer';
 import { CreateOrganizationDocument } from './organization.generated';
 
 // Mock useAuth hook
@@ -73,7 +73,7 @@ const mockErrorResponse = {
   error: new Error('Organization with this ID already exists'),
 };
 
-describe('CreateOrganizationDialog', () => {
+describe('CreateOrganizationDrawer', () => {
   const defaultProps = {
     open: true,
     onClose: vi.fn(),
@@ -88,7 +88,7 @@ describe('CreateOrganizationDialog', () => {
     it('renders dialog with correct title', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -98,7 +98,7 @@ describe('CreateOrganizationDialog', () => {
     it('renders organization title input field', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -108,7 +108,7 @@ describe('CreateOrganizationDialog', () => {
     it('renders cancel and create buttons', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -119,7 +119,7 @@ describe('CreateOrganizationDialog', () => {
     it('renders customize ID button', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -129,7 +129,7 @@ describe('CreateOrganizationDialog', () => {
     it('does not render when closed', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} open={false} />
+          <CreateOrganizationDrawer {...defaultProps} open={false} />
         </MockedProvider>
       );
 
@@ -142,7 +142,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -158,7 +158,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -173,7 +173,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -188,7 +188,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -205,7 +205,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -219,7 +219,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -240,7 +240,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -259,7 +259,7 @@ describe('CreateOrganizationDialog', () => {
     it('disables submit button when title is empty', () => {
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -271,7 +271,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -286,7 +286,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -310,7 +310,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -334,7 +334,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -358,7 +358,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -382,7 +382,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -406,7 +406,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -432,7 +432,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -447,7 +447,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -473,7 +473,7 @@ describe('CreateOrganizationDialog', () => {
 
       render(
         <MockedProvider mocks={[delayedMock]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -497,7 +497,7 @@ describe('CreateOrganizationDialog', () => {
 
       render(
         <MockedProvider mocks={[delayedMock]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -516,7 +516,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -535,7 +535,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -554,7 +554,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[mockErrorResponse]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -573,7 +573,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[mockSuccessWithAliasResponse]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -601,7 +601,7 @@ describe('CreateOrganizationDialog', () => {
       const user = userEvent.setup();
       const { rerender } = render(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} />
+          <CreateOrganizationDrawer {...defaultProps} />
         </MockedProvider>
       );
 
@@ -620,7 +620,7 @@ describe('CreateOrganizationDialog', () => {
       // Reopen dialog
       rerender(
         <MockedProvider mocks={[]} addTypename={false}>
-          <CreateOrganizationDialog {...defaultProps} open={true} />
+          <CreateOrganizationDrawer {...defaultProps} open={true} />
         </MockedProvider>
       );
 
@@ -636,7 +636,7 @@ describe('generateIdFromTitle', () => {
   it('handles empty title', async () => {
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <CreateOrganizationDialog open={true} onClose={vi.fn()} />
+        <CreateOrganizationDrawer open={true} onClose={vi.fn()} />
       </MockedProvider>
     );
 
@@ -651,7 +651,7 @@ describe('validateId', () => {
     const user = userEvent.setup();
     render(
       <MockedProvider mocks={[]} addTypename={false}>
-        <CreateOrganizationDialog open={true} onClose={vi.fn()} />
+        <CreateOrganizationDrawer open={true} onClose={vi.fn()} />
       </MockedProvider>
     );
 

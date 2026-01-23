@@ -12,9 +12,9 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetExchangesQuery, GetExchangesQuery } from './exchanges.generated';
-import { CreateExchangeDialog } from './CreateExchangeDialog';
-import { EditExchangeDialog } from './EditExchangeDialog';
-import { DeleteExchangeDialog } from './DeleteExchangeDialog';
+import { CreateExchangeDrawer } from './CreateExchangeDrawer';
+import { EditExchangeDrawer } from './EditExchangeDrawer';
+import { DeleteExchangeDrawer } from './DeleteExchangeDrawer';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination, useOrganizationPermission } from '../../hooks';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
@@ -190,13 +190,13 @@ export const ExchangesList = () => {
         emptyMessage="No exchanges configured. Add an exchange to connect to trading platforms."
       />
 
-      <CreateExchangeDialog
+      <CreateExchangeDrawer
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onSuccess={handleSuccess}
       />
 
-      <EditExchangeDialog
+      <EditExchangeDrawer
         open={editDialogOpen}
         onClose={() => {
           setEditDialogOpen(false);
@@ -206,7 +206,7 @@ export const ExchangesList = () => {
         exchange={selectedExchange}
       />
 
-      <DeleteExchangeDialog
+      <DeleteExchangeDrawer
         open={deleteDialogOpen}
         onClose={() => {
           setDeleteDialogOpen(false);

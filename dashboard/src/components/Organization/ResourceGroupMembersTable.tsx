@@ -45,8 +45,8 @@ import {
 } from '@mui/icons-material';
 import { ResourceGroupMembersDocument, ChangeOrganizationUserRoleDocument } from './organization.generated';
 import { ResourceGroupMemberOrderField, OrderDirection } from '../../generated/types';
-import { InviteUserDialog } from './InviteUserDialog';
-import { ChangeRoleDialog } from './ChangeRoleDialog';
+import { InviteUserDrawer } from './InviteUserDrawer';
+import { ChangeRoleDrawer } from './ChangeRoleDrawer';
 import { useCanPerform } from '../../hooks/useCanPerform';
 
 interface ResourceGroupMembersTableProps {
@@ -486,17 +486,17 @@ export const ResourceGroupMembersTable = ({
         </MenuItem>
       </Menu>
 
-      {/* Invite User Dialog */}
-      <InviteUserDialog
+      {/* Invite User Drawer */}
+      <InviteUserDrawer
         open={inviteDialogOpen}
         onClose={() => setInviteDialogOpen(false)}
         organizationId={organizationId}
         organizationName={resourceGroupName}
       />
 
-      {/* Change Role Dialog */}
+      {/* Change Role Drawer */}
       {selectedUser && (
-        <ChangeRoleDialog
+        <ChangeRoleDrawer
           open={changeRoleDialogOpen}
           onClose={() => {
             setChangeRoleDialogOpen(false);

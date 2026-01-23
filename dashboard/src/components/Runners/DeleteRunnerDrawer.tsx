@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material';
 import { useDeleteRunnerMutation } from '../../generated/graphql';
-import { ConfirmDialog } from '../shared/FormDialog';
+import { ConfirmDrawer } from '../shared';
 import { useMutationHandler } from '../../hooks';
 
-interface DeleteRunnerDialogProps {
+interface DeleteRunnerDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -13,7 +13,7 @@ interface DeleteRunnerDialogProps {
   } | null;
 }
 
-export const DeleteRunnerDialog = ({ open, onClose, onSuccess, runner }: DeleteRunnerDialogProps) => {
+export const DeleteRunnerDrawer = ({ open, onClose, onSuccess, runner }: DeleteRunnerDrawerProps) => {
   const [deleteRunner] = useDeleteRunnerMutation();
 
   const mutation = useMutationHandler(deleteRunner, {
@@ -31,7 +31,7 @@ export const DeleteRunnerDialog = ({ open, onClose, onSuccess, runner }: DeleteR
   };
 
   return (
-    <ConfirmDialog
+    <ConfirmDrawer
       open={open}
       onClose={onClose}
       title="Delete Runner"

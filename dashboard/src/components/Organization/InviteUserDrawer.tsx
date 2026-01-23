@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
   Button,
   TextField,
-  Box,
   Alert,
   CircularProgress,
+  Divider,
 } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import { useInviteOrganizationUserMutation } from './organization.generated';
 import { ORG_ID_PARAM } from '../../constants/url';
 import { isValidEmail } from '../../utils/validation';
 
-interface InviteUserDialogProps {
+interface InviteUserDrawerProps {
   open: boolean;
   onClose: () => void;
   organizationId: string;
@@ -23,18 +24,18 @@ interface InviteUserDialogProps {
 }
 
 /**
- * Dialog for inviting a user to an organization.
+ * Drawer for inviting a user to an organization.
  * Creates an invitation via GraphQL mutation which sends an email
  * with an invite link. Upon acceptance, the user is automatically assigned
  * the 'viewer' role.
  */
-export const InviteUserDialog = ({
+export const InviteUserDrawer = ({
   open,
   onClose,
   organizationId,
   organizationName,
   onSuccess,
-}: InviteUserDialogProps) => {
+}: InviteUserDrawerProps) => {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -42,7 +43,7 @@ export const InviteUserDialog = ({
 
   const [inviteUser, { loading, error, reset }] = useInviteOrganizationUserMutation();
 
-  // Reset form state when dialog opens/closes to prevent stale data
+  // Reset form state when drawer opens/closes to prevent stale data
   useEffect(() => {
     if (!open) {
       setEmail('');
@@ -102,10 +103,47 @@ export const InviteUserDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Invite User to {organizationName}</DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: 450 },
+          maxWidth: '100%',
+        },
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h6" component="h2">
+          Invite User to {organizationName}
+        </Typography>
+        <IconButton onClick={handleClose} size="small" aria-label="close">
+          <Close />
+        </IconButton>
+      </Box>
+
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          px: 3,
+          py: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {successMessage && (
             <Alert severity="success" onClose={() => setSuccessMessage(null)}>
               {successMessage}
@@ -155,8 +193,19 @@ export const InviteUserDialog = ({
             change their role after they accept the invitation.
           </Alert>
         </Box>
-      </DialogContent>
-      <DialogActions>
+      </Box>
+
+      {/* Footer */}
+      <Divider />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 1,
+          px: 3,
+          py: 2,
+        }}
+      >
         <Button onClick={handleClose} disabled={loading}>
           Close
         </Button>
@@ -168,7 +217,7 @@ export const InviteUserDialog = ({
         >
           {loading ? 'Sending...' : 'Send Invitation'}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 };

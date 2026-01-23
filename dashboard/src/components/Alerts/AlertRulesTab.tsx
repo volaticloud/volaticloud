@@ -29,7 +29,7 @@ import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { AlertRuleAlertSeverity, AlertRuleAlertType } from '../../generated/types';
-import { AlertRuleDialog } from './AlertRuleDialog';
+import { AlertRuleDrawer } from './AlertRuleDrawer';
 import { usePermissions } from '../../hooks/usePermissions';
 
 // Extract AlertRule type from generated query
@@ -334,7 +334,7 @@ export const AlertRulesTab = () => {
         emptyMessage="No alert rules configured. Add a rule to receive notifications."
       />
 
-      <AlertRuleDialog
+      <AlertRuleDrawer
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSuccess={() => {

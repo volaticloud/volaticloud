@@ -40,8 +40,8 @@ import { useGetBacktestQuery } from '../Backtests/backtests.generated';
 import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
-import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
-import { BacktestResultsDialog } from '../Backtests/BacktestResultsDialog';
+import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
+import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
 import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
@@ -679,9 +679,9 @@ class MyStrategy(IStrategy):
         </Box>
       </Box>
 
-      {/* Backtest Dialog - only in edit mode */}
+      {/* Backtest Drawer - only in edit mode */}
       {!isCreateMode && strategy && (
-        <CreateBacktestDialog
+        <CreateBacktestDrawer
           open={backtestDialogOpen}
           onClose={() => setBacktestDialogOpen(false)}
           onSuccess={() => {
@@ -694,9 +694,9 @@ class MyStrategy(IStrategy):
         />
       )}
 
-      {/* Backtest Results Dialog - only in edit mode */}
+      {/* Backtest Results Drawer - only in edit mode */}
       {!isCreateMode && (
-        <BacktestResultsDialog
+        <BacktestResultsDrawer
           open={backtestResultsDialogOpen}
           onClose={() => setBacktestResultsDialogOpen(false)}
           backtestId={activeBacktestId}

@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material';
 import { useDeleteExchangeMutation } from './exchanges.generated';
-import { ConfirmDialog } from '../shared/FormDialog';
+import { ConfirmDrawer } from '../shared';
 import { useMutationHandler } from '../../hooks';
 
-interface DeleteExchangeDialogProps {
+interface DeleteExchangeDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -13,7 +13,7 @@ interface DeleteExchangeDialogProps {
   } | null;
 }
 
-export const DeleteExchangeDialog = ({ open, onClose, onSuccess, exchange }: DeleteExchangeDialogProps) => {
+export const DeleteExchangeDrawer = ({ open, onClose, onSuccess, exchange }: DeleteExchangeDrawerProps) => {
   const [deleteExchange] = useDeleteExchangeMutation();
 
   const mutation = useMutationHandler(deleteExchange, {
@@ -33,7 +33,7 @@ export const DeleteExchangeDialog = ({ open, onClose, onSuccess, exchange }: Del
   if (!exchange) return null;
 
   return (
-    <ConfirmDialog
+    <ConfirmDrawer
       open={open}
       onClose={onClose}
       title="Delete Exchange"

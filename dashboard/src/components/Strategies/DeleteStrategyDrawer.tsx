@@ -1,9 +1,9 @@
 import { Typography, Box } from '@mui/material';
 import { useDeleteStrategyMutation } from './strategies.generated';
-import { ConfirmDialog } from '../shared/FormDialog';
+import { ConfirmDrawer } from '../shared';
 import { useMutationHandler } from '../../hooks';
 
-interface DeleteStrategyDialogProps {
+interface DeleteStrategyDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -13,7 +13,7 @@ interface DeleteStrategyDialogProps {
   };
 }
 
-export const DeleteStrategyDialog = ({ open, onClose, onSuccess, strategy }: DeleteStrategyDialogProps) => {
+export const DeleteStrategyDrawer = ({ open, onClose, onSuccess, strategy }: DeleteStrategyDrawerProps) => {
   const [deleteStrategy] = useDeleteStrategyMutation();
 
   const mutation = useMutationHandler(deleteStrategy, {
@@ -30,7 +30,7 @@ export const DeleteStrategyDialog = ({ open, onClose, onSuccess, strategy }: Del
   };
 
   return (
-    <ConfirmDialog
+    <ConfirmDrawer
       open={open}
       onClose={onClose}
       title="Delete Strategy"

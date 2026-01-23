@@ -1,26 +1,26 @@
 import { useState, useMemo, useCallback } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
   Button,
   TextField,
   CircularProgress,
   Alert,
-  Typography,
-  Box,
   Collapse,
+  Divider,
 } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateOrganizationMutation } from './organization.generated';
 import { useDialogUnsavedChanges } from '../../hooks/useDialogUnsavedChanges';
-import { UnsavedChangesDialog } from '../shared/UnsavedChangesDialog';
+import { UnsavedChangesDrawer } from '../shared';
 
-interface CreateOrganizationDialogProps {
+interface CreateOrganizationDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
@@ -82,11 +82,11 @@ function validateId(id: string): string | null {
   return null;
 }
 
-export function CreateOrganizationDialog({
+export function CreateOrganizationDrawer({
   open,
   onClose,
   onSuccess,
-}: CreateOrganizationDialogProps) {
+}: CreateOrganizationDrawerProps) {
   const auth = useAuth();
   const [title, setTitle] = useState('');
   const [customId, setCustomId] = useState('');
@@ -114,7 +114,7 @@ export function CreateOrganizationDialog({
     return false;
   }, [title, customId]);
 
-  // Clear form and close dialog
+  // Clear form and close drawer
   const clearAndClose = useCallback(() => {
     setTitle('');
     setCustomId('');
@@ -130,7 +130,7 @@ export function CreateOrganizationDialog({
 
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
     onCompleted: async () => {
-      // Refresh token BEFORE closing dialog to ensure JWT has new organization claims
+      // Refresh token BEFORE closing drawer to ensure JWT has new organization claims
       try {
         await auth.signinSilent();
       } catch (refreshError) {
@@ -140,7 +140,7 @@ export function CreateOrganizationDialog({
         setError('Organization created, but session refresh failed. Please sign out and sign back in to see your new organization.');
         return;
       }
-      // Token refreshed successfully, now close dialog and notify success
+      // Token refreshed successfully, now close drawer and notify success
       clearAndClose();
       onSuccess?.();
     },
@@ -149,8 +149,8 @@ export function CreateOrganizationDialog({
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setError(null);
 
     const trimmedTitle = title.trim();
@@ -182,87 +182,135 @@ export function CreateOrganizationDialog({
 
   return (
     <>
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>Create New Organization</DialogTitle>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <TextField
-            autoFocus
-            fullWidth
-            label="Organization Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="My Trading Organization"
-            disabled={loading}
-            margin="dense"
-          />
-
-          {/* Show auto-generated ID preview */}
-          {effectiveId && !showAdvanced && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              ID: <strong>{effectiveId}</strong>
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 400 },
+            maxWidth: '100%',
+          },
+        }}
+      >
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* Header */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 3,
+              py: 2,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography variant="h6" component="h2">
+              Create New Organization
             </Typography>
-          )}
+            <IconButton onClick={handleClose} size="small" aria-label="close">
+              <Close />
+            </IconButton>
+          </Box>
 
-          {/* Advanced settings toggle */}
-          <Button
-            size="small"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            endIcon={showAdvanced ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            sx={{ mt: 1, textTransform: 'none' }}
+          {/* Content */}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: 'auto',
+              px: 3,
+              py: 2,
+            }}
           >
-            {showAdvanced ? 'Hide advanced' : 'Customize ID'}
-          </Button>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            <TextField
+              autoFocus
+              fullWidth
+              label="Organization Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="My Trading Organization"
+              disabled={loading}
+              margin="dense"
+            />
 
-          <Collapse in={showAdvanced}>
-            <Box sx={{ mt: 1 }}>
-              <TextField
-                fullWidth
-                label="Organization ID"
-                value={customId}
-                onChange={(e) => setCustomId(e.target.value.toLowerCase())}
-                placeholder={generateIdFromTitle(title) || 'my-organization'}
-                disabled={loading}
-                margin="dense"
-                error={!!idError}
-                helperText={
-                  idError ||
-                  'URL-friendly identifier (3-50 chars, lowercase, hyphens allowed). Cannot be changed after creation.'
-                }
-              />
-              {!customId && title && (
-                <Typography variant="caption" color="text.secondary">
-                  Will be auto-generated as: <strong>{effectiveId}</strong>
-                </Typography>
-              )}
-            </Box>
-          </Collapse>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading || !title.trim() || !!idError}
-            startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
+            {/* Show auto-generated ID preview */}
+            {effectiveId && !showAdvanced && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                ID: <strong>{effectiveId}</strong>
+              </Typography>
+            )}
+
+            {/* Advanced settings toggle */}
+            <Button
+              size="small"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              endIcon={showAdvanced ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{ mt: 1, textTransform: 'none' }}
+            >
+              {showAdvanced ? 'Hide advanced' : 'Customize ID'}
+            </Button>
+
+            <Collapse in={showAdvanced}>
+              <Box sx={{ mt: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Organization ID"
+                  value={customId}
+                  onChange={(e) => setCustomId(e.target.value.toLowerCase())}
+                  placeholder={generateIdFromTitle(title) || 'my-organization'}
+                  disabled={loading}
+                  margin="dense"
+                  error={!!idError}
+                  helperText={
+                    idError ||
+                    'URL-friendly identifier (3-50 chars, lowercase, hyphens allowed). Cannot be changed after creation.'
+                  }
+                />
+                {!customId && title && (
+                  <Typography variant="caption" color="text.secondary">
+                    Will be auto-generated as: <strong>{effectiveId}</strong>
+                  </Typography>
+                )}
+              </Box>
+            </Collapse>
+          </Box>
+
+          {/* Footer */}
+          <Divider />
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 1,
+              px: 3,
+              py: 2,
+            }}
           >
-            {loading ? 'Creating...' : 'Create'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
-    <UnsavedChangesDialog
-      open={confirmDialogOpen}
-      onCancel={cancelClose}
-      onDiscard={confirmClose}
-    />
+            <Button onClick={handleClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading || !title.trim() || !!idError}
+              startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
+            >
+              {loading ? 'Creating...' : 'Create'}
+            </Button>
+          </Box>
+        </form>
+      </Drawer>
+      <UnsavedChangesDrawer
+        open={confirmDialogOpen}
+        onCancel={cancelClose}
+        onDiscard={confirmClose}
+      />
     </>
   );
 }

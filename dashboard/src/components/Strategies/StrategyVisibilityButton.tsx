@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { IconButton, Tooltip, Snackbar, Alert, CircularProgress } from '@mui/material';
 import { Public as PublicIcon, Lock as LockIcon } from '@mui/icons-material';
 import { useSetStrategyVisibilityMutation } from './strategies.generated';
-import { VisibilityToggleDialog } from '../shared/VisibilityToggleDialog';
+import { VisibilityToggleDrawer } from '../shared/VisibilityToggleDrawer';
 import { useCanPerform } from '../../hooks/useCanPerform';
 
 interface StrategyVisibilityButtonProps {
@@ -89,7 +89,7 @@ export const StrategyVisibilityButton = ({
         </span>
       </Tooltip>
 
-      <VisibilityToggleDialog
+      <VisibilityToggleDrawer
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleConfirm}

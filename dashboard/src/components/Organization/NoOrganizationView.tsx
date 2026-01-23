@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Container, Paper, Typography, Button, Alert } from '@mui/material';
 import { Business as BusinessIcon, Add as AddIcon } from '@mui/icons-material';
-import { CreateOrganizationDialog } from './CreateOrganizationDialog';
+import { CreateOrganizationDrawer } from './CreateOrganizationDrawer';
 
 export function NoOrganizationView() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -60,7 +60,7 @@ export function NoOrganizationView() {
           </Paper>
         </Container>
       </Box>
-      <CreateOrganizationDialog
+      <CreateOrganizationDrawer
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSuccess={() => {

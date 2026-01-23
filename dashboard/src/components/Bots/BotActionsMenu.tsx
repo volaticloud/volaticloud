@@ -34,7 +34,7 @@ import {
   useDeleteBotMutation,
   useSetBotVisibilityMutation,
 } from './bots.generated';
-import FreqUIDialog from './FreqUIDialog';
+import { FreqUIDrawer } from './FreqUIDrawer';
 import { usePermissions } from '../../hooks/usePermissions';
 
 export interface BotActionsMenuProps {
@@ -331,7 +331,7 @@ export const BotActionsMenu = ({
 
         {/* FreqUI Dialog */}
         {showFreqUI && (
-          <FreqUIDialog
+          <FreqUIDrawer
             open={frequiDialogOpen}
             onClose={() => setFrequiDialogOpen(false)}
             botId={botId}
@@ -451,7 +451,7 @@ export const BotActionsMenu = ({
 
       {/* FreqUI Dialog */}
       {showFreqUI && (
-        <FreqUIDialog
+        <FreqUIDrawer
           open={frequiDialogOpen}
           onClose={() => setFrequiDialogOpen(false)}
           botId={botId}

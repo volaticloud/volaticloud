@@ -20,8 +20,8 @@ import {
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetStrategiesQuery, GetStrategiesQuery } from './strategies.generated';
-import { DeleteStrategyDialog } from './DeleteStrategyDialog';
-import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
+import { DeleteStrategyDrawer } from './DeleteStrategyDrawer';
+import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
 import { useCursorPagination, useOrganizationPermission } from '../../hooks';
@@ -263,7 +263,7 @@ export const StrategiesList = () => {
       />
 
       {selectedStrategy && (
-        <DeleteStrategyDialog
+        <DeleteStrategyDrawer
           open={deleteDialogOpen}
           onClose={() => {
             setDeleteDialogOpen(false);
@@ -282,7 +282,7 @@ export const StrategiesList = () => {
         />
       )}
 
-      <CreateBacktestDialog
+      <CreateBacktestDrawer
         open={backtestDialogOpen}
         onClose={() => {
           setBacktestDialogOpen(false);

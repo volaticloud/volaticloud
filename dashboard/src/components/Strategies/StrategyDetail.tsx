@@ -18,8 +18,8 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useGetStrategyDetailQuery, useGetStrategyVersionsQuery } from './strategy-detail.generated';
-import { CreateBacktestDialog } from '../Backtests/CreateBacktestDialog';
-import { DeleteStrategyDialog } from './DeleteStrategyDialog';
+import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
+import { DeleteStrategyDrawer } from './DeleteStrategyDrawer';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
@@ -161,8 +161,8 @@ const StrategyDetail = () => {
         )}
       </Box>
 
-      {/* Dialogs */}
-      <CreateBacktestDialog
+      {/* Drawers */}
+      <CreateBacktestDrawer
         open={backtestDialogOpen}
         onClose={() => setBacktestDialogOpen(false)}
         onSuccess={(newStrategyId) => {
@@ -177,7 +177,7 @@ const StrategyDetail = () => {
         preSelectedStrategyId={strategy.id}
       />
 
-      <DeleteStrategyDialog
+      <DeleteStrategyDrawer
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onSuccess={() => {

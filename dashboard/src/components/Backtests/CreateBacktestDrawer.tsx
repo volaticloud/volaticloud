@@ -1,15 +1,13 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
   Button,
   FormHelperText,
-  Box,
   Alert,
   ToggleButtonGroup,
   ToggleButton,
-  Typography,
   Divider,
   Chip,
   Autocomplete,
@@ -22,6 +20,7 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRunBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
@@ -42,7 +41,7 @@ import {
   type BacktestConfigValidationResult,
 } from './backtestValidation';
 
-interface CreateBacktestDialogProps {
+interface CreateBacktestDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (newStrategyId?: string) => void;
@@ -145,7 +144,7 @@ const extractSimpleModeFromConfig = (config: Record<string, unknown>): { exchang
   }
 };
 
-export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreated, preSelectedStrategyId }: CreateBacktestDialogProps) => {
+export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreated, preSelectedStrategyId }: CreateBacktestDrawerProps) => {
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyOption | null>(null);
   const [strategyInputValue, setStrategyInputValue] = useState('');
   const [strategyOptions, setStrategyOptions] = useState<StrategyOption[]>([]);
@@ -472,7 +471,7 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
     [activeOrganizationId, searchStrategies, selectedStrategy]
   );
 
-  // Load initial strategies when dialog opens
+  // Load initial strategies when drawer opens
   useEffect(() => {
     if (open && activeOrganizationId) {
       debouncedSearch('');
@@ -623,10 +622,47 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <DialogTitle>Create New Backtest</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={onClose}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 600 },
+            maxWidth: '100%',
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            py: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            Create New Backtest
+          </Typography>
+          <IconButton onClick={onClose} size="small" aria-label="close">
+            <Close />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            px: 3,
+            py: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Autocomplete
               value={selectedStrategy}
               onChange={(_event, newValue) => setSelectedStrategy(newValue)}
@@ -972,18 +1008,30 @@ export const CreateBacktestDialog = ({ open, onClose, onSuccess, onBacktestCreat
               </FormHelperText>
             )}
           </Box>
-        </DialogContent>
-        <DialogActions>
+        </Box>
+
+        {/* Footer */}
+        <Divider />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            px: 3,
+            py: 2,
+          }}
+        >
           <Button onClick={onClose}>Cancel</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={isSubmitDisabled}
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
           >
             {loading ? 'Creating...' : 'Create Backtest'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </LocalizationProvider>
   );
 };
