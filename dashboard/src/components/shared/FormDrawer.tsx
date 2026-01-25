@@ -260,6 +260,8 @@ interface ContentDrawerProps {
   width?: number | string;
   /** Anchor position (default: "right") */
   anchor?: 'left' | 'right';
+  /** Whether to auto-focus the close button for keyboard navigation (default: true) */
+  autoFocus?: boolean;
 }
 
 /**
@@ -282,12 +284,14 @@ export function ContentDrawer({
   children,
   width = 400,
   anchor = 'right',
+  autoFocus = true,
 }: ContentDrawerProps) {
   return (
     <Drawer
       anchor={anchor}
       open={open}
       onClose={onClose}
+      disableAutoFocus={!autoFocus}
       PaperProps={{
         sx: {
           width: { xs: '100%', sm: width },

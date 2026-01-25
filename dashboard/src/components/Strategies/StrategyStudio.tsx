@@ -618,6 +618,12 @@ class MyStrategy(IStrategy):
             overflow: 'hidden',
           }}
         >
+          {/* Panel Title */}
+          <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              {builderMode === StrategyStrategyBuilderMode.Ui ? 'Strategy Builder' : 'Strategy Code'}
+            </Typography>
+          </Box>
           <Box sx={{ flex: 1, position: 'relative', minHeight: 0 }}>
             {builderMode === StrategyStrategyBuilderMode.Ui ? (
               <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -804,6 +810,7 @@ class MyStrategy(IStrategy):
           open={versionHistoryDrawerOpen}
           onClose={() => setVersionHistoryDrawerOpen(false)}
           title="Version History"
+          width={600}
         >
           <VersionHistoryPanel
             strategyName={strategy.name}
