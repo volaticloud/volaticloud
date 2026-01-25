@@ -291,17 +291,12 @@ func HasScopeDirective(
 	}
 
 	// Get UMA client from context
-	umaClient := GetUMAClientFromContext(ctx)
+	umaClient := authz.GetUMAClientFromContext(ctx)
 
-	// Get ENT client from context (type assert from interface{})
-	clientInterface := GetEntClientFromContext(ctx)
-	if clientInterface == nil {
+	// Get ENT client from context
+	client := authz.GetEntClientFromContext(ctx)
+	if client == nil {
 		return nil, fmt.Errorf("database client not available")
-	}
-
-	client, ok := clientInterface.(*ent.Client)
-	if !ok {
-		return nil, fmt.Errorf("invalid database client type")
 	}
 
 	// Use permission verification with the provided resource type for O(1) lookup
@@ -434,47 +429,35 @@ func extractResourceID(obj interface{}, fieldName string) (string, error) {
 	return "", fmt.Errorf("unsupported ID field type: %v", idField.Type())
 }
 
-// Context keys for storing clients
-type contextKey string
-
-const (
-	umaClientKey   contextKey = "uma_client"
-	entClientKey   contextKey = "ent_client"
-	adminClientKey contextKey = "admin_client"
-)
+// Context helper aliases - delegate to authz package to avoid duplication
+// These are kept for backward compatibility with existing code in the graph package
 
 // SetUMAClientInContext stores the UMA client in context
 func SetUMAClientInContext(ctx context.Context, client keycloak.UMAClientInterface) context.Context {
-	return context.WithValue(ctx, umaClientKey, client)
+	return authz.SetUMAClientInContext(ctx, client)
 }
 
 // GetUMAClientFromContext retrieves the UMA client from context
 func GetUMAClientFromContext(ctx context.Context) keycloak.UMAClientInterface {
-	if client, ok := ctx.Value(umaClientKey).(keycloak.UMAClientInterface); ok {
-		return client
-	}
-	return nil
+	return authz.GetUMAClientFromContext(ctx)
 }
 
 // SetEntClientInContext stores the ENT client in context
-func SetEntClientInContext(ctx context.Context, client interface{}) context.Context {
-	return context.WithValue(ctx, entClientKey, client)
+func SetEntClientInContext(ctx context.Context, client *ent.Client) context.Context {
+	return authz.SetEntClientInContext(ctx, client)
 }
 
 // GetEntClientFromContext retrieves the ENT client from context
-func GetEntClientFromContext(ctx context.Context) interface{} {
-	return ctx.Value(entClientKey)
+func GetEntClientFromContext(ctx context.Context) *ent.Client {
+	return authz.GetEntClientFromContext(ctx)
 }
 
 // SetAdminClientInContext stores the Keycloak Admin client in context
 func SetAdminClientInContext(ctx context.Context, client keycloak.AdminClientInterface) context.Context {
-	return context.WithValue(ctx, adminClientKey, client)
+	return authz.SetAdminClientInContext(ctx, client)
 }
 
 // GetAdminClientFromContext retrieves the Keycloak Admin client from context
 func GetAdminClientFromContext(ctx context.Context) keycloak.AdminClientInterface {
-	if client, ok := ctx.Value(adminClientKey).(keycloak.AdminClientInterface); ok {
-		return client
-	}
-	return nil
+	return authz.GetAdminClientFromContext(ctx)
 }
