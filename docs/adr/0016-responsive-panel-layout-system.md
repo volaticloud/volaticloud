@@ -47,6 +47,7 @@ components/shared/
 #### 1. Breakpoint: 900px (md)
 
 Chosen because:
+
 - MUI's default `md` breakpoint aligns with tablet portrait mode
 - Below 900px, two-column layouts become cramped
 - Above 900px, panels have enough space to be useful
@@ -54,12 +55,14 @@ Chosen because:
 #### 2. Library: react-resizable-panels
 
 Chosen over alternatives for:
+
 - **Minimal bundle size**: ~8KB gzipped
 - **Accessibility built-in**: Keyboard navigation for resize handles
 - **React 18 support**: Works with concurrent features
 - **Flexible API**: Supports horizontal/vertical orientation, persistence
 
 Alternatives considered:
+
 - **Custom CSS Grid/Flexbox**: More code, no resize handles, accessibility burden
 - **react-split-pane**: Larger bundle, less maintained
 - **allotment**: Good option but react-resizable-panels has better TypeScript support
@@ -67,6 +70,7 @@ Alternatives considered:
 #### 3. State Synchronization Strategy
 
 When transitioning between mobile and desktop:
+
 - **Mobile → Desktop**: The selected mobile tab maps to its group/tab position
 - **Desktop → Mobile**: The first group's active tab becomes the mobile selection
 
@@ -75,6 +79,7 @@ This approach preserves the most recent user intent without complex state manage
 #### 4. Tab Content Rendering
 
 All tab content is mounted but hidden (CSS `display: none`) rather than unmounted. This:
+
 - Preserves form state when switching tabs
 - Avoids re-mount costs for complex components
 - Trades memory for UX smoothness
