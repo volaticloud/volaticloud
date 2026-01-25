@@ -38,7 +38,8 @@ const (
 	TestClientSecret = "test-secret"
 
 	// StartupTimeout is how long to wait for Keycloak to start
-	StartupTimeout = 180 * time.Second
+	// Set to 5 minutes to account for cold image pulls on CI runners
+	StartupTimeout = 300 * time.Second
 )
 
 // KeycloakContainer holds testcontainer configuration and state

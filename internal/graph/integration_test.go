@@ -239,6 +239,9 @@ func TestIntegration_ResourceCreationWithScopes(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
@@ -406,6 +409,9 @@ func TestIntegration_MultipleResourcesSequential(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
@@ -527,6 +533,9 @@ func TestIntegration_ConcurrentResourceCreation(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
@@ -634,6 +643,9 @@ func TestIntegration_InvitationLifecycle(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
@@ -888,6 +900,9 @@ func TestIntegration_GroupHierarchyOperations(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
@@ -981,6 +996,9 @@ func TestIntegration_RoleChangeOperations(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
@@ -1045,6 +1063,9 @@ func TestIntegration_ResourceGroupOperations(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
+		if orgResourceID == "" {
+			return // Skip cleanup if resource was never created
+		}
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
