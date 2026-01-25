@@ -22,6 +22,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0014](0014-backtest-config-layer-separation.md) | Backtest Configuration Layer Separation | Accepted | 2026-01-22 |
 | [0015](0015-dialog-to-drawer-ui-pattern.md) | Dialog to Drawer UI Pattern | Accepted | 2026-01-23 |
 | [0016](0016-responsive-panel-layout-system.md) | Responsive Panel Layout System | Accepted | 2026-01-25 |
+| [0017](0017-hybrid-testing-strategy.md) | Hybrid Testing Strategy with Testcontainers | Accepted | 2026-01-26 |
 
 ## What is an ADR?
 

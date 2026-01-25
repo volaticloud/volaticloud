@@ -91,7 +91,7 @@ func (m *mockUMAClient) getSyncCalls() int {
 // setupTestContext creates a context with UMA client
 func setupTestContext(umaClient keycloak.UMAClientInterface) context.Context {
 	ctx := context.Background()
-	return context.WithValue(ctx, umaClientKey, umaClient)
+	return SetUMAClientInContext(ctx, umaClient)
 }
 
 // createBotWithDeps creates a bot with all required dependencies (exchange, strategy, runner)

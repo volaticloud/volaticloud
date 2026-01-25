@@ -28,6 +28,9 @@ type UMAClient struct {
 	clientSecret string
 }
 
+// Compile-time check that UMAClient implements UMAClientInterface
+var _ UMAClientInterface = (*UMAClient)(nil)
+
 // NewUMAClient creates a new UMA client for Keycloak authorization services
 func NewUMAClient(keycloakURL, realm, clientID, clientSecret string) *UMAClient {
 	client := gocloak.NewClient(keycloakURL)

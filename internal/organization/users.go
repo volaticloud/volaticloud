@@ -15,7 +15,7 @@ import (
 
 // GetGroupTree fetches the hierarchical group tree for an organization
 // Returns the full tree with resource groups (inactive) and role subgroups (active)
-func GetGroupTree(ctx context.Context, adminClient *keycloak.AdminClient, organizationID string) (*model.GroupNode, error) {
+func GetGroupTree(ctx context.Context, adminClient keycloak.AdminClientInterface, organizationID string) (*model.GroupNode, error) {
 	if adminClient == nil {
 		return nil, fmt.Errorf("admin client not available")
 	}
@@ -32,7 +32,7 @@ func GetGroupTree(ctx context.Context, adminClient *keycloak.AdminClient, organi
 
 // GetGroupMembers fetches users from a specific group (non-recursive)
 // Used when user selects a role group in the tree navigation
-func GetGroupMembers(ctx context.Context, adminClient *keycloak.AdminClient, groupID string) ([]*model.OrganizationUser, error) {
+func GetGroupMembers(ctx context.Context, adminClient keycloak.AdminClientInterface, groupID string) ([]*model.OrganizationUser, error) {
 	if adminClient == nil {
 		return nil, fmt.Errorf("admin client not available")
 	}

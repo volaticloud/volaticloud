@@ -2,13 +2,16 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"volaticloud/internal/auth"
+	"volaticloud/internal/authz"
 	"volaticloud/internal/graph/model"
+	"volaticloud/internal/keycloak"
 )
 
 // TestCreateOrganization tests the CreateOrganization resolver
@@ -144,32 +147,98 @@ func TestCreateOrganization(t *testing.T) {
 	})
 
 	t.Run("successful organization creation", func(t *testing.T) {
-		// TODO(#128): Add integration test with Keycloak mock
-		t.Skip("Integration test - requires Keycloak mock or interface refactor")
-		// This would test:
-		// 1. Mock admin client CreateResource returns successfully
-		// 2. Mock admin client ChangeUserRole adds user as admin
-		// 3. Resolver returns CreateOrganizationResponse with ID and title
+		// Create mock admin client
+		mockAdmin := keycloak.NewMockAdminClient()
+
+		// Create context with user and admin client
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: "test-user-id",
+			Email:  "test@example.com",
+		})
+		ctx = authz.SetAdminClientInContext(ctx, mockAdmin)
+
+		resolver := &mutationResolver{}
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "My Test Organization"})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.NotEmpty(t, result.ID)
+		assert.Equal(t, "My Test Organization", result.Title)
+		assert.NotEmpty(t, result.Alias)
+
+		// Verify the correct methods were called
+		calls := mockAdmin.GetCalls()
+		require.GreaterOrEqual(t, len(calls), 3)
+		assert.Equal(t, "CheckOrganizationAliasExists", calls[0].Method)
+		assert.Equal(t, "CreateResource", calls[1].Method)
+		assert.Equal(t, "ChangeUserRole", calls[2].Method)
 	})
 
 	t.Run("rollback on ChangeUserRole failure", func(t *testing.T) {
-		// TODO(#128): Add integration test with Keycloak mock
-		t.Skip("Integration test - requires Keycloak mock or interface refactor")
-		// This would test:
-		// 1. Mock admin client CreateResource returns successfully
-		// 2. Mock admin client ChangeUserRole fails
-		// 3. Mock admin client DeleteResource is called (rollback)
-		// 4. Resolver returns error about adding admin
+		// Create mock admin client with error on ChangeUserRole
+		mockAdmin := keycloak.NewMockAdminClient()
+		mockAdmin.SetError("ChangeUserRole", fmt.Errorf("simulated ChangeUserRole failure"))
+
+		// Create context with user and admin client
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: "test-user-id",
+			Email:  "test@example.com",
+		})
+		ctx = authz.SetAdminClientInContext(ctx, mockAdmin)
+
+		resolver := &mutationResolver{}
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "Rollback Test Org"})
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to add you as organization admin")
+		assert.Nil(t, result)
+
+		// Verify DeleteResource was called for rollback
+		calls := mockAdmin.GetCalls()
+		foundDelete := false
+		for _, call := range calls {
+			if call.Method == "DeleteResource" {
+				foundDelete = true
+				break
+			}
+		}
+		assert.True(t, foundDelete, "DeleteResource should be called for rollback")
 	})
 
 	t.Run("rollback failure logged on ChangeUserRole failure", func(t *testing.T) {
-		// TODO(#128): Add integration test with Keycloak mock
-		t.Skip("Integration test - requires Keycloak mock or interface refactor")
-		// This would test:
-		// 1. Mock admin client CreateResource returns successfully
-		// 2. Mock admin client ChangeUserRole fails
-		// 3. Mock admin client DeleteResource also fails
-		// 4. Both failures are logged
-		// 5. Resolver returns error about adding admin
+		// Create mock admin client with errors on both ChangeUserRole and DeleteResource
+		mockAdmin := keycloak.NewMockAdminClient()
+		mockAdmin.SetError("ChangeUserRole", fmt.Errorf("simulated ChangeUserRole failure"))
+		mockAdmin.SetError("DeleteResource", fmt.Errorf("simulated DeleteResource failure"))
+
+		// Create context with user and admin client
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: "test-user-id",
+			Email:  "test@example.com",
+		})
+		ctx = authz.SetAdminClientInContext(ctx, mockAdmin)
+
+		resolver := &mutationResolver{}
+		result, err := resolver.CreateOrganization(ctx, model.CreateOrganizationInput{Title: "Double Failure Org"})
+
+		// Should still return error about adding admin (primary failure)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to add you as organization admin")
+		assert.Nil(t, result)
+
+		// Verify both methods were called (even though DeleteResource failed, it should have been attempted)
+		calls := mockAdmin.GetCalls()
+		foundChangeUserRole := false
+		foundDeleteResource := false
+		for _, call := range calls {
+			if call.Method == "ChangeUserRole" {
+				foundChangeUserRole = true
+			}
+			if call.Method == "DeleteResource" {
+				foundDeleteResource = true
+			}
+		}
+		assert.True(t, foundChangeUserRole, "ChangeUserRole should be called")
+		assert.True(t, foundDeleteResource, "DeleteResource should be attempted for rollback")
 	})
 }

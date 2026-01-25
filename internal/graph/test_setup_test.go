@@ -12,15 +12,17 @@ import (
 
 	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/keycloak"
 )
 
 // TestEnv holds all test environment components
 type TestEnv struct {
-	Client  *ent.Client
-	GraphQL *client.Client
-	MockUMA *MockUMAClient
-	Context context.Context
-	T       *testing.T
+	Client    *ent.Client
+	GraphQL   *client.Client
+	MockUMA   *MockUMAClient
+	MockAdmin *keycloak.MockAdminClient
+	Context   context.Context
+	T         *testing.T
 }
 
 // Setup creates a complete test environment with in-memory database
@@ -37,6 +39,9 @@ func Setup(t *testing.T) *TestEnv {
 
 	// Create mock UMA client
 	mockUMA := NewMockUMAClient()
+
+	// Create mock Admin client
+	mockAdmin := keycloak.NewMockAdminClient()
 
 	// Create GraphQL handler with test configuration
 	// Pass nil for Keycloak auth client since tests handle auth differently
@@ -60,11 +65,12 @@ func Setup(t *testing.T) *TestEnv {
 	graphqlClient := client.New(srv)
 
 	return &TestEnv{
-		Client:  entClient,
-		GraphQL: graphqlClient,
-		MockUMA: mockUMA,
-		Context: ctx,
-		T:       t,
+		Client:    entClient,
+		GraphQL:   graphqlClient,
+		MockUMA:   mockUMA,
+		MockAdmin: mockAdmin,
+		Context:   ctx,
+		T:         t,
 	}
 }
 
@@ -91,6 +97,7 @@ func (te *TestEnv) WithAuth(userID, groupID string, permissions map[string][]str
 	ctx = auth.SetUserContext(ctx, userCtx)
 	ctx = SetEntClientInContext(ctx, te.Client)
 	ctx = SetUMAClientInContext(ctx, te.MockUMA)
+	ctx = SetAdminClientInContext(ctx, te.MockAdmin)
 
 	return ctx
 }
@@ -100,5 +107,6 @@ func (te *TestEnv) WithoutAuth() context.Context {
 	ctx := te.Context
 	ctx = SetEntClientInContext(ctx, te.Client)
 	ctx = SetUMAClientInContext(ctx, te.MockUMA)
+	ctx = SetAdminClientInContext(ctx, te.MockAdmin)
 	return ctx
 }
