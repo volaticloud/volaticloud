@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { Box, Tabs, Tab, Chip, Paper, Typography } from '@mui/material';
 import {
   Panel,
@@ -37,6 +37,38 @@ export function ResponsivePanelLayout({
   const [desktopActiveTabs, setDesktopActiveTabs] = useState<Record<string, number>>(() =>
     Object.fromEntries(groups.map((g) => [g.id, 0]))
   );
+
+  // Track previous mobile state to detect transitions
+  const prevIsMobile = useRef(isMobile);
+
+  // Synchronize tab state when transitioning between mobile/desktop
+  useEffect(() => {
+    if (prevIsMobile.current !== isMobile) {
+      if (isMobile) {
+        // Transitioning to mobile: find the flattened index of the first active desktop tab
+        // Use the first group's active tab as the mobile selection
+        const firstGroup = groups[0];
+        if (firstGroup) {
+          const activeTabInGroup = desktopActiveTabs[firstGroup.id] ?? 0;
+          // Use the first group's active tab index as the mobile selection
+          setMobileActiveTab(activeTabInGroup);
+        }
+      } else {
+        // Transitioning to desktop: find which group/tab the mobile selection corresponds to
+        const mobileTab = allTabs[mobileActiveTab];
+        if (mobileTab) {
+          const group = groups.find((g) => g.id === mobileTab.groupId);
+          if (group) {
+            const tabIndex = group.tabs.findIndex((t) => t.id === mobileTab.id);
+            if (tabIndex >= 0) {
+              setDesktopActiveTabs((prev) => ({ ...prev, [mobileTab.groupId]: tabIndex }));
+            }
+          }
+        }
+      }
+      prevIsMobile.current = isMobile;
+    }
+  }, [isMobile, groups, allTabs, mobileActiveTab, desktopActiveTabs]);
 
   const handleMobileTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setMobileActiveTab(newValue);

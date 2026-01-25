@@ -126,7 +126,10 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
             <TextField
               type="number"
               value={config.max_entries}
-              onChange={(e) => handleMaxEntriesChange(parseInt(e.target.value) || 1)}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val)) handleMaxEntriesChange(val);
+              }}
               size="small"
               sx={{ width: 80 }}
               slotProps={{
@@ -154,7 +157,10 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
             <TextField
               type="number"
               value={config.cooldown_minutes || 0}
-              onChange={(e) => handleCooldownChange(parseInt(e.target.value) || 0)}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val)) handleCooldownChange(val);
+              }}
               size="small"
               sx={{ width: 80 }}
               slotProps={{
@@ -209,13 +215,10 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
                     <TextField
                       type="number"
                       value={rule.price_drop_percent}
-                      onChange={(e) =>
-                        handleRuleChange(
-                          index,
-                          'price_drop_percent',
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) handleRuleChange(index, 'price_drop_percent', val);
+                      }}
                       size="small"
                       sx={{ width: 80 }}
                       slotProps={{
@@ -230,13 +233,10 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
                     <TextField
                       type="number"
                       value={rule.stake_multiplier}
-                      onChange={(e) =>
-                        handleRuleChange(
-                          index,
-                          'stake_multiplier',
-                          parseFloat(e.target.value) || 1
-                        )
-                      }
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) handleRuleChange(index, 'stake_multiplier', val);
+                      }}
                       size="small"
                       sx={{ width: 80 }}
                       slotProps={{

@@ -25,7 +25,14 @@ export interface PercentageSliderProps {
 
 /**
  * Reusable percentage slider with synchronized TextField.
+ *
  * Handles conversion between decimal (internal) and percentage (display).
+ *
+ * For showNegative mode (e.g., stoploss):
+ * - Internal value is stored as negative decimal (e.g., -0.10 for -10%)
+ * - Both slider and TextField display the ABSOLUTE percentage value (e.g., 10)
+ * - Slider label shows the negative sign (e.g., "-10%")
+ * - Moving slider right = larger absolute loss = more negative internal value
  */
 export function PercentageSlider({
   value,
@@ -39,26 +46,27 @@ export function PercentageSlider({
   marks,
   disabled = false,
 }: PercentageSliderProps) {
-  // Convert decimal to percentage for display
-  const displayValue = showNegative ? Math.abs(value) * 100 : value * 100;
+  // Convert decimal to percentage for display (always positive for slider/text)
+  const displayValue = Math.abs(value) * 100;
 
-  // Handle slider change
+  // Handle slider change - apply negation for showNegative mode
   const handleSliderChange = (_: Event, newValue: number | number[]) => {
     const percentValue = newValue as number;
     const decimalValue = showNegative ? -(percentValue / 100) : percentValue / 100;
     onChange(decimalValue);
   };
 
-  // Handle text field change
+  // Handle text field change - user enters absolute value, we apply sign
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const textValue = parseFloat(e.target.value);
     if (!isNaN(textValue)) {
-      const decimalValue = textValue / 100;
+      // For showNegative, negate the absolute value entered by user
+      const decimalValue = showNegative ? -(textValue / 100) : textValue / 100;
       onChange(decimalValue);
     }
   };
 
-  // Default value label format
+  // Default value label format - adds negative sign for showNegative mode
   const defaultFormat = (v: number) => (showNegative ? `-${v}%` : `${v}%`);
 
   return (
@@ -77,7 +85,7 @@ export function PercentageSlider({
       />
       <TextField
         type="number"
-        value={showNegative ? (value * 100).toFixed(1) : displayValue.toFixed(1)}
+        value={displayValue.toFixed(1)}
         onChange={handleTextChange}
         size="small"
         sx={{ width: textFieldWidth }}
@@ -87,8 +95,8 @@ export function PercentageSlider({
             endAdornment: <InputAdornment position="end">%</InputAdornment>,
           },
           htmlInput: {
-            min: showNegative ? -max : min,
-            max: showNegative ? -min : max,
+            min,
+            max,
             step,
           },
         }}

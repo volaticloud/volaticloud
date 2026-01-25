@@ -1,4 +1,4 @@
-import { useState, memo, useMemo } from 'react';
+import { useState, memo } from 'react';
 import {
   Box,
   Paper,
@@ -85,11 +85,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
 
-  // Memoize computed values
-  const borderColor = useMemo(
-    () => CONDITION_DEPTH_COLORS[depth % CONDITION_DEPTH_COLORS.length],
-    [depth]
-  );
+  // Simple computed values - no memoization needed for trivial lookups
+  const borderColor = CONDITION_DEPTH_COLORS[depth % CONDITION_DEPTH_COLORS.length];
   const isDisabled = node.disabled === true;
 
   const handleToggleDisabled = () => {
