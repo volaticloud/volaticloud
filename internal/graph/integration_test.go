@@ -743,3 +743,340 @@ func TestIntegration_InvitationErrors(t *testing.T) {
 		_ = err
 	})
 }
+
+// TestIntegration_UMAResourceOperations tests UMA resource operations via UMAClient
+// Note: These tests require the Keycloak client to have uma_protection scope.
+// If the scope is not configured, tests will be skipped.
+func TestIntegration_UMAResourceOperations(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	resourceID := uuid.New().String()
+	resourceName := "Test UMA Resource " + resourceID[:8]
+
+	// Clean up at the end
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.UMAClient.DeleteResource(cleanupCtx, resourceID)
+	}()
+
+	t.Run("create UMA resource", func(t *testing.T) {
+		err := env.UMAClient.CreateResource(ctx, resourceID, resourceName, []string{"view", "edit"}, map[string][]string{
+			"type": {"test"},
+		})
+		if err != nil && (contains(err.Error(), "uma_protection") || contains(err.Error(), "403")) {
+			t.Skip("Skipping - UMA client requires uma_protection scope which is not configured in test realm")
+		}
+		require.NoError(t, err, "Should create UMA resource")
+	})
+
+	t.Run("get UMA resource", func(t *testing.T) {
+		resource, err := env.UMAClient.GetResource(ctx, resourceID)
+		if err != nil && (contains(err.Error(), "uma_protection") || contains(err.Error(), "403")) {
+			t.Skip("Skipping - UMA client requires uma_protection scope which is not configured in test realm")
+		}
+		require.NoError(t, err, "Should get UMA resource")
+		require.NotNil(t, resource)
+		assert.Equal(t, resourceID, *resource.Name, "Resource name should match ID")
+	})
+
+	t.Run("update UMA resource attributes", func(t *testing.T) {
+		err := env.UMAClient.UpdateResource(ctx, resourceID, map[string][]string{
+			"type":   {"test"},
+			"public": {"true"},
+		})
+		if err != nil && (contains(err.Error(), "uma_protection") || contains(err.Error(), "403")) {
+			t.Skip("Skipping - UMA client requires uma_protection scope which is not configured in test realm")
+		}
+		require.NoError(t, err, "Should update UMA resource")
+
+		// Verify the update
+		resource, err := env.UMAClient.GetResource(ctx, resourceID)
+		require.NoError(t, err)
+		require.NotNil(t, resource.Attributes)
+		attrs := *resource.Attributes
+		assert.Equal(t, []string{"true"}, attrs["public"], "Public attribute should be updated")
+	})
+
+	t.Run("sync UMA resource scopes", func(t *testing.T) {
+		// Add a new scope
+		err := env.UMAClient.SyncResourceScopes(ctx, resourceID, resourceName, []string{"view", "edit", "delete"}, map[string][]string{
+			"type": {"test"},
+		})
+		if err != nil && (contains(err.Error(), "uma_protection") || contains(err.Error(), "403")) {
+			t.Skip("Skipping - UMA client requires uma_protection scope which is not configured in test realm")
+		}
+		require.NoError(t, err, "Should sync UMA resource scopes")
+	})
+
+	t.Run("delete UMA resource", func(t *testing.T) {
+		err := env.UMAClient.DeleteResource(ctx, resourceID)
+		require.NoError(t, err, "Should delete UMA resource")
+
+		// Verify deletion - GetResource should return error
+		_, err = env.UMAClient.GetResource(ctx, resourceID)
+		require.Error(t, err, "GetResource should fail after deletion")
+	})
+}
+
+// contains checks if a string contains a substring (helper for error checking)
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// TestIntegration_UMAResourceErrors tests error cases for UMA operations
+func TestIntegration_UMAResourceErrors(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+
+	t.Run("get non-existent resource", func(t *testing.T) {
+		nonExistentID := uuid.New().String()
+		_, err := env.UMAClient.GetResource(ctx, nonExistentID)
+		require.Error(t, err, "Should error when getting non-existent resource")
+	})
+
+	t.Run("update non-existent resource", func(t *testing.T) {
+		nonExistentID := uuid.New().String()
+		err := env.UMAClient.UpdateResource(ctx, nonExistentID, map[string][]string{
+			"type": {"test"},
+		})
+		require.Error(t, err, "Should error when updating non-existent resource")
+	})
+}
+
+// TestIntegration_GroupHierarchyOperations tests group hierarchy operations via AdminClient
+// These test GetGroupUsers, GetGroupTree, and GetGroupMembers methods.
+// Note: These tests require the Keycloak client to have realm admin roles.
+// If the roles are not configured, tests will be skipped.
+func TestIntegration_GroupHierarchyOperations(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	testUserID := uuid.New().String()
+
+	// Create an organization resource (which creates a Keycloak group)
+	orgAlias := "test-org-hierarchy-" + uuid.New().String()[:8]
+	orgReq := keycloak.ResourceCreateRequest{
+		Title:   "Test Organization " + uuid.New().String()[:8],
+		Type:    "organization",
+		OwnerID: testUserID,
+		Scopes:  authz.GroupScopes,
+		Attributes: map[string][]string{
+			"alias": {orgAlias},
+		},
+	}
+	orgResp, err := env.AdminClient.CreateResource(ctx, orgReq)
+	require.NoError(t, err, "Should create organization resource")
+	require.NotNil(t, orgResp)
+	require.NotEmpty(t, orgResp.GroupID, "Organization should have a GroupID")
+	orgResourceID := orgResp.ID
+	orgGroupID := orgResp.GroupID
+
+	// Clean up organization at the end
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
+	}()
+
+	t.Run("get group tree for organization", func(t *testing.T) {
+		tree, err := env.AdminClient.GetGroupTree(ctx, orgGroupID)
+		if err != nil && contains(err.Error(), "403") {
+			t.Skip("Skipping - client requires realm admin roles which are not configured in test realm")
+		}
+		require.NoError(t, err, "Should get group tree")
+		require.NotNil(t, tree, "Group tree should not be nil")
+		assert.NotEmpty(t, tree.ID, "Group tree should have ID")
+		assert.NotEmpty(t, tree.Name, "Group tree should have name")
+		t.Logf("Group tree: ID=%s, Name=%s, Type=%s, Children=%d",
+			tree.ID, tree.Name, tree.Type, len(tree.Children))
+	})
+
+	t.Run("get group users for organization", func(t *testing.T) {
+		users, err := env.AdminClient.GetGroupUsers(ctx, orgGroupID)
+		if err != nil && contains(err.Error(), "403") {
+			t.Skip("Skipping - client requires realm admin roles which are not configured in test realm")
+		}
+		require.NoError(t, err, "Should get group users")
+		require.NotNil(t, users, "Users list should not be nil")
+		// A newly created organization may not have users
+		t.Logf("Group has %d users", len(users))
+	})
+
+	t.Run("get group members for organization", func(t *testing.T) {
+		members, err := env.AdminClient.GetGroupMembers(ctx, orgGroupID)
+		if err != nil && contains(err.Error(), "403") {
+			t.Skip("Skipping - client requires realm admin roles which are not configured in test realm")
+		}
+		require.NoError(t, err, "Should get group members")
+		require.NotNil(t, members, "Members list should not be nil")
+		// A newly created organization may not have members
+		t.Logf("Group has %d direct members", len(members))
+	})
+}
+
+// TestIntegration_GroupHierarchyErrors tests error cases for group hierarchy operations
+func TestIntegration_GroupHierarchyErrors(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+
+	t.Run("get group tree for non-existent group", func(t *testing.T) {
+		nonExistentID := uuid.New().String()
+		_, err := env.AdminClient.GetGroupTree(ctx, nonExistentID)
+		require.Error(t, err, "Should error when getting group tree for non-existent group")
+	})
+
+	t.Run("get group users for non-existent group", func(t *testing.T) {
+		nonExistentID := uuid.New().String()
+		_, err := env.AdminClient.GetGroupUsers(ctx, nonExistentID)
+		require.Error(t, err, "Should error when getting group users for non-existent group")
+	})
+
+	t.Run("get group members for non-existent group", func(t *testing.T) {
+		nonExistentID := uuid.New().String()
+		_, err := env.AdminClient.GetGroupMembers(ctx, nonExistentID)
+		require.Error(t, err, "Should error when getting group members for non-existent group")
+	})
+}
+
+// TestIntegration_RoleChangeOperations tests role change operations via AdminClient
+func TestIntegration_RoleChangeOperations(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	testUserID := uuid.New().String()
+
+	// Create an organization resource
+	orgAlias := "test-org-roles-" + uuid.New().String()[:8]
+	orgReq := keycloak.ResourceCreateRequest{
+		Title:   "Test Organization " + uuid.New().String()[:8],
+		Type:    "organization",
+		OwnerID: testUserID,
+		Scopes:  authz.GroupScopes,
+		Attributes: map[string][]string{
+			"alias": {orgAlias},
+		},
+	}
+	orgResp, err := env.AdminClient.CreateResource(ctx, orgReq)
+	require.NoError(t, err, "Should create organization resource")
+	require.NotNil(t, orgResp)
+	orgResourceID := orgResp.ID
+
+	// Clean up organization at the end
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
+	}()
+
+	t.Run("get available roles for organization", func(t *testing.T) {
+		roles, err := env.AdminClient.GetAvailableRoles(ctx, orgResourceID)
+		require.NoError(t, err, "Should get available roles")
+		require.NotNil(t, roles, "Roles list should not be nil")
+		t.Logf("Available roles: %v", roles)
+		// At minimum, there should be some roles available
+		assert.NotEmpty(t, roles, "Should have at least one available role")
+	})
+}
+
+// TestIntegration_RoleChangeErrors tests error cases for role change operations
+func TestIntegration_RoleChangeErrors(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+
+	t.Run("change role for non-existent organization", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+		nonExistentUserID := uuid.New().String()
+
+		_, err := env.AdminClient.ChangeUserRole(ctx, nonExistentOrgID, nonExistentUserID, "member")
+		require.Error(t, err, "Should error when changing role for non-existent organization")
+	})
+
+	t.Run("get available roles for non-existent organization", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+
+		_, err := env.AdminClient.GetAvailableRoles(ctx, nonExistentOrgID)
+		require.Error(t, err, "Should error when getting roles for non-existent organization")
+	})
+}
+
+// TestIntegration_ResourceGroupOperations tests resource group operations via AdminClient
+func TestIntegration_ResourceGroupOperations(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	testUserID := uuid.New().String()
+
+	// Create an organization resource
+	orgAlias := "test-org-resgroups-" + uuid.New().String()[:8]
+	orgReq := keycloak.ResourceCreateRequest{
+		Title:   "Test Organization " + uuid.New().String()[:8],
+		Type:    "organization",
+		OwnerID: testUserID,
+		Scopes:  authz.GroupScopes,
+		Attributes: map[string][]string{
+			"alias": {orgAlias},
+		},
+	}
+	orgResp, err := env.AdminClient.CreateResource(ctx, orgReq)
+	require.NoError(t, err, "Should create organization resource")
+	require.NotNil(t, orgResp)
+	orgResourceID := orgResp.ID
+
+	// Clean up organization at the end
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
+	}()
+
+	t.Run("get resource groups for organization", func(t *testing.T) {
+		groups, err := env.AdminClient.GetResourceGroups(ctx, orgResourceID, "", 0, 10, "", "")
+		require.NoError(t, err, "Should get resource groups")
+		require.NotNil(t, groups, "Resource groups response should not be nil")
+		t.Logf("Found %d resource groups, total count: %d", len(groups.Items), groups.TotalCount)
+	})
+}
+
+// TestIntegration_ResourceGroupErrors tests error cases for resource group operations
+func TestIntegration_ResourceGroupErrors(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+
+	t.Run("get resource groups for non-existent organization", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+
+		_, err := env.AdminClient.GetResourceGroups(ctx, nonExistentOrgID, "", 0, 10, "", "")
+		require.Error(t, err, "Should error when getting resource groups for non-existent organization")
+	})
+
+	t.Run("get resource group members for non-existent organization", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+		nonExistentGroupID := uuid.New().String()
+
+		_, err := env.AdminClient.GetResourceGroupMembers(ctx, nonExistentOrgID, nonExistentGroupID, nil, "", nil, nil, 0, 10, "", "")
+		require.Error(t, err, "Should error when getting resource group members for non-existent organization")
+	})
+}

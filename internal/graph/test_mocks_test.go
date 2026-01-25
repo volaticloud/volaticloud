@@ -4,12 +4,16 @@ import (
 	"context"
 	"sync"
 
+	"github.com/Nerzal/gocloak/v13"
+
 	"volaticloud/internal/keycloak"
 )
 
+// Compile-time check that MockUMAClient implements UMAClientInterface
+var _ keycloak.UMAClientInterface = (*MockUMAClient)(nil)
+
 // MockUMAClient is a mock implementation of UMAClient for testing
 type MockUMAClient struct {
-	keycloak.UMAClient
 	mu          sync.RWMutex
 	permissions map[string][]string // resourceID -> []scopes
 }
@@ -72,4 +76,12 @@ func (m *MockUMAClient) UpdateResource(ctx context.Context, resourceID string, a
 // SyncResourceScopes is a no-op for the mock (not needed in tests)
 func (m *MockUMAClient) SyncResourceScopes(ctx context.Context, resourceID, resourceName string, scopes []string, attributes map[string][]string) error {
 	return nil
+}
+
+// GetResource returns a mock resource representation (not needed in tests)
+func (m *MockUMAClient) GetResource(ctx context.Context, resourceID string) (*gocloak.ResourceRepresentation, error) {
+	return &gocloak.ResourceRepresentation{
+		ID:   gocloak.StringP(resourceID),
+		Name: gocloak.StringP(resourceID),
+	}, nil
 }
