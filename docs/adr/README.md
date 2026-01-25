@@ -21,6 +21,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0013](0013-long-short-signal-support.md) | Long/Short Signal Support with Mirror | Accepted | 2026-01-20 |
 | [0014](0014-backtest-config-layer-separation.md) | Backtest Configuration Layer Separation | Accepted | 2026-01-22 |
 | [0015](0015-dialog-to-drawer-ui-pattern.md) | Dialog to Drawer UI Pattern | Accepted | 2026-01-23 |
+| [0016](0016-responsive-panel-layout-system.md) | Responsive Panel Layout System | Accepted | 2026-01-25 |
 
 ## What is an ADR?
 

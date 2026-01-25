@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -38,13 +39,17 @@ interface ROIEntry {
 }
 
 export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
-  // Convert minimal_roi object to array for editing
-  const roiEntries: ROIEntry[] = Object.entries(value.minimal_roi)
-    .map(([minutes, roi]) => ({
-      minutes: parseInt(minutes, 10),
-      roi: roi as number,
-    }))
-    .sort((a, b) => a.minutes - b.minutes);
+  // Convert minimal_roi object to array for editing (memoized to avoid recalculation on every render)
+  const roiEntries = useMemo<ROIEntry[]>(
+    () =>
+      Object.entries(value.minimal_roi)
+        .map(([minutes, roi]) => ({
+          minutes: parseInt(minutes, 10),
+          roi: roi as number,
+        }))
+        .sort((a, b) => a.minutes - b.minutes),
+    [value.minimal_roi]
+  );
 
   const handleStoplossChange = (stoploss: number) => {
     onChange({ ...value, stoploss });
@@ -140,7 +145,10 @@ export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
           <TextField
             type="number"
             value={(value.stoploss * 100).toFixed(1)}
-            onChange={(e) => handleStoplossChange(parseFloat(e.target.value) / 100)}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              if (!isNaN(value)) handleStoplossChange(value / 100);
+            }}
             size="small"
             sx={{ width: 100 }}
             slotProps={{
@@ -278,7 +286,10 @@ export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
                 <TextField
                   type="number"
                   value={((value.trailing_stop_positive || 0.01) * 100).toFixed(1)}
-                  onChange={(e) => handleTrailingPositiveChange(parseFloat(e.target.value) / 100)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) handleTrailingPositiveChange(val / 100);
+                  }}
                   size="small"
                   sx={{ width: 100 }}
                   slotProps={{
@@ -312,7 +323,10 @@ export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
                 <TextField
                   type="number"
                   value={((value.trailing_stop_positive_offset || 0.01) * 100).toFixed(1)}
-                  onChange={(e) => handleTrailingOffsetChange(parseFloat(e.target.value) / 100)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) handleTrailingOffsetChange(val / 100);
+                  }}
                   size="small"
                   sx={{ width: 100 }}
                   slotProps={{

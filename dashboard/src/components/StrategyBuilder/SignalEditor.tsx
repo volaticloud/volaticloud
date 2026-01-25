@@ -1,6 +1,6 @@
 import { Box, Typography, Alert, Chip, Button } from '@mui/material';
 import { TrendingUp, TrendingDown, Login, Logout, LinkOff } from '@mui/icons-material';
-import { ConditionNode, IndicatorDefinition, StrategySignalDirection, SignalConfig, createDefaultSignalConfig } from './types';
+import { ConditionNode, IndicatorDefinition, StrategySignalDirection, SignalConfig, createDefaultSignalConfig, getConditionCount } from './types';
 import { ConditionNodeEditor } from './ConditionNode';
 
 interface SignalEditorProps {
@@ -57,17 +57,6 @@ export function SignalEditor({
   const currentConditions = isEntry
     ? signalConfig.entry_conditions
     : signalConfig.exit_conditions;
-
-  // Count conditions
-  const getConditionCount = (node: ConditionNode): number => {
-    if (node.type === 'AND' || node.type === 'OR') {
-      return (node as { children: ConditionNode[] }).children.reduce(
-        (acc, child) => acc + getConditionCount(child),
-        0
-      );
-    }
-    return 1;
-  };
 
   const conditionCount = getConditionCount(currentConditions);
 

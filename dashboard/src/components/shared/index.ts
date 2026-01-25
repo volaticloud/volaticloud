@@ -15,3 +15,5 @@ export { ProtectedButton, ProtectedIconButton } from './ProtectedButton';
 export { UnsavedChangesDrawer } from './UnsavedChangesDrawer';
 export { ToolbarActions, OverflowMenu } from './ToolbarActions';
 export type { ToolbarAction, ToolbarActionsProps, OverflowMenuProps } from './ToolbarActions';
+export { ResponsivePanelLayout } from './ResponsivePanelLayout';
+export type { TabDefinition, PanelGroupDefinition, ResponsivePanelLayoutProps } from './ResponsivePanelLayout';

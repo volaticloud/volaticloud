@@ -18,7 +18,6 @@ import {
 } from '@mui/icons-material';
 import {
   UIBuilderConfig,
-  ConditionNode,
   IndicatorDefinition,
   StrategyParameters,
   CallbacksConfig,
@@ -32,6 +31,7 @@ import {
   applyMirrorConfig,
   shouldGenerateLongSignals,
   shouldGenerateShortSignals,
+  getConditionCount,
 } from './types';
 import { IndicatorSelector } from './IndicatorSelector';
 import { ParameterEditor } from './ParameterEditor';
@@ -155,17 +155,6 @@ export function StrategyBuilder({
 
   const handleCallbacksChange = (callbacks: CallbacksConfig) => {
     onChange({ ...config, callbacks });
-  };
-
-  const getConditionCount = (node: ConditionNode | undefined): number => {
-    if (!node) return 0;
-    if (node.type === 'AND' || node.type === 'OR') {
-      return (node as { children: ConditionNode[] }).children.reduce(
-        (acc, child) => acc + getConditionCount(child),
-        0
-      );
-    }
-    return 1;
   };
 
   // Count conditions for each signal type (use displayConfig for mirrored signals)

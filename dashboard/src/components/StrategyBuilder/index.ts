@@ -15,6 +15,10 @@ export { EntryConfirmBuilder } from './EntryConfirmBuilder';
 // Code preview
 export { CodePreview } from './CodePreview';
 
+// Hooks
+export { useBuilderTabs } from './useBuilderTabs';
+export type { UseBuilderTabsProps } from './useBuilderTabs';
+
 // Types
 export * from './types';
 
