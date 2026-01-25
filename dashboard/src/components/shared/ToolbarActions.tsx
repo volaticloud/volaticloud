@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { useState, ReactNode, Fragment } from 'react';
 import {
   Button,
   IconButton,
@@ -153,24 +153,25 @@ export const ToolbarActions = ({
               horizontal: 'right',
             }}
           >
-            {secondaryActions.map((action, index) => [
-              action.dividerBefore && index > 0 && <Divider key={`divider-${action.id}`} />,
-              <MenuItem
-                key={action.id}
-                onClick={() => handleMenuItemClick(action)}
-                disabled={action.disabled || action.loading}
-              >
-                {action.icon && (
-                  <ListItemIcon sx={{ color: action.color ? `${action.color}.main` : undefined }}>
-                    {action.loading ? <CircularProgress size={20} /> : action.icon}
-                  </ListItemIcon>
-                )}
-                <ListItemText
-                  primary={action.loading && action.loadingLabel ? action.loadingLabel : action.label}
-                  sx={{ color: action.color ? `${action.color}.main` : undefined }}
-                />
-              </MenuItem>,
-            ])}
+            {secondaryActions.map((action, index) => (
+              <Fragment key={action.id}>
+                {action.dividerBefore && index > 0 && <Divider />}
+                <MenuItem
+                  onClick={() => handleMenuItemClick(action)}
+                  disabled={action.disabled || action.loading}
+                >
+                  {action.icon && (
+                    <ListItemIcon sx={{ color: action.color ? `${action.color}.main` : undefined }}>
+                      {action.loading ? <CircularProgress size={20} /> : action.icon}
+                    </ListItemIcon>
+                  )}
+                  <ListItemText
+                    primary={action.loading && action.loadingLabel ? action.loadingLabel : action.label}
+                    sx={{ color: action.color ? `${action.color}.main` : undefined }}
+                  />
+                </MenuItem>
+              </Fragment>
+            ))}
           </Menu>
         </>
       )}
@@ -258,24 +259,25 @@ export const OverflowMenu = ({
           horizontal: 'right',
         }}
       >
-        {visibleItems.map((item, index) => [
-          item.dividerBefore && index > 0 && <Divider key={`divider-${item.id}`} />,
-          <MenuItem
-            key={item.id}
-            onClick={() => handleMenuItemClick(item)}
-            disabled={item.disabled || item.loading}
-          >
-            {item.icon && (
-              <ListItemIcon sx={{ color: item.color ? `${item.color}.main` : undefined }}>
-                {item.loading ? <CircularProgress size={20} /> : item.icon}
-              </ListItemIcon>
-            )}
-            <ListItemText
-              primary={item.loading && item.loadingLabel ? item.loadingLabel : item.label}
-              sx={{ color: item.color ? `${item.color}.main` : undefined }}
-            />
-          </MenuItem>,
-        ])}
+        {visibleItems.map((item, index) => (
+          <Fragment key={item.id}>
+            {item.dividerBefore && index > 0 && <Divider />}
+            <MenuItem
+              onClick={() => handleMenuItemClick(item)}
+              disabled={item.disabled || item.loading}
+            >
+              {item.icon && (
+                <ListItemIcon sx={{ color: item.color ? `${item.color}.main` : undefined }}>
+                  {item.loading ? <CircularProgress size={20} /> : item.icon}
+                </ListItemIcon>
+              )}
+              <ListItemText
+                primary={item.loading && item.loadingLabel ? item.loadingLabel : item.label}
+                sx={{ color: item.color ? `${item.color}.main` : undefined }}
+              />
+            </MenuItem>
+          </Fragment>
+        ))}
       </Menu>
     </>
   );

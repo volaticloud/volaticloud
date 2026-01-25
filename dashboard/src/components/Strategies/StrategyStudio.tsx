@@ -583,7 +583,7 @@ class MyStrategy(IStrategy):
                     icon: <Close />,
                     onClick: handleCancel,
                   },
-                ] as ToolbarAction[])
+                ] satisfies ToolbarAction[])
           }
         />
       </Paper>
