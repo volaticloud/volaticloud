@@ -512,7 +512,7 @@ class MyStrategy(IStrategy):
           size="medium"
           actions={
             isCreateMode
-              ? [
+              ? ([
                   // Create mode actions
                   {
                     id: 'create',
@@ -531,7 +531,7 @@ class MyStrategy(IStrategy):
                     icon: <Close />,
                     onClick: handleCancel,
                   },
-                ]
+                ] satisfies ToolbarAction[])
               : ([
                   // Edit mode actions
                   {

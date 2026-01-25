@@ -85,11 +85,6 @@ export const ToolbarActions = ({
     setAnchorEl(null);
   };
 
-  const handleMenuItemClick = (action: ToolbarAction) => {
-    handleMenuClose();
-    action.onClick();
-  };
-
   // Filter out hidden actions
   const visibleActions = actions.filter((action) => !action.hidden);
 
@@ -103,6 +98,7 @@ export const ToolbarActions = ({
       {primaryActions.map((action) => {
         const button = (
           <Button
+            aria-label={action.label}
             variant={action.variant || 'outlined'}
             color={action.color || 'primary'}
             size={size}
@@ -153,23 +149,12 @@ export const ToolbarActions = ({
             }}
           >
             {secondaryActions.map((action, index) => (
-              <Fragment key={action.id}>
-                {action.dividerBefore && index > 0 && <Divider />}
-                <MenuItem
-                  onClick={() => handleMenuItemClick(action)}
-                  disabled={action.disabled || action.loading}
-                >
-                  {action.icon && (
-                    <ListItemIcon sx={{ color: action.color ? `${action.color}.main` : undefined }}>
-                      {action.loading ? <CircularProgress size={20} /> : action.icon}
-                    </ListItemIcon>
-                  )}
-                  <ListItemText
-                    primary={action.loading && action.loadingLabel ? action.loadingLabel : action.label}
-                    sx={{ color: action.color ? `${action.color}.main` : undefined }}
-                  />
-                </MenuItem>
-              </Fragment>
+              <MenuItemContent
+                key={action.id}
+                action={action}
+                index={index}
+                onClose={handleMenuClose}
+              />
             ))}
           </Menu>
         </>
@@ -191,6 +176,9 @@ export interface OverflowMenuProps {
 
 /**
  * OverflowMenu - A standalone 3-dot menu component for secondary actions.
+ *
+ * This component reuses ToolbarActions internally, treating all items as secondary
+ * (overflow menu) actions. Use this when you only need a menu without primary buttons.
  *
  * @example
  * ```tsx
@@ -219,11 +207,7 @@ export const OverflowMenu = ({
     setAnchorEl(null);
   };
 
-  const handleMenuItemClick = (item: ToolbarAction) => {
-    handleMenuClose();
-    item.onClick();
-  };
-
+  // Filter out hidden items
   const visibleItems = items.filter((item) => !item.hidden);
 
   if (visibleItems.length === 0) {
@@ -259,25 +243,50 @@ export const OverflowMenu = ({
         }}
       >
         {visibleItems.map((item, index) => (
-          <Fragment key={item.id}>
-            {item.dividerBefore && index > 0 && <Divider />}
-            <MenuItem
-              onClick={() => handleMenuItemClick(item)}
-              disabled={item.disabled || item.loading}
-            >
-              {item.icon && (
-                <ListItemIcon sx={{ color: item.color ? `${item.color}.main` : undefined }}>
-                  {item.loading ? <CircularProgress size={20} /> : item.icon}
-                </ListItemIcon>
-              )}
-              <ListItemText
-                primary={item.loading && item.loadingLabel ? item.loadingLabel : item.label}
-                sx={{ color: item.color ? `${item.color}.main` : undefined }}
-              />
-            </MenuItem>
-          </Fragment>
+          <MenuItemContent
+            key={item.id}
+            action={item}
+            index={index}
+            onClose={handleMenuClose}
+          />
         ))}
       </Menu>
     </>
+  );
+};
+
+/**
+ * Internal component for rendering menu items consistently across
+ * ToolbarActions and OverflowMenu to reduce code duplication.
+ */
+const MenuItemContent = ({
+  action,
+  index,
+  onClose,
+}: {
+  action: ToolbarAction;
+  index: number;
+  onClose: () => void;
+}) => {
+  const handleClick = () => {
+    onClose();
+    action.onClick();
+  };
+
+  return (
+    <Fragment>
+      {action.dividerBefore && index > 0 && <Divider />}
+      <MenuItem onClick={handleClick} disabled={action.disabled || action.loading}>
+        {action.icon && (
+          <ListItemIcon sx={{ color: action.color ? `${action.color}.main` : undefined }}>
+            {action.loading ? <CircularProgress size={20} /> : action.icon}
+          </ListItemIcon>
+        )}
+        <ListItemText
+          primary={action.loading && action.loadingLabel ? action.loadingLabel : action.label}
+          sx={{ color: action.color ? `${action.color}.main` : undefined }}
+        />
+      </MenuItem>
+    </Fragment>
   );
 };
