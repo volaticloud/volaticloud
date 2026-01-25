@@ -128,6 +128,17 @@ func TestIntegration_AdminClientResourceLifecycle(t *testing.T) {
 	var orgResourceID string
 	var strategyResourceID string
 
+	// Register cleanup to run even if tests fail
+	t.Cleanup(func() {
+		cleanupCtx := context.Background()
+		if strategyResourceID != "" {
+			_ = env.AdminClient.DeleteResource(cleanupCtx, strategyResourceID)
+		}
+		if orgResourceID != "" {
+			_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
+		}
+	})
+
 	// First create an organization (parent resource)
 	t.Run("create organization", func(t *testing.T) {
 		req := keycloak.ResourceCreateRequest{
