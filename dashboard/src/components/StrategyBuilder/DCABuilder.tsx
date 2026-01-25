@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@mui/material';
 import { Add, Delete, Info, Layers } from '@mui/icons-material';
-import { DCAConfig, DCARule } from './types';
+import { DCAConfig, DCARule, createId } from './types';
 import { ToggleableSection } from './shared';
 import { DEFAULT_DCA_CONFIG } from './constants';
 
@@ -37,16 +37,21 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
   };
 
   const handleMaxEntriesChange = (max_entries: number) => {
+    // Ensure max_entries is at least rules.length + 1 (to account for initial entry)
+    const minRequired = config.rules.length + 1;
+    const validatedMaxEntries = Math.max(minRequired, Math.min(10, Math.max(1, max_entries)));
     onChange({
       ...config,
-      max_entries,
+      max_entries: validatedMaxEntries,
     });
   };
 
   const handleCooldownChange = (cooldown_minutes: number) => {
+    // Ensure cooldown is within valid range (0-1440 minutes = 0-24 hours)
+    const validatedCooldown = Math.max(0, Math.min(1440, cooldown_minutes));
     onChange({
       ...config,
-      cooldown_minutes,
+      cooldown_minutes: validatedCooldown,
     });
   };
 
@@ -59,14 +64,24 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
       ...config,
       rules: [
         ...config.rules,
-        { price_drop_percent: newPriceDrop, stake_multiplier: newMultiplier },
+        { id: createId(), price_drop_percent: newPriceDrop, stake_multiplier: newMultiplier },
       ],
     });
   };
 
   const handleRuleChange = (index: number, field: keyof DCARule, value: number) => {
+    // Validate numeric fields
+    let validatedValue = value;
+    if (field === 'price_drop_percent') {
+      // Price drop should be positive and reasonable (0-100%)
+      validatedValue = Math.max(0, Math.min(100, value));
+    } else if (field === 'stake_multiplier') {
+      // Stake multiplier should be positive (0.1x-10x)
+      validatedValue = Math.max(0.1, Math.min(10, value));
+    }
+
     const newRules = [...config.rules];
-    newRules[index] = { ...newRules[index], [field]: value };
+    newRules[index] = { ...newRules[index], [field]: validatedValue };
     onChange({
       ...config,
       rules: newRules,
@@ -81,11 +96,10 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
   };
 
   // Calculate total stake after all DCA entries
+  // Uses slice to get effective rules (consistent with UI display)
   const calculateTotalStake = () => {
-    let total = 1; // Initial stake
-    for (let i = 0; i < Math.min(config.max_entries - 1, config.rules.length); i++) {
-      total += config.rules[i].stake_multiplier;
-    }
+    const effectiveRules = config.rules.slice(0, config.max_entries - 1);
+    const total = 1 + effectiveRules.reduce((sum, rule) => sum + rule.stake_multiplier, 0);
     return total.toFixed(2);
   };
 
@@ -209,7 +223,7 @@ export function DCABuilder({ value, onChange }: DCABuilderProps) {
                 <TableCell></TableCell>
               </TableRow>
               {config.rules.map((rule, index) => (
-                <TableRow key={index}>
+                <TableRow key={rule.id}>
                   <TableCell>{index + 2}</TableCell>
                   <TableCell>
                     <TextField

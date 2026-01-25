@@ -7,15 +7,16 @@ import {
   Button,
   IconButton,
   TextField,
-  Slider,
   InputAdornment,
   Divider,
   Alert,
 } from '@mui/material';
+// Note: Slider removed - using PercentageSlider component instead
 import { Add, Delete, TrendingDown } from '@mui/icons-material';
 import {
   CustomStoplossConfig,
   StoplossRule,
+  TrailingConfig,
   IndicatorDefinition,
   createId,
   createCompareNode,
@@ -24,8 +25,20 @@ import {
   ComparisonOperator,
 } from './types';
 import { ConditionNodeEditor } from './ConditionNode';
-import { ToggleableSection } from './shared';
+import { ToggleableSection, PercentageSlider } from './shared';
 import { DEFAULT_STOPLOSS_CONFIG } from './constants';
+
+/** Default trailing config values for consistent initialization */
+const DEFAULT_TRAILING: TrailingConfig = {
+  enabled: false,
+  positive: 0.01,
+  positive_offset: 0.02,
+};
+
+/** Get or create trailing config with consistent defaults */
+function getOrCreateTrailing(existing?: TrailingConfig): TrailingConfig {
+  return existing ?? { ...DEFAULT_TRAILING };
+}
 
 interface StoplossBuilderProps {
   value: CustomStoplossConfig | undefined;
@@ -87,30 +100,21 @@ export function StoplossBuilder({ value, onChange, indicators }: StoplossBuilder
   const handleTrailingToggle = (enabled: boolean) => {
     onChange({
       ...config,
-      trailing: {
-        ...(config.trailing || { positive: 0.01, positive_offset: 0.02 }),
-        enabled,
-      },
+      trailing: { ...getOrCreateTrailing(config.trailing), enabled },
     });
   };
 
   const handleTrailingPositiveChange = (positive: number) => {
     onChange({
       ...config,
-      trailing: {
-        ...(config.trailing || { enabled: false, positive_offset: 0.02 }),
-        positive,
-      },
+      trailing: { ...getOrCreateTrailing(config.trailing), positive },
     });
   };
 
   const handleTrailingOffsetChange = (positive_offset: number) => {
     onChange({
       ...config,
-      trailing: {
-        ...(config.trailing || { enabled: false, positive: 0.01 }),
-        positive_offset,
-      },
+      trailing: { ...getOrCreateTrailing(config.trailing), positive_offset },
     });
   };
 
@@ -132,32 +136,14 @@ export function StoplossBuilder({ value, onChange, indicators }: StoplossBuilder
         <Typography variant="caption" color="text.secondary" gutterBottom>
           Default Stoploss (fallback)
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-          <Slider
-            value={Math.abs(config.default_stoploss) * 100}
-            onChange={(_, v) => handleDefaultStoplossChange(-(v as number) / 100)}
+        <Box sx={{ mt: 1 }}>
+          <PercentageSlider
+            value={config.default_stoploss}
+            onChange={handleDefaultStoplossChange}
+            showNegative
             min={1}
             max={50}
             step={0.5}
-            sx={{ flex: 1 }}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(v) => `-${v}%`}
-          />
-          <TextField
-            type="number"
-            value={(config.default_stoploss * 100).toFixed(1)}
-            onChange={(e) => {
-              const value = parseFloat(e.target.value);
-              if (!isNaN(value)) handleDefaultStoplossChange(value / 100);
-            }}
-            size="small"
-            sx={{ width: 100 }}
-            slotProps={{
-              input: {
-                endAdornment: <InputAdornment position="end">%</InputAdornment>,
-              },
-              htmlInput: { step: 0.5 },
-            }}
           />
         </Box>
       </Box>
@@ -261,32 +247,13 @@ export function StoplossBuilder({ value, onChange, indicators }: StoplossBuilder
               <Typography variant="caption" color="text.secondary">
                 Trailing Stop Positive (lock in profit at)
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
-                <Slider
-                  value={(config.trailing.positive || 0.01) * 100}
-                  onChange={(_, v) => handleTrailingPositiveChange((v as number) / 100)}
+              <Box sx={{ mt: 0.5 }}>
+                <PercentageSlider
+                  value={config.trailing.positive || 0.01}
+                  onChange={handleTrailingPositiveChange}
                   min={0.1}
                   max={10}
                   step={0.1}
-                  sx={{ flex: 1 }}
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(v) => `${v}%`}
-                />
-                <TextField
-                  type="number"
-                  value={((config.trailing.positive || 0.01) * 100).toFixed(1)}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value)) handleTrailingPositiveChange(value / 100);
-                  }}
-                  size="small"
-                  sx={{ width: 100 }}
-                  slotProps={{
-                    input: {
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                    },
-                    htmlInput: { step: 0.1 },
-                  }}
                 />
               </Box>
             </Box>
@@ -295,32 +262,13 @@ export function StoplossBuilder({ value, onChange, indicators }: StoplossBuilder
               <Typography variant="caption" color="text.secondary">
                 Trailing Stop Offset (activate when profit exceeds)
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
-                <Slider
-                  value={(config.trailing.positive_offset || 0.02) * 100}
-                  onChange={(_, v) => handleTrailingOffsetChange((v as number) / 100)}
+              <Box sx={{ mt: 0.5 }}>
+                <PercentageSlider
+                  value={config.trailing.positive_offset || 0.02}
+                  onChange={handleTrailingOffsetChange}
                   min={0.1}
                   max={10}
                   step={0.1}
-                  sx={{ flex: 1 }}
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(v) => `${v}%`}
-                />
-                <TextField
-                  type="number"
-                  value={((config.trailing.positive_offset || 0.02) * 100).toFixed(1)}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value)) handleTrailingOffsetChange(value / 100);
-                  }}
-                  size="small"
-                  sx={{ width: 100 }}
-                  slotProps={{
-                    input: {
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                    },
-                    htmlInput: { step: 0.1 },
-                  }}
                 />
               </Box>
             </Box>

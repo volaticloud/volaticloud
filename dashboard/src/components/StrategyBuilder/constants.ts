@@ -3,7 +3,7 @@
  * Centralized here for consistency and easy maintenance.
  */
 
-import { DCAConfig, CustomStoplossConfig, ConfirmEntryConfig, createAndNode } from './types';
+import { DCAConfig, CustomStoplossConfig, ConfirmEntryConfig, createAndNode, createId } from './types';
 
 /**
  * Default DCA (Dollar Cost Averaging) configuration
@@ -12,8 +12,8 @@ export const DEFAULT_DCA_CONFIG: DCAConfig = {
   enabled: false,
   max_entries: 3,
   rules: [
-    { price_drop_percent: 5, stake_multiplier: 1.5 },
-    { price_drop_percent: 10, stake_multiplier: 2.0 },
+    { id: createId(), price_drop_percent: 5, stake_multiplier: 1.5 },
+    { id: createId(), price_drop_percent: 10, stake_multiplier: 2.0 },
   ],
   cooldown_minutes: 60,
 };

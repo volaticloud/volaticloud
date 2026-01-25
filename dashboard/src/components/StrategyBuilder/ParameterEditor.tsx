@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -38,13 +39,17 @@ interface ROIEntry {
 }
 
 export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
-  // Convert minimal_roi object to array for editing
-  const roiEntries: ROIEntry[] = Object.entries(value.minimal_roi)
-    .map(([minutes, roi]) => ({
-      minutes: parseInt(minutes, 10),
-      roi: roi as number,
-    }))
-    .sort((a, b) => a.minutes - b.minutes);
+  // Convert minimal_roi object to array for editing (memoized to avoid recalculation on every render)
+  const roiEntries = useMemo<ROIEntry[]>(
+    () =>
+      Object.entries(value.minimal_roi)
+        .map(([minutes, roi]) => ({
+          minutes: parseInt(minutes, 10),
+          roi: roi as number,
+        }))
+        .sort((a, b) => a.minutes - b.minutes),
+    [value.minimal_roi]
+  );
 
   const handleStoplossChange = (stoploss: number) => {
     onChange({ ...value, stoploss });

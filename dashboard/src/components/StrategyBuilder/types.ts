@@ -300,6 +300,8 @@ export interface ConfirmEntryConfig {
 }
 
 export interface DCARule {
+  /** Unique identifier for stable React keys */
+  id: string;
   price_drop_percent: number;
   stake_multiplier: number;
 }
