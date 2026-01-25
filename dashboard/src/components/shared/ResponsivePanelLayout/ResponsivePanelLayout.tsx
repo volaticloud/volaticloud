@@ -123,10 +123,13 @@ function MobileTabs({
           onChange={onChange}
           variant="scrollable"
           scrollButtons="auto"
+          aria-label="Mobile navigation tabs"
         >
           {tabs.map((tab) => (
             <Tab
               key={`${tab.groupId}-${tab.id}`}
+              id={`mobile-tab-${tab.groupId}-${tab.id}`}
+              aria-controls={`mobile-tabpanel-${tab.groupId}-${tab.id}`}
               icon={tab.icon as React.ReactElement | undefined}
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -150,7 +153,9 @@ function MobileTabs({
         {tabs.map((tab, index) => (
           <Box
             key={`${tab.groupId}-${tab.id}`}
+            id={`mobile-tabpanel-${tab.groupId}-${tab.id}`}
             role="tabpanel"
+            aria-labelledby={`mobile-tab-${tab.groupId}-${tab.id}`}
             hidden={activeTab !== index}
             sx={{
               position: 'absolute',
@@ -220,10 +225,13 @@ function DesktopPanels({
                     onChange={(_, v) => onTabChange(group.id, v)}
                     variant="scrollable"
                     scrollButtons="auto"
+                    aria-label={`${group.title || group.id} tabs`}
                   >
                     {group.tabs.map((tab) => (
                       <Tab
                         key={tab.id}
+                        id={`desktop-tab-${group.id}-${tab.id}`}
+                        aria-controls={`desktop-tabpanel-${group.id}-${tab.id}`}
                         icon={tab.icon as React.ReactElement | undefined}
                         label={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -254,7 +262,9 @@ function DesktopPanels({
                   return (
                     <Box
                       key={tab.id}
+                      id={`desktop-tabpanel-${group.id}-${tab.id}`}
                       role="tabpanel"
+                      aria-labelledby={`desktop-tab-${group.id}-${tab.id}`}
                       hidden={!shouldShow}
                       sx={{
                         position: 'absolute',
