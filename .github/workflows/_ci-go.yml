@@ -149,3 +149,7 @@ jobs:
         if: always()
         run: |
           echo "### Integration Tests Complete" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: docker system prune -f

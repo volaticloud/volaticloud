@@ -13,7 +13,7 @@ help:
 	@echo "  make build           - Build binary"
 	@echo "  make test            - Run tests with coverage"
 	@echo "  make test-authz      - Run authorization integration tests only"
-	@echo "  make test-integration- Run integration tests with real Keycloak (requires Docker)"
+	@echo "  make test-integration - Run integration tests with real Keycloak (requires Docker)"
 	@echo "  make test-all        - Run all tests (unit + integration)"
 	@echo "  make coverage        - Run tests and open HTML coverage report"
 	@echo "  make lint            - Run linters"

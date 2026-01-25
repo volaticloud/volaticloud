@@ -89,6 +89,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0011](../docs/adr/0011-strategy-ui-builder.md) - Strategy UI Builder Architecture
 - [ADR-0012](../docs/adr/0012-organization-alias-system.md) - Organization Alias System
 - [ADR-0013](../docs/adr/0013-long-short-signal-support.md) - Long/Short Signal Support with Mirror
+- [ADR-0017](../docs/adr/0017-hybrid-testing-strategy.md) - Hybrid Testing Strategy (mocks + testcontainers)
 
 ## Project Structure
 
@@ -122,6 +123,8 @@ internal/
 make generate     # Regenerate all (ENT + GraphQL + Freqtrade)
 make build        # Build binary
 make test         # Run tests with coverage
+make test-integration  # Run integration tests with real Keycloak (requires Docker)
+make test-all     # Run all tests (unit + integration)
 make dev          # Run development server
 
 # Documentation
@@ -277,13 +280,22 @@ See `internal/keycloak/doc.go` and `internal/authz/doc.go` for details.
 **Coverage:** 91.9% (excluding generated code)
 
 ```bash
-make test       # Run all tests
-make coverage   # Open HTML report
+make test              # Run unit tests (fast, no Docker required)
+make test-integration  # Run integration tests (requires Docker)
+make test-all          # Run all tests
+make coverage          # Open HTML coverage report
 ```
+
+**Hybrid Testing Strategy** (see [ADR-0017](../docs/adr/0017-hybrid-testing-strategy.md)):
+
+- **Unit tests** use mocks (`MockAdminClient`, `MockUMAClient`) for fast execution
+- **Integration tests** use testcontainers with real Keycloak for high fidelity
+- Build tag `//go:build integration` separates integration tests
 
 **Test files follow pattern:**
 
-- `internal/{package}/*_test.go` - Unit tests
+- `internal/{package}/*_test.go` - Unit tests (with mocks)
+- `internal/{package}/integration_test.go` - Integration tests (with `//go:build integration`)
 - Uses table-driven tests for multiple scenarios
 - 100% coverage goal for business logic
 

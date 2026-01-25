@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -130,7 +131,8 @@ func TestIntegration_AdminClientResourceLifecycle(t *testing.T) {
 
 	// Register cleanup to run even if tests fail
 	t.Cleanup(func() {
-		cleanupCtx := context.Background()
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 		if strategyResourceID != "" {
 			_ = env.AdminClient.DeleteResource(cleanupCtx, strategyResourceID)
 		}
@@ -237,7 +239,9 @@ func TestIntegration_ResourceCreationWithScopes(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
-		_ = env.AdminClient.DeleteResource(ctx, orgResourceID)
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
 	}()
 
 	testCases := []struct {
@@ -402,7 +406,9 @@ func TestIntegration_MultipleResourcesSequential(t *testing.T) {
 
 	// Clean up organization at the end
 	defer func() {
-		_ = env.AdminClient.DeleteResource(ctx, orgResourceID)
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
 	}()
 
 	// Create multiple resources
@@ -449,4 +455,291 @@ func TestIntegration_ResourceDeleteNonExistent(t *testing.T) {
 	// AdminClient may or may not error depending on implementation
 	// We just verify it doesn't panic
 	_ = err
+}
+
+// TestIntegration_UpdateNonExistentResource tests updating a resource that doesn't exist
+func TestIntegration_UpdateNonExistentResource(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	nonExistentID := uuid.New().String()
+
+	updateReq := keycloak.ResourceUpdateRequest{
+		Title: "Updated Title",
+		Attributes: map[string][]string{
+			"type": {"strategy"},
+		},
+	}
+
+	// Updating non-existent resource should error
+	_, err := env.AdminClient.UpdateResource(ctx, nonExistentID, updateReq)
+	require.Error(t, err, "Updating non-existent resource should return error")
+}
+
+// TestIntegration_CreateResourceWithInvalidParent tests creating a resource with non-existent parent
+func TestIntegration_CreateResourceWithInvalidParent(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	nonExistentParentID := uuid.New().String()
+
+	req := keycloak.ResourceCreateRequest{
+		ID:      uuid.New().String(),
+		Title:   "Test Strategy",
+		Type:    "strategy",
+		OwnerID: nonExistentParentID, // Non-existent parent
+		Scopes:  authz.StrategyScopes,
+		Attributes: map[string][]string{
+			"type": {"strategy"},
+		},
+	}
+
+	// Creating resource with non-existent parent should error
+	_, err := env.AdminClient.CreateResource(ctx, req)
+	require.Error(t, err, "Creating resource with non-existent parent should return error")
+}
+
+// TestIntegration_ConcurrentResourceCreation tests creating multiple resources concurrently
+func TestIntegration_ConcurrentResourceCreation(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	testUserID := uuid.New().String()
+	numConcurrent := 5
+
+	// First create an organization to serve as parent
+	orgReq := keycloak.ResourceCreateRequest{
+		Title:   "Test Organization " + uuid.New().String()[:8],
+		Type:    "organization",
+		OwnerID: testUserID,
+		Scopes:  authz.GroupScopes,
+		Attributes: map[string][]string{
+			"alias": {"test-org-concurrent-" + uuid.New().String()[:8]},
+		},
+	}
+	orgResp, err := env.AdminClient.CreateResource(ctx, orgReq)
+	require.NoError(t, err, "Should create organization resource")
+	require.NotNil(t, orgResp)
+	orgResourceID := orgResp.ID
+
+	// Clean up organization at the end
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
+	}()
+
+	// Create resources concurrently
+	type result struct {
+		id  string
+		err error
+	}
+	results := make(chan result, numConcurrent)
+
+	for i := 0; i < numConcurrent; i++ {
+		go func(index int) {
+			resourceID := uuid.New().String()
+			req := keycloak.ResourceCreateRequest{
+				ID:      resourceID,
+				Title:   fmt.Sprintf("concurrent-strategy-%d-%s", index, resourceID[:8]),
+				Type:    "strategy",
+				OwnerID: orgResourceID,
+				Scopes:  authz.StrategyScopes,
+				Attributes: map[string][]string{
+					"type":  {"strategy"},
+					"index": {fmt.Sprintf("%d", index)},
+				},
+			}
+
+			resp, err := env.AdminClient.CreateResource(ctx, req)
+			if err != nil {
+				results <- result{err: err}
+				return
+			}
+			results <- result{id: resp.ID}
+		}(i)
+	}
+
+	// Collect results
+	var createdIDs []string
+	var errors []error
+	for i := 0; i < numConcurrent; i++ {
+		r := <-results
+		if r.err != nil {
+			errors = append(errors, r.err)
+		} else {
+			createdIDs = append(createdIDs, r.id)
+		}
+	}
+
+	// All should succeed
+	assert.Empty(t, errors, "No errors expected during concurrent creation")
+	assert.Len(t, createdIDs, numConcurrent, "All resources should be created")
+
+	// Cleanup created resources
+	for _, id := range createdIDs {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		_ = env.AdminClient.DeleteResource(cleanupCtx, id)
+		cancel()
+	}
+}
+
+// TestIntegration_OrganizationAliasExistsCheck tests the organization alias existence check
+func TestIntegration_OrganizationAliasExistsCheck(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	uniqueAlias := "test-alias-" + uuid.New().String()[:8]
+
+	t.Run("alias does not exist initially", func(t *testing.T) {
+		exists, err := env.AdminClient.CheckOrganizationAliasExists(ctx, uniqueAlias)
+		require.NoError(t, err)
+		assert.False(t, exists, "Alias should not exist initially")
+	})
+
+	// Note: The "alias exists after creating organization" test is skipped because
+	// the AdminClient.CreateResource creates a UMA resource with an alias attribute,
+	// but CheckOrganizationAliasExists looks for Keycloak organizations which are
+	// different from UMA resources. In production, organizations are created via
+	// a separate flow that creates both the Keycloak organization and UMA resource.
+}
+
+// TestIntegration_InvitationLifecycle tests the full invitation lifecycle
+// Note: This test may be skipped if Keycloak is not configured with SMTP for sending emails
+func TestIntegration_InvitationLifecycle(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+	testUserID := uuid.New().String()
+
+	// First create an organization
+	orgReq := keycloak.ResourceCreateRequest{
+		Title:   "Test Organization " + uuid.New().String()[:8],
+		Type:    "organization",
+		OwnerID: testUserID,
+		Scopes:  authz.GroupScopes,
+		Attributes: map[string][]string{
+			"alias": {"test-org-invite-" + uuid.New().String()[:8]},
+		},
+	}
+	orgResp, err := env.AdminClient.CreateResource(ctx, orgReq)
+	require.NoError(t, err, "Should create organization resource")
+	require.NotNil(t, orgResp)
+	orgResourceID := orgResp.ID
+
+	// Clean up organization at the end
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = env.AdminClient.DeleteResource(cleanupCtx, orgResourceID)
+	}()
+
+	var invitationID string
+	testEmail := fmt.Sprintf("test-%s@example.com", uuid.New().String()[:8])
+
+	t.Run("create invitation", func(t *testing.T) {
+		inviteReq := keycloak.InvitationRequest{
+			Email:     testEmail,
+			FirstName: "Test",
+			LastName:  "User",
+		}
+
+		inviteResp, err := env.AdminClient.CreateInvitation(ctx, orgResourceID, inviteReq)
+		if err != nil {
+			// Skip the rest of the test if invitation creation fails due to email config
+			// This is expected in test environments without SMTP configured
+			t.Skipf("Skipping invitation tests - SMTP not configured: %v", err)
+			return
+		}
+		require.NotNil(t, inviteResp)
+		assert.NotEmpty(t, inviteResp.ID, "Invitation should have an ID")
+		assert.Equal(t, testEmail, inviteResp.Email, "Invitation email should match")
+		invitationID = inviteResp.ID
+	})
+
+	t.Run("list invitations", func(t *testing.T) {
+		if invitationID == "" {
+			t.Skip("Skipping - invitation was not created (SMTP not configured)")
+		}
+
+		listResp, err := env.AdminClient.ListInvitations(ctx, orgResourceID, 0, 10)
+		require.NoError(t, err, "Should list invitations")
+		require.NotNil(t, listResp)
+		assert.GreaterOrEqual(t, len(listResp.Invitations), 1, "Should have at least one invitation")
+
+		// Find our invitation
+		found := false
+		for _, inv := range listResp.Invitations {
+			if inv.ID == invitationID {
+				found = true
+				assert.Equal(t, testEmail, inv.Email, "Invitation email should match")
+				break
+			}
+		}
+		assert.True(t, found, "Should find the created invitation in the list")
+	})
+
+	t.Run("delete invitation", func(t *testing.T) {
+		if invitationID == "" {
+			t.Skip("Skipping - invitation was not created (SMTP not configured)")
+		}
+
+		err := env.AdminClient.DeleteInvitation(ctx, orgResourceID, invitationID)
+		require.NoError(t, err, "Should delete invitation")
+	})
+
+	t.Run("verify invitation deleted", func(t *testing.T) {
+		if invitationID == "" {
+			t.Skip("Skipping - invitation was not created (SMTP not configured)")
+		}
+
+		listResp, err := env.AdminClient.ListInvitations(ctx, orgResourceID, 0, 10)
+		require.NoError(t, err, "Should list invitations")
+
+		// Verify the invitation is no longer in the list
+		for _, inv := range listResp.Invitations {
+			assert.NotEqual(t, invitationID, inv.ID, "Deleted invitation should not be in list")
+		}
+	})
+}
+
+// TestIntegration_InvitationErrors tests error cases for invitations
+func TestIntegration_InvitationErrors(t *testing.T) {
+	env := SetupIntegration(t)
+	defer env.Cleanup()
+
+	ctx := context.Background()
+
+	t.Run("create invitation for non-existent organization", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+		inviteReq := keycloak.InvitationRequest{
+			Email:     "test@example.com",
+			FirstName: "Test",
+			LastName:  "User",
+		}
+
+		_, err := env.AdminClient.CreateInvitation(ctx, nonExistentOrgID, inviteReq)
+		require.Error(t, err, "Should error when creating invitation for non-existent organization")
+	})
+
+	t.Run("list invitations for non-existent organization", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+
+		_, err := env.AdminClient.ListInvitations(ctx, nonExistentOrgID, 0, 10)
+		require.Error(t, err, "Should error when listing invitations for non-existent organization")
+	})
+
+	t.Run("delete non-existent invitation", func(t *testing.T) {
+		nonExistentOrgID := uuid.New().String()
+		nonExistentInviteID := uuid.New().String()
+
+		err := env.AdminClient.DeleteInvitation(ctx, nonExistentOrgID, nonExistentInviteID)
+		// May or may not error depending on implementation - just verify no panic
+		_ = err
+	})
 }
