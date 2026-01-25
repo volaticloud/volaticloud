@@ -1,4 +1,4 @@
-.PHONY: help setup dev test test-authz coverage lint generate migrate clean build docs-generate docs-verify docs-quality
+.PHONY: help setup dev test test-authz test-integration test-all coverage lint generate migrate clean build docs-generate docs-verify docs-quality
 
 # Default target
 help:
@@ -9,12 +9,14 @@ help:
 	@echo "  make generate     - Generate ENT and GraphQL code"
 	@echo ""
 	@echo "Development:"
-	@echo "  make dev          - Run server in development mode"
-	@echo "  make build        - Build binary"
-	@echo "  make test         - Run tests with coverage"
-	@echo "  make test-authz   - Run authorization integration tests only"
-	@echo "  make coverage     - Run tests and open HTML coverage report"
-	@echo "  make lint         - Run linters"
+	@echo "  make dev             - Run server in development mode"
+	@echo "  make build           - Build binary"
+	@echo "  make test            - Run tests with coverage"
+	@echo "  make test-authz      - Run authorization integration tests only"
+	@echo "  make test-integration- Run integration tests with real Keycloak (requires Docker)"
+	@echo "  make test-all        - Run all tests (unit + integration)"
+	@echo "  make coverage        - Run tests and open HTML coverage report"
+	@echo "  make lint            - Run linters"
 	@echo ""
 	@echo "Database:"
 	@echo "  make db-reset     - Reset database (removes data/volaticloud.db)"
@@ -115,6 +117,19 @@ test-authz:
 	go test -v -race ./internal/graph -run TestAuthorization
 	@echo ""
 	@echo "Authorization integration tests complete!"
+
+# Run integration tests with real Keycloak container (requires Docker)
+test-integration:
+	@echo "Running integration tests with Keycloak container..."
+	@echo "Note: This requires Docker to be running."
+	go test -v -race -tags=integration ./internal/graph/... -run TestIntegration
+	@echo ""
+	@echo "Integration tests complete!"
+
+# Run all tests (unit + integration)
+test-all: test test-integration
+	@echo ""
+	@echo "All tests complete!"
 
 # Run tests and open coverage report
 coverage: test

@@ -19,6 +19,10 @@ on:
         description: 'Validate generated code is up to date'
         type: boolean
         default: true
+      run-integration-tests:
+        description: 'Run integration tests with Keycloak container'
+        type: boolean
+        default: false
 
 jobs:
   test:
@@ -124,3 +128,24 @@ jobs:
             echo "::error::Generated code is out of date. Run 'make generate' and commit."
             exit 1
           fi
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    if: ${{ inputs.run-integration-tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Run integration tests
+        run: go test -v -race -tags=integration ./internal/graph/... -run TestIntegration -timeout 600s
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Integration Tests Complete" >> $GITHUB_STEP_SUMMARY

@@ -467,13 +467,13 @@ func GetEntClientFromContext(ctx context.Context) interface{} {
 }
 
 // SetAdminClientInContext stores the Keycloak Admin client in context
-func SetAdminClientInContext(ctx context.Context, client *keycloak.AdminClient) context.Context {
+func SetAdminClientInContext(ctx context.Context, client keycloak.AdminClientInterface) context.Context {
 	return context.WithValue(ctx, adminClientKey, client)
 }
 
 // GetAdminClientFromContext retrieves the Keycloak Admin client from context
-func GetAdminClientFromContext(ctx context.Context) *keycloak.AdminClient {
-	if client, ok := ctx.Value(adminClientKey).(*keycloak.AdminClient); ok {
+func GetAdminClientFromContext(ctx context.Context) keycloak.AdminClientInterface {
+	if client, ok := ctx.Value(adminClientKey).(keycloak.AdminClientInterface); ok {
 		return client
 	}
 	return nil

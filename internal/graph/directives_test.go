@@ -1229,18 +1229,47 @@ func TestChangeOrganizationUserRole(t *testing.T) {
 	})
 
 	t.Run("validates role against available roles", func(t *testing.T) {
-		t.Skip("Integration test - requires Keycloak mock or interface refactor")
-		// This would test:
-		// 1. Mock admin client returns available roles: ["admin", "viewer"]
-		// 2. Resolver rejects "invalid-role" with helpful error message
-		// 3. Error contains both the invalid role and available roles list
+		// Create mock admin client with available roles
+		mockAdmin := keycloak.NewMockAdminClient()
+		mockAdmin.SetAvailableRoles(orgID, []string{"admin", "viewer"})
+
+		// Create context with user and admin client
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: currentUserID,
+		})
+		ctx = SetAdminClientInContext(ctx, mockAdmin)
+
+		resolver := &mutationResolver{}
+		result, err := resolver.ChangeOrganizationUserRole(ctx, orgID, userID, "invalid-role")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid role: invalid-role")
+		assert.Contains(t, err.Error(), "admin")
+		assert.Contains(t, err.Error(), "viewer")
+		assert.False(t, result)
 	})
 
 	t.Run("successful role change", func(t *testing.T) {
-		t.Skip("Integration test - requires Keycloak mock or interface refactor")
-		// This would test:
-		// 1. Mock admin client validates role is in available list
-		// 2. Mock admin client successfully changes role
-		// 3. Resolver returns true on success
+		// Create mock admin client with available roles
+		mockAdmin := keycloak.NewMockAdminClient()
+		mockAdmin.SetAvailableRoles(orgID, []string{"admin", "viewer"})
+
+		// Create context with user and admin client
+		ctx := auth.SetUserContext(context.Background(), &auth.UserContext{
+			UserID: currentUserID,
+		})
+		ctx = SetAdminClientInContext(ctx, mockAdmin)
+
+		resolver := &mutationResolver{}
+		result, err := resolver.ChangeOrganizationUserRole(ctx, orgID, userID, "viewer")
+
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		// Verify the correct methods were called
+		calls := mockAdmin.GetCalls()
+		require.GreaterOrEqual(t, len(calls), 2)
+		assert.Equal(t, "GetAvailableRoles", calls[0].Method)
+		assert.Equal(t, "ChangeUserRole", calls[1].Method)
 	})
 }

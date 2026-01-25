@@ -16,7 +16,7 @@ import (
 // This is a thin wrapper that calls the Keycloak extension endpoint
 func GetResourceGroups(
 	ctx context.Context,
-	adminClient *keycloak.AdminClient,
+	adminClient keycloak.AdminClientInterface,
 	organizationID string,
 	where *model.ResourceGroupWhereInput,
 	orderBy *model.ResourceGroupOrder,
@@ -56,7 +56,7 @@ func GetResourceGroups(
 // This is a thin wrapper that calls the Keycloak extension endpoint
 func GetResourceGroupMembers(
 	ctx context.Context,
-	adminClient *keycloak.AdminClient,
+	adminClient keycloak.AdminClientInterface,
 	organizationID, resourceGroupID string,
 	where *model.ResourceGroupMemberWhereInput,
 	orderBy *model.ResourceGroupMemberOrder,

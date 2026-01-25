@@ -73,6 +73,64 @@ type ResourceResponse struct {
 // DefaultDashboardClientID is the fallback client ID if not configured
 const DefaultDashboardClientID = "dashboard"
 
+// AdminClientInterface defines the interface for Keycloak Admin API operations.
+// This allows for mocking in tests.
+type AdminClientInterface interface {
+	// GetDashboardClientID returns the configured dashboard client ID or default
+	GetDashboardClientID() string
+
+	// GetGroupUsers fetches all users from a Keycloak group including subgroups
+	GetGroupUsers(ctx context.Context, organizationID string) ([]OrganizationUser, error)
+
+	// GetGroupTree fetches the hierarchical group tree for an organization
+	GetGroupTree(ctx context.Context, organizationID string) (*GroupNode, error)
+
+	// GetGroupMembers fetches users from a specific group (non-recursive)
+	GetGroupMembers(ctx context.Context, groupID string) ([]OrganizationUser, error)
+
+	// CreateResource creates a unified resource (UMA resource + Keycloak group) atomically
+	CreateResource(ctx context.Context, request ResourceCreateRequest) (*ResourceResponse, error)
+
+	// UpdateResource updates a unified resource (UMA resource + Keycloak group) atomically
+	UpdateResource(ctx context.Context, resourceID string, request ResourceUpdateRequest) (*ResourceResponse, error)
+
+	// DeleteResource deletes a unified resource (UMA resource + Keycloak group) atomically
+	DeleteResource(ctx context.Context, resourceID string) error
+
+	// CreateInvitation creates an invitation for a user to join an organization
+	CreateInvitation(ctx context.Context, resourceID string, request InvitationRequest) (*InvitationResponse, error)
+
+	// ListInvitations lists pending invitations for an organization
+	ListInvitations(ctx context.Context, resourceID string, first, max int) (*InvitationListResponse, error)
+
+	// DeleteInvitation cancels/deletes a pending invitation
+	DeleteInvitation(ctx context.Context, resourceID, invitationID string) error
+
+	// DisableOrganization disables an organization (soft delete)
+	DisableOrganization(ctx context.Context, alias string) error
+
+	// EnableOrganization re-enables a disabled organization
+	EnableOrganization(ctx context.Context, alias string) error
+
+	// CheckOrganizationAliasExists checks if an organization with the given alias already exists
+	CheckOrganizationAliasExists(ctx context.Context, alias string) (bool, error)
+
+	// ChangeUserRole changes a user's role in an organization
+	ChangeUserRole(ctx context.Context, resourceID, userID, newRole string) (*ChangeUserRoleResponse, error)
+
+	// GetAvailableRoles fetches the list of available roles for an organization
+	GetAvailableRoles(ctx context.Context, organizationID string) ([]string, error)
+
+	// GetResourceGroups fetches resource groups with pagination and filtering
+	GetResourceGroups(ctx context.Context, organizationID, search string, first, offset int, orderBy, order string) (*ResourceGroupListResponse, error)
+
+	// GetResourceGroupMembers fetches resource group members with pagination and filtering
+	GetResourceGroupMembers(ctx context.Context, organizationID, resourceGroupID string, roleFilter []string, search string, enabled, emailVerified *bool, first, offset int, orderBy, order string) (*ResourceGroupMemberListResponse, error)
+}
+
+// Compile-time check to ensure AdminClient implements AdminClientInterface
+var _ AdminClientInterface = (*AdminClient)(nil)
+
 // NewAdminClient creates a new Keycloak admin API client
 func NewAdminClient(config auth.KeycloakConfig) *AdminClient {
 	client := gocloak.NewClient(config.URL)
