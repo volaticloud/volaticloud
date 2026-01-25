@@ -32,6 +32,8 @@ import {
   Code,
   Dashboard,
   Warning,
+  Close,
+  History,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
@@ -42,7 +44,8 @@ import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
-import { ConfirmDrawer } from '../shared/FormDrawer';
+import { ConfirmDrawer, ContentDrawer } from '../shared/FormDrawer';
+import { ToolbarActions, ToolbarAction } from '../shared/ToolbarActions';
 import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
@@ -110,6 +113,7 @@ class MyStrategy(IStrategy):
     isCreateMode ? createDefaultUIBuilderConfig() : null
   );
   const [ejectDrawerOpen, setEjectDrawerOpen] = useState(false);
+  const [versionHistoryDrawerOpen, setVersionHistoryDrawerOpen] = useState(false);
 
   // Navigation guard - prevents accidental data loss
   const {
@@ -375,7 +379,19 @@ class MyStrategy(IStrategy):
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        // Fill the parent container
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+      }}
+    >
       {/* Header */}
       <Paper
         elevation={0}
@@ -391,10 +407,10 @@ class MyStrategy(IStrategy):
         <IconButton onClick={handleCancel}>
           <ArrowBack />
         </IconButton>
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h5" fontWeight={600}>
-              {isCreateMode ? 'Create Strategy' : 'Strategy Studio'}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="h5" fontWeight={600} noWrap>
+              {isCreateMode ? 'Create Strategy' : name || 'Strategy'}
             </Typography>
             {!isCreateMode && strategy && (
               <>
@@ -417,16 +433,8 @@ class MyStrategy(IStrategy):
                 )}
               </>
             )}
-            {isCreateMode && (
-              <Chip
-                icon={<AddIcon />}
-                label="New Strategy"
-                size="small"
-                color="primary"
-              />
-            )}
             {hasChanges && (
-              <Chip label="Unsaved changes" size="small" color="warning" variant="outlined" />
+              <Chip label="Unsaved" size="small" color="warning" variant="outlined" />
             )}
           </Box>
         </Box>
@@ -496,63 +504,88 @@ class MyStrategy(IStrategy):
                 />
               </Tooltip>
             )}
-            {(isBacktestCompleted || isBacktestFailed) && (
-              <Button
-                variant="outlined"
-                color={isBacktestCompleted ? 'success' : 'error'}
-                startIcon={<Assessment />}
-                onClick={() => setBacktestResultsDrawerOpen(true)}
-                size="small"
-              >
-                View Results
-              </Button>
-            )}
           </>
         )}
-        {/* Run Backtest - only in edit mode */}
-        {!isCreateMode && (
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<PlayArrow />}
-            onClick={() => setBacktestDrawerOpen(true)}
-            disabled={hasChanges || isBacktestRunning}
-          >
-            {isBacktestRunning ? 'Running...' : 'Run Backtest'}
-          </Button>
-        )}
-        <Button variant="outlined" onClick={handleCancel}>
-          Cancel
-        </Button>
-        {isCreateMode ? (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleSave(true)}
-            disabled={saving || !name || !code || !config || !activeOrganizationId}
-          >
-            {saving ? 'Creating...' : 'Create Strategy'}
-          </Button>
-        ) : (
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<Save />}
-              onClick={() => handleSave(false)}
-              disabled={saving || !name || !code || !hasChanges}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<ExitToApp />}
-              onClick={() => handleSave(true)}
-              disabled={saving || !name || !code || !hasChanges}
-            >
-              {saving ? 'Saving...' : 'Save & Close'}
-            </Button>
-          </>
-        )}
+
+        {/* Toolbar Actions */}
+        <ToolbarActions
+          size="medium"
+          actions={
+            isCreateMode
+              ? ([
+                  // Create mode actions
+                  {
+                    id: 'create',
+                    label: 'Create Strategy',
+                    loadingLabel: 'Creating...',
+                    icon: <AddIcon />,
+                    onClick: () => handleSave(true),
+                    primary: true,
+                    variant: 'contained',
+                    disabled: !name || !code || !config || !activeOrganizationId,
+                    loading: saving,
+                  },
+                  {
+                    id: 'cancel',
+                    label: 'Cancel',
+                    icon: <Close />,
+                    onClick: handleCancel,
+                  },
+                ] satisfies ToolbarAction[])
+              : ([
+                  // Edit mode actions
+                  {
+                    id: 'save',
+                    label: 'Save',
+                    loadingLabel: 'Saving...',
+                    icon: <Save />,
+                    onClick: () => handleSave(false),
+                    primary: true,
+                    variant: 'contained',
+                    disabled: !name || !code || !hasChanges,
+                    loading: saving,
+                  },
+                  {
+                    id: 'run-backtest',
+                    label: isBacktestRunning ? 'Running...' : 'Run Backtest',
+                    icon: <PlayArrow />,
+                    onClick: () => setBacktestDrawerOpen(true),
+                    disabled: hasChanges || isBacktestRunning,
+                    color: 'secondary',
+                  },
+                  {
+                    id: 'view-results',
+                    label: 'View Results',
+                    icon: <Assessment />,
+                    onClick: () => setBacktestResultsDrawerOpen(true),
+                    hidden: !isBacktestCompleted && !isBacktestFailed,
+                    color: isBacktestCompleted ? 'success' : 'error',
+                  },
+                  {
+                    id: 'save-close',
+                    label: 'Save & Close',
+                    loadingLabel: 'Saving...',
+                    icon: <ExitToApp />,
+                    onClick: () => handleSave(true),
+                    disabled: !name || !code || !hasChanges,
+                    loading: saving,
+                    dividerBefore: true,
+                  },
+                  {
+                    id: 'version-history',
+                    label: 'Version History',
+                    icon: <History />,
+                    onClick: () => setVersionHistoryDrawerOpen(true),
+                  },
+                  {
+                    id: 'cancel',
+                    label: 'Cancel',
+                    icon: <Close />,
+                    onClick: handleCancel,
+                  },
+                ] satisfies ToolbarAction[])
+          }
+        />
       </Paper>
 
       {saveError && (
@@ -562,20 +595,32 @@ class MyStrategy(IStrategy):
       )}
 
       {/* Main Content */}
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          overflow: { xs: 'auto', md: 'hidden' },
+          minHeight: 0,
+        }}
+      >
         {/* Left Panel - Code Editor or UI Builder */}
         <Box
           sx={{
-            flex: 1,
+            flex: { xs: 'none', md: 1 },
+            height: { xs: 500, md: '100%' },
+            minHeight: { xs: 400, md: 0 },
             display: 'flex',
             flexDirection: 'column',
-            borderRight: 1,
-            borderColor: 'divider',
+            borderRight: { xs: 0, md: 1 },
+            borderBottom: { xs: 1, md: 0 },
+            borderColor: 'grey.200',
             overflow: 'hidden',
           }}
         >
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant="subtitle1" fontWeight={600}>
+          {/* Panel Title */}
+          <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography variant="subtitle2" color="text.secondary">
               {builderMode === StrategyStrategyBuilderMode.Ui ? 'Strategy Builder' : 'Strategy Code'}
             </Typography>
           </Box>
@@ -607,7 +652,10 @@ class MyStrategy(IStrategy):
         {/* Right Panel - Configuration */}
         <Box
           sx={{
-            width: { xs: '100%', md: '400px', lg: '500px' },
+            width: { xs: '100%', md: 400, lg: 500 },
+            flex: { xs: 'none', md: 'none' },
+            height: { xs: 'auto', md: '100%' },
+            minHeight: { xs: 400, md: 0 },
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -658,19 +706,6 @@ class MyStrategy(IStrategy):
                   hideSubmitButton
                 />
               </Box>
-
-              {/* Version History - only in edit mode */}
-              {!isCreateMode && strategy && (
-                <>
-                  <Divider />
-                  <VersionHistoryPanel
-                    strategyName={strategy.name}
-                    currentCode={code}
-                    currentVersionNumber={strategy.versionNumber}
-                    onCopyFromVersion={handleChange(setCode)}
-                  />
-                </>
-              )}
 
               {saveError && (
                 <FormHelperText error>
@@ -768,6 +803,23 @@ class MyStrategy(IStrategy):
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Version History Drawer - only in edit mode */}
+      {!isCreateMode && strategy && (
+        <ContentDrawer
+          open={versionHistoryDrawerOpen}
+          onClose={() => setVersionHistoryDrawerOpen(false)}
+          title="Version History"
+          width={600}
+        >
+          <VersionHistoryPanel
+            strategyName={strategy.name}
+            currentCode={code}
+            currentVersionNumber={strategy.versionNumber}
+            onCopyFromVersion={handleChange(setCode)}
+          />
+        </ContentDrawer>
+      )}
     </Box>
   );
 };

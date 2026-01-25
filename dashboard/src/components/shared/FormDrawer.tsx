@@ -246,3 +246,86 @@ export function ConfirmDrawer({
     </FormDrawer>
   );
 }
+
+interface ContentDrawerProps {
+  /** Whether the drawer is open */
+  open: boolean;
+  /** Called when drawer should close */
+  onClose: () => void;
+  /** Drawer title */
+  title: string;
+  /** Drawer content */
+  children: ReactNode;
+  /** Drawer width (default: 400) */
+  width?: number | string;
+  /** Anchor position (default: "right") */
+  anchor?: 'left' | 'right';
+  /** Whether to auto-focus the close button for keyboard navigation (default: true) */
+  autoFocus?: boolean;
+}
+
+/**
+ * Reusable content drawer for displaying read-only content.
+ * Unlike FormDrawer, this has no submit/cancel buttons.
+ *
+ * @example
+ * <ContentDrawer
+ *   open={open}
+ *   onClose={onClose}
+ *   title="Version History"
+ * >
+ *   <VersionHistoryPanel ... />
+ * </ContentDrawer>
+ */
+export function ContentDrawer({
+  open,
+  onClose,
+  title,
+  children,
+  width = 400,
+  anchor = 'right',
+  autoFocus = true,
+}: ContentDrawerProps) {
+  return (
+    <Drawer
+      anchor={anchor}
+      open={open}
+      onClose={onClose}
+      disableAutoFocus={!autoFocus}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: width },
+          maxWidth: '100%',
+        },
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h6">{title}</Typography>
+        <IconButton onClick={onClose} size="small" aria-label="close">
+          <Close />
+        </IconButton>
+      </Box>
+
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+        }}
+      >
+        {children}
+      </Box>
+    </Drawer>
+  );
+}
