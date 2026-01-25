@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -73,7 +73,7 @@ interface ConditionNodeProps {
   readOnly?: boolean;
 }
 
-export function ConditionNodeEditor({
+export const ConditionNodeEditor = memo(function ConditionNodeEditor({
   node,
   onChange,
   onDelete,
@@ -85,7 +85,11 @@ export function ConditionNodeEditor({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
 
-  const borderColor = CONDITION_DEPTH_COLORS[depth % CONDITION_DEPTH_COLORS.length];
+  // Memoize computed values
+  const borderColor = useMemo(
+    () => CONDITION_DEPTH_COLORS[depth % CONDITION_DEPTH_COLORS.length],
+    [depth]
+  );
   const isDisabled = node.disabled === true;
 
   const handleToggleDisabled = () => {
@@ -841,4 +845,7 @@ export function ConditionNodeEditor({
       </Typography>
     </Paper>
   );
-}
+});
+
+// Display name for React DevTools
+ConditionNodeEditor.displayName = 'ConditionNodeEditor';

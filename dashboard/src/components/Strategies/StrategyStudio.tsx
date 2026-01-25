@@ -34,8 +34,9 @@ import {
   Warning,
   Close,
   History,
+  InfoOutlined,
 } from '@mui/icons-material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
 import { useGetBacktestQuery } from '../Backtests/backtests.generated';
@@ -44,13 +45,37 @@ import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
-import { ConfirmDrawer, ContentDrawer } from '../shared/FormDrawer';
+import { ConfirmDrawer, ContentDrawer, ResponsivePanelLayout } from '../shared';
+import type { TabDefinition, PanelGroupDefinition } from '../shared';
 import { ToolbarActions, ToolbarAction } from '../shared/ToolbarActions';
 import { useOrganizationNavigate, useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useSidebar } from '../../contexts/SidebarContext';
-import { StrategyBuilder, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
+import { useBuilderTabs, UIBuilderConfig, createDefaultUIBuilderConfig } from '../StrategyBuilder';
 import { StrategyStrategyBuilderMode } from '../../generated/types';
-import { useUnsavedChangesGuard } from '../../hooks';
+import { useUnsavedChangesGuard, useResponsiveLayout } from '../../hooks';
+
+// Sanitize strategy name to valid Python class name (PascalCase)
+// IMPORTANT: This must match backend runner.SanitizeStrategyFilename (internal/runner/backtest_types.go)
+// The backend uses this for ConfigMap keys and --strategy flag values
+const toClassName = (str: string): string => {
+  if (!str) return 'MyStrategy';
+  // Remove invalid characters
+  const sanitized = str.replace(/[^a-zA-Z0-9\s]/g, '');
+  if (!sanitized) return 'MyStrategy';
+
+  // If no spaces, preserve original casing (already PascalCase or camelCase)
+  // Just ensure first char is uppercase
+  if (!sanitized.includes(' ')) {
+    return sanitized.charAt(0).toUpperCase() + sanitized.slice(1);
+  }
+
+  // Convert space-separated words to PascalCase
+  return sanitized
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+};
 
 const StrategyStudio = () => {
   const { id } = useParams<{ id: string }>();
@@ -225,44 +250,21 @@ class MyStrategy(IStrategy):
     setHasChanges(true);
   };
 
-  // Sanitize strategy name to valid Python class name (PascalCase)
-  // IMPORTANT: This must match backend runner.SanitizeStrategyFilename (internal/runner/backtest_types.go)
-  // The backend uses this for ConfigMap keys and --strategy flag values
-  const toClassName = (str: string): string => {
-    if (!str) return 'MyStrategy';
-    // Remove invalid characters
-    const sanitized = str.replace(/[^a-zA-Z0-9\s]/g, '');
-    if (!sanitized) return 'MyStrategy';
-
-    // If no spaces, preserve original casing (already PascalCase or camelCase)
-    // Just ensure first char is uppercase
-    if (!sanitized.includes(' ')) {
-      return sanitized.charAt(0).toUpperCase() + sanitized.slice(1);
-    }
-
-    // Convert space-separated words to PascalCase
-    return sanitized
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('');
-  };
-
   // Handle name change with sync to config and code
-  const handleNameChange = (newName: string) => {
+  const handleNameChange = useCallback((newName: string) => {
     setName(newName);
     setHasChanges(true);
 
     // Update config with strategy_name field
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
       strategy_name: newName || undefined,
     }));
 
     // Update class name in code
     const className = toClassName(newName);
-    setCode(prev => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
-  };
+    setCode((prev) => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
+  }, []);
 
   /**
    * Save the strategy. Returns true if save succeeded, false otherwise.
@@ -358,6 +360,167 @@ class MyStrategy(IStrategy):
       safeNavigate(`/strategies/${id}`);
     }
   };
+
+  // Get responsive layout state
+  const { isMobile } = useResponsiveLayout();
+
+  // Handler for description changes
+  const handleDescriptionChange = useCallback((value: string) => {
+    setDescription(value);
+    setHasChanges(true);
+  }, []);
+
+  // Handler for config changes
+  const handleConfigChange = useCallback((value: object | null) => {
+    setConfig(value);
+    setHasChanges(true);
+  }, []);
+
+  // Get builder tabs from the hook
+  const builderTabs = useBuilderTabs({
+    value: uiBuilderConfig,
+    onChange: handleUIBuilderConfigChange,
+    className: toClassName(name),
+    timeframe: (config as Record<string, unknown>)?.timeframe as string || '5m',
+    stakeCurrency: (config as Record<string, unknown>)?.stake_currency as string || 'USDT',
+    stakeAmount: (config as Record<string, unknown>)?.stake_amount as number || 100,
+  });
+
+  // Strategy settings tab content (shared between both modes)
+  const strategySettingsContent = useMemo(
+    () => (
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* Strategy Name */}
+        <TextField
+          label="Strategy Name"
+          value={name}
+          onChange={(e) => handleNameChange(e.target.value)}
+          required
+          fullWidth
+          size="small"
+          helperText={`Class: ${toClassName(name)}`}
+        />
+
+        {/* Description */}
+        <TextField
+          label="Description"
+          value={description}
+          onChange={(e) => handleDescriptionChange(e.target.value)}
+          fullWidth
+          multiline
+          rows={3}
+          size="small"
+        />
+
+        <Divider />
+
+        {/* Freqtrade Config */}
+        <Box>
+          <Typography variant="subtitle2" gutterBottom>
+            Freqtrade Configuration
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Configure trading parameters for backtesting and live trading.
+          </Typography>
+          <FreqtradeConfigForm value={config} onChange={handleConfigChange} hideSubmitButton />
+        </Box>
+
+        {saveError && (
+          <FormHelperText error>Error saving strategy: {saveError.message}</FormHelperText>
+        )}
+      </Box>
+    ),
+    [name, description, config, saveError, handleNameChange, handleDescriptionChange, handleConfigChange]
+  );
+
+  // General settings tab definition (name, description, freqtrade config)
+  const generalSettingsTab: TabDefinition = useMemo(
+    () => ({
+      id: 'general',
+      label: 'General',
+      icon: <InfoOutlined />,
+      content: strategySettingsContent,
+    }),
+    [strategySettingsContent]
+  );
+
+  // Handler for code changes
+  const handleCodeChange = useCallback((value: string) => {
+    setCode(value);
+    setHasChanges(true);
+  }, []);
+
+  // Code tab definition (for code mode)
+  const codeTab: TabDefinition = useMemo(
+    () => ({
+      id: 'code',
+      label: 'Code',
+      icon: <Code />,
+      content: (
+        <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <PythonCodeEditor value={code} onChange={handleCodeChange} height="100%" label="" />
+        </Box>
+      ),
+    }),
+    [code, handleCodeChange]
+  );
+
+  // Build panel groups based on builder mode and screen size
+  const panelGroups: PanelGroupDefinition[] = useMemo(() => {
+    if (builderMode === StrategyStrategyBuilderMode.Ui) {
+      // UI Builder mode
+      if (isMobile) {
+        // Mobile: flatten all tabs into a single group (General first)
+        return [
+          {
+            id: 'all',
+            tabs: [generalSettingsTab, ...builderTabs],
+          },
+        ];
+      }
+      // Desktop: two panels - builder tabs + strategy settings
+      return [
+        {
+          id: 'builder',
+          title: 'Strategy Builder',
+          tabs: builderTabs,
+          panel: { defaultSize: 65, minSize: 40 },
+        },
+        {
+          id: 'settings',
+          title: 'Strategy Settings',
+          tabs: [generalSettingsTab],
+          panel: { defaultSize: 35, minSize: 25 },
+        },
+      ];
+    } else {
+      // Code mode
+      if (isMobile) {
+        // Mobile: General first, then code
+        return [
+          {
+            id: 'all',
+            tabs: [generalSettingsTab, codeTab],
+          },
+        ];
+      }
+      // Desktop: two panels - code editor + strategy settings
+      return [
+        {
+          id: 'code',
+          title: 'Strategy Code',
+          tabs: [codeTab],
+          panel: { defaultSize: 65, minSize: 40 },
+        },
+        {
+          id: 'settings',
+          title: 'Strategy Settings',
+          tabs: [generalSettingsTab],
+          panel: { defaultSize: 35, minSize: 25 },
+        },
+      ];
+    }
+  }, [builderMode, isMobile, builderTabs, generalSettingsTab, codeTab]);
 
   // Loading state - only for edit mode
   if (!isCreateMode && loading) {
@@ -594,127 +757,15 @@ class MyStrategy(IStrategy):
         </Alert>
       )}
 
-      {/* Main Content */}
+      {/* Main Content - Responsive Panels */}
       <Box
         sx={{
           flex: 1,
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          overflow: { xs: 'auto', md: 'hidden' },
           minHeight: 0,
+          overflow: 'hidden',
         }}
       >
-        {/* Left Panel - Code Editor or UI Builder */}
-        <Box
-          sx={{
-            flex: { xs: 'none', md: 1 },
-            height: { xs: 500, md: '100%' },
-            minHeight: { xs: 400, md: 0 },
-            display: 'flex',
-            flexDirection: 'column',
-            borderRight: { xs: 0, md: 1 },
-            borderBottom: { xs: 1, md: 0 },
-            borderColor: 'grey.200',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Panel Title */}
-          <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              {builderMode === StrategyStrategyBuilderMode.Ui ? 'Strategy Builder' : 'Strategy Code'}
-            </Typography>
-          </Box>
-          <Box sx={{ flex: 1, position: 'relative', minHeight: 0 }}>
-            {builderMode === StrategyStrategyBuilderMode.Ui ? (
-              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <StrategyBuilder
-                  value={uiBuilderConfig}
-                  onChange={handleUIBuilderConfigChange}
-                  className={toClassName(name)}
-                  timeframe={(config as Record<string, unknown>)?.timeframe as string || '5m'}
-                  stakeCurrency={(config as Record<string, unknown>)?.stake_currency as string || 'USDT'}
-                  stakeAmount={(config as Record<string, unknown>)?.stake_amount as number || 100}
-                />
-              </Box>
-            ) : (
-              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                <PythonCodeEditor
-                  value={code}
-                  onChange={handleChange(setCode)}
-                  height="100%"
-                  label=""
-                />
-              </Box>
-            )}
-          </Box>
-        </Box>
-
-        {/* Right Panel - Configuration */}
-        <Box
-          sx={{
-            width: { xs: '100%', md: 400, lg: 500 },
-            flex: { xs: 'none', md: 'none' },
-            height: { xs: 'auto', md: '100%' },
-            minHeight: { xs: 400, md: 0 },
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Strategy Settings
-            </Typography>
-          </Box>
-          <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {/* Strategy Name */}
-              <TextField
-                label="Strategy Name"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                required
-                fullWidth
-                size="small"
-                helperText={`Class: ${toClassName(name)}`}
-              />
-
-              {/* Description */}
-              <TextField
-                label="Description"
-                value={description}
-                onChange={(e) => handleChange(setDescription)(e.target.value)}
-                fullWidth
-                multiline
-                rows={3}
-                size="small"
-              />
-
-              <Divider />
-
-              {/* Freqtrade Config */}
-              <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  Freqtrade Configuration
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Configure trading parameters for backtesting and live trading.
-                </Typography>
-                <FreqtradeConfigForm
-                  value={config}
-                  onChange={handleChange(setConfig)}
-                  hideSubmitButton
-                />
-              </Box>
-
-              {saveError && (
-                <FormHelperText error>
-                  Error saving strategy: {saveError.message}
-                </FormHelperText>
-              )}
-            </Box>
-          </Box>
-        </Box>
+        <ResponsivePanelLayout groups={panelGroups} />
       </Box>
 
       {/* Backtest Drawer - only in edit mode */}

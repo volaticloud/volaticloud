@@ -140,7 +140,10 @@ export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
           <TextField
             type="number"
             value={(value.stoploss * 100).toFixed(1)}
-            onChange={(e) => handleStoplossChange(parseFloat(e.target.value) / 100)}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              if (!isNaN(value)) handleStoplossChange(value / 100);
+            }}
             size="small"
             sx={{ width: 100 }}
             slotProps={{
@@ -278,7 +281,10 @@ export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
                 <TextField
                   type="number"
                   value={((value.trailing_stop_positive || 0.01) * 100).toFixed(1)}
-                  onChange={(e) => handleTrailingPositiveChange(parseFloat(e.target.value) / 100)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) handleTrailingPositiveChange(val / 100);
+                  }}
                   size="small"
                   sx={{ width: 100 }}
                   slotProps={{
@@ -312,7 +318,10 @@ export function ParameterEditor({ value, onChange }: ParameterEditorProps) {
                 <TextField
                   type="number"
                   value={((value.trailing_stop_positive_offset || 0.01) * 100).toFixed(1)}
-                  onChange={(e) => handleTrailingOffsetChange(parseFloat(e.target.value) / 100)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) handleTrailingOffsetChange(val / 100);
+                  }}
                   size="small"
                   sx={{ width: 100 }}
                   slotProps={{

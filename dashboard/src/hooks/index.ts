@@ -9,3 +9,4 @@ export { useOrganizationPermission } from './useOrganizationPermission';
 export { useCursorPagination } from './useCursorPagination';
 export { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
 export { useDialogUnsavedChanges } from './useDialogUnsavedChanges';
+export { useResponsiveLayout } from './useResponsiveLayout';

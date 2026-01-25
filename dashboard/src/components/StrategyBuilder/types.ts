@@ -624,6 +624,21 @@ export function hasChildren(node: ConditionNode): node is AndNode | OrNode {
   return isLogicalNode(node);
 }
 
+/**
+ * Count the number of leaf conditions in a condition tree.
+ * AND/OR nodes don't count themselves, only their leaf children.
+ */
+export function getConditionCount(node: ConditionNode | undefined): number {
+  if (!node) return 0;
+  if (node.type === 'AND' || node.type === 'OR') {
+    return (node as AndNode | OrNode).children.reduce(
+      (acc, child) => acc + getConditionCount(child),
+      0
+    );
+  }
+  return 1;
+}
+
 // ============================================================================
 // Mirror/Inversion Logic (for UI display of mirrored signals)
 // ============================================================================
