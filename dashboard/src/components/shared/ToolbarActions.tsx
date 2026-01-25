@@ -103,7 +103,6 @@ export const ToolbarActions = ({
       {primaryActions.map((action) => {
         const button = (
           <Button
-            key={action.id}
             variant={action.variant || 'outlined'}
             color={action.color || 'primary'}
             size={size}
@@ -120,7 +119,7 @@ export const ToolbarActions = ({
             <span>{button}</span>
           </Tooltip>
         ) : (
-          button
+          <Fragment key={action.id}>{button}</Fragment>
         );
       })}
 
