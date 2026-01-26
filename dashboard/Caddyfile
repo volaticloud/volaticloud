@@ -3,8 +3,18 @@
 	encode gzip
 
 	# Reverse proxy /gateway/* to backend (GraphQL, bot proxy, health)
+	# WebSocket support for GraphQL subscriptions
 	handle /gateway/* {
-		reverse_proxy http://volaticloud-backend-volaticloud-backend:8080
+		reverse_proxy http://volaticloud-backend-volaticloud-backend:8080 {
+			# Flush immediately for WebSocket/streaming responses
+			flush_interval -1
+
+			# Extended timeouts for WebSocket connections
+			transport http {
+				read_timeout 0
+				write_timeout 0
+			}
+		}
 	}
 
 	# Serve FreqUI static files at /frequi/*
