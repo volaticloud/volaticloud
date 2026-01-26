@@ -325,3 +325,56 @@ func TestMemoryPubSub_DoubleCleanupReverse(t *testing.T) {
 
 	// If we get here without panic, the test passes
 }
+
+func TestMemoryPubSub_CloseWithActiveSubscriptions(t *testing.T) {
+	ps := NewMemoryPubSub()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	topic := "close-active-topic"
+
+	// Create multiple subscriptions
+	_, unsub1 := ps.Subscribe(ctx, topic)
+	_, unsub2 := ps.Subscribe(ctx, topic)
+
+	// Close the pubsub while subscriptions are active
+	if err := ps.Close(); err != nil {
+		t.Fatalf("Close failed: %v", err)
+	}
+
+	// Now try to call cleanup on subscriptions after Close()
+	// This should not panic due to double-close protection
+	unsub1()
+	unsub2()
+
+	// If we get here without panic, the test passes
+}
+
+func TestMemoryPubSub_CleanupThenClose(t *testing.T) {
+	ps := NewMemoryPubSub()
+
+	ctx := context.Background()
+	topic := "cleanup-then-close-topic"
+
+	// Create subscription
+	ch, unsub := ps.Subscribe(ctx, topic)
+
+	// Cleanup first
+	unsub()
+
+	// Verify channel is closed
+	select {
+	case _, ok := <-ch:
+		if ok {
+			t.Error("Expected channel to be closed after unsub")
+		}
+	case <-time.After(100 * time.Millisecond):
+		// Channel might not be immediately readable, that's ok
+	}
+
+	// Then Close() - should not panic even though channel was already closed
+	if err := ps.Close(); err != nil {
+		t.Fatalf("Close failed: %v", err)
+	}
+}

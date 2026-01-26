@@ -63,6 +63,10 @@ func (ps *MemoryPubSub) Subscribe(ctx context.Context, topic string) (<-chan []b
 		once.Do(func() {
 			ps.mu.Lock()
 			defer ps.mu.Unlock()
+			// Check if Close() was already called - it closes all channels
+			if ps.closed {
+				return
+			}
 			subscribers := ps.subs[topic]
 			for i, c := range subscribers {
 				if c == ch {
