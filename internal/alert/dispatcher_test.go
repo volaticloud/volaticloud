@@ -305,10 +305,6 @@ func containsSubstring(s, substr string) bool {
 	return false
 }
 
-func uuidPtr(u uuid.UUID) *uuid.UUID {
-	return &u
-}
-
 func strPtr(s string) *string {
 	return &s
 }

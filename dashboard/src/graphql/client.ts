@@ -18,7 +18,9 @@ const statusListeners: Set<ConnectionStatusListener> = new Set();
 
 export const addConnectionStatusListener = (listener: ConnectionStatusListener) => {
   statusListeners.add(listener);
-  return () => statusListeners.delete(listener);
+  return () => {
+    statusListeners.delete(listener);
+  };
 };
 
 const notifyListeners = (status: ConnectionStatus, error?: Error) => {

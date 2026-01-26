@@ -127,10 +127,8 @@ func TestRedisPubSub_Unsubscribe(t *testing.T) {
 
 	// Channel should be closed eventually
 	select {
-	case _, ok := <-ch:
-		if ok {
-			// Received a message before close, that's ok
-		}
+	case <-ch:
+		// Received a message before close, that's ok
 	case <-time.After(time.Second):
 		// Timeout is acceptable for cleanup
 	}

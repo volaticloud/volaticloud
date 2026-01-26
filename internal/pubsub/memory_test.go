@@ -125,10 +125,8 @@ func TestMemoryPubSub_ContextCancellation(t *testing.T) {
 
 	// The subscriber's channel should eventually close or not receive
 	select {
-	case _, ok := <-ch:
-		if ok {
-			// Message received is acceptable if it was buffered before cancel
-		}
+	case <-ch:
+		// Message received is acceptable if it was buffered before cancel
 	case <-time.After(100 * time.Millisecond):
 		// Timeout is acceptable
 	}
@@ -191,11 +189,8 @@ func TestMemoryPubSub_Close(t *testing.T) {
 		t.Error("Channel should be closed immediately after Close()")
 	}
 
-	// Publishing after close should not panic
-	err := ps.Publish(ctx, topic, "after-close")
-	if err != nil {
-		// Error is acceptable
-	}
+	// Publishing after close should not panic (error is acceptable)
+	_ = ps.Publish(ctx, topic, "after-close")
 }
 
 func TestMemoryPubSub_ConcurrentPublish(t *testing.T) {

@@ -68,7 +68,7 @@ export type BacktestProgressSubscriptionVariables = Types.Exact<{
 }>;
 
 
-export type BacktestProgressSubscription = { __typename?: 'Subscription', backtestProgress: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string } } };
+export type BacktestProgressSubscription = { __typename?: 'Subscription', backtestProgress: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, logs?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string } } };
 
 
 export const GetBacktestsDocument = gql`
@@ -471,6 +471,7 @@ export const BacktestProgressDocument = gql`
     id
     status
     result
+    logs
     errorMessage
     createdAt
     updatedAt

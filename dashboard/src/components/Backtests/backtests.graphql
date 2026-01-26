@@ -134,6 +134,7 @@ subscription BacktestProgress($backtestId: ID!) {
     id
     status
     result
+    logs
     errorMessage
     createdAt
     updatedAt
