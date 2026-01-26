@@ -290,4 +290,4 @@ internal/
 - [Apollo Subscriptions Documentation](https://www.apollographql.com/docs/react/data/subscriptions)
 - [gqlgen Subscriptions Recipe](https://gqlgen.com/recipes/subscriptions/)
 - [graphql-ws Protocol](https://github.com/enisdenjo/graphql-ws)
-- [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/)
+- [Redis Pub/Sub](https://redis.io/docs/latest/develop/interact/pubsub/)
