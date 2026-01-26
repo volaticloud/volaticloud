@@ -56,7 +56,7 @@ This runbook provides step-by-step procedures for deploying the VolatiCloud back
 4. **Verify Health**
 
    ```bash
-   curl https://api.volaticloud.com/health
+   curl https://console.volaticloud.com/gateway/v1/health
    # Expected: {"status":"ok"}
    ```
 
@@ -201,8 +201,8 @@ kubectl logs -n volaticloud -l app=volaticloud-backend | grep -i "failed creatin
 kubectl run -it --rm curl-test --image=curlimages/curl --restart=Never -- \
   curl http://volaticloud-backend:8080/health
 
-# External (via ingress)
-curl https://api.volaticloud.com/health
+# External (via dashboard reverse proxy)
+curl https://console.volaticloud.com/gateway/v1/health
 ```
 
 ---

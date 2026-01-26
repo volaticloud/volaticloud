@@ -15,24 +15,29 @@ The backend is deployed as a Kubernetes Deployment with:
 
 ## Architecture
 
+> **Note**: Backend is internal-only with no external ingress. All traffic flows through
+> the dashboard's Caddy reverse proxy. See [ADR-0019](../../docs/adr/0019-internal-backend-architecture.md).
+
 ```
-┌─────────────────┐
-│   Ingress       │  https://api.volaticloud.com
-│   (TLS)         │  (cert-manager + Let's Encrypt)
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   Service       │  ClusterIP:8080
-└────────┬────────┘
-         │
-    ┌────▼─────┬──────────┬──────────┐
-    │  Pod 1   │  Pod 2   │  Pod N   │  (2-10 replicas via HPA)
-    └──────────┴──────────┴──────────┘
-         │
-┌────────▼────────┐
-│  PostgreSQL     │  Managed Database (Vultr)
-│  (External)     │
-└─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     Kubernetes Cluster                       │
+│                                                              │
+│  ┌─────────────┐      ┌─────────────┐      ┌─────────────┐  │
+│  │   NGINX     │      │  Dashboard  │      │   Backend   │  │
+│  │   Ingress   │─────►│   (Caddy)   │─────►│   Service   │  │
+│  │             │      │             │      │ ClusterIP   │  │
+│  └─────────────┘      └─────────────┘      └──────┬──────┘  │
+│        │               /gateway/*                  │         │
+│        │                                     ┌─────▼─────┐   │
+│  console.volaticloud.com                     │  Pod 1-N  │   │
+│                                              │ (2-10 HPA)│   │
+│                                              └─────┬─────┘   │
+└────────────────────────────────────────────────────┼────────┘
+                                                     │
+                                            ┌────────▼────────┐
+                                            │   PostgreSQL    │
+                                            │  (Vultr Managed)│
+                                            └─────────────────┘
 ```
 
 ## Prerequisites
@@ -149,20 +154,18 @@ resources:
 **Ingress:**
 
 ```yaml
-ingress:
-  - name: main
-    ingressClassName: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - host: api.volaticloud.com
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: volaticloud-api-tls
-        hosts:
-          - api.volaticloud.com
+# NOTE: Backend has NO external ingress - it is internal-only.
+# All external traffic routes through the dashboard's Caddy reverse proxy.
+# See ADR-0019 for architecture details.
+#
+# The backend service is ClusterIP (internal):
+services:
+  volaticloud-backend:
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 8080
+        targetPort: http
 ```
 
 **Database Migration (extraDeploy):**

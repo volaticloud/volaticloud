@@ -187,7 +187,7 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 5. **Verify System Health**
 
    ```bash
-   curl https://api.volaticloud.com/health
+   curl https://console.volaticloud.com/gateway/v1/health
    kubectl logs -n volaticloud -l app=volaticloud-backend --tail=50
    ```
 
@@ -252,7 +252,7 @@ Kubernetes automatically handles node failures:
 
    ```bash
    # Existing pods continue serving traffic
-   curl https://api.volaticloud.com/health
+   curl https://console.volaticloud.com/gateway/v1/health
 
    # But cannot make changes until control plane restored
    ```
@@ -329,15 +329,16 @@ Kubernetes automatically handles node failures:
    # Get new ingress IP
    kubectl get svc -n ingress-nginx ingress-nginx-controller
 
-   # Update DNS A record for api.volaticloud.com
+   # Update DNS A record for console.volaticloud.com
    # to point to new LoadBalancer IP
+   # Note: Backend is internal-only, no external DNS needed (see ADR-0019)
    ```
 
 6. **Verify Deployment**
 
    ```bash
    kubectl get all -n volaticloud
-   curl https://api.volaticloud.com/health
+   curl https://console.volaticloud.com/gateway/v1/health
    ```
 
 **RTO**: 2-4 hours
@@ -520,10 +521,10 @@ psql -h <DB_HOST> -U volaticloud -d volaticloud -c "SELECT COUNT(*) FROM bots;"
 kubectl get pods -n volaticloud -l app=volaticloud-backend
 
 # 3. Health endpoint
-curl https://api.volaticloud.com/health
+curl https://console.volaticloud.com/gateway/v1/health
 
 # 4. GraphQL endpoint
-curl -X POST https://api.volaticloud.com/query \
+curl -X POST https://console.volaticloud.com/gateway/v1/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"{ __typename }"}'
 

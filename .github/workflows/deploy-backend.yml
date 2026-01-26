@@ -24,7 +24,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: prod
-      url: https://api.volaticloud.com
+      url: https://console.volaticloud.com
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -111,13 +111,13 @@ jobs:
           kubectl wait --for=condition=available --timeout=300s \
             deployment/volaticloud-backend-volaticloud-backend -n volaticloud
           sleep 30
-          curl -f -s "https://api.volaticloud.com/health" || true
+          curl -f -s "https://console.volaticloud.com/gateway/v1/health" || true
 
       - name: Summary
         run: |
           echo "### Backend Deployment Successful" >> $GITHUB_STEP_SUMMARY
           echo "**Image Tag:** ${{ steps.tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** https://api.volaticloud.com" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://console.volaticloud.com/gateway/v1" >> $GITHUB_STEP_SUMMARY
 
   rollback:
     name: Rollback

@@ -204,18 +204,23 @@ service:
   type: ClusterIP
   port: 8080
 
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  hosts:
-    - host: api.volaticloud.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: volaticloud-tls
-      hosts:
-        - api.volaticloud.com
+# NOTE: Backend ingress has been removed - backend is now internal-only.
+# See ADR-0019 for the updated architecture where all traffic flows
+# through the dashboard's Caddy reverse proxy.
+# The configuration below is kept for historical reference.
+#
+# ingress:
+#   enabled: true
+#   ingressClassName: nginx
+#   hosts:
+#     - host: api.volaticloud.com
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#   tls:
+#     - secretName: volaticloud-tls
+#       hosts:
+#         - api.volaticloud.com
 
 livenessProbe:
   httpGet:
@@ -331,8 +336,8 @@ kubectl get pods -n volaticloud -l app=volaticloud-backend
 # View logs
 kubectl logs -n volaticloud -l app=volaticloud-backend --tail=100 -f
 
-# Test health endpoint
-curl https://api.volaticloud.com/health
+# Test health endpoint (via dashboard reverse proxy)
+curl https://console.volaticloud.com/gateway/v1/health
 
 # Check HPA status
 kubectl get hpa -n volaticloud
@@ -376,8 +381,8 @@ helm lint nixys/nxs-universal-chart -f deployments/backend/values.yaml
 # Verify deployment
 kubectl rollout status deployment/volaticloud-backend -n volaticloud
 
-# Test health endpoint
-curl -f https://api.volaticloud.com/health || exit 1
+# Test health endpoint (via dashboard reverse proxy)
+curl -f https://console.volaticloud.com/gateway/v1/health || exit 1
 
 # Verify HPA
 kubectl get hpa volaticloud-backend -n volaticloud | grep -q "2/10" || exit 1

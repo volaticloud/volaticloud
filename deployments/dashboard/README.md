@@ -23,7 +23,7 @@ Kubernetes deployment configuration for the VolatiCloud dashboard using Caddy.
 
 Set in `deployments/dashboard/values.yaml`:
 
-- `VOLATICLOUD__GATEWAY_URL`: Gateway API base URL (e.g., /gateway/v1 or https://api.volaticloud.com/gateway/v1)
+- `VOLATICLOUD__GATEWAY_URL`: Gateway API base URL (always `/gateway/v1` - backend is internal-only, see ADR-0019)
 
 ## Local Development
 
