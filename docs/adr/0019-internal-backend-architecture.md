@@ -14,6 +14,7 @@ VolatiCloud's production deployment needs to expose API endpoints to users while
 4. **Metrics**: Prometheus scraping (internal)
 
 Initially, both the dashboard and backend had separate external ingresses:
+
 - `console.volaticloud.com` - Dashboard (Caddy serving static files)
 - `api.volaticloud.com` - Backend (direct external access)
 
@@ -92,6 +93,7 @@ handle /gateway/* {
 ```
 
 Key configurations:
+
 - **`flush_interval -1`**: Disables response buffering for WebSocket/SSE
 - **`read_timeout 0`**: No timeout for long-lived WebSocket connections
 - **`write_timeout 0`**: No timeout for streaming responses
@@ -153,10 +155,12 @@ services:
 ### 1. Dual External Ingress (Rejected)
 
 **Original approach:**
+
 - `api.volaticloud.com` - Backend direct access
 - `console.volaticloud.com` - Dashboard
 
 **Rejected because:**
+
 - CORS complexity for cross-origin API calls
 - Separate WebSocket origin handling
 - Increased attack surface
@@ -165,9 +169,11 @@ services:
 ### 2. API Gateway (Kong, Ambassador)
 
 **Considered:**
+
 - Dedicated API gateway between ingress and backend
 
 **Rejected because:**
+
 - Additional infrastructure complexity
 - Caddy handles reverse proxy needs adequately
 - Cost of additional service in cluster
@@ -176,10 +182,12 @@ services:
 ### 3. Service Mesh (Istio, Linkerd)
 
 **Considered:**
+
 - mTLS between services
 - Advanced traffic management
 
 **Rejected because:**
+
 - Significant operational overhead
 - Not justified for current service count
 - Caddy + K8s native features sufficient
