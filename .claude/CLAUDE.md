@@ -91,6 +91,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0013](../docs/adr/0013-long-short-signal-support.md) - Long/Short Signal Support with Mirror
 - [ADR-0017](../docs/adr/0017-hybrid-testing-strategy.md) - Hybrid Testing Strategy (mocks + testcontainers)
 - [ADR-0018](../docs/adr/0018-graphql-websocket-subscriptions.md) - GraphQL WebSocket Subscriptions (real-time updates)
+- [ADR-0019](../docs/adr/0019-internal-backend-architecture.md) - Internal Backend Architecture (no external API ingress)
 
 ## Project Structure
 
