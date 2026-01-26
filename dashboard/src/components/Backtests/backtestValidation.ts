@@ -227,13 +227,18 @@ export interface AvailableDateRange {
 /**
  * Computes the available date range based on selected exchange, pairs, and timeframe.
  * Uses INTERSECTION logic: finds the overlapping date range where data exists for ALL
- * selected pairs and the selected timeframe.
+ * selected pairs FOR THE SELECTED TIMEFRAME.
+ *
+ * IMPORTANT: A timeframe MUST be selected to compute the date range. This ensures
+ * accurate results - without a specific timeframe, combining ranges across different
+ * timeframes would give misleading results (e.g., showing a range that includes dates
+ * where some pairs lack data for the eventually-selected timeframe).
  *
  * @param runnerData - Runner's data availability metadata
  * @param exchange - Selected exchange name
  * @param pairs - Selected trading pairs (empty = consider all pairs)
- * @param timeframe - Selected timeframe (null = consider all timeframes)
- * @returns The intersection date range, or null if no valid overlap exists
+ * @param timeframe - Selected timeframe (null = returns null, timeframe required)
+ * @returns The intersection date range, or null if no valid overlap exists or no timeframe selected
  */
 export const computeAvailableDateRange = (
   runnerData: RunnerDataAvailable | null,
@@ -242,6 +247,10 @@ export const computeAvailableDateRange = (
   timeframe: string | null
 ): AvailableDateRange | null => {
   if (!runnerData?.exchanges?.length) return null;
+
+  // Timeframe is required to compute accurate date range
+  // Without it, we'd mix ranges from different timeframes which is misleading
+  if (!timeframe) return null;
 
   const exchangeData = runnerData.exchanges.find(
     e => e.name.toLowerCase() === exchange.toLowerCase()
@@ -253,10 +262,11 @@ export const computeAvailableDateRange = (
     ? new Set(pairs.map(p => p.toUpperCase()))
     : null;
 
-  // Track the intersection of date ranges (latest start, earliest end)
+  // For each selected pair, find the date range for the selected timeframe
+  // Then compute the intersection of all per-pair ranges
   let latestStart: Date | null = null;
   let earliestEnd: Date | null = null;
-  let hasMatchingData = false;
+  let pairsWithData = 0;
 
   for (const pair of exchangeData.pairs) {
     // Skip pairs not in selection (if pairs are selected)
@@ -264,31 +274,30 @@ export const computeAvailableDateRange = (
       continue;
     }
 
-    for (const tf of pair.timeframes ?? []) {
-      // Skip timeframes that don't match selection (if timeframe is selected)
-      if (timeframe && tf.timeframe !== timeframe) {
-        continue;
-      }
+    // Find the specific timeframe for this pair
+    const tfData = pair.timeframes?.find(tf => tf.timeframe === timeframe);
+    if (!tfData?.from || !tfData?.to) {
+      // This pair doesn't have data for the selected timeframe - skip it
+      // Note: The UI should warn users if selected pairs lack the timeframe
+      continue;
+    }
 
-      if (tf.from && tf.to) {
-        hasMatchingData = true;
-        const fromDate = new Date(tf.from);
-        const toDate = new Date(tf.to);
+    pairsWithData++;
+    const fromDate = new Date(tfData.from);
+    const toDate = new Date(tfData.to);
 
-        // For intersection: take the LATEST start date
-        if (!latestStart || fromDate > latestStart) {
-          latestStart = fromDate;
-        }
-        // For intersection: take the EARLIEST end date
-        if (!earliestEnd || toDate < earliestEnd) {
-          earliestEnd = toDate;
-        }
-      }
+    // For intersection: take the LATEST start date across all pairs
+    if (!latestStart || fromDate > latestStart) {
+      latestStart = fromDate;
+    }
+    // For intersection: take the EARLIEST end date across all pairs
+    if (!earliestEnd || toDate < earliestEnd) {
+      earliestEnd = toDate;
     }
   }
 
-  // Validate that the intersection is valid (start before end)
-  if (hasMatchingData && latestStart && earliestEnd && latestStart <= earliestEnd) {
+  // Validate that we have data and the intersection is valid (start <= end)
+  if (pairsWithData > 0 && latestStart && earliestEnd && latestStart <= earliestEnd) {
     return { from: latestStart, to: earliestEnd };
   }
 

@@ -184,6 +184,9 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   }, [pairsOverride, strategyConfigFields.pair_whitelist]);
   const effectiveTimeframe = timeframeOverride ?? strategyConfigFields.timeframe ?? null;
 
+  // Stable key for pairs to prevent unnecessary recomputations
+  const effectivePairsKey = effectivePairs.join(',');
+
   // Compute available exchanges from runner data
   const availableExchanges = useMemo(() => {
     if (!runnerDataAvailable?.exchanges?.length) {
@@ -211,6 +214,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
 
   // Compute available date range for the selected exchange + pairs + timeframe combination
   // Uses shared function that implements INTERSECTION logic across all selected pairs/timeframe
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- effectivePairsKey is stable string representation
   const availableDateRange = useMemo(() => {
     return computeAvailableDateRange(
       runnerDataAvailable,
@@ -218,7 +222,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
       effectivePairs,
       effectiveTimeframe
     );
-  }, [runnerDataAvailable, effectiveExchange, effectivePairs, effectiveTimeframe]);
+  }, [runnerDataAvailable, effectiveExchange, effectivePairsKey, effectiveTimeframe]);
 
   // Compute available timeframes for selected exchange and pairs
   // Uses INTERSECTION: only shows timeframes available for ALL selected pairs

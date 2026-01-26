@@ -81,11 +81,20 @@ jobs:
             echo "::error::Coverage file not found: coverage/coverage-summary.json"
             exit 1
           fi
-          # Extract coverage percentage from vitest coverage output
+          # Extract coverage percentage from vitest coverage output with error handling
           COVERAGE=$(cat coverage/coverage-summary.json | node -e "
             const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
-            console.log(data.total.lines.pct.toFixed(2));
+            try {
+              const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
+              if (!data.total?.lines?.pct && data.total?.lines?.pct !== 0) {
+                console.error('Missing coverage data: total.lines.pct not found');
+                process.exit(1);
+              }
+              console.log(data.total.lines.pct.toFixed(2));
+            } catch (e) {
+              console.error('Failed to parse coverage JSON:', e.message);
+              process.exit(1);
+            }
           ")
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
 

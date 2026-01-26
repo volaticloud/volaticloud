@@ -507,6 +507,52 @@ describe('Backtest Validation', () => {
       expect(result).toBeNull();
     });
 
+    it('returns null when no timeframe specified (timeframe required)', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], null);
+      expect(result).toBeNull();
+    });
+
+    it('only considers selected timeframe to avoid mixing different timeframe ranges', () => {
+      // This tests the bug fix: pairs with different timeframe availability
+      // BTC/USDT has 5m data, ETH/USDT only has 1h data (no 5m)
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-06-30' }] },
+            { pair: 'ETH/USDT', timeframes: [{ timeframe: '1h', from: '2024-03-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      // When selecting 5m timeframe, ETH/USDT should be excluded (no 5m data)
+      // So we only get BTC/USDT's 5m range
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT', 'ETH/USDT'], '5m');
+      expect(result).not.toBeNull();
+      expect(result!.from.toISOString().split('T')[0]).toBe('2024-01-01');
+      expect(result!.to.toISOString().split('T')[0]).toBe('2024-06-30');
+    });
+
+    it('returns null when no pairs have the selected timeframe', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '1h', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], '5m');
+      expect(result).toBeNull();
+    });
+
     it('returns date range for single pair and timeframe', () => {
       const runnerData = createRunnerDataWithDates([
         {
