@@ -252,15 +252,16 @@ export const computeAvailableDateRange = (
   // Without it, we'd mix ranges from different timeframes which is misleading
   if (!timeframe) return null;
 
+  // No pairs selected = invalid state for date range computation
+  // Return null to indicate no valid range (UI should disable date pickers)
+  if (pairs.length === 0) return null;
+
   const exchangeData = runnerData.exchanges.find(
     e => e.name.toLowerCase() === exchange.toLowerCase()
   );
   if (!exchangeData?.pairs?.length) return null;
 
-  // If no pairs selected, consider all pairs on the exchange
-  const selectedPairSet = pairs.length > 0
-    ? new Set(pairs.map(p => p.toUpperCase()))
-    : null;
+  const selectedPairSet = new Set(pairs.map(p => p.toUpperCase()));
 
   // ==================== INTERSECTION ALGORITHM ====================
   // For backtesting, we need data available for ALL selected pairs at the
@@ -285,7 +286,7 @@ export const computeAvailableDateRange = (
 
   for (const pair of exchangeData.pairs) {
     // Skip pairs not in user's selection (case-insensitive)
-    if (selectedPairSet && !selectedPairSet.has(pair.pair.toUpperCase())) {
+    if (!selectedPairSet.has(pair.pair.toUpperCase())) {
       continue;
     }
 

@@ -45,7 +45,9 @@ import {
   type BacktestConfigValidationResult,
 } from './backtestValidation';
 
-// Default number of pairs to select when loading runner data
+// Default number of pairs to auto-select when loading runner data.
+// 3 provides a reasonable starting point: enough to test strategy behavior
+// across multiple assets, but not so many that initial backtests are slow.
 const DEFAULT_PAIR_SELECTION_LIMIT = 3;
 
 interface CreateBacktestDrawerProps {
@@ -900,6 +902,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                             variant="text"
                             onClick={() => setPairsOverride(availablePairs)}
                             disabled={areAllPairsSelected(effectivePairs, availablePairs)}
+                            aria-label="Select all available trading pairs"
                             sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
                           >
                             Select All ({availablePairs.length})
@@ -910,6 +913,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                               variant="text"
                               color="secondary"
                               onClick={() => setPairsOverride([])}
+                              aria-label="Clear all selected trading pairs"
                               sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
                             >
                               Clear

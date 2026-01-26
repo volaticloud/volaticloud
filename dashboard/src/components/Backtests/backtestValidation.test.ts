@@ -621,7 +621,7 @@ describe('Backtest Validation', () => {
       expect(result1h!.from.toISOString().split('T')[0]).toBe('2024-03-01');
     });
 
-    it('considers all pairs when no pairs specified', () => {
+    it('returns null when no pairs specified (empty pairs = invalid state)', () => {
       const runnerData = createRunnerDataWithDates([
         {
           name: 'binance',
@@ -631,10 +631,9 @@ describe('Backtest Validation', () => {
           ],
         },
       ]);
+      // Empty pairs is an invalid state - user must select at least one pair
       const result = computeAvailableDateRange(runnerData, 'binance', [], '5m');
-      // When no pairs specified, takes intersection of all
-      expect(result!.from.toISOString().split('T')[0]).toBe('2024-03-01');
-      expect(result!.to.toISOString().split('T')[0]).toBe('2024-09-30');
+      expect(result).toBeNull();
     });
 
     it('handles case-insensitive exchange matching', () => {
