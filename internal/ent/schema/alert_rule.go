@@ -44,6 +44,9 @@ func (AlertRule) Fields() []ent.Field {
 		field.Enum("resource_type").
 			GoType(enum.AlertResourceType("")).
 			Comment("Type of resource: organization, bot, strategy, runner"),
+		// ResourceID is stored as string to support both UUIDs and organization aliases.
+		// Changed from UUID to string to support organization alias system (ADR-0012).
+		// Existing UUID values remain compatible as strings.
 		field.String("resource_id").
 			Optional().
 			Nillable().

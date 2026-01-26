@@ -75,13 +75,23 @@ Selected Redis for:
 
 ### Subscriptions Implemented
 
+**Per-Resource Subscriptions:**
+
 | Subscription | Trigger | Use Case |
 |-------------|---------|----------|
 | `botStatusChanged(botId)` | Bot status updates | Bot detail page |
 | `backtestProgress(backtestId)` | Progress updates | Strategy Studio |
+| `tradeUpdated(botId)` | Trade events | Bot trades list |
+| `runnerStatusChanged(runnerId)` | Runner status | Runner detail page |
+
+**Organization-Level Subscriptions:**
+
+| Subscription | Trigger | Use Case |
+|-------------|---------|----------|
 | `alertEventCreated(ownerId)` | New alerts | Notifications dropdown |
-| `tradeUpdated(botId)` | Trade events | Trades list |
-| `runnerStatusChanged(runnerId)` | Runner status | Runners list |
+| `botChanged(ownerId)` | Any bot change | Bots list page |
+| `tradeChanged(ownerId)` | Any trade event | Trades dashboard |
+| `runnerChanged(ownerId)` | Any runner change | Runners list page |
 
 ### Authentication
 
@@ -145,6 +155,20 @@ This ensures the application remains functional during Redis outages.
 - Proper cleanup on context cancellation
 - Connection status indicator in UI
 - Graceful degradation without Redis
+
+### Known Limitations
+
+**Authorization During Long-Lived Connections:**
+
+- JWT is validated once at WebSocket connection (`connection_init`)
+- Permissions are not re-validated if they change during the connection
+- If a user's access is revoked, they continue receiving updates until disconnect
+
+This matches industry standard behavior (e.g., Twitch, Discord). For critical security scenarios, consider:
+
+1. Frontend tracking token expiry and reconnecting before timeout
+2. Implementing periodic re-authentication for sensitive subscriptions
+3. Server-side connection invalidation when permissions change (future enhancement)
 
 ## Alternatives Considered
 

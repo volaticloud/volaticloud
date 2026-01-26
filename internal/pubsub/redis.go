@@ -3,6 +3,7 @@ package pubsub
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"sync"
 
@@ -81,12 +82,22 @@ func (ps *RedisPubSub) Subscribe(ctx context.Context, topic string) (<-chan []by
 }
 
 // Close releases all resources held by the pub/sub client.
+// Returns an aggregated error if any close operations fail.
 func (ps *RedisPubSub) Close() error {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
+
+	var errs []error
 	for _, sub := range ps.subs {
-		_ = sub.Close()
+		if err := sub.Close(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	ps.subs = nil
-	return ps.client.Close()
+
+	if err := ps.client.Close(); err != nil {
+		errs = append(errs, err)
+	}
+
+	return errors.Join(errs...)
 }
