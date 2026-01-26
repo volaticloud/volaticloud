@@ -51,6 +51,7 @@ type ResolverRoot interface {
 	Bot() BotResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -626,6 +627,17 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Subscription struct {
+		AlertEventCreated   func(childComplexity int, ownerID string) int
+		BacktestProgress    func(childComplexity int, backtestID uuid.UUID) int
+		BotChanged          func(childComplexity int, ownerID string) int
+		BotStatusChanged    func(childComplexity int, botID uuid.UUID) int
+		RunnerChanged       func(childComplexity int, ownerID string) int
+		RunnerStatusChanged func(childComplexity int, runnerID uuid.UUID) int
+		TradeChanged        func(childComplexity int, ownerID string) int
+		TradeUpdated        func(childComplexity int, botID uuid.UUID) int
+	}
+
 	Trade struct {
 		Amount           func(childComplexity int) int
 		Bot              func(childComplexity int) int
@@ -748,6 +760,16 @@ type QueryResolver interface {
 	ResourceGroups(ctx context.Context, organizationID string, where *model.ResourceGroupWhereInput, orderBy *model.ResourceGroupOrder, first *int, offset *int) (*model.ResourceGroupConnection, error)
 	ResourceGroupMembers(ctx context.Context, organizationID string, resourceGroupID string, where *model.ResourceGroupMemberWhereInput, orderBy *model.ResourceGroupMemberOrder, first *int, offset *int) (*model.ResourceGroupMemberConnection, error)
 	OrganizationInvitations(ctx context.Context, organizationID string, first *int, offset *int) (*model.OrganizationInvitationConnection, error)
+}
+type SubscriptionResolver interface {
+	BotStatusChanged(ctx context.Context, botID uuid.UUID) (<-chan *ent.Bot, error)
+	BacktestProgress(ctx context.Context, backtestID uuid.UUID) (<-chan *ent.Backtest, error)
+	AlertEventCreated(ctx context.Context, ownerID string) (<-chan *ent.AlertEvent, error)
+	TradeUpdated(ctx context.Context, botID uuid.UUID) (<-chan *ent.Trade, error)
+	RunnerStatusChanged(ctx context.Context, runnerID uuid.UUID) (<-chan *ent.BotRunner, error)
+	BotChanged(ctx context.Context, ownerID string) (<-chan *ent.Bot, error)
+	TradeChanged(ctx context.Context, ownerID string) (<-chan *ent.Trade, error)
+	RunnerChanged(ctx context.Context, ownerID string) (<-chan *ent.BotRunner, error)
 }
 
 type executableSchema struct {
@@ -3693,6 +3715,95 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.StrategyEdge.Node(childComplexity), true
 
+	case "Subscription.alertEventCreated":
+		if e.complexity.Subscription.AlertEventCreated == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_alertEventCreated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.AlertEventCreated(childComplexity, args["ownerId"].(string)), true
+	case "Subscription.backtestProgress":
+		if e.complexity.Subscription.BacktestProgress == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_backtestProgress_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.BacktestProgress(childComplexity, args["backtestId"].(uuid.UUID)), true
+	case "Subscription.botChanged":
+		if e.complexity.Subscription.BotChanged == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_botChanged_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.BotChanged(childComplexity, args["ownerId"].(string)), true
+	case "Subscription.botStatusChanged":
+		if e.complexity.Subscription.BotStatusChanged == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_botStatusChanged_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.BotStatusChanged(childComplexity, args["botId"].(uuid.UUID)), true
+	case "Subscription.runnerChanged":
+		if e.complexity.Subscription.RunnerChanged == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_runnerChanged_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.RunnerChanged(childComplexity, args["ownerId"].(string)), true
+	case "Subscription.runnerStatusChanged":
+		if e.complexity.Subscription.RunnerStatusChanged == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_runnerStatusChanged_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.RunnerStatusChanged(childComplexity, args["runnerId"].(uuid.UUID)), true
+	case "Subscription.tradeChanged":
+		if e.complexity.Subscription.TradeChanged == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_tradeChanged_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.TradeChanged(childComplexity, args["ownerId"].(string)), true
+	case "Subscription.tradeUpdated":
+		if e.complexity.Subscription.TradeUpdated == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_tradeUpdated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.TradeUpdated(childComplexity, args["botId"].(uuid.UUID)), true
+
 	case "Trade.amount":
 		if e.complexity.Trade.Amount == nil {
 			break
@@ -3985,6 +4096,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, opCtx.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -5358,6 +5486,94 @@ func (ec *executionContext) field_Strategy_bots_args(ctx context.Context, rawArg
 	return args, nil
 }
 
+func (ec *executionContext) field_Subscription_alertEventCreated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_backtestProgress_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "backtestId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["backtestId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_botChanged_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_botStatusChanged_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "botId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["botId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_runnerChanged_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_runnerStatusChanged_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "runnerId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["runnerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_tradeChanged_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["ownerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_tradeUpdated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "botId", ec.unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID)
+	if err != nil {
+		return nil, err
+	}
+	args["botId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5797,7 +6013,7 @@ func (ec *executionContext) _AlertEvent_resourceID(ctx context.Context, field gr
 			return obj.ResourceID, nil
 		},
 		nil,
-		ec.marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID,
+		ec.marshalOString2ᚖstring,
 		true,
 		false,
 	)
@@ -5810,7 +6026,7 @@ func (ec *executionContext) fieldContext_AlertEvent_resourceID(_ context.Context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6384,7 +6600,7 @@ func (ec *executionContext) _AlertRule_resourceID(ctx context.Context, field gra
 			return obj.ResourceID, nil
 		},
 		nil,
-		ec.marshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID,
+		ec.marshalOString2ᚖstring,
 		true,
 		false,
 	)
@@ -6397,7 +6613,7 @@ func (ec *executionContext) fieldContext_AlertRule_resourceID(_ context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23132,6 +23348,962 @@ func (ec *executionContext) fieldContext_StrategyEdge_cursor(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Subscription_botStatusChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_botStatusChanged,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().BotStatusChanged(ctx, fc.Args["botId"].(uuid.UUID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "botId")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "BOT")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_botStatusChanged(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bot_id(ctx, field)
+			case "public":
+				return ec.fieldContext_Bot_public(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Bot_deletedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_Bot_name(ctx, field)
+			case "status":
+				return ec.fieldContext_Bot_status(ctx, field)
+			case "mode":
+				return ec.fieldContext_Bot_mode(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
+			case "freqtradeVersion":
+				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
+			case "lastSeenAt":
+				return ec.fieldContext_Bot_lastSeenAt(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Bot_errorMessage(ctx, field)
+			case "exchangeID":
+				return ec.fieldContext_Bot_exchangeID(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Bot_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bot_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Bot_updatedAt(ctx, field)
+			case "exchange":
+				return ec.fieldContext_Bot_exchange(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Bot_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
+			case "trades":
+				return ec.fieldContext_Bot_trades(ctx, field)
+			case "metrics":
+				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_botStatusChanged_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_backtestProgress(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_backtestProgress,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().BacktestProgress(ctx, fc.Args["backtestId"].(uuid.UUID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "backtestId")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "BACKTEST")
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Backtest
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBacktest2ᚖvolaticloudᚋinternalᚋentᚐBacktest,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_backtestProgress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Backtest_id(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Backtest_deletedAt(ctx, field)
+			case "status":
+				return ec.fieldContext_Backtest_status(ctx, field)
+			case "result":
+				return ec.fieldContext_Backtest_result(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Backtest_errorMessage(ctx, field)
+			case "logs":
+				return ec.fieldContext_Backtest_logs(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Backtest_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Backtest_runnerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Backtest_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Backtest_updatedAt(ctx, field)
+			case "completedAt":
+				return ec.fieldContext_Backtest_completedAt(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Backtest_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Backtest_endDate(ctx, field)
+			case "config":
+				return ec.fieldContext_Backtest_config(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Backtest_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Backtest_runner(ctx, field)
+			case "summary":
+				return ec.fieldContext_Backtest_summary(ctx, field)
+			case "resourceUsage":
+				return ec.fieldContext_Backtest_resourceUsage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Backtest", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_backtestProgress_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_alertEventCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_alertEventCreated,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().AlertEventCreated(ctx, fc.Args["ownerId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "ownerId")
+				if err != nil {
+					var zeroVal *ent.AlertEvent
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.AlertEvent
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *ent.AlertEvent
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.AlertEvent
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.AlertEvent
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNAlertEvent2ᚖvolaticloudᚋinternalᚋentᚐAlertEvent,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_alertEventCreated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AlertEvent_id(ctx, field)
+			case "ruleID":
+				return ec.fieldContext_AlertEvent_ruleID(ctx, field)
+			case "status":
+				return ec.fieldContext_AlertEvent_status(ctx, field)
+			case "alertType":
+				return ec.fieldContext_AlertEvent_alertType(ctx, field)
+			case "severity":
+				return ec.fieldContext_AlertEvent_severity(ctx, field)
+			case "subject":
+				return ec.fieldContext_AlertEvent_subject(ctx, field)
+			case "body":
+				return ec.fieldContext_AlertEvent_body(ctx, field)
+			case "context":
+				return ec.fieldContext_AlertEvent_context(ctx, field)
+			case "recipients":
+				return ec.fieldContext_AlertEvent_recipients(ctx, field)
+			case "channelType":
+				return ec.fieldContext_AlertEvent_channelType(ctx, field)
+			case "sentAt":
+				return ec.fieldContext_AlertEvent_sentAt(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_AlertEvent_errorMessage(ctx, field)
+			case "resourceType":
+				return ec.fieldContext_AlertEvent_resourceType(ctx, field)
+			case "resourceID":
+				return ec.fieldContext_AlertEvent_resourceID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_AlertEvent_ownerID(ctx, field)
+			case "readAt":
+				return ec.fieldContext_AlertEvent_readAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AlertEvent_createdAt(ctx, field)
+			case "rule":
+				return ec.fieldContext_AlertEvent_rule(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AlertEvent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_alertEventCreated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_tradeUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_tradeUpdated,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().TradeUpdated(ctx, fc.Args["botId"].(uuid.UUID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "botId")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "BOT")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Trade
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_tradeUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Trade_id(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Trade_deletedAt(ctx, field)
+			case "freqtradeTradeID":
+				return ec.fieldContext_Trade_freqtradeTradeID(ctx, field)
+			case "pair":
+				return ec.fieldContext_Trade_pair(ctx, field)
+			case "isOpen":
+				return ec.fieldContext_Trade_isOpen(ctx, field)
+			case "openDate":
+				return ec.fieldContext_Trade_openDate(ctx, field)
+			case "closeDate":
+				return ec.fieldContext_Trade_closeDate(ctx, field)
+			case "openRate":
+				return ec.fieldContext_Trade_openRate(ctx, field)
+			case "closeRate":
+				return ec.fieldContext_Trade_closeRate(ctx, field)
+			case "amount":
+				return ec.fieldContext_Trade_amount(ctx, field)
+			case "stakeAmount":
+				return ec.fieldContext_Trade_stakeAmount(ctx, field)
+			case "profitAbs":
+				return ec.fieldContext_Trade_profitAbs(ctx, field)
+			case "profitRatio":
+				return ec.fieldContext_Trade_profitRatio(ctx, field)
+			case "sellReason":
+				return ec.fieldContext_Trade_sellReason(ctx, field)
+			case "strategyName":
+				return ec.fieldContext_Trade_strategyName(ctx, field)
+			case "timeframe":
+				return ec.fieldContext_Trade_timeframe(ctx, field)
+			case "botID":
+				return ec.fieldContext_Trade_botID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Trade_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Trade_updatedAt(ctx, field)
+			case "bot":
+				return ec.fieldContext_Trade_bot(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Trade", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_tradeUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_runnerStatusChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_runnerStatusChanged,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().RunnerStatusChanged(ctx, fc.Args["runnerId"].(uuid.UUID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "runnerId")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "BOT_RUNNER")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_runnerStatusChanged(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BotRunner_id(ctx, field)
+			case "public":
+				return ec.fieldContext_BotRunner_public(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_BotRunner_deletedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_BotRunner_name(ctx, field)
+			case "type":
+				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadStartedAt":
+				return ec.fieldContext_BotRunner_dataDownloadStartedAt(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_runnerStatusChanged_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_botChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_botChanged,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().BotChanged(ctx, fc.Args["ownerId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "ownerId")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.Bot
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Bot
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBot2ᚖvolaticloudᚋinternalᚋentᚐBot,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_botChanged(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bot_id(ctx, field)
+			case "public":
+				return ec.fieldContext_Bot_public(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Bot_deletedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_Bot_name(ctx, field)
+			case "status":
+				return ec.fieldContext_Bot_status(ctx, field)
+			case "mode":
+				return ec.fieldContext_Bot_mode(ctx, field)
+			case "config":
+				return ec.fieldContext_Bot_config(ctx, field)
+			case "freqtradeVersion":
+				return ec.fieldContext_Bot_freqtradeVersion(ctx, field)
+			case "lastSeenAt":
+				return ec.fieldContext_Bot_lastSeenAt(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_Bot_errorMessage(ctx, field)
+			case "exchangeID":
+				return ec.fieldContext_Bot_exchangeID(ctx, field)
+			case "strategyID":
+				return ec.fieldContext_Bot_strategyID(ctx, field)
+			case "runnerID":
+				return ec.fieldContext_Bot_runnerID(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_Bot_ownerID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bot_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Bot_updatedAt(ctx, field)
+			case "exchange":
+				return ec.fieldContext_Bot_exchange(ctx, field)
+			case "strategy":
+				return ec.fieldContext_Bot_strategy(ctx, field)
+			case "runner":
+				return ec.fieldContext_Bot_runner(ctx, field)
+			case "trades":
+				return ec.fieldContext_Bot_trades(ctx, field)
+			case "metrics":
+				return ec.fieldContext_Bot_metrics(ctx, field)
+			case "recentUsage":
+				return ec.fieldContext_Bot_recentUsage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bot", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_botChanged_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_tradeChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_tradeChanged,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().TradeChanged(ctx, fc.Args["ownerId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "ownerId")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.Trade
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.Trade
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNTrade2ᚖvolaticloudᚋinternalᚋentᚐTrade,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_tradeChanged(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Trade_id(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Trade_deletedAt(ctx, field)
+			case "freqtradeTradeID":
+				return ec.fieldContext_Trade_freqtradeTradeID(ctx, field)
+			case "pair":
+				return ec.fieldContext_Trade_pair(ctx, field)
+			case "isOpen":
+				return ec.fieldContext_Trade_isOpen(ctx, field)
+			case "openDate":
+				return ec.fieldContext_Trade_openDate(ctx, field)
+			case "closeDate":
+				return ec.fieldContext_Trade_closeDate(ctx, field)
+			case "openRate":
+				return ec.fieldContext_Trade_openRate(ctx, field)
+			case "closeRate":
+				return ec.fieldContext_Trade_closeRate(ctx, field)
+			case "amount":
+				return ec.fieldContext_Trade_amount(ctx, field)
+			case "stakeAmount":
+				return ec.fieldContext_Trade_stakeAmount(ctx, field)
+			case "profitAbs":
+				return ec.fieldContext_Trade_profitAbs(ctx, field)
+			case "profitRatio":
+				return ec.fieldContext_Trade_profitRatio(ctx, field)
+			case "sellReason":
+				return ec.fieldContext_Trade_sellReason(ctx, field)
+			case "strategyName":
+				return ec.fieldContext_Trade_strategyName(ctx, field)
+			case "timeframe":
+				return ec.fieldContext_Trade_timeframe(ctx, field)
+			case "botID":
+				return ec.fieldContext_Trade_botID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Trade_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Trade_updatedAt(ctx, field)
+			case "bot":
+				return ec.fieldContext_Trade_bot(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Trade", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_tradeChanged_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_runnerChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_runnerChanged,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Subscription().RunnerChanged(ctx, fc.Args["ownerId"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				resource, err := ec.unmarshalNString2string(ctx, "ownerId")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				scope, err := ec.unmarshalNString2string(ctx, "view")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				resourceType, err := ec.unmarshalNResourceType2volaticloudᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, "ORGANIZATION")
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				fromParent, err := ec.unmarshalOBoolean2ᚖbool(ctx, false)
+				if err != nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, err
+				}
+				if ec.directives.HasScope == nil {
+					var zeroVal *ent.BotRunner
+					return zeroVal, errors.New("directive hasScope is not implemented")
+				}
+				return ec.directives.HasScope(ctx, nil, directive0, resource, scope, resourceType, fromParent)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBotRunner2ᚖvolaticloudᚋinternalᚋentᚐBotRunner,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_runnerChanged(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BotRunner_id(ctx, field)
+			case "public":
+				return ec.fieldContext_BotRunner_public(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_BotRunner_deletedAt(ctx, field)
+			case "name":
+				return ec.fieldContext_BotRunner_name(ctx, field)
+			case "type":
+				return ec.fieldContext_BotRunner_type(ctx, field)
+			case "config":
+				return ec.fieldContext_BotRunner_config(ctx, field)
+			case "dataIsReady":
+				return ec.fieldContext_BotRunner_dataIsReady(ctx, field)
+			case "dataLastUpdated":
+				return ec.fieldContext_BotRunner_dataLastUpdated(ctx, field)
+			case "dataDownloadStatus":
+				return ec.fieldContext_BotRunner_dataDownloadStatus(ctx, field)
+			case "dataDownloadStartedAt":
+				return ec.fieldContext_BotRunner_dataDownloadStartedAt(ctx, field)
+			case "dataDownloadProgress":
+				return ec.fieldContext_BotRunner_dataDownloadProgress(ctx, field)
+			case "dataErrorMessage":
+				return ec.fieldContext_BotRunner_dataErrorMessage(ctx, field)
+			case "dataDownloadConfig":
+				return ec.fieldContext_BotRunner_dataDownloadConfig(ctx, field)
+			case "s3Config":
+				return ec.fieldContext_BotRunner_s3Config(ctx, field)
+			case "s3DataKey":
+				return ec.fieldContext_BotRunner_s3DataKey(ctx, field)
+			case "s3DataUploadedAt":
+				return ec.fieldContext_BotRunner_s3DataUploadedAt(ctx, field)
+			case "dataAvailable":
+				return ec.fieldContext_BotRunner_dataAvailable(ctx, field)
+			case "ownerID":
+				return ec.fieldContext_BotRunner_ownerID(ctx, field)
+			case "billingEnabled":
+				return ec.fieldContext_BotRunner_billingEnabled(ctx, field)
+			case "cpuPricePerCoreHour":
+				return ec.fieldContext_BotRunner_cpuPricePerCoreHour(ctx, field)
+			case "memoryPricePerGBHour":
+				return ec.fieldContext_BotRunner_memoryPricePerGBHour(ctx, field)
+			case "networkPricePerGB":
+				return ec.fieldContext_BotRunner_networkPricePerGB(ctx, field)
+			case "storagePricePerGB":
+				return ec.fieldContext_BotRunner_storagePricePerGB(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_BotRunner_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_BotRunner_updatedAt(ctx, field)
+			case "bots":
+				return ec.fieldContext_BotRunner_bots(ctx, field)
+			case "backtests":
+				return ec.fieldContext_BotRunner_backtests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BotRunner", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_runnerChanged_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Trade_id(ctx context.Context, field graphql.CollectedField, obj *ent.Trade) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -25626,7 +26798,7 @@ func (ec *executionContext) unmarshalInputAlertEventWhereInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "ruleID", "ruleIDNEQ", "ruleIDIn", "ruleIDNotIn", "status", "statusNEQ", "statusIn", "statusNotIn", "alertType", "alertTypeNEQ", "alertTypeIn", "alertTypeNotIn", "severity", "severityNEQ", "severityIn", "severityNotIn", "subject", "subjectNEQ", "subjectIn", "subjectNotIn", "subjectGT", "subjectGTE", "subjectLT", "subjectLTE", "subjectContains", "subjectHasPrefix", "subjectHasSuffix", "subjectEqualFold", "subjectContainsFold", "body", "bodyNEQ", "bodyIn", "bodyNotIn", "bodyGT", "bodyGTE", "bodyLT", "bodyLTE", "bodyContains", "bodyHasPrefix", "bodyHasSuffix", "bodyEqualFold", "bodyContainsFold", "channelType", "channelTypeNEQ", "channelTypeIn", "channelTypeNotIn", "channelTypeGT", "channelTypeGTE", "channelTypeLT", "channelTypeLTE", "channelTypeContains", "channelTypeHasPrefix", "channelTypeHasSuffix", "channelTypeEqualFold", "channelTypeContainsFold", "sentAt", "sentAtNEQ", "sentAtIn", "sentAtNotIn", "sentAtGT", "sentAtGTE", "sentAtLT", "sentAtLTE", "sentAtIsNil", "sentAtNotNil", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "resourceType", "resourceTypeNEQ", "resourceTypeIn", "resourceTypeNotIn", "resourceID", "resourceIDNEQ", "resourceIDIn", "resourceIDNotIn", "resourceIDGT", "resourceIDGTE", "resourceIDLT", "resourceIDLTE", "resourceIDIsNil", "resourceIDNotNil", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "readAt", "readAtNEQ", "readAtIn", "readAtNotIn", "readAtGT", "readAtGTE", "readAtLT", "readAtLTE", "readAtIsNil", "readAtNotNil", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "hasRule", "hasRuleWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "ruleID", "ruleIDNEQ", "ruleIDIn", "ruleIDNotIn", "status", "statusNEQ", "statusIn", "statusNotIn", "alertType", "alertTypeNEQ", "alertTypeIn", "alertTypeNotIn", "severity", "severityNEQ", "severityIn", "severityNotIn", "subject", "subjectNEQ", "subjectIn", "subjectNotIn", "subjectGT", "subjectGTE", "subjectLT", "subjectLTE", "subjectContains", "subjectHasPrefix", "subjectHasSuffix", "subjectEqualFold", "subjectContainsFold", "body", "bodyNEQ", "bodyIn", "bodyNotIn", "bodyGT", "bodyGTE", "bodyLT", "bodyLTE", "bodyContains", "bodyHasPrefix", "bodyHasSuffix", "bodyEqualFold", "bodyContainsFold", "channelType", "channelTypeNEQ", "channelTypeIn", "channelTypeNotIn", "channelTypeGT", "channelTypeGTE", "channelTypeLT", "channelTypeLTE", "channelTypeContains", "channelTypeHasPrefix", "channelTypeHasSuffix", "channelTypeEqualFold", "channelTypeContainsFold", "sentAt", "sentAtNEQ", "sentAtIn", "sentAtNotIn", "sentAtGT", "sentAtGTE", "sentAtLT", "sentAtLTE", "sentAtIsNil", "sentAtNotNil", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "resourceType", "resourceTypeNEQ", "resourceTypeIn", "resourceTypeNotIn", "resourceID", "resourceIDNEQ", "resourceIDIn", "resourceIDNotIn", "resourceIDGT", "resourceIDGTE", "resourceIDLT", "resourceIDLTE", "resourceIDContains", "resourceIDHasPrefix", "resourceIDHasSuffix", "resourceIDIsNil", "resourceIDNotNil", "resourceIDEqualFold", "resourceIDContainsFold", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "readAt", "readAtNEQ", "readAtIn", "readAtNotIn", "readAtGT", "readAtGTE", "readAtLT", "readAtLTE", "readAtIsNil", "readAtNotNil", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "hasRule", "hasRuleWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -26300,60 +27472,81 @@ func (ec *executionContext) unmarshalInputAlertEventWhereInput(ctx context.Conte
 			it.ResourceTypeNotIn = data
 		case "resourceID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceID = data
 		case "resourceIDNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNEQ"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDNEQ = data
 		case "resourceIDIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDIn"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDIn = data
 		case "resourceIDNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNotIn"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDNotIn = data
 		case "resourceIDGT":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGT"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDGT = data
 		case "resourceIDGTE":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGTE"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDGTE = data
 		case "resourceIDLT":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLT"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDLT = data
 		case "resourceIDLTE":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLTE"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDLTE = data
+		case "resourceIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDContains = data
+		case "resourceIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDHasPrefix = data
+		case "resourceIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDHasSuffix = data
 		case "resourceIDIsNil":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDIsNil"))
 			data, err := ec.unmarshalOBoolean2bool(ctx, v)
@@ -26368,6 +27561,20 @@ func (ec *executionContext) unmarshalInputAlertEventWhereInput(ctx context.Conte
 				return it, err
 			}
 			it.ResourceIDNotNil = data
+		case "resourceIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDEqualFold = data
+		case "resourceIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDContainsFold = data
 		case "ownerID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerID"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -26612,7 +27819,7 @@ func (ec *executionContext) unmarshalInputAlertRuleWhereInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "deletedAtIsNil", "deletedAtNotNil", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "alertType", "alertTypeNEQ", "alertTypeIn", "alertTypeNotIn", "severity", "severityNEQ", "severityIn", "severityNotIn", "enabled", "enabledNEQ", "resourceType", "resourceTypeNEQ", "resourceTypeIn", "resourceTypeNotIn", "resourceID", "resourceIDNEQ", "resourceIDIn", "resourceIDNotIn", "resourceIDGT", "resourceIDGTE", "resourceIDLT", "resourceIDLTE", "resourceIDIsNil", "resourceIDNotNil", "deliveryMode", "deliveryModeNEQ", "deliveryModeIn", "deliveryModeNotIn", "batchIntervalMinutes", "batchIntervalMinutesNEQ", "batchIntervalMinutesIn", "batchIntervalMinutesNotIn", "batchIntervalMinutesGT", "batchIntervalMinutesGTE", "batchIntervalMinutesLT", "batchIntervalMinutesLTE", "botModeFilter", "botModeFilterNEQ", "botModeFilterIn", "botModeFilterNotIn", "cooldownMinutes", "cooldownMinutesNEQ", "cooldownMinutesIn", "cooldownMinutesNotIn", "cooldownMinutesGT", "cooldownMinutesGTE", "cooldownMinutesLT", "cooldownMinutesLTE", "lastTriggeredAt", "lastTriggeredAtNEQ", "lastTriggeredAtIn", "lastTriggeredAtNotIn", "lastTriggeredAtGT", "lastTriggeredAtGTE", "lastTriggeredAtLT", "lastTriggeredAtLTE", "lastTriggeredAtIsNil", "lastTriggeredAtNotNil", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasEvents", "hasEventsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "deletedAtIsNil", "deletedAtNotNil", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "alertType", "alertTypeNEQ", "alertTypeIn", "alertTypeNotIn", "severity", "severityNEQ", "severityIn", "severityNotIn", "enabled", "enabledNEQ", "resourceType", "resourceTypeNEQ", "resourceTypeIn", "resourceTypeNotIn", "resourceID", "resourceIDNEQ", "resourceIDIn", "resourceIDNotIn", "resourceIDGT", "resourceIDGTE", "resourceIDLT", "resourceIDLTE", "resourceIDContains", "resourceIDHasPrefix", "resourceIDHasSuffix", "resourceIDIsNil", "resourceIDNotNil", "resourceIDEqualFold", "resourceIDContainsFold", "deliveryMode", "deliveryModeNEQ", "deliveryModeIn", "deliveryModeNotIn", "batchIntervalMinutes", "batchIntervalMinutesNEQ", "batchIntervalMinutesIn", "batchIntervalMinutesNotIn", "batchIntervalMinutesGT", "batchIntervalMinutesGTE", "batchIntervalMinutesLT", "batchIntervalMinutesLTE", "botModeFilter", "botModeFilterNEQ", "botModeFilterIn", "botModeFilterNotIn", "cooldownMinutes", "cooldownMinutesNEQ", "cooldownMinutesIn", "cooldownMinutesNotIn", "cooldownMinutesGT", "cooldownMinutesGTE", "cooldownMinutesLT", "cooldownMinutesLTE", "lastTriggeredAt", "lastTriggeredAtNEQ", "lastTriggeredAtIn", "lastTriggeredAtNotIn", "lastTriggeredAtGT", "lastTriggeredAtGTE", "lastTriggeredAtLT", "lastTriggeredAtLTE", "lastTriggeredAtIsNil", "lastTriggeredAtNotNil", "ownerID", "ownerIDNEQ", "ownerIDIn", "ownerIDNotIn", "ownerIDGT", "ownerIDGTE", "ownerIDLT", "ownerIDLTE", "ownerIDContains", "ownerIDHasPrefix", "ownerIDHasSuffix", "ownerIDEqualFold", "ownerIDContainsFold", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "hasEvents", "hasEventsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -26957,60 +28164,81 @@ func (ec *executionContext) unmarshalInputAlertRuleWhereInput(ctx context.Contex
 			it.ResourceTypeNotIn = data
 		case "resourceID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceID = data
 		case "resourceIDNEQ":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNEQ"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDNEQ = data
 		case "resourceIDIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDIn"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDIn = data
 		case "resourceIDNotIn":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDNotIn"))
-			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgoogleᚋuuidᚐUUIDᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDNotIn = data
 		case "resourceIDGT":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGT"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDGT = data
 		case "resourceIDGTE":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDGTE"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDGTE = data
 		case "resourceIDLT":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLT"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDLT = data
 		case "resourceIDLTE":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDLTE"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ResourceIDLTE = data
+		case "resourceIDContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDContains = data
+		case "resourceIDHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDHasPrefix = data
+		case "resourceIDHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDHasSuffix = data
 		case "resourceIDIsNil":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDIsNil"))
 			data, err := ec.unmarshalOBoolean2bool(ctx, v)
@@ -27025,6 +28253,20 @@ func (ec *executionContext) unmarshalInputAlertRuleWhereInput(ctx context.Contex
 				return it, err
 			}
 			it.ResourceIDNotNil = data
+		case "resourceIDEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDEqualFold = data
+		case "resourceIDContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceIDContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResourceIDContainsFold = data
 		case "deliveryMode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deliveryMode"))
 			data, err := ec.unmarshalOAlertRuleAlertDeliveryMode2ᚖvolaticloudᚋinternalᚋenumᚐAlertDeliveryMode(ctx, v)
@@ -32493,7 +33735,7 @@ func (ec *executionContext) unmarshalInputCreateAlertRuleInput(ctx context.Conte
 			it.ResourceType = data
 		case "resourceID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39253,7 +40495,7 @@ func (ec *executionContext) unmarshalInputUpdateAlertRuleInput(ctx context.Conte
 			it.ResourceType = data
 		case "resourceID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceID"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -45383,6 +46625,40 @@ func (ec *executionContext) _StrategyEdge(ctx context.Context, sel ast.Selection
 	}
 
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "botStatusChanged":
+		return ec._Subscription_botStatusChanged(ctx, fields[0])
+	case "backtestProgress":
+		return ec._Subscription_backtestProgress(ctx, fields[0])
+	case "alertEventCreated":
+		return ec._Subscription_alertEventCreated(ctx, fields[0])
+	case "tradeUpdated":
+		return ec._Subscription_tradeUpdated(ctx, fields[0])
+	case "runnerStatusChanged":
+		return ec._Subscription_runnerStatusChanged(ctx, fields[0])
+	case "botChanged":
+		return ec._Subscription_botChanged(ctx, fields[0])
+	case "tradeChanged":
+		return ec._Subscription_tradeChanged(ctx, fields[0])
+	case "runnerChanged":
+		return ec._Subscription_runnerChanged(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var tradeImplementors = []string{"Trade", "Node"}

@@ -9,6 +9,7 @@ import (
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/botrunner"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/pubsub"
 )
 
 const (
@@ -29,6 +30,7 @@ const (
 type RunnerMonitor struct {
 	dbClient            *ent.Client
 	coordinator         *Coordinator
+	pubsub              pubsub.PubSub
 	interval            time.Duration
 	dataDownloadTimeout time.Duration
 
@@ -37,10 +39,11 @@ type RunnerMonitor struct {
 }
 
 // NewRunnerMonitor creates a new runner monitoring worker
-func NewRunnerMonitor(dbClient *ent.Client, coordinator *Coordinator) *RunnerMonitor {
+func NewRunnerMonitor(dbClient *ent.Client, coordinator *Coordinator, ps pubsub.PubSub) *RunnerMonitor {
 	return &RunnerMonitor{
 		dbClient:            dbClient,
 		coordinator:         coordinator,
+		pubsub:              ps,
 		interval:            DefaultRunnerMonitorInterval,
 		dataDownloadTimeout: DefaultDataDownloadTimeout,
 		stopChan:            make(chan struct{}),
@@ -225,7 +228,9 @@ func (m *RunnerMonitor) markDownloadFailed(ctx context.Context, runner *ent.BotR
 		ClearDataDownloadStartedAt().
 		Save(ctx); err != nil {
 		log.Printf("Runner %s: failed to mark download as failed: %v", runner.Name, err)
+		return
 	}
+	m.publishRunnerStatusEvent(ctx, runner, enum.DataDownloadStatusFailed, errorMsg)
 }
 
 // triggerDataDownload triggers the data download process for a runner
@@ -247,6 +252,9 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunne
 		return fmt.Errorf("failed to update runner status: %w", err)
 	}
 
+	// Publish status change event
+	m.publishRunnerStatusEvent(ctx, r, enum.DataDownloadStatusDownloading, "")
+
 	// Launch data download in a goroutine
 	go func() {
 		downloadCtx, cancel := context.WithTimeout(context.Background(), m.dataDownloadTimeout)
@@ -263,6 +271,8 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunne
 				ClearDataDownloadStartedAt().
 				Save(context.Background()); saveErr != nil {
 				log.Printf("Runner %s: failed to update runner status after download error: %v", r.Name, saveErr)
+			} else {
+				m.publishRunnerStatusEvent(context.Background(), r, enum.DataDownloadStatusFailed, err.Error())
 			}
 		} else {
 			log.Printf("Runner %s: data download completed successfully", r.Name)
@@ -278,9 +288,38 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunne
 				ClearDataDownloadStartedAt().
 				Save(context.Background()); saveErr != nil {
 				log.Printf("Runner %s: failed to update runner status after successful download: %v", r.Name, saveErr)
+			} else {
+				m.publishRunnerStatusEvent(context.Background(), r, enum.DataDownloadStatusCompleted, "")
 			}
 		}
 	}()
 
 	return nil
+}
+
+// publishRunnerStatusEvent publishes a runner status change event to pub/sub
+func (m *RunnerMonitor) publishRunnerStatusEvent(ctx context.Context, r *ent.BotRunner, status enum.DataDownloadStatus, errorMsg string) {
+	if m.pubsub == nil {
+		return
+	}
+
+	event := pubsub.RunnerEvent{
+		Type:      pubsub.EventTypeRunnerStatus,
+		RunnerID:  r.ID.String(),
+		Status:    string(status),
+		Error:     errorMsg,
+		Timestamp: time.Now(),
+	}
+
+	// Publish to runner-specific topic (for detail views)
+	topic := pubsub.RunnerTopic(r.ID.String())
+	if err := m.pubsub.Publish(ctx, topic, event); err != nil {
+		log.Printf("Runner %s: failed to publish status event: %v", r.Name, err)
+	}
+
+	// Also publish to org-level topic (for list views)
+	orgTopic := pubsub.OrgRunnersTopic(r.OwnerID)
+	if err := m.pubsub.Publish(ctx, orgTopic, event); err != nil {
+		log.Printf("Runner %s: failed to publish org status event: %v", r.Name, err)
+	}
 }

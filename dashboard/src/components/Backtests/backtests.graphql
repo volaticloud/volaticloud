@@ -127,3 +127,20 @@ mutation StopBacktest($id: ID!) {
 mutation DeleteBacktest($id: ID!) {
   deleteBacktest(id: $id)
 }
+
+# Subscription for real-time backtest progress updates
+subscription BacktestProgress($backtestId: ID!) {
+  backtestProgress(backtestId: $backtestId) {
+    id
+    status
+    result
+    errorMessage
+    createdAt
+    updatedAt
+    completedAt
+    strategy {
+      id
+      name
+    }
+  }
+}

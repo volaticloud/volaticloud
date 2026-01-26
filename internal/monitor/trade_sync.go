@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/trade"
 	"volaticloud/internal/freqtrade"
+	"volaticloud/internal/pubsub"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
@@ -154,6 +156,9 @@ func (m *BotMonitor) syncTrades(ctx context.Context, b *ent.Bot, ftClient *freqt
 		return err
 	}
 
+	// Publish trade events to pub/sub for real-time updates
+	m.publishTradeEvents(ctx, b, tradesToSync)
+
 	// Emit grouped alerts (single alert per type with all trades)
 	m.emitTradeAlerts(ctx, b, newTrades, closedTrades)
 
@@ -247,6 +252,55 @@ func (m *BotMonitor) emitTradeAlerts(ctx context.Context, b *ent.Bot, newTrades,
 		}
 		if err := alertMgr.HandleTradesClosed(ctx, b.ID, b.Name, b.OwnerID, botMode, tradeInfos); err != nil {
 			log.Printf("Bot %s: failed to emit trades closed alert: %v", b.Name, err)
+		}
+	}
+}
+
+// publishTradeEvents publishes trade update events to pub/sub
+func (m *BotMonitor) publishTradeEvents(ctx context.Context, b *ent.Bot, trades []freqtrade.TradeSchema) {
+	if m.pubsub == nil {
+		return
+	}
+
+	// Publish each trade to both bot-specific and org-level topics
+	for _, t := range trades {
+		// Determine trade side and status
+		side := "long"
+		if t.IsShort {
+			side = "short"
+		}
+		status := "open"
+		if !t.IsOpen {
+			status = "closed"
+		}
+
+		// Get profit percentage
+		profitPct := 0.0
+		if t.ProfitRatio.IsSet() && t.ProfitRatio.Get() != nil {
+			profitPct = float64(*t.ProfitRatio.Get()) * 100
+		}
+
+		event := pubsub.TradeEvent{
+			Type:      pubsub.EventTypeTradeUpdated,
+			TradeID:   fmt.Sprintf("%d", t.TradeId),
+			BotID:     b.ID.String(),
+			Pair:      t.Pair,
+			Side:      side,
+			Status:    status,
+			ProfitPct: profitPct,
+			Timestamp: time.Now(),
+		}
+
+		// Publish to bot-specific topic (for trade detail views)
+		topic := pubsub.TradeTopic(b.ID.String())
+		if err := m.pubsub.Publish(ctx, topic, event); err != nil {
+			log.Printf("Bot %s: failed to publish trade event: %v", b.Name, err)
+		}
+
+		// Also publish to org-level topic (for list views)
+		orgTopic := pubsub.OrgTradesTopic(b.OwnerID)
+		if err := m.pubsub.Publish(ctx, orgTopic, event); err != nil {
+			log.Printf("Bot %s: failed to publish org trade event: %v", b.Name, err)
 		}
 	}
 }

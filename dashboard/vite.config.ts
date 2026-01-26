@@ -8,9 +8,11 @@ export default defineConfig({
         allowedHosts: true,
         proxy: {
             // Proxy all gateway routes to backend (GraphQL, health, bot proxy)
+            // ws: true enables WebSocket proxying for GraphQL subscriptions
             '/gateway': {
                 target: 'http://localhost:8080',
                 changeOrigin: true,
+                ws: true,
             },
             // Proxy FreqUI to same origin (fixes cross-origin iframe access)
             // FreqUI is built with base path /frequi/ so no rewrite needed

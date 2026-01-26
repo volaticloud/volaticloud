@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   IconButton,
   Popover,
@@ -27,6 +27,7 @@ import {
   useGetUnreadAlertCountQuery,
   useMarkAlertEventAsReadMutation,
   useMarkAllAlertEventsAsReadMutation,
+  useAlertEventCreatedSubscription,
 } from '../Alerts/alerts.generated';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { OrderDirection, AlertEventOrderField, AlertEventAlertSeverity, AlertEventAlertEventStatus } from '../../generated/types';
@@ -63,7 +64,6 @@ export const NotificationsDropdown = () => {
       },
     },
     skip: !activeOrganizationId,
-    pollInterval: 30000, // Poll every 30 seconds for new alerts
   });
 
   // Separate query for total unread count (not limited to page size)
@@ -75,8 +75,21 @@ export const NotificationsDropdown = () => {
       },
     },
     skip: !activeOrganizationId,
-    pollInterval: 30000,
   });
+
+  // Subscribe to real-time alert events via WebSocket
+  const { data: subscriptionData } = useAlertEventCreatedSubscription({
+    variables: { ownerId: activeOrganizationId! },
+    skip: !activeOrganizationId,
+  });
+
+  // Refetch alerts when new event is received via subscription
+  useEffect(() => {
+    if (subscriptionData?.alertEventCreated) {
+      refetch();
+      refetchUnread();
+    }
+  }, [subscriptionData, refetch, refetchUnread]);
 
   const [markAsRead] = useMarkAlertEventAsReadMutation();
   const [markAllAsRead, { loading: markingAllRead }] = useMarkAllAlertEventsAsReadMutation();

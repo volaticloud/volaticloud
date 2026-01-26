@@ -145,16 +145,21 @@ type AlertEventWhereInput struct {
 	ResourceTypeNotIn []enum.AlertResourceType `json:"resourceTypeNotIn,omitempty"`
 
 	// "resource_id" field predicates.
-	ResourceID       *uuid.UUID  `json:"resourceID,omitempty"`
-	ResourceIDNEQ    *uuid.UUID  `json:"resourceIDNEQ,omitempty"`
-	ResourceIDIn     []uuid.UUID `json:"resourceIDIn,omitempty"`
-	ResourceIDNotIn  []uuid.UUID `json:"resourceIDNotIn,omitempty"`
-	ResourceIDGT     *uuid.UUID  `json:"resourceIDGT,omitempty"`
-	ResourceIDGTE    *uuid.UUID  `json:"resourceIDGTE,omitempty"`
-	ResourceIDLT     *uuid.UUID  `json:"resourceIDLT,omitempty"`
-	ResourceIDLTE    *uuid.UUID  `json:"resourceIDLTE,omitempty"`
-	ResourceIDIsNil  bool        `json:"resourceIDIsNil,omitempty"`
-	ResourceIDNotNil bool        `json:"resourceIDNotNil,omitempty"`
+	ResourceID             *string  `json:"resourceID,omitempty"`
+	ResourceIDNEQ          *string  `json:"resourceIDNEQ,omitempty"`
+	ResourceIDIn           []string `json:"resourceIDIn,omitempty"`
+	ResourceIDNotIn        []string `json:"resourceIDNotIn,omitempty"`
+	ResourceIDGT           *string  `json:"resourceIDGT,omitempty"`
+	ResourceIDGTE          *string  `json:"resourceIDGTE,omitempty"`
+	ResourceIDLT           *string  `json:"resourceIDLT,omitempty"`
+	ResourceIDLTE          *string  `json:"resourceIDLTE,omitempty"`
+	ResourceIDContains     *string  `json:"resourceIDContains,omitempty"`
+	ResourceIDHasPrefix    *string  `json:"resourceIDHasPrefix,omitempty"`
+	ResourceIDHasSuffix    *string  `json:"resourceIDHasSuffix,omitempty"`
+	ResourceIDIsNil        bool     `json:"resourceIDIsNil,omitempty"`
+	ResourceIDNotNil       bool     `json:"resourceIDNotNil,omitempty"`
+	ResourceIDEqualFold    *string  `json:"resourceIDEqualFold,omitempty"`
+	ResourceIDContainsFold *string  `json:"resourceIDContainsFold,omitempty"`
 
 	// "owner_id" field predicates.
 	OwnerID             *string  `json:"ownerID,omitempty"`
@@ -569,11 +574,26 @@ func (i *AlertEventWhereInput) P() (predicate.AlertEvent, error) {
 	if i.ResourceIDLTE != nil {
 		predicates = append(predicates, alertevent.ResourceIDLTE(*i.ResourceIDLTE))
 	}
+	if i.ResourceIDContains != nil {
+		predicates = append(predicates, alertevent.ResourceIDContains(*i.ResourceIDContains))
+	}
+	if i.ResourceIDHasPrefix != nil {
+		predicates = append(predicates, alertevent.ResourceIDHasPrefix(*i.ResourceIDHasPrefix))
+	}
+	if i.ResourceIDHasSuffix != nil {
+		predicates = append(predicates, alertevent.ResourceIDHasSuffix(*i.ResourceIDHasSuffix))
+	}
 	if i.ResourceIDIsNil {
 		predicates = append(predicates, alertevent.ResourceIDIsNil())
 	}
 	if i.ResourceIDNotNil {
 		predicates = append(predicates, alertevent.ResourceIDNotNil())
+	}
+	if i.ResourceIDEqualFold != nil {
+		predicates = append(predicates, alertevent.ResourceIDEqualFold(*i.ResourceIDEqualFold))
+	}
+	if i.ResourceIDContainsFold != nil {
+		predicates = append(predicates, alertevent.ResourceIDContainsFold(*i.ResourceIDContainsFold))
 	}
 	if i.OwnerID != nil {
 		predicates = append(predicates, alertevent.OwnerIDEQ(*i.OwnerID))
@@ -764,16 +784,21 @@ type AlertRuleWhereInput struct {
 	ResourceTypeNotIn []enum.AlertResourceType `json:"resourceTypeNotIn,omitempty"`
 
 	// "resource_id" field predicates.
-	ResourceID       *uuid.UUID  `json:"resourceID,omitempty"`
-	ResourceIDNEQ    *uuid.UUID  `json:"resourceIDNEQ,omitempty"`
-	ResourceIDIn     []uuid.UUID `json:"resourceIDIn,omitempty"`
-	ResourceIDNotIn  []uuid.UUID `json:"resourceIDNotIn,omitempty"`
-	ResourceIDGT     *uuid.UUID  `json:"resourceIDGT,omitempty"`
-	ResourceIDGTE    *uuid.UUID  `json:"resourceIDGTE,omitempty"`
-	ResourceIDLT     *uuid.UUID  `json:"resourceIDLT,omitempty"`
-	ResourceIDLTE    *uuid.UUID  `json:"resourceIDLTE,omitempty"`
-	ResourceIDIsNil  bool        `json:"resourceIDIsNil,omitempty"`
-	ResourceIDNotNil bool        `json:"resourceIDNotNil,omitempty"`
+	ResourceID             *string  `json:"resourceID,omitempty"`
+	ResourceIDNEQ          *string  `json:"resourceIDNEQ,omitempty"`
+	ResourceIDIn           []string `json:"resourceIDIn,omitempty"`
+	ResourceIDNotIn        []string `json:"resourceIDNotIn,omitempty"`
+	ResourceIDGT           *string  `json:"resourceIDGT,omitempty"`
+	ResourceIDGTE          *string  `json:"resourceIDGTE,omitempty"`
+	ResourceIDLT           *string  `json:"resourceIDLT,omitempty"`
+	ResourceIDLTE          *string  `json:"resourceIDLTE,omitempty"`
+	ResourceIDContains     *string  `json:"resourceIDContains,omitempty"`
+	ResourceIDHasPrefix    *string  `json:"resourceIDHasPrefix,omitempty"`
+	ResourceIDHasSuffix    *string  `json:"resourceIDHasSuffix,omitempty"`
+	ResourceIDIsNil        bool     `json:"resourceIDIsNil,omitempty"`
+	ResourceIDNotNil       bool     `json:"resourceIDNotNil,omitempty"`
+	ResourceIDEqualFold    *string  `json:"resourceIDEqualFold,omitempty"`
+	ResourceIDContainsFold *string  `json:"resourceIDContainsFold,omitempty"`
 
 	// "delivery_mode" field predicates.
 	DeliveryMode      *enum.AlertDeliveryMode  `json:"deliveryMode,omitempty"`
@@ -1089,11 +1114,26 @@ func (i *AlertRuleWhereInput) P() (predicate.AlertRule, error) {
 	if i.ResourceIDLTE != nil {
 		predicates = append(predicates, alertrule.ResourceIDLTE(*i.ResourceIDLTE))
 	}
+	if i.ResourceIDContains != nil {
+		predicates = append(predicates, alertrule.ResourceIDContains(*i.ResourceIDContains))
+	}
+	if i.ResourceIDHasPrefix != nil {
+		predicates = append(predicates, alertrule.ResourceIDHasPrefix(*i.ResourceIDHasPrefix))
+	}
+	if i.ResourceIDHasSuffix != nil {
+		predicates = append(predicates, alertrule.ResourceIDHasSuffix(*i.ResourceIDHasSuffix))
+	}
 	if i.ResourceIDIsNil {
 		predicates = append(predicates, alertrule.ResourceIDIsNil())
 	}
 	if i.ResourceIDNotNil {
 		predicates = append(predicates, alertrule.ResourceIDNotNil())
+	}
+	if i.ResourceIDEqualFold != nil {
+		predicates = append(predicates, alertrule.ResourceIDEqualFold(*i.ResourceIDEqualFold))
+	}
+	if i.ResourceIDContainsFold != nil {
+		predicates = append(predicates, alertrule.ResourceIDContainsFold(*i.ResourceIDContainsFold))
 	}
 	if i.DeliveryMode != nil {
 		predicates = append(predicates, alertrule.DeliveryModeEQ(*i.DeliveryMode))

@@ -48,11 +48,14 @@ function App() {
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
 
-  // Create Apollo client with auth token
+  // Create Apollo client with auth token and WebSocket for subscriptions
   // GraphQL endpoint is at {gatewayUrl}/query
+  // WebSocket uses the same endpoint with ws:// protocol (gqlgen handles both)
   const apolloClient = useMemo(() => {
     const getAccessToken = () => auth.user?.access_token;
-    return createApolloClient(`${gatewayUrl}/query`, getAccessToken);
+    // Convert http(s):// to ws(s):// for WebSocket URL - same endpoint handles both
+    const wsUrl = gatewayUrl.replace(/^http/, 'ws') + '/query';
+    return createApolloClient(`${gatewayUrl}/query`, wsUrl, getAccessToken);
   }, [gatewayUrl, auth.user?.access_token]);
 
   const toggleDarkMode = () => {

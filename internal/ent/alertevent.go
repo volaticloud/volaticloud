@@ -45,8 +45,8 @@ type AlertEvent struct {
 	ErrorMessage string `json:"error_message,omitempty"`
 	// Type of resource that triggered alert
 	ResourceType enum.AlertResourceType `json:"resource_type,omitempty"`
-	// ID of resource that triggered alert
-	ResourceID *uuid.UUID `json:"resource_id,omitempty"`
+	// Resource ID - UUID for bot/strategy/runner, or organization alias for org-level events
+	ResourceID *string `json:"resource_id,omitempty"`
 	// Organization ID
 	OwnerID string `json:"owner_id,omitempty"`
 	// When the alert was read by the user
@@ -86,11 +86,9 @@ func (*AlertEvent) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case alertevent.FieldResourceID:
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case alertevent.FieldContext, alertevent.FieldRecipients:
 			values[i] = new([]byte)
-		case alertevent.FieldStatus, alertevent.FieldAlertType, alertevent.FieldSeverity, alertevent.FieldSubject, alertevent.FieldBody, alertevent.FieldChannelType, alertevent.FieldErrorMessage, alertevent.FieldResourceType, alertevent.FieldOwnerID:
+		case alertevent.FieldStatus, alertevent.FieldAlertType, alertevent.FieldSeverity, alertevent.FieldSubject, alertevent.FieldBody, alertevent.FieldChannelType, alertevent.FieldErrorMessage, alertevent.FieldResourceType, alertevent.FieldResourceID, alertevent.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case alertevent.FieldSentAt, alertevent.FieldReadAt, alertevent.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -195,11 +193,11 @@ func (_m *AlertEvent) assignValues(columns []string, values []any) error {
 				_m.ResourceType = enum.AlertResourceType(value.String)
 			}
 		case alertevent.FieldResourceID:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_id", values[i])
 			} else if value.Valid {
-				_m.ResourceID = new(uuid.UUID)
-				*_m.ResourceID = *value.S.(*uuid.UUID)
+				_m.ResourceID = new(string)
+				*_m.ResourceID = value.String
 			}
 		case alertevent.FieldOwnerID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -301,7 +299,7 @@ func (_m *AlertEvent) String() string {
 	builder.WriteString(", ")
 	if v := _m.ResourceID; v != nil {
 		builder.WriteString("resource_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
+		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("owner_id=")

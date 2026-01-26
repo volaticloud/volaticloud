@@ -77,16 +77,33 @@ Configure these secrets in the `prod` environment:
 | Secret Name | Description | Example |
 |------------|-------------|---------|
 | `VKE_KUBECONFIG` | Base64-encoded kubeconfig | `cat kubeconfig.yaml \| base64` |
+| `GHCR_TOKEN` | GitHub token for pulling images | Personal access token with `read:packages` |
 | `VOLATICLOUD_DATABASE` | Full PostgreSQL connection string | `postgresql://user:pass@host:port/db?sslmode=require` |
+| `VOLATICLOUD_KEYCLOAK_URL` | Keycloak server URL | `https://keycloak.volaticloud.com` |
+| `VOLATICLOUD_KEYCLOAK_REALM` | Keycloak realm name | `volaticloud` |
+| `VOLATICLOUD_KEYCLOAK_CLIENT_ID` | Keycloak client ID | `volaticloud-api` |
+| `VOLATICLOUD_KEYCLOAK_CLIENT_SECRET` | Keycloak client secret | `<secret>` |
+| `VOLATICLOUD_SENDGRID_API_KEY` | SendGrid API key for email alerts | `SG.xxxx` |
+| `VOLATICLOUD_ALERT_FROM_EMAIL` | Alert sender email address | `alerts@volaticloud.com` |
+| `VOLATICLOUD_ALERT_FROM_NAME` | Alert sender display name | `VolatiCloud Alerts` |
+| `VOLATICLOUD_REDIS_URL` | Redis/Valkey URL for pub/sub | `redis://user:pass@host:port` |
 
-**Note:** The secret name `VOLATICLOUD_DATABASE` matches the environment variable used in `cmd/server/main.go:52`.
+**Note:** The secret names match environment variables used in `cmd/server/main.go`.
 
 Set secrets:
 
 ```bash
 gh secret set VKE_KUBECONFIG --env prod
-# When prompted, enter: postgresql://volaticloud:your-password@postgres-abc.vultr.com:16751/volaticloud?sslmode=require
+gh secret set GHCR_TOKEN --env prod
 gh secret set VOLATICLOUD_DATABASE --env prod
+gh secret set VOLATICLOUD_KEYCLOAK_URL --env prod
+gh secret set VOLATICLOUD_KEYCLOAK_REALM --env prod
+gh secret set VOLATICLOUD_KEYCLOAK_CLIENT_ID --env prod
+gh secret set VOLATICLOUD_KEYCLOAK_CLIENT_SECRET --env prod
+gh secret set VOLATICLOUD_SENDGRID_API_KEY --env prod
+gh secret set VOLATICLOUD_ALERT_FROM_EMAIL --env prod
+gh secret set VOLATICLOUD_ALERT_FROM_NAME --env prod
+gh secret set VOLATICLOUD_REDIS_URL --env prod
 ```
 
 ## Configuration

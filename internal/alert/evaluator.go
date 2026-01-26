@@ -31,7 +31,7 @@ func (e *Evaluator) FindMatchingRules(
 	ownerID string,
 	alertType enum.AlertType,
 	resourceType enum.AlertResourceType,
-	resourceID *uuid.UUID,
+	resourceID *string,
 ) ([]*ent.AlertRule, error) {
 	// Build query for matching rules
 	query := e.dbClient.AlertRule.Query().

@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,6 +19,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/redis/go-redis/v9"
 	"github.com/urfave/cli/v2"
 
 	"volaticloud/internal/alert"
@@ -36,6 +36,7 @@ import (
 	_ "volaticloud/internal/kubernetes" // Register Kubernetes runtime creator
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/proxy"
+	"volaticloud/internal/pubsub"
 )
 
 func main() {
@@ -136,6 +137,19 @@ func main() {
 				Usage:   "How often to send batched alerts",
 				Value:   time.Hour,
 				EnvVars: []string{"VOLATICLOUD_ALERT_BATCH_INTERVAL"},
+			},
+			// Redis configuration for subscriptions
+			&cli.StringFlag{
+				Name:    "redis-url",
+				Usage:   "Redis URL for GraphQL subscriptions (e.g., redis://localhost:6379). If empty, uses in-memory pub/sub",
+				EnvVars: []string{"VOLATICLOUD_REDIS_URL"},
+			},
+			// WebSocket configuration
+			&cli.StringSliceFlag{
+				Name:    "cors-origins",
+				Usage:   "Allowed CORS origins (comma-separated)",
+				Value:   cli.NewStringSlice("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"),
+				EnvVars: []string{"VOLATICLOUD_CORS_ORIGINS"},
 			},
 		},
 		Action: runServer,
@@ -329,14 +343,63 @@ func runServer(c *cli.Context) error {
 		}
 	}()
 
-	// Setup GraphQL server with auth clients and directive handlers
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
-		Resolvers: graph.NewResolver(client, keycloakClient, umaClient),
-		Directives: graph.DirectiveRoot{
-			IsAuthenticated: graph.IsAuthenticatedDirective,
-			HasScope:        graph.HasScopeDirective,
+	// Initialize pub/sub for GraphQL subscriptions
+	var ps pubsub.PubSub
+	redisURL := c.String("redis-url")
+	if redisURL != "" {
+		// Parse Redis URL and create client
+		opt, err := redis.ParseURL(redisURL)
+		if err != nil {
+			return fmt.Errorf("failed to parse Redis URL: %w", err)
+		}
+		redisClient := redis.NewClient(opt)
+
+		// Verify Redis connection
+		if err := redisClient.Ping(ctx).Err(); err != nil {
+			return fmt.Errorf("failed to connect to Redis: %w", err)
+		}
+
+		ps = pubsub.NewRedisPubSub(redisClient)
+		log.Printf("✓ Redis pub/sub enabled: %s", redisURL)
+		defer func() {
+			if err := ps.Close(); err != nil {
+				log.Printf("Error closing pub/sub: %v", err)
+			}
+		}()
+	} else {
+		// Use in-memory pub/sub for single-instance deployments
+		ps = pubsub.NewMemoryPubSub()
+		log.Println("✓ In-memory pub/sub enabled (no Redis configured)")
+		defer func() {
+			if err := ps.Close(); err != nil {
+				log.Printf("Error closing pub/sub: %v", err)
+			}
+		}()
+	}
+
+	// Connect pub/sub to alert manager for real-time notifications
+	if alertManager != nil {
+		alertManager.SetPubSub(ps)
+	}
+
+	// Get allowed CORS origins
+	corsOrigins := c.StringSlice("cors-origins")
+
+	// Setup GraphQL server with auth clients, directive handlers, and WebSocket support
+	srv := graph.NewServerWithWebSocket(
+		graph.NewExecutableSchema(graph.Config{
+			Resolvers: graph.NewResolver(client, keycloakClient, umaClient, ps),
+			Directives: graph.DirectiveRoot{
+				IsAuthenticated: graph.IsAuthenticatedDirective,
+				HasScope:        graph.HasScopeDirective,
+			},
+		}),
+		graph.WebSocketConfig{
+			AllowedOrigins:        corsOrigins,
+			KeepAlivePingInterval: 10 * time.Second,
+			AuthClient:            keycloakClient,
 		},
-	}))
+	)
 
 	// Setup Chi router
 	router := chi.NewRouter()
@@ -350,7 +413,7 @@ func runServer(c *cli.Context) error {
 
 	// CORS middleware for dashboard routes (used with With() for specific routes)
 	corsMiddleware := cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"},
+		AllowedOrigins:   corsOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -425,6 +488,7 @@ func runServer(c *cli.Context) error {
 	log.Printf("✓ Database: %s (%s)\n", driver, dsn)
 	log.Println("✓ Schema migrated")
 	log.Printf("✓ GraphQL endpoint: http://%s/gateway/v1/query\n", addr)
+	log.Printf("✓ GraphQL WebSocket: ws://%s/gateway/v1/query\n", addr)
 	log.Printf("✓ GraphQL playground: http://%s/gateway/v1/\n", addr)
 	log.Printf("✓ Health check: http://%s/gateway/v1/health\n", addr)
 	log.Printf("✓ Bot proxy: http://%s/gateway/v1/bot/{id}/*\n", addr)

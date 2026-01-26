@@ -8,6 +8,7 @@ import (
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/etcd"
+	"volaticloud/internal/pubsub"
 )
 
 // Manager manages all monitoring workers and coordinates distributed monitoring
@@ -58,6 +59,10 @@ type Config struct {
 	// DataDownloadTimeout is the maximum time allowed for runner data downloads
 	// Default: 12h
 	DataDownloadTimeout time.Duration
+
+	// PubSub for publishing status change events for GraphQL subscriptions
+	// Optional - if nil, no events are published
+	PubSub pubsub.PubSub
 }
 
 // NewManager creates a new monitor manager
@@ -119,13 +124,13 @@ func NewManager(cfg Config) (*Manager, error) {
 	}
 
 	// Create bot monitor
-	m.botMonitor = NewBotMonitor(cfg.DatabaseClient, m.coordinator)
+	m.botMonitor = NewBotMonitor(cfg.DatabaseClient, m.coordinator, cfg.PubSub)
 	if cfg.MonitorInterval > 0 {
 		m.botMonitor.SetInterval(cfg.MonitorInterval)
 	}
 
 	// Create runner monitor
-	m.runnerMonitor = NewRunnerMonitor(cfg.DatabaseClient, m.coordinator)
+	m.runnerMonitor = NewRunnerMonitor(cfg.DatabaseClient, m.coordinator, cfg.PubSub)
 	if cfg.RunnerMonitorInterval > 0 {
 		m.runnerMonitor.SetInterval(cfg.RunnerMonitorInterval)
 	}
@@ -134,7 +139,7 @@ func NewManager(cfg Config) (*Manager, error) {
 	}
 
 	// Create backtest monitor (uses same interval as bot monitor)
-	m.backtestMonitor = NewBacktestMonitor(cfg.DatabaseClient, cfg.MonitorInterval)
+	m.backtestMonitor = NewBacktestMonitor(cfg.DatabaseClient, cfg.MonitorInterval, cfg.PubSub)
 
 	// Create usage aggregator worker
 	m.usageAggregator = NewUsageAggregatorWorker(cfg.DatabaseClient)

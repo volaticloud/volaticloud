@@ -87,13 +87,13 @@ func (_c *AlertRuleCreate) SetResourceType(v enum.AlertResourceType) *AlertRuleC
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_c *AlertRuleCreate) SetResourceID(v uuid.UUID) *AlertRuleCreate {
+func (_c *AlertRuleCreate) SetResourceID(v string) *AlertRuleCreate {
 	_c.mutation.SetResourceID(v)
 	return _c
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_c *AlertRuleCreate) SetNillableResourceID(v *uuid.UUID) *AlertRuleCreate {
+func (_c *AlertRuleCreate) SetNillableResourceID(v *string) *AlertRuleCreate {
 	if v != nil {
 		_c.SetResourceID(*v)
 	}
@@ -459,7 +459,7 @@ func (_c *AlertRuleCreate) createSpec() (*AlertRule, *sqlgraph.CreateSpec) {
 		_node.ResourceType = value
 	}
 	if value, ok := _c.mutation.ResourceID(); ok {
-		_spec.SetField(alertrule.FieldResourceID, field.TypeUUID, value)
+		_spec.SetField(alertrule.FieldResourceID, field.TypeString, value)
 		_node.ResourceID = &value
 	}
 	if value, ok := _c.mutation.Conditions(); ok {
@@ -649,7 +649,7 @@ func (u *AlertRuleUpsert) UpdateResourceType() *AlertRuleUpsert {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (u *AlertRuleUpsert) SetResourceID(v uuid.UUID) *AlertRuleUpsert {
+func (u *AlertRuleUpsert) SetResourceID(v string) *AlertRuleUpsert {
 	u.Set(alertrule.FieldResourceID, v)
 	return u
 }
@@ -941,7 +941,7 @@ func (u *AlertRuleUpsertOne) UpdateResourceType() *AlertRuleUpsertOne {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (u *AlertRuleUpsertOne) SetResourceID(v uuid.UUID) *AlertRuleUpsertOne {
+func (u *AlertRuleUpsertOne) SetResourceID(v string) *AlertRuleUpsertOne {
 	return u.Update(func(s *AlertRuleUpsert) {
 		s.SetResourceID(v)
 	})
@@ -1425,7 +1425,7 @@ func (u *AlertRuleUpsertBulk) UpdateResourceType() *AlertRuleUpsertBulk {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (u *AlertRuleUpsertBulk) SetResourceID(v uuid.UUID) *AlertRuleUpsertBulk {
+func (u *AlertRuleUpsertBulk) SetResourceID(v string) *AlertRuleUpsertBulk {
 	return u.Update(func(s *AlertRuleUpsert) {
 		s.SetResourceID(v)
 	})

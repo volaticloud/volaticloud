@@ -32,8 +32,8 @@ type AlertRule struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// Type of resource: organization, bot, strategy, runner
 	ResourceType enum.AlertResourceType `json:"resource_type,omitempty"`
-	// Specific resource ID (null for org-level rules that apply to all resources)
-	ResourceID *uuid.UUID `json:"resource_id,omitempty"`
+	// Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules
+	ResourceID *string `json:"resource_id,omitempty"`
 	// Condition parameters: thresholds, status values, etc.
 	Conditions map[string]interface{} `json:"conditions,omitempty"`
 	// Delivery mode: immediate or batched
@@ -87,15 +87,13 @@ func (*AlertRule) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case alertrule.FieldResourceID:
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case alertrule.FieldConditions, alertrule.FieldRecipients:
 			values[i] = new([]byte)
 		case alertrule.FieldEnabled:
 			values[i] = new(sql.NullBool)
 		case alertrule.FieldBatchIntervalMinutes, alertrule.FieldCooldownMinutes:
 			values[i] = new(sql.NullInt64)
-		case alertrule.FieldName, alertrule.FieldAlertType, alertrule.FieldSeverity, alertrule.FieldResourceType, alertrule.FieldDeliveryMode, alertrule.FieldBotModeFilter, alertrule.FieldOwnerID:
+		case alertrule.FieldName, alertrule.FieldAlertType, alertrule.FieldSeverity, alertrule.FieldResourceType, alertrule.FieldResourceID, alertrule.FieldDeliveryMode, alertrule.FieldBotModeFilter, alertrule.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case alertrule.FieldDeletedAt, alertrule.FieldLastTriggeredAt, alertrule.FieldCreatedAt, alertrule.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -160,11 +158,11 @@ func (_m *AlertRule) assignValues(columns []string, values []any) error {
 				_m.ResourceType = enum.AlertResourceType(value.String)
 			}
 		case alertrule.FieldResourceID:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_id", values[i])
 			} else if value.Valid {
-				_m.ResourceID = new(uuid.UUID)
-				*_m.ResourceID = *value.S.(*uuid.UUID)
+				_m.ResourceID = new(string)
+				*_m.ResourceID = value.String
 			}
 		case alertrule.FieldConditions:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -294,7 +292,7 @@ func (_m *AlertRule) String() string {
 	builder.WriteString(", ")
 	if v := _m.ResourceID; v != nil {
 		builder.WriteString("resource_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
+		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("conditions=")

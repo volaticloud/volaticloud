@@ -72,3 +72,45 @@ query GetTrade($id: ID!) {
     }
   }
 }
+
+# Subscribe to trade updates for a specific bot (detail view)
+subscription TradeUpdated($botId: ID!) {
+  tradeUpdated(botId: $botId) {
+    id
+    freqtradeTradeID
+    pair
+    isOpen
+    openDate
+    closeDate
+    openRate
+    closeRate
+    amount
+    stakeAmount
+    profitAbs
+    profitRatio
+    sellReason
+    createdAt
+    updatedAt
+  }
+}
+
+# Subscribe to all trade changes in an organization (list view)
+subscription TradeChanged($ownerId: String!) {
+  tradeChanged(ownerId: $ownerId) {
+    id
+    freqtradeTradeID
+    pair
+    isOpen
+    openDate
+    closeDate
+    openRate
+    closeRate
+    profitAbs
+    profitRatio
+    sellReason
+    bot {
+      id
+      name
+    }
+  }
+}

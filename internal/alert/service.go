@@ -10,7 +10,6 @@ import (
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
 	"volaticloud/internal/ent"
-	"volaticloud/internal/enum"
 	"volaticloud/internal/keycloak"
 )
 
@@ -29,13 +28,10 @@ func NewService(dbClient *ent.Client, umaClient keycloak.UMAClientInterface) *Se
 }
 
 // getEffectiveResourceID determines the resource ID to check permissions against
-// For organization-scoped alerts, use ownerID; for resource-specific, use resourceID
-func getEffectiveResourceID(resourceType enum.AlertResourceType, resourceID *uuid.UUID, ownerID string) string {
-	if resourceType == enum.AlertResourceTypeOrganization {
-		return ownerID
-	}
-	if resourceID != nil {
-		return resourceID.String()
+// Returns resourceID if set, otherwise falls back to ownerID
+func getEffectiveResourceID(resourceID *string, ownerID string) string {
+	if resourceID != nil && *resourceID != "" {
+		return *resourceID
 	}
 	return ownerID
 }
@@ -43,7 +39,7 @@ func getEffectiveResourceID(resourceType enum.AlertResourceType, resourceID *uui
 // checkAlertPermission verifies that the user has the specified permission on the alert's resource.
 // If the permission check fails due to missing or invalid scopes, it attempts self-healing by
 // syncing the resource's scopes with Keycloak and retrying the permission check.
-func (s *Service) checkAlertPermission(ctx context.Context, resourceType enum.AlertResourceType, resourceID *uuid.UUID, ownerID, scope string) error {
+func (s *Service) checkAlertPermission(ctx context.Context, resourceID *string, ownerID, scope string) error {
 	userCtx, err := auth.GetUserContext(ctx)
 	if err != nil {
 		return fmt.Errorf("authentication required: %w", err)
@@ -54,7 +50,7 @@ func (s *Service) checkAlertPermission(ctx context.Context, resourceType enum.Al
 		return nil
 	}
 
-	effectiveResourceID := getEffectiveResourceID(resourceType, resourceID, ownerID)
+	effectiveResourceID := getEffectiveResourceID(resourceID, ownerID)
 
 	hasPermission, err := s.umaClient.CheckPermission(ctx, userCtx.RawToken, effectiveResourceID, scope)
 
@@ -88,7 +84,7 @@ func (s *Service) checkAlertPermission(ctx context.Context, resourceType enum.Al
 // CreateRule creates a new alert rule
 func (s *Service) CreateRule(ctx context.Context, input ent.CreateAlertRuleInput) (*ent.AlertRule, error) {
 	// Check permission on the target resource
-	if err := s.checkAlertPermission(ctx, input.ResourceType, input.ResourceID, input.OwnerID, "create-alert-rule"); err != nil {
+	if err := s.checkAlertPermission(ctx, input.ResourceID, input.OwnerID, "create-alert-rule"); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +108,7 @@ func (s *Service) UpdateRule(ctx context.Context, ruleID uuid.UUID, input ent.Up
 	}
 
 	// Check permission on the rule's resource
-	if err := s.checkAlertPermission(ctx, rule.ResourceType, rule.ResourceID, rule.OwnerID, "update-alert-rule"); err != nil {
+	if err := s.checkAlertPermission(ctx, rule.ResourceID, rule.OwnerID, "update-alert-rule"); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +132,7 @@ func (s *Service) ToggleRule(ctx context.Context, ruleID uuid.UUID, enabled bool
 	}
 
 	// Check permission on the rule's resource (toggle is an update operation)
-	if err := s.checkAlertPermission(ctx, rule.ResourceType, rule.ResourceID, rule.OwnerID, "update-alert-rule"); err != nil {
+	if err := s.checkAlertPermission(ctx, rule.ResourceID, rule.OwnerID, "update-alert-rule"); err != nil {
 		return nil, err
 	}
 
@@ -162,7 +158,7 @@ func (s *Service) DeleteRule(ctx context.Context, ruleID uuid.UUID) error {
 	}
 
 	// Check permission on the rule's resource
-	if err := s.checkAlertPermission(ctx, rule.ResourceType, rule.ResourceID, rule.OwnerID, "delete-alert-rule"); err != nil {
+	if err := s.checkAlertPermission(ctx, rule.ResourceID, rule.OwnerID, "delete-alert-rule"); err != nil {
 		return err
 	}
 

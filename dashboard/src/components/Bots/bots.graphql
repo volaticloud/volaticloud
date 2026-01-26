@@ -237,3 +237,61 @@ query GetBotUsageHistory($botID: ID!, $start: Time!, $end: Time!) {
     sampleCount
   }
 }
+
+# Subscription for real-time bot status updates (detail view)
+subscription BotStatusChanged($botId: ID!) {
+  botStatusChanged(botId: $botId) {
+    id
+    name
+    status
+    mode
+    lastSeenAt
+    errorMessage
+    metrics {
+      id
+      profitClosedCoin
+      profitClosedPercent
+      profitAllCoin
+      profitAllPercent
+      tradeCount
+      closedTradeCount
+      openTradeCount
+      winningTrades
+      losingTrades
+      winrate
+      expectancy
+      profitFactor
+      maxDrawdown
+      maxDrawdownAbs
+      bestPair
+      bestRate
+      fetchedAt
+      updatedAt
+    }
+  }
+}
+
+# Subscription for all bot changes in an organization (list view)
+subscription BotChanged($ownerId: String!) {
+  botChanged(ownerId: $ownerId) {
+    id
+    name
+    status
+    mode
+    lastSeenAt
+    errorMessage
+    exchange {
+      id
+      name
+    }
+    strategy {
+      id
+      name
+    }
+    runner {
+      id
+      name
+      type
+    }
+  }
+}

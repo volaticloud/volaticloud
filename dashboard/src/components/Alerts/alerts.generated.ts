@@ -89,6 +89,13 @@ export type MarkAllAlertEventsAsReadMutationVariables = Types.Exact<{
 
 export type MarkAllAlertEventsAsReadMutation = { __typename?: 'Mutation', markAllAlertEventsAsRead: number };
 
+export type AlertEventCreatedSubscriptionVariables = Types.Exact<{
+  ownerId: Types.Scalars['String']['input'];
+}>;
+
+
+export type AlertEventCreatedSubscription = { __typename?: 'Subscription', alertEventCreated: { __typename?: 'AlertEvent', id: string, status: Types.AlertEventAlertEventStatus, alertType: Types.AlertEventAlertType, severity: Types.AlertEventAlertSeverity, subject: string, body: string, context?: Record<string, any> | null, recipients: Array<string>, channelType: string, sentAt?: string | null, errorMessage?: string | null, resourceType: Types.AlertEventAlertResourceType, resourceID?: string | null, ownerID: string, createdAt: string, rule: { __typename?: 'AlertRule', id: string, name: string } } };
+
 
 export const GetAlertRulesDocument = gql`
     query GetAlertRules($first: Int, $after: Cursor, $where: AlertRuleWhereInput) {
@@ -597,3 +604,51 @@ export function useMarkAllAlertEventsAsReadMutation(baseOptions?: Apollo.Mutatio
 export type MarkAllAlertEventsAsReadMutationHookResult = ReturnType<typeof useMarkAllAlertEventsAsReadMutation>;
 export type MarkAllAlertEventsAsReadMutationResult = Apollo.MutationResult<MarkAllAlertEventsAsReadMutation>;
 export type MarkAllAlertEventsAsReadMutationOptions = Apollo.BaseMutationOptions<MarkAllAlertEventsAsReadMutation, MarkAllAlertEventsAsReadMutationVariables>;
+export const AlertEventCreatedDocument = gql`
+    subscription AlertEventCreated($ownerId: String!) {
+  alertEventCreated(ownerId: $ownerId) {
+    id
+    status
+    alertType
+    severity
+    subject
+    body
+    context
+    recipients
+    channelType
+    sentAt
+    errorMessage
+    resourceType
+    resourceID
+    ownerID
+    createdAt
+    rule {
+      id
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useAlertEventCreatedSubscription__
+ *
+ * To run a query within a React component, call `useAlertEventCreatedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useAlertEventCreatedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAlertEventCreatedSubscription({
+ *   variables: {
+ *      ownerId: // value for 'ownerId'
+ *   },
+ * });
+ */
+export function useAlertEventCreatedSubscription(baseOptions: Apollo.SubscriptionHookOptions<AlertEventCreatedSubscription, AlertEventCreatedSubscriptionVariables> & ({ variables: AlertEventCreatedSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<AlertEventCreatedSubscription, AlertEventCreatedSubscriptionVariables>(AlertEventCreatedDocument, options);
+      }
+export type AlertEventCreatedSubscriptionHookResult = ReturnType<typeof useAlertEventCreatedSubscription>;
+export type AlertEventCreatedSubscriptionResult = Apollo.SubscriptionResult<AlertEventCreatedSubscription>;
