@@ -25,3 +25,6 @@ dist-ssr
 # Generated files (GraphQL codegen)
 **/*.generated.ts
 **/*.generated.tsx
+
+# Test coverage
+coverage/

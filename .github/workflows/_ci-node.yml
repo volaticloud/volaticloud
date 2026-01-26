@@ -15,6 +15,10 @@ on:
         description: 'Run production build'
         type: boolean
         default: true
+      coverage-threshold:
+        description: 'Minimum coverage percentage (warning if below)'
+        type: number
+        default: 70
 
 jobs:
   lint:
@@ -64,9 +68,41 @@ jobs:
           node-version: ${{ inputs.node-version }}
           working-directory: ${{ inputs.working-directory }}
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: ${{ inputs.working-directory }}
-        run: npm test
+        run: npm run test:coverage -- --run
+
+      - name: Parse coverage
+        id: coverage
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          # Extract coverage percentage from vitest coverage output
+          COVERAGE=$(cat coverage/coverage-summary.json 2>/dev/null | node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
+            console.log(data.total.lines.pct.toFixed(2));
+          " 2>/dev/null || echo "0")
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: Check threshold
+        run: |
+          COVERAGE=${{ steps.coverage.outputs.coverage }}
+          THRESHOLD=${{ inputs.coverage-threshold }}
+          echo "Coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "::warning::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### Test Coverage: ${{ steps.coverage.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report-dashboard
+          path: ${{ inputs.working-directory }}/coverage
+          retention-days: 7
 
   build:
     name: Build

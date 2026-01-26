@@ -215,3 +215,190 @@ export const validateBacktestConfigAgainstRunner = (
 
   return result;
 };
+
+/**
+ * Available date range for backtesting
+ */
+export interface AvailableDateRange {
+  from: Date;
+  to: Date;
+}
+
+/**
+ * Computes the available date range based on selected exchange, pairs, and timeframe.
+ * Uses INTERSECTION logic: finds the overlapping date range where data exists for ALL
+ * selected pairs and the selected timeframe.
+ *
+ * @param runnerData - Runner's data availability metadata
+ * @param exchange - Selected exchange name
+ * @param pairs - Selected trading pairs (empty = consider all pairs)
+ * @param timeframe - Selected timeframe (null = consider all timeframes)
+ * @returns The intersection date range, or null if no valid overlap exists
+ */
+export const computeAvailableDateRange = (
+  runnerData: RunnerDataAvailable | null,
+  exchange: string,
+  pairs: string[],
+  timeframe: string | null
+): AvailableDateRange | null => {
+  if (!runnerData?.exchanges?.length) return null;
+
+  const exchangeData = runnerData.exchanges.find(
+    e => e.name.toLowerCase() === exchange.toLowerCase()
+  );
+  if (!exchangeData?.pairs?.length) return null;
+
+  // If no pairs selected, consider all pairs on the exchange
+  const selectedPairSet = pairs.length > 0
+    ? new Set(pairs.map(p => p.toUpperCase()))
+    : null;
+
+  // Track the intersection of date ranges (latest start, earliest end)
+  let latestStart: Date | null = null;
+  let earliestEnd: Date | null = null;
+  let hasMatchingData = false;
+
+  for (const pair of exchangeData.pairs) {
+    // Skip pairs not in selection (if pairs are selected)
+    if (selectedPairSet && !selectedPairSet.has(pair.pair.toUpperCase())) {
+      continue;
+    }
+
+    for (const tf of pair.timeframes ?? []) {
+      // Skip timeframes that don't match selection (if timeframe is selected)
+      if (timeframe && tf.timeframe !== timeframe) {
+        continue;
+      }
+
+      if (tf.from && tf.to) {
+        hasMatchingData = true;
+        const fromDate = new Date(tf.from);
+        const toDate = new Date(tf.to);
+
+        // For intersection: take the LATEST start date
+        if (!latestStart || fromDate > latestStart) {
+          latestStart = fromDate;
+        }
+        // For intersection: take the EARLIEST end date
+        if (!earliestEnd || toDate < earliestEnd) {
+          earliestEnd = toDate;
+        }
+      }
+    }
+  }
+
+  // Validate that the intersection is valid (start before end)
+  if (hasMatchingData && latestStart && earliestEnd && latestStart <= earliestEnd) {
+    return { from: latestStart, to: earliestEnd };
+  }
+
+  return null;
+};
+
+/**
+ * Date range validation result
+ */
+export interface DateRangeValidationResult {
+  startError: string | null;
+  endError: string | null;
+}
+
+/**
+ * Validates if selected dates are within the available date range.
+ *
+ * @param startDate - Selected start date
+ * @param endDate - Selected end date
+ * @param availableRange - Available date range from runner
+ * @returns Validation result with error messages for start and end dates
+ */
+export const validateDateRange = (
+  startDate: Date | null,
+  endDate: Date | null,
+  availableRange: AvailableDateRange | null
+): DateRangeValidationResult => {
+  if (!availableRange || !startDate || !endDate) {
+    return { startError: null, endError: null };
+  }
+
+  const { from: availableFrom, to: availableTo } = availableRange;
+  let startError: string | null = null;
+  let endError: string | null = null;
+
+  // Compare dates at day granularity
+  const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  const fromDay = new Date(availableFrom.getFullYear(), availableFrom.getMonth(), availableFrom.getDate());
+  const toDay = new Date(availableTo.getFullYear(), availableTo.getMonth(), availableTo.getDate());
+
+  if (startDay < fromDay) {
+    startError = `Start date is before available data (${formatDate(availableFrom)})`;
+  } else if (startDay > toDay) {
+    startError = `Start date is after available data (${formatDate(availableTo)})`;
+  }
+
+  if (endDay > toDay) {
+    endError = `End date is after available data (${formatDate(availableTo)})`;
+  } else if (endDay < fromDay) {
+    endError = `End date is before available data (${formatDate(availableFrom)})`;
+  }
+
+  return { startError, endError };
+};
+
+/**
+ * Formats a date as YYYY-MM-DD
+ */
+const formatDate = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+/**
+ * Checks if all available pairs are selected (case-insensitive comparison).
+ *
+ * @param selectedPairs - Currently selected pairs
+ * @param availablePairs - All available pairs from runner
+ * @returns true if all available pairs are selected
+ */
+export const areAllPairsSelected = (
+  selectedPairs: string[],
+  availablePairs: string[]
+): boolean => {
+  if (selectedPairs.length !== availablePairs.length) {
+    return false;
+  }
+
+  const selectedSet = new Set(selectedPairs.map(p => p.toUpperCase()));
+  return availablePairs.every(p => selectedSet.has(p.toUpperCase()));
+};
+
+/**
+ * Clamps a date to be within an available range.
+ * Returns the original date if it's within range, otherwise returns the boundary.
+ *
+ * @param date - Date to clamp
+ * @param range - Available date range
+ * @param preferStart - If date is outside range, prefer start (true) or end (false)
+ * @returns Clamped date, or null if input date is null
+ */
+export const clampDateToRange = (
+  date: Date | null,
+  range: AvailableDateRange,
+  preferStart: boolean
+): Date | null => {
+  if (!date) {
+    return preferStart ? range.from : range.to;
+  }
+
+  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const fromDay = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
+  const toDay = new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate());
+
+  if (dateDay < fromDay) {
+    return range.from;
+  }
+  if (dateDay > toDay) {
+    return preferStart ? range.from : range.to;
+  }
+
+  return date;
+};
