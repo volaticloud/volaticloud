@@ -76,12 +76,17 @@ jobs:
         id: coverage
         working-directory: ${{ inputs.working-directory }}
         run: |
+          # Fail explicitly if coverage file is missing
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::error::Coverage file not found: coverage/coverage-summary.json"
+            exit 1
+          fi
           # Extract coverage percentage from vitest coverage output
-          COVERAGE=$(cat coverage/coverage-summary.json 2>/dev/null | node -e "
+          COVERAGE=$(cat coverage/coverage-summary.json | node -e "
             const fs = require('fs');
             const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
             console.log(data.total.lines.pct.toFixed(2));
-          " 2>/dev/null || echo "0")
+          ")
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
 
       - name: Check threshold

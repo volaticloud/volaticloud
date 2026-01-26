@@ -95,6 +95,11 @@ jobs:
         id: coverage
         working-directory: dashboard
         run: |
+          # Fail explicitly if coverage file is missing
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::error::Coverage file not found: coverage/coverage-summary.json"
+            exit 1
+          fi
           COVERAGE=$(cat coverage/coverage-summary.json | node -e "
             const fs = require('fs');
             const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));

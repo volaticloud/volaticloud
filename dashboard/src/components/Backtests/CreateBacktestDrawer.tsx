@@ -19,6 +19,7 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
+  Snackbar,
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -38,6 +39,7 @@ import {
   extractStrategyConfigFields,
   validateBacktestConfigAgainstRunner,
   validateDateRange,
+  computeAvailableDateRange,
   SUPPORTED_EXCHANGES,
   type BacktestConfigValidationResult,
 } from './backtestValidation';
@@ -164,6 +166,9 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   const [pairsOverride, setPairsOverride] = useState<string[] | null>(['BTC/USDT', 'ETH/USDT']);
   const [timeframeOverride, setTimeframeOverride] = useState<string | null>(null);
 
+  // Notification for auto-adjusted dates
+  const [dateAdjustedNotification, setDateAdjustedNotification] = useState<string | null>(null);
+
   // Runner data availability
   const [runnerDataAvailable, setRunnerDataAvailable] = useState<RunnerDataAvailable | null>(null);
 
@@ -205,57 +210,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   }, [runnerDataAvailable, effectiveExchange]);
 
   // Compute available date range for the selected exchange + pairs + timeframe combination
-  // Uses INTERSECTION: finds the overlapping date range across all selected pairs/timeframe
+  // Uses shared function that implements INTERSECTION logic across all selected pairs/timeframe
   const availableDateRange = useMemo(() => {
-    if (!runnerDataAvailable?.exchanges?.length) return null;
-    const exchangeData = runnerDataAvailable.exchanges.find(e => e.name.toLowerCase() === effectiveExchange.toLowerCase());
-    if (!exchangeData?.pairs?.length) return null;
-
-    // If no pairs selected, consider all pairs on the exchange
-    const selectedPairSet = effectivePairs.length > 0
-      ? new Set(effectivePairs.map(p => p.toUpperCase()))
-      : null;
-
-    // Track the intersection of date ranges (latest start, earliest end)
-    let latestStart: Date | null = null;
-    let earliestEnd: Date | null = null;
-    let hasMatchingData = false;
-
-    for (const pair of exchangeData.pairs) {
-      // Skip pairs not in selection (if pairs are selected)
-      if (selectedPairSet && !selectedPairSet.has(pair.pair.toUpperCase())) {
-        continue;
-      }
-
-      for (const tf of pair.timeframes ?? []) {
-        // Skip timeframes that don't match selection (if timeframe is selected)
-        if (effectiveTimeframe && tf.timeframe !== effectiveTimeframe) {
-          continue;
-        }
-
-        if (tf.from && tf.to) {
-          hasMatchingData = true;
-          const fromDate = new Date(tf.from);
-          const toDate = new Date(tf.to);
-
-          // For intersection: take the LATEST start date
-          if (!latestStart || fromDate > latestStart) {
-            latestStart = fromDate;
-          }
-          // For intersection: take the EARLIEST end date
-          if (!earliestEnd || toDate < earliestEnd) {
-            earliestEnd = toDate;
-          }
-        }
-      }
-    }
-
-    // Validate that the intersection is valid (start before end)
-    if (hasMatchingData && latestStart && earliestEnd && latestStart <= earliestEnd) {
-      return { from: latestStart, to: earliestEnd };
-    }
-
-    return null;
+    return computeAvailableDateRange(
+      runnerDataAvailable,
+      effectiveExchange,
+      effectivePairs,
+      effectiveTimeframe
+    );
   }, [runnerDataAvailable, effectiveExchange, effectivePairs, effectiveTimeframe]);
 
   // Compute available timeframes for selected exchange and pairs
@@ -331,20 +293,21 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
 
     const availableFrom = dayjs(availableDateRange.from);
     const availableTo = dayjs(availableDateRange.to);
-    let datesAdjusted = false;
+    let startAdjusted = false;
+    let endAdjusted = false;
 
     setStartDate(currentStart => {
       if (!currentStart) {
-        datesAdjusted = true;
+        startAdjusted = true;
         return availableFrom;
       }
       // Only adjust if date is actually outside the valid range
       if (currentStart.isBefore(availableFrom, 'day')) {
-        datesAdjusted = true;
+        startAdjusted = true;
         return availableFrom;
       }
       if (currentStart.isAfter(availableTo, 'day')) {
-        datesAdjusted = true;
+        startAdjusted = true;
         return availableFrom;
       }
       return currentStart;
@@ -352,24 +315,26 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
 
     setEndDate(currentEnd => {
       if (!currentEnd) {
-        datesAdjusted = true;
+        endAdjusted = true;
         return availableTo;
       }
       // Only adjust if date is actually outside the valid range
       if (currentEnd.isAfter(availableTo, 'day')) {
-        datesAdjusted = true;
+        endAdjusted = true;
         return availableTo;
       }
       if (currentEnd.isBefore(availableFrom, 'day')) {
-        datesAdjusted = true;
+        endAdjusted = true;
         return availableTo;
       }
       return currentEnd;
     });
 
-    // Only switch to custom preset if dates were actually adjusted
-    if (datesAdjusted) {
+    // Show notification and switch to custom preset if dates were adjusted
+    if (startAdjusted || endAdjusted) {
       setDatePreset('custom');
+      const adjustedParts = [startAdjusted && 'start', endAdjusted && 'end'].filter(Boolean);
+      setDateAdjustedNotification(`Date range adjusted: ${adjustedParts.join(' and ')} date${adjustedParts.length > 1 ? 's' : ''} moved to available data range`);
     }
   }, [availableDateRange]);
 
@@ -1170,6 +1135,23 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
           </Button>
         </Box>
       </Drawer>
+
+      {/* Notification for auto-adjusted dates */}
+      <Snackbar
+        open={!!dateAdjustedNotification}
+        autoHideDuration={4000}
+        onClose={() => setDateAdjustedNotification(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setDateAdjustedNotification(null)}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {dateAdjustedNotification}
+        </Alert>
+      </Snackbar>
     </LocalizationProvider>
   );
 };
