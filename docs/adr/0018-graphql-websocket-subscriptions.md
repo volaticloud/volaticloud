@@ -172,6 +172,95 @@ This ensures the application remains functional during Redis outages.
 - Single point of failure
 - Unnecessary for single-instance deployments
 
+## Implementation Details
+
+### Event Publishers
+
+Events are published from the following locations:
+
+| Component | File | Events Published |
+|-----------|------|------------------|
+| Bot Monitor | `internal/monitor/bot_monitor.go` | `botStatusChanged`, `botChanged` |
+| Backtest Monitor | `internal/monitor/backtest_monitor.go` | `backtestProgress` |
+| Alert Manager | `internal/alert/manager.go` | `alertEventCreated` |
+| Trade Monitor | `internal/monitor/trade_monitor.go` | `tradeUpdated`, `tradeChanged` |
+| Runner Monitor | `internal/monitor/runner_monitor.go` | `runnerStatusChanged`, `runnerChanged` |
+
+### Topic Schema
+
+Topics follow a consistent naming convention:
+
+```
+{resource_type}:{resource_id}
+```
+
+Examples:
+
+- `bot:550e8400-e29b-41d4-a716-446655440000` - Single bot updates
+- `backtest:550e8400-e29b-41d4-a716-446655440001` - Backtest progress
+- `alert:org_12345` - Alerts for an organization
+- `trade:550e8400-e29b-41d4-a716-446655440002` - Trade updates for a bot
+- `runner:550e8400-e29b-41d4-a716-446655440003` - Runner status
+
+Topic functions are defined in `internal/pubsub/topics.go`.
+
+### Token Lifetime Considerations
+
+**Current Behavior:**
+
+- JWT is validated once at WebSocket connection (`connection_init`)
+- Token claims are stored in context for the connection lifetime
+- Subscription resolvers use the stored claims for authorization checks
+
+**Token Expiration:**
+
+- Default Keycloak access token TTL: 5 minutes
+- WebSocket connections may outlive token lifetime
+- Authorization checks use the @hasScope directive, which validates against the stored context
+
+**Recommendations for Production:**
+
+1. Frontend should track token expiry and reconnect before timeout
+2. Consider implementing periodic re-authentication for long-lived connections
+3. Critical operations should validate freshness of authorization
+
+### Message Buffer Behavior
+
+Both Redis and in-memory implementations use a buffered channel:
+
+- **Buffer size**: 100 messages (hardcoded)
+- **Overflow behavior**: Messages are dropped when buffer is full
+- **No backpressure**: Publishers are not blocked
+
+This is intentional to prevent slow subscribers from blocking publishers. For critical alerts, the `alertEventCreated` subscription should be combined with a fallback query to catch missed messages.
+
+### Performance Characteristics
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Connection overhead | ~2KB per connection | WebSocket + goroutine |
+| Message latency | <10ms (Redis), <1ms (memory) | End-to-end |
+| Throughput | ~10,000 msg/sec (Redis) | Per server instance |
+| Max connections | Limited by OS file descriptors | Typically 1024-65535 |
+
+### File Structure
+
+```
+internal/
+├── pubsub/
+│   ├── doc.go           # Package documentation
+│   ├── pubsub.go        # PubSub interface
+│   ├── memory.go        # In-memory implementation
+│   ├── redis.go         # Redis implementation
+│   ├── topics.go        # Topic naming functions
+│   └── helpers.go       # Panic recovery helpers
+├── graph/
+│   ├── websocket.go     # WebSocket transport setup
+│   └── schema.resolvers.go  # Subscription resolvers
+└── monitor/
+    └── *.go             # Event publishers
+```
+
 ## References
 
 - [Apollo Subscriptions Documentation](https://www.apollographql.com/docs/react/data/subscriptions)
