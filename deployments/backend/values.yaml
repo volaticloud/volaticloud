@@ -117,21 +117,9 @@ services:
         targetPort: http
         protocol: TCP
 
-ingresses:
-  api.volaticloud.com:
-    ingressClassName: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    certManager:
-      issuerName: letsencrypt-prod
-      issuerType: cluster-issuer
-    hosts:
-      - paths:
-          - path: /
-            pathType: Prefix
-            serviceName: volaticloud-backend
-            servicePort: http
+# NOTE: No external ingress for backend - it is internal-only.
+# All API calls are reverse-proxied through the dashboard's Caddy server.
+# See ADR-0019 for architecture details.
 
 hpa:
   volaticloud-backend:
