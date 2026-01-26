@@ -323,31 +323,53 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     }
   }, [availableTimeframes, timeframeOverride]);
 
-  // Auto-adjust dates when available date range changes
+  // Auto-adjust dates only when they fall outside the available range
+  // This preserves user's date selection when it's still valid
   useEffect(() => {
     if (!availableDateRange) return;
 
     const availableFrom = dayjs(availableDateRange.from);
     const availableTo = dayjs(availableDateRange.to);
+    let datesAdjusted = false;
 
     setStartDate(currentStart => {
-      if (!currentStart) return availableFrom;
-      // Clamp start date to available range
-      if (currentStart.isBefore(availableFrom)) return availableFrom;
-      if (currentStart.isAfter(availableTo)) return availableFrom;
+      if (!currentStart) {
+        datesAdjusted = true;
+        return availableFrom;
+      }
+      // Only adjust if date is actually outside the valid range
+      if (currentStart.isBefore(availableFrom, 'day')) {
+        datesAdjusted = true;
+        return availableFrom;
+      }
+      if (currentStart.isAfter(availableTo, 'day')) {
+        datesAdjusted = true;
+        return availableFrom;
+      }
       return currentStart;
     });
 
     setEndDate(currentEnd => {
-      if (!currentEnd) return availableTo;
-      // Clamp end date to available range
-      if (currentEnd.isAfter(availableTo)) return availableTo;
-      if (currentEnd.isBefore(availableFrom)) return availableTo;
+      if (!currentEnd) {
+        datesAdjusted = true;
+        return availableTo;
+      }
+      // Only adjust if date is actually outside the valid range
+      if (currentEnd.isAfter(availableTo, 'day')) {
+        datesAdjusted = true;
+        return availableTo;
+      }
+      if (currentEnd.isBefore(availableFrom, 'day')) {
+        datesAdjusted = true;
+        return availableTo;
+      }
       return currentEnd;
     });
 
-    // Switch to custom preset when dates are auto-adjusted
-    setDatePreset('custom');
+    // Only switch to custom preset if dates were actually adjusted
+    if (datesAdjusted) {
+      setDatePreset('custom');
+    }
   }, [availableDateRange]);
 
   // Get active group for filtering strategies and runners
@@ -896,7 +918,10 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                             size="small"
                             variant="text"
                             onClick={() => setPairsOverride(availablePairs)}
-                            disabled={effectivePairs.length === availablePairs.length}
+                            disabled={
+                              effectivePairs.length === availablePairs.length &&
+                              effectivePairs.every(p => availablePairs.some(ap => ap.toUpperCase() === p.toUpperCase()))
+                            }
                             sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
                           >
                             Select All ({availablePairs.length})
@@ -1024,7 +1049,8 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                   {!availableDateRange && runnerDataAvailable && effectivePairs.length > 0 && (
                     <Alert severity="warning" sx={{ py: 0 }}>
                       No overlapping data range found for the selected pairs
-                      {effectiveTimeframe ? ` and ${effectiveTimeframe} timeframe` : ''}
+                      {effectiveTimeframe ? ` and ${effectiveTimeframe} timeframe` : ''}.
+                      Try selecting fewer pairs or a different timeframe.
                     </Alert>
                   )}
                 </Box>
