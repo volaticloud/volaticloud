@@ -71,6 +71,20 @@ export type TestS3ConnectionMutationVariables = Types.Exact<{
 
 export type TestS3ConnectionMutation = { __typename?: 'Mutation', testS3Connection: { __typename?: 'ConnectionTestResult', success: boolean, message: string } };
 
+export type RunnerStatusChangedSubscriptionVariables = Types.Exact<{
+  runnerId: Types.Scalars['ID']['input'];
+}>;
+
+
+export type RunnerStatusChangedSubscription = { __typename?: 'Subscription', runnerStatusChanged: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataErrorMessage?: string | null } };
+
+export type RunnerChangedSubscriptionVariables = Types.Exact<{
+  ownerId: Types.Scalars['String']['input'];
+}>;
+
+
+export type RunnerChangedSubscription = { __typename?: 'Subscription', runnerChanged: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType, dataIsReady: boolean, dataLastUpdated?: string | null, dataDownloadStatus: Types.BotRunnerDataDownloadStatus, dataDownloadProgress?: Record<string, any> | null, dataErrorMessage?: string | null, bots: { __typename?: 'BotConnection', totalCount: number } } };
+
 
 export const GetRunnersDocument = gql`
     query GetRunners($first: Int, $after: Cursor, $where: BotRunnerWhereInput) {
@@ -472,3 +486,80 @@ export function useTestS3ConnectionMutation(baseOptions?: Apollo.MutationHookOpt
 export type TestS3ConnectionMutationHookResult = ReturnType<typeof useTestS3ConnectionMutation>;
 export type TestS3ConnectionMutationResult = Apollo.MutationResult<TestS3ConnectionMutation>;
 export type TestS3ConnectionMutationOptions = Apollo.BaseMutationOptions<TestS3ConnectionMutation, TestS3ConnectionMutationVariables>;
+export const RunnerStatusChangedDocument = gql`
+    subscription RunnerStatusChanged($runnerId: ID!) {
+  runnerStatusChanged(runnerId: $runnerId) {
+    id
+    name
+    type
+    dataIsReady
+    dataLastUpdated
+    dataDownloadStatus
+    dataDownloadProgress
+    dataErrorMessage
+  }
+}
+    `;
+
+/**
+ * __useRunnerStatusChangedSubscription__
+ *
+ * To run a query within a React component, call `useRunnerStatusChangedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useRunnerStatusChangedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRunnerStatusChangedSubscription({
+ *   variables: {
+ *      runnerId: // value for 'runnerId'
+ *   },
+ * });
+ */
+export function useRunnerStatusChangedSubscription(baseOptions: Apollo.SubscriptionHookOptions<RunnerStatusChangedSubscription, RunnerStatusChangedSubscriptionVariables> & ({ variables: RunnerStatusChangedSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<RunnerStatusChangedSubscription, RunnerStatusChangedSubscriptionVariables>(RunnerStatusChangedDocument, options);
+      }
+export type RunnerStatusChangedSubscriptionHookResult = ReturnType<typeof useRunnerStatusChangedSubscription>;
+export type RunnerStatusChangedSubscriptionResult = Apollo.SubscriptionResult<RunnerStatusChangedSubscription>;
+export const RunnerChangedDocument = gql`
+    subscription RunnerChanged($ownerId: String!) {
+  runnerChanged(ownerId: $ownerId) {
+    id
+    name
+    type
+    dataIsReady
+    dataLastUpdated
+    dataDownloadStatus
+    dataDownloadProgress
+    dataErrorMessage
+    bots {
+      totalCount
+    }
+  }
+}
+    `;
+
+/**
+ * __useRunnerChangedSubscription__
+ *
+ * To run a query within a React component, call `useRunnerChangedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useRunnerChangedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRunnerChangedSubscription({
+ *   variables: {
+ *      ownerId: // value for 'ownerId'
+ *   },
+ * });
+ */
+export function useRunnerChangedSubscription(baseOptions: Apollo.SubscriptionHookOptions<RunnerChangedSubscription, RunnerChangedSubscriptionVariables> & ({ variables: RunnerChangedSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<RunnerChangedSubscription, RunnerChangedSubscriptionVariables>(RunnerChangedDocument, options);
+      }
+export type RunnerChangedSubscriptionHookResult = ReturnType<typeof useRunnerChangedSubscription>;
+export type RunnerChangedSubscriptionResult = Apollo.SubscriptionResult<RunnerChangedSubscription>;

@@ -13,12 +13,12 @@ func TestDefaultDataDownloadTimeout(t *testing.T) {
 
 func TestRunnerMonitorDefaultTimeout(t *testing.T) {
 	// NewRunnerMonitor should initialize with default timeout
-	rm := NewRunnerMonitor(nil, nil)
+	rm := NewRunnerMonitor(nil, nil, nil)
 	assert.Equal(t, DefaultDataDownloadTimeout, rm.GetDataDownloadTimeout())
 }
 
 func TestRunnerMonitorSetDataDownloadTimeout(t *testing.T) {
-	rm := NewRunnerMonitor(nil, nil)
+	rm := NewRunnerMonitor(nil, nil, nil)
 
 	// Set custom timeout
 	customTimeout := 24 * time.Hour

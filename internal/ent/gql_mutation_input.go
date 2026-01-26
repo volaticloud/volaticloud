@@ -17,7 +17,7 @@ type CreateAlertRuleInput struct {
 	Severity             *enum.AlertSeverity
 	Enabled              *bool
 	ResourceType         enum.AlertResourceType
-	ResourceID           *uuid.UUID
+	ResourceID           *string
 	Conditions           map[string]interface{}
 	DeliveryMode         *enum.AlertDeliveryMode
 	BatchIntervalMinutes *int
@@ -97,7 +97,7 @@ type UpdateAlertRuleInput struct {
 	Enabled              *bool
 	ResourceType         *enum.AlertResourceType
 	ClearResourceID      bool
-	ResourceID           *uuid.UUID
+	ResourceID           *string
 	ClearConditions      bool
 	Conditions           map[string]interface{}
 	DeliveryMode         *enum.AlertDeliveryMode

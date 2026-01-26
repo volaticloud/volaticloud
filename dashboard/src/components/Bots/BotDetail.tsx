@@ -20,8 +20,8 @@ import {
   Tab,
 } from '@mui/material';
 import { ArrowBack, Dashboard, DataUsage, SwapHoriz } from '@mui/icons-material';
-import { useState, SyntheticEvent } from 'react';
-import { useGetBotQuery } from './bots.generated';
+import { useState, SyntheticEvent, useEffect } from 'react';
+import { useGetBotQuery, useBotStatusChangedSubscription } from './bots.generated';
 import BotMetrics from './BotMetrics';
 import BotUsageCharts from './BotUsageCharts';
 import BotActionsMenu from './BotActionsMenu';
@@ -60,8 +60,21 @@ const BotDetail = () => {
   const { data, loading, error, refetch } = useGetBotQuery({
     variables: { id: id! },
     skip: !id,
-    pollInterval: 10000,
   });
+
+  // Subscribe to real-time bot status updates via WebSocket
+  const { data: subscriptionData } = useBotStatusChangedSubscription({
+    variables: { botId: id! },
+    skip: !id,
+  });
+
+  // Update local data when subscription receives new status
+  useEffect(() => {
+    if (subscriptionData?.botStatusChanged) {
+      // Refetch to get full bot data when status changes
+      refetch();
+    }
+  }, [subscriptionData, refetch]);
 
   if (loading) {
     return (

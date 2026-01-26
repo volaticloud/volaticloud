@@ -66,11 +66,10 @@ func (AlertEvent) Fields() []ent.Field {
 		field.Enum("resource_type").
 			GoType(enum.AlertResourceType("")).
 			Comment("Type of resource that triggered alert"),
-		field.UUID("resource_id", uuid.UUID{}).
+		field.String("resource_id").
 			Optional().
 			Nillable().
-			Annotations(entgql.Type("ID")).
-			Comment("ID of resource that triggered alert"),
+			Comment("Resource ID - UUID for bot/strategy/runner, or organization alias for org-level events"),
 
 		// Ownership (denormalized for efficient querying)
 		field.String("owner_id").

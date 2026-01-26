@@ -131,3 +131,34 @@ mutation TestS3Connection($config: S3ConfigInput!) {
     message
   }
 }
+
+# Subscribe to runner status changes (detail view)
+subscription RunnerStatusChanged($runnerId: ID!) {
+  runnerStatusChanged(runnerId: $runnerId) {
+    id
+    name
+    type
+    dataIsReady
+    dataLastUpdated
+    dataDownloadStatus
+    dataDownloadProgress
+    dataErrorMessage
+  }
+}
+
+# Subscribe to all runner changes in an organization (list view)
+subscription RunnerChanged($ownerId: String!) {
+  runnerChanged(ownerId: $ownerId) {
+    id
+    name
+    type
+    dataIsReady
+    dataLastUpdated
+    dataDownloadStatus
+    dataDownloadProgress
+    dataErrorMessage
+    bots {
+      totalCount
+    }
+  }
+}

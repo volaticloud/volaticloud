@@ -63,6 +63,13 @@ export type DeleteBacktestMutationVariables = Types.Exact<{
 
 export type DeleteBacktestMutation = { __typename?: 'Mutation', deleteBacktest: boolean };
 
+export type BacktestProgressSubscriptionVariables = Types.Exact<{
+  backtestId: Types.Scalars['ID']['input'];
+}>;
+
+
+export type BacktestProgressSubscription = { __typename?: 'Subscription', backtestProgress: { __typename?: 'Backtest', id: string, status: Types.BacktestTaskStatus, result?: Record<string, any> | null, logs?: string | null, errorMessage?: string | null, createdAt: string, updatedAt: string, completedAt?: string | null, strategy: { __typename?: 'Strategy', id: string, name: string } } };
+
 
 export const GetBacktestsDocument = gql`
     query GetBacktests($first: Int, $after: Cursor, $where: BacktestWhereInput) {
@@ -458,3 +465,44 @@ export function useDeleteBacktestMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteBacktestMutationHookResult = ReturnType<typeof useDeleteBacktestMutation>;
 export type DeleteBacktestMutationResult = Apollo.MutationResult<DeleteBacktestMutation>;
 export type DeleteBacktestMutationOptions = Apollo.BaseMutationOptions<DeleteBacktestMutation, DeleteBacktestMutationVariables>;
+export const BacktestProgressDocument = gql`
+    subscription BacktestProgress($backtestId: ID!) {
+  backtestProgress(backtestId: $backtestId) {
+    id
+    status
+    result
+    logs
+    errorMessage
+    createdAt
+    updatedAt
+    completedAt
+    strategy {
+      id
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useBacktestProgressSubscription__
+ *
+ * To run a query within a React component, call `useBacktestProgressSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useBacktestProgressSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBacktestProgressSubscription({
+ *   variables: {
+ *      backtestId: // value for 'backtestId'
+ *   },
+ * });
+ */
+export function useBacktestProgressSubscription(baseOptions: Apollo.SubscriptionHookOptions<BacktestProgressSubscription, BacktestProgressSubscriptionVariables> & ({ variables: BacktestProgressSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<BacktestProgressSubscription, BacktestProgressSubscriptionVariables>(BacktestProgressDocument, options);
+      }
+export type BacktestProgressSubscriptionHookResult = ReturnType<typeof useBacktestProgressSubscription>;
+export type BacktestProgressSubscriptionResult = Apollo.SubscriptionResult<BacktestProgressSubscription>;

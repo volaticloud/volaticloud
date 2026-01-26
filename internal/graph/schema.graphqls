@@ -1401,3 +1401,65 @@ extend type Mutation {
   """
   enableOrganization(organizationId: String!): Boolean! @hasScope(resource: "organizationId", scope: "edit", resourceType: ORGANIZATION)
 }
+
+# ==============================================================================
+# Subscriptions
+# WebSocket-based real-time updates using graphql-ws protocol
+# ==============================================================================
+
+"""
+Real-time subscriptions for monitoring status changes.
+All subscriptions require authentication via connection_init payload.
+Authorization is checked per the @hasScope directive on each subscription.
+"""
+type Subscription {
+  """
+  Subscribe to bot status changes.
+  Receives updates when a bot's status, health, or metrics change.
+  """
+  botStatusChanged(botId: ID!): Bot! @hasScope(resource: "botId", scope: "view", resourceType: BOT)
+
+  """
+  Subscribe to backtest progress updates.
+  Receives updates during backtest execution including progress percentage and completion.
+  """
+  backtestProgress(backtestId: ID!): Backtest! @hasScope(resource: "backtestId", scope: "view", resourceType: BACKTEST)
+
+  """
+  Subscribe to alert events for an organization.
+  Receives notifications when new alerts are triggered.
+  """
+  alertEventCreated(ownerId: String!): AlertEvent! @hasScope(resource: "ownerId", scope: "view", resourceType: ORGANIZATION)
+
+  """
+  Subscribe to trade updates for a bot.
+  Receives notifications when trades are opened, updated, or closed.
+  """
+  tradeUpdated(botId: ID!): Trade! @hasScope(resource: "botId", scope: "view", resourceType: BOT)
+
+  """
+  Subscribe to runner status changes.
+  Receives updates when a runner's status changes (e.g., data download progress).
+  """
+  runnerStatusChanged(runnerId: ID!): BotRunner! @hasScope(resource: "runnerId", scope: "view", resourceType: BOT_RUNNER)
+
+  # Organization-level subscriptions for list views
+
+  """
+  Subscribe to bot changes for an organization.
+  Receives notifications when any bot in the organization is created, updated, or changes status.
+  """
+  botChanged(ownerId: String!): Bot! @hasScope(resource: "ownerId", scope: "view", resourceType: ORGANIZATION)
+
+  """
+  Subscribe to trade changes for an organization.
+  Receives notifications when any trade in the organization is created or updated.
+  """
+  tradeChanged(ownerId: String!): Trade! @hasScope(resource: "ownerId", scope: "view", resourceType: ORGANIZATION)
+
+  """
+  Subscribe to runner changes for an organization.
+  Receives notifications when any runner in the organization is created, updated, or changes status.
+  """
+  runnerChanged(ownerId: String!): BotRunner! @hasScope(resource: "ownerId", scope: "view", resourceType: ORGANIZATION)
+}

@@ -44,6 +44,7 @@ deployments:
             - VOLATICLOUD_SENDGRID_API_KEY
             - VOLATICLOUD_ALERT_FROM_EMAIL
             - VOLATICLOUD_ALERT_FROM_NAME
+            - VOLATICLOUD_REDIS_URL
 
         livenessProbe:
           httpGet:

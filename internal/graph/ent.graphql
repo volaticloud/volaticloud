@@ -51,9 +51,9 @@ type AlertEvent implements Node {
   """
   resourceType: AlertEventAlertResourceType!
   """
-  ID of resource that triggered alert
+  Resource ID - UUID for bot/strategy/runner, or organization alias for org-level events
   """
-  resourceID: ID
+  resourceID: String
   """
   Organization ID
   """
@@ -291,16 +291,21 @@ input AlertEventWhereInput {
   """
   resource_id field predicates
   """
-  resourceID: ID
-  resourceIDNEQ: ID
-  resourceIDIn: [ID!]
-  resourceIDNotIn: [ID!]
-  resourceIDGT: ID
-  resourceIDGTE: ID
-  resourceIDLT: ID
-  resourceIDLTE: ID
+  resourceID: String
+  resourceIDNEQ: String
+  resourceIDIn: [String!]
+  resourceIDNotIn: [String!]
+  resourceIDGT: String
+  resourceIDGTE: String
+  resourceIDLT: String
+  resourceIDLTE: String
+  resourceIDContains: String
+  resourceIDHasPrefix: String
+  resourceIDHasSuffix: String
   resourceIDIsNil: Boolean
   resourceIDNotNil: Boolean
+  resourceIDEqualFold: String
+  resourceIDContainsFold: String
   """
   owner_id field predicates
   """
@@ -374,9 +379,9 @@ type AlertRule implements Node {
   """
   resourceType: AlertRuleAlertResourceType!
   """
-  Specific resource ID (null for org-level rules that apply to all resources)
+  Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules
   """
-  resourceID: ID
+  resourceID: String
   """
   Condition parameters: thresholds, status values, etc.
   """
@@ -597,16 +602,21 @@ input AlertRuleWhereInput {
   """
   resource_id field predicates
   """
-  resourceID: ID
-  resourceIDNEQ: ID
-  resourceIDIn: [ID!]
-  resourceIDNotIn: [ID!]
-  resourceIDGT: ID
-  resourceIDGTE: ID
-  resourceIDLT: ID
-  resourceIDLTE: ID
+  resourceID: String
+  resourceIDNEQ: String
+  resourceIDIn: [String!]
+  resourceIDNotIn: [String!]
+  resourceIDGT: String
+  resourceIDGTE: String
+  resourceIDLT: String
+  resourceIDLTE: String
+  resourceIDContains: String
+  resourceIDHasPrefix: String
+  resourceIDHasSuffix: String
   resourceIDIsNil: Boolean
   resourceIDNotNil: Boolean
+  resourceIDEqualFold: String
+  resourceIDContainsFold: String
   """
   delivery_mode field predicates
   """
@@ -2212,9 +2222,9 @@ input CreateAlertRuleInput {
   """
   resourceType: AlertRuleAlertResourceType!
   """
-  Specific resource ID (null for org-level rules that apply to all resources)
+  Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules
   """
-  resourceID: ID
+  resourceID: String
   """
   Condition parameters: thresholds, status values, etc.
   """
@@ -4413,9 +4423,9 @@ input UpdateAlertRuleInput {
   """
   resourceType: AlertRuleAlertResourceType
   """
-  Specific resource ID (null for org-level rules that apply to all resources)
+  Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules
   """
-  resourceID: ID
+  resourceID: String
   clearResourceID: Boolean
   """
   Condition parameters: thresholds, status values, etc.

@@ -12,6 +12,7 @@ import (
 	"volaticloud/internal/ent"
 	entbacktest "volaticloud/internal/ent/backtest"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/pubsub"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/usage"
 )
@@ -20,12 +21,13 @@ import (
 type BacktestMonitor struct {
 	client         *ent.Client
 	usageCollector usage.Collector
+	pubsub         pubsub.PubSub
 	interval       time.Duration
 	stopChan       chan struct{}
 }
 
 // NewBacktestMonitor creates a new backtest monitor
-func NewBacktestMonitor(client *ent.Client, interval time.Duration) *BacktestMonitor {
+func NewBacktestMonitor(client *ent.Client, interval time.Duration, ps pubsub.PubSub) *BacktestMonitor {
 	if interval == 0 {
 		interval = 30 * time.Second // Default to 30 seconds
 	}
@@ -33,6 +35,7 @@ func NewBacktestMonitor(client *ent.Client, interval time.Duration) *BacktestMon
 	return &BacktestMonitor{
 		client:         client,
 		usageCollector: usage.NewCollector(client),
+		pubsub:         ps,
 		interval:       interval,
 		stopChan:       make(chan struct{}),
 	}
@@ -149,6 +152,13 @@ func (m *BacktestMonitor) checkBacktest(ctx context.Context, bt *ent.Backtest) {
 	}
 
 	log.Printf("Backtest %s status changed: %s -> %s", bt.ID, bt.Status, status.Status)
+
+	// Publish status change event for GraphQL subscriptions
+	progress := 0.0
+	if status.Status == enum.TaskStatusCompleted {
+		progress = 1.0
+	}
+	m.publishBacktestEvent(ctx, bt, status.Status, progress, status.ErrorMessage)
 
 	// Update backtest based on new status
 	switch status.Status {
@@ -334,5 +344,32 @@ func (m *BacktestMonitor) emitBacktestAlert(ctx context.Context, bt *ent.Backtes
 		profitTotal,
 	); err != nil {
 		log.Printf("Backtest %s: failed to emit backtest alert: %v", bt.ID, err)
+	}
+}
+
+// publishBacktestEvent publishes a backtest progress event to pub/sub
+func (m *BacktestMonitor) publishBacktestEvent(ctx context.Context, bt *ent.Backtest, status enum.TaskStatus, progress float64, errorMsg string) {
+	if m.pubsub == nil {
+		return
+	}
+
+	strategyID := ""
+	if bt.Edges.Strategy != nil {
+		strategyID = bt.Edges.Strategy.ID.String()
+	}
+
+	event := pubsub.BacktestEvent{
+		Type:       pubsub.EventTypeBacktestProgress,
+		BacktestID: bt.ID.String(),
+		StrategyID: strategyID,
+		Status:     string(status),
+		Progress:   progress,
+		Error:      errorMsg,
+		Timestamp:  time.Now(),
+	}
+
+	topic := pubsub.BacktestTopic(bt.ID.String())
+	if err := m.pubsub.Publish(ctx, topic, event); err != nil {
+		log.Printf("Backtest %s: failed to publish progress event: %v", bt.ID, err)
 	}
 }

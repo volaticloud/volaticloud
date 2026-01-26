@@ -164,3 +164,28 @@ mutation MarkAlertEventAsRead($id: ID!, $ownerID: String!) {
 mutation MarkAllAlertEventsAsRead($ownerID: String!) {
   markAllAlertEventsAsRead(ownerID: $ownerID)
 }
+
+# Subscription for real-time alert notifications
+subscription AlertEventCreated($ownerId: String!) {
+  alertEventCreated(ownerId: $ownerId) {
+    id
+    status
+    alertType
+    severity
+    subject
+    body
+    context
+    recipients
+    channelType
+    sentAt
+    errorMessage
+    resourceType
+    resourceID
+    ownerID
+    createdAt
+    rule {
+      id
+      name
+    }
+  }
+}

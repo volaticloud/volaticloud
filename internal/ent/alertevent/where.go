@@ -88,7 +88,7 @@ func ErrorMessage(v string) predicate.AlertEvent {
 }
 
 // ResourceID applies equality check predicate on the "resource_id" field. It's identical to ResourceIDEQ.
-func ResourceID(v uuid.UUID) predicate.AlertEvent {
+func ResourceID(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldEQ(FieldResourceID, v))
 }
 
@@ -578,43 +578,58 @@ func ResourceTypeNotIn(vs ...enum.AlertResourceType) predicate.AlertEvent {
 }
 
 // ResourceIDEQ applies the EQ predicate on the "resource_id" field.
-func ResourceIDEQ(v uuid.UUID) predicate.AlertEvent {
+func ResourceIDEQ(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldEQ(FieldResourceID, v))
 }
 
 // ResourceIDNEQ applies the NEQ predicate on the "resource_id" field.
-func ResourceIDNEQ(v uuid.UUID) predicate.AlertEvent {
+func ResourceIDNEQ(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldNEQ(FieldResourceID, v))
 }
 
 // ResourceIDIn applies the In predicate on the "resource_id" field.
-func ResourceIDIn(vs ...uuid.UUID) predicate.AlertEvent {
+func ResourceIDIn(vs ...string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldIn(FieldResourceID, vs...))
 }
 
 // ResourceIDNotIn applies the NotIn predicate on the "resource_id" field.
-func ResourceIDNotIn(vs ...uuid.UUID) predicate.AlertEvent {
+func ResourceIDNotIn(vs ...string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldNotIn(FieldResourceID, vs...))
 }
 
 // ResourceIDGT applies the GT predicate on the "resource_id" field.
-func ResourceIDGT(v uuid.UUID) predicate.AlertEvent {
+func ResourceIDGT(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldGT(FieldResourceID, v))
 }
 
 // ResourceIDGTE applies the GTE predicate on the "resource_id" field.
-func ResourceIDGTE(v uuid.UUID) predicate.AlertEvent {
+func ResourceIDGTE(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldGTE(FieldResourceID, v))
 }
 
 // ResourceIDLT applies the LT predicate on the "resource_id" field.
-func ResourceIDLT(v uuid.UUID) predicate.AlertEvent {
+func ResourceIDLT(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldLT(FieldResourceID, v))
 }
 
 // ResourceIDLTE applies the LTE predicate on the "resource_id" field.
-func ResourceIDLTE(v uuid.UUID) predicate.AlertEvent {
+func ResourceIDLTE(v string) predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldLTE(FieldResourceID, v))
+}
+
+// ResourceIDContains applies the Contains predicate on the "resource_id" field.
+func ResourceIDContains(v string) predicate.AlertEvent {
+	return predicate.AlertEvent(sql.FieldContains(FieldResourceID, v))
+}
+
+// ResourceIDHasPrefix applies the HasPrefix predicate on the "resource_id" field.
+func ResourceIDHasPrefix(v string) predicate.AlertEvent {
+	return predicate.AlertEvent(sql.FieldHasPrefix(FieldResourceID, v))
+}
+
+// ResourceIDHasSuffix applies the HasSuffix predicate on the "resource_id" field.
+func ResourceIDHasSuffix(v string) predicate.AlertEvent {
+	return predicate.AlertEvent(sql.FieldHasSuffix(FieldResourceID, v))
 }
 
 // ResourceIDIsNil applies the IsNil predicate on the "resource_id" field.
@@ -625,6 +640,16 @@ func ResourceIDIsNil() predicate.AlertEvent {
 // ResourceIDNotNil applies the NotNil predicate on the "resource_id" field.
 func ResourceIDNotNil() predicate.AlertEvent {
 	return predicate.AlertEvent(sql.FieldNotNull(FieldResourceID))
+}
+
+// ResourceIDEqualFold applies the EqualFold predicate on the "resource_id" field.
+func ResourceIDEqualFold(v string) predicate.AlertEvent {
+	return predicate.AlertEvent(sql.FieldEqualFold(FieldResourceID, v))
+}
+
+// ResourceIDContainsFold applies the ContainsFold predicate on the "resource_id" field.
+func ResourceIDContainsFold(v string) predicate.AlertEvent {
+	return predicate.AlertEvent(sql.FieldContainsFold(FieldResourceID, v))
 }
 
 // OwnerIDEQ applies the EQ predicate on the "owner_id" field.

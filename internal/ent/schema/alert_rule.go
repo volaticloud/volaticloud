@@ -44,11 +44,13 @@ func (AlertRule) Fields() []ent.Field {
 		field.Enum("resource_type").
 			GoType(enum.AlertResourceType("")).
 			Comment("Type of resource: organization, bot, strategy, runner"),
-		field.UUID("resource_id", uuid.UUID{}).
+		// ResourceID is stored as string to support both UUIDs and organization aliases.
+		// Changed from UUID to string to support organization alias system (ADR-0012).
+		// Existing UUID values remain compatible as strings.
+		field.String("resource_id").
 			Optional().
 			Nillable().
-			Annotations(entgql.Type("ID")).
-			Comment("Specific resource ID (null for org-level rules that apply to all resources)"),
+			Comment("Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules"),
 
 		// Alert condition configuration
 		field.JSON("conditions", map[string]interface{}{}).

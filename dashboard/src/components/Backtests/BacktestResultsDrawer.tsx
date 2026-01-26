@@ -10,7 +10,8 @@ import {
   Divider,
 } from '@mui/material';
 import { Close, OpenInNew } from '@mui/icons-material';
-import { useGetBacktestQuery } from './backtests.generated';
+import { useEffect } from 'react';
+import { useGetBacktestQuery, useBacktestProgressSubscription } from './backtests.generated';
 import { BacktestResults } from './BacktestResults';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 
@@ -29,13 +30,27 @@ export const BacktestResultsDrawer = ({
 }: BacktestResultsDrawerProps) => {
   const navigate = useOrganizationNavigate();
 
-  const { data, loading, error } = useGetBacktestQuery({
+  const { data, loading, error, refetch } = useGetBacktestQuery({
     variables: { id: backtestId! },
     skip: !backtestId || !open,
-    pollInterval: polling ? 3000 : 0,
   });
 
-  const backtest = data?.backtests?.edges?.[0]?.node;
+  // Subscribe to real-time backtest progress updates via WebSocket
+  const { data: subscriptionData } = useBacktestProgressSubscription({
+    variables: { backtestId: backtestId! },
+    skip: !backtestId || !open || !polling,
+  });
+
+  // Use subscription data if available, otherwise fall back to query data
+  const backtest = subscriptionData?.backtestProgress || data?.backtests?.edges?.[0]?.node;
+
+  // Refetch full data when subscription indicates completion
+  useEffect(() => {
+    if (subscriptionData?.backtestProgress?.status === 'completed' ||
+        subscriptionData?.backtestProgress?.status === 'failed') {
+      refetch();
+    }
+  }, [subscriptionData, refetch]);
 
   const handleViewDetails = () => {
     if (backtestId) {

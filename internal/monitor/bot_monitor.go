@@ -13,6 +13,7 @@ import (
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/freqtrade"
+	"volaticloud/internal/pubsub"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/usage"
 )
@@ -38,6 +39,7 @@ type BotMonitor struct {
 	dbClient       *ent.Client
 	coordinator    *Coordinator
 	usageCollector usage.Collector
+	pubsub         pubsub.PubSub
 	interval       time.Duration
 
 	// Trade sync configuration
@@ -48,11 +50,12 @@ type BotMonitor struct {
 }
 
 // NewBotMonitor creates a new bot monitoring worker
-func NewBotMonitor(dbClient *ent.Client, coordinator *Coordinator) *BotMonitor {
+func NewBotMonitor(dbClient *ent.Client, coordinator *Coordinator, ps pubsub.PubSub) *BotMonitor {
 	return &BotMonitor{
 		dbClient:       dbClient,
 		coordinator:    coordinator,
 		usageCollector: usage.NewCollector(dbClient),
+		pubsub:         ps,
 		interval:       DefaultMonitorInterval,
 		tradeSyncConfig: TradeSyncConfig{
 			Enabled:  true, // Trade sync enabled by default
@@ -307,7 +310,38 @@ func (m *BotMonitor) updateBotStatus(ctx context.Context, b *ent.Bot, status enu
 		m.emitStatusAlert(ctx, b, oldStatus, status, errorMsg)
 	}
 
+	// Publish status change event for GraphQL subscriptions
+	m.publishBotStatusEvent(ctx, b, status, healthy, errorMsg)
+
 	return nil
+}
+
+// publishBotStatusEvent publishes a bot status change event to pub/sub
+func (m *BotMonitor) publishBotStatusEvent(ctx context.Context, b *ent.Bot, status enum.BotStatus, healthy bool, errorMsg string) {
+	if m.pubsub == nil {
+		return
+	}
+
+	event := pubsub.BotEvent{
+		Type:      pubsub.EventTypeBotStatus,
+		BotID:     b.ID.String(),
+		Status:    string(status),
+		Healthy:   healthy,
+		Error:     errorMsg,
+		Timestamp: time.Now(),
+	}
+
+	// Publish to bot-specific topic (for detail views)
+	topic := pubsub.BotTopic(b.ID.String())
+	if err := m.pubsub.Publish(ctx, topic, event); err != nil {
+		log.Printf("Bot %s: failed to publish status event: %v", b.Name, err)
+	}
+
+	// Also publish to org-level topic (for list views)
+	orgTopic := pubsub.OrgBotsTopic(b.OwnerID)
+	if err := m.pubsub.Publish(ctx, orgTopic, event); err != nil {
+		log.Printf("Bot %s: failed to publish org status event: %v", b.Name, err)
+	}
 }
 
 // emitStatusAlert sends a bot status change alert via the alert manager

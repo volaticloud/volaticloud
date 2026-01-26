@@ -83,6 +83,7 @@ jobs:
             --from-literal=VOLATICLOUD_SENDGRID_API_KEY="${{ secrets.VOLATICLOUD_SENDGRID_API_KEY }}" \
             --from-literal=VOLATICLOUD_ALERT_FROM_EMAIL="${{ secrets.VOLATICLOUD_ALERT_FROM_EMAIL }}" \
             --from-literal=VOLATICLOUD_ALERT_FROM_NAME="${{ secrets.VOLATICLOUD_ALERT_FROM_NAME }}" \
+            --from-literal=VOLATICLOUD_REDIS_URL="${{ secrets.VOLATICLOUD_REDIS_URL }}" \
             --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 

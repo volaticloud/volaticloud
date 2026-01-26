@@ -273,7 +273,7 @@ func TestAlert_Struct(t *testing.T) {
 		AlertType:    enum.AlertTypeStatusChange,
 		Severity:     enum.AlertSeverityCritical,
 		ResourceType: enum.AlertResourceTypeBot,
-		ResourceID:   uuidPtr(uuid.New()),
+		ResourceID:   strPtr(uuid.New().String()),
 		Subject:      "Test Subject",
 		Body:         "Test Body",
 		HTMLBody:     "<p>Test Body</p>",
@@ -305,8 +305,8 @@ func containsSubstring(s, substr string) bool {
 	return false
 }
 
-func uuidPtr(u uuid.UUID) *uuid.UUID {
-	return &u
+func strPtr(s string) *string {
+	return &s
 }
 
 // Note: Dispatch method requires a full database setup for integration testing.

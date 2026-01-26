@@ -14,7 +14,7 @@ import {
   AccessTime as OpenIcon,
   CheckCircle as ClosedIcon,
 } from '@mui/icons-material';
-import { useGetTradesQuery, GetTradesQuery } from './trades.generated';
+import { useGetTradesQuery, useTradeChangedSubscription, GetTradesQuery } from './trades.generated';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { TradeOrderField, OrderDirection } from '../../generated/types';
 import { useCursorPagination } from '../../hooks/useCursorPagination';
@@ -35,7 +35,7 @@ export const TradesList = () => {
   // Build where clause
   const whereClause = activeOrganizationId ? { hasBotWith: [{ ownerID: activeOrganizationId }] } : {};
 
-  const { data, loading } = useGetTradesQuery({
+  const { data, loading, refetch } = useGetTradesQuery({
     variables: {
       first: pagination.pageSize,
       after: pagination.cursor,
@@ -45,7 +45,12 @@ export const TradesList = () => {
         direction: OrderDirection.Desc,
       },
     },
-    pollInterval: 30000,
+    skip: !activeOrganizationId,
+  });
+
+  // Subscribe to trade changes for real-time updates (organization-level)
+  const { data: subscriptionData } = useTradeChangedSubscription({
+    variables: { ownerId: activeOrganizationId! },
     skip: !activeOrganizationId,
   });
 
@@ -55,6 +60,13 @@ export const TradesList = () => {
       updateFromResponse(data.trades);
     }
   }, [data, loading, setLoading, updateFromResponse]);
+
+  // Refetch when subscription receives data
+  useEffect(() => {
+    if (subscriptionData?.tradeChanged) {
+      refetch();
+    }
+  }, [subscriptionData, refetch]);
 
   useEffect(() => {
     reset();

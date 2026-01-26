@@ -13,6 +13,7 @@ import (
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/keycloak"
+	"volaticloud/internal/pubsub"
 )
 
 // Config holds configuration for the alert manager
@@ -71,6 +72,11 @@ func (m *Manager) SetEmailChannel(ch channel.Channel) {
 // SetUMAClient sets the UMA client for permission checks
 func (m *Manager) SetUMAClient(client keycloak.UMAClientInterface) {
 	m.umaClient = client
+}
+
+// SetPubSub sets the pub/sub for publishing alert events
+func (m *Manager) SetPubSub(ps pubsub.PubSub) {
+	m.dispatcher.SetPubSub(ps)
 }
 
 // Start starts the alert manager
@@ -139,7 +145,8 @@ func (m *Manager) HandleBotStatus(
 
 	// Find matching rules
 	log.Printf("Alert: Bot %s (%s) status changed %s -> %s (owner: %s)", botName, botMode, oldStatus, newStatus, ownerID)
-	rules, err := m.evaluator.FindMatchingRules(ctx, ownerID, alertType, enum.AlertResourceTypeBot, &botID)
+	botIDStr := botID.String()
+	rules, err := m.evaluator.FindMatchingRules(ctx, ownerID, alertType, enum.AlertResourceTypeBot, &botIDStr)
 	if err != nil {
 		return fmt.Errorf("failed to find matching rules: %w", err)
 	}
@@ -188,7 +195,8 @@ func (m *Manager) HandleConnectionIssue(
 	}
 
 	log.Printf("Alert: Bot %s (%s) connection issue - %s (owner: %s)", botName, botMode, errorMessage, ownerID)
-	return m.dispatchForAlertType(ctx, ownerID, enum.AlertTypeConnectionIssue, enum.AlertResourceTypeBot, &botID, eventData, botMode)
+	botIDStr := botID.String()
+	return m.dispatchForAlertType(ctx, ownerID, enum.AlertTypeConnectionIssue, enum.AlertResourceTypeBot, &botIDStr, eventData, botMode)
 }
 
 // TradeInfo holds trade data for batch alerting
@@ -277,7 +285,8 @@ func (m *Manager) HandleTradesOpened(
 	}
 
 	log.Printf("Alert: Bot %s opened %d trade(s)", botName, len(trades))
-	return m.dispatchForAlertType(ctx, ownerID, enum.AlertTypeTradeOpened, enum.AlertResourceTypeBot, &botID, eventData, botMode)
+	botIDStr := botID.String()
+	return m.dispatchForAlertType(ctx, ownerID, enum.AlertTypeTradeOpened, enum.AlertResourceTypeBot, &botIDStr, eventData, botMode)
 }
 
 // HandleTradeClosed processes a trade closed event (single trade - legacy)
@@ -361,13 +370,15 @@ func (m *Manager) HandleTradesClosed(
 
 	log.Printf("Alert: Bot %s closed %d trade(s), total profit: %.4f", botName, len(trades), totalProfitAbs)
 
+	botIDStr := botID.String()
+
 	// Dispatch trade_closed alert
-	if err := m.dispatchForAlertType(ctx, ownerID, enum.AlertTypeTradeClosed, enum.AlertResourceTypeBot, &botID, eventData, botMode); err != nil {
+	if err := m.dispatchForAlertType(ctx, ownerID, enum.AlertTypeTradeClosed, enum.AlertResourceTypeBot, &botIDStr, eventData, botMode); err != nil {
 		log.Printf("Failed to dispatch trade_closed alert: %v", err)
 	}
 
 	// Check for large_profit_loss alert (for any trade exceeding threshold)
-	rules, err := m.evaluator.FindMatchingRules(ctx, ownerID, enum.AlertTypeLargeProfitLoss, enum.AlertResourceTypeBot, &botID)
+	rules, err := m.evaluator.FindMatchingRules(ctx, ownerID, enum.AlertTypeLargeProfitLoss, enum.AlertResourceTypeBot, &botIDStr)
 	if err != nil {
 		return err
 	}
@@ -434,7 +445,8 @@ func (m *Manager) HandleBacktestCompleted(
 		alertType = enum.AlertTypeBacktestFailed
 	}
 
-	return m.dispatchForAlertType(ctx, ownerID, alertType, enum.AlertResourceTypeStrategy, &strategyID, eventData)
+	strategyIDStr := strategyID.String()
+	return m.dispatchForAlertType(ctx, ownerID, alertType, enum.AlertResourceTypeStrategy, &strategyIDStr, eventData)
 }
 
 // HandlePerformanceThreshold processes a performance threshold violation
@@ -456,7 +468,8 @@ func (m *Manager) HandlePerformanceThreshold(
 		"timestamp":       time.Now(),
 	}
 
-	return m.dispatchForAlertType(ctx, ownerID, alertType, enum.AlertResourceTypeBot, &botID, eventData)
+	botIDStr := botID.String()
+	return m.dispatchForAlertType(ctx, ownerID, alertType, enum.AlertResourceTypeBot, &botIDStr, eventData)
 }
 
 // dispatchForAlertType is a helper to find rules and dispatch alerts
@@ -466,7 +479,7 @@ func (m *Manager) dispatchForAlertType(
 	ownerID string,
 	alertType enum.AlertType,
 	resourceType enum.AlertResourceType,
-	resourceID *uuid.UUID,
+	resourceID *string,
 	eventData map[string]interface{},
 	botMode ...string,
 ) error {
@@ -515,7 +528,7 @@ func (m *Manager) TestRule(ctx context.Context, ruleID uuid.UUID) error {
 			return fmt.Errorf("authentication required: %w", err)
 		}
 
-		effectiveResourceID := getEffectiveResourceID(rule.ResourceType, rule.ResourceID, rule.OwnerID)
+		effectiveResourceID := getEffectiveResourceID(rule.ResourceID, rule.OwnerID)
 		hasPermission, permErr := m.umaClient.CheckPermission(ctx, userCtx.RawToken, effectiveResourceID, "update-alert-rule")
 		if permErr != nil {
 			return fmt.Errorf("permission check failed: %w", permErr)

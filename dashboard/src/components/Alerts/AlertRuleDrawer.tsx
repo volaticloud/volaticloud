@@ -273,7 +273,8 @@ export const AlertRuleDrawer = ({
     const requiresResourceIdFlag = resourceType !== AlertRuleAlertResourceType.Organization;
     if (requiresResourceIdFlag && !resourceId) return;
 
-    // Always save resourceID - for organization type, save the activeOrganizationId
+    // For all resource types, pass the appropriate ID as resourceID
+    // Organization type uses activeOrganizationId, others use the selected resourceId
     const effectiveResId = resourceType === AlertRuleAlertResourceType.Organization
       ? activeOrganizationId
       : resourceId;

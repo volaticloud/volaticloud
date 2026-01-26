@@ -209,13 +209,13 @@ func (_u *AlertEventUpdate) SetNillableResourceType(v *enum.AlertResourceType) *
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *AlertEventUpdate) SetResourceID(v uuid.UUID) *AlertEventUpdate {
+func (_u *AlertEventUpdate) SetResourceID(v string) *AlertEventUpdate {
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *AlertEventUpdate) SetNillableResourceID(v *uuid.UUID) *AlertEventUpdate {
+func (_u *AlertEventUpdate) SetNillableResourceID(v *string) *AlertEventUpdate {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -398,10 +398,10 @@ func (_u *AlertEventUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		_spec.SetField(alertevent.FieldResourceType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(alertevent.FieldResourceID, field.TypeUUID, value)
+		_spec.SetField(alertevent.FieldResourceID, field.TypeString, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(alertevent.FieldResourceID, field.TypeUUID)
+		_spec.ClearField(alertevent.FieldResourceID, field.TypeString)
 	}
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(alertevent.FieldOwnerID, field.TypeString, value)
@@ -638,13 +638,13 @@ func (_u *AlertEventUpdateOne) SetNillableResourceType(v *enum.AlertResourceType
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *AlertEventUpdateOne) SetResourceID(v uuid.UUID) *AlertEventUpdateOne {
+func (_u *AlertEventUpdateOne) SetResourceID(v string) *AlertEventUpdateOne {
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *AlertEventUpdateOne) SetNillableResourceID(v *uuid.UUID) *AlertEventUpdateOne {
+func (_u *AlertEventUpdateOne) SetNillableResourceID(v *string) *AlertEventUpdateOne {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -857,10 +857,10 @@ func (_u *AlertEventUpdateOne) sqlSave(ctx context.Context) (_node *AlertEvent, 
 		_spec.SetField(alertevent.FieldResourceType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(alertevent.FieldResourceID, field.TypeUUID, value)
+		_spec.SetField(alertevent.FieldResourceID, field.TypeString, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(alertevent.FieldResourceID, field.TypeUUID)
+		_spec.ClearField(alertevent.FieldResourceID, field.TypeString)
 	}
 	if value, ok := _u.mutation.OwnerID(); ok {
 		_spec.SetField(alertevent.FieldOwnerID, field.TypeString, value)

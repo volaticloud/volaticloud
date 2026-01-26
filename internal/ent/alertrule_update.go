@@ -123,13 +123,13 @@ func (_u *AlertRuleUpdate) SetNillableResourceType(v *enum.AlertResourceType) *A
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *AlertRuleUpdate) SetResourceID(v uuid.UUID) *AlertRuleUpdate {
+func (_u *AlertRuleUpdate) SetResourceID(v string) *AlertRuleUpdate {
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *AlertRuleUpdate) SetNillableResourceID(v *uuid.UUID) *AlertRuleUpdate {
+func (_u *AlertRuleUpdate) SetNillableResourceID(v *string) *AlertRuleUpdate {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -427,10 +427,10 @@ func (_u *AlertRuleUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.SetField(alertrule.FieldResourceType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(alertrule.FieldResourceID, field.TypeUUID, value)
+		_spec.SetField(alertrule.FieldResourceID, field.TypeString, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(alertrule.FieldResourceID, field.TypeUUID)
+		_spec.ClearField(alertrule.FieldResourceID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Conditions(); ok {
 		_spec.SetField(alertrule.FieldConditions, field.TypeJSON, value)
@@ -632,13 +632,13 @@ func (_u *AlertRuleUpdateOne) SetNillableResourceType(v *enum.AlertResourceType)
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_u *AlertRuleUpdateOne) SetResourceID(v uuid.UUID) *AlertRuleUpdateOne {
+func (_u *AlertRuleUpdateOne) SetResourceID(v string) *AlertRuleUpdateOne {
 	_u.mutation.SetResourceID(v)
 	return _u
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_u *AlertRuleUpdateOne) SetNillableResourceID(v *uuid.UUID) *AlertRuleUpdateOne {
+func (_u *AlertRuleUpdateOne) SetNillableResourceID(v *string) *AlertRuleUpdateOne {
 	if v != nil {
 		_u.SetResourceID(*v)
 	}
@@ -966,10 +966,10 @@ func (_u *AlertRuleUpdateOne) sqlSave(ctx context.Context) (_node *AlertRule, er
 		_spec.SetField(alertrule.FieldResourceType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ResourceID(); ok {
-		_spec.SetField(alertrule.FieldResourceID, field.TypeUUID, value)
+		_spec.SetField(alertrule.FieldResourceID, field.TypeString, value)
 	}
 	if _u.mutation.ResourceIDCleared() {
-		_spec.ClearField(alertrule.FieldResourceID, field.TypeUUID)
+		_spec.ClearField(alertrule.FieldResourceID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Conditions(); ok {
 		_spec.SetField(alertrule.FieldConditions, field.TypeJSON, value)

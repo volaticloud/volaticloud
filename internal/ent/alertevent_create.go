@@ -131,13 +131,13 @@ func (_c *AlertEventCreate) SetResourceType(v enum.AlertResourceType) *AlertEven
 }
 
 // SetResourceID sets the "resource_id" field.
-func (_c *AlertEventCreate) SetResourceID(v uuid.UUID) *AlertEventCreate {
+func (_c *AlertEventCreate) SetResourceID(v string) *AlertEventCreate {
 	_c.mutation.SetResourceID(v)
 	return _c
 }
 
 // SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (_c *AlertEventCreate) SetNillableResourceID(v *uuid.UUID) *AlertEventCreate {
+func (_c *AlertEventCreate) SetNillableResourceID(v *string) *AlertEventCreate {
 	if v != nil {
 		_c.SetResourceID(*v)
 	}
@@ -394,7 +394,7 @@ func (_c *AlertEventCreate) createSpec() (*AlertEvent, *sqlgraph.CreateSpec) {
 		_node.ResourceType = value
 	}
 	if value, ok := _c.mutation.ResourceID(); ok {
-		_spec.SetField(alertevent.FieldResourceID, field.TypeUUID, value)
+		_spec.SetField(alertevent.FieldResourceID, field.TypeString, value)
 		_node.ResourceID = &value
 	}
 	if value, ok := _c.mutation.OwnerID(); ok {
@@ -641,7 +641,7 @@ func (u *AlertEventUpsert) UpdateResourceType() *AlertEventUpsert {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (u *AlertEventUpsert) SetResourceID(v uuid.UUID) *AlertEventUpsert {
+func (u *AlertEventUpsert) SetResourceID(v string) *AlertEventUpsert {
 	u.Set(alertevent.FieldResourceID, v)
 	return u
 }
@@ -929,7 +929,7 @@ func (u *AlertEventUpsertOne) UpdateResourceType() *AlertEventUpsertOne {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (u *AlertEventUpsertOne) SetResourceID(v uuid.UUID) *AlertEventUpsertOne {
+func (u *AlertEventUpsertOne) SetResourceID(v string) *AlertEventUpsertOne {
 	return u.Update(func(s *AlertEventUpsert) {
 		s.SetResourceID(v)
 	})
@@ -1392,7 +1392,7 @@ func (u *AlertEventUpsertBulk) UpdateResourceType() *AlertEventUpsertBulk {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (u *AlertEventUpsertBulk) SetResourceID(v uuid.UUID) *AlertEventUpsertBulk {
+func (u *AlertEventUpsertBulk) SetResourceID(v string) *AlertEventUpsertBulk {
 	return u.Update(func(s *AlertEventUpsert) {
 		s.SetResourceID(v)
 	})

@@ -67,7 +67,7 @@ type AlertEventMutation struct {
 	sent_at          *time.Time
 	error_message    *string
 	resource_type    *enum.AlertResourceType
-	resource_id      *uuid.UUID
+	resource_id      *string
 	owner_id         *string
 	read_at          *time.Time
 	created_at       *time.Time
@@ -670,12 +670,12 @@ func (m *AlertEventMutation) ResetResourceType() {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (m *AlertEventMutation) SetResourceID(u uuid.UUID) {
-	m.resource_id = &u
+func (m *AlertEventMutation) SetResourceID(s string) {
+	m.resource_id = &s
 }
 
 // ResourceID returns the value of the "resource_id" field in the mutation.
-func (m *AlertEventMutation) ResourceID() (r uuid.UUID, exists bool) {
+func (m *AlertEventMutation) ResourceID() (r string, exists bool) {
 	v := m.resource_id
 	if v == nil {
 		return
@@ -686,7 +686,7 @@ func (m *AlertEventMutation) ResourceID() (r uuid.UUID, exists bool) {
 // OldResourceID returns the old "resource_id" field's value of the AlertEvent entity.
 // If the AlertEvent object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AlertEventMutation) OldResourceID(ctx context.Context) (v *uuid.UUID, err error) {
+func (m *AlertEventMutation) OldResourceID(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceID is only allowed on UpdateOne operations")
 	}
@@ -1124,7 +1124,7 @@ func (m *AlertEventMutation) SetField(name string, value ent.Value) error {
 		m.SetResourceType(v)
 		return nil
 	case alertevent.FieldResourceID:
-		v, ok := value.(uuid.UUID)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1371,7 +1371,7 @@ type AlertRuleMutation struct {
 	severity                  *enum.AlertSeverity
 	enabled                   *bool
 	resource_type             *enum.AlertResourceType
-	resource_id               *uuid.UUID
+	resource_id               *string
 	conditions                *map[string]interface{}
 	delivery_mode             *enum.AlertDeliveryMode
 	batch_interval_minutes    *int
@@ -1728,12 +1728,12 @@ func (m *AlertRuleMutation) ResetResourceType() {
 }
 
 // SetResourceID sets the "resource_id" field.
-func (m *AlertRuleMutation) SetResourceID(u uuid.UUID) {
-	m.resource_id = &u
+func (m *AlertRuleMutation) SetResourceID(s string) {
+	m.resource_id = &s
 }
 
 // ResourceID returns the value of the "resource_id" field in the mutation.
-func (m *AlertRuleMutation) ResourceID() (r uuid.UUID, exists bool) {
+func (m *AlertRuleMutation) ResourceID() (r string, exists bool) {
 	v := m.resource_id
 	if v == nil {
 		return
@@ -1744,7 +1744,7 @@ func (m *AlertRuleMutation) ResourceID() (r uuid.UUID, exists bool) {
 // OldResourceID returns the old "resource_id" field's value of the AlertRule entity.
 // If the AlertRule object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AlertRuleMutation) OldResourceID(ctx context.Context) (v *uuid.UUID, err error) {
+func (m *AlertRuleMutation) OldResourceID(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceID is only allowed on UpdateOne operations")
 	}
@@ -2494,7 +2494,7 @@ func (m *AlertRuleMutation) SetField(name string, value ent.Value) error {
 		m.SetResourceType(v)
 		return nil
 	case alertrule.FieldResourceID:
-		v, ok := value.(uuid.UUID)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

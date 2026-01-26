@@ -44,9 +44,9 @@ func Setup(t *testing.T) *TestEnv {
 	mockAdmin := keycloak.NewMockAdminClient()
 
 	// Create GraphQL handler with test configuration
-	// Pass nil for Keycloak auth client since tests handle auth differently
+	// Pass nil for Keycloak auth client and pubsub since tests handle auth differently
 	srv := handler.NewDefaultServer(NewExecutableSchema(Config{
-		Resolvers: NewResolver(entClient, nil, mockUMA),
+		Resolvers: NewResolver(entClient, nil, mockUMA, nil),
 		Directives: DirectiveRoot{
 			IsAuthenticated: IsAuthenticatedDirective,
 			HasScope:        HasScopeDirective,

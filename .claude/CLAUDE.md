@@ -90,6 +90,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0012](../docs/adr/0012-organization-alias-system.md) - Organization Alias System
 - [ADR-0013](../docs/adr/0013-long-short-signal-support.md) - Long/Short Signal Support with Mirror
 - [ADR-0017](../docs/adr/0017-hybrid-testing-strategy.md) - Hybrid Testing Strategy (mocks + testcontainers)
+- [ADR-0018](../docs/adr/0018-graphql-websocket-subscriptions.md) - GraphQL WebSocket Subscriptions (real-time updates)
 
 ## Project Structure
 
@@ -109,6 +110,7 @@ internal/
 ├── keycloak/      # Keycloak UMA client → See doc.go
 ├── monitor/       # Bot/backtest monitoring → See doc.go
 ├── organization/  # Organization alias system → See doc.go
+├── pubsub/        # Pub/sub messaging for GraphQL subscriptions → See doc.go
 ├── runner/        # Container orchestration → See doc.go
 ├── strategy/      # Strategy versioning
 └── utils/         # Shared utilities

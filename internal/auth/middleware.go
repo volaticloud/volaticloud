@@ -28,6 +28,13 @@ func (m *AuthMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		// Skip auth for WebSocket upgrade requests
+		// WebSocket connections are authenticated via connection_init payload in gqlgen's InitFunc
+		if isWebSocketUpgrade(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Extract Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -61,6 +68,16 @@ func (m *AuthMiddleware) Handler(next http.Handler) http.Handler {
 		// Continue with authenticated request
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// isWebSocketUpgrade checks if the request is a WebSocket upgrade request
+func isWebSocketUpgrade(r *http.Request) bool {
+	// Check for WebSocket upgrade headers
+	// Connection header should contain "upgrade" (case-insensitive)
+	// Upgrade header should be "websocket" (case-insensitive)
+	connection := strings.ToLower(r.Header.Get("Connection"))
+	upgrade := strings.ToLower(r.Header.Get("Upgrade"))
+	return strings.Contains(connection, "upgrade") && upgrade == "websocket"
 }
 
 // extractBearerToken extracts the token from "Bearer <token>" format

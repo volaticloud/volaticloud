@@ -449,6 +449,12 @@ type SignalConfigInput struct {
 	ExitConditions map[string]any `json:"exitConditions"`
 }
 
+// Real-time subscriptions for monitoring status changes.
+// All subscriptions require authentication via connection_init payload.
+// Authorization is checked per the @hasScope directive on each subscription.
+type Subscription struct {
+}
+
 // Estimated cost breakdown for resource usage
 // Uses runner-specific pricing rates
 type UsageCost struct {

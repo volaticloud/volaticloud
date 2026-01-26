@@ -39,7 +39,7 @@ import {
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
-import { useGetBacktestQuery } from '../Backtests/backtests.generated';
+import { useGetBacktestQuery, useBacktestProgressSubscription } from '../Backtests/backtests.generated';
 import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
@@ -164,14 +164,28 @@ class MyStrategy(IStrategy):
 
   const strategy = data?.strategies?.edges?.[0]?.node;
 
-  // Poll for active backtest status
-  const { data: backtestData } = useGetBacktestQuery({
+  // Fetch initial backtest data
+  const { data: backtestData, refetch: refetchBacktest } = useGetBacktestQuery({
     variables: { id: activeBacktestId! },
     skip: !activeBacktestId,
-    pollInterval: activeBacktestId ? 3000 : 0,
   });
 
-  const activeBacktest = backtestData?.backtests?.edges?.[0]?.node;
+  // Subscribe to real-time backtest progress updates via WebSocket
+  const { data: backtestSubscriptionData } = useBacktestProgressSubscription({
+    variables: { backtestId: activeBacktestId! },
+    skip: !activeBacktestId,
+  });
+
+  // Use subscription data if available, otherwise fall back to query data
+  const activeBacktest = backtestSubscriptionData?.backtestProgress || backtestData?.backtests?.edges?.[0]?.node;
+
+  // Refetch full data when subscription indicates completion
+  useEffect(() => {
+    if (backtestSubscriptionData?.backtestProgress?.status === 'completed' ||
+        backtestSubscriptionData?.backtestProgress?.status === 'failed') {
+      refetchBacktest();
+    }
+  }, [backtestSubscriptionData, refetchBacktest]);
   const isBacktestRunning = activeBacktest?.status === 'running' || activeBacktest?.status === 'pending';
   const isBacktestCompleted = activeBacktest?.status === 'completed';
   const isBacktestFailed = activeBacktest?.status === 'failed';

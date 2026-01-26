@@ -28,6 +28,7 @@ import (
 	"volaticloud/internal/keycloak"
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/organization"
+	"volaticloud/internal/pubsub"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
 	strategy1 "volaticloud/internal/strategy"
@@ -1802,6 +1803,457 @@ func (r *queryResolver) OrganizationInvitations(ctx context.Context, organizatio
 	}, nil
 }
 
+func (r *subscriptionResolver) BotStatusChanged(ctx context.Context, botID uuid.UUID) (<-chan *ent.Bot, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.BotTopic(botID.String())
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	botCh := make(chan *ent.Bot)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in BotStatusChanged: %v", r)
+			}
+			close(botCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Fetch the latest bot state from the database
+				bot, err := r.client.Bot.Get(ctx, botID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Bot was deleted, close subscription
+						log.Printf("subscription: bot %s was deleted, closing subscription", botID)
+						return
+					}
+					log.Printf("subscription: failed to fetch bot %s: %v", botID, err)
+					continue
+				}
+				select {
+				case botCh <- bot:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return botCh, nil
+}
+
+func (r *subscriptionResolver) BacktestProgress(ctx context.Context, backtestID uuid.UUID) (<-chan *ent.Backtest, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.BacktestTopic(backtestID.String())
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	backtestCh := make(chan *ent.Backtest)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in BacktestProgress: %v", r)
+			}
+			close(backtestCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Fetch the latest backtest state from the database
+				backtest, err := r.client.Backtest.Get(ctx, backtestID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Backtest was deleted, close subscription
+						log.Printf("subscription: backtest %s was deleted, closing subscription", backtestID)
+						return
+					}
+					log.Printf("subscription: failed to fetch backtest %s: %v", backtestID, err)
+					continue
+				}
+				select {
+				case backtestCh <- backtest:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return backtestCh, nil
+}
+
+func (r *subscriptionResolver) AlertEventCreated(ctx context.Context, ownerID string) (<-chan *ent.AlertEvent, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.AlertTopic(ownerID)
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	alertCh := make(chan *ent.AlertEvent)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in AlertEventCreated: %v", r)
+			}
+			close(alertCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case eventData, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Parse the event to get the alert ID
+				var event pubsub.AlertEvent
+				if err := json.Unmarshal(eventData, &event); err != nil {
+					log.Printf("subscription: failed to parse alert event: %v", err)
+					continue
+				}
+				// Fetch the alert from the database
+				alertID, err := uuid.Parse(event.AlertID)
+				if err != nil {
+					log.Printf("subscription: invalid alert ID %s: %v", event.AlertID, err)
+					continue
+				}
+				alertEvent, err := r.client.AlertEvent.Get(ctx, alertID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Alert was deleted, skip (don't close subscription - other alerts may come)
+						log.Printf("subscription: alert %s was deleted, skipping", alertID)
+						continue
+					}
+					log.Printf("subscription: failed to fetch alert %s: %v", event.AlertID, err)
+					continue
+				}
+				select {
+				case alertCh <- alertEvent:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return alertCh, nil
+}
+
+func (r *subscriptionResolver) TradeUpdated(ctx context.Context, botID uuid.UUID) (<-chan *ent.Trade, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.TradeTopic(botID.String())
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	tradeCh := make(chan *ent.Trade)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in TradeUpdated: %v", r)
+			}
+			close(tradeCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case eventData, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Parse the event to get the trade ID
+				var event pubsub.TradeEvent
+				if err := json.Unmarshal(eventData, &event); err != nil {
+					log.Printf("subscription: failed to parse trade event: %v", err)
+					continue
+				}
+				// Fetch the trade from the database
+				tradeID, err := uuid.Parse(event.TradeID)
+				if err != nil {
+					log.Printf("subscription: invalid trade ID %s: %v", event.TradeID, err)
+					continue
+				}
+				trade, err := r.client.Trade.Get(ctx, tradeID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Trade was deleted, skip
+						continue
+					}
+					log.Printf("subscription: failed to fetch trade %s: %v", event.TradeID, err)
+					continue
+				}
+				select {
+				case tradeCh <- trade:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return tradeCh, nil
+}
+
+func (r *subscriptionResolver) RunnerStatusChanged(ctx context.Context, runnerID uuid.UUID) (<-chan *ent.BotRunner, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.RunnerTopic(runnerID.String())
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	runnerCh := make(chan *ent.BotRunner)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in RunnerStatusChanged: %v", r)
+			}
+			close(runnerCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Fetch the latest runner state from the database
+				runner, err := r.client.BotRunner.Get(ctx, runnerID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Runner was deleted, close subscription
+						log.Printf("subscription: runner %s was deleted, closing subscription", runnerID)
+						return
+					}
+					log.Printf("subscription: failed to fetch runner %s: %v", runnerID, err)
+					continue
+				}
+				select {
+				case runnerCh <- runner:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return runnerCh, nil
+}
+
+func (r *subscriptionResolver) BotChanged(ctx context.Context, ownerID string) (<-chan *ent.Bot, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.OrgBotsTopic(ownerID)
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	botCh := make(chan *ent.Bot)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in BotChanged: %v", r)
+			}
+			close(botCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case data, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Parse bot ID from event and fetch latest state
+				var event pubsub.BotEvent
+				if err := json.Unmarshal(data, &event); err != nil {
+					log.Printf("subscription: failed to unmarshal bot event: %v", err)
+					continue
+				}
+				botID, err := uuid.Parse(event.BotID)
+				if err != nil {
+					log.Printf("subscription: invalid bot ID in event: %v", err)
+					continue
+				}
+				bot, err := r.client.Bot.Get(ctx, botID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Bot was deleted, skip (don't close - other bots may update)
+						continue
+					}
+					log.Printf("subscription: failed to fetch bot %s: %v", botID, err)
+					continue
+				}
+				select {
+				case botCh <- bot:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return botCh, nil
+}
+
+func (r *subscriptionResolver) TradeChanged(ctx context.Context, ownerID string) (<-chan *ent.Trade, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.OrgTradesTopic(ownerID)
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	tradeCh := make(chan *ent.Trade)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in TradeChanged: %v", r)
+			}
+			close(tradeCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case data, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Parse trade ID from event and fetch latest state
+				var event pubsub.TradeEvent
+				if err := json.Unmarshal(data, &event); err != nil {
+					log.Printf("subscription: failed to unmarshal trade event: %v", err)
+					continue
+				}
+				tradeID, err := uuid.Parse(event.TradeID)
+				if err != nil {
+					log.Printf("subscription: invalid trade ID in event: %v", err)
+					continue
+				}
+				trade, err := r.client.Trade.Get(ctx, tradeID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Trade was deleted, skip
+						continue
+					}
+					log.Printf("subscription: failed to fetch trade %s: %v", tradeID, err)
+					continue
+				}
+				select {
+				case tradeCh <- trade:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return tradeCh, nil
+}
+
+func (r *subscriptionResolver) RunnerChanged(ctx context.Context, ownerID string) (<-chan *ent.BotRunner, error) {
+	// Authorization is already checked by @hasScope directive on initial subscribe
+	if r.pubsub == nil {
+		return nil, fmt.Errorf("subscriptions not available: pub/sub not configured")
+	}
+
+	topic := pubsub.OrgRunnersTopic(ownerID)
+	eventCh, unsub := r.pubsub.Subscribe(ctx, topic)
+
+	runnerCh := make(chan *ent.BotRunner)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in RunnerChanged: %v", r)
+			}
+			close(runnerCh)
+			unsub()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case data, ok := <-eventCh:
+				if !ok {
+					return
+				}
+				// Parse runner ID from event and fetch latest state
+				var event pubsub.RunnerEvent
+				if err := json.Unmarshal(data, &event); err != nil {
+					log.Printf("subscription: failed to unmarshal runner event: %v", err)
+					continue
+				}
+				runnerID, err := uuid.Parse(event.RunnerID)
+				if err != nil {
+					log.Printf("subscription: invalid runner ID in event: %v", err)
+					continue
+				}
+				runner, err := r.client.BotRunner.Get(ctx, runnerID)
+				if err != nil {
+					if ent.IsNotFound(err) {
+						// Runner was deleted, skip
+						continue
+					}
+					log.Printf("subscription: failed to fetch runner %s: %v", runnerID, err)
+					continue
+				}
+				select {
+				case runnerCh <- runner:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return runnerCh, nil
+}
+
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

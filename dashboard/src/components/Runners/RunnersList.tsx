@@ -23,7 +23,7 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
-import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation, GetRunnersQuery } from './runners.generated';
+import { useGetRunnersQuery, useGetRunnerWithSecretsLazyQuery, useRefreshRunnerDataMutation, useSetRunnerVisibilityMutation, useRunnerChangedSubscription, GetRunnersQuery } from './runners.generated';
 import { CreateRunnerDrawer } from './CreateRunnerDrawer';
 import { EditRunnerDrawer } from './EditRunnerDrawer';
 import { DeleteRunnerDrawer } from './DeleteRunnerDrawer';
@@ -68,9 +68,14 @@ export const RunnersList = () => {
           : { public: true })
       }
     },
-    pollInterval: 10000,
     fetchPolicy: 'network-only',
     skip: viewMode === 'mine' && !activeOrganizationId,
+  });
+
+  // Subscribe to runner changes for real-time updates (organization-level)
+  const { data: subscriptionData } = useRunnerChangedSubscription({
+    variables: { ownerId: activeOrganizationId! },
+    skip: !activeOrganizationId || viewMode !== 'mine',
   });
 
   // Sync pagination state with query results
@@ -80,6 +85,13 @@ export const RunnersList = () => {
       updateFromResponse(data.botRunners);
     }
   }, [data, loading, setLoading, updateFromResponse]);
+
+  // Refetch when subscription receives data
+  useEffect(() => {
+    if (subscriptionData?.runnerChanged) {
+      refetch();
+    }
+  }, [subscriptionData, refetch]);
 
   // Reset pagination when view mode changes
   useEffect(() => {

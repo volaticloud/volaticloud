@@ -17,7 +17,7 @@ type Alert struct {
 	AlertType    enum.AlertType
 	Severity     enum.AlertSeverity
 	ResourceType enum.AlertResourceType
-	ResourceID   *uuid.UUID
+	ResourceID   *string // UUID for bot/strategy/runner, or org alias for organization
 	Subject      string
 	Body         string
 	HTMLBody     string

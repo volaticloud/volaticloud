@@ -43,8 +43,8 @@ export type AlertEvent = Node & {
   readAt?: Maybe<Scalars['Time']['output']>;
   /** Actual recipients at time of send */
   recipients: Array<Scalars['String']['output']>;
-  /** ID of resource that triggered alert */
-  resourceID?: Maybe<Scalars['ID']['output']>;
+  /** Resource ID - UUID for bot/strategy/runner, or organization alias for org-level events */
+  resourceID?: Maybe<Scalars['String']['output']>;
   /** Type of resource that triggered alert */
   resourceType: AlertEventAlertResourceType;
   rule: AlertRule;
@@ -234,15 +234,20 @@ export type AlertEventWhereInput = {
   readAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
   readAtNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** resource_id field predicates */
-  resourceID?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDGT?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDGTE?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  resourceID?: InputMaybe<Scalars['String']['input']>;
+  resourceIDContains?: InputMaybe<Scalars['String']['input']>;
+  resourceIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  resourceIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  resourceIDGT?: InputMaybe<Scalars['String']['input']>;
+  resourceIDGTE?: InputMaybe<Scalars['String']['input']>;
+  resourceIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  resourceIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  resourceIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
   resourceIDIsNil?: InputMaybe<Scalars['Boolean']['input']>;
-  resourceIDLT?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDLTE?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDNEQ?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  resourceIDLT?: InputMaybe<Scalars['String']['input']>;
+  resourceIDLTE?: InputMaybe<Scalars['String']['input']>;
+  resourceIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  resourceIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   resourceIDNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** resource_type field predicates */
   resourceType?: InputMaybe<AlertEventAlertResourceType>;
@@ -320,8 +325,8 @@ export type AlertRule = Node & {
   ownerID: Scalars['String']['output'];
   /** List of recipient email addresses */
   recipients: Array<Scalars['String']['output']>;
-  /** Specific resource ID (null for org-level rules that apply to all resources) */
-  resourceID?: Maybe<Scalars['ID']['output']>;
+  /** Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules */
+  resourceID?: Maybe<Scalars['String']['output']>;
   /** Type of resource: organization, bot, strategy, runner */
   resourceType: AlertRuleAlertResourceType;
   /** Alert severity: critical, warning, info */
@@ -517,15 +522,20 @@ export type AlertRuleWhereInput = {
   ownerIDNEQ?: InputMaybe<Scalars['String']['input']>;
   ownerIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** resource_id field predicates */
-  resourceID?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDGT?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDGTE?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  resourceID?: InputMaybe<Scalars['String']['input']>;
+  resourceIDContains?: InputMaybe<Scalars['String']['input']>;
+  resourceIDContainsFold?: InputMaybe<Scalars['String']['input']>;
+  resourceIDEqualFold?: InputMaybe<Scalars['String']['input']>;
+  resourceIDGT?: InputMaybe<Scalars['String']['input']>;
+  resourceIDGTE?: InputMaybe<Scalars['String']['input']>;
+  resourceIDHasPrefix?: InputMaybe<Scalars['String']['input']>;
+  resourceIDHasSuffix?: InputMaybe<Scalars['String']['input']>;
+  resourceIDIn?: InputMaybe<Array<Scalars['String']['input']>>;
   resourceIDIsNil?: InputMaybe<Scalars['Boolean']['input']>;
-  resourceIDLT?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDLTE?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDNEQ?: InputMaybe<Scalars['ID']['input']>;
-  resourceIDNotIn?: InputMaybe<Array<Scalars['ID']['input']>>;
+  resourceIDLT?: InputMaybe<Scalars['String']['input']>;
+  resourceIDLTE?: InputMaybe<Scalars['String']['input']>;
+  resourceIDNEQ?: InputMaybe<Scalars['String']['input']>;
+  resourceIDNotIn?: InputMaybe<Array<Scalars['String']['input']>>;
   resourceIDNotNil?: InputMaybe<Scalars['Boolean']['input']>;
   /** resource_type field predicates */
   resourceType?: InputMaybe<AlertRuleAlertResourceType>;
@@ -1832,8 +1842,8 @@ export type CreateAlertRuleInput = {
   ownerID: Scalars['String']['input'];
   /** List of recipient email addresses */
   recipients?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** Specific resource ID (null for org-level rules that apply to all resources) */
-  resourceID?: InputMaybe<Scalars['ID']['input']>;
+  /** Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules */
+  resourceID?: InputMaybe<Scalars['String']['input']>;
   /** Type of resource: organization, bot, strategy, runner */
   resourceType: AlertRuleAlertResourceType;
   /** Alert severity: critical, warning, info */
@@ -4056,6 +4066,135 @@ export type StrategyWhereInput = {
   versionNumberNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type Subscription = {
+  __typename?: 'Subscription';
+  /**
+   * Subscribe to alert events for an organization.
+   * Receives notifications when new alerts are triggered.
+   */
+  alertEventCreated: AlertEvent;
+  /**
+   * Subscribe to backtest progress updates.
+   * Receives updates during backtest execution including progress percentage and completion.
+   */
+  backtestProgress: Backtest;
+  /**
+   * Subscribe to bot changes for an organization.
+   * Receives notifications when any bot in the organization is created, updated, or changes status.
+   */
+  botChanged: Bot;
+  /**
+   * Subscribe to bot status changes.
+   * Receives updates when a bot's status, health, or metrics change.
+   */
+  botStatusChanged: Bot;
+  /**
+   * Subscribe to runner changes for an organization.
+   * Receives notifications when any runner in the organization is created, updated, or changes status.
+   */
+  runnerChanged: BotRunner;
+  /**
+   * Subscribe to runner status changes.
+   * Receives updates when a runner's status changes (e.g., data download progress).
+   */
+  runnerStatusChanged: BotRunner;
+  /**
+   * Subscribe to trade changes for an organization.
+   * Receives notifications when any trade in the organization is created or updated.
+   */
+  tradeChanged: Trade;
+  /**
+   * Subscribe to trade updates for a bot.
+   * Receives notifications when trades are opened, updated, or closed.
+   */
+  tradeUpdated: Trade;
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionAlertEventCreatedArgs = {
+  ownerId: Scalars['String']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionBacktestProgressArgs = {
+  backtestId: Scalars['ID']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionBotChangedArgs = {
+  ownerId: Scalars['String']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionBotStatusChangedArgs = {
+  botId: Scalars['ID']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionRunnerChangedArgs = {
+  ownerId: Scalars['String']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionRunnerStatusChangedArgs = {
+  runnerId: Scalars['ID']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionTradeChangedArgs = {
+  ownerId: Scalars['String']['input'];
+};
+
+
+/**
+ * Real-time subscriptions for monitoring status changes.
+ * All subscriptions require authentication via connection_init payload.
+ * Authorization is checked per the @hasScope directive on each subscription.
+ */
+export type SubscriptionTradeUpdatedArgs = {
+  botId: Scalars['ID']['input'];
+};
+
 /** Time field options for TIME operands */
 export enum TimeField {
   DayOfMonth = 'day_of_month',
@@ -4399,8 +4538,8 @@ export type UpdateAlertRuleInput = {
   /** List of recipient email addresses */
   recipients?: InputMaybe<Array<Scalars['String']['input']>>;
   removeEventIDs?: InputMaybe<Array<Scalars['ID']['input']>>;
-  /** Specific resource ID (null for org-level rules that apply to all resources) */
-  resourceID?: InputMaybe<Scalars['ID']['input']>;
+  /** Resource ID - UUID for bot/strategy/runner, or organization alias for org-level rules */
+  resourceID?: InputMaybe<Scalars['String']['input']>;
   /** Type of resource: organization, bot, strategy, runner */
   resourceType?: InputMaybe<AlertRuleAlertResourceType>;
   /** Alert severity: critical, warning, info */

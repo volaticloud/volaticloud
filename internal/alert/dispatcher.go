@@ -13,12 +13,14 @@ import (
 	"volaticloud/internal/bot"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/pubsub"
 )
 
 // Dispatcher routes alerts to appropriate channels and creates audit records
 type Dispatcher struct {
 	dbClient     *ent.Client
 	emailChannel channel.Channel
+	pubsub       pubsub.PubSub
 	evaluator    *Evaluator
 	batcher      *Batcher
 	templateFn   func(alertType enum.AlertType, data map[string]interface{}) (subject, body, htmlBody string)
@@ -41,6 +43,11 @@ func (d *Dispatcher) SetEmailChannel(ch channel.Channel) {
 // SetBatcher sets the batcher for batched delivery mode
 func (d *Dispatcher) SetBatcher(batcher *Batcher) {
 	d.batcher = batcher
+}
+
+// SetPubSub sets the pub/sub for publishing alert events
+func (d *Dispatcher) SetPubSub(ps pubsub.PubSub) {
+	d.pubsub = ps
 }
 
 // SetTemplateFunc sets a custom template function for building alert content
@@ -248,8 +255,39 @@ func (d *Dispatcher) createEventRecord(
 		builder.SetErrorMessage(errorMessage)
 	}
 
-	_, err := builder.Save(ctx)
-	return err
+	alertEvent, err := builder.Save(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Publish alert event to pub/sub for real-time notifications
+	d.publishAlertEvent(ctx, alertEvent, rule, subject)
+
+	return nil
+}
+
+// publishAlertEvent publishes an alert event to pub/sub
+func (d *Dispatcher) publishAlertEvent(ctx context.Context, alertEvent *ent.AlertEvent, rule *ent.AlertRule, title string) {
+	if d.pubsub == nil {
+		return
+	}
+
+	event := pubsub.AlertEvent{
+		Type:        pubsub.EventTypeAlertCreated,
+		AlertID:     alertEvent.ID.String(),
+		RuleID:      rule.ID.String(),
+		OwnerID:     rule.OwnerID,
+		AlertType:   string(rule.AlertType),
+		Severity:    string(rule.Severity),
+		Title:       title,
+		Description: alertEvent.Body,
+		Timestamp:   time.Now(),
+	}
+
+	topic := pubsub.AlertTopic(rule.OwnerID)
+	if err := d.pubsub.Publish(ctx, topic, event); err != nil {
+		log.Printf("Alert: failed to publish alert event: %v", err)
+	}
 }
 
 // defaultTemplate uses Hermes templates from domain packages to generate beautiful emails.

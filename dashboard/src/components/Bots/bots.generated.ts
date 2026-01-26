@@ -105,6 +105,20 @@ export type GetBotUsageHistoryQueryVariables = Types.Exact<{
 
 export type GetBotUsageHistoryQuery = { __typename?: 'Query', botUsageHistory: Array<{ __typename?: 'ResourceUsageAggregation', id: string, resourceType: Types.ResourceUsageAggregationResourceType, resourceID: string, granularity: Types.ResourceUsageAggregationAggregationGranularity, bucketStart: string, bucketEnd: string, cpuCoreSeconds: number, cpuAvgPercent: number, cpuMaxPercent: number, memoryGBSeconds: number, memoryAvgBytes: number, memoryMaxBytes: number, networkRxBytes: number, networkTxBytes: number, blockReadBytes: number, blockWriteBytes: number, sampleCount: number }> };
 
+export type BotStatusChangedSubscriptionVariables = Types.Exact<{
+  botId: Types.Scalars['ID']['input'];
+}>;
+
+
+export type BotStatusChangedSubscription = { __typename?: 'Subscription', botStatusChanged: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, lastSeenAt?: string | null, errorMessage?: string | null, metrics?: { __typename?: 'BotMetrics', id: string, profitClosedCoin?: number | null, profitClosedPercent?: number | null, profitAllCoin?: number | null, profitAllPercent?: number | null, tradeCount?: number | null, closedTradeCount?: number | null, openTradeCount?: number | null, winningTrades?: number | null, losingTrades?: number | null, winrate?: number | null, expectancy?: number | null, profitFactor?: number | null, maxDrawdown?: number | null, maxDrawdownAbs?: number | null, bestPair?: string | null, bestRate?: number | null, fetchedAt: string, updatedAt: string } | null } };
+
+export type BotChangedSubscriptionVariables = Types.Exact<{
+  ownerId: Types.Scalars['String']['input'];
+}>;
+
+
+export type BotChangedSubscription = { __typename?: 'Subscription', botChanged: { __typename?: 'Bot', id: string, name: string, status: Types.BotBotStatus, mode: Types.BotBotMode, lastSeenAt?: string | null, errorMessage?: string | null, exchange: { __typename?: 'Exchange', id: string, name: string }, strategy: { __typename?: 'Strategy', id: string, name: string }, runner: { __typename?: 'BotRunner', id: string, name: string, type: Types.BotRunnerRunnerType } } };
+
 
 export const GetBotsDocument = gql`
     query GetBots($first: Int, $after: Cursor, $where: BotWhereInput) {
@@ -786,3 +800,107 @@ export type GetBotUsageHistoryQueryHookResult = ReturnType<typeof useGetBotUsage
 export type GetBotUsageHistoryLazyQueryHookResult = ReturnType<typeof useGetBotUsageHistoryLazyQuery>;
 export type GetBotUsageHistorySuspenseQueryHookResult = ReturnType<typeof useGetBotUsageHistorySuspenseQuery>;
 export type GetBotUsageHistoryQueryResult = Apollo.QueryResult<GetBotUsageHistoryQuery, GetBotUsageHistoryQueryVariables>;
+export const BotStatusChangedDocument = gql`
+    subscription BotStatusChanged($botId: ID!) {
+  botStatusChanged(botId: $botId) {
+    id
+    name
+    status
+    mode
+    lastSeenAt
+    errorMessage
+    metrics {
+      id
+      profitClosedCoin
+      profitClosedPercent
+      profitAllCoin
+      profitAllPercent
+      tradeCount
+      closedTradeCount
+      openTradeCount
+      winningTrades
+      losingTrades
+      winrate
+      expectancy
+      profitFactor
+      maxDrawdown
+      maxDrawdownAbs
+      bestPair
+      bestRate
+      fetchedAt
+      updatedAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useBotStatusChangedSubscription__
+ *
+ * To run a query within a React component, call `useBotStatusChangedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useBotStatusChangedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBotStatusChangedSubscription({
+ *   variables: {
+ *      botId: // value for 'botId'
+ *   },
+ * });
+ */
+export function useBotStatusChangedSubscription(baseOptions: Apollo.SubscriptionHookOptions<BotStatusChangedSubscription, BotStatusChangedSubscriptionVariables> & ({ variables: BotStatusChangedSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<BotStatusChangedSubscription, BotStatusChangedSubscriptionVariables>(BotStatusChangedDocument, options);
+      }
+export type BotStatusChangedSubscriptionHookResult = ReturnType<typeof useBotStatusChangedSubscription>;
+export type BotStatusChangedSubscriptionResult = Apollo.SubscriptionResult<BotStatusChangedSubscription>;
+export const BotChangedDocument = gql`
+    subscription BotChanged($ownerId: String!) {
+  botChanged(ownerId: $ownerId) {
+    id
+    name
+    status
+    mode
+    lastSeenAt
+    errorMessage
+    exchange {
+      id
+      name
+    }
+    strategy {
+      id
+      name
+    }
+    runner {
+      id
+      name
+      type
+    }
+  }
+}
+    `;
+
+/**
+ * __useBotChangedSubscription__
+ *
+ * To run a query within a React component, call `useBotChangedSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useBotChangedSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBotChangedSubscription({
+ *   variables: {
+ *      ownerId: // value for 'ownerId'
+ *   },
+ * });
+ */
+export function useBotChangedSubscription(baseOptions: Apollo.SubscriptionHookOptions<BotChangedSubscription, BotChangedSubscriptionVariables> & ({ variables: BotChangedSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<BotChangedSubscription, BotChangedSubscriptionVariables>(BotChangedDocument, options);
+      }
+export type BotChangedSubscriptionHookResult = ReturnType<typeof useBotChangedSubscription>;
+export type BotChangedSubscriptionResult = Apollo.SubscriptionResult<BotChangedSubscription>;

@@ -16,7 +16,7 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
-import { useGetBotsQuery, GetBotsQuery } from './bots.generated';
+import { useGetBotsQuery, useBotChangedSubscription, GetBotsQuery } from './bots.generated';
 import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { useOrganizationPermission } from '../../hooks';
 import { CreateBotDrawer } from './CreateBotDrawer';
@@ -68,9 +68,21 @@ export const BotsList = () => {
           : { public: true })
       }
     },
-    pollInterval: 30000,
     skip: viewMode === 'mine' && !activeOrganizationId,
   });
+
+  // Subscribe to bot changes for real-time updates (organization-level)
+  const { data: subscriptionData } = useBotChangedSubscription({
+    variables: { ownerId: activeOrganizationId! },
+    skip: !activeOrganizationId || viewMode !== 'mine',
+  });
+
+  // Refetch when subscription receives data
+  useEffect(() => {
+    if (subscriptionData?.botChanged) {
+      refetch();
+    }
+  }, [subscriptionData, refetch]);
 
   // Sync pagination state with query results
   useEffect(() => {
