@@ -33,6 +33,9 @@ deployments:
             value: "30s"
           - name: VOLATICLOUD_ETCD_ENDPOINTS
             value: "volaticloud-etcd.etcd-system.svc.cluster.local:2379"
+          # Required for WebSocket origin validation (even though HTTP goes through same-origin Caddy)
+          - name: VOLATICLOUD_CORS_ORIGINS
+            value: "https://console.volaticloud.com"
 
         envsFromSecret:
           volaticloud-secrets:
