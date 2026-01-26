@@ -10,5 +10,8 @@ build/
 *.min.js
 *.bundle.js
 
+# Claude Code artifacts
+.claude/
+
 # Temporary files
 .DS_Store

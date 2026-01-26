@@ -135,11 +135,8 @@ func TestSubscriptionResolver_ContextCancellation(t *testing.T) {
 
 	// Channel should close eventually
 	select {
-	case _, ok := <-ch:
-		if ok {
-			// Got a message before close - that's acceptable if it was in flight
-		}
-		// Channel closed, test passes
+	case <-ch:
+		// Got a message before close or channel closed - both acceptable
 	case <-time.After(2 * time.Second):
 		t.Error("Channel did not close after context cancellation")
 	}
