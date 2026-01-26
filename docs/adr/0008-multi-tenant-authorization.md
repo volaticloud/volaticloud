@@ -1658,6 +1658,38 @@ const canDelete = can(bot.id, 'delete');
 const canRun = can(bot.id, 'run');
 ```
 
+**4. Cache Invalidation Strategies (PR #155):**
+
+The permission cache implements two invalidation strategies to prevent stale permissions:
+
+| Strategy | Trigger | Behavior |
+|----------|---------|----------|
+| **Time-based (TTL)** | 5 minutes elapsed | Permission expires, re-requested on next `can()` call |
+| **Size-based (LRU)** | Cache exceeds 1000 entries | Oldest entries evicted, can be re-requested |
+
+**Critical Implementation Detail:**
+
+The `PermissionContext` maintains a `requestedPermissions` ref to prevent duplicate requests. When a permission expires or is evicted, this ref must be cleared to allow re-requests:
+
+```typescript
+// In can() - clear expired permissions from requestedPermissions
+if (cached !== undefined) {
+  const age = Date.now() - cached.timestamp;
+  if (age < PERMISSION_CACHE_TTL_MS) {
+    return cached.granted;
+  }
+  // Expired - remove from requestedPermissions so it can be re-requested
+  requestedPermissions.current.delete(key);
+}
+
+// In evictOldestIfNeeded() - clear evicted permissions
+for (const [key] of evicted) {
+  requestedPermissions.current.delete(key);
+}
+```
+
+**Bug Fix (PR #155):** Previously, `requestedPermissions` was never cleared on expiration/eviction, causing permissions to never be re-requested. This led to buttons remaining permanently disabled after cache invalidation until page refresh.
+
 ### Components and Hooks
 
 **`usePermissions`** - Main hook for permission checking:
