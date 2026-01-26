@@ -92,7 +92,15 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     const sorted = Array.from(cacheMap.entries()).sort(
       ([, a], [, b]) => b.timestamp - a.timestamp
     );
-    return new Map(sorted.slice(0, MAX_CACHE_SIZE));
+    const kept = sorted.slice(0, MAX_CACHE_SIZE);
+    const evicted = sorted.slice(MAX_CACHE_SIZE);
+
+    // Remove evicted keys from requestedPermissions so they can be re-requested
+    for (const [key] of evicted) {
+      requestedPermissions.current.delete(key);
+    }
+
+    return new Map(kept);
   }, []);
 
   // Execute batched permission check
@@ -212,7 +220,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     } finally {
       setLoading(false);
     }
-  }, [apolloClient]);
+  }, [apolloClient, evictOldestIfNeeded]);
 
   // Schedule a permission request (batched)
   const scheduleRequest = useCallback(
@@ -261,7 +269,8 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         if (age < PERMISSION_CACHE_TTL_MS) {
           return cached.granted;
         }
-        // Expired - re-fetch
+        // Expired - remove from requestedPermissions so it can be re-requested
+        requestedPermissions.current.delete(key);
       }
 
       // Not cached or expired - schedule a request and return false for now
