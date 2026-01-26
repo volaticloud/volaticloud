@@ -1814,8 +1814,13 @@ func (r *subscriptionResolver) BotStatusChanged(ctx context.Context, botID uuid.
 
 	botCh := make(chan *ent.Bot)
 	go func() {
-		defer close(botCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in BotStatusChanged: %v", r)
+			}
+			close(botCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -1828,6 +1833,11 @@ func (r *subscriptionResolver) BotStatusChanged(ctx context.Context, botID uuid.
 				// Fetch the latest bot state from the database
 				bot, err := r.client.Bot.Get(ctx, botID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Bot was deleted, close subscription
+						log.Printf("subscription: bot %s was deleted, closing subscription", botID)
+						return
+					}
 					log.Printf("subscription: failed to fetch bot %s: %v", botID, err)
 					continue
 				}
@@ -1854,8 +1864,13 @@ func (r *subscriptionResolver) BacktestProgress(ctx context.Context, backtestID 
 
 	backtestCh := make(chan *ent.Backtest)
 	go func() {
-		defer close(backtestCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in BacktestProgress: %v", r)
+			}
+			close(backtestCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -1868,6 +1883,11 @@ func (r *subscriptionResolver) BacktestProgress(ctx context.Context, backtestID 
 				// Fetch the latest backtest state from the database
 				backtest, err := r.client.Backtest.Get(ctx, backtestID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Backtest was deleted, close subscription
+						log.Printf("subscription: backtest %s was deleted, closing subscription", backtestID)
+						return
+					}
 					log.Printf("subscription: failed to fetch backtest %s: %v", backtestID, err)
 					continue
 				}
@@ -1894,8 +1914,13 @@ func (r *subscriptionResolver) AlertEventCreated(ctx context.Context, ownerID st
 
 	alertCh := make(chan *ent.AlertEvent)
 	go func() {
-		defer close(alertCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in AlertEventCreated: %v", r)
+			}
+			close(alertCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -1919,6 +1944,11 @@ func (r *subscriptionResolver) AlertEventCreated(ctx context.Context, ownerID st
 				}
 				alertEvent, err := r.client.AlertEvent.Get(ctx, alertID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Alert was deleted, skip (don't close subscription - other alerts may come)
+						log.Printf("subscription: alert %s was deleted, skipping", alertID)
+						continue
+					}
 					log.Printf("subscription: failed to fetch alert %s: %v", event.AlertID, err)
 					continue
 				}
@@ -1945,8 +1975,13 @@ func (r *subscriptionResolver) TradeUpdated(ctx context.Context, botID uuid.UUID
 
 	tradeCh := make(chan *ent.Trade)
 	go func() {
-		defer close(tradeCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in TradeUpdated: %v", r)
+			}
+			close(tradeCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -1970,6 +2005,10 @@ func (r *subscriptionResolver) TradeUpdated(ctx context.Context, botID uuid.UUID
 				}
 				trade, err := r.client.Trade.Get(ctx, tradeID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Trade was deleted, skip
+						continue
+					}
 					log.Printf("subscription: failed to fetch trade %s: %v", event.TradeID, err)
 					continue
 				}
@@ -1996,8 +2035,13 @@ func (r *subscriptionResolver) RunnerStatusChanged(ctx context.Context, runnerID
 
 	runnerCh := make(chan *ent.BotRunner)
 	go func() {
-		defer close(runnerCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in RunnerStatusChanged: %v", r)
+			}
+			close(runnerCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -2010,6 +2054,11 @@ func (r *subscriptionResolver) RunnerStatusChanged(ctx context.Context, runnerID
 				// Fetch the latest runner state from the database
 				runner, err := r.client.BotRunner.Get(ctx, runnerID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Runner was deleted, close subscription
+						log.Printf("subscription: runner %s was deleted, closing subscription", runnerID)
+						return
+					}
 					log.Printf("subscription: failed to fetch runner %s: %v", runnerID, err)
 					continue
 				}
@@ -2036,8 +2085,13 @@ func (r *subscriptionResolver) BotChanged(ctx context.Context, ownerID string) (
 
 	botCh := make(chan *ent.Bot)
 	go func() {
-		defer close(botCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in BotChanged: %v", r)
+			}
+			close(botCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -2060,6 +2114,10 @@ func (r *subscriptionResolver) BotChanged(ctx context.Context, ownerID string) (
 				}
 				bot, err := r.client.Bot.Get(ctx, botID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Bot was deleted, skip (don't close - other bots may update)
+						continue
+					}
 					log.Printf("subscription: failed to fetch bot %s: %v", botID, err)
 					continue
 				}
@@ -2086,8 +2144,13 @@ func (r *subscriptionResolver) TradeChanged(ctx context.Context, ownerID string)
 
 	tradeCh := make(chan *ent.Trade)
 	go func() {
-		defer close(tradeCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in TradeChanged: %v", r)
+			}
+			close(tradeCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -2110,6 +2173,10 @@ func (r *subscriptionResolver) TradeChanged(ctx context.Context, ownerID string)
 				}
 				trade, err := r.client.Trade.Get(ctx, tradeID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Trade was deleted, skip
+						continue
+					}
 					log.Printf("subscription: failed to fetch trade %s: %v", tradeID, err)
 					continue
 				}
@@ -2136,8 +2203,13 @@ func (r *subscriptionResolver) RunnerChanged(ctx context.Context, ownerID string
 
 	runnerCh := make(chan *ent.BotRunner)
 	go func() {
-		defer close(runnerCh)
-		defer unsub()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("subscription panic recovered in RunnerChanged: %v", r)
+			}
+			close(runnerCh)
+			unsub()
+		}()
 
 		for {
 			select {
@@ -2160,6 +2232,10 @@ func (r *subscriptionResolver) RunnerChanged(ctx context.Context, ownerID string
 				}
 				runner, err := r.client.BotRunner.Get(ctx, runnerID)
 				if err != nil {
+					if ent.IsNotFound(err) {
+						// Runner was deleted, skip
+						continue
+					}
 					log.Printf("subscription: failed to fetch runner %s: %v", runnerID, err)
 					continue
 				}

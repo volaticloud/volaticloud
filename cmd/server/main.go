@@ -350,32 +350,33 @@ func runServer(c *cli.Context) error {
 		// Parse Redis URL and create client
 		opt, err := redis.ParseURL(redisURL)
 		if err != nil {
-			return fmt.Errorf("failed to parse Redis URL: %w", err)
-		}
-		redisClient := redis.NewClient(opt)
+			log.Printf("Warning: failed to parse Redis URL, falling back to in-memory pub/sub: %v", err)
+			ps = pubsub.NewMemoryPubSub()
+			log.Println("✓ In-memory pub/sub enabled (Redis URL parse error)")
+		} else {
+			redisClient := redis.NewClient(opt)
 
-		// Verify Redis connection
-		if err := redisClient.Ping(ctx).Err(); err != nil {
-			return fmt.Errorf("failed to connect to Redis: %w", err)
-		}
-
-		ps = pubsub.NewRedisPubSub(redisClient)
-		log.Printf("✓ Redis pub/sub enabled: %s", redisURL)
-		defer func() {
-			if err := ps.Close(); err != nil {
-				log.Printf("Error closing pub/sub: %v", err)
+			// Verify Redis connection with graceful degradation
+			if err := redisClient.Ping(ctx).Err(); err != nil {
+				log.Printf("Warning: Redis unavailable, falling back to in-memory pub/sub: %v", err)
+				redisClient.Close()
+				ps = pubsub.NewMemoryPubSub()
+				log.Println("✓ In-memory pub/sub enabled (Redis connection failed)")
+			} else {
+				ps = pubsub.NewRedisPubSub(redisClient)
+				log.Printf("✓ Redis pub/sub enabled: %s", redisURL)
 			}
-		}()
+		}
 	} else {
 		// Use in-memory pub/sub for single-instance deployments
 		ps = pubsub.NewMemoryPubSub()
 		log.Println("✓ In-memory pub/sub enabled (no Redis configured)")
-		defer func() {
-			if err := ps.Close(); err != nil {
-				log.Printf("Error closing pub/sub: %v", err)
-			}
-		}()
 	}
+	defer func() {
+		if err := ps.Close(); err != nil {
+			log.Printf("Error closing pub/sub: %v", err)
+		}
+	}()
 
 	// Connect pub/sub to alert manager for real-time notifications
 	if alertManager != nil {
