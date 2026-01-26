@@ -203,30 +203,59 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     return pairs;
   }, [runnerDataAvailable, effectiveExchange]);
 
-  // Compute available date range for the selected exchange
+  // Compute available date range for the selected exchange + pairs + timeframe combination
+  // Uses INTERSECTION: finds the overlapping date range across all selected pairs/timeframe
   const availableDateRange = useMemo(() => {
     if (!runnerDataAvailable?.exchanges?.length) return null;
     const exchangeData = runnerDataAvailable.exchanges.find(e => e.name.toLowerCase() === effectiveExchange.toLowerCase());
     if (!exchangeData?.pairs?.length) return null;
 
-    let minDate: Date | null = null;
-    let maxDate: Date | null = null;
+    // If no pairs selected, consider all pairs on the exchange
+    const selectedPairSet = effectivePairs.length > 0
+      ? new Set(effectivePairs.map(p => p.toUpperCase()))
+      : null;
+
+    // Track the intersection of date ranges (latest start, earliest end)
+    let latestStart: Date | null = null;
+    let earliestEnd: Date | null = null;
+    let hasMatchingData = false;
 
     for (const pair of exchangeData.pairs) {
+      // Skip pairs not in selection (if pairs are selected)
+      if (selectedPairSet && !selectedPairSet.has(pair.pair.toUpperCase())) {
+        continue;
+      }
+
       for (const tf of pair.timeframes ?? []) {
-        if (tf.from) {
-          const fromDate = new Date(tf.from);
-          if (!minDate || fromDate < minDate) minDate = fromDate;
+        // Skip timeframes that don't match selection (if timeframe is selected)
+        if (effectiveTimeframe && tf.timeframe !== effectiveTimeframe) {
+          continue;
         }
-        if (tf.to) {
+
+        if (tf.from && tf.to) {
+          hasMatchingData = true;
+          const fromDate = new Date(tf.from);
           const toDate = new Date(tf.to);
-          if (!maxDate || toDate > maxDate) maxDate = toDate;
+
+          // For intersection: take the LATEST start date
+          if (!latestStart || fromDate > latestStart) {
+            latestStart = fromDate;
+          }
+          // For intersection: take the EARLIEST end date
+          if (!earliestEnd || toDate < earliestEnd) {
+            earliestEnd = toDate;
+          }
         }
       }
     }
 
-    return minDate && maxDate ? { from: minDate, to: maxDate } : null;
-  }, [runnerDataAvailable, effectiveExchange]);
+    // Validate that the intersection is valid (start before end)
+    if (hasMatchingData && latestStart && earliestEnd && latestStart <= earliestEnd) {
+      return { from: latestStart, to: earliestEnd };
+    }
+
+    return null;
+  }, [runnerDataAvailable, effectiveExchange, effectivePairs, effectiveTimeframe]);
 
   // Compute available timeframes for selected exchange and pairs
   // Uses INTERSECTION: only shows timeframes available for ALL selected pairs
@@ -293,6 +322,33 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
       }
     }
   }, [availableTimeframes, timeframeOverride]);
+
+  // Auto-adjust dates when available date range changes
+  useEffect(() => {
+    if (!availableDateRange) return;
+
+    const availableFrom = dayjs(availableDateRange.from);
+    const availableTo = dayjs(availableDateRange.to);
+
+    setStartDate(currentStart => {
+      if (!currentStart) return availableFrom;
+      // Clamp start date to available range
+      if (currentStart.isBefore(availableFrom)) return availableFrom;
+      if (currentStart.isAfter(availableTo)) return availableFrom;
+      return currentStart;
+    });
+
+    setEndDate(currentEnd => {
+      if (!currentEnd) return availableTo;
+      // Clamp end date to available range
+      if (currentEnd.isAfter(availableTo)) return availableTo;
+      if (currentEnd.isBefore(availableFrom)) return availableTo;
+      return currentEnd;
+    });
+
+    // Switch to custom preset when dates are auto-adjusted
+    setDatePreset('custom');
+  }, [availableDateRange]);
 
   // Get active group for filtering strategies and runners
   const { activeOrganizationId } = useActiveOrganization();
@@ -608,6 +664,34 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     }
   };
 
+  // Date range validation - check if selected dates are within available range
+  const dateRangeValidation = useMemo(() => {
+    if (!availableDateRange || !startDate || !endDate) {
+      return { startError: null, endError: null };
+    }
+
+    const availableFrom = dayjs(availableDateRange.from);
+    const availableTo = dayjs(availableDateRange.to);
+    let startError: string | null = null;
+    let endError: string | null = null;
+
+    if (startDate.isBefore(availableFrom, 'day')) {
+      startError = `Start date is before available data (${availableFrom.format('YYYY-MM-DD')})`;
+    } else if (startDate.isAfter(availableTo, 'day')) {
+      startError = `Start date is after available data (${availableTo.format('YYYY-MM-DD')})`;
+    }
+
+    if (endDate.isAfter(availableTo, 'day')) {
+      endError = `End date is after available data (${availableTo.format('YYYY-MM-DD')})`;
+    } else if (endDate.isBefore(availableFrom, 'day')) {
+      endError = `End date is before available data (${availableFrom.format('YYYY-MM-DD')})`;
+    }
+
+    return { startError, endError };
+  }, [availableDateRange, startDate, endDate]);
+
+  const hasDateRangeError = !!(dateRangeValidation.startError || dateRangeValidation.endError);
+
   // Validation: need at least pairs (inherited or overridden) to run backtest
   const hasPairs = effectivePairs.length > 0;
   const hasValidationErrors = !!(
@@ -617,6 +701,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     configValidation.formatError
   );
   const isSubmitDisabled = loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate ||
+    hasDateRangeError ||
     (advancedMode && (!!jsonError || hasValidationErrors)) ||
     (!advancedMode && (!hasPairs || hasValidationErrors));
 
@@ -788,19 +873,46 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
 
                   {/* Trading Pairs with Inheritance */}
                   <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Trading Pairs *</Typography>
-                      {strategyConfigFields.pair_whitelist && pairsOverride === null && (
-                        <Chip
-                          label="Inherited from strategy"
-                          size="small"
-                          color="default"
-                          variant="outlined"
-                          onClick={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
-                          onDelete={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
-                          deleteIcon={<EditIcon fontSize="small" />}
-                          sx={{ cursor: 'pointer' }}
-                        />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" color="text.secondary">Trading Pairs *</Typography>
+                        {strategyConfigFields.pair_whitelist && pairsOverride === null && (
+                          <Chip
+                            label="Inherited from strategy"
+                            size="small"
+                            color="default"
+                            variant="outlined"
+                            onClick={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
+                            onDelete={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
+                            deleteIcon={<EditIcon fontSize="small" />}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        )}
+                      </Box>
+                      {/* Select All / Clear buttons - only show when in override mode and pairs available */}
+                      {(pairsOverride !== null || !strategyConfigFields.pair_whitelist) && availablePairs && availablePairs.length > 0 && (
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => setPairsOverride(availablePairs)}
+                            disabled={effectivePairs.length === availablePairs.length}
+                            sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
+                          >
+                            Select All ({availablePairs.length})
+                          </Button>
+                          {effectivePairs.length > 0 && (
+                            <Button
+                              size="small"
+                              variant="text"
+                              color="secondary"
+                              onClick={() => setPairsOverride([])}
+                              sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
+                            >
+                              Clear
+                            </Button>
+                          )}
+                        </Box>
                       )}
                     </Box>
 
@@ -906,6 +1018,13 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                   {availableDateRange && (
                     <Alert severity="info" sx={{ py: 0 }}>
                       Data available from {dayjs(availableDateRange.from).format('YYYY-MM-DD')} to {dayjs(availableDateRange.to).format('YYYY-MM-DD')}
+                      {effectivePairs.length > 0 && effectiveTimeframe && ' for selected pairs/timeframe'}
+                    </Alert>
+                  )}
+                  {!availableDateRange && runnerDataAvailable && effectivePairs.length > 0 && (
+                    <Alert severity="warning" sx={{ py: 0 }}>
+                      No overlapping data range found for the selected pairs
+                      {effectiveTimeframe ? ` and ${effectiveTimeframe} timeframe` : ''}
                     </Alert>
                   )}
                 </Box>
@@ -971,10 +1090,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                       setDatePreset('custom');
                     }
                   }}
+                  minDate={availableDateRange ? dayjs(availableDateRange.from) : undefined}
+                  maxDate={endDate ?? (availableDateRange ? dayjs(availableDateRange.to) : undefined)}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       required: true,
+                      error: !!dateRangeValidation.startError,
+                      helperText: dateRangeValidation.startError,
                     },
                   }}
                 />
@@ -987,10 +1110,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                       setDatePreset('custom');
                     }
                   }}
+                  minDate={startDate ?? (availableDateRange ? dayjs(availableDateRange.from) : undefined)}
+                  maxDate={availableDateRange ? dayjs(availableDateRange.to) : undefined}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       required: true,
+                      error: !!dateRangeValidation.endError,
+                      helperText: dateRangeValidation.endError,
                     },
                   }}
                 />
