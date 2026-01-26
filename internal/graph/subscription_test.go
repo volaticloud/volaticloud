@@ -117,8 +117,8 @@ func TestSubscriptionResolver_ContextCancellation(t *testing.T) {
 	defer ps.Close()
 
 	r := &Resolver{
-		client:    nil, // Will cause DB fetch to fail, but that's ok for this test
-		pubsub:    ps,
+		client: nil, // Will cause DB fetch to fail, but that's ok for this test
+		pubsub: ps,
 	}
 
 	sub := &subscriptionResolver{r}
