@@ -263,7 +263,7 @@ Before first deployment:
 
 - [ ] PostgreSQL database created
 - [ ] GitHub secrets configured in `prod` environment
-- [ ] Domain DNS configured (api.volaticloud.com → VKE LoadBalancer)
+- [ ] Domain DNS configured (console.volaticloud.com → VKE LoadBalancer)
 - [ ] VKE kubeconfig not expired
 - [ ] Ingress Nginx installed
 - [ ] Cert-manager installed with Let's Encrypt ClusterIssuer
@@ -273,8 +273,8 @@ After deployment:
 - [ ] Pods running: `kubectl get pods -n volaticloud`
 - [ ] Ingress configured: `kubectl get ingress -n volaticloud`
 - [ ] Certificate issued: `kubectl get certificate -n volaticloud`
-- [ ] Health endpoint: `curl https://api.volaticloud.com/health`
-- [ ] GraphQL playground: `https://api.volaticloud.com/`
+- [ ] Health endpoint: `curl https://console.volaticloud.com/gateway/v1/health`
+- [ ] GraphQL endpoint: `https://console.volaticloud.com/gateway/v1/graphql`
 
 ## Monitoring
 

@@ -50,7 +50,7 @@ introspection:
 servers:
   - url: http://localhost:8080/query
     description: Local Development
-  - url: https://api.volaticloud.com/query
+  - url: https://console.volaticloud.com/gateway/v1/graphql
     description: Production
 
 info:

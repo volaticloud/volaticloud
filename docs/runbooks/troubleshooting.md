@@ -134,7 +134,7 @@ GraphQL queries return errors or unexpected results
 
 ```bash
 # Test GraphQL endpoint
-curl -X POST https://api.volaticloud.com/query \
+curl -X POST https://console.volaticloud.com/gateway/v1/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"{ __schema { types { name } } }"}'
 
@@ -351,7 +351,7 @@ kubectl top pods -n volaticloud
 kubectl get hpa -n volaticloud
 
 # Monitor response times
-curl -w "@curl-format.txt" -o /dev/null -s https://api.volaticloud.com/health
+curl -w "@curl-format.txt" -o /dev/null -s https://console.volaticloud.com/gateway/v1/health
 # curl-format.txt:
 # time_namelookup:  %{time_namelookup}\n
 # time_connect:  %{time_connect}\n
@@ -847,7 +847,7 @@ kubectl run -it --rm netshoot --image=nicolaka/netshoot --restart=Never -- /bin/
 # Inside container:
 nslookup volaticloud-backend.volaticloud.svc.cluster.local
 curl http://volaticloud-backend:8080/health
-traceroute api.volaticloud.com
+traceroute console.volaticloud.com
 ```
 
 ---
