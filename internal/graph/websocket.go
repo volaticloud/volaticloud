@@ -44,7 +44,9 @@ func NewServerWithWebSocket(es graphql.ExecutableSchema, cfg WebSocketConfig) *h
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
 				if origin == "" {
-					return true // Allow connections without Origin header (e.g., wscat)
+					// Empty origin only allowed in development mode
+					// (when localhost is in allowed origins or no origins configured)
+					return isDevMode(cfg.AllowedOrigins)
 				}
 				return slices.Contains(cfg.AllowedOrigins, origin)
 			},
@@ -107,4 +109,18 @@ type WebSocketAuthError struct {
 
 func (e *WebSocketAuthError) Error() string {
 	return e.Message
+}
+
+// isDevMode checks if the server is running in development mode.
+// Returns true if no origins are configured or if localhost is in the allowed origins.
+func isDevMode(allowedOrigins []string) bool {
+	if len(allowedOrigins) == 0 {
+		return true
+	}
+	for _, origin := range allowedOrigins {
+		if strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1") {
+			return true
+		}
+	}
+	return false
 }

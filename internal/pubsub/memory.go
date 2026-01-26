@@ -56,17 +56,22 @@ func (ps *MemoryPubSub) Subscribe(ctx context.Context, topic string) (<-chan []b
 	ps.subs[topic] = append(ps.subs[topic], ch)
 	ps.mu.Unlock()
 
+	// Use sync.Once to prevent double-close panic if cleanup is called
+	// both manually and via context cancellation
+	var once sync.Once
 	cleanup := func() {
-		ps.mu.Lock()
-		defer ps.mu.Unlock()
-		subscribers := ps.subs[topic]
-		for i, c := range subscribers {
-			if c == ch {
-				ps.subs[topic] = append(subscribers[:i], subscribers[i+1:]...)
-				close(ch)
-				break
+		once.Do(func() {
+			ps.mu.Lock()
+			defer ps.mu.Unlock()
+			subscribers := ps.subs[topic]
+			for i, c := range subscribers {
+				if c == ch {
+					ps.subs[topic] = append(subscribers[:i], subscribers[i+1:]...)
+					close(ch)
+					break
+				}
 			}
-		}
+		})
 	}
 
 	// Handle context cancellation

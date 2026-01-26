@@ -67,6 +67,7 @@ Selected `graphql-ws` as the industry standard with native Apollo Client support
 | Kafka | ✅ Multi-instance | 5-10ms | High |
 
 Selected Redis for:
+
 - Industry standard for GraphQL subscriptions
 - Sub-millisecond latency
 - Simple deployment (Vultr offers managed Valkey, Redis-compatible)
@@ -115,6 +116,7 @@ Authorization uses existing `@hasScope` directive on subscription fields.
 ### Graceful Degradation
 
 If Redis is unavailable at startup:
+
 1. Log warning
 2. Fall back to in-memory pub/sub
 3. Continue operating (subscriptions work within single instance)
@@ -149,6 +151,7 @@ This ensures the application remains functional during Redis outages.
 ### 1. Server-Sent Events (SSE)
 
 **Rejected because:**
+
 - One-way only (server to client)
 - Less GraphQL ecosystem support
 - Would require separate transport
@@ -156,6 +159,7 @@ This ensures the application remains functional during Redis outages.
 ### 2. Long Polling
 
 **Rejected because:**
+
 - Higher latency than WebSockets
 - More complex server-side implementation
 - Higher resource usage
@@ -163,6 +167,7 @@ This ensures the application remains functional during Redis outages.
 ### 3. No Fallback (Require Redis)
 
 **Rejected because:**
+
 - Reduces development experience
 - Single point of failure
 - Unnecessary for single-instance deployments

@@ -287,3 +287,46 @@ func TestMemoryPubSub_PublishNoSubscribers(t *testing.T) {
 		t.Errorf("Publish to empty topic should not error: %v", err)
 	}
 }
+
+func TestMemoryPubSub_DoubleCleanup(t *testing.T) {
+	ps := NewMemoryPubSub()
+	defer ps.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	topic := "double-cleanup-topic"
+
+	_, unsub := ps.Subscribe(ctx, topic)
+
+	// Call cleanup manually
+	unsub()
+
+	// Cancel context (which also triggers cleanup)
+	cancel()
+
+	// Give the goroutine time to run
+	time.Sleep(50 * time.Millisecond)
+
+	// If we get here without panic, the test passes
+	// The sync.Once ensures cleanup only runs once
+}
+
+func TestMemoryPubSub_DoubleCleanupReverse(t *testing.T) {
+	ps := NewMemoryPubSub()
+	defer ps.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	topic := "double-cleanup-reverse-topic"
+
+	_, unsub := ps.Subscribe(ctx, topic)
+
+	// Cancel context first
+	cancel()
+
+	// Give the goroutine time to run cleanup
+	time.Sleep(50 * time.Millisecond)
+
+	// Call cleanup manually after context cancellation
+	unsub()
+
+	// If we get here without panic, the test passes
+}

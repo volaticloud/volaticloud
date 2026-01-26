@@ -359,7 +359,9 @@ func runServer(c *cli.Context) error {
 			// Verify Redis connection with graceful degradation
 			if err := redisClient.Ping(ctx).Err(); err != nil {
 				log.Printf("Warning: Redis unavailable, falling back to in-memory pub/sub: %v", err)
-				redisClient.Close()
+				if closeErr := redisClient.Close(); closeErr != nil {
+					log.Printf("Warning: failed to close Redis client: %v", closeErr)
+				}
 				ps = pubsub.NewMemoryPubSub()
 				log.Println("✓ In-memory pub/sub enabled (Redis connection failed)")
 			} else {
