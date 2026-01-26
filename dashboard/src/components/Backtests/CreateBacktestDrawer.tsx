@@ -37,6 +37,7 @@ import { debounce } from '@mui/material/utils';
 import {
   extractStrategyConfigFields,
   validateBacktestConfigAgainstRunner,
+  validateDateRange,
   SUPPORTED_EXCHANGES,
   type BacktestConfigValidationResult,
 } from './backtestValidation';
@@ -687,29 +688,13 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   };
 
   // Date range validation - check if selected dates are within available range
+  // Uses shared validateDateRange function for consistency
   const dateRangeValidation = useMemo(() => {
-    if (!availableDateRange || !startDate || !endDate) {
-      return { startError: null, endError: null };
-    }
-
-    const availableFrom = dayjs(availableDateRange.from);
-    const availableTo = dayjs(availableDateRange.to);
-    let startError: string | null = null;
-    let endError: string | null = null;
-
-    if (startDate.isBefore(availableFrom, 'day')) {
-      startError = `Start date is before available data (${availableFrom.format('YYYY-MM-DD')})`;
-    } else if (startDate.isAfter(availableTo, 'day')) {
-      startError = `Start date is after available data (${availableTo.format('YYYY-MM-DD')})`;
-    }
-
-    if (endDate.isAfter(availableTo, 'day')) {
-      endError = `End date is after available data (${availableTo.format('YYYY-MM-DD')})`;
-    } else if (endDate.isBefore(availableFrom, 'day')) {
-      endError = `End date is before available data (${availableFrom.format('YYYY-MM-DD')})`;
-    }
-
-    return { startError, endError };
+    return validateDateRange(
+      startDate?.toDate() ?? null,
+      endDate?.toDate() ?? null,
+      availableDateRange
+    );
   }, [availableDateRange, startDate, endDate]);
 
   const hasDateRangeError = !!(dateRangeValidation.startError || dateRangeValidation.endError);

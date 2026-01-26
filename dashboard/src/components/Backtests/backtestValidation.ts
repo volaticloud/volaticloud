@@ -304,7 +304,16 @@ export interface DateRangeValidationResult {
 }
 
 /**
+ * Creates a UTC day timestamp for consistent timezone-independent comparison.
+ * Strips time component by using UTC date parts.
+ */
+const toUTCDay = (date: Date): number => {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
+/**
  * Validates if selected dates are within the available date range.
+ * Uses UTC for timezone-independent day-level comparison.
  *
  * @param startDate - Selected start date
  * @param endDate - Selected end date
@@ -324,11 +333,11 @@ export const validateDateRange = (
   let startError: string | null = null;
   let endError: string | null = null;
 
-  // Compare dates at day granularity
-  const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-  const fromDay = new Date(availableFrom.getFullYear(), availableFrom.getMonth(), availableFrom.getDate());
-  const toDay = new Date(availableTo.getFullYear(), availableTo.getMonth(), availableTo.getDate());
+  // Compare dates at day granularity using UTC
+  const startDay = toUTCDay(startDate);
+  const endDay = toUTCDay(endDate);
+  const fromDay = toUTCDay(availableFrom);
+  const toDay = toUTCDay(availableTo);
 
   if (startDay < fromDay) {
     startError = `Start date is before available data (${formatDate(availableFrom)})`;
@@ -371,34 +380,3 @@ export const areAllPairsSelected = (
   return availablePairs.every(p => selectedSet.has(p.toUpperCase()));
 };
 
-/**
- * Clamps a date to be within an available range.
- * Returns the original date if it's within range, otherwise returns the boundary.
- *
- * @param date - Date to clamp
- * @param range - Available date range
- * @param preferStart - If date is outside range, prefer start (true) or end (false)
- * @returns Clamped date, or null if input date is null
- */
-export const clampDateToRange = (
-  date: Date | null,
-  range: AvailableDateRange,
-  preferStart: boolean
-): Date | null => {
-  if (!date) {
-    return preferStart ? range.from : range.to;
-  }
-
-  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const fromDay = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
-  const toDay = new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate());
-
-  if (dateDay < fromDay) {
-    return range.from;
-  }
-  if (dateDay > toDay) {
-    return preferStart ? range.from : range.to;
-  }
-
-  return date;
-};

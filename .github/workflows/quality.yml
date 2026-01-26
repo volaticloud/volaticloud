@@ -133,7 +133,7 @@ jobs:
         run: |
           COVERAGE=${{ steps.coverage.outputs.coverage }}
           THRESHOLD=70.0
-          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+          if awk "BEGIN {exit !($COVERAGE < $THRESHOLD)}"; then
             echo "::warning::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
           fi
 

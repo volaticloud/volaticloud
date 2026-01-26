@@ -7,7 +7,6 @@ import {
   computeAvailableDateRange,
   validateDateRange,
   areAllPairsSelected,
-  clampDateToRange,
   SUPPORTED_EXCHANGES,
   type AvailableDateRange,
 } from './backtestValidation';
@@ -747,48 +746,4 @@ describe('Backtest Validation', () => {
     });
   });
 
-  describe('clampDateToRange', () => {
-    const range: AvailableDateRange = {
-      from: new Date('2024-03-01'),
-      to: new Date('2024-09-30'),
-    };
-
-    it('returns original date when within range', () => {
-      const date = new Date('2024-06-15');
-      const result = clampDateToRange(date, range, true);
-      expect(result).toBe(date);
-    });
-
-    it('returns range start when date is before range', () => {
-      const result = clampDateToRange(new Date('2024-01-15'), range, true);
-      expect(result).toBe(range.from);
-    });
-
-    it('returns range start when date is after range and preferStart is true', () => {
-      const result = clampDateToRange(new Date('2024-12-15'), range, true);
-      expect(result).toBe(range.from);
-    });
-
-    it('returns range end when date is after range and preferStart is false', () => {
-      const result = clampDateToRange(new Date('2024-12-15'), range, false);
-      expect(result).toBe(range.to);
-    });
-
-    it('returns range start for null date when preferStart is true', () => {
-      const result = clampDateToRange(null, range, true);
-      expect(result).toBe(range.from);
-    });
-
-    it('returns range end for null date when preferStart is false', () => {
-      const result = clampDateToRange(null, range, false);
-      expect(result).toBe(range.to);
-    });
-
-    it('accepts boundary dates', () => {
-      const startDate = new Date('2024-03-01');
-      const endDate = new Date('2024-09-30');
-      expect(clampDateToRange(startDate, range, true)).toBe(startDate);
-      expect(clampDateToRange(endDate, range, false)).toBe(endDate);
-    });
-  });
 });
