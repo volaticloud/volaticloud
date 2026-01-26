@@ -262,19 +262,34 @@ export const computeAvailableDateRange = (
     ? new Set(pairs.map(p => p.toUpperCase()))
     : null;
 
-  // For each selected pair, find the date range for the selected timeframe
-  // Then compute the intersection of all per-pair ranges
+  // ==================== INTERSECTION ALGORITHM ====================
+  // For backtesting, we need data available for ALL selected pairs at the
+  // SAME time for the SAME timeframe. This requires finding the INTERSECTION
+  // of all per-pair date ranges.
+  //
+  // Intersection logic:
+  // - latestStart: The LATEST "from" date across all pairs (max of all starts)
+  // - earliestEnd: The EARLIEST "to" date across all pairs (min of all ends)
+  //
+  // Example:
+  //   BTC/USDT 5m: 2024-01-01 to 2024-09-30
+  //   ETH/USDT 5m: 2024-03-01 to 2024-12-31
+  //   Intersection: 2024-03-01 to 2024-09-30 (overlap where BOTH have data)
+  //
+  // If latestStart > earliestEnd, there's NO overlap → return null
+  // ==================================================================
+
   let latestStart: Date | null = null;
   let earliestEnd: Date | null = null;
   let pairsWithData = 0;
 
   for (const pair of exchangeData.pairs) {
-    // Skip pairs not in selection (if pairs are selected)
+    // Skip pairs not in user's selection (case-insensitive)
     if (selectedPairSet && !selectedPairSet.has(pair.pair.toUpperCase())) {
       continue;
     }
 
-    // Find the specific timeframe for this pair
+    // Find the date range for the SELECTED timeframe only
     const tfData = pair.timeframes?.find(tf => tf.timeframe === timeframe);
     if (!tfData?.from || !tfData?.to) {
       // This pair doesn't have data for the selected timeframe - skip it
@@ -286,17 +301,16 @@ export const computeAvailableDateRange = (
     const fromDate = new Date(tfData.from);
     const toDate = new Date(tfData.to);
 
-    // For intersection: take the LATEST start date across all pairs
+    // Update intersection bounds: take LATEST start (max) and EARLIEST end (min)
     if (!latestStart || fromDate > latestStart) {
       latestStart = fromDate;
     }
-    // For intersection: take the EARLIEST end date across all pairs
     if (!earliestEnd || toDate < earliestEnd) {
       earliestEnd = toDate;
     }
   }
 
-  // Validate that we have data and the intersection is valid (start <= end)
+  // Intersection is valid only if we have data AND start <= end (ranges overlap)
   if (pairsWithData > 0 && latestStart && earliestEnd && latestStart <= earliestEnd) {
     return { from: latestStart, to: earliestEnd };
   }

@@ -22,7 +22,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRunBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -40,9 +40,13 @@ import {
   validateBacktestConfigAgainstRunner,
   validateDateRange,
   computeAvailableDateRange,
+  areAllPairsSelected,
   SUPPORTED_EXCHANGES,
   type BacktestConfigValidationResult,
 } from './backtestValidation';
+
+// Default number of pairs to select when loading runner data
+const DEFAULT_PAIR_SELECTION_LIMIT = 3;
 
 interface CreateBacktestDrawerProps {
   open: boolean;
@@ -169,6 +173,9 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   // Notification for auto-adjusted dates
   const [dateAdjustedNotification, setDateAdjustedNotification] = useState<string | null>(null);
 
+  // Track previous date range to prevent duplicate notifications
+  const prevDateRangeRef = useRef<{ from: string; to: string } | null>(null);
+
   // Runner data availability
   const [runnerDataAvailable, setRunnerDataAvailable] = useState<RunnerDataAvailable | null>(null);
 
@@ -293,7 +300,19 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   // Auto-adjust dates only when they fall outside the available range
   // This preserves user's date selection when it's still valid
   useEffect(() => {
-    if (!availableDateRange) return;
+    if (!availableDateRange) {
+      prevDateRangeRef.current = null;
+      return;
+    }
+
+    // Create a key to detect if date range actually changed (prevent duplicate notifications)
+    const rangeKey = { from: availableDateRange.from.toISOString(), to: availableDateRange.to.toISOString() };
+    const prevRange = prevDateRangeRef.current;
+    const rangeChanged = !prevRange || prevRange.from !== rangeKey.from || prevRange.to !== rangeKey.to;
+    prevDateRangeRef.current = rangeKey;
+
+    // Only process if the date range actually changed
+    if (!rangeChanged) return;
 
     const availableFrom = dayjs(availableDateRange.from);
     const availableTo = dayjs(availableDateRange.to);
@@ -355,27 +374,35 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     setRunnerDataAvailable(data);
 
     if (data?.exchanges?.length) {
+      // Track which exchange will be selected after the update
+      let newExchange: string | null = null;
+
       // Use functional updates to avoid dependency on current state values
       setExchangeOverride(currentExchange => {
         const runnerExchangeNames = new Set(data.exchanges!.map(e => e.name.toLowerCase()));
         const exchange = currentExchange ?? 'binance';
         if (!runnerExchangeNames.has(exchange.toLowerCase())) {
           // Current exchange not available, switch to first available
-          return data.exchanges![0]?.name.toLowerCase() ?? 'binance';
+          newExchange = data.exchanges![0]?.name.toLowerCase() ?? 'binance';
+          return newExchange;
         }
+        newExchange = currentExchange;
         return currentExchange;
       });
 
-      // Update pairs based on the exchange that will be selected
+      // Update pairs based on the exchange that will be selected (not always the first one)
       setPairsOverride(currentPairs => {
         // Only update if user has already overridden pairs (not inheriting from strategy)
         if (currentPairs === null) {
           return null;
         }
-        // Find the exchange data for the first available exchange
-        const exchangeData = data.exchanges![0];
+        // Find the exchange data for the SELECTED exchange (use newExchange from above)
+        const targetExchange = newExchange ?? 'binance';
+        const exchangeData = data.exchanges!.find(
+          e => e.name.toLowerCase() === targetExchange.toLowerCase()
+        );
         if (exchangeData?.pairs?.length) {
-                    return exchangeData.pairs.map(p => p.pair).slice(0, 3);
+          return exchangeData.pairs.map(p => p.pair).slice(0, DEFAULT_PAIR_SELECTION_LIMIT);
         }
         return currentPairs;
       });
@@ -827,7 +854,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                             ex => ex.name.toLowerCase() === newExchange.toLowerCase()
                           );
                           if (exchangeData?.pairs?.length) {
-                            setPairsOverride(exchangeData.pairs.map(p => p.pair).slice(0, 3));
+                            setPairsOverride(exchangeData.pairs.map(p => p.pair).slice(0, DEFAULT_PAIR_SELECTION_LIMIT));
                                                       }
                         }
                       }}
@@ -872,10 +899,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                             size="small"
                             variant="text"
                             onClick={() => setPairsOverride(availablePairs)}
-                            disabled={
-                              effectivePairs.length === availablePairs.length &&
-                              effectivePairs.every(p => availablePairs.some(ap => ap.toUpperCase() === p.toUpperCase()))
-                            }
+                            disabled={areAllPairsSelected(effectivePairs, availablePairs)}
                             sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
                           >
                             Select All ({availablePairs.length})

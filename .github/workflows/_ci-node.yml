@@ -86,8 +86,8 @@ jobs:
             const fs = require('fs');
             try {
               const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
-              if (!data.total?.lines?.pct && data.total?.lines?.pct !== 0) {
-                console.error('Missing coverage data: total.lines.pct not found');
+              if (typeof data.total?.lines?.pct !== 'number') {
+                console.error('Missing coverage data: total.lines.pct not found or not a number');
                 process.exit(1);
               }
               console.log(data.total.lines.pct.toFixed(2));
