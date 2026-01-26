@@ -215,3 +215,192 @@ export const validateBacktestConfigAgainstRunner = (
 
   return result;
 };
+
+/**
+ * Available date range for backtesting
+ */
+export interface AvailableDateRange {
+  from: Date;
+  to: Date;
+}
+
+/**
+ * Computes the available date range based on selected exchange, pairs, and timeframe.
+ * Uses INTERSECTION logic: finds the overlapping date range where data exists for ALL
+ * selected pairs FOR THE SELECTED TIMEFRAME.
+ *
+ * IMPORTANT: A timeframe MUST be selected to compute the date range. This ensures
+ * accurate results - without a specific timeframe, combining ranges across different
+ * timeframes would give misleading results (e.g., showing a range that includes dates
+ * where some pairs lack data for the eventually-selected timeframe).
+ *
+ * @param runnerData - Runner's data availability metadata
+ * @param exchange - Selected exchange name
+ * @param pairs - Selected trading pairs (empty = consider all pairs)
+ * @param timeframe - Selected timeframe (null = returns null, timeframe required)
+ * @returns The intersection date range, or null if no valid overlap exists or no timeframe selected
+ */
+export const computeAvailableDateRange = (
+  runnerData: RunnerDataAvailable | null,
+  exchange: string,
+  pairs: string[],
+  timeframe: string | null
+): AvailableDateRange | null => {
+  if (!runnerData?.exchanges?.length) return null;
+
+  // Timeframe is required to compute accurate date range
+  // Without it, we'd mix ranges from different timeframes which is misleading
+  if (!timeframe) return null;
+
+  // No pairs selected = invalid state for date range computation
+  // Return null to indicate no valid range (UI should disable date pickers)
+  if (pairs.length === 0) return null;
+
+  const exchangeData = runnerData.exchanges.find(
+    e => e.name.toLowerCase() === exchange.toLowerCase()
+  );
+  if (!exchangeData?.pairs?.length) return null;
+
+  const selectedPairSet = new Set(pairs.map(p => p.toUpperCase()));
+
+  // ==================== INTERSECTION ALGORITHM ====================
+  // For backtesting, we need data available for ALL selected pairs at the
+  // SAME time for the SAME timeframe. This requires finding the INTERSECTION
+  // of all per-pair date ranges.
+  //
+  // Intersection logic:
+  // - latestStart: The LATEST "from" date across all pairs (max of all starts)
+  // - earliestEnd: The EARLIEST "to" date across all pairs (min of all ends)
+  //
+  // Example:
+  //   BTC/USDT 5m: 2024-01-01 to 2024-09-30
+  //   ETH/USDT 5m: 2024-03-01 to 2024-12-31
+  //   Intersection: 2024-03-01 to 2024-09-30 (overlap where BOTH have data)
+  //
+  // If latestStart > earliestEnd, there's NO overlap → return null
+  // ==================================================================
+
+  let latestStart: Date | null = null;
+  let earliestEnd: Date | null = null;
+  let pairsWithData = 0;
+
+  for (const pair of exchangeData.pairs) {
+    // Skip pairs not in user's selection (case-insensitive)
+    if (!selectedPairSet.has(pair.pair.toUpperCase())) {
+      continue;
+    }
+
+    // Find the date range for the SELECTED timeframe only
+    const tfData = pair.timeframes?.find(tf => tf.timeframe === timeframe);
+    if (!tfData?.from || !tfData?.to) {
+      // This pair doesn't have data for the selected timeframe - skip it
+      // Note: The UI should warn users if selected pairs lack the timeframe
+      continue;
+    }
+
+    pairsWithData++;
+    const fromDate = new Date(tfData.from);
+    const toDate = new Date(tfData.to);
+
+    // Update intersection bounds: take LATEST start (max) and EARLIEST end (min)
+    if (!latestStart || fromDate > latestStart) {
+      latestStart = fromDate;
+    }
+    if (!earliestEnd || toDate < earliestEnd) {
+      earliestEnd = toDate;
+    }
+  }
+
+  // Intersection is valid only if we have data AND start <= end (ranges overlap)
+  if (pairsWithData > 0 && latestStart && earliestEnd && latestStart <= earliestEnd) {
+    return { from: latestStart, to: earliestEnd };
+  }
+
+  return null;
+};
+
+/**
+ * Date range validation result
+ */
+export interface DateRangeValidationResult {
+  startError: string | null;
+  endError: string | null;
+}
+
+/**
+ * Creates a UTC day timestamp for consistent timezone-independent comparison.
+ * Strips time component by using UTC date parts.
+ */
+const toUTCDay = (date: Date): number => {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
+/**
+ * Validates if selected dates are within the available date range.
+ * Uses UTC for timezone-independent day-level comparison.
+ *
+ * @param startDate - Selected start date
+ * @param endDate - Selected end date
+ * @param availableRange - Available date range from runner
+ * @returns Validation result with error messages for start and end dates
+ */
+export const validateDateRange = (
+  startDate: Date | null,
+  endDate: Date | null,
+  availableRange: AvailableDateRange | null
+): DateRangeValidationResult => {
+  if (!availableRange || !startDate || !endDate) {
+    return { startError: null, endError: null };
+  }
+
+  const { from: availableFrom, to: availableTo } = availableRange;
+  let startError: string | null = null;
+  let endError: string | null = null;
+
+  // Compare dates at day granularity using UTC
+  const startDay = toUTCDay(startDate);
+  const endDay = toUTCDay(endDate);
+  const fromDay = toUTCDay(availableFrom);
+  const toDay = toUTCDay(availableTo);
+
+  if (startDay < fromDay) {
+    startError = `Start date is before available data (${formatDate(availableFrom)})`;
+  } else if (startDay > toDay) {
+    startError = `Start date is after available data (${formatDate(availableTo)})`;
+  }
+
+  if (endDay > toDay) {
+    endError = `End date is after available data (${formatDate(availableTo)})`;
+  } else if (endDay < fromDay) {
+    endError = `End date is before available data (${formatDate(availableFrom)})`;
+  }
+
+  return { startError, endError };
+};
+
+/**
+ * Formats a date as YYYY-MM-DD
+ */
+const formatDate = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+/**
+ * Checks if all available pairs are selected (case-insensitive comparison).
+ *
+ * @param selectedPairs - Currently selected pairs
+ * @param availablePairs - All available pairs from runner
+ * @returns true if all available pairs are selected
+ */
+export const areAllPairsSelected = (
+  selectedPairs: string[],
+  availablePairs: string[]
+): boolean => {
+  if (selectedPairs.length !== availablePairs.length) {
+    return false;
+  }
+
+  const selectedSet = new Set(selectedPairs.map(p => p.toUpperCase()));
+  return availablePairs.every(p => selectedSet.has(p.toUpperCase()));
+};
+

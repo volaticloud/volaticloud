@@ -9,8 +9,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  coverage-report:
-    name: Coverage Report
+  backend-coverage-report:
+    name: Backend Coverage Report
     runs-on: ${{ vars.RUNNER_LABEL }}
     steps:
       - name: Checkout
@@ -43,7 +43,7 @@ jobs:
             const coverage = '${{ steps.coverage.outputs.coverage }}';
             const details = execSync('go tool cover -func=coverage.filtered.out | tail -20').toString();
 
-            const comment = `## Test Coverage Report
+            const comment = `## Backend Test Coverage Report
 
             **Total Coverage (excluding generated code): ${coverage}%**
 
@@ -71,6 +71,84 @@ jobs:
           COVERAGE=${{ steps.coverage.outputs.coverage }}
           THRESHOLD=85.0
           if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "::warning::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+          fi
+
+  frontend-coverage-report:
+    name: Frontend Coverage Report
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+        with:
+          node-version: '22'
+          working-directory: 'dashboard'
+
+      - name: Run tests with coverage
+        working-directory: dashboard
+        run: npm run test:coverage -- --run
+
+      - name: Parse coverage
+        id: coverage
+        working-directory: dashboard
+        run: |
+          # Fail explicitly if coverage file is missing
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::error::Coverage file not found: coverage/coverage-summary.json"
+            exit 1
+          fi
+          # Extract coverage percentage with error handling
+          COVERAGE=$(cat coverage/coverage-summary.json | node -e "
+            const fs = require('fs');
+            try {
+              const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
+              if (typeof data.total?.lines?.pct !== 'number') {
+                console.error('Missing coverage data: total.lines.pct not found or not a number');
+                process.exit(1);
+              }
+              console.log(data.total.lines.pct.toFixed(2));
+            } catch (e) {
+              console.error('Failed to parse coverage JSON:', e.message);
+              process.exit(1);
+            }
+          ")
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: Generate report
+        working-directory: dashboard
+        run: |
+          echo "### Frontend Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "**Total: ${{ steps.coverage.outputs.coverage }}%**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = '${{ steps.coverage.outputs.coverage }}';
+
+            const comment = `## Frontend Test Coverage Report
+
+            **Total Coverage (excluding generated code): ${coverage}%**
+
+            Coverage report for commit ${context.sha.substring(0, 7)}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Coverage gate
+        run: |
+          COVERAGE=${{ steps.coverage.outputs.coverage }}
+          THRESHOLD=70.0
+          if awk "BEGIN {exit !($COVERAGE < $THRESHOLD)}"; then
             echo "::warning::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
           fi
 

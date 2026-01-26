@@ -4,7 +4,11 @@ import {
   validateTradingPairsFormat,
   extractStrategyConfigFields,
   validateBacktestConfigAgainstRunner,
+  computeAvailableDateRange,
+  validateDateRange,
+  areAllPairsSelected,
   SUPPORTED_EXCHANGES,
+  type AvailableDateRange,
 } from './backtestValidation';
 import type { RunnerDataAvailable } from '../shared/RunnerSelector';
 
@@ -465,4 +469,326 @@ describe('Backtest Validation', () => {
       });
     });
   });
+
+  describe('computeAvailableDateRange', () => {
+    const createRunnerDataWithDates = (
+      exchanges: Array<{
+        name: string;
+        pairs: Array<{
+          pair: string;
+          timeframes: Array<{ timeframe: string; from: string; to: string }>;
+        }>;
+      }>
+    ): RunnerDataAvailable => ({
+      exchanges: exchanges.map((e) => ({
+        name: e.name,
+        pairs: e.pairs.map((p) => ({
+          pair: p.pair,
+          timeframes: p.timeframes,
+        })),
+      })),
+    });
+
+    it('returns null when no runner data', () => {
+      const result = computeAvailableDateRange(null, 'binance', ['BTC/USDT'], '5m');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when exchange not found', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'kraken', ['BTC/USDT'], '5m');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when no timeframe specified (timeframe required)', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], null);
+      expect(result).toBeNull();
+    });
+
+    it('only considers selected timeframe to avoid mixing different timeframe ranges', () => {
+      // This tests the bug fix: pairs with different timeframe availability
+      // BTC/USDT has 5m data, ETH/USDT only has 1h data (no 5m)
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-06-30' }] },
+            { pair: 'ETH/USDT', timeframes: [{ timeframe: '1h', from: '2024-03-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      // When selecting 5m timeframe, ETH/USDT should be excluded (no 5m data)
+      // So we only get BTC/USDT's 5m range
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT', 'ETH/USDT'], '5m');
+      expect(result).not.toBeNull();
+      expect(result!.from.toISOString().split('T')[0]).toBe('2024-01-01');
+      expect(result!.to.toISOString().split('T')[0]).toBe('2024-06-30');
+    });
+
+    it('returns null when no pairs have the selected timeframe', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '1h', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], '5m');
+      expect(result).toBeNull();
+    });
+
+    it('returns date range for single pair and timeframe', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], '5m');
+      expect(result).not.toBeNull();
+      expect(result!.from.toISOString().split('T')[0]).toBe('2024-01-01');
+      expect(result!.to.toISOString().split('T')[0]).toBe('2024-12-31');
+    });
+
+    it('returns intersection for multiple pairs', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+            { pair: 'ETH/USDT', timeframes: [{ timeframe: '5m', from: '2024-03-01', to: '2024-09-30' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT', 'ETH/USDT'], '5m');
+      expect(result).not.toBeNull();
+      // Intersection: latest start (2024-03-01) to earliest end (2024-09-30)
+      expect(result!.from.toISOString().split('T')[0]).toBe('2024-03-01');
+      expect(result!.to.toISOString().split('T')[0]).toBe('2024-09-30');
+    });
+
+    it('returns null when no overlapping date range', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-03-31' }] },
+            { pair: 'ETH/USDT', timeframes: [{ timeframe: '5m', from: '2024-06-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT', 'ETH/USDT'], '5m');
+      expect(result).toBeNull();
+    });
+
+    it('filters by timeframe when specified', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            {
+              pair: 'BTC/USDT',
+              timeframes: [
+                { timeframe: '5m', from: '2024-01-01', to: '2024-06-30' },
+                { timeframe: '1h', from: '2024-03-01', to: '2024-12-31' },
+              ],
+            },
+          ],
+        },
+      ]);
+      const result5m = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], '5m');
+      expect(result5m!.to.toISOString().split('T')[0]).toBe('2024-06-30');
+
+      const result1h = computeAvailableDateRange(runnerData, 'binance', ['BTC/USDT'], '1h');
+      expect(result1h!.from.toISOString().split('T')[0]).toBe('2024-03-01');
+    });
+
+    it('returns null when no pairs specified (empty pairs = invalid state)', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+            { pair: 'ETH/USDT', timeframes: [{ timeframe: '5m', from: '2024-03-01', to: '2024-09-30' }] },
+          ],
+        },
+      ]);
+      // Empty pairs is an invalid state - user must select at least one pair
+      const result = computeAvailableDateRange(runnerData, 'binance', [], '5m');
+      expect(result).toBeNull();
+    });
+
+    it('handles case-insensitive exchange matching', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'Binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'BINANCE', ['BTC/USDT'], '5m');
+      expect(result).not.toBeNull();
+    });
+
+    it('handles case-insensitive pair matching', () => {
+      const runnerData = createRunnerDataWithDates([
+        {
+          name: 'binance',
+          pairs: [
+            { pair: 'BTC/USDT', timeframes: [{ timeframe: '5m', from: '2024-01-01', to: '2024-12-31' }] },
+          ],
+        },
+      ]);
+      const result = computeAvailableDateRange(runnerData, 'binance', ['btc/usdt'], '5m');
+      expect(result).not.toBeNull();
+    });
+  });
+
+  describe('validateDateRange', () => {
+    const availableRange: AvailableDateRange = {
+      from: new Date('2024-03-01'),
+      to: new Date('2024-09-30'),
+    };
+
+    it('returns no errors for dates within range', () => {
+      const result = validateDateRange(
+        new Date('2024-04-01'),
+        new Date('2024-08-31'),
+        availableRange
+      );
+      expect(result.startError).toBeNull();
+      expect(result.endError).toBeNull();
+    });
+
+    it('returns no errors when no available range', () => {
+      const result = validateDateRange(
+        new Date('2024-01-01'),
+        new Date('2024-12-31'),
+        null
+      );
+      expect(result.startError).toBeNull();
+      expect(result.endError).toBeNull();
+    });
+
+    it('returns start error when start is before available range', () => {
+      const result = validateDateRange(
+        new Date('2024-01-15'),
+        new Date('2024-06-15'),
+        availableRange
+      );
+      expect(result.startError).toContain('before available data');
+      expect(result.startError).toContain('2024-03-01');
+      expect(result.endError).toBeNull();
+    });
+
+    it('returns start error when start is after available range', () => {
+      const result = validateDateRange(
+        new Date('2024-12-01'),
+        new Date('2024-12-31'),
+        availableRange
+      );
+      expect(result.startError).toContain('after available data');
+      expect(result.startError).toContain('2024-09-30');
+    });
+
+    it('returns end error when end is after available range', () => {
+      const result = validateDateRange(
+        new Date('2024-04-01'),
+        new Date('2024-12-31'),
+        availableRange
+      );
+      expect(result.startError).toBeNull();
+      expect(result.endError).toContain('after available data');
+      expect(result.endError).toContain('2024-09-30');
+    });
+
+    it('returns end error when end is before available range', () => {
+      const result = validateDateRange(
+        new Date('2024-01-01'),
+        new Date('2024-02-15'),
+        availableRange
+      );
+      expect(result.endError).toContain('before available data');
+      expect(result.endError).toContain('2024-03-01');
+    });
+
+    it('returns both errors when both dates are invalid', () => {
+      const result = validateDateRange(
+        new Date('2024-01-01'),
+        new Date('2024-12-31'),
+        availableRange
+      );
+      expect(result.startError).not.toBeNull();
+      expect(result.endError).not.toBeNull();
+    });
+
+    it('accepts boundary dates', () => {
+      const result = validateDateRange(
+        new Date('2024-03-01'),
+        new Date('2024-09-30'),
+        availableRange
+      );
+      expect(result.startError).toBeNull();
+      expect(result.endError).toBeNull();
+    });
+  });
+
+  describe('areAllPairsSelected', () => {
+    it('returns true when all pairs are selected', () => {
+      const result = areAllPairsSelected(
+        ['BTC/USDT', 'ETH/USDT'],
+        ['BTC/USDT', 'ETH/USDT']
+      );
+      expect(result).toBe(true);
+    });
+
+    it('returns false when lengths differ', () => {
+      const result = areAllPairsSelected(
+        ['BTC/USDT'],
+        ['BTC/USDT', 'ETH/USDT']
+      );
+      expect(result).toBe(false);
+    });
+
+    it('returns false when pairs differ', () => {
+      const result = areAllPairsSelected(
+        ['BTC/USDT', 'XRP/USDT'],
+        ['BTC/USDT', 'ETH/USDT']
+      );
+      expect(result).toBe(false);
+    });
+
+    it('handles case-insensitive comparison', () => {
+      const result = areAllPairsSelected(
+        ['btc/usdt', 'ETH/USDT'],
+        ['BTC/USDT', 'eth/usdt']
+      );
+      expect(result).toBe(true);
+    });
+
+    it('returns true for empty arrays', () => {
+      const result = areAllPairsSelected([], []);
+      expect(result).toBe(true);
+    });
+  });
+
 });

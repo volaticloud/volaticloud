@@ -15,6 +15,10 @@ on:
         description: 'Run production build'
         type: boolean
         default: true
+      coverage-threshold:
+        description: 'Minimum coverage percentage (warning if below)'
+        type: number
+        default: 70
 
 jobs:
   lint:
@@ -64,9 +68,55 @@ jobs:
           node-version: ${{ inputs.node-version }}
           working-directory: ${{ inputs.working-directory }}
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: ${{ inputs.working-directory }}
-        run: npm test
+        run: npm run test:coverage -- --run
+
+      - name: Parse coverage
+        id: coverage
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          # Fail explicitly if coverage file is missing
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::error::Coverage file not found: coverage/coverage-summary.json"
+            exit 1
+          fi
+          # Extract coverage percentage from vitest coverage output with error handling
+          COVERAGE=$(cat coverage/coverage-summary.json | node -e "
+            const fs = require('fs');
+            try {
+              const data = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));
+              if (typeof data.total?.lines?.pct !== 'number') {
+                console.error('Missing coverage data: total.lines.pct not found or not a number');
+                process.exit(1);
+              }
+              console.log(data.total.lines.pct.toFixed(2));
+            } catch (e) {
+              console.error('Failed to parse coverage JSON:', e.message);
+              process.exit(1);
+            }
+          ")
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: Check threshold
+        run: |
+          COVERAGE=${{ steps.coverage.outputs.coverage }}
+          THRESHOLD=${{ inputs.coverage-threshold }}
+          echo "Coverage: ${COVERAGE}%"
+          if awk "BEGIN {exit !($COVERAGE < $THRESHOLD)}"; then
+            echo "::warning::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### Test Coverage: ${{ steps.coverage.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report-dashboard
+          path: ${{ inputs.working-directory }}/coverage
+          retention-days: 7
 
   build:
     name: Build

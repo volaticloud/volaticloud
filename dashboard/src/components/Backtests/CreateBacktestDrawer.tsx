@@ -19,9 +19,10 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
+  Snackbar,
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRunBacktestMutation, useSearchStrategiesLazyQuery, useGetStrategyByIdLazyQuery } from './backtests.generated';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -37,9 +38,17 @@ import { debounce } from '@mui/material/utils';
 import {
   extractStrategyConfigFields,
   validateBacktestConfigAgainstRunner,
+  validateDateRange,
+  computeAvailableDateRange,
+  areAllPairsSelected,
   SUPPORTED_EXCHANGES,
   type BacktestConfigValidationResult,
 } from './backtestValidation';
+
+// Default number of pairs to auto-select when loading runner data.
+// 3 provides a reasonable starting point: enough to test strategy behavior
+// across multiple assets, but not so many that initial backtests are slow.
+const DEFAULT_PAIR_SELECTION_LIMIT = 3;
 
 interface CreateBacktestDrawerProps {
   open: boolean;
@@ -163,6 +172,12 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
   const [pairsOverride, setPairsOverride] = useState<string[] | null>(['BTC/USDT', 'ETH/USDT']);
   const [timeframeOverride, setTimeframeOverride] = useState<string | null>(null);
 
+  // Notification for auto-adjusted dates
+  const [dateAdjustedNotification, setDateAdjustedNotification] = useState<string | null>(null);
+
+  // Track previous date range to prevent duplicate notifications
+  const prevDateRangeRef = useRef<{ from: string; to: string } | null>(null);
+
   // Runner data availability
   const [runnerDataAvailable, setRunnerDataAvailable] = useState<RunnerDataAvailable | null>(null);
 
@@ -177,6 +192,9 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     return pairsOverride ?? strategyConfigFields.pair_whitelist ?? [];
   }, [pairsOverride, strategyConfigFields.pair_whitelist]);
   const effectiveTimeframe = timeframeOverride ?? strategyConfigFields.timeframe ?? null;
+
+  // Stable key for pairs to prevent unnecessary recomputations
+  const effectivePairsKey = effectivePairs.join(',');
 
   // Compute available exchanges from runner data
   const availableExchanges = useMemo(() => {
@@ -203,30 +221,17 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     return pairs;
   }, [runnerDataAvailable, effectiveExchange]);
 
-  // Compute available date range for the selected exchange
+  // Compute available date range for the selected exchange + pairs + timeframe combination
+  // Uses shared function that implements INTERSECTION logic across all selected pairs/timeframe
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- effectivePairsKey is stable string representation
   const availableDateRange = useMemo(() => {
-    if (!runnerDataAvailable?.exchanges?.length) return null;
-    const exchangeData = runnerDataAvailable.exchanges.find(e => e.name.toLowerCase() === effectiveExchange.toLowerCase());
-    if (!exchangeData?.pairs?.length) return null;
-
-    let minDate: Date | null = null;
-    let maxDate: Date | null = null;
-
-    for (const pair of exchangeData.pairs) {
-      for (const tf of pair.timeframes ?? []) {
-        if (tf.from) {
-          const fromDate = new Date(tf.from);
-          if (!minDate || fromDate < minDate) minDate = fromDate;
-        }
-        if (tf.to) {
-          const toDate = new Date(tf.to);
-          if (!maxDate || toDate > maxDate) maxDate = toDate;
-        }
-      }
-    }
-
-    return minDate && maxDate ? { from: minDate, to: maxDate } : null;
-  }, [runnerDataAvailable, effectiveExchange]);
+    return computeAvailableDateRange(
+      runnerDataAvailable,
+      effectiveExchange,
+      effectivePairs,
+      effectiveTimeframe
+    );
+  }, [runnerDataAvailable, effectiveExchange, effectivePairsKey, effectiveTimeframe]);
 
   // Compute available timeframes for selected exchange and pairs
   // Uses INTERSECTION: only shows timeframes available for ALL selected pairs
@@ -294,6 +299,70 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     }
   }, [availableTimeframes, timeframeOverride]);
 
+  // Auto-adjust dates only when they fall outside the available range
+  // This preserves user's date selection when it's still valid
+  useEffect(() => {
+    if (!availableDateRange) {
+      prevDateRangeRef.current = null;
+      return;
+    }
+
+    // Create a key to detect if date range actually changed (prevent duplicate notifications)
+    const rangeKey = { from: availableDateRange.from.toISOString(), to: availableDateRange.to.toISOString() };
+    const prevRange = prevDateRangeRef.current;
+    const rangeChanged = !prevRange || prevRange.from !== rangeKey.from || prevRange.to !== rangeKey.to;
+    prevDateRangeRef.current = rangeKey;
+
+    // Only process if the date range actually changed
+    if (!rangeChanged) return;
+
+    const availableFrom = dayjs(availableDateRange.from);
+    const availableTo = dayjs(availableDateRange.to);
+    let startAdjusted = false;
+    let endAdjusted = false;
+
+    setStartDate(currentStart => {
+      if (!currentStart) {
+        startAdjusted = true;
+        return availableFrom;
+      }
+      // Only adjust if date is actually outside the valid range
+      if (currentStart.isBefore(availableFrom, 'day')) {
+        startAdjusted = true;
+        return availableFrom;
+      }
+      if (currentStart.isAfter(availableTo, 'day')) {
+        startAdjusted = true;
+        return availableFrom;
+      }
+      return currentStart;
+    });
+
+    setEndDate(currentEnd => {
+      if (!currentEnd) {
+        endAdjusted = true;
+        return availableTo;
+      }
+      // Only adjust if date is actually outside the valid range
+      if (currentEnd.isAfter(availableTo, 'day')) {
+        endAdjusted = true;
+        return availableTo;
+      }
+      if (currentEnd.isBefore(availableFrom, 'day')) {
+        endAdjusted = true;
+        return availableTo;
+      }
+      return currentEnd;
+    });
+
+    // Show notification and switch to custom preset if dates were adjusted
+    if (startAdjusted || endAdjusted) {
+      setDatePreset('custom');
+      const adjustedParts = [startAdjusted && 'start', endAdjusted && 'end'].filter(Boolean);
+      setDateAdjustedNotification(`Date range adjusted: ${adjustedParts.join(' and ')} date${adjustedParts.length > 1 ? 's' : ''} moved to available data range`);
+    }
+  }, [availableDateRange]);
+
   // Get active group for filtering strategies and runners
   const { activeOrganizationId } = useActiveOrganization();
 
@@ -307,27 +376,35 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     setRunnerDataAvailable(data);
 
     if (data?.exchanges?.length) {
+      // Track which exchange will be selected after the update
+      let newExchange: string | null = null;
+
       // Use functional updates to avoid dependency on current state values
       setExchangeOverride(currentExchange => {
         const runnerExchangeNames = new Set(data.exchanges!.map(e => e.name.toLowerCase()));
         const exchange = currentExchange ?? 'binance';
         if (!runnerExchangeNames.has(exchange.toLowerCase())) {
           // Current exchange not available, switch to first available
-          return data.exchanges![0]?.name.toLowerCase() ?? 'binance';
+          newExchange = data.exchanges![0]?.name.toLowerCase() ?? 'binance';
+          return newExchange;
         }
+        newExchange = currentExchange;
         return currentExchange;
       });
 
-      // Update pairs based on the exchange that will be selected
+      // Update pairs based on the exchange that will be selected (not always the first one)
       setPairsOverride(currentPairs => {
         // Only update if user has already overridden pairs (not inheriting from strategy)
         if (currentPairs === null) {
           return null;
         }
-        // Find the exchange data for the first available exchange
-        const exchangeData = data.exchanges![0];
+        // Find the exchange data for the SELECTED exchange (use newExchange from above)
+        const targetExchange = newExchange ?? 'binance';
+        const exchangeData = data.exchanges!.find(
+          e => e.name.toLowerCase() === targetExchange.toLowerCase()
+        );
         if (exchangeData?.pairs?.length) {
-                    return exchangeData.pairs.map(p => p.pair).slice(0, 3);
+          return exchangeData.pairs.map(p => p.pair).slice(0, DEFAULT_PAIR_SELECTION_LIMIT);
         }
         return currentPairs;
       });
@@ -608,6 +685,18 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     }
   };
 
+  // Date range validation - check if selected dates are within available range
+  // Uses shared validateDateRange function for consistency
+  const dateRangeValidation = useMemo(() => {
+    return validateDateRange(
+      startDate?.toDate() ?? null,
+      endDate?.toDate() ?? null,
+      availableDateRange
+    );
+  }, [availableDateRange, startDate, endDate]);
+
+  const hasDateRangeError = !!(dateRangeValidation.startError || dateRangeValidation.endError);
+
   // Validation: need at least pairs (inherited or overridden) to run backtest
   const hasPairs = effectivePairs.length > 0;
   const hasValidationErrors = !!(
@@ -617,6 +706,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
     configValidation.formatError
   );
   const isSubmitDisabled = loading || !selectedStrategy?.id || !runnerID || !startDate || !endDate ||
+    hasDateRangeError ||
     (advancedMode && (!!jsonError || hasValidationErrors)) ||
     (!advancedMode && (!hasPairs || hasValidationErrors));
 
@@ -766,7 +856,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                             ex => ex.name.toLowerCase() === newExchange.toLowerCase()
                           );
                           if (exchangeData?.pairs?.length) {
-                            setPairsOverride(exchangeData.pairs.map(p => p.pair).slice(0, 3));
+                            setPairsOverride(exchangeData.pairs.map(p => p.pair).slice(0, DEFAULT_PAIR_SELECTION_LIMIT));
                                                       }
                         }
                       }}
@@ -788,19 +878,48 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
 
                   {/* Trading Pairs with Inheritance */}
                   <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Trading Pairs *</Typography>
-                      {strategyConfigFields.pair_whitelist && pairsOverride === null && (
-                        <Chip
-                          label="Inherited from strategy"
-                          size="small"
-                          color="default"
-                          variant="outlined"
-                          onClick={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
-                          onDelete={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
-                          deleteIcon={<EditIcon fontSize="small" />}
-                          sx={{ cursor: 'pointer' }}
-                        />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" color="text.secondary">Trading Pairs *</Typography>
+                        {strategyConfigFields.pair_whitelist && pairsOverride === null && (
+                          <Chip
+                            label="Inherited from strategy"
+                            size="small"
+                            color="default"
+                            variant="outlined"
+                            onClick={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
+                            onDelete={() => setPairsOverride(strategyConfigFields.pair_whitelist ?? [])}
+                            deleteIcon={<EditIcon fontSize="small" />}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        )}
+                      </Box>
+                      {/* Select All / Clear buttons - only show when in override mode and pairs available */}
+                      {(pairsOverride !== null || !strategyConfigFields.pair_whitelist) && availablePairs && availablePairs.length > 0 && (
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => setPairsOverride(availablePairs)}
+                            disabled={areAllPairsSelected(effectivePairs, availablePairs)}
+                            aria-label="Select all available trading pairs"
+                            sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
+                          >
+                            Select All ({availablePairs.length})
+                          </Button>
+                          {effectivePairs.length > 0 && (
+                            <Button
+                              size="small"
+                              variant="text"
+                              color="secondary"
+                              onClick={() => setPairsOverride([])}
+                              aria-label="Clear all selected trading pairs"
+                              sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
+                            >
+                              Clear
+                            </Button>
+                          )}
+                        </Box>
                       )}
                     </Box>
 
@@ -906,6 +1025,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                   {availableDateRange && (
                     <Alert severity="info" sx={{ py: 0 }}>
                       Data available from {dayjs(availableDateRange.from).format('YYYY-MM-DD')} to {dayjs(availableDateRange.to).format('YYYY-MM-DD')}
+                      {effectivePairs.length > 0 && effectiveTimeframe && ' for selected pairs/timeframe'}
+                    </Alert>
+                  )}
+                  {!availableDateRange && runnerDataAvailable && effectivePairs.length > 0 && (
+                    <Alert severity="warning" sx={{ py: 0 }}>
+                      No overlapping data range found for the selected pairs
+                      {effectiveTimeframe ? ` and ${effectiveTimeframe} timeframe` : ''}.
+                      Try selecting fewer pairs or a different timeframe.
                     </Alert>
                   )}
                 </Box>
@@ -971,10 +1098,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                       setDatePreset('custom');
                     }
                   }}
+                  minDate={availableDateRange ? dayjs(availableDateRange.from) : undefined}
+                  maxDate={endDate ?? (availableDateRange ? dayjs(availableDateRange.to) : undefined)}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       required: true,
+                      error: !!dateRangeValidation.startError,
+                      helperText: dateRangeValidation.startError,
                     },
                   }}
                 />
@@ -987,10 +1118,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                       setDatePreset('custom');
                     }
                   }}
+                  minDate={startDate ?? (availableDateRange ? dayjs(availableDateRange.from) : undefined)}
+                  maxDate={availableDateRange ? dayjs(availableDateRange.to) : undefined}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       required: true,
+                      error: !!dateRangeValidation.endError,
+                      helperText: dateRangeValidation.endError,
                     },
                   }}
                 />
@@ -1032,6 +1167,23 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
           </Button>
         </Box>
       </Drawer>
+
+      {/* Notification for auto-adjusted dates */}
+      <Snackbar
+        open={!!dateAdjustedNotification}
+        autoHideDuration={4000}
+        onClose={() => setDateAdjustedNotification(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setDateAdjustedNotification(null)}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {dateAdjustedNotification}
+        </Alert>
+      </Snackbar>
     </LocalizationProvider>
   );
 };
