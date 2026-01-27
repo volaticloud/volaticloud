@@ -11,8 +11,10 @@ import {
   Lock as LockIcon,
 } from '@mui/icons-material';
 import { useConfigValue } from '../../contexts/ConfigContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const CredentialsPage = () => {
+  useDocumentTitle('Password');
   const authority = useConfigValue('VOLATICLOUD__KEYCLOAK_AUTHORITY');
   const clientId = useConfigValue('VOLATICLOUD__KEYCLOAK_CLIENT_ID');
 

@@ -6,6 +6,7 @@ import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/O
 import { CollapsibleSidebar } from '../../components/Layout/CollapsibleSidebar';
 import { ResourceGroupsTable } from '../../components/Organization/ResourceGroupsTable';
 import { ResourceGroupMembersTable } from '../../components/Organization/ResourceGroupMembersTable';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 interface BreadcrumbItem {
   id: string;
@@ -13,6 +14,7 @@ interface BreadcrumbItem {
 }
 
 export const OrganizationUsersPage = () => {
+  useDocumentTitle('Users & Access');
   const { activeOrganizationId } = useActiveOrganization();
   const { resourceGroupId } = useParams<{ resourceGroupId?: string }>();
   const navigate = useOrganizationNavigate();

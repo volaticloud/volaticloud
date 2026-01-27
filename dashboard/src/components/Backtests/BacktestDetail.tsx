@@ -20,6 +20,7 @@ import { useGetBacktestQuery } from './backtests.generated';
 import { BacktestCharts } from './BacktestCharts';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
+import { useDocumentTitle } from '../../hooks';
 
 const BacktestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,15 @@ const BacktestDetail: React.FC = () => {
     variables: { id: id! },
     skip: !id,
   });
+
+  const backtest = data?.backtests?.edges?.[0]?.node;
+
+  // Set dynamic page title based on strategy name
+  useDocumentTitle(
+    backtest?.strategy?.name
+      ? `${backtest.strategy.name} - Backtest`
+      : 'Backtest Results'
+  );
 
   if (loading) {
     return (
@@ -44,8 +54,6 @@ const BacktestDetail: React.FC = () => {
       </Alert>
     );
   }
-
-  const backtest = data?.backtests?.edges?.[0]?.node;
 
   if (!backtest) {
     return (

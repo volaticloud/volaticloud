@@ -19,8 +19,10 @@ import {
 import { useKeycloakAccount } from '../../hooks/useKeycloakAccount';
 import { ConfirmDrawer } from '../../components/shared/FormDrawer';
 import { useConfigValue } from '../../contexts/ConfigContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const TwoFactorPage = () => {
+  useDocumentTitle('Two-Factor Authentication');
   const account = useKeycloakAccount();
   const authority = useConfigValue('VOLATICLOUD__KEYCLOAK_AUTHORITY');
   const clientId = useConfigValue('VOLATICLOUD__KEYCLOAK_CLIENT_ID');

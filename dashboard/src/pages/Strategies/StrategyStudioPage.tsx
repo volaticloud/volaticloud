@@ -1,5 +1,7 @@
 import { Box } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import StrategyStudio from '../../components/Strategies/StrategyStudio';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 /**
  * StrategyStudioPage - Full-bleed layout wrapper for Strategy Studio.
@@ -18,6 +20,9 @@ import StrategyStudio from '../../components/Strategies/StrategyStudio';
  * If MainLayout padding changes, these values must be updated accordingly.
  */
 export const StrategyStudioPage = () => {
+  const { id } = useParams<{ id: string }>();
+  useDocumentTitle(id ? 'Edit Strategy' : 'New Strategy');
+
   return (
     <Box
       sx={{

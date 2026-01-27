@@ -1,6 +1,7 @@
 import { BotsList } from '../../components/Bots/BotsList';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-// Thin page component - just a route handler
 export const BotsPage = () => {
+  useDocumentTitle('Bots');
   return <BotsList />;
 };

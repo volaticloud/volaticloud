@@ -26,6 +26,7 @@ import BotMetrics from './BotMetrics';
 import BotUsageCharts from './BotUsageCharts';
 import BotActionsMenu from './BotActionsMenu';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
+import { useDocumentTitle } from '../../hooks';
 
 type TabValue = 'overview' | 'usage' | 'trades';
 
@@ -68,6 +69,11 @@ const BotDetail = () => {
     skip: !id,
   });
 
+  const bot = data?.bots?.edges?.[0]?.node;
+
+  // Set dynamic page title based on bot name
+  useDocumentTitle(bot?.name ? `${bot.name} - Bot` : 'Bot Details');
+
   // Update local data when subscription receives new status
   useEffect(() => {
     if (subscriptionData?.botStatusChanged) {
@@ -87,8 +93,6 @@ const BotDetail = () => {
   if (error) {
     return <Alert severity="error">Error loading bot: {error.message}</Alert>;
   }
-
-  const bot = data?.bots?.edges?.[0]?.node;
 
   if (!bot) {
     return <Alert severity="warning">Bot not found</Alert>;

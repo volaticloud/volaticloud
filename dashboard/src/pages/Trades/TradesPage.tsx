@@ -1,6 +1,7 @@
 import { TradesList } from '../../components/Trades/TradesList';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-// Thin page component - just a route handler
 export const TradesPage = () => {
+  useDocumentTitle('Trades');
   return <TradesList />;
 };

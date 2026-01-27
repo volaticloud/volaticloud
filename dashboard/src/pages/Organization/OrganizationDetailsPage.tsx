@@ -1,7 +1,9 @@
 import { Paper, Typography, Box } from '@mui/material';
 import { Business as BusinessIcon } from '@mui/icons-material';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const OrganizationDetailsPage = () => {
+  useDocumentTitle('Organization Details');
   return (
     <Box>
       <Typography variant="h4" gutterBottom>

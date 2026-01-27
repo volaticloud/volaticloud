@@ -1,6 +1,7 @@
 import { ExchangesList } from '../../components/Exchanges/ExchangesList';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-// Thin page component - just a route handler
 export const ExchangesPage = () => {
+  useDocumentTitle('Exchanges');
   return <ExchangesList />;
 };
