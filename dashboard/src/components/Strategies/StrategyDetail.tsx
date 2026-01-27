@@ -25,6 +25,7 @@ import { StrategyInfo } from './StrategyInfo';
 import { StrategyVersionHistory } from './StrategyVersionHistory';
 import { BacktestResults } from '../Backtests/BacktestResults';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
+import { useDocumentTitle } from '../../hooks';
 
 const StrategyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,9 @@ const StrategyDetail = () => {
   });
 
   const strategy = data?.strategies?.edges?.[0]?.node;
+
+  // Set dynamic page title based on strategy name
+  useDocumentTitle(strategy?.name ? `${strategy.name} - Strategy` : 'Strategy Details');
 
   const { data: versionsData, loading: versionsLoading } = useGetStrategyVersionsQuery({
     variables: { name: strategy?.name || '' },
