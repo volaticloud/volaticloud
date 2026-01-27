@@ -1,6 +1,7 @@
 import { AlertsList } from '../../components/Alerts/AlertsList';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-// Thin page component - just a route handler
 export const AlertsPage = () => {
+  useDocumentTitle('Alerts');
   return <AlertsList />;
 };

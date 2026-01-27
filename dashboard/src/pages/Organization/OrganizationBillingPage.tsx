@@ -1,7 +1,9 @@
 import { Paper, Typography, Box } from '@mui/material';
 import { Payment as PaymentIcon } from '@mui/icons-material';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const OrganizationBillingPage = () => {
+  useDocumentTitle('Billing & Plans');
   return (
     <Box>
       <Typography variant="h4" gutterBottom>

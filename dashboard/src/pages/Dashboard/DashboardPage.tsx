@@ -1,6 +1,7 @@
 import { Dashboard } from '../../components/Dashboard/Dashboard';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-// Thin page component - just a route handler
 export const DashboardPage = () => {
+  useDocumentTitle('Dashboard');
   return <Dashboard />;
 };

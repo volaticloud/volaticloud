@@ -1,8 +1,10 @@
 import { Alert, Box } from '@mui/material';
 import { ProfileInfo } from '../../components/Profile/ProfileInfo';
 import { useKeycloakAccount } from '../../hooks/useKeycloakAccount';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const ProfilePage = () => {
+  useDocumentTitle('Profile');
   const account = useKeycloakAccount();
 
   return (
