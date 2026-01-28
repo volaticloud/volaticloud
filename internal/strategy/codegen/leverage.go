@@ -81,7 +81,7 @@ func (g *Generator) generateLeverage(config *LeverageConfig) (string, error) {
 				return "", fmt.Errorf("failed to generate leverage value: %w", err)
 			}
 
-			sb.WriteString(fmt.Sprintf("        # Catch-all rule (no condition)\n"))
+			sb.WriteString("        # Catch-all rule (no condition)\n")
 			sb.WriteString(fmt.Sprintf("        return %s\n\n", leverageCode))
 			// No need to check remaining rules since this is a catch-all
 			break
