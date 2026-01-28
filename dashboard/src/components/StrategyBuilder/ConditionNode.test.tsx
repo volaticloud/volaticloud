@@ -16,6 +16,8 @@ import {
   ConditionNode,
   IfThenElseNode,
   createId,
+  OperandType,
+  TradeContextOperand,
 } from './types';
 import { ComparisonOperator } from '../../generated/types';
 
@@ -660,6 +662,263 @@ describe('ConditionNodeEditor', () => {
       );
 
       expect(screen.getByText(/unknown node type/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Smart TradeContext Field Handling', () => {
+    describe('Boolean field (is_short)', () => {
+      it('hides comparison operator for boolean TradeContext field', () => {
+        const isShortOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'is_short',
+        };
+        const compareNode = createCompareNode(
+          isShortOperand,
+          ComparisonOperator.Eq,
+          createConstantOperand(true)
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show TRADE CONTEXT and the constant value
+        expect(screen.getByText('TRADE CONTEXT')).toBeInTheDocument();
+        expect(screen.getByText('CONSTANT')).toBeInTheDocument();
+
+        // Should NOT show the comparison operator dropdown
+        // Boolean fields have operator hidden
+        const comboboxes = screen.getAllByRole('combobox');
+        // There should be 3 comboboxes: Trade Field, Constant value (True/False)
+        // NOT 4 (which would include the operator dropdown)
+        const operatorValues = ['=', '≠', '<', '>', '≤', '≥'];
+        const hasOperatorDropdown = comboboxes.some(cb => {
+          const value = cb.textContent || '';
+          return operatorValues.includes(value);
+        });
+        expect(hasOperatorDropdown).toBe(false);
+      });
+
+      it('shows True/False dropdown for boolean constant value', () => {
+        const isShortOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'is_short',
+        };
+        const compareNode = createCompareNode(
+          isShortOperand,
+          ComparisonOperator.Eq,
+          createConstantOperand(true)
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show True as the selected value
+        expect(screen.getByText('True')).toBeInTheDocument();
+      });
+    });
+
+    describe('Enum field (side)', () => {
+      it('shows comparison operator for enum TradeContext field', () => {
+        const sideOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'side',
+        };
+        const compareNode = createCompareNode(
+          sideOperand,
+          ComparisonOperator.Eq,
+          createConstantOperand('long')
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show TRADE CONTEXT
+        expect(screen.getByText('TRADE CONTEXT')).toBeInTheDocument();
+
+        // Should show the = operator (enum fields show limited operators)
+        expect(screen.getByText('=')).toBeInTheDocument();
+      });
+
+      it('shows Long/Short dropdown for side enum value', async () => {
+        const sideOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'side',
+        };
+        const compareNode = createCompareNode(
+          sideOperand,
+          ComparisonOperator.Eq,
+          createConstantOperand('long')
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show Long as the selected value
+        expect(screen.getByText('Long')).toBeInTheDocument();
+      });
+    });
+
+    describe('String field (pair)', () => {
+      it('shows text input for pair string value', () => {
+        const pairOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'pair',
+        };
+        const compareNode = createCompareNode(
+          pairOperand,
+          ComparisonOperator.Eq,
+          createConstantOperand('BTC/USDT')
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show text input with the pair value
+        const input = screen.getByPlaceholderText(/trading pair/i);
+        expect(input).toBeInTheDocument();
+        expect(input).toHaveValue('BTC/USDT');
+      });
+    });
+
+    describe('Number field (current_profit)', () => {
+      it('shows full comparison operators for number TradeContext field', () => {
+        const profitOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'current_profit',
+        };
+        const compareNode = createCompareNode(
+          profitOperand,
+          ComparisonOperator.Gt,
+          createConstantOperand(0.05)
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show TRADE CONTEXT
+        expect(screen.getByText('TRADE CONTEXT')).toBeInTheDocument();
+
+        // Should show the > operator
+        expect(screen.getByText('>')).toBeInTheDocument();
+      });
+
+      it('shows number input for number constant value', () => {
+        const profitOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'current_profit',
+        };
+        const compareNode = createCompareNode(
+          profitOperand,
+          ComparisonOperator.Gt,
+          createConstantOperand(0.05)
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Should show number input with the value
+        const input = screen.getByRole('spinbutton');
+        expect(input).toBeInTheDocument();
+        expect(input).toHaveValue(0.05);
+      });
+    });
+
+    describe('Field type change updates constant value', () => {
+      it('updates constant when changing from number to boolean field', async () => {
+        const onChange = vi.fn();
+        const profitOperand: TradeContextOperand = {
+          type: OperandType.TradeContext,
+          field: 'current_profit',
+        };
+        const compareNode = createCompareNode(
+          profitOperand,
+          ComparisonOperator.Gt,
+          createConstantOperand(0.05)
+        );
+
+        render(
+          <TestWrapper>
+            <ConditionNodeEditor
+              {...defaultProps}
+              node={compareNode}
+              onChange={onChange}
+              showTradeContext={true}
+            />
+          </TestWrapper>
+        );
+
+        // Find and click on the trade field dropdown
+        const tradeFieldCombobox = screen.getByText('Current Profit');
+        await userEvent.click(tradeFieldCombobox);
+
+        // Select Is Short
+        await waitFor(() => {
+          expect(screen.getByText('Is Short')).toBeInTheDocument();
+        });
+        await userEvent.click(screen.getByText('Is Short'));
+
+        // onChange should be called with updated node
+        expect(onChange).toHaveBeenCalled();
+        const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+
+        // Left operand should be is_short
+        expect(lastCall.left.field).toBe('is_short');
+
+        // Right operand should be updated to boolean
+        expect(lastCall.right.value).toBe(true);
+
+        // Operator should be set to Eq for boolean
+        expect(lastCall.operator).toBe(ComparisonOperator.Eq);
+      });
     });
   });
 });

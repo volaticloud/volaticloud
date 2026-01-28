@@ -21,19 +21,54 @@ export interface MinimalROI {
   [key: string]: number;
 }
 
+export interface OrderTypesConfig {
+  entry: 'limit' | 'market';
+  exit: 'limit' | 'market';
+  stoploss: 'limit' | 'market';
+  stoploss_on_exchange: boolean;
+}
+
+export interface OrderTimeInForceConfig {
+  entry: 'GTC' | 'FOK' | 'IOC' | 'PO';
+  exit: 'GTC' | 'FOK' | 'IOC' | 'PO';
+}
+
 export interface FreqtradeConfig {
+  // Basic settings
   stake_currency: string;
   stake_amount: number;
   timeframe?: string;
   max_open_trades?: number;
+
+  // Trading mode settings
+  dry_run?: boolean;
+  dry_run_wallet?: number;
+  trading_mode?: 'spot' | 'margin' | 'futures';
+  margin_mode?: 'cross' | 'isolated';
+  liquidation_buffer?: number;
+
+  // Order settings
+  order_types?: OrderTypesConfig;
+  order_time_in_force?: OrderTimeInForceConfig;
+
+  // Pricing settings
   entry_pricing: PricingConfig;
   exit_pricing: PricingConfig;
+
+  // Risk management
   stoploss?: number;
   trailing_stop?: boolean;
   trailing_stop_positive?: number;
   trailing_stop_positive_offset?: number;
   trailing_only_offset_is_reached?: boolean;
   minimal_roi?: MinimalROI;
+
+  // Exit strategy settings
+  use_exit_signal?: boolean;
+  exit_profit_only?: boolean;
+  exit_profit_offset?: number;
+  ignore_roi_if_entry_signal?: boolean;
+
   // Allow additional fields from Freqtrade schema
   [key: string]: unknown;
 }
@@ -124,3 +159,36 @@ export const PRICE_SIDES = [
   { value: 'bid', label: 'Bid', description: 'Always use bid price' },
   { value: 'ask', label: 'Ask', description: 'Always use ask price' },
 ] as const;
+
+/**
+ * Available section identifiers for the config form
+ *
+ * - basic: Core trading parameters (stake_currency, stake_amount, timeframe, max_open_trades)
+ * - trading: Trading mode settings (dry_run, trading_mode, margin_mode)
+ * - orders: Order types and time-in-force settings
+ * - pricing: Entry/exit pricing configuration
+ * - risk: Stop loss and trailing stop settings
+ * - exits: Exit strategy behavior (use_exit_signal, exit_profit_only, etc.)
+ */
+export type ConfigSection = 'basic' | 'trading' | 'orders' | 'pricing' | 'risk' | 'exits';
+
+/**
+ * All available sections in the structured config form
+ */
+export const ALL_SECTIONS: ConfigSection[] = ['basic', 'trading', 'orders', 'pricing', 'risk', 'exits'];
+
+/**
+ * Recommended sections for strategy creation
+ * - basic: Core parameters
+ * - risk: Stop loss, trailing stop, minimal ROI
+ * - exits: Exit signal behavior
+ */
+export const STRATEGY_SECTIONS: ConfigSection[] = ['basic', 'risk', 'exits'];
+
+/**
+ * Recommended sections for bot creation
+ * - basic: Core trading parameters
+ * - trading: Dry run, trading mode
+ * - orders: Order types configuration
+ */
+export const BOT_SECTIONS: ConfigSection[] = ['basic', 'trading', 'orders'];

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client/react';
 import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
@@ -48,15 +48,28 @@ function App() {
 
   const theme = useMemo(() => createAppTheme(darkMode ? 'dark' : 'light'), [darkMode]);
 
+  // Store the current access token in a ref to avoid recreating Apollo client on token refresh
+  // The ref is always up-to-date but doesn't trigger useMemo recalculation
+  const accessTokenRef = useRef<string | undefined>(auth.user?.access_token);
+
+  // Keep the ref in sync with the latest token
+  useEffect(() => {
+    accessTokenRef.current = auth.user?.access_token;
+  }, [auth.user?.access_token]);
+
+  // Stable callback that always returns the current token from the ref
+  const getAccessToken = useCallback(() => accessTokenRef.current, []);
+
   // Create Apollo client with auth token and WebSocket for subscriptions
   // GraphQL endpoint is at {gatewayUrl}/query
   // WebSocket uses the same endpoint with ws:// protocol (gqlgen handles both)
+  // IMPORTANT: Only recreate client when gatewayUrl changes, NOT on token refresh
+  // Token refresh is handled via the getAccessToken callback which reads from ref
   const apolloClient = useMemo(() => {
-    const getAccessToken = () => auth.user?.access_token;
     // Convert http(s):// to ws(s):// for WebSocket URL - same endpoint handles both
     const wsUrl = gatewayUrl.replace(/^http/, 'ws') + '/query';
     return createApolloClient(`${gatewayUrl}/query`, wsUrl, getAccessToken);
-  }, [gatewayUrl, auth.user?.access_token]);
+  }, [gatewayUrl, getAccessToken]);
 
   const toggleDarkMode = () => {
     setDarkMode((prev) => !prev);

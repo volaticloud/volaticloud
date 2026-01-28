@@ -16,7 +16,7 @@ import {
 import { Close } from '@mui/icons-material';
 import { useState, useEffect, useMemo } from 'react';
 import { useUpdateBotMutation, useGetExchangesForEditQuery } from './bots.generated';
-import { JSONEditor } from '../JSONEditor';
+import { FreqtradeConfigForm, BOT_SECTIONS } from '../Freqtrade';
 import { useDialogUnsavedChanges } from '../../hooks';
 import { UnsavedChangesDrawer, StrategySelector, RunnerSelector } from '../shared';
 
@@ -204,12 +204,16 @@ export const EditBotDrawer = ({ open, onClose, onSuccess, bot }: EditBotDrawerPr
             />
 
             <Box>
-              <JSONEditor
+              <Typography variant="subtitle2" gutterBottom>
+                Freqtrade Bot Configuration
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Configure bot settings. This will be written to config.bot.json and merged with exchange and strategy configs.
+              </Typography>
+              <FreqtradeConfigForm
                 value={config}
                 onChange={setConfig}
-                label="Freqtrade Bot Configuration"
-                helperText="Complete freqtrade bot config. Required fields: stake_currency, stake_amount, exit_pricing, entry_pricing. This will be written to config.bot.json and merged with exchange and strategy configs."
-                height="400px"
+                defaultSections={BOT_SECTIONS}
               />
             </Box>
 

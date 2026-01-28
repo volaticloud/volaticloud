@@ -852,6 +852,64 @@ func (e IndicatorType) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Type of leverage value in a leverage rule
+type LeverageValueType string
+
+const (
+	// Fixed constant leverage value (e.g., 3x)
+	LeverageValueTypeConstant LeverageValueType = "CONSTANT"
+	// Dynamic leverage computed from an expression/operand
+	LeverageValueTypeExpression LeverageValueType = "EXPRESSION"
+)
+
+var AllLeverageValueType = []LeverageValueType{
+	LeverageValueTypeConstant,
+	LeverageValueTypeExpression,
+}
+
+func (e LeverageValueType) IsValid() bool {
+	switch e {
+	case LeverageValueTypeConstant, LeverageValueTypeExpression:
+		return true
+	}
+	return false
+}
+
+func (e LeverageValueType) String() string {
+	return string(e)
+}
+
+func (e *LeverageValueType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LeverageValueType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LeverageValueType", str)
+	}
+	return nil
+}
+
+func (e LeverageValueType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LeverageValueType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LeverageValueType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Category of operand for UI organization
 type OperandCategory string
 
@@ -983,6 +1041,67 @@ func (e *OperandType) UnmarshalJSON(b []byte) error {
 }
 
 func (e OperandType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Type of pattern matching for pair-based leverage rules
+type PairMatchPatternType string
+
+const (
+	// Exact match (e.g., "BTC/USDT")
+	PairMatchPatternTypeExact PairMatchPatternType = "EXACT"
+	// Wildcard match using fnmatch (e.g., "BTC/*", "*/USDT")
+	PairMatchPatternTypeWildcard PairMatchPatternType = "WILDCARD"
+	// Regular expression match
+	PairMatchPatternTypeRegex PairMatchPatternType = "REGEX"
+)
+
+var AllPairMatchPatternType = []PairMatchPatternType{
+	PairMatchPatternTypeExact,
+	PairMatchPatternTypeWildcard,
+	PairMatchPatternTypeRegex,
+}
+
+func (e PairMatchPatternType) IsValid() bool {
+	switch e {
+	case PairMatchPatternTypeExact, PairMatchPatternTypeWildcard, PairMatchPatternTypeRegex:
+		return true
+	}
+	return false
+}
+
+func (e PairMatchPatternType) String() string {
+	return string(e)
+}
+
+func (e *PairMatchPatternType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PairMatchPatternType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PairMatchPatternType", str)
+	}
+	return nil
+}
+
+func (e PairMatchPatternType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PairMatchPatternType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PairMatchPatternType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

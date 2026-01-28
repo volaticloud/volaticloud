@@ -4,6 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { OperandEditor } from './OperandEditor';
 import {
+  getTradeContextFieldMeta,
+  shouldShowOperator,
+  getDefaultConstantForField,
+  TRADE_CONTEXT_FIELDS,
+} from './tradeContextFields';
+import {
   createConstantOperand,
   createIndicatorOperand,
   createPriceOperand,
@@ -473,6 +479,271 @@ describe('OperandEditor', () => {
       );
 
       expect(screen.getByText(/not supported yet/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Field Metadata Helper Functions', () => {
+    describe('getTradeContextFieldMeta', () => {
+      it('returns metadata for number field', () => {
+        const meta = getTradeContextFieldMeta('current_profit');
+        expect(meta).toBeDefined();
+        expect(meta?.valueType).toBe('number');
+        expect(meta?.label).toBe('Current Profit');
+      });
+
+      it('returns metadata for boolean field', () => {
+        const meta = getTradeContextFieldMeta('is_short');
+        expect(meta).toBeDefined();
+        expect(meta?.valueType).toBe('boolean');
+        expect(meta?.showOperator).toBe(false);
+      });
+
+      it('returns metadata for enum field with options', () => {
+        const meta = getTradeContextFieldMeta('side');
+        expect(meta).toBeDefined();
+        expect(meta?.valueType).toBe('enum');
+        expect(meta?.enumOptions).toHaveLength(2);
+        expect(meta?.enumOptions?.[0].value).toBe('long');
+        expect(meta?.enumOptions?.[1].value).toBe('short');
+      });
+
+      it('returns metadata for string field', () => {
+        const meta = getTradeContextFieldMeta('pair');
+        expect(meta).toBeDefined();
+        expect(meta?.valueType).toBe('string');
+      });
+
+      it('returns undefined for unknown field', () => {
+        const meta = getTradeContextFieldMeta('unknown_field');
+        expect(meta).toBeUndefined();
+      });
+    });
+
+    describe('shouldShowOperator', () => {
+      it('returns false for boolean fields', () => {
+        expect(shouldShowOperator('is_short')).toBe(false);
+      });
+
+      it('returns true for number fields', () => {
+        expect(shouldShowOperator('current_profit')).toBe(true);
+        expect(shouldShowOperator('stake_amount')).toBe(true);
+      });
+
+      it('returns true for enum fields', () => {
+        expect(shouldShowOperator('side')).toBe(true);
+      });
+
+      it('returns true for string fields', () => {
+        expect(shouldShowOperator('pair')).toBe(true);
+      });
+
+      it('returns true for unknown fields (default)', () => {
+        expect(shouldShowOperator('unknown_field')).toBe(true);
+      });
+    });
+
+    describe('getDefaultConstantForField', () => {
+      it('returns true for boolean fields', () => {
+        expect(getDefaultConstantForField('is_short')).toBe(true);
+      });
+
+      it('returns 0 for number fields', () => {
+        expect(getDefaultConstantForField('current_profit')).toBe(0);
+        expect(getDefaultConstantForField('stake_amount')).toBe(0);
+      });
+
+      it('returns first enum option for enum fields', () => {
+        expect(getDefaultConstantForField('side')).toBe('long');
+      });
+
+      it('returns empty string for string fields', () => {
+        expect(getDefaultConstantForField('pair')).toBe('');
+      });
+
+      it('returns 0 for unknown fields (default)', () => {
+        expect(getDefaultConstantForField('unknown_field')).toBe(0);
+      });
+    });
+
+    describe('TRADE_CONTEXT_FIELDS', () => {
+      it('contains all expected field types', () => {
+        const valueTypes = TRADE_CONTEXT_FIELDS.map(f => f.valueType);
+        expect(valueTypes).toContain('number');
+        expect(valueTypes).toContain('boolean');
+        expect(valueTypes).toContain('enum');
+        expect(valueTypes).toContain('string');
+      });
+
+      it('has unique field values', () => {
+        const fieldValues = TRADE_CONTEXT_FIELDS.map(f => f.value);
+        const uniqueValues = new Set(fieldValues);
+        expect(uniqueValues.size).toBe(fieldValues.length);
+      });
+    });
+  });
+
+  describe('Context-Aware Constant Rendering', () => {
+    it('renders boolean dropdown when contextFieldMeta is boolean type', () => {
+      const booleanMeta = getTradeContextFieldMeta('is_short')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand(true)}
+            contextFieldMeta={booleanMeta}
+          />
+        </TestWrapper>
+      );
+
+      // Should show True in a dropdown, not a number input
+      expect(screen.getByText('True')).toBeInTheDocument();
+      expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
+    });
+
+    it('renders enum dropdown with options when contextFieldMeta is enum type', async () => {
+      const enumMeta = getTradeContextFieldMeta('side')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand('long')}
+            contextFieldMeta={enumMeta}
+          />
+        </TestWrapper>
+      );
+
+      // Should show Long in a dropdown
+      expect(screen.getByText('Long')).toBeInTheDocument();
+
+      // Click to open dropdown and verify options
+      fireEvent.mouseDown(screen.getByText('Long'));
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'Long' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Short' })).toBeInTheDocument();
+      });
+    });
+
+    it('renders text input when contextFieldMeta is string type', () => {
+      const stringMeta = getTradeContextFieldMeta('pair')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand('BTC/USDT')}
+            contextFieldMeta={stringMeta}
+          />
+        </TestWrapper>
+      );
+
+      // Should show text input with placeholder
+      const input = screen.getByPlaceholderText(/trading pair/i);
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveValue('BTC/USDT');
+    });
+
+    it('renders number input when contextFieldMeta is number type', () => {
+      const numberMeta = getTradeContextFieldMeta('current_profit')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand(0.05)}
+            contextFieldMeta={numberMeta}
+          />
+        </TestWrapper>
+      );
+
+      // Should show number input
+      const input = screen.getByRole('spinbutton');
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveValue(0.05);
+    });
+
+    it('updates boolean value when changed', async () => {
+      const onChange = vi.fn();
+      const booleanMeta = getTradeContextFieldMeta('is_short')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand(true)}
+            onChange={onChange}
+            contextFieldMeta={booleanMeta}
+          />
+        </TestWrapper>
+      );
+
+      // Click to open dropdown
+      fireEvent.mouseDown(screen.getByText('True'));
+
+      // Select False
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'False' })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('option', { name: 'False' }));
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'CONSTANT',
+          value: false,
+        })
+      );
+    });
+
+    it('updates enum value when changed', async () => {
+      const onChange = vi.fn();
+      const enumMeta = getTradeContextFieldMeta('side')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand('long')}
+            onChange={onChange}
+            contextFieldMeta={enumMeta}
+          />
+        </TestWrapper>
+      );
+
+      // Click to open dropdown
+      fireEvent.mouseDown(screen.getByText('Long'));
+
+      // Select Short
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'Short' })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('option', { name: 'Short' }));
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'CONSTANT',
+          value: 'short',
+        })
+      );
+    });
+
+    it('updates string value when changed', () => {
+      const onChange = vi.fn();
+      const stringMeta = getTradeContextFieldMeta('pair')!;
+      render(
+        <TestWrapper>
+          <OperandEditor
+            {...defaultProps}
+            value={createConstantOperand('')}
+            onChange={onChange}
+            contextFieldMeta={stringMeta}
+          />
+        </TestWrapper>
+      );
+
+      const input = screen.getByPlaceholderText(/trading pair/i);
+      fireEvent.change(input, { target: { value: 'ETH/USDT' } });
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'CONSTANT',
+          value: 'ETH/USDT',
+        })
+      );
     });
   });
 });

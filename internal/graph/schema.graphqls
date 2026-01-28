@@ -161,6 +161,60 @@ enum TimeField {
 }
 
 # ==============================================================================
+# Leverage Configuration Types
+# ==============================================================================
+
+"""
+Type of leverage value in a leverage rule
+"""
+enum LeverageValueType {
+  """
+  Fixed constant leverage value (e.g., 3x)
+  """
+  CONSTANT
+  """
+  Dynamic leverage computed from an expression/operand
+  """
+  EXPRESSION
+}
+
+"""
+Type of pattern matching for pair-based leverage rules
+"""
+enum PairMatchPatternType {
+  """
+  Exact match (e.g., "BTC/USDT")
+  """
+  EXACT
+  """
+  Wildcard match using fnmatch (e.g., "BTC/*", "*/USDT")
+  """
+  WILDCARD
+  """
+  Regular expression match
+  """
+  REGEX
+}
+
+"""
+Trading mode for the strategy - determines whether leverage and shorting are available
+"""
+enum TradingMode {
+  """
+  Spot trading - no leverage, no shorting
+  """
+  SPOT
+  """
+  Margin trading - leverage available, shorting available
+  """
+  MARGIN
+  """
+  Futures/perpetuals trading - leverage available, shorting available
+  """
+  FUTURES
+}
+
+# ==============================================================================
 # Long/Short Signal Support Types
 # ==============================================================================
 

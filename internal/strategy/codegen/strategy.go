@@ -182,6 +182,15 @@ func (g *Generator) GenerateFullStrategy(config *UIBuilderConfig, className stri
 		sb.WriteString(callbackCode)
 	}
 
+	if config.Callbacks.Leverage != nil && config.Callbacks.Leverage.Enabled {
+		callbackCode, err := g.generateLeverage(config.Callbacks.Leverage)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate leverage: %w", err)
+		}
+		sb.WriteString("\n")
+		sb.WriteString(callbackCode)
+	}
+
 	return sb.String(), nil
 }
 

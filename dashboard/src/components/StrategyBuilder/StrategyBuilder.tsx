@@ -24,6 +24,7 @@ import {
   SignalConfig,
   MirrorConfig,
   PositionMode,
+  TradingMode,
   StrategySignalDirection,
   createDefaultUIBuilderConfig,
   createDefaultSignalConfig,
@@ -31,6 +32,8 @@ import {
   applyMirrorConfig,
   shouldGenerateLongSignals,
   shouldGenerateShortSignals,
+  isLeverageAvailable,
+  isShortingAvailable,
   getConditionCount,
 } from './types';
 import { IndicatorSelector } from './IndicatorSelector';
@@ -38,8 +41,10 @@ import { ParameterEditor } from './ParameterEditor';
 import { StoplossBuilder } from './StoplossBuilder';
 import { DCABuilder } from './DCABuilder';
 import { EntryConfirmBuilder } from './EntryConfirmBuilder';
+import { LeverageBuilder } from './LeverageBuilder';
 import { CodePreview } from './CodePreview';
 import { PositionModeSelector } from './PositionModeSelector';
+import { TradingModeSelector } from './TradingModeSelector';
 import { MirrorToggle } from './MirrorToggle';
 import { SignalEditor } from './SignalEditor';
 
@@ -103,6 +108,10 @@ export function StrategyBuilder({
   const showLong = shouldGenerateLongSignals(config);
   const showShort = shouldGenerateShortSignals(config);
 
+  // Check trading mode capabilities
+  const canShort = isShortingAvailable(config);
+  const leverageAvailable = isLeverageAvailable(config);
+
   // Check if short signals are mirrored
   const isMirrored = config.mirror_config?.enabled &&
     config.position_mode === PositionMode.LongAndShort;
@@ -111,6 +120,30 @@ export function StrategyBuilder({
 
   const handleIndicatorsChange = (indicators: IndicatorDefinition[]) => {
     onChange({ ...config, indicators });
+  };
+
+  const handleTradingModeChange = (tradingMode: TradingMode) => {
+    const newConfig = { ...config, trading_mode: tradingMode };
+
+    // If switching to Spot mode, reset position mode to LongOnly (no shorting in spot)
+    if (tradingMode === TradingMode.Spot) {
+      if (newConfig.position_mode === PositionMode.ShortOnly || newConfig.position_mode === PositionMode.LongAndShort) {
+        newConfig.position_mode = PositionMode.LongOnly;
+        // Disable mirror config since it requires both long and short
+        if (newConfig.mirror_config?.enabled) {
+          newConfig.mirror_config = { ...newConfig.mirror_config, enabled: false };
+        }
+      }
+      // Disable leverage in spot mode
+      if (newConfig.callbacks.leverage?.enabled) {
+        newConfig.callbacks = {
+          ...newConfig.callbacks,
+          leverage: { ...newConfig.callbacks.leverage, enabled: false },
+        };
+      }
+    }
+
+    onChange(newConfig);
   };
 
   const handlePositionModeChange = (positionMode: PositionMode) => {
@@ -176,6 +209,7 @@ export function StrategyBuilder({
     config.callbacks.custom_stoploss?.enabled,
     config.callbacks.dca?.enabled,
     config.callbacks.confirm_entry?.enabled,
+    config.callbacks.leverage?.enabled,
   ].filter(Boolean).length;
 
   // Build dynamic tabs based on position mode
@@ -212,13 +246,16 @@ export function StrategyBuilder({
         badge: longEntryCount > 0 ? longEntryCount : undefined,
         badgeColor: '#4caf50',
       });
-      result.push({
-        id: 'long-exit',
-        icon: <TrendingUp sx={{ color: '#4caf50' }} />,
-        label: 'Long Exit',
-        badge: longExitCount > 0 ? longExitCount : undefined,
-        badgeColor: '#4caf50',
-      });
+      // Long Exit tab only if use_exit_signal is enabled
+      if (config.parameters.use_exit_signal) {
+        result.push({
+          id: 'long-exit',
+          icon: <TrendingUp sx={{ color: '#4caf50' }} />,
+          label: 'Long Exit',
+          badge: longExitCount > 0 ? longExitCount : undefined,
+          badgeColor: '#4caf50',
+        });
+      }
     }
 
     if (showShort) {
@@ -229,13 +266,16 @@ export function StrategyBuilder({
         badge: shortEntryCount > 0 ? shortEntryCount : undefined,
         badgeColor: '#f44336',
       });
-      result.push({
-        id: 'short-exit',
-        icon: <TrendingDown sx={{ color: '#f44336' }} />,
-        label: 'Short Exit',
-        badge: shortExitCount > 0 ? shortExitCount : undefined,
-        badgeColor: '#f44336',
-      });
+      // Short Exit tab only if use_exit_signal is enabled
+      if (config.parameters.use_exit_signal) {
+        result.push({
+          id: 'short-exit',
+          icon: <TrendingDown sx={{ color: '#f44336' }} />,
+          label: 'Short Exit',
+          badge: shortExitCount > 0 ? shortExitCount : undefined,
+          badgeColor: '#f44336',
+        });
+      }
     }
 
     // Add advanced and preview tabs
@@ -313,34 +353,46 @@ export function StrategyBuilder({
         </Box>
       </TabPanel>
 
-      {/* Settings Tab (Position Mode + Parameters) */}
+      {/* Settings Tab (Trading Mode + Position Mode + Parameters) */}
       <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'settings')}>
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
           <Typography variant="subtitle2" gutterBottom>
             Strategy Settings
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Configure position mode and risk management settings.
+            Configure trading mode, position mode, and risk management settings.
           </Typography>
+
+          {/* Trading Mode Selector */}
+          <Box sx={{ mb: 3 }}>
+            <TradingModeSelector
+              value={config.trading_mode || TradingMode.Spot}
+              onChange={handleTradingModeChange}
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
 
           {/* Position Mode Selector */}
           <Box sx={{ mb: 3 }}>
             <PositionModeSelector
               value={config.position_mode || PositionMode.LongOnly}
               onChange={handlePositionModeChange}
+              allowShort={canShort}
             />
           </Box>
 
-          <Divider sx={{ my: 3 }} />
-
           {/* Mirror Toggle (only for Long & Short mode) */}
-          {config.position_mode === PositionMode.LongAndShort && (
-            <Box sx={{ mb: 3 }}>
-              <MirrorToggle
-                value={config.mirror_config}
-                onChange={handleMirrorConfigChange}
-              />
-            </Box>
+          {config.position_mode === PositionMode.LongAndShort && canShort && (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <Box sx={{ mb: 3 }}>
+                <MirrorToggle
+                  value={config.mirror_config}
+                  onChange={handleMirrorConfigChange}
+                />
+              </Box>
+            </>
           )}
 
           <Divider sx={{ my: 3 }} />
@@ -369,7 +421,7 @@ export function StrategyBuilder({
       )}
 
       {/* Long Exit Tab */}
-      {showLong && (
+      {showLong && config.parameters.use_exit_signal && (
         <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'long-exit')}>
           <SignalEditor
             direction={StrategySignalDirection.Long}
@@ -400,7 +452,7 @@ export function StrategyBuilder({
       )}
 
       {/* Short Exit Tab */}
-      {showShort && (
+      {showShort && config.parameters.use_exit_signal && (
         <TabPanel value={activeTab} index={tabs.findIndex(t => t.id === 'short-exit')}>
           <SignalEditor
             direction={StrategySignalDirection.Short}
@@ -449,6 +501,24 @@ export function StrategyBuilder({
               }
               indicators={config.indicators}
             />
+
+            {leverageAvailable && (
+              <LeverageBuilder
+                value={config.callbacks.leverage}
+                onChange={(leverage) =>
+                  handleCallbacksChange({ ...config.callbacks, leverage })
+                }
+                indicators={config.indicators}
+              />
+            )}
+            {!leverageAvailable && (
+              <Box sx={{ p: 2, bgcolor: 'action.disabledBackground', borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Leverage configuration is only available in Margin or Futures trading mode.
+                  Change the trading mode in the Settings tab to enable leverage.
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Box>
       </TabPanel>

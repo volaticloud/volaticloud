@@ -6,6 +6,8 @@ import {
   ToggleButtonGroup,
   Typography,
   Tooltip,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -18,6 +20,8 @@ interface PositionModeSelectorProps {
   value: PositionMode;
   onChange: (mode: PositionMode) => void;
   disabled?: boolean;
+  /** If false, short-related options will be disabled */
+  allowShort?: boolean;
 }
 
 const MODE_INFO: Record<PositionMode, { icon: React.ReactNode; label: string; description: string; color: string }> = {
@@ -45,7 +49,11 @@ export function PositionModeSelector({
   value,
   onChange,
   disabled = false,
+  allowShort = true,
 }: PositionModeSelectorProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const handleChange = (_event: React.MouseEvent<HTMLElement>, newValue: PositionMode | null) => {
     if (newValue !== null) {
       onChange(newValue);
@@ -53,6 +61,10 @@ export function PositionModeSelector({
   };
 
   const currentInfo = MODE_INFO[value];
+
+  // Check if a mode requires shorting
+  const requiresShort = (mode: PositionMode) =>
+    mode === PositionMode.ShortOnly || mode === PositionMode.LongAndShort;
 
   return (
     <FormControl component="fieldset" fullWidth>
@@ -68,34 +80,46 @@ export function PositionModeSelector({
         onChange={handleChange}
         disabled={disabled}
         fullWidth
+        orientation={isMobile ? 'vertical' : 'horizontal'}
         sx={{ mb: 1 }}
       >
-        {Object.entries(MODE_INFO).map(([mode, info]) => (
-          <Tooltip key={mode} title={info.description} arrow>
-            {/* span wrapper needed for Tooltip to work when button is disabled */}
-            <span>
-              <ToggleButton
-                value={mode}
-                sx={{
-                  '&.Mui-selected': {
-                    backgroundColor: `${info.color}20`,
-                    borderColor: info.color,
-                    color: info.color,
-                    '&:hover': {
-                      backgroundColor: `${info.color}30`,
+        {Object.entries(MODE_INFO).map(([mode, info]) => {
+          const modeValue = mode as PositionMode;
+          const isDisabledDueToShort = !allowShort && requiresShort(modeValue);
+          const tooltipTitle = isDisabledDueToShort
+            ? `${info.description} (Requires Margin or Futures trading mode)`
+            : info.description;
+
+          return (
+            <Tooltip key={mode} title={tooltipTitle} arrow>
+              {/* span wrapper needed for Tooltip to work when button is disabled */}
+              <span>
+                <ToggleButton
+                  value={mode}
+                  disabled={disabled || isDisabledDueToShort}
+                  sx={{
+                    whiteSpace: 'nowrap',
+                    '&.Mui-selected': {
+                      backgroundColor: `${info.color}20`,
+                      borderColor: info.color,
+                      color: info.color,
+                      '&:hover': {
+                        backgroundColor: `${info.color}30`,
+                      },
                     },
-                  },
-                  '& .MuiSvgIcon-root': {
-                    mr: 1,
-                  },
-                }}
-              >
-                {info.icon}
-                {info.label}
-              </ToggleButton>
-            </span>
-          </Tooltip>
-        ))}
+                    '& .MuiSvgIcon-root': {
+                      mr: 1,
+                      flexShrink: 0,
+                    },
+                  }}
+                >
+                  {info.icon}
+                  {info.label}
+                </ToggleButton>
+              </span>
+            </Tooltip>
+          );
+        })}
       </ToggleButtonGroup>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
