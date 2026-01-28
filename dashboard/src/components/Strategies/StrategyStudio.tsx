@@ -7,9 +7,7 @@ import {
   CircularProgress,
   Alert,
   IconButton,
-  TextField,
   Paper,
-  Divider,
   FormHelperText,
   Tooltip,
   ToggleButton,
@@ -35,6 +33,7 @@ import {
   Close,
   History,
   InfoOutlined,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
@@ -43,6 +42,8 @@ import { useGetBacktestQuery, useBacktestProgressSubscription } from '../Backtes
 import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
+import { RenameStrategyDrawer } from './RenameStrategyDrawer';
+import { DEFAULT_STRATEGY_CODE } from './strategyDefaults';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
 import { ConfirmDrawer, ContentDrawer, ResponsivePanelLayout } from '../shared';
@@ -90,40 +91,9 @@ const StrategyStudio = () => {
   // Default config for new strategies - includes all mandatory Freqtrade fields
   const defaultConfig = createDefaultFreqtradeConfig();
 
-  // Default code template for new strategies
-  const defaultCode = `# pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
-from freqtrade.strategy import IStrategy
-from pandas import DataFrame
-
-
-class MyStrategy(IStrategy):
-    """
-    Sample strategy - customize this for your trading logic
-    """
-
-    # Strategy parameters
-    minimal_roi = {"0": 0.1}
-    stoploss = -0.10
-    timeframe = '5m'
-
-    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Add your indicators here
-        return dataframe
-
-    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Define entry conditions
-        dataframe['enter_long'] = 0
-        return dataframe
-
-    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Define exit conditions
-        dataframe['exit_long'] = 0
-        return dataframe
-`;
-
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [code, setCode] = useState(isCreateMode ? defaultCode : '');
+  const [code, setCode] = useState(isCreateMode ? DEFAULT_STRATEGY_CODE : '');
   const [config, setConfig] = useState<object | null>(isCreateMode ? defaultConfig : null);
   const [hasChanges, setHasChanges] = useState(false);
   const [backtestDrawerOpen, setBacktestDrawerOpen] = useState(false);
@@ -139,6 +109,7 @@ class MyStrategy(IStrategy):
   );
   const [ejectDrawerOpen, setEjectDrawerOpen] = useState(false);
   const [versionHistoryDrawerOpen, setVersionHistoryDrawerOpen] = useState(false);
+  const [renameDrawerOpen, setRenameDrawerOpen] = useState(false);
 
   // Navigation guard - prevents accidental data loss
   const {
@@ -245,7 +216,7 @@ class MyStrategy(IStrategy):
     // Switching from Code to UI is only allowed for new strategies
     if (builderMode === StrategyStrategyBuilderMode.Code && newMode === StrategyStrategyBuilderMode.Ui) {
       // Only allow if no code has been written (or it's the default template)
-      if (code !== defaultCode && !isCreateMode) {
+      if (code !== DEFAULT_STRATEGY_CODE && !isCreateMode) {
         // Cannot switch existing code-based strategies to UI mode
         return;
       }
@@ -263,22 +234,6 @@ class MyStrategy(IStrategy):
     setEjectDrawerOpen(false);
     setHasChanges(true);
   };
-
-  // Handle name change with sync to config and code
-  const handleNameChange = useCallback((newName: string) => {
-    setName(newName);
-    setHasChanges(true);
-
-    // Update config with strategy_name field
-    setConfig((prev) => ({
-      ...prev,
-      strategy_name: newName || undefined,
-    }));
-
-    // Update class name in code
-    const className = toClassName(newName);
-    setCode((prev) => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
-  }, []);
 
   /**
    * Save the strategy. Returns true if save succeeded, false otherwise.
@@ -378,12 +333,6 @@ class MyStrategy(IStrategy):
   // Get responsive layout state
   const { isMobile } = useResponsiveLayout();
 
-  // Handler for description changes
-  const handleDescriptionChange = useCallback((value: string) => {
-    setDescription(value);
-    setHasChanges(true);
-  }, []);
-
   // Handler for config changes
   const handleConfigChange = useCallback((value: object | null) => {
     setConfig(value);
@@ -404,30 +353,6 @@ class MyStrategy(IStrategy):
   const strategySettingsContent = useMemo(
     () => (
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Strategy Name */}
-        <TextField
-          label="Strategy Name"
-          value={name}
-          onChange={(e) => handleNameChange(e.target.value)}
-          required
-          fullWidth
-          size="small"
-          helperText={`Class: ${toClassName(name)}`}
-        />
-
-        {/* Description */}
-        <TextField
-          label="Description"
-          value={description}
-          onChange={(e) => handleDescriptionChange(e.target.value)}
-          fullWidth
-          multiline
-          rows={3}
-          size="small"
-        />
-
-        <Divider />
-
         {/* Freqtrade Config */}
         <Box>
           <Typography variant="subtitle2" gutterBottom>
@@ -444,7 +369,7 @@ class MyStrategy(IStrategy):
         )}
       </Box>
     ),
-    [name, description, config, saveError, handleNameChange, handleDescriptionChange, handleConfigChange]
+    [config, saveError, handleConfigChange]
   );
 
   // General settings tab definition (name, description, freqtrade config)
@@ -628,7 +553,7 @@ class MyStrategy(IStrategy):
             disabled={
               builderMode === StrategyStrategyBuilderMode.Code &&
               !isCreateMode &&
-              code !== defaultCode
+              code !== DEFAULT_STRATEGY_CODE
             }
           >
             <Tooltip title="Visual Builder">
@@ -753,6 +678,12 @@ class MyStrategy(IStrategy):
                     label: 'Version History',
                     icon: <History />,
                     onClick: () => setVersionHistoryDrawerOpen(true),
+                  },
+                  {
+                    id: 'rename',
+                    label: 'Rename',
+                    icon: <EditIcon />,
+                    onClick: () => setRenameDrawerOpen(true),
                   },
                   {
                     id: 'cancel',
@@ -884,6 +815,34 @@ class MyStrategy(IStrategy):
             onCopyFromVersion={handleChange(setCode)}
           />
         </ContentDrawer>
+      )}
+
+      {/* Rename Strategy Drawer - only in edit mode */}
+      {!isCreateMode && strategy && (
+        <RenameStrategyDrawer
+          open={renameDrawerOpen}
+          onClose={() => setRenameDrawerOpen(false)}
+          onSuccess={(newName, newDescription) => {
+            // Update local state with new name/description
+            setName(newName);
+            setDescription(newDescription);
+            // Also update config with strategy_name field (guard against null)
+            setConfig((prev) => prev ? { ...prev, strategy_name: newName || undefined } : prev);
+            // Update class name in code
+            const className = toClassName(newName);
+            setCode((prev) => {
+              const updated = prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`);
+              // Mark as changed if code was actually modified
+              if (updated !== prev) {
+                setHasChanges(true);
+              }
+              return updated;
+            });
+          }}
+          strategyId={strategy.id}
+          currentName={name}
+          currentDescription={description}
+        />
       )}
     </Box>
   );
