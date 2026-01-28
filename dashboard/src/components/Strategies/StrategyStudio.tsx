@@ -7,9 +7,7 @@ import {
   CircularProgress,
   Alert,
   IconButton,
-  TextField,
   Paper,
-  Divider,
   FormHelperText,
   Tooltip,
   ToggleButton,
@@ -35,6 +33,7 @@ import {
   Close,
   History,
   InfoOutlined,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
@@ -43,6 +42,7 @@ import { useGetBacktestQuery, useBacktestProgressSubscription } from '../Backtes
 import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
+import { RenameStrategyDrawer } from './RenameStrategyDrawer';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
 import { ConfirmDrawer, ContentDrawer, ResponsivePanelLayout } from '../shared';
@@ -139,6 +139,7 @@ class MyStrategy(IStrategy):
   );
   const [ejectDrawerOpen, setEjectDrawerOpen] = useState(false);
   const [versionHistoryDrawerOpen, setVersionHistoryDrawerOpen] = useState(false);
+  const [renameDrawerOpen, setRenameDrawerOpen] = useState(false);
 
   // Navigation guard - prevents accidental data loss
   const {
@@ -264,22 +265,6 @@ class MyStrategy(IStrategy):
     setHasChanges(true);
   };
 
-  // Handle name change with sync to config and code
-  const handleNameChange = useCallback((newName: string) => {
-    setName(newName);
-    setHasChanges(true);
-
-    // Update config with strategy_name field
-    setConfig((prev) => ({
-      ...prev,
-      strategy_name: newName || undefined,
-    }));
-
-    // Update class name in code
-    const className = toClassName(newName);
-    setCode((prev) => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
-  }, []);
-
   /**
    * Save the strategy. Returns true if save succeeded, false otherwise.
    * @param closeAfterSave - If true, navigates to detail view after save
@@ -378,12 +363,6 @@ class MyStrategy(IStrategy):
   // Get responsive layout state
   const { isMobile } = useResponsiveLayout();
 
-  // Handler for description changes
-  const handleDescriptionChange = useCallback((value: string) => {
-    setDescription(value);
-    setHasChanges(true);
-  }, []);
-
   // Handler for config changes
   const handleConfigChange = useCallback((value: object | null) => {
     setConfig(value);
@@ -404,30 +383,6 @@ class MyStrategy(IStrategy):
   const strategySettingsContent = useMemo(
     () => (
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Strategy Name */}
-        <TextField
-          label="Strategy Name"
-          value={name}
-          onChange={(e) => handleNameChange(e.target.value)}
-          required
-          fullWidth
-          size="small"
-          helperText={`Class: ${toClassName(name)}`}
-        />
-
-        {/* Description */}
-        <TextField
-          label="Description"
-          value={description}
-          onChange={(e) => handleDescriptionChange(e.target.value)}
-          fullWidth
-          multiline
-          rows={3}
-          size="small"
-        />
-
-        <Divider />
-
         {/* Freqtrade Config */}
         <Box>
           <Typography variant="subtitle2" gutterBottom>
@@ -444,7 +399,7 @@ class MyStrategy(IStrategy):
         )}
       </Box>
     ),
-    [name, description, config, saveError, handleNameChange, handleDescriptionChange, handleConfigChange]
+    [config, saveError, handleConfigChange]
   );
 
   // General settings tab definition (name, description, freqtrade config)
@@ -755,6 +710,12 @@ class MyStrategy(IStrategy):
                     onClick: () => setVersionHistoryDrawerOpen(true),
                   },
                   {
+                    id: 'rename',
+                    label: 'Rename',
+                    icon: <EditIcon />,
+                    onClick: () => setRenameDrawerOpen(true),
+                  },
+                  {
                     id: 'cancel',
                     label: 'Cancel',
                     icon: <Close />,
@@ -884,6 +845,30 @@ class MyStrategy(IStrategy):
             onCopyFromVersion={handleChange(setCode)}
           />
         </ContentDrawer>
+      )}
+
+      {/* Rename Strategy Drawer - only in edit mode */}
+      {!isCreateMode && strategy && (
+        <RenameStrategyDrawer
+          open={renameDrawerOpen}
+          onClose={() => setRenameDrawerOpen(false)}
+          onSuccess={(newName, newDescription) => {
+            // Update local state with new name/description
+            setName(newName);
+            setDescription(newDescription);
+            // Also update config with strategy_name field
+            setConfig((prev) => ({
+              ...prev,
+              strategy_name: newName || undefined,
+            }));
+            // Update class name in code
+            const className = toClassName(newName);
+            setCode((prev) => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
+          }}
+          strategyId={strategy.id}
+          currentName={name}
+          currentDescription={description}
+        />
       )}
     </Box>
   );
