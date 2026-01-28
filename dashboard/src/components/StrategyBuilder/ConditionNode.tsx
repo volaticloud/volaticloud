@@ -59,8 +59,16 @@ import {
   createCrossunderNode,
   createId,
   OPERATOR_SYMBOLS,
+  OperandType,
+  TradeContextOperand,
 } from './types';
 import { OperandEditor } from './OperandEditor';
+import {
+  getTradeContextFieldMeta,
+  shouldShowOperator,
+  getDefaultConstantForField,
+  TradeContextFieldMeta,
+} from './tradeContextFields';
 
 interface ConditionNodeProps {
   node: ConditionNodeType;
@@ -69,6 +77,8 @@ interface ConditionNodeProps {
   indicators: IndicatorDefinition[];
   depth?: number;
   showTradeContext?: boolean;
+  /** Override the list of available trade context fields (e.g., leverage callback has fewer fields) */
+  tradeContextFields?: readonly import('./tradeContextFields').TradeContextFieldMeta[];
   /** When true, all editing is disabled (used for mirrored signals) */
   readOnly?: boolean;
 }
@@ -80,6 +90,7 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
   indicators,
   depth = 0,
   showTradeContext = false,
+  tradeContextFields: tradeContextFieldsOverride,
   readOnly = false,
 }: ConditionNodeProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -288,6 +299,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                     indicators={indicators}
                     depth={depth + 1}
                     showTradeContext={showTradeContext}
+
+                    tradeContextFields={tradeContextFieldsOverride}
                     readOnly={readOnly}
                   />
                 </Box>
@@ -409,6 +422,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
           indicators={indicators}
           depth={depth + 1}
           showTradeContext={showTradeContext}
+
+          tradeContextFields={tradeContextFieldsOverride}
           readOnly={readOnly}
         />
 
@@ -442,6 +457,71 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
   if (isCompareNode(node)) {
     const cmpNode = node as CompareNode;
 
+    // Get field metadata if left operand is TradeContext
+    let contextFieldMeta: TradeContextFieldMeta | undefined;
+    if (cmpNode.left.type === OperandType.TradeContext) {
+      const tcOp = cmpNode.left as TradeContextOperand;
+      contextFieldMeta = getTradeContextFieldMeta(tcOp.field);
+    }
+
+    // Determine if we should show the comparison operator
+    const showOperator = !contextFieldMeta || shouldShowOperator(
+      (cmpNode.left as TradeContextOperand).field
+    );
+
+    // Get appropriate operators based on field type
+    const getOperatorsForFieldType = () => {
+      if (!contextFieldMeta) return OPERATOR_SYMBOLS;
+      switch (contextFieldMeta.valueType) {
+        case 'boolean':
+          // Boolean fields only use equality
+          return { [ComparisonOperator.Eq]: '=' };
+        case 'enum':
+        case 'string':
+          // String/enum fields use equality and inequality
+          return {
+            [ComparisonOperator.Eq]: '=',
+            [ComparisonOperator.Neq]: '≠',
+          };
+        case 'number':
+        default:
+          return OPERATOR_SYMBOLS;
+      }
+    };
+
+    const availableOperators = getOperatorsForFieldType();
+
+    // Handle left operand change - update right operand if field type changes
+    const handleLeftChange = (left: typeof cmpNode.left) => {
+      let newRight = cmpNode.right;
+      let newOperator = cmpNode.operator;
+
+      // If left changed to TradeContext, update the right operand to match the field type
+      if (left.type === OperandType.TradeContext) {
+        const tcOp = left as TradeContextOperand;
+        const newMeta = getTradeContextFieldMeta(tcOp.field);
+
+        // If field changed and right is a constant, update the constant value type
+        if (newMeta && cmpNode.right.type === OperandType.Constant) {
+          const currentLeft = cmpNode.left;
+          const previousField = currentLeft.type === OperandType.TradeContext
+            ? (currentLeft as TradeContextOperand).field
+            : null;
+
+          // Only update if the field actually changed
+          if (previousField !== tcOp.field) {
+            newRight = createConstantOperand(getDefaultConstantForField(tcOp.field));
+            // Also update operator if the new field type doesn't support the current operator
+            if (newMeta.valueType === 'boolean') {
+              newOperator = ComparisonOperator.Eq;
+            }
+          }
+        }
+      }
+
+      onChange({ ...cmpNode, left, right: newRight, operator: newOperator });
+    };
+
     return (
       <Paper
         variant="outlined"
@@ -463,34 +543,41 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
 
         <OperandEditor
           value={cmpNode.left}
-          onChange={(left) => onChange({ ...cmpNode, left })}
+          onChange={handleLeftChange}
           indicators={indicators}
           showTradeContext={showTradeContext}
+
+          tradeContextFields={tradeContextFieldsOverride}
           readOnly={readOnly}
         />
 
-        <FormControl size="small" sx={{ minWidth: 70 }}>
-          <Select
-            value={cmpNode.operator}
-            onChange={(e) =>
-              onChange({ ...cmpNode, operator: e.target.value as ComparisonOperator })
-            }
-            disabled={isDisabled || readOnly}
-          >
-            {Object.entries(OPERATOR_SYMBOLS).map(([op, symbol]) => (
-              <MenuItem key={op} value={op}>
-                {symbol}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {showOperator && (
+          <FormControl size="small" sx={{ minWidth: 70 }}>
+            <Select
+              value={cmpNode.operator}
+              onChange={(e) =>
+                onChange({ ...cmpNode, operator: e.target.value as ComparisonOperator })
+              }
+              disabled={isDisabled || readOnly}
+            >
+              {Object.entries(availableOperators).map(([op, symbol]) => (
+                <MenuItem key={op} value={op}>
+                  {symbol}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <OperandEditor
           value={cmpNode.right}
           onChange={(right) => onChange({ ...cmpNode, right })}
           indicators={indicators}
           showTradeContext={showTradeContext}
+
+          tradeContextFields={tradeContextFieldsOverride}
           readOnly={readOnly}
+          contextFieldMeta={contextFieldMeta}
         />
 
         <Box sx={{ flex: 1 }} />
@@ -750,6 +837,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
               indicators={indicators}
               depth={depth + 1}
               showTradeContext={showTradeContext}
+
+              tradeContextFields={tradeContextFieldsOverride}
               readOnly={readOnly}
             />
           </Box>
@@ -765,6 +854,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
               indicators={indicators}
               depth={depth + 1}
               showTradeContext={showTradeContext}
+
+              tradeContextFields={tradeContextFieldsOverride}
               readOnly={readOnly}
             />
           </Box>
@@ -790,6 +881,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                   indicators={indicators}
                   depth={depth + 1}
                   showTradeContext={showTradeContext}
+
+                  tradeContextFields={tradeContextFieldsOverride}
                   readOnly={readOnly}
                 />
               </Box>

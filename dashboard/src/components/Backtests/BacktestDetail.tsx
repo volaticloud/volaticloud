@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -8,27 +8,43 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Button,
   Paper,
   Grid,
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  IconButton,
 } from '@mui/material';
-import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code } from '@mui/icons-material';
-import { useGetBacktestQuery } from './backtests.generated';
+import { ArrowBack, Timeline, TrendingUp, TrendingDown, ExpandMore, Code, Delete } from '@mui/icons-material';
+import { useGetBacktestQuery, useDeleteBacktestMutation } from './backtests.generated';
 import { BacktestCharts } from './BacktestCharts';
 import { extractStrategyData, extractTrades } from '../../types/freqtrade';
+import { ToolbarActions, ToolbarAction } from '../shared/ToolbarActions';
+import { ConfirmDrawer } from '../shared';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
 import { useDocumentTitle } from '../../hooks';
 
 const BacktestDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useOrganizationNavigate();
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+
   const { data, loading, error } = useGetBacktestQuery({
     variables: { id: id! },
     skip: !id,
   });
+
+  const [deleteBacktest, { loading: deleteLoading }] = useDeleteBacktestMutation();
+
+  const handleDelete = async () => {
+    setDeleteDrawerOpen(false);
+    try {
+      await deleteBacktest({ variables: { id: id! } });
+      navigate('/backtests');
+    } catch {
+      // Error handling could be added here
+    }
+  };
 
   const backtest = data?.backtests?.edges?.[0]?.node;
 
@@ -95,18 +111,56 @@ const BacktestDetail: React.FC = () => {
 
   return (
     <Box>
-      <Box display="flex" alignItems="center" mb={3}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/backtests')}
-          sx={{ mr: 2 }}
-        >
-          Back
-        </Button>
-        <Typography variant="h4" component="h1">
-          Backtest Results
-        </Typography>
-      </Box>
+      {/* Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          px: 2,
+          py: 2,
+          mb: 3,
+          mx: -3,
+          mt: -3,
+          pt: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap',
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <IconButton onClick={() => navigate('/backtests')} size="small">
+          <ArrowBack />
+        </IconButton>
+
+        {/* Title and Chips */}
+        <Box sx={{ flex: 1, minWidth: 200 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Typography variant="h5" fontWeight={600}>
+              {backtest.strategy?.name || 'Backtest Results'}
+            </Typography>
+            <Chip
+              label={backtest.status}
+              color={getStatusColor(backtest.status)}
+              size="small"
+            />
+          </Box>
+        </Box>
+
+        {/* Toolbar Actions */}
+        <ToolbarActions
+          actions={[
+            {
+              id: 'delete',
+              label: 'Delete',
+              icon: <Delete />,
+              onClick: () => setDeleteDrawerOpen(true),
+              color: 'error',
+              disabled: deleteLoading,
+            },
+          ] satisfies ToolbarAction[]}
+        />
+      </Paper>
 
       {/* Backtest Info */}
       <Card sx={{ mb: 3 }}>
@@ -289,6 +343,17 @@ const BacktestDetail: React.FC = () => {
           Backtest is currently running. Refresh to see results when complete.
         </Alert>
       )}
+
+      {/* Delete Confirmation Drawer */}
+      <ConfirmDrawer
+        open={deleteDrawerOpen}
+        onClose={() => setDeleteDrawerOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Backtest"
+        message="Are you sure you want to delete this backtest? This action cannot be undone."
+        confirmLabel="Delete"
+        confirmColor="error"
+      />
     </Box>
   );
 };

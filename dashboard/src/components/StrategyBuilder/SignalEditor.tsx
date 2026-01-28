@@ -170,6 +170,7 @@ export function SignalEditor({
           onChange={handleConditionsChange}
           indicators={indicators}
           readOnly={isMirrored}
+          showTradeContext={!isEntry}
         />
       </Box>
     </Box>

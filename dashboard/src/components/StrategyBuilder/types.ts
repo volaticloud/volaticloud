@@ -25,6 +25,9 @@ export {
   TimeField,
   PositionMode,
   StrategySignalDirection,
+  LeverageValueType,
+  PairMatchPatternType,
+  TradingMode,
 } from '../../generated/types';
 
 // Import for local use (need runtime values for OPERATOR_LABELS/OPERATOR_SYMBOLS)
@@ -37,6 +40,9 @@ import {
   IndicatorType,
   PositionMode,
   StrategySignalDirection,
+  LeverageValueType,
+  PairMatchPatternType,
+  TradingMode,
 } from '../../generated/types';
 
 // Type alias for backward compatibility
@@ -330,6 +336,68 @@ export interface CallbacksConfig {
   confirm_entry?: ConfirmEntryConfig;
   dca?: DCAConfig;
   custom_exit?: CustomExitConfig;
+  leverage?: LeverageConfig;
+}
+
+// ============================================================================
+// Leverage Configuration Types
+// ============================================================================
+
+/**
+ * Leverage value can be a constant or computed from an expression
+ */
+export interface LeverageConstantValue {
+  type: typeof LeverageValueType.Constant;
+  value: number;
+}
+
+export interface LeverageExpressionValue {
+  type: typeof LeverageValueType.Expression;
+  operand: Operand;
+  min?: number;
+  max?: number;
+}
+
+export type LeverageValue = LeverageConstantValue | LeverageExpressionValue;
+
+/**
+ * A single leverage rule that maps a condition to a leverage value
+ */
+export interface LeverageRule {
+  id: string;
+  /** Optional condition - if omitted/empty, rule always matches (use for catch-all) */
+  condition?: ConditionNode;
+  /** The leverage value to use when condition matches */
+  leverage: LeverageValue;
+  /** Higher priority rules are evaluated first (default: 0) */
+  priority: number;
+  /** Optional label for UI display */
+  label?: string;
+  /** Disabled rules are skipped during evaluation */
+  disabled?: boolean;
+}
+
+/**
+ * Complete leverage configuration
+ */
+export interface LeverageConfig {
+  enabled: boolean;
+  /** Rules evaluated in priority order (highest first) */
+  rules: LeverageRule[];
+  /** Default leverage when no rules match (default: 1.0) */
+  default_leverage: number;
+  /** Global maximum leverage cap */
+  max_leverage?: number;
+}
+
+/**
+ * Pair match condition node for leverage rules
+ * Allows matching against trading pairs with patterns
+ */
+export interface PairMatchNode extends BaseNode {
+  type: 'PAIR_MATCH';
+  pattern: string;
+  pattern_type: typeof PairMatchPatternType.Exact | typeof PairMatchPatternType.Wildcard | typeof PairMatchPatternType.Regex;
 }
 
 // ============================================================================
@@ -383,6 +451,7 @@ export interface UIBuilderConfig {
   callbacks: CallbacksConfig;
 
   // Version 2 fields (nested signal config)
+  trading_mode?: TradingMode;
   position_mode?: PositionMode;
   long?: SignalConfig;
   short?: SignalConfig;
@@ -506,6 +575,7 @@ export function createDefaultUIBuilderConfig(): UIBuilderConfig {
     version: 2,
     schema_version: '2.0.0',
     indicators: [],
+    trading_mode: TradingMode.Spot,
     position_mode: PositionMode.LongOnly,
     long: {
       entry_conditions: createAndNode([]),
@@ -548,6 +618,7 @@ export function normalizeUIBuilderConfig(config: UIBuilderConfig): UIBuilderConf
   if (config.long || config.short) {
     return {
       ...config,
+      trading_mode: config.trading_mode || TradingMode.Spot,
       position_mode: config.position_mode || PositionMode.LongOnly,
     };
   }
@@ -556,6 +627,7 @@ export function normalizeUIBuilderConfig(config: UIBuilderConfig): UIBuilderConf
   const normalized: UIBuilderConfig = {
     ...config,
     version: 2,
+    trading_mode: config.trading_mode || TradingMode.Spot,
     position_mode: PositionMode.LongOnly,
     long: {
       entry_conditions: config.entry_conditions || createAndNode([]),
@@ -583,6 +655,24 @@ export function shouldGenerateLongSignals(config: UIBuilderConfig): boolean {
 export function shouldGenerateShortSignals(config: UIBuilderConfig): boolean {
   const mode = config.position_mode || PositionMode.LongOnly;
   return mode === PositionMode.ShortOnly || mode === PositionMode.LongAndShort;
+}
+
+/**
+ * Check if leverage is available based on trading mode
+ * Leverage is only available in Margin and Futures modes
+ */
+export function isLeverageAvailable(config: UIBuilderConfig): boolean {
+  const mode = config.trading_mode || TradingMode.Spot;
+  return mode === TradingMode.Margin || mode === TradingMode.Futures;
+}
+
+/**
+ * Check if shorting is available based on trading mode
+ * Shorting is only available in Margin and Futures modes
+ */
+export function isShortingAvailable(config: UIBuilderConfig): boolean {
+  const mode = config.trading_mode || TradingMode.Spot;
+  return mode === TradingMode.Margin || mode === TradingMode.Futures;
 }
 
 // Type guards
@@ -639,6 +729,64 @@ export function getConditionCount(node: ConditionNode | undefined): number {
     );
   }
   return 1;
+}
+
+// ============================================================================
+// Leverage Helper Functions
+// ============================================================================
+
+/**
+ * Create a new leverage rule with a constant value
+ */
+export function createLeverageRule(
+  leverage: number,
+  priority: number = 0,
+  condition?: ConditionNode,
+  label?: string
+): LeverageRule {
+  return {
+    id: createId(),
+    condition,
+    leverage: {
+      type: LeverageValueType.Constant,
+      value: leverage,
+    },
+    priority,
+    label,
+  };
+}
+
+/**
+ * Create a constant leverage value
+ */
+export function createConstantLeverageValue(value: number): LeverageConstantValue {
+  return {
+    type: LeverageValueType.Constant,
+    value,
+  };
+}
+
+/**
+ * Create an expression-based leverage value
+ */
+export function createExpressionLeverageValue(
+  operand: Operand,
+  min?: number,
+  max?: number
+): LeverageExpressionValue {
+  return {
+    type: LeverageValueType.Expression,
+    operand,
+    min,
+    max,
+  };
+}
+
+/**
+ * Sort leverage rules by priority (highest first)
+ */
+export function sortLeverageRulesByPriority(rules: LeverageRule[]): LeverageRule[] {
+  return [...rules].sort((a, b) => b.priority - a.priority);
 }
 
 // ============================================================================

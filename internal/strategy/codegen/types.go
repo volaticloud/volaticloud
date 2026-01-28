@@ -34,6 +34,20 @@ type (
 	// SignalDirection represents the direction of a signal (LONG or SHORT)
 	// Uses StrategySignalDirection to avoid collision with freqtrade.SignalDirection
 	SignalDirection = model.StrategySignalDirection
+	// LeverageValueType represents the type of leverage value (constant or expression)
+	LeverageValueType = model.LeverageValueType
+	// PairMatchPatternType represents the pattern matching type for pair-based rules
+	PairMatchPatternType = model.PairMatchPatternType
+)
+
+// TradingMode represents the trading mode for the strategy
+type TradingMode string
+
+// TradingMode constants
+const (
+	TradingModeSpot    TradingMode = "SPOT"
+	TradingModeMargin  TradingMode = "MARGIN"
+	TradingModeFutures TradingMode = "FUTURES"
 )
 
 // NodeType constants (aliases for model.ConditionNodeType*)
@@ -132,6 +146,19 @@ const (
 const (
 	SignalDirectionLong  = model.StrategySignalDirectionLong
 	SignalDirectionShort = model.StrategySignalDirectionShort
+)
+
+// LeverageValueType constants (aliases for model.LeverageValueType*)
+const (
+	LeverageValueTypeConstant   = model.LeverageValueTypeConstant
+	LeverageValueTypeExpression = model.LeverageValueTypeExpression
+)
+
+// PairMatchPatternType constants (aliases for model.PairMatchPatternType*)
+const (
+	PairMatchPatternTypeExact    = model.PairMatchPatternTypeExact
+	PairMatchPatternTypeWildcard = model.PairMatchPatternTypeWildcard
+	PairMatchPatternTypeRegex    = model.PairMatchPatternTypeRegex
 )
 
 // ConditionNode represents any node in the condition tree
@@ -515,6 +542,7 @@ type UIBuilderConfig struct {
 	Callbacks     CallbacksConfig       `json:"callbacks"`
 
 	// Version 2 fields (nested signal config)
+	TradingMode  TradingMode   `json:"trading_mode,omitempty"`
 	PositionMode PositionMode  `json:"position_mode,omitempty"`
 	Long         *SignalConfig `json:"long,omitempty"`
 	Short        *SignalConfig `json:"short,omitempty"`
@@ -542,6 +570,7 @@ type CallbacksConfig struct {
 	ConfirmEntry   *ConfirmEntryConfig   `json:"confirm_entry,omitempty"`
 	DCA            *DCAConfig            `json:"dca,omitempty"`
 	CustomExit     *CustomExitConfig     `json:"custom_exit,omitempty"`
+	Leverage       *LeverageConfig       `json:"leverage,omitempty"`
 }
 
 // CustomStoplossConfig defines dynamic stoploss rules
@@ -598,6 +627,91 @@ type ExitStrategy struct {
 	EntryTag      string        `json:"entry_tag"`
 	ExitCondition ConditionNode `json:"exit_condition"`
 	ExitTag       string        `json:"exit_tag"`
+}
+
+// LeverageConfig defines leverage callback configuration for futures trading
+type LeverageConfig struct {
+	Enabled         bool           `json:"enabled"`
+	Rules           []LeverageRule `json:"rules"`
+	DefaultLeverage float64        `json:"default_leverage"`
+	MaxLeverage     *float64       `json:"max_leverage,omitempty"`
+}
+
+// LeverageRule defines a single leverage rule
+type LeverageRule struct {
+	ID        string         `json:"id"`
+	Condition *ConditionNode `json:"condition,omitempty"`
+	Leverage  LeverageValue  `json:"leverage"`
+	Priority  int            `json:"priority"`
+	Label     string         `json:"label,omitempty"`
+	Disabled  bool           `json:"disabled,omitempty"`
+}
+
+// LeverageValue represents either a constant or expression-based leverage value
+type LeverageValue struct {
+	raw json.RawMessage
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (v *LeverageValue) UnmarshalJSON(data []byte) error {
+	v.raw = data
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler
+func (v LeverageValue) MarshalJSON() ([]byte, error) {
+	return v.raw, nil
+}
+
+// GetLeverageValueType returns the type of this leverage value
+func (v *LeverageValue) GetLeverageValueType() (LeverageValueType, error) {
+	var base struct {
+		Type LeverageValueType `json:"type"`
+	}
+	if err := json.Unmarshal(v.raw, &base); err != nil {
+		return "", err
+	}
+	return base.Type, nil
+}
+
+// AsConstant parses the value as a constant leverage
+func (v *LeverageValue) AsConstant() (*ConstantLeverageValue, error) {
+	var val ConstantLeverageValue
+	if err := json.Unmarshal(v.raw, &val); err != nil {
+		return nil, err
+	}
+	return &val, nil
+}
+
+// AsExpression parses the value as an expression-based leverage
+func (v *LeverageValue) AsExpression() (*ExpressionLeverageValue, error) {
+	var val ExpressionLeverageValue
+	if err := json.Unmarshal(v.raw, &val); err != nil {
+		return nil, err
+	}
+	return &val, nil
+}
+
+// ConstantLeverageValue represents a fixed leverage multiplier
+type ConstantLeverageValue struct {
+	Type  LeverageValueType `json:"type"` // Always "CONSTANT"
+	Value float64           `json:"value"`
+}
+
+// ExpressionLeverageValue represents dynamic leverage computed from an operand
+type ExpressionLeverageValue struct {
+	Type    LeverageValueType `json:"type"` // Always "EXPRESSION"
+	Operand Operand           `json:"operand"`
+	Min     *float64          `json:"min,omitempty"`
+	Max     *float64          `json:"max,omitempty"`
+}
+
+// PairMatchNode represents a pair matching condition for leverage rules
+type PairMatchNode struct {
+	BaseNode
+	Type        NodeType             `json:"type"` // Always "PAIR_MATCH"
+	Pattern     string               `json:"pattern"`
+	PatternType PairMatchPatternType `json:"pattern_type"`
 }
 
 // StrategyConfig represents the full strategy configuration including UI builder

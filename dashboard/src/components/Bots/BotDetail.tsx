@@ -19,18 +19,39 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { ArrowBack, Dashboard, DataUsage, SwapHoriz } from '@mui/icons-material';
+import {
+  ArrowBack,
+  Dashboard as DashboardIcon,
+  DataUsage,
+  SwapHoriz,
+  PlayArrow,
+  Stop,
+  Refresh,
+  Delete,
+} from '@mui/icons-material';
 import { useState, SyntheticEvent, useEffect } from 'react';
-import { useGetBotQuery, useBotStatusChangedSubscription } from './bots.generated';
+import {
+  useGetBotQuery,
+  useBotStatusChangedSubscription,
+  useStartBotMutation,
+  useStopBotMutation,
+  useRestartBotMutation,
+  useDeleteBotMutation,
+} from './bots.generated';
 import BotMetrics from './BotMetrics';
 import BotUsageCharts from './BotUsageCharts';
-import BotActionsMenu from './BotActionsMenu';
+import { FreqUIDrawer } from './FreqUIDrawer';
+import { ToolbarActions, ToolbarAction } from '../shared/ToolbarActions';
+import { ConfirmDrawer } from '../shared';
 import { useOrganizationNavigate } from '../../contexts/OrganizationContext';
-import { useDocumentTitle } from '../../hooks';
+import { useDocumentTitle, usePermissions } from '../../hooks';
 
 type TabValue = 'overview' | 'usage' | 'trades';
 
 const VALID_TABS: TabValue[] = ['overview', 'usage', 'trades'];
+
+const canStart = (status: string) => status === 'stopped' || status === 'error';
+const canStopOrRestart = (status: string) => status === 'running' || status === 'unhealthy';
 
 const BotDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +62,9 @@ const BotDetail = () => {
     message: string;
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+  const [frequiDrawerOpen, setFrequiDrawerOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Get tab from URL, default to 'overview'
   const tabParam = searchParams.get('tab') as TabValue | null;
@@ -81,6 +105,82 @@ const BotDetail = () => {
       refetch();
     }
   }, [subscriptionData, refetch]);
+
+  // Mutations
+  const [startBot] = useStartBotMutation();
+  const [stopBot] = useStopBotMutation();
+  const [restartBot] = useRestartBotMutation();
+  const [deleteBot] = useDeleteBotMutation();
+
+  // Permissions
+  const { can, loading: permissionsLoading } = usePermissions();
+  const canRun = can(id || '', 'run');
+  const canStopBot = can(id || '', 'stop');
+  const canDelete = can(id || '', 'delete');
+  const canFreqtradeApi = can(id || '', 'freqtrade-api');
+
+  // Action handlers
+  const handleAction = async (
+    action: () => Promise<unknown>,
+    successMessage: string,
+    errorPrefix: string
+  ) => {
+    setActionLoading(true);
+    try {
+      const result = await action() as { errors?: { message: string }[] };
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || `${errorPrefix} failed`);
+      }
+      refetch();
+      setSnackbar({ open: true, message: successMessage, severity: 'success' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : `${errorPrefix} failed`;
+      setSnackbar({ open: true, message, severity: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStart = () => {
+    handleAction(
+      () => startBot({ variables: { id: id! } }),
+      'Bot started successfully',
+      'Failed to start bot'
+    );
+  };
+
+  const handleStop = () => {
+    handleAction(
+      () => stopBot({ variables: { id: id! } }),
+      'Bot stopped successfully',
+      'Failed to stop bot'
+    );
+  };
+
+  const handleRestart = () => {
+    handleAction(
+      () => restartBot({ variables: { id: id! } }),
+      'Bot restarted successfully',
+      'Failed to restart bot'
+    );
+  };
+
+  const handleDelete = async () => {
+    setActionLoading(true);
+    setDeleteDrawerOpen(false);
+    try {
+      const result = await deleteBot({ variables: { id: id! } });
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to delete bot');
+      }
+      setSnackbar({ open: true, message: 'Bot deleted successfully', severity: 'success' });
+      navigate('/bots');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete bot';
+      setSnackbar({ open: true, message, severity: 'error' });
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -135,27 +235,90 @@ const BotDetail = () => {
   return (
     <Box>
       {/* Header */}
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <IconButton onClick={() => navigate('/bots')}>
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h4">{bot.name}</Typography>
-          <Chip label={bot.status} color={getStatusColor(bot.status)} />
-          <Chip label={bot.mode} color={getModeColor(bot.mode)} />
+      <Paper
+        elevation={0}
+        sx={{
+          px: 2,
+          py: 2,
+          mb: 3,
+          mx: -3,
+          mt: -3,
+          pt: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap',
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <IconButton onClick={() => navigate('/bots')} size="small">
+          <ArrowBack />
+        </IconButton>
+
+        {/* Title and Chips */}
+        <Box sx={{ flex: 1, minWidth: 200 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Typography variant="h5" fontWeight={600}>
+              {bot.name}
+            </Typography>
+            <Chip label={bot.status} color={getStatusColor(bot.status)} size="small" />
+            <Chip label={bot.mode} color={getModeColor(bot.mode)} size="small" />
+          </Box>
         </Box>
 
-        <BotActionsMenu
-          botId={bot.id}
-          botName={bot.name}
-          botStatus={bot.status}
-          showFreqUI
-          refetch={refetch}
-          onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
-          onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
-          onDeleteSuccess={() => navigate('/bots')}
+        {/* Toolbar Actions */}
+        <ToolbarActions
+          actions={[
+            {
+              id: 'start',
+              label: 'Start',
+              icon: <PlayArrow />,
+              onClick: handleStart,
+              primary: true,
+              variant: 'contained',
+              color: 'success',
+              disabled: !canStart(bot.status) || !canRun || actionLoading || permissionsLoading,
+              tooltip: 'Start Bot',
+              iconOnlyOnSmallScreen: true,
+            },
+            {
+              id: 'stop',
+              label: 'Stop',
+              icon: <Stop />,
+              onClick: handleStop,
+              primary: true,
+              color: 'warning',
+              disabled: !canStopOrRestart(bot.status) || !canStopBot || actionLoading || permissionsLoading,
+              tooltip: 'Stop Bot',
+              iconOnlyOnSmallScreen: true,
+            },
+            {
+              id: 'restart',
+              label: 'Restart',
+              icon: <Refresh />,
+              onClick: handleRestart,
+              disabled: !canStopOrRestart(bot.status) || !canRun || actionLoading || permissionsLoading,
+            },
+            {
+              id: 'frequi',
+              label: 'Open FreqUI',
+              icon: <DashboardIcon />,
+              onClick: () => setFrequiDrawerOpen(true),
+              disabled: !canFreqtradeApi || actionLoading || permissionsLoading,
+            },
+            {
+              id: 'delete',
+              label: 'Delete',
+              icon: <Delete />,
+              onClick: () => setDeleteDrawerOpen(true),
+              color: 'error',
+              disabled: !canDelete || actionLoading || permissionsLoading,
+              dividerBefore: true,
+            },
+          ] satisfies ToolbarAction[]}
         />
-      </Box>
+      </Paper>
 
       {/* Error Message */}
       {bot.errorMessage && (
@@ -167,7 +330,7 @@ const BotDetail = () => {
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab icon={<Dashboard />} iconPosition="start" label="Overview" value="overview" />
+          <Tab icon={<DashboardIcon />} iconPosition="start" label="Overview" value="overview" />
           <Tab icon={<DataUsage />} iconPosition="start" label="Usage" value="usage" />
           <Tab
             icon={<SwapHoriz />}
@@ -352,6 +515,25 @@ const BotDetail = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Delete Confirmation Drawer */}
+      <ConfirmDrawer
+        open={deleteDrawerOpen}
+        onClose={() => setDeleteDrawerOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Bot"
+        message={`Are you sure you want to delete "${bot.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmColor="error"
+      />
+
+      {/* FreqUI Drawer */}
+      <FreqUIDrawer
+        open={frequiDrawerOpen}
+        onClose={() => setFrequiDrawerOpen(false)}
+        botId={bot.id}
+        botName={bot.name}
+      />
     </Box>
   );
 };

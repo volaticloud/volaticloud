@@ -10,8 +10,6 @@ import {
   Paper,
   FormHelperText,
   Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,7 +37,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useGetStrategyForStudioQuery } from './strategy-studio.generated';
 import { useUpdateStrategyMutation, useCreateStrategyMutation } from './strategies.generated';
 import { useGetBacktestQuery, useBacktestProgressSubscription } from '../Backtests/backtests.generated';
-import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } from '../Freqtrade';
+import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults, STRATEGY_SECTIONS } from '../Freqtrade';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { RenameStrategyDrawer } from './RenameStrategyDrawer';
@@ -203,31 +201,6 @@ const StrategyStudio = () => {
     setHasChanges(true);
   };
 
-  // Handle mode toggle between UI and Code
-  const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: StrategyStrategyBuilderMode | null) => {
-    if (newMode === null) return;
-
-    // Switching from UI to Code requires ejection confirmation
-    if (builderMode === StrategyStrategyBuilderMode.Ui && newMode === StrategyStrategyBuilderMode.Code) {
-      setEjectDrawerOpen(true);
-      return;
-    }
-
-    // Switching from Code to UI is only allowed for new strategies
-    if (builderMode === StrategyStrategyBuilderMode.Code && newMode === StrategyStrategyBuilderMode.Ui) {
-      // Only allow if no code has been written (or it's the default template)
-      if (code !== DEFAULT_STRATEGY_CODE && !isCreateMode) {
-        // Cannot switch existing code-based strategies to UI mode
-        return;
-      }
-      setBuilderMode(newMode);
-      if (!uiBuilderConfig) {
-        setUiBuilderConfig(createDefaultUIBuilderConfig());
-      }
-      setHasChanges(true);
-    }
-  };
-
   // Confirm eject to code mode
   const handleConfirmEject = () => {
     setBuilderMode(StrategyStrategyBuilderMode.Code);
@@ -361,7 +334,12 @@ const StrategyStudio = () => {
           <Typography variant="body2" color="text.secondary" gutterBottom>
             Configure trading parameters for backtesting and live trading.
           </Typography>
-          <FreqtradeConfigForm value={config} onChange={handleConfigChange} hideSubmitButton />
+          <FreqtradeConfigForm
+            value={config}
+            onChange={handleConfigChange}
+            hideSubmitButton
+            defaultSections={STRATEGY_SECTIONS}
+          />
         </Box>
 
         {saveError && (
@@ -541,34 +519,6 @@ const StrategyStudio = () => {
           </Box>
         </Box>
 
-        {/* Mode Toggle */}
-        <ToggleButtonGroup
-          value={builderMode}
-          exclusive
-          onChange={handleModeChange}
-          size="small"
-        >
-          <ToggleButton
-            value={StrategyStrategyBuilderMode.Ui}
-            disabled={
-              builderMode === StrategyStrategyBuilderMode.Code &&
-              !isCreateMode &&
-              code !== DEFAULT_STRATEGY_CODE
-            }
-          >
-            <Tooltip title="Visual Builder">
-              <Dashboard fontSize="small" sx={{ mr: 0.5 }} />
-            </Tooltip>
-            Builder
-          </ToggleButton>
-          <ToggleButton value={StrategyStrategyBuilderMode.Code}>
-            <Tooltip title="Code Editor">
-              <Code fontSize="small" sx={{ mr: 0.5 }} />
-            </Tooltip>
-            Code
-          </ToggleButton>
-        </ToggleButtonGroup>
-
         {/* Backtest Status Indicator - only in edit mode */}
         {!isCreateMode && activeBacktestId && (
           <>
@@ -626,6 +576,31 @@ const StrategyStudio = () => {
                     variant: 'contained',
                     disabled: !name || !code || !config || !activeOrganizationId,
                     loading: saving,
+                    tooltip: 'Create Strategy',
+                    iconOnlyOnSmallScreen: true,
+                  },
+                  {
+                    id: 'switch-mode',
+                    label:
+                      builderMode === StrategyStrategyBuilderMode.Ui
+                        ? 'Switch to Code'
+                        : 'Switch to Builder',
+                    icon: builderMode === StrategyStrategyBuilderMode.Ui ? <Code /> : <Dashboard />,
+                    onClick: () => {
+                      if (builderMode === StrategyStrategyBuilderMode.Ui) {
+                        setEjectDrawerOpen(true);
+                      } else {
+                        setBuilderMode(StrategyStrategyBuilderMode.Ui);
+                        if (!uiBuilderConfig) {
+                          setUiBuilderConfig(createDefaultUIBuilderConfig());
+                        }
+                        setHasChanges(true);
+                      }
+                    },
+                    disabled:
+                      builderMode === StrategyStrategyBuilderMode.Code &&
+                      code !== DEFAULT_STRATEGY_CODE,
+                    dividerBefore: true,
                   },
                   {
                     id: 'cancel',
@@ -646,6 +621,8 @@ const StrategyStudio = () => {
                     variant: 'contained',
                     disabled: !name || !code || !hasChanges,
                     loading: saving,
+                    tooltip: 'Save',
+                    iconOnlyOnSmallScreen: true,
                   },
                   {
                     id: 'run-backtest',
@@ -684,6 +661,28 @@ const StrategyStudio = () => {
                     label: 'Rename',
                     icon: <EditIcon />,
                     onClick: () => setRenameDrawerOpen(true),
+                  },
+                  {
+                    id: 'switch-mode',
+                    label:
+                      builderMode === StrategyStrategyBuilderMode.Ui
+                        ? 'Switch to Code'
+                        : 'Switch to Builder',
+                    icon: builderMode === StrategyStrategyBuilderMode.Ui ? <Code /> : <Dashboard />,
+                    onClick: () => {
+                      if (builderMode === StrategyStrategyBuilderMode.Ui) {
+                        setEjectDrawerOpen(true);
+                      } else if (code === DEFAULT_STRATEGY_CODE) {
+                        setBuilderMode(StrategyStrategyBuilderMode.Ui);
+                        if (!uiBuilderConfig) {
+                          setUiBuilderConfig(createDefaultUIBuilderConfig());
+                        }
+                        setHasChanges(true);
+                      }
+                    },
+                    disabled:
+                      builderMode === StrategyStrategyBuilderMode.Code &&
+                      code !== DEFAULT_STRATEGY_CODE,
                   },
                   {
                     id: 'cancel',

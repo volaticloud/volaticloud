@@ -37,6 +37,10 @@ import {
   createPriceOperand,
 } from './types';
 import { INDICATORS } from './indicatorMeta';
+import {
+  TRADE_CONTEXT_FIELDS,
+  TradeContextFieldMeta,
+} from './tradeContextFields';
 
 // Note: Only implemented operand types are included here
 // MARKET operand is not yet implemented in the backend
@@ -62,16 +66,6 @@ const PRICE_FIELDS = [
   { value: 'hl2', label: 'HL/2' },
 ] as const;
 
-const TRADE_CONTEXT_FIELDS = [
-  { value: 'current_profit', label: 'Current Profit', description: 'Decimal (0.05 = 5%)' },
-  { value: 'current_profit_pct', label: 'Profit %', description: 'Percentage value' },
-  { value: 'entry_rate', label: 'Entry Price', description: 'Trade entry rate' },
-  { value: 'current_rate', label: 'Current Price', description: 'Current market price' },
-  { value: 'trade_duration', label: 'Duration (min)', description: 'Trade duration in minutes' },
-  { value: 'nr_of_entries', label: 'Entry Count', description: 'Number of entries (DCA)' },
-  { value: 'stake_amount', label: 'Stake Amount', description: 'Current stake' },
-] as const;
-
 const TIME_FIELDS = [
   { value: 'hour', label: 'Hour (0-23)' },
   { value: 'day_of_week', label: 'Day of Week (0-6)' },
@@ -85,9 +79,13 @@ interface OperandEditorProps {
   onChange: (operand: Operand) => void;
   indicators: IndicatorDefinition[];
   showTradeContext?: boolean;
+  /** Override the list of available trade context fields (e.g., leverage callback has fewer fields) */
+  tradeContextFields?: readonly TradeContextFieldMeta[];
   label?: string;
   /** When true, all editing is disabled (used for mirrored signals) */
   readOnly?: boolean;
+  /** Context field metadata - used to render appropriate input for constant values */
+  contextFieldMeta?: TradeContextFieldMeta;
 }
 
 export function OperandEditor({
@@ -95,8 +93,10 @@ export function OperandEditor({
   onChange,
   indicators,
   showTradeContext = false,
+  tradeContextFields: tradeContextFieldsOverride,
   label,
   readOnly = false,
+  contextFieldMeta,
 }: OperandEditorProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
@@ -136,6 +136,123 @@ export function OperandEditor({
     switch (value.type) {
       case OperandType.Constant: {
         const constOp = value as ConstantOperand;
+
+        // Use contextFieldMeta to determine the appropriate input type
+        if (contextFieldMeta) {
+          switch (contextFieldMeta.valueType) {
+            case 'boolean':
+              return (
+                <FormControl size="small" sx={{ minWidth: 80 }} disabled={readOnly}>
+                  <Select
+                    value={constOp.value === true || constOp.value === 'true' ? 'true' : 'false'}
+                    onChange={(e) =>
+                      onChange({
+                        ...constOp,
+                        value: e.target.value === 'true',
+                      })
+                    }
+                  >
+                    <MenuItem value="true">True</MenuItem>
+                    <MenuItem value="false">False</MenuItem>
+                  </Select>
+                </FormControl>
+              );
+            case 'enum':
+              return (
+                <FormControl size="small" sx={{ minWidth: 100 }} disabled={readOnly}>
+                  <Select
+                    value={constOp.value ?? contextFieldMeta.enumOptions?.[0]?.value ?? ''}
+                    onChange={(e) =>
+                      onChange({
+                        ...constOp,
+                        value: e.target.value,
+                      })
+                    }
+                  >
+                    {contextFieldMeta.enumOptions?.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              );
+            case 'string':
+              return (
+                <TextField
+                  value={constOp.value ?? ''}
+                  onChange={(e) =>
+                    onChange({
+                      ...constOp,
+                      value: e.target.value,
+                    })
+                  }
+                  size="small"
+                  sx={{ width: 140 }}
+                  disabled={readOnly}
+                  placeholder={contextFieldMeta.description || 'Value'}
+                />
+              );
+            case 'number':
+            default:
+              return (
+                <TextField
+                  type="number"
+                  value={constOp.value ?? 0}
+                  onChange={(e) =>
+                    onChange({
+                      ...constOp,
+                      value: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  size="small"
+                  sx={{ width: 100 }}
+                  disabled={readOnly}
+                  slotProps={{
+                    htmlInput: { step: 'any' }
+                  }}
+                />
+              );
+          }
+        }
+
+        // Fallback: determine type from current value
+        if (typeof constOp.value === 'boolean') {
+          return (
+            <FormControl size="small" sx={{ minWidth: 80 }} disabled={readOnly}>
+              <Select
+                value={constOp.value ? 'true' : 'false'}
+                onChange={(e) =>
+                  onChange({
+                    ...constOp,
+                    value: e.target.value === 'true',
+                  })
+                }
+              >
+                <MenuItem value="true">True</MenuItem>
+                <MenuItem value="false">False</MenuItem>
+              </Select>
+            </FormControl>
+          );
+        }
+        if (typeof constOp.value === 'string') {
+          return (
+            <TextField
+              value={constOp.value ?? ''}
+              onChange={(e) =>
+                onChange({
+                  ...constOp,
+                  value: e.target.value,
+                })
+              }
+              size="small"
+              sx={{ width: 120 }}
+              disabled={readOnly}
+              placeholder="Value"
+            />
+          );
+        }
+        // Default: number input
         return (
           <TextField
             type="number"
@@ -277,7 +394,7 @@ export function OperandEditor({
               }
               label="Trade Field"
             >
-              {TRADE_CONTEXT_FIELDS.map((field) => (
+              {(tradeContextFieldsOverride || TRADE_CONTEXT_FIELDS).map((field) => (
                 <MenuItem key={field.value} value={field.value}>
                   {field.label}
                 </MenuItem>

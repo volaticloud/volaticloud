@@ -10,6 +10,8 @@ import {
   Divider,
   Box,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { MoreVert } from '@mui/icons-material';
 
@@ -40,6 +42,8 @@ export interface ToolbarAction {
   hidden?: boolean;
   /** Add divider before this item in the menu */
   dividerBefore?: boolean;
+  /** Show only icon on small screens (requires icon and tooltip) */
+  iconOnlyOnSmallScreen?: boolean;
 }
 
 export interface ToolbarActionsProps {
@@ -74,6 +78,8 @@ export const ToolbarActions = ({
   gap = 1,
   overflowTooltip = 'More actions',
 }: ToolbarActionsProps) => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
@@ -96,7 +102,20 @@ export const ToolbarActions = ({
     <Box sx={{ display: 'flex', alignItems: 'center', gap }}>
       {/* Primary actions as buttons */}
       {primaryActions.map((action) => {
-        const button = (
+        const showIconOnly = action.iconOnlyOnSmallScreen && isSmallScreen && action.icon;
+        const tooltipTitle = action.tooltip || (showIconOnly ? action.label : '');
+
+        const button = showIconOnly ? (
+          <IconButton
+            aria-label={action.label}
+            color={action.color || 'primary'}
+            size={size}
+            onClick={action.onClick}
+            disabled={action.disabled || action.loading}
+          >
+            {action.loading ? <CircularProgress size={20} /> : action.icon}
+          </IconButton>
+        ) : (
           <Button
             aria-label={action.label}
             variant={action.variant || 'outlined'}
@@ -110,8 +129,8 @@ export const ToolbarActions = ({
           </Button>
         );
 
-        return action.tooltip ? (
-          <Tooltip key={action.id} title={action.tooltip}>
+        return tooltipTitle ? (
+          <Tooltip key={action.id} title={tooltipTitle}>
             <span>{button}</span>
           </Tooltip>
         ) : (
@@ -139,6 +158,7 @@ export const ToolbarActions = ({
             anchorEl={anchorEl}
             open={menuOpen}
             onClose={handleMenuClose}
+            disableRestoreFocus
             anchorOrigin={{
               vertical: 'bottom',
               horizontal: 'right',
@@ -233,6 +253,7 @@ export const OverflowMenu = ({
         anchorEl={anchorEl}
         open={menuOpen}
         onClose={handleMenuClose}
+        disableRestoreFocus
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'right',

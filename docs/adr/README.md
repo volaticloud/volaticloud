@@ -25,6 +25,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0017](0017-hybrid-testing-strategy.md) | Hybrid Testing Strategy with Testcontainers | Accepted | 2026-01-26 |
 | [0018](0018-graphql-websocket-subscriptions.md) | GraphQL WebSocket Subscriptions | Accepted | 2026-01-26 |
 | [0019](0019-internal-backend-architecture.md) | Internal Backend Architecture | Accepted | 2026-01-27 |
+| [0020](0020-leverage-configuration-system.md) | Leverage Configuration System | Accepted | 2026-01-28 |
 
 ## What is an ADR?
 

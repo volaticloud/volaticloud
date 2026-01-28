@@ -285,6 +285,47 @@ internal/
     └── *.go             # Event publishers
 ```
 
+### Apollo Client Token Refresh Without Remounting
+
+**Problem:** When the OIDC access token refreshes (every ~5 minutes), the Apollo Client was
+recreated because `auth.user?.access_token` was a `useMemo` dependency. This caused:
+
+- All active queries/subscriptions to reset
+- Component state loss (forms, drawers, scroll position)
+- Poor UX with page "flickering" on token refresh
+
+**Solution:** Decouple token refresh from Apollo Client lifecycle using a ref-based pattern:
+
+```typescript
+// App.tsx - Token ref pattern
+const accessTokenRef = useRef<string | undefined>(auth.user?.access_token);
+
+// Keep ref in sync without triggering useMemo
+useEffect(() => {
+  accessTokenRef.current = auth.user?.access_token;
+}, [auth.user?.access_token]);
+
+// Stable callback - identity never changes
+const getAccessToken = useCallback(() => accessTokenRef.current, []);
+
+// Apollo Client only recreated when gateway URL changes, NOT on token refresh
+const apolloClient = useMemo(() => {
+  const wsUrl = gatewayUrl.replace(/^http/, 'ws') + '/query';
+  return createApolloClient(`${gatewayUrl}/query`, wsUrl, getAccessToken);
+}, [gatewayUrl, getAccessToken]);
+```
+
+**How it works:**
+
+1. `accessTokenRef` always holds the latest token but doesn't trigger re-renders
+2. `getAccessToken` is a stable callback (empty dependency array) that reads from the ref
+3. Apollo Client's `authLink` calls `getAccessToken()` on every request, getting the fresh token
+4. WebSocket reconnection also uses the latest token from the ref
+
+**Trade-off:** If a token becomes invalid between refreshes, individual requests may fail with 401
+until the next OIDC silent refresh cycle. This is acceptable because OIDC handles refresh
+automatically and the window is brief.
+
 ## References
 
 - [Apollo Subscriptions Documentation](https://www.apollographql.com/docs/react/data/subscriptions)

@@ -16,7 +16,7 @@ import {
 import { Close } from '@mui/icons-material';
 import { useState, useMemo } from 'react';
 import { useCreateBotMutation, useGetExchangesForCreateQuery } from './bots.generated';
-import { JSONEditor } from '../JSONEditor';
+import { FreqtradeConfigForm, createDefaultFreqtradeConfig, BOT_SECTIONS } from '../Freqtrade';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { RunnerSelector, StrategySelector } from '../shared';
 import { useDialogUnsavedChanges } from '../../hooks';
@@ -28,52 +28,8 @@ interface CreateBotDrawerProps {
   onSuccess: () => void;
 }
 
-const DEFAULT_BOT_CONFIG = {
-  stake_currency: 'USDT',
-  stake_amount: 10,
-  dry_run_wallet: 1000,
-  timeframe: '5m',
-  max_open_trades: 3,
-  unfilledtimeout: {
-    entry: 10,
-    exit: 30,
-  },
-  exit_pricing: {
-    price_side: 'other',
-    use_order_book: true,
-    order_book_top: 1,
-    price_last_balance: 0.0,
-  },
-  entry_pricing: {
-    price_side: 'other',
-    use_order_book: true,
-    order_book_top: 1,
-    price_last_balance: 0.0,
-    check_depth_of_market: {
-      enabled: false,
-      bids_to_ask_delta: 1,
-    },
-  },
-  order_types: {
-    entry: 'limit',
-    exit: 'limit',
-    stoploss: 'market',
-    stoploss_on_exchange: false,
-    stoploss_on_exchange_interval: 60,
-  },
-  order_time_in_force: {
-    entry: 'GTC',
-    exit: 'GTC',
-  },
-  pairlists: [
-    {
-      method: 'StaticPairList',
-    },
-  ],
-  exchange: {
-    pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
-  },
-};
+// Create default config once for comparison
+const DEFAULT_BOT_CONFIG = createDefaultFreqtradeConfig();
 
 export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerProps) => {
   const { activeOrganizationId } = useActiveOrganization();
@@ -82,7 +38,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
   const [strategyID, setStrategyID] = useState('');
   const [runnerID, setRunnerID] = useState('');
   const [mode, setMode] = useState<'live' | 'dry_run'>('dry_run');
-  const [config, setConfig] = useState<object | null>(DEFAULT_BOT_CONFIG);
+  const [config, setConfig] = useState<object | null>(null);
 
   const { data: optionsData } = useGetExchangesForCreateQuery({
     variables: {
@@ -99,7 +55,8 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
     if (strategyID !== '') return true;
     if (runnerID !== '') return true;
     if (mode !== 'dry_run') return true;
-    if (JSON.stringify(config) !== JSON.stringify(DEFAULT_BOT_CONFIG)) return true;
+    // Config starts as null, any change means it's been modified
+    if (config !== null && JSON.stringify(config) !== JSON.stringify(DEFAULT_BOT_CONFIG)) return true;
     return false;
   }, [name, exchangeID, strategyID, runnerID, mode, config]);
 
@@ -249,12 +206,16 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
             />
 
             <Box>
-              <JSONEditor
+              <Typography variant="subtitle2" gutterBottom>
+                Freqtrade Bot Configuration
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Configure bot settings. This will be written to config.bot.json and merged with exchange and strategy configs.
+              </Typography>
+              <FreqtradeConfigForm
                 value={config}
                 onChange={setConfig}
-                label="Freqtrade Bot Configuration"
-                helperText="Complete freqtrade bot config. Required fields: stake_currency, stake_amount, exit_pricing, entry_pricing. This will be written to config.bot.json and merged with exchange and strategy configs."
-                height="400px"
+                defaultSections={BOT_SECTIONS}
               />
             </Box>
 

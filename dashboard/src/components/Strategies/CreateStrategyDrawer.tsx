@@ -12,7 +12,7 @@ import {
 import { Close } from '@mui/icons-material';
 import { useState, useMemo } from 'react';
 import { useCreateStrategyMutation } from './strategies.generated';
-import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
+import { FreqtradeConfigForm, STRATEGY_SECTIONS } from '../Freqtrade';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { useDialogUnsavedChanges } from '../../hooks';
@@ -160,6 +160,7 @@ export const CreateStrategyDrawer = ({ open, onClose, onSuccess }: CreateStrateg
                 value={config}
                 onChange={setConfig}
                 hideSubmitButton
+                defaultSections={STRATEGY_SECTIONS}
               />
             </Box>
 

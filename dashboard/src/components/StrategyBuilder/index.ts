@@ -11,6 +11,10 @@ export { ParameterEditor } from './ParameterEditor';
 export { StoplossBuilder } from './StoplossBuilder';
 export { DCABuilder } from './DCABuilder';
 export { EntryConfirmBuilder } from './EntryConfirmBuilder';
+export { LeverageBuilder } from './LeverageBuilder';
+
+// Selectors
+export { TradingModeSelector } from './TradingModeSelector';
 
 // Code preview
 export { CodePreview } from './CodePreview';

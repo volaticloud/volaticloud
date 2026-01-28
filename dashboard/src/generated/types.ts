@@ -2391,6 +2391,14 @@ export type KubernetesConfigInput = {
   storageClassName?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Type of leverage value in a leverage rule */
+export enum LeverageValueType {
+  /** Fixed constant leverage value (e.g., 3x) */
+  Constant = 'CONSTANT',
+  /** Dynamic leverage computed from an expression/operand */
+  Expression = 'EXPRESSION'
+}
+
 export type LocalConfigInput = {
   basePath?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2893,6 +2901,16 @@ export type PageInfo = {
   /** When paginating backwards, the cursor to continue. */
   startCursor?: Maybe<Scalars['Cursor']['output']>;
 };
+
+/** Type of pattern matching for pair-based leverage rules */
+export enum PairMatchPatternType {
+  /** Exact match (e.g., "BTC/USDT") */
+  Exact = 'EXACT',
+  /** Regular expression match */
+  Regex = 'REGEX',
+  /** Wildcard match using fnmatch (e.g., "BTC/*", "*\/USDT") */
+  Wildcard = 'WILDCARD'
+}
 
 export type PassphraseExchangeConfigInput = {
   apiKey: Scalars['String']['input'];
@@ -4500,6 +4518,16 @@ export type TradeWhereInput = {
   updatedAtNEQ?: InputMaybe<Scalars['Time']['input']>;
   updatedAtNotIn?: InputMaybe<Array<Scalars['Time']['input']>>;
 };
+
+/** Trading mode for the strategy - determines whether leverage and shorting are available */
+export enum TradingMode {
+  /** Futures/perpetuals trading - leverage available, shorting available */
+  Futures = 'FUTURES',
+  /** Margin trading - leverage available, shorting available */
+  Margin = 'MARGIN',
+  /** Spot trading - no leverage, no shorting */
+  Spot = 'SPOT'
+}
 
 /**
  * UpdateAlertRuleInput is used for update AlertRule object.

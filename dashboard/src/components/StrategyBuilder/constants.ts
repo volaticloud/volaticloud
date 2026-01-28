@@ -3,7 +3,14 @@
  * Centralized here for consistency and easy maintenance.
  */
 
-import { DCAConfig, CustomStoplossConfig, ConfirmEntryConfig, createAndNode, createId } from './types';
+import {
+  DCAConfig,
+  CustomStoplossConfig,
+  ConfirmEntryConfig,
+  LeverageConfig,
+  createAndNode,
+  createId,
+} from './types';
 
 /**
  * Default DCA (Dollar Cost Averaging) configuration
@@ -38,4 +45,15 @@ export const DEFAULT_STOPLOSS_CONFIG: CustomStoplossConfig = {
 export const DEFAULT_CONFIRM_ENTRY_CONFIG: ConfirmEntryConfig = {
   enabled: false,
   rules: createAndNode([]),
+};
+
+/**
+ * Default Leverage configuration
+ * Leverage is only applicable in futures trading mode
+ */
+export const DEFAULT_LEVERAGE_CONFIG: LeverageConfig = {
+  enabled: false,
+  rules: [],
+  default_leverage: 1.0,
+  max_leverage: 10.0,
 };
