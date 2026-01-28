@@ -21,7 +21,6 @@ import {
 import { useState, useEffect } from 'react';
 import { useGetStrategiesQuery, GetStrategiesQuery } from './strategies.generated';
 import { DeleteStrategyDrawer } from './DeleteStrategyDrawer';
-import { CreateStrategyNameDrawer } from './CreateStrategyNameDrawer';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { StrategyVisibilityButton } from './StrategyVisibilityButton';
 import { PaginatedDataGrid } from '../shared/PaginatedDataGrid';
@@ -40,7 +39,6 @@ export const StrategiesList = () => {
   const { allowed: canCreateStrategy } = useOrganizationPermission('create-strategy');
 
   const [viewMode, setViewMode] = useState<ViewMode>('mine');
-  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
   const [backtestDrawerOpen, setBacktestDrawerOpen] = useState(false);
   const [selectedStrategyForBacktest, setSelectedStrategyForBacktest] = useState<string | null>(null);
@@ -245,7 +243,7 @@ export const StrategiesList = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setCreateDrawerOpen(true)}
+                  onClick={() => navigate('/strategies/new')}
                   disabled={!canCreateStrategy}
                   sx={{ flexShrink: 0 }}
                 >
@@ -303,15 +301,6 @@ export const StrategiesList = () => {
           }
         }}
         preSelectedStrategyId={selectedStrategyForBacktest || undefined}
-      />
-
-      <CreateStrategyNameDrawer
-        open={createDrawerOpen}
-        onClose={() => setCreateDrawerOpen(false)}
-        onSuccess={(strategyId) => {
-          setCreateDrawerOpen(false);
-          navigate(`/strategies/${strategyId}/edit`);
-        }}
       />
 
       <Snackbar

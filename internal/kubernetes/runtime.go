@@ -919,7 +919,7 @@ ls -la /userdata/strategies/`
 			Labels: map[string]string{
 				LabelManaged:   "true",
 				LabelBotID:     spec.ID,
-				LabelBotName:   runner.SanitizeLabelValue(spec.Name),
+				LabelBotName:   spec.Name,
 				LabelComponent: ComponentBot,
 			},
 		},
@@ -935,7 +935,7 @@ ls -la /userdata/strategies/`
 					Labels: map[string]string{
 						LabelManaged:   "true",
 						LabelBotID:     spec.ID,
-						LabelBotName:   runner.SanitizeLabelValue(spec.Name),
+						LabelBotName:   spec.Name,
 						LabelComponent: ComponentBot,
 					},
 				},

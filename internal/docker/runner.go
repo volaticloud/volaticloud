@@ -644,7 +644,7 @@ func (d *Runtime) buildContainerConfig(spec runner.BotSpec, configPaths *configF
 		ExposedPorts: exposedPorts,
 		Labels: map[string]string{
 			labelBotID:   spec.ID,
-			labelBotName: runner.SanitizeLabelValue(spec.Name),
+			labelBotName: spec.Name,
 			labelManaged: "true",
 		},
 	}

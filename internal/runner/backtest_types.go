@@ -58,44 +58,6 @@ func SanitizeStrategyFilename(name string) string {
 	return result.String()
 }
 
-// labelValueRegex matches characters that are not valid in Kubernetes label values
-var labelValueRegex = regexp.MustCompile(`[^a-zA-Z0-9._-]`)
-
-// SanitizeLabelValue converts a string to a valid Kubernetes label value.
-// Kubernetes label values must:
-// - Be 63 characters or fewer
-// - Contain only alphanumeric characters, dashes (-), underscores (_), and dots (.)
-// - Begin and end with an alphanumeric character
-// Example: "My Bot Name!" -> "My-Bot-Name"
-func SanitizeLabelValue(value string) string {
-	if value == "" {
-		return ""
-	}
-
-	// Replace spaces with dashes first
-	sanitized := strings.ReplaceAll(value, " ", "-")
-
-	// Remove any other invalid characters
-	sanitized = labelValueRegex.ReplaceAllString(sanitized, "")
-
-	// Collapse multiple dashes into single dash
-	for strings.Contains(sanitized, "--") {
-		sanitized = strings.ReplaceAll(sanitized, "--", "-")
-	}
-
-	// Trim leading/trailing dashes, underscores, and dots (must start/end with alphanumeric)
-	sanitized = strings.Trim(sanitized, "-_.")
-
-	// Truncate to 63 characters (max label value length)
-	if len(sanitized) > 63 {
-		sanitized = sanitized[:63]
-		// Ensure we don't end with a non-alphanumeric character after truncation
-		sanitized = strings.TrimRight(sanitized, "-_.")
-	}
-
-	return sanitized
-}
-
 // BacktestSpec defines the specification for running a backtest
 type BacktestSpec struct {
 	// Identity
