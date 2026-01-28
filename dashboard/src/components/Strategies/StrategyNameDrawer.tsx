@@ -12,7 +12,7 @@ import {
 import { Close, Add, Edit } from '@mui/icons-material';
 import { useState, useEffect, useMemo } from 'react';
 import { useDialogUnsavedChanges } from '../../hooks';
-import { UnsavedChangesDrawer } from '../shared';
+import { UnsavedChangesDrawer } from '../shared/UnsavedChangesDrawer';
 
 export interface StrategyNameDrawerProps {
   open: boolean;
