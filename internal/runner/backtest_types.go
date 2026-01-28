@@ -61,6 +61,9 @@ func SanitizeStrategyFilename(name string) string {
 // labelValueRegex matches characters that are not valid in Kubernetes label values
 var labelValueRegex = regexp.MustCompile(`[^a-zA-Z0-9._-]`)
 
+// multipleDashRegex matches two or more consecutive dashes
+var multipleDashRegex = regexp.MustCompile(`-{2,}`)
+
 // SanitizeLabelValue converts a string to a valid Kubernetes label value.
 // Kubernetes label values must:
 // - Be 63 characters or fewer
@@ -78,10 +81,8 @@ func SanitizeLabelValue(value string) string {
 	// Remove any other invalid characters
 	sanitized = labelValueRegex.ReplaceAllString(sanitized, "")
 
-	// Collapse multiple dashes into single dash
-	for strings.Contains(sanitized, "--") {
-		sanitized = strings.ReplaceAll(sanitized, "--", "-")
-	}
+	// Collapse multiple dashes into single dash (using regex for efficiency)
+	sanitized = multipleDashRegex.ReplaceAllString(sanitized, "-")
 
 	// Trim leading/trailing dashes, underscores, and dots (must start/end with alphanumeric)
 	sanitized = strings.Trim(sanitized, "-_.")

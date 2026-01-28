@@ -43,6 +43,7 @@ import { FreqtradeConfigForm, createDefaultFreqtradeConfig, mergeWithDefaults } 
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { RenameStrategyDrawer } from './RenameStrategyDrawer';
+import { DEFAULT_STRATEGY_CODE } from './strategyDefaults';
 import { CreateBacktestDrawer } from '../Backtests/CreateBacktestDrawer';
 import { BacktestResultsDrawer } from '../Backtests/BacktestResultsDrawer';
 import { ConfirmDrawer, ContentDrawer, ResponsivePanelLayout } from '../shared';
@@ -90,40 +91,9 @@ const StrategyStudio = () => {
   // Default config for new strategies - includes all mandatory Freqtrade fields
   const defaultConfig = createDefaultFreqtradeConfig();
 
-  // Default code template for new strategies
-  const defaultCode = `# pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
-from freqtrade.strategy import IStrategy
-from pandas import DataFrame
-
-
-class MyStrategy(IStrategy):
-    """
-    Sample strategy - customize this for your trading logic
-    """
-
-    # Strategy parameters
-    minimal_roi = {"0": 0.1}
-    stoploss = -0.10
-    timeframe = '5m'
-
-    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Add your indicators here
-        return dataframe
-
-    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Define entry conditions
-        dataframe['enter_long'] = 0
-        return dataframe
-
-    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Define exit conditions
-        dataframe['exit_long'] = 0
-        return dataframe
-`;
-
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [code, setCode] = useState(isCreateMode ? defaultCode : '');
+  const [code, setCode] = useState(isCreateMode ? DEFAULT_STRATEGY_CODE : '');
   const [config, setConfig] = useState<object | null>(isCreateMode ? defaultConfig : null);
   const [hasChanges, setHasChanges] = useState(false);
   const [backtestDrawerOpen, setBacktestDrawerOpen] = useState(false);
@@ -246,7 +216,7 @@ class MyStrategy(IStrategy):
     // Switching from Code to UI is only allowed for new strategies
     if (builderMode === StrategyStrategyBuilderMode.Code && newMode === StrategyStrategyBuilderMode.Ui) {
       // Only allow if no code has been written (or it's the default template)
-      if (code !== defaultCode && !isCreateMode) {
+      if (code !== DEFAULT_STRATEGY_CODE && !isCreateMode) {
         // Cannot switch existing code-based strategies to UI mode
         return;
       }
@@ -583,7 +553,7 @@ class MyStrategy(IStrategy):
             disabled={
               builderMode === StrategyStrategyBuilderMode.Code &&
               !isCreateMode &&
-              code !== defaultCode
+              code !== DEFAULT_STRATEGY_CODE
             }
           >
             <Tooltip title="Visual Builder">
@@ -856,14 +826,18 @@ class MyStrategy(IStrategy):
             // Update local state with new name/description
             setName(newName);
             setDescription(newDescription);
-            // Also update config with strategy_name field
-            setConfig((prev) => ({
-              ...prev,
-              strategy_name: newName || undefined,
-            }));
+            // Also update config with strategy_name field (guard against null)
+            setConfig((prev) => prev ? { ...prev, strategy_name: newName || undefined } : prev);
             // Update class name in code
             const className = toClassName(newName);
-            setCode((prev) => prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`));
+            setCode((prev) => {
+              const updated = prev.replace(/class \w+\(IStrategy\):/, `class ${className}(IStrategy):`);
+              // Mark as changed if code was actually modified
+              if (updated !== prev) {
+                setHasChanges(true);
+              }
+              return updated;
+            });
           }}
           strategyId={strategy.id}
           currentName={name}
