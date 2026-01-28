@@ -77,6 +77,8 @@ interface ConditionNodeProps {
   indicators: IndicatorDefinition[];
   depth?: number;
   showTradeContext?: boolean;
+  /** Override the list of available trade context fields (e.g., leverage callback has fewer fields) */
+  tradeContextFields?: readonly import('./tradeContextFields').TradeContextFieldMeta[];
   /** When true, all editing is disabled (used for mirrored signals) */
   readOnly?: boolean;
 }
@@ -88,6 +90,7 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
   indicators,
   depth = 0,
   showTradeContext = false,
+  tradeContextFields: tradeContextFieldsOverride,
   readOnly = false,
 }: ConditionNodeProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -296,6 +299,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                     indicators={indicators}
                     depth={depth + 1}
                     showTradeContext={showTradeContext}
+
+                    tradeContextFields={tradeContextFieldsOverride}
                     readOnly={readOnly}
                   />
                 </Box>
@@ -417,6 +422,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
           indicators={indicators}
           depth={depth + 1}
           showTradeContext={showTradeContext}
+
+          tradeContextFields={tradeContextFieldsOverride}
           readOnly={readOnly}
         />
 
@@ -539,6 +546,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
           onChange={handleLeftChange}
           indicators={indicators}
           showTradeContext={showTradeContext}
+
+          tradeContextFields={tradeContextFieldsOverride}
           readOnly={readOnly}
         />
 
@@ -565,6 +574,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
           onChange={(right) => onChange({ ...cmpNode, right })}
           indicators={indicators}
           showTradeContext={showTradeContext}
+
+          tradeContextFields={tradeContextFieldsOverride}
           readOnly={readOnly}
           contextFieldMeta={contextFieldMeta}
         />
@@ -826,6 +837,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
               indicators={indicators}
               depth={depth + 1}
               showTradeContext={showTradeContext}
+
+              tradeContextFields={tradeContextFieldsOverride}
               readOnly={readOnly}
             />
           </Box>
@@ -841,6 +854,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
               indicators={indicators}
               depth={depth + 1}
               showTradeContext={showTradeContext}
+
+              tradeContextFields={tradeContextFieldsOverride}
               readOnly={readOnly}
             />
           </Box>
@@ -866,6 +881,8 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                   indicators={indicators}
                   depth={depth + 1}
                   showTradeContext={showTradeContext}
+
+                  tradeContextFields={tradeContextFieldsOverride}
                   readOnly={readOnly}
                 />
               </Box>

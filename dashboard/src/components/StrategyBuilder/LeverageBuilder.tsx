@@ -44,6 +44,10 @@ import {
 import { ConditionNodeEditor } from './ConditionNode';
 import { ToggleableSection } from './shared';
 import { DEFAULT_LEVERAGE_CONFIG } from './constants';
+import { LEVERAGE_TRADE_CONTEXT_FIELDS } from './tradeContextFields';
+
+/** Maximum leverage limit supported by most exchanges */
+const MAX_LEVERAGE_LIMIT = 125;
 
 interface LeverageBuilderProps {
   value: LeverageConfig | undefined;
@@ -77,7 +81,7 @@ export function LeverageBuilder({ value, onChange, indicators }: LeverageBuilder
   const handleDefaultLeverageChange = (leverage: number) => {
     onChange({
       ...config,
-      default_leverage: Math.max(1, Math.min(leverage, config.max_leverage || 125)),
+      default_leverage: Math.max(1, Math.min(leverage, config.max_leverage || MAX_LEVERAGE_LIMIT)),
     });
   };
 
@@ -129,7 +133,7 @@ export function LeverageBuilder({ value, onChange, indicators }: LeverageBuilder
   };
 
   const handleRuleLeverageChange = (id: string, leverageValue: number) => {
-    const clampedValue = Math.max(1, Math.min(leverageValue, config.max_leverage || 125));
+    const clampedValue = Math.max(1, Math.min(leverageValue, config.max_leverage || MAX_LEVERAGE_LIMIT));
     handleRuleChange(id, {
       leverage: {
         type: LeverageValueType.Constant,
@@ -300,7 +304,7 @@ export function LeverageBuilder({ value, onChange, indicators }: LeverageBuilder
                 input: {
                   endAdornment: <InputAdornment position="end">x</InputAdornment>,
                 },
-                htmlInput: { min: 1, max: config.max_leverage || 125, step: 1 },
+                htmlInput: { min: 1, max: config.max_leverage || MAX_LEVERAGE_LIMIT, step: 1 },
               }}
             />
           </Box>
@@ -315,7 +319,7 @@ export function LeverageBuilder({ value, onChange, indicators }: LeverageBuilder
               value={config.max_leverage || 10}
               onChange={(_, v) => handleMaxLeverageChange(v as number)}
               min={1}
-              max={125}
+              max={MAX_LEVERAGE_LIMIT}
               step={1}
               valueLabelDisplay="auto"
               valueLabelFormat={(v) => `${v}x`}
@@ -482,6 +486,7 @@ export function LeverageBuilder({ value, onChange, indicators }: LeverageBuilder
                   onChange={(condition) => handleRuleConditionChange(rule.id, condition)}
                   indicators={indicators}
                   showTradeContext
+                  tradeContextFields={LEVERAGE_TRADE_CONTEXT_FIELDS}
                   readOnly={rule.disabled}
                 />
               ) : (
@@ -518,7 +523,7 @@ export function LeverageBuilder({ value, onChange, indicators }: LeverageBuilder
                   input: {
                     endAdornment: <InputAdornment position="end">x</InputAdornment>,
                   },
-                  htmlInput: { min: 1, max: config.max_leverage || 125, step: 1 },
+                  htmlInput: { min: 1, max: config.max_leverage || MAX_LEVERAGE_LIMIT, step: 1 },
                 }}
               />
             </Box>

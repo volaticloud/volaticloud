@@ -79,6 +79,8 @@ interface OperandEditorProps {
   onChange: (operand: Operand) => void;
   indicators: IndicatorDefinition[];
   showTradeContext?: boolean;
+  /** Override the list of available trade context fields (e.g., leverage callback has fewer fields) */
+  tradeContextFields?: readonly TradeContextFieldMeta[];
   label?: string;
   /** When true, all editing is disabled (used for mirrored signals) */
   readOnly?: boolean;
@@ -91,6 +93,7 @@ export function OperandEditor({
   onChange,
   indicators,
   showTradeContext = false,
+  tradeContextFields: tradeContextFieldsOverride,
   label,
   readOnly = false,
   contextFieldMeta,
@@ -391,7 +394,7 @@ export function OperandEditor({
               }
               label="Trade Field"
             >
-              {TRADE_CONTEXT_FIELDS.map((field) => (
+              {(tradeContextFieldsOverride || TRADE_CONTEXT_FIELDS).map((field) => (
                 <MenuItem key={field.value} value={field.value}>
                   {field.label}
                 </MenuItem>

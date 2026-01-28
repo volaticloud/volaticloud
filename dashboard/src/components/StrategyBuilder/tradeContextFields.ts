@@ -55,6 +55,16 @@ export const TRADE_CONTEXT_FIELDS: readonly TradeContextFieldMeta[] = [
 ] as const;
 
 /**
+ * Trade context fields available in the leverage callback.
+ * The leverage callback only receives: pair, current_rate, side (and is_short derived from side).
+ * Fields like current_profit, trade_duration, etc. are NOT available because no trade exists yet.
+ */
+export const LEVERAGE_TRADE_CONTEXT_FIELDS: readonly TradeContextFieldMeta[] =
+  TRADE_CONTEXT_FIELDS.filter(f =>
+    ['pair', 'is_short', 'current_rate', 'side'].includes(f.value)
+  );
+
+/**
  * Get metadata for a trade context field
  */
 export function getTradeContextFieldMeta(field: string): TradeContextFieldMeta | undefined {

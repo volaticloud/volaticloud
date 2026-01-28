@@ -431,62 +431,70 @@ func (g *Generator) generateLeverageIfThenElse(node *ConditionNode, needsDatafra
 }
 
 // generateLeverageCrossover generates CROSSOVER condition for leverage callback
-// Crossover is True when series1 crosses above series2 (series1[-2] < series2[-2] and series1[-1] >= series2[-1])
+// Crossover is True when series1 crosses above series2 (prev below, current above or equal)
 func (g *Generator) generateLeverageCrossover(node *ConditionNode, needsDataframe bool) (string, error) {
 	crossNode, err := node.AsCrossoverNode()
 	if err != nil {
 		return "", err
 	}
 
-	// For leverage callback with dataframe access, we use last_candle for current values
-	// and need to access previous candle for crossover detection
-	series1Current, err := g.generateLeverageOperand(&crossNode.Series1, needsDataframe)
+	series1Current, err := g.generateLeverageOperandWithCandle(&crossNode.Series1, needsDataframe, "last_candle")
+	if err != nil {
+		return "", err
+	}
+	series2Current, err := g.generateLeverageOperandWithCandle(&crossNode.Series2, needsDataframe, "last_candle")
+	if err != nil {
+		return "", err
+	}
+	series1Prev, err := g.generateLeverageOperandWithCandle(&crossNode.Series1, needsDataframe, "prev_candle")
+	if err != nil {
+		return "", err
+	}
+	series2Prev, err := g.generateLeverageOperandWithCandle(&crossNode.Series2, needsDataframe, "prev_candle")
 	if err != nil {
 		return "", err
 	}
 
-	series2Current, err := g.generateLeverageOperand(&crossNode.Series2, needsDataframe)
-	if err != nil {
-		return "", err
-	}
-
-	// For crossover we need previous values - modify the operand to use offset -1
-	// This requires special handling since leverage operands use last_candle
-	series1Prev := strings.Replace(series1Current, "last_candle", "prev_candle", 1)
-	series2Prev := strings.Replace(series2Current, "last_candle", "prev_candle", 1)
-
-	// Crossover: previous was below, current is above or equal
 	return fmt.Sprintf("(%s < %s) and (%s >= %s)", series1Prev, series2Prev, series1Current, series2Current), nil
 }
 
 // generateLeverageCrossunder generates CROSSUNDER condition for leverage callback
-// Crossunder is True when series1 crosses below series2 (series1[-2] > series2[-2] and series1[-1] <= series2[-1])
+// Crossunder is True when series1 crosses below series2 (prev above, current below or equal)
 func (g *Generator) generateLeverageCrossunder(node *ConditionNode, needsDataframe bool) (string, error) {
 	crossNode, err := node.AsCrossunderNode()
 	if err != nil {
 		return "", err
 	}
 
-	series1Current, err := g.generateLeverageOperand(&crossNode.Series1, needsDataframe)
+	series1Current, err := g.generateLeverageOperandWithCandle(&crossNode.Series1, needsDataframe, "last_candle")
+	if err != nil {
+		return "", err
+	}
+	series2Current, err := g.generateLeverageOperandWithCandle(&crossNode.Series2, needsDataframe, "last_candle")
+	if err != nil {
+		return "", err
+	}
+	series1Prev, err := g.generateLeverageOperandWithCandle(&crossNode.Series1, needsDataframe, "prev_candle")
+	if err != nil {
+		return "", err
+	}
+	series2Prev, err := g.generateLeverageOperandWithCandle(&crossNode.Series2, needsDataframe, "prev_candle")
 	if err != nil {
 		return "", err
 	}
 
-	series2Current, err := g.generateLeverageOperand(&crossNode.Series2, needsDataframe)
-	if err != nil {
-		return "", err
-	}
-
-	series1Prev := strings.Replace(series1Current, "last_candle", "prev_candle", 1)
-	series2Prev := strings.Replace(series2Current, "last_candle", "prev_candle", 1)
-
-	// Crossunder: previous was above, current is below or equal
 	return fmt.Sprintf("(%s > %s) and (%s <= %s)", series1Prev, series2Prev, series1Current, series2Current), nil
 }
 
 // generateLeverageOperand generates Python code for an operand in leverage callback
-// Returns scalar values (not pandas Series)
+// Returns scalar values (not pandas Series), using last_candle for dataframe access
 func (g *Generator) generateLeverageOperand(op *Operand, needsDataframe bool) (string, error) {
+	return g.generateLeverageOperandWithCandle(op, needsDataframe, "last_candle")
+}
+
+// generateLeverageOperandWithCandle generates Python code for an operand using the specified candle reference
+// candleRef is typically "last_candle" or "prev_candle" (for crossover/crossunder detection)
+func (g *Generator) generateLeverageOperandWithCandle(op *Operand, needsDataframe bool, candleRef string) (string, error) {
 	opType, err := op.GetOperandType()
 	if err != nil {
 		return "", err
@@ -496,9 +504,9 @@ func (g *Generator) generateLeverageOperand(op *Operand, needsDataframe bool) (s
 	case OperandTypeCONSTANT:
 		return g.generateConstantOperand(op)
 	case OperandTypeINDICATOR:
-		return g.generateLeverageIndicatorOperand(op)
+		return g.generateLeverageIndicatorOperand(op, candleRef)
 	case OperandTypePRICE:
-		return g.generateLeveragePriceOperand(op)
+		return g.generateLeveragePriceOperand(op, candleRef)
 	case OperandTypeTradeContext:
 		return g.generateLeverageTradeContextOperand(op)
 	case OperandTypeTIME:
@@ -509,8 +517,8 @@ func (g *Generator) generateLeverageOperand(op *Operand, needsDataframe bool) (s
 }
 
 // generateLeverageIndicatorOperand generates Python code for indicator access in leverage callback
-// Returns scalar value from last candle
-func (g *Generator) generateLeverageIndicatorOperand(op *Operand) (string, error) {
+// candleRef specifies which candle to access (e.g. "last_candle" or "prev_candle")
+func (g *Generator) generateLeverageIndicatorOperand(op *Operand, candleRef string) (string, error) {
 	indOp, err := op.AsIndicatorOperand()
 	if err != nil {
 		return "", err
@@ -522,13 +530,12 @@ func (g *Generator) generateLeverageIndicatorOperand(op *Operand) (string, error
 		colName = fmt.Sprintf("%s_%s", indOp.IndicatorID, indOp.Field)
 	}
 
-	// Access from last_candle (scalar)
-	return fmt.Sprintf("last_candle['%s']", colName), nil
+	return fmt.Sprintf("%s['%s']", candleRef, colName), nil
 }
 
 // generateLeveragePriceOperand generates Python code for price access in leverage callback
-// Returns scalar value from last candle
-func (g *Generator) generateLeveragePriceOperand(op *Operand) (string, error) {
+// candleRef specifies which candle to access (e.g. "last_candle" or "prev_candle")
+func (g *Generator) generateLeveragePriceOperand(op *Operand, candleRef string) (string, error) {
 	priceOp, err := op.AsPriceOperand()
 	if err != nil {
 		return "", err
@@ -536,15 +543,15 @@ func (g *Generator) generateLeveragePriceOperand(op *Operand) (string, error) {
 
 	switch priceOp.Field {
 	case "open", "high", "low", "close", "volume":
-		return fmt.Sprintf("last_candle['%s']", priceOp.Field), nil
+		return fmt.Sprintf("%s['%s']", candleRef, priceOp.Field), nil
 	case "ohlc4":
-		return "(last_candle['open'] + last_candle['high'] + last_candle['low'] + last_candle['close']) / 4", nil
+		return fmt.Sprintf("(%s['open'] + %s['high'] + %s['low'] + %s['close']) / 4", candleRef, candleRef, candleRef, candleRef), nil
 	case "hlc3":
-		return "(last_candle['high'] + last_candle['low'] + last_candle['close']) / 3", nil
+		return fmt.Sprintf("(%s['high'] + %s['low'] + %s['close']) / 3", candleRef, candleRef, candleRef), nil
 	case "hl2":
-		return "(last_candle['high'] + last_candle['low']) / 2", nil
+		return fmt.Sprintf("(%s['high'] + %s['low']) / 2", candleRef, candleRef), nil
 	default:
-		return fmt.Sprintf("last_candle['%s']", priceOp.Field), nil
+		return fmt.Sprintf("%s['%s']", candleRef, priceOp.Field), nil
 	}
 }
 
