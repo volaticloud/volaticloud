@@ -1,0 +1,35 @@
+:8080 {
+	# Enable gzip compression
+	encode gzip
+
+	# Serve static files
+	handle {
+		root * /srv
+
+		# SPA fallback - serve index.html for all routes
+		try_files {path} /index.html
+
+		file_server
+	}
+
+	# Security headers
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Cache static assets
+	@static {
+		path *.js *.css *.woff *.woff2 *.ttf *.eot *.svg *.png *.jpg *.jpeg *.gif *.ico
+	}
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# Logging
+	log {
+		output stdout
+		format json
+	}
+}

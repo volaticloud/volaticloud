@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #0a0a0a;
+}
+
+/* Green glow text */
+.text-glow-green {
+  text-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Pricing card highlighted glow */
+.pricing-glow {
+  box-shadow:
+    0 0 100px -12px rgba(34, 197, 94, 0.25),
+    0 0 40px -8px rgba(34, 197, 94, 0.18),
+    inset 0 1px 0 rgba(34, 197, 94, 0.2);
+}
+
+/* Gradient border for CTA */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.6) 0%,
+    rgba(34, 197, 94, 0.15) 30%,
+    transparent 50%,
+    rgba(34, 197, 94, 0.1) 70%,
+    rgba(34, 197, 94, 0.4) 100%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* Smooth accordion transition */
+.accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.accordion-content[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.accordion-content > div {
+  overflow: hidden;
+}

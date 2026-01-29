@@ -1,0 +1,29 @@
+name: Landing CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'landing/**'
+      - '.github/workflows/landing-ci.yml'
+      - '.github/workflows/_ci-node.yml'
+      - '.github/actions/setup-node/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'landing/**'
+      - '.github/workflows/landing-ci.yml'
+      - '.github/workflows/_ci-node.yml'
+      - '.github/actions/setup-node/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_ci-node.yml
+    with:
+      node-version: '22'
+      working-directory: 'landing'
+      run-build: true

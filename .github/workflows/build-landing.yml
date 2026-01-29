@@ -1,0 +1,27 @@
+name: Build and Push Landing Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'landing/**'
+      - '.github/workflows/build-landing.yml'
+      - '.github/workflows/_docker-build.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-landing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_docker-build.yml
+    with:
+      image-name: 'volaticloud-landing'
+      dockerfile: 'landing/Dockerfile'
+      context: './landing'
+      push: true
+    permissions:
+      contents: read
+      packages: write
