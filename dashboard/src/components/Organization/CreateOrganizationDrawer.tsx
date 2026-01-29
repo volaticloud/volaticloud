@@ -23,7 +23,6 @@ import { UnsavedChangesDrawer } from '../shared/UnsavedChangesDrawer';
 interface CreateOrganizationDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
 }
 
 /**
@@ -85,7 +84,6 @@ function validateId(id: string): string | null {
 export function CreateOrganizationDrawer({
   open,
   onClose,
-  onSuccess,
 }: CreateOrganizationDrawerProps) {
   const auth = useAuth();
   const [title, setTitle] = useState('');
@@ -130,19 +128,21 @@ export function CreateOrganizationDrawer({
 
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
     onCompleted: async () => {
-      // Refresh token BEFORE closing drawer to ensure JWT has new organization claims
+      // Organization created in Keycloak, but the current session's refresh token
+      // is bound to the OLD claims (without the new org membership).
+      // signinSilent() reuses the existing session and won't pick up new org claims.
+      // We must force a full re-authentication to create a NEW Keycloak session
+      // that includes the updated organization membership in the JWT.
+      // Since the user already has an active Keycloak SSO session, this redirect
+      // is instant (no password prompt) — Keycloak auto-issues a new token.
       try {
-        await auth.signinSilent();
-      } catch (refreshError) {
-        console.error('Failed to refresh token after organization creation:', refreshError);
-        // Organization was created successfully, but token refresh failed
-        // User will need to manually refresh (sign out and back in) to see the new org
-        setError('Organization created, but session refresh failed. Please sign out and sign back in to see your new organization.');
-        return;
+        await auth.signinRedirect();
+      } catch (err) {
+        console.error('Failed to redirect for re-authentication:', err);
+        setError(
+          'Organization created successfully, but automatic login failed. Please refresh the page.'
+        );
       }
-      // Token refreshed successfully, now close drawer and notify success
-      clearAndClose();
-      onSuccess?.();
     },
     onError: (err) => {
       setError(err.message || 'Failed to create organization');

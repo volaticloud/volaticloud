@@ -81,7 +81,7 @@ function App() {
         <CssBaseline />
         <GlobalStyles
           styles={{
-            html: { overflowX: 'hidden' },
+            html: { overflowX: 'hidden', touchAction: 'pan-x pan-y' },
             body: { overflowX: 'hidden' },
           }}
         />
