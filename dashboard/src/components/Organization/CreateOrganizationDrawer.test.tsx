@@ -78,7 +78,6 @@ describe('CreateOrganizationDrawer', () => {
   const defaultProps = {
     open: true,
     onClose: vi.fn(),
-    onSuccess: vi.fn(),
   };
 
   beforeEach(() => {
@@ -530,6 +529,28 @@ describe('CreateOrganizationDrawer', () => {
       await waitFor(() => {
         // signinRedirect() creates a new Keycloak session with updated org claims
         expect(mockSigninRedirect).toHaveBeenCalled();
+      });
+    });
+
+    it('shows error when signinRedirect fails after successful creation', async () => {
+      mockSigninRedirect.mockRejectedValueOnce(new Error('Redirect failed'));
+      const user = userEvent.setup();
+      render(
+        <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
+          <CreateOrganizationDrawer {...defaultProps} />
+        </MockedProvider>
+      );
+
+      const titleInput = screen.getByLabelText(/organization title/i);
+      await user.type(titleInput, 'My Organization');
+
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/organization created successfully, but automatic login failed/i)
+        ).toBeInTheDocument();
       });
     });
 

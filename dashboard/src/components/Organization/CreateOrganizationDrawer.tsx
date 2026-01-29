@@ -23,7 +23,6 @@ import { UnsavedChangesDrawer } from '../shared/UnsavedChangesDrawer';
 interface CreateOrganizationDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
 }
 
 /**
@@ -136,7 +135,14 @@ export function CreateOrganizationDrawer({
       // that includes the updated organization membership in the JWT.
       // Since the user already has an active Keycloak SSO session, this redirect
       // is instant (no password prompt) — Keycloak auto-issues a new token.
-      await auth.signinRedirect();
+      try {
+        await auth.signinRedirect();
+      } catch (err) {
+        console.error('Failed to redirect for re-authentication:', err);
+        setError(
+          'Organization created successfully, but automatic login failed. Please refresh the page.'
+        );
+      }
     },
     onError: (err) => {
       setError(err.message || 'Failed to create organization');
