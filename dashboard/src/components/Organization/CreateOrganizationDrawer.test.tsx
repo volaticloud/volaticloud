@@ -6,9 +6,10 @@ import { CreateOrganizationDrawer } from './CreateOrganizationDrawer';
 import { CreateOrganizationDocument } from './organization.generated';
 
 // Mock useAuth hook
+const mockSigninRedirect = vi.fn().mockResolvedValue(undefined);
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    signinSilent: vi.fn().mockResolvedValue(undefined),
+    signinRedirect: mockSigninRedirect,
   }),
 }));
 
@@ -512,7 +513,7 @@ describe('CreateOrganizationDrawer', () => {
       });
     });
 
-    it('calls onSuccess after successful creation', async () => {
+    it('triggers full re-authentication after successful creation', async () => {
       const user = userEvent.setup();
       render(
         <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
@@ -527,26 +528,8 @@ describe('CreateOrganizationDrawer', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(defaultProps.onSuccess).toHaveBeenCalled();
-      });
-    });
-
-    it('calls onClose after successful creation', async () => {
-      const user = userEvent.setup();
-      render(
-        <MockedProvider mocks={[mockSuccessResponse]} addTypename={false}>
-          <CreateOrganizationDrawer {...defaultProps} />
-        </MockedProvider>
-      );
-
-      const titleInput = screen.getByLabelText(/organization title/i);
-      await user.type(titleInput, 'My Organization');
-
-      const submitButton = screen.getByRole('button', { name: /create/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(defaultProps.onClose).toHaveBeenCalled();
+        // signinRedirect() creates a new Keycloak session with updated org claims
+        expect(mockSigninRedirect).toHaveBeenCalled();
       });
     });
 
@@ -591,7 +574,7 @@ describe('CreateOrganizationDrawer', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(defaultProps.onSuccess).toHaveBeenCalled();
+        expect(mockSigninRedirect).toHaveBeenCalled();
       });
     });
   });

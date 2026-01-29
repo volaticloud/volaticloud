@@ -63,10 +63,8 @@ export function NoOrganizationView() {
       <CreateOrganizationDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onSuccess={() => {
-          // Force page reload to ensure all contexts are updated with new organization
-          window.location.reload();
-        }}
+        // onSuccess not needed — CreateOrganizationDrawer triggers signinRedirect
+        // which creates a new Keycloak session with updated org claims
       />
     </>
   );

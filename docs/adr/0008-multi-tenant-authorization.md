@@ -127,6 +127,15 @@ Chosen option: **UMA 2.0 with Hierarchical Groups**, because it provides:
 - Organization creator is automatically added as admin
 - No `ownerId` attribute (root-level resource)
 
+**Token Refresh After Organization Creation:**
+
+When a new organization is created, the user's Keycloak group membership is updated server-side,
+but the existing OIDC session's refresh token is bound to the **old claims** (without the new org).
+Calling `signinSilent()` (refresh token grant) returns a new access token with the same stale
+session claims. A full re-authentication via `signinRedirect()` is required to create a new
+Keycloak session that includes the updated `organization` claim in the JWT. Since the user
+already has an active Keycloak SSO cookie, this redirect is instant (no password prompt).
+
 **Hierarchical Group Structure:**
 
 ```
