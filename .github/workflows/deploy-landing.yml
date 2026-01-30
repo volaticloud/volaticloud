@@ -1,0 +1,112 @@
+name: Deploy Landing to VKE
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Landing Image"]
+    types: [completed]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag (leave empty for latest commit)'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-landing-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: prod
+      url: https://volaticloud.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup kubectl and Helm
+        uses: ./.github/actions/setup-kubectl-helm
+        with:
+          kubeconfig: ${{ secrets.VKE_KUBECONFIG }}
+
+      - name: Add Helm repos
+        run: |
+          helm repo add nixys https://registry.nixys.io/chartrepo/public
+          helm repo update
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace volaticloud \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GHCR_TOKEN }} \
+            --namespace=volaticloud \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy
+        run: |
+          helm upgrade --install volaticloud-landing nixys/nxs-universal-chart \
+            --namespace volaticloud \
+            -f deployments/landing/values.yaml \
+            --set deployments.volaticloud-landing.containers[0].image=ghcr.io/volaticloud/volaticloud-landing \
+            --set deployments.volaticloud-landing.containers[0].imageTag=${{ steps.tag.outputs.tag }} \
+            --set deployments.volaticloud-landing.imagePullSecrets[0].name=ghcr-pull-secret \
+            --wait --timeout 10m --atomic
+
+      - name: Verify
+        run: |
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/volaticloud-landing-volaticloud-landing -n volaticloud
+          sleep 30
+          curl -f -s "https://volaticloud.com" || true
+
+      - name: Summary
+        run: |
+          echo "### Landing Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${{ steps.tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://volaticloud.com" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    name: Rollback
+    runs-on: ${{ vars.RUNNER_LABEL }}
+    needs: deploy
+    if: failure()
+    environment: prod
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup kubectl and Helm
+        uses: ./.github/actions/setup-kubectl-helm
+        with:
+          kubeconfig: ${{ secrets.VKE_KUBECONFIG }}
+
+      - name: Rollback
+        run: |
+          helm rollback volaticloud-landing -n volaticloud
+          kubectl wait --for=condition=available --timeout=300s \
+            deployment/volaticloud-landing-volaticloud-landing -n volaticloud
+
+      - name: Summary
+        run: |
+          echo "### Rollback Completed" >> $GITHUB_STEP_SUMMARY
+          helm history volaticloud-landing -n volaticloud

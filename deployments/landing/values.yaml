@@ -1,0 +1,136 @@
+# Helm values for VolatiCloud Landing Page using Nixys Universal Chart
+# Chart: nixys/nxs-universal-chart
+# Repo: https://registry.nixys.io/chartrepo/public
+
+deployments:
+  volaticloud-landing:
+    replicaCount: 2
+    revisionHistoryLimit: 3
+
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+
+    containers:
+      - name: caddy
+        image: ghcr.io/volaticloud/volaticloud-landing
+        imagePullPolicy: Always
+
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+
+        volumeMounts:
+          - name: caddy-data
+            mountPath: /data
+          - name: caddy-config
+            mountPath: /config
+
+    volumes:
+      - name: caddy-data
+        emptyDir: {}
+      - name: caddy-config
+        emptyDir: {}
+
+    podSecurityContext:
+      fsGroup: 1000
+
+    podAnnotations:
+      prometheus.io/scrape: "false"
+
+    podLabels:
+      app: volaticloud-landing
+      component: ui
+
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - volaticloud-landing
+              topologyKey: kubernetes.io/hostname
+
+services:
+  volaticloud-landing:
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 80
+        targetPort: http
+        protocol: TCP
+
+ingresses:
+  volaticloud.com:
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    certManager:
+      issuerName: letsencrypt-prod
+      issuerType: cluster-issuer
+    hosts:
+      - paths:
+          - path: /
+            pathType: Prefix
+            serviceName: volaticloud-landing
+            servicePort: http
+
+hpa:
+  volaticloud-landing:
+    minReplicas: 2
+    maxReplicas: 10
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: 80
+
+pdb:
+  volaticloud-landing:
+    minAvailable: 1
