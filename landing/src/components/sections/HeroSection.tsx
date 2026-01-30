@@ -1,156 +1,92 @@
 import Container from '../ui/Container'
-import Button from '../ui/Button'
 import { heroContent } from '../../data/content'
 
 function HeroGlow() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {/* Ambient glow behind the streaks */}
-      <div className="absolute -top-40 -left-40 h-[700px] w-[700px] rounded-full bg-orange-600/20 blur-[120px]" />
-      <div className="absolute -top-20 left-20 h-[500px] w-[500px] rounded-full bg-amber-600/15 blur-[90px]" />
-      <div className="absolute -top-10 left-[15%] h-[300px] w-[400px] rounded-full bg-red-600/10 blur-[80px]" />
-      <div className="absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-teal-500/15 blur-[100px]" />
-      <div className="absolute -top-10 right-[10%] h-[300px] w-[300px] rounded-full bg-green-500/8 blur-[80px]" />
+      {/* Large vivid orange/red glow — top-left */}
+      <div className="absolute -top-[200px] -left-[200px] h-[900px] w-[900px] rounded-full bg-[#ff541f] opacity-[0.35] blur-[150px]" />
+      <div className="absolute -top-[100px] left-[5%] h-[600px] w-[600px] rounded-full bg-[#e84e1b] opacity-[0.25] blur-[100px]" />
 
-      {/* Wide curved light ray BANDS — orange/amber from top-left */}
-      <svg
-        className="absolute -top-20 -left-40 w-[1200px] h-[500px]"
-        viewBox="0 0 1200 500"
-        fill="none"
-      >
-        {/* Thick band rays using fill between two curves */}
-        <path d="M-50 0 Q300 -10 600 120 Q850 220 1200 160 L1200 180 Q850 250 600 155 Q300 30 -50 40 Z" fill="url(#band-o1)" />
-        <path d="M-50 30 Q280 15 550 150 Q800 270 1200 200 L1200 225 Q800 300 550 190 Q280 55 -50 70 Z" fill="url(#band-o2)" />
-        <path d="M-50 70 Q250 50 500 190 Q750 320 1150 260 L1150 285 Q750 350 500 230 Q250 95 -50 110 Z" fill="url(#band-o3)" />
-        <path d="M-50 120 Q220 100 460 240 Q700 370 1100 320 L1100 340 Q700 395 460 275 Q220 140 -50 155 Z" fill="url(#band-o4)" />
-        <defs>
-          <linearGradient id="band-o1" x1="0" y1="0" x2="1200" y2="0">
-            <stop offset="0%" stopColor="rgba(234,88,12,0)" />
-            <stop offset="10%" stopColor="rgba(234,88,12,0.5)" />
-            <stop offset="30%" stopColor="rgba(251,146,60,0.3)" />
-            <stop offset="55%" stopColor="rgba(251,146,60,0.08)" />
-            <stop offset="100%" stopColor="rgba(251,146,60,0)" />
-          </linearGradient>
-          <linearGradient id="band-o2" x1="0" y1="0" x2="1200" y2="0">
-            <stop offset="0%" stopColor="rgba(239,68,68,0)" />
-            <stop offset="8%" stopColor="rgba(239,68,68,0.45)" />
-            <stop offset="25%" stopColor="rgba(234,88,12,0.25)" />
-            <stop offset="50%" stopColor="rgba(234,88,12,0.06)" />
-            <stop offset="100%" stopColor="rgba(234,88,12,0)" />
-          </linearGradient>
-          <linearGradient id="band-o3" x1="0" y1="0" x2="1200" y2="0">
-            <stop offset="0%" stopColor="rgba(251,146,60,0)" />
-            <stop offset="12%" stopColor="rgba(251,146,60,0.35)" />
-            <stop offset="30%" stopColor="rgba(234,88,12,0.15)" />
-            <stop offset="55%" stopColor="rgba(234,88,12,0.03)" />
-            <stop offset="100%" stopColor="rgba(234,88,12,0)" />
-          </linearGradient>
-          <linearGradient id="band-o4" x1="0" y1="0" x2="1200" y2="0">
-            <stop offset="0%" stopColor="rgba(220,38,38,0)" />
-            <stop offset="15%" stopColor="rgba(220,38,38,0.25)" />
-            <stop offset="35%" stopColor="rgba(239,68,68,0.08)" />
-            <stop offset="100%" stopColor="rgba(239,68,68,0)" />
-          </linearGradient>
-        </defs>
-      </svg>
+      {/* Teal/green glow — top-right */}
+      <div className="absolute -top-[150px] -right-[150px] h-[700px] w-[700px] rounded-full bg-[#14b8a6] opacity-[0.3] blur-[130px]" />
+      <div className="absolute -top-[50px] right-[10%] h-[400px] w-[400px] rounded-full bg-[#22c55e] opacity-[0.15] blur-[90px]" />
 
-      {/* Wide curved light ray BANDS — teal/green from top-right */}
-      <svg
-        className="absolute -top-20 -right-40 w-[1000px] h-[400px]"
-        viewBox="0 0 1000 400"
-        fill="none"
-      >
-        <path d="M1050 0 Q700 -5 450 100 Q200 200 -50 150 L-50 175 Q200 230 450 135 Q700 30 1050 35 Z" fill="url(#band-t1)" />
-        <path d="M1050 35 Q680 25 420 130 Q180 230 -50 190 L-50 215 Q180 260 420 170 Q680 65 1050 70 Z" fill="url(#band-t2)" />
-        <path d="M1050 75 Q660 60 400 165 Q170 265 -30 230 L-30 250 Q170 290 400 200 Q660 100 1050 108 Z" fill="url(#band-t3)" />
-        <defs>
-          <linearGradient id="band-t1" x1="1000" y1="0" x2="0" y2="0">
-            <stop offset="0%" stopColor="rgba(20,184,166,0)" />
-            <stop offset="10%" stopColor="rgba(20,184,166,0.4)" />
-            <stop offset="30%" stopColor="rgba(34,197,94,0.2)" />
-            <stop offset="55%" stopColor="rgba(34,197,94,0.04)" />
-            <stop offset="100%" stopColor="rgba(34,197,94,0)" />
-          </linearGradient>
-          <linearGradient id="band-t2" x1="1000" y1="0" x2="0" y2="0">
-            <stop offset="0%" stopColor="rgba(34,197,94,0)" />
-            <stop offset="12%" stopColor="rgba(34,197,94,0.3)" />
-            <stop offset="35%" stopColor="rgba(20,184,166,0.12)" />
-            <stop offset="60%" stopColor="rgba(20,184,166,0.02)" />
-            <stop offset="100%" stopColor="rgba(20,184,166,0)" />
-          </linearGradient>
-          <linearGradient id="band-t3" x1="1000" y1="0" x2="0" y2="0">
-            <stop offset="0%" stopColor="rgba(20,184,166,0)" />
-            <stop offset="15%" stopColor="rgba(20,184,166,0.2)" />
-            <stop offset="40%" stopColor="rgba(34,197,94,0.06)" />
-            <stop offset="100%" stopColor="rgba(34,197,94,0)" />
-          </linearGradient>
-        </defs>
-      </svg>
+      {/* Diagonal light streaks — orange from top-left */}
+      <div className="absolute -top-[50px] -left-[100px] w-[1400px] h-[600px] rotate-[12deg] origin-top-left">
+        <div className="absolute top-0 left-0 w-full h-[40px] rounded-full bg-gradient-to-r from-[#ff541f]/70 via-[#ff8c5a]/30 to-transparent blur-[8px]" />
+        <div className="absolute top-[60px] left-[20px] w-[90%] h-[35px] rounded-full bg-gradient-to-r from-[#e84e1b]/60 via-[#ff7043]/25 to-transparent blur-[10px]" />
+        <div className="absolute top-[120px] left-[40px] w-[80%] h-[30px] rounded-full bg-gradient-to-r from-[#ff6b35]/50 via-[#ffab91]/15 to-transparent blur-[12px]" />
+        <div className="absolute top-[180px] left-[60px] w-[70%] h-[25px] rounded-full bg-gradient-to-r from-[#ff541f]/35 via-[#ff8a65]/10 to-transparent blur-[14px]" />
+      </div>
+
+      {/* Diagonal light streaks — teal from top-right */}
+      <div className="absolute -top-[30px] -right-[100px] w-[1200px] h-[500px] -rotate-[10deg] origin-top-right">
+        <div className="absolute top-0 right-0 w-full h-[35px] rounded-full bg-gradient-to-l from-[#14b8a6]/60 via-[#2dd4bf]/25 to-transparent blur-[8px]" />
+        <div className="absolute top-[55px] right-[20px] w-[85%] h-[30px] rounded-full bg-gradient-to-l from-[#0d9488]/50 via-[#5eead4]/15 to-transparent blur-[10px]" />
+        <div className="absolute top-[110px] right-[40px] w-[70%] h-[25px] rounded-full bg-gradient-to-l from-[#14b8a6]/30 via-[#99f6e4]/10 to-transparent blur-[14px]" />
+      </div>
+
+      {/* Bottom gradient fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-[250px] bg-gradient-to-t from-[#010101] via-[#010101]/60 to-transparent" />
     </div>
   )
 }
 
-function TrustBadges() {
+function StatusBadge() {
   return (
-    <div className="mb-6 flex items-center justify-center gap-3">
-      {/* Small app icons */}
-      <div className="flex -space-x-1.5">
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 border border-white/10" />
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 border border-white/10" />
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-green-500 to-green-700 border border-white/10" />
+    <div className="mb-8 flex items-center justify-center">
+      <div className="inline-flex items-center gap-3 rounded-full border border-white/15 px-5 py-2.5">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#079211] opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#0AC300]" />
+        </span>
+        <span className="text-sm text-white/65 tracking-tight">Platform Online</span>
+        <span className="text-white/20">·</span>
+        <span className="text-sm text-white/65 tracking-tight">99.9% Uptime</span>
       </div>
-      {/* Star ratings */}
-      <div className="flex items-center gap-0.5 text-orange-400">
-        {'★★★★★'.split('').map((star, i) => (
-          <span key={i} className="text-sm">{star}</span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ScrollIndicator() {
-  return (
-    <div className="mt-12 flex flex-col items-center gap-1.5">
-      <div className="h-[2px] w-8 rounded-full bg-gradient-to-r from-transparent via-green-500/50 to-transparent" />
-      <div className="h-[2px] w-5 rounded-full bg-gradient-to-r from-transparent via-green-500/30 to-transparent" />
-      <div className="h-[1.5px] w-3 rounded-full bg-gradient-to-r from-transparent via-green-500/15 to-transparent" />
     </div>
   )
 }
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-32 pb-20">
+    <section className="relative overflow-hidden pt-40 pb-20">
       <HeroGlow />
 
       <Container className="relative text-center">
-        <TrustBadges />
+        <StatusBadge />
 
-        <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.15] tracking-tight text-white sm:text-5xl lg:text-6xl">
-          {heroContent.titleLine1}
-          <br />
-          <span className="italic text-green-400 text-glow-green">
-            {heroContent.titleAccent}
+        <h1 className="mx-auto max-w-[1005px]">
+          <span className="block text-[80px] font-black leading-[88px] tracking-tight text-white">
+            {heroContent.titleLine1}{' '}
+            <span className="italic text-[#079211] text-glow-green">
+              {heroContent.titleAccent}
+            </span>
           </span>
-          <br />
-          {heroContent.titleLine2}
+          <span className="block text-[68px] font-black leading-[88px] tracking-tight text-white">
+            {heroContent.titleLine2}
+          </span>
         </h1>
 
-        <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-gray-500">
+        <p className="mx-auto mt-6 max-w-[681px] text-[22px] leading-relaxed text-white/70">
           {heroContent.description}
         </p>
 
-        <div className="mt-10 flex items-center justify-center gap-4">
-          <Button variant="primary" size="lg">
+        <div className="mt-10 flex items-center justify-center gap-6">
+          <a
+            href="https://console.volaticloud.com"
+            className="inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-xl text-white transition-colors hover:bg-[#068a0f]"
+          >
             {heroContent.primaryCta}
-          </Button>
-          <Button variant="secondary" size="lg">
+          </a>
+          <a
+            href="#features"
+            className="inline-flex items-center justify-center rounded-[10px] border border-white/[0.23] px-9 py-4 text-xl text-white transition-colors hover:bg-white/5"
+          >
             {heroContent.secondaryCta}
-          </Button>
+          </a>
         </div>
-
-        <ScrollIndicator />
       </Container>
     </section>
   )

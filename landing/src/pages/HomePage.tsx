@@ -3,48 +3,46 @@ import Footer from '../components/layout/Footer'
 import HeroSection from '../components/sections/HeroSection'
 import StatsSection from '../components/sections/StatsSection'
 import FeaturesSection from '../components/sections/FeaturesSection'
-import SocialProofSection from '../components/sections/SocialProofSection'
+import StrategyBuilderSection from '../components/sections/StrategyBuilderSection'
+import CodeModeSection from '../components/sections/CodeModeSection'
+import BacktestingSection from '../components/sections/BacktestingSection'
+import TeamManagementSection from '../components/sections/TeamManagementSection'
+import AlertingSection from '../components/sections/AlertingSection'
 import PricingSection from '../components/sections/PricingSection'
 import FAQSection from '../components/sections/FAQSection'
 import CTASection from '../components/sections/CTASection'
-import Divider from '../components/ui/Divider'
 
 function BackgroundDecorations() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {/* Large green semi-circle arcs on edges */}
-      <div className="absolute top-[52%] -right-[250px] h-[600px] w-[600px] rounded-full border-[3px] border-green-500/20 bg-green-500/[0.03] blur-[2px]" />
-      <div className="absolute top-[52%] -right-[250px] h-[600px] w-[600px] rounded-full bg-green-500/[0.04] blur-[40px]" />
-      <div className="absolute top-[68%] -left-[250px] h-[600px] w-[600px] rounded-full border-[3px] border-green-500/20 bg-green-500/[0.03] blur-[2px]" />
-      <div className="absolute top-[68%] -left-[250px] h-[600px] w-[600px] rounded-full bg-green-500/[0.04] blur-[40px]" />
+      {/* Green rounded rectangle - left side, rotated 90deg */}
+      <div className="hidden lg:block absolute top-[65%] -left-[176px] h-[226px] w-[423px] rotate-90 rounded-[117px] border-[23px] border-[rgba(7,146,17,0.55)]" />
 
-      {/* Faint filled ellipses */}
-      <div className="absolute top-[30%] right-[5%] h-[500px] w-[300px] rotate-12 rounded-full bg-white/[0.008]" />
-      <div className="absolute top-[65%] right-[10%] h-[350px] w-[250px] rotate-[20deg] rounded-full bg-white/[0.006]" />
+      {/* Green circle - right side */}
+      <div className="hidden lg:block absolute top-[52%] -right-[347px] h-[445px] w-[445px] rounded-full border-[23px] border-[#079211]" />
 
-      {/* Faint filled rounded rectangles */}
-      <div className="absolute top-[45%] -left-20 h-[400px] w-[200px] -rotate-6 rounded-3xl bg-white/[0.008]" />
-      <div className="absolute top-[75%] left-[8%] h-[300px] w-[180px] -rotate-12 rounded-3xl bg-white/[0.006]" />
+      {/* White rounded rectangle - bottom left */}
+      <div className="hidden lg:block absolute top-[78%] -left-[413px] h-[226px] w-[636px] rounded-[117px] border-[23px] border-[#f6f6f6]" />
 
-      {/* Bottom warm/red gradient glow */}
-      <div className="absolute bottom-0 left-0 right-0 h-[800px]">
-        <div className="absolute inset-0 bg-gradient-to-t from-red-950/25 via-red-950/8 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-orange-950/15 via-transparent to-transparent" />
-        {/* Shadowed curved lines at bottom */}
-        <svg className="absolute bottom-0 left-0 right-0 h-full w-full opacity-30" viewBox="0 0 1440 800" fill="none" preserveAspectRatio="none">
-          <path d="M0 600 Q360 550 720 580 Q1080 610 1440 560" stroke="rgba(127,29,29,0.15)" strokeWidth="1" />
-          <path d="M0 650 Q360 610 720 640 Q1080 670 1440 620" stroke="rgba(127,29,29,0.12)" strokeWidth="1" />
-          <path d="M0 700 Q360 670 720 695 Q1080 720 1440 680" stroke="rgba(127,29,29,0.08)" strokeWidth="1" />
-          <path d="M0 740 Q360 720 720 738 Q1080 756 1440 730" stroke="rgba(127,29,29,0.05)" strokeWidth="1" />
-        </svg>
+      {/* Two bold diagonal ray lines — \ direction, 45deg, full width */}
+      <div className="hidden lg:block absolute bottom-[25%] h-[45px] w-[99999%] rotate-[45deg] origin-left bg-gradient-to-r from-white/3 via-white/10 to-white/25" />
+      <div className="hidden lg:block absolute bottom-[23%] h-[45px] w-[99999%] rotate-[45deg] origin-left bg-gradient-to-r from-white/2 via-white/7 to-white/18" />
+
+      {/* Warm ambient glow around pricing area */}
+      <div className="absolute top-[48%] left-1/2 -translate-x-1/2 h-[925px] w-[1483px] opacity-60">
+        <div className="h-full w-full bg-gradient-to-b from-transparent via-orange-950/8 to-transparent rounded-full blur-[100px]" />
       </div>
+
+      {/* Large vivid red/orange glow — bottom of page, global */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[1200px] w-[1800px] rounded-full bg-[#ff541f] opacity-[0.12] blur-[200px]" />
+      <div className="absolute bottom-[2%] left-1/2 -translate-x-1/2 h-[700px] w-[1100px] rounded-full bg-[#e84e1b] opacity-[0.15] blur-[120px]" />
     </div>
   )
 }
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen bg-[#0a0a0a] text-white">
+    <div className="relative min-h-screen bg-[#010101] text-white">
       <BackgroundDecorations />
       <div className="relative">
         <Navbar />
@@ -52,11 +50,12 @@ export default function HomePage() {
           <HeroSection />
           <StatsSection />
           <FeaturesSection />
-          <Divider className="py-2" />
-          <SocialProofSection />
-          <Divider className="py-2" />
+          <StrategyBuilderSection />
+          <CodeModeSection />
+          <BacktestingSection />
+          <TeamManagementSection />
+          <AlertingSection />
           <PricingSection />
-          <Divider className="py-2" />
           <FAQSection />
           <CTASection />
         </main>

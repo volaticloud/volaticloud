@@ -1,26 +1,50 @@
 import Container from '../ui/Container'
-import Button from '../ui/Button'
 import { ctaBanner } from '../../data/content'
 
 export default function CTASection() {
   return (
     <section className="py-24">
       <Container>
-        <div className="gradient-border relative overflow-hidden rounded-2xl bg-gradient-to-b from-gray-900/80 to-gray-950/80 px-8 py-16 text-center sm:px-16">
-          {/* Subtle glow in top-right corner */}
-          <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-green-500/5 blur-[80px]" />
+        <div className="relative" style={{ maxWidth: '1120px', margin: '0 auto' }}>
+        <div className="gradient-border relative overflow-hidden rounded-[30px] bg-white/[0.04] px-16 py-14 text-center">
+          {/* Subtle inner glow */}
+          <div className="pointer-events-none absolute inset-0 cta-glow opacity-20" />
 
-          <h2 className="relative text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          {/* Dot grid pattern overlay */}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.23]">
+            <svg className="w-full h-full" viewBox="0 0 1120 375">
+              {Array.from({ length: 28 }).map((_, row) =>
+                Array.from({ length: 28 }).map((_, col) => (
+                  <circle
+                    key={`${row}-${col}`}
+                    cx={20 + col * 39.5}
+                    cy={20 + row * 39.5}
+                    r="1.5"
+                    fill="white"
+                  />
+                ))
+              )}
+            </svg>
+          </div>
+
+          <h2 className="relative mx-auto max-w-[789px] text-[64px] font-black leading-tight text-white">
             {ctaBanner.title}
           </h2>
-          <p className="relative mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-500">
+          <p className="relative mx-auto mt-6 max-w-[618px] text-xl leading-[22.4px] text-white/80">
             {ctaBanner.description}
           </p>
           <div className="relative mt-8">
-            <Button variant="primary" size="lg">
+            <a
+              href="https://console.volaticloud.com"
+              className="inline-flex items-center gap-3 rounded-[10px] bg-[#079211] px-9 py-4 text-xl font-bold text-white transition-colors hover:bg-[#068a0f]"
+            >
               {ctaBanner.cta}
-            </Button>
+              <svg width="23" height="16" viewBox="0 0 23 16" fill="none">
+                <path d="M22.7 8.7a1 1 0 0 0 0-1.4L16.35.95a1 1 0 1 0-1.42 1.42L20.57 8l-5.64 5.64a1 1 0 1 0 1.42 1.42L22.7 8.7ZM0 9h22V7H0v2Z" fill="white" />
+              </svg>
+            </a>
           </div>
+        </div>
         </div>
       </Container>
     </section>

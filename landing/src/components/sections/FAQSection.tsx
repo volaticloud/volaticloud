@@ -1,31 +1,31 @@
 import Container from '../ui/Container'
-import SectionHeading from '../ui/SectionHeading'
 import AccordionItem from '../ui/AccordionItem'
-import Divider from '../ui/Divider'
 import { faqItems } from '../../data/content'
 
 export default function FAQSection() {
   return (
-    <section className="py-24">
+    <section className="py-24" id="faq">
       <Container>
-        <SectionHeading
-          subtitle="Got questions? We've got answers. If you can't find what you're looking for, reach out to our support team."
-        >
-          Frequently Asked
-          <br />
-          Questions
-        </SectionHeading>
+        <div className="mx-auto max-w-[892px]">
+          <div className="text-center">
+            <h2 className="mx-auto max-w-[556px] text-[64px] font-bold leading-tight text-white">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-6 text-xl leading-[28.6px] text-[#d9d9d9]">
+              Got questions? We've got answers. Find everything you need to know about using our platform, plans, and features.
+            </p>
+          </div>
 
-        <Divider className="mt-10" />
-
-        <div className="mx-auto mt-10 max-w-3xl">
-          {faqItems.map((item) => (
-            <AccordionItem
-              key={item.question}
-              question={item.question}
-              answer={item.answer}
-            />
-          ))}
+          <div className="mt-16">
+            {faqItems.map((item, i) => (
+              <AccordionItem
+                key={item.question}
+                question={item.question}
+                answer={item.answer}
+                defaultOpen={i === 0}
+              />
+            ))}
+          </div>
         </div>
       </Container>
     </section>

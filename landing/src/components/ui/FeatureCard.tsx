@@ -4,22 +4,29 @@ export default function FeatureCard({
   icon,
   title,
   description,
+  highlighted = false,
 }: {
   icon: ReactNode
   title: string
   description: string
+  highlighted?: boolean
 }) {
   return (
-    <div className="card-hover group relative overflow-hidden rounded-xl border border-gray-700/40 bg-gradient-to-b from-gray-900/50 to-gray-950/50 p-5 pl-7">
-      {/* Green left border accent */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-[2px] rounded-r-full bg-green-500/60" />
-
+    <div
+      className="card-hover group relative overflow-hidden rounded-[20px] border-[1.25px] border-[rgba(255,84,31,0.2)] p-5"
+      style={{
+        backgroundColor: 'rgba(39,40,41,0.7)',
+        ...(highlighted
+          ? { backgroundImage: 'linear-gradient(142.85deg, rgba(0,0,0,0) 23.339%, rgba(255,60,0,0.3) 96.361%)' }
+          : {}),
+      }}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-sm leading-relaxed text-gray-500 mb-3">{description}</p>
-          <h3 className="text-[15px] font-semibold text-white">{title}</h3>
+          <p className="text-base sm:text-lg leading-[19.2px] text-[#d9d9d9]/85 mb-8 sm:mb-16">{description}</p>
+          <h3 className="text-2xl sm:text-[34px] sm:leading-[40.8px] text-white">{title}</h3>
         </div>
-        <div className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-green-500/10 text-green-400">
+        <div className="shrink-0 flex h-[50px] w-[50px] items-center justify-center rounded-full bg-[#079211] text-white -rotate-45">
           {icon}
         </div>
       </div>

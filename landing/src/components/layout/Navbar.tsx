@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Container from '../ui/Container'
-import Button from '../ui/Button'
 import Logo from '../ui/Logo'
 import { navLinks } from '../../data/content'
 
@@ -8,32 +7,35 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-xl">
-      <Container className="flex h-16 items-center justify-between">
-        <a href="/">
+    <nav className="fixed top-0 z-50 w-full bg-[#010101]/80 backdrop-blur-xl">
+      <Container className="flex h-[100px] items-center justify-between">
+        <a href="/" className="flex items-center">
           <Logo height={26} />
         </a>
 
         {/* Desktop nav */}
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-16 md:flex">
           {navLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
-              className="text-[13px] text-gray-400 transition-colors hover:text-white"
+              className="relative text-lg text-white transition-colors hover:text-white"
             >
               {link.label}
+              {'active' in link && link.active && (
+                <span className="absolute -bottom-1 left-0 right-0 h-[2px] rounded-full bg-[#079211]" />
+              )}
             </a>
           ))}
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="outline" size="sm">
+        <div className="hidden md:block">
+          <a
+            href="https://console.volaticloud.com"
+            className="inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-lg font-medium text-white transition-colors hover:bg-[#068a0f]"
+          >
             Login
-          </Button>
-          <Button variant="primary" size="sm">
-            Sign Up
-          </Button>
+          </a>
         </div>
 
         {/* Mobile hamburger */}
@@ -54,7 +56,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-white/5 bg-[#0a0a0a] px-4 pb-6 pt-4 md:hidden">
+        <div className="border-t border-white/5 bg-[#010101] px-4 pb-6 pt-4 md:hidden">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <a
@@ -66,14 +68,12 @@ export default function Navbar() {
                 {link.label}
               </a>
             ))}
-            <div className="mt-2 flex gap-3">
-              <Button variant="outline" size="sm" className="flex-1">
-                Login
-              </Button>
-              <Button variant="primary" size="sm" className="flex-1">
-                Sign Up
-              </Button>
-            </div>
+            <a
+              href="#"
+              className="mt-2 inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-lg font-medium text-white"
+            >
+              Login
+            </a>
           </div>
         </div>
       )}

@@ -1,65 +1,65 @@
 import { useState } from 'react'
 import Container from '../ui/Container'
-import SectionHeading from '../ui/SectionHeading'
 import PricingCard from '../ui/PricingCard'
 import { pricingContent, pricingTiers } from '../../data/content'
 
-function Toggle({
-  enabled,
-  onToggle,
-}: {
-  enabled: boolean
-  onToggle: () => void
-}) {
+function Toggle({ active, onToggle }: { active: 'monthly' | 'yearly'; onToggle: () => void }) {
   return (
-    <div className="mt-10 flex items-center justify-center gap-3">
-      <span className={`text-sm transition-colors ${!enabled ? 'text-white' : 'text-gray-500'}`}>
-        Monthly
-      </span>
-      <button
-        onClick={onToggle}
-        className={`relative h-6 w-11 rounded-full transition-colors cursor-pointer ${
-          enabled ? 'bg-green-500' : 'bg-gray-700'
-        }`}
-        aria-label="Toggle billing period"
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-            enabled ? 'translate-x-5' : ''
+    <div className="mt-10 flex justify-center">
+      <div className="inline-flex items-center rounded-full bg-white/10 p-[10px]">
+        <button
+          onClick={() => active !== 'monthly' && onToggle()}
+          className={`cursor-pointer rounded-[20px] px-8 py-1.5 text-base transition-colors ${
+            active === 'monthly' ? 'bg-white/20 text-white' : 'text-[#919191]'
           }`}
-        />
-      </button>
-      <span className={`text-sm transition-colors ${enabled ? 'text-white' : 'text-gray-500'}`}>
-        Annual
-      </span>
+        >
+          Monthly
+        </button>
+        <button
+          onClick={() => active !== 'yearly' && onToggle()}
+          className={`cursor-pointer rounded-[20px] px-8 py-1.5 text-base transition-colors ${
+            active === 'yearly' ? 'bg-white/20 text-white' : 'text-[#919191]'
+          }`}
+        >
+          Yearly
+        </button>
+      </div>
     </div>
   )
 }
 
 export default function PricingSection() {
-  const [annual, setAnnual] = useState(false)
+  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
 
   return (
     <section className="py-24" id="pricing">
       <Container>
-        <SectionHeading subtitle={pricingContent.subtitle}>
-          {pricingContent.titleLine1}
-          <br />
-          {pricingContent.titleLine2}
-        </SectionHeading>
+        <div className="mx-auto max-w-[600px] text-center">
+          <h2 className="text-3xl sm:text-[48px] lg:text-[64px] font-bold leading-tight text-white">
+            {pricingContent.titleLine1}{' '}
+            {pricingContent.titleLine2}
+          </h2>
+        </div>
 
-        <Toggle enabled={annual} onToggle={() => setAnnual(!annual)} />
+        <p className="mx-auto mt-4 sm:mt-6 max-w-3xl text-center text-base sm:text-xl leading-6 text-[#d9d9d9]">
+          {pricingContent.subtitle}
+        </p>
 
-        <div className="mt-16 grid items-center gap-6 lg:grid-cols-3">
-          {pricingTiers.map((tier) => (
+        <Toggle active={billing} onToggle={() => setBilling(billing === 'monthly' ? 'yearly' : 'monthly')} />
+
+        <div className="mt-12 flex flex-col lg:flex-row items-stretch gap-6 lg:gap-0">
+          {pricingTiers.map((tier, i) => (
             <PricingCard
               key={tier.name}
               name={tier.name}
-              price={annual ? Math.round(tier.price * 0.8) : tier.price}
-              period={annual ? '/year' : tier.period}
+              price={billing === 'yearly' ? Math.round(tier.price * 0.8) : tier.price}
+              period={tier.period}
+              description={tier.description}
               features={tier.features}
               highlighted={tier.highlighted}
               ctaLabel={tier.ctaLabel}
+              discount={tier.discount}
+              position={i === 0 ? 'left' : i === 2 ? 'right' : 'center'}
             />
           ))}
         </div>
