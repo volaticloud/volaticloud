@@ -7,4 +7,11 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  test: {
+    passWithNoTests: true,
+    environment: 'jsdom',
+    coverage: {
+      reporter: ['text', 'json-summary'],
+    },
+  },
 })
