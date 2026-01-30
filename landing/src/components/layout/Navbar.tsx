@@ -33,6 +33,7 @@ export default function Navbar() {
         <div className="hidden md:block">
           <a
             href={CONSOLE_URL}
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-lg font-medium text-white transition-colors hover:bg-[#068a0f]"
           >
             Login
@@ -72,6 +73,7 @@ export default function Navbar() {
             ))}
             <a
               href={CONSOLE_URL}
+              rel="noopener noreferrer"
               className="mt-2 inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-lg font-medium text-white"
             >
               Login

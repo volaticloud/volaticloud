@@ -77,6 +77,7 @@ export default function HeroSection() {
         <div className="mt-10 flex items-center justify-center gap-6">
           <a
             href={CONSOLE_URL}
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-xl text-white transition-colors hover:bg-[#068a0f]"
           >
             {heroContent.primaryCta}

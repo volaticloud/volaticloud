@@ -1,4 +1,5 @@
 import Icon from './Icon'
+import { CONSOLE_URL } from '../../config'
 
 export default function PricingCard({
   name,
@@ -75,12 +76,16 @@ export default function PricingCard({
         ))}
       </ul>
 
-      <button className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#079211] py-3 text-lg font-semibold text-white cursor-pointer transition-colors hover:bg-[#068a0f]">
+      <a
+        href={CONSOLE_URL}
+        rel="noopener noreferrer"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#079211] py-3 text-lg font-semibold text-white cursor-pointer transition-colors hover:bg-[#068a0f]"
+      >
         {ctaLabel}
-        <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none" aria-hidden="true">
           <path d="M1 1l6 6-6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </button>
+      </a>
     </div>
   )
 }

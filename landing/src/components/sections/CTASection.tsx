@@ -37,6 +37,7 @@ export default function CTASection() {
           <div className="relative mt-8">
             <a
               href={CONSOLE_URL}
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-3 rounded-[10px] bg-[#079211] px-9 py-4 text-xl font-bold text-white transition-colors hover:bg-[#068a0f]"
             >
               {ctaBanner.cta}
