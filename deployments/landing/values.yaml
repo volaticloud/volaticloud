@@ -50,8 +50,20 @@ deployments:
             memory: 64Mi
 
         securityContext:
-          readOnlyRootFilesystem: false
+          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+
+        volumeMounts:
+          - name: caddy-data
+            mountPath: /data
+          - name: caddy-config
+            mountPath: /config
+
+    volumes:
+      - name: caddy-data
+        emptyDir: {}
+      - name: caddy-config
+        emptyDir: {}
 
     podSecurityContext:
       fsGroup: 1000
