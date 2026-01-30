@@ -26,6 +26,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0018](0018-graphql-websocket-subscriptions.md) | GraphQL WebSocket Subscriptions | Accepted | 2026-01-26 |
 | [0019](0019-internal-backend-architecture.md) | Internal Backend Architecture | Accepted | 2026-01-27 |
 | [0020](0020-leverage-configuration-system.md) | Leverage Configuration System | Accepted | 2026-01-28 |
+| [0021](0021-landing-page-architecture.md) | Landing Page Architecture | Accepted | 2026-01-30 |
 
 ## What is an ADR?
 

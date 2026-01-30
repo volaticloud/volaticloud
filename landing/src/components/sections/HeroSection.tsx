@@ -59,13 +59,13 @@ export default function HeroSection() {
         <StatusBadge />
 
         <h1 className="mx-auto max-w-[1005px]">
-          <span className="block text-[80px] font-black leading-[88px] tracking-tight text-white">
+          <span className="block text-4xl sm:text-6xl lg:text-[80px] font-black leading-tight lg:leading-[88px] tracking-tight text-white">
             {heroContent.titleLine1}{' '}
             <span className="italic text-[#079211] text-glow-green">
               {heroContent.titleAccent}
             </span>
           </span>
-          <span className="block text-[68px] font-black leading-[88px] tracking-tight text-white">
+          <span className="block text-3xl sm:text-5xl lg:text-[68px] font-black leading-tight lg:leading-[88px] tracking-tight text-white">
             {heroContent.titleLine2}
           </span>
         </h1>

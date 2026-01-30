@@ -52,7 +52,7 @@ export default function PricingSection() {
             <PricingCard
               key={tier.name}
               name={tier.name}
-              price={billing === 'yearly' ? Math.round(tier.price * 0.8) : tier.price}
+              price={billing === 'yearly' ? Math.floor(tier.price * 0.8) : tier.price}
               period={tier.period}
               description={tier.description}
               features={tier.features}
