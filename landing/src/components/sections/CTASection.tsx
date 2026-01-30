@@ -1,5 +1,6 @@
 import Container from '../ui/Container'
 import { ctaBanner } from '../../data/content'
+import { CONSOLE_URL } from '../../config'
 
 export default function CTASection() {
   return (
@@ -35,7 +36,7 @@ export default function CTASection() {
           </p>
           <div className="relative mt-8">
             <a
-              href="https://console.volaticloud.com"
+              href={CONSOLE_URL}
               className="inline-flex items-center gap-3 rounded-[10px] bg-[#079211] px-9 py-4 text-xl font-bold text-white transition-colors hover:bg-[#068a0f]"
             >
               {ctaBanner.cta}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Container from '../ui/Container'
 import Logo from '../ui/Logo'
 import { navLinks } from '../../data/content'
+import { CONSOLE_URL } from '../../config'
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -31,7 +32,7 @@ export default function Navbar() {
 
         <div className="hidden md:block">
           <a
-            href="https://console.volaticloud.com"
+            href={CONSOLE_URL}
             className="inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-lg font-medium text-white transition-colors hover:bg-[#068a0f]"
           >
             Login
@@ -43,6 +44,7 @@ export default function Navbar() {
           className="md:hidden text-gray-400 cursor-pointer"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             {mobileOpen ? (
@@ -69,7 +71,7 @@ export default function Navbar() {
               </a>
             ))}
             <a
-              href="#"
+              href={CONSOLE_URL}
               className="mt-2 inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-lg font-medium text-white"
             >
               Login

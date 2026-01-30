@@ -1,5 +1,6 @@
 import Container from '../ui/Container'
 import { heroContent } from '../../data/content'
+import { CONSOLE_URL } from '../../config'
 
 function HeroGlow() {
   return (
@@ -75,7 +76,7 @@ export default function HeroSection() {
 
         <div className="mt-10 flex items-center justify-center gap-6">
           <a
-            href="https://console.volaticloud.com"
+            href={CONSOLE_URL}
             className="inline-flex items-center justify-center rounded-[10px] bg-[#079211] px-9 py-4 text-xl text-white transition-colors hover:bg-[#068a0f]"
           >
             {heroContent.primaryCta}
