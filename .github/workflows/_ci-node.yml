@@ -139,6 +139,6 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v6
         with:
-          name: build-output
+          name: build-output-${{ inputs.working-directory }}
           path: ${{ inputs.working-directory }}/dist
           retention-days: 7
