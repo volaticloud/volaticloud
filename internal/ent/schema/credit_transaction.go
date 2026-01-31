@@ -55,7 +55,7 @@ func (CreditTransaction) Edges() []ent.Edge {
 func (CreditTransaction) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("owner_id", "created_at"),
-		index.Fields("reference_id"),
+		index.Fields("reference_id").Unique(),
 	}
 }
 

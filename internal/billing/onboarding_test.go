@@ -17,9 +17,9 @@ func TestExtractPlanMetadata(t *testing.T) {
 							Product: &stripe.Product{
 								Name: "Pro Plan",
 								Metadata: map[string]string{
-									"display_name":   "Pro",
+									"display_name":    "Pro",
 									"monthly_deposit": "60",
-									"features":       "live_trading,backtesting,code_mode",
+									"features":        "live_trading,backtesting,code_mode",
 								},
 							},
 						},

@@ -335,7 +335,7 @@ var (
 			},
 			{
 				Name:    "credittransaction_reference_id",
-				Unique:  false,
+				Unique:  true,
 				Columns: []*schema.Column{CreditTransactionsColumns[6]},
 			},
 		},
