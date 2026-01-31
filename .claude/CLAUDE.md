@@ -41,6 +41,7 @@
 | `strategy` | Strategy versioning |
 | `strategy/codegen` | Strategy code generation from UI Builder |
 | `exchange` | Exchange config validation |
+| `billing` | Stripe integration, credits, subscriptions, enforcement |
 | `db` | Database transactions |
 
 See `internal/{package}/doc.go` for comprehensive package documentation.

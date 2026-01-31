@@ -335,9 +335,10 @@ func TestEntityScopes(t *testing.T) {
 	t.Run("GroupScopes contains expected values", func(t *testing.T) {
 		expected := []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user", "change-user-roles",
 			"create-strategy", "create-bot", "create-exchange", "create-runner",
-			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+			"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules",
+			"view-billing", "manage-billing"}
 		assert.Equal(t, expected, authz.GroupScopes, "GroupScopes should contain the expected values")
-		assert.Len(t, authz.GroupScopes, 15, "GroupScopes should have 15 scopes")
+		assert.Len(t, authz.GroupScopes, 17, "GroupScopes should have 17 scopes")
 	})
 }
 

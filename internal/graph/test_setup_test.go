@@ -50,6 +50,7 @@ func Setup(t *testing.T) *TestEnv {
 		Directives: DirectiveRoot{
 			IsAuthenticated: IsAuthenticatedDirective,
 			HasScope:        HasScopeDirective,
+			RequiresFeature: RequiresFeatureDirective,
 		},
 	}))
 

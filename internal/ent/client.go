@@ -17,10 +17,13 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/creditbalance"
+	"volaticloud/internal/ent/credittransaction"
 	"volaticloud/internal/ent/exchange"
 	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/stripesubscription"
 	"volaticloud/internal/ent/trade"
 
 	"entgo.io/ent"
@@ -47,6 +50,10 @@ type Client struct {
 	BotMetrics *BotMetricsClient
 	// BotRunner is the client for interacting with the BotRunner builders.
 	BotRunner *BotRunnerClient
+	// CreditBalance is the client for interacting with the CreditBalance builders.
+	CreditBalance *CreditBalanceClient
+	// CreditTransaction is the client for interacting with the CreditTransaction builders.
+	CreditTransaction *CreditTransactionClient
 	// Exchange is the client for interacting with the Exchange builders.
 	Exchange *ExchangeClient
 	// ResourceUsageAggregation is the client for interacting with the ResourceUsageAggregation builders.
@@ -55,6 +62,8 @@ type Client struct {
 	ResourceUsageSample *ResourceUsageSampleClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
+	// StripeSubscription is the client for interacting with the StripeSubscription builders.
+	StripeSubscription *StripeSubscriptionClient
 	// Trade is the client for interacting with the Trade builders.
 	Trade *TradeClient
 }
@@ -74,10 +83,13 @@ func (c *Client) init() {
 	c.Bot = NewBotClient(c.config)
 	c.BotMetrics = NewBotMetricsClient(c.config)
 	c.BotRunner = NewBotRunnerClient(c.config)
+	c.CreditBalance = NewCreditBalanceClient(c.config)
+	c.CreditTransaction = NewCreditTransactionClient(c.config)
 	c.Exchange = NewExchangeClient(c.config)
 	c.ResourceUsageAggregation = NewResourceUsageAggregationClient(c.config)
 	c.ResourceUsageSample = NewResourceUsageSampleClient(c.config)
 	c.Strategy = NewStrategyClient(c.config)
+	c.StripeSubscription = NewStripeSubscriptionClient(c.config)
 	c.Trade = NewTradeClient(c.config)
 }
 
@@ -177,10 +189,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Bot:                      NewBotClient(cfg),
 		BotMetrics:               NewBotMetricsClient(cfg),
 		BotRunner:                NewBotRunnerClient(cfg),
+		CreditBalance:            NewCreditBalanceClient(cfg),
+		CreditTransaction:        NewCreditTransactionClient(cfg),
 		Exchange:                 NewExchangeClient(cfg),
 		ResourceUsageAggregation: NewResourceUsageAggregationClient(cfg),
 		ResourceUsageSample:      NewResourceUsageSampleClient(cfg),
 		Strategy:                 NewStrategyClient(cfg),
+		StripeSubscription:       NewStripeSubscriptionClient(cfg),
 		Trade:                    NewTradeClient(cfg),
 	}, nil
 }
@@ -207,10 +222,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Bot:                      NewBotClient(cfg),
 		BotMetrics:               NewBotMetricsClient(cfg),
 		BotRunner:                NewBotRunnerClient(cfg),
+		CreditBalance:            NewCreditBalanceClient(cfg),
+		CreditTransaction:        NewCreditTransactionClient(cfg),
 		Exchange:                 NewExchangeClient(cfg),
 		ResourceUsageAggregation: NewResourceUsageAggregationClient(cfg),
 		ResourceUsageSample:      NewResourceUsageSampleClient(cfg),
 		Strategy:                 NewStrategyClient(cfg),
+		StripeSubscription:       NewStripeSubscriptionClient(cfg),
 		Trade:                    NewTradeClient(cfg),
 	}, nil
 }
@@ -242,8 +260,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AlertEvent, c.AlertRule, c.Backtest, c.Bot, c.BotMetrics, c.BotRunner,
-		c.Exchange, c.ResourceUsageAggregation, c.ResourceUsageSample, c.Strategy,
-		c.Trade,
+		c.CreditBalance, c.CreditTransaction, c.Exchange, c.ResourceUsageAggregation,
+		c.ResourceUsageSample, c.Strategy, c.StripeSubscription, c.Trade,
 	} {
 		n.Use(hooks...)
 	}
@@ -254,8 +272,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AlertEvent, c.AlertRule, c.Backtest, c.Bot, c.BotMetrics, c.BotRunner,
-		c.Exchange, c.ResourceUsageAggregation, c.ResourceUsageSample, c.Strategy,
-		c.Trade,
+		c.CreditBalance, c.CreditTransaction, c.Exchange, c.ResourceUsageAggregation,
+		c.ResourceUsageSample, c.Strategy, c.StripeSubscription, c.Trade,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -276,6 +294,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BotMetrics.mutate(ctx, m)
 	case *BotRunnerMutation:
 		return c.BotRunner.mutate(ctx, m)
+	case *CreditBalanceMutation:
+		return c.CreditBalance.mutate(ctx, m)
+	case *CreditTransactionMutation:
+		return c.CreditTransaction.mutate(ctx, m)
 	case *ExchangeMutation:
 		return c.Exchange.mutate(ctx, m)
 	case *ResourceUsageAggregationMutation:
@@ -284,6 +306,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ResourceUsageSample.mutate(ctx, m)
 	case *StrategyMutation:
 		return c.Strategy.mutate(ctx, m)
+	case *StripeSubscriptionMutation:
+		return c.StripeSubscription.mutate(ctx, m)
 	case *TradeMutation:
 		return c.Trade.mutate(ctx, m)
 	default:
@@ -1319,6 +1343,272 @@ func (c *BotRunnerClient) mutate(ctx context.Context, m *BotRunnerMutation) (Val
 	}
 }
 
+// CreditBalanceClient is a client for the CreditBalance schema.
+type CreditBalanceClient struct {
+	config
+}
+
+// NewCreditBalanceClient returns a client for the CreditBalance from the given config.
+func NewCreditBalanceClient(c config) *CreditBalanceClient {
+	return &CreditBalanceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `creditbalance.Hooks(f(g(h())))`.
+func (c *CreditBalanceClient) Use(hooks ...Hook) {
+	c.hooks.CreditBalance = append(c.hooks.CreditBalance, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `creditbalance.Intercept(f(g(h())))`.
+func (c *CreditBalanceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CreditBalance = append(c.inters.CreditBalance, interceptors...)
+}
+
+// Create returns a builder for creating a CreditBalance entity.
+func (c *CreditBalanceClient) Create() *CreditBalanceCreate {
+	mutation := newCreditBalanceMutation(c.config, OpCreate)
+	return &CreditBalanceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CreditBalance entities.
+func (c *CreditBalanceClient) CreateBulk(builders ...*CreditBalanceCreate) *CreditBalanceCreateBulk {
+	return &CreditBalanceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CreditBalanceClient) MapCreateBulk(slice any, setFunc func(*CreditBalanceCreate, int)) *CreditBalanceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CreditBalanceCreateBulk{err: fmt.Errorf("calling to CreditBalanceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CreditBalanceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CreditBalanceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CreditBalance.
+func (c *CreditBalanceClient) Update() *CreditBalanceUpdate {
+	mutation := newCreditBalanceMutation(c.config, OpUpdate)
+	return &CreditBalanceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CreditBalanceClient) UpdateOne(_m *CreditBalance) *CreditBalanceUpdateOne {
+	mutation := newCreditBalanceMutation(c.config, OpUpdateOne, withCreditBalance(_m))
+	return &CreditBalanceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CreditBalanceClient) UpdateOneID(id uuid.UUID) *CreditBalanceUpdateOne {
+	mutation := newCreditBalanceMutation(c.config, OpUpdateOne, withCreditBalanceID(id))
+	return &CreditBalanceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CreditBalance.
+func (c *CreditBalanceClient) Delete() *CreditBalanceDelete {
+	mutation := newCreditBalanceMutation(c.config, OpDelete)
+	return &CreditBalanceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CreditBalanceClient) DeleteOne(_m *CreditBalance) *CreditBalanceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CreditBalanceClient) DeleteOneID(id uuid.UUID) *CreditBalanceDeleteOne {
+	builder := c.Delete().Where(creditbalance.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CreditBalanceDeleteOne{builder}
+}
+
+// Query returns a query builder for CreditBalance.
+func (c *CreditBalanceClient) Query() *CreditBalanceQuery {
+	return &CreditBalanceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCreditBalance},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CreditBalance entity by its id.
+func (c *CreditBalanceClient) Get(ctx context.Context, id uuid.UUID) (*CreditBalance, error) {
+	return c.Query().Where(creditbalance.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CreditBalanceClient) GetX(ctx context.Context, id uuid.UUID) *CreditBalance {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CreditBalanceClient) Hooks() []Hook {
+	return c.hooks.CreditBalance
+}
+
+// Interceptors returns the client interceptors.
+func (c *CreditBalanceClient) Interceptors() []Interceptor {
+	return c.inters.CreditBalance
+}
+
+func (c *CreditBalanceClient) mutate(ctx context.Context, m *CreditBalanceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CreditBalanceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CreditBalanceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CreditBalanceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CreditBalanceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CreditBalance mutation op: %q", m.Op())
+	}
+}
+
+// CreditTransactionClient is a client for the CreditTransaction schema.
+type CreditTransactionClient struct {
+	config
+}
+
+// NewCreditTransactionClient returns a client for the CreditTransaction from the given config.
+func NewCreditTransactionClient(c config) *CreditTransactionClient {
+	return &CreditTransactionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `credittransaction.Hooks(f(g(h())))`.
+func (c *CreditTransactionClient) Use(hooks ...Hook) {
+	c.hooks.CreditTransaction = append(c.hooks.CreditTransaction, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `credittransaction.Intercept(f(g(h())))`.
+func (c *CreditTransactionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CreditTransaction = append(c.inters.CreditTransaction, interceptors...)
+}
+
+// Create returns a builder for creating a CreditTransaction entity.
+func (c *CreditTransactionClient) Create() *CreditTransactionCreate {
+	mutation := newCreditTransactionMutation(c.config, OpCreate)
+	return &CreditTransactionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CreditTransaction entities.
+func (c *CreditTransactionClient) CreateBulk(builders ...*CreditTransactionCreate) *CreditTransactionCreateBulk {
+	return &CreditTransactionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CreditTransactionClient) MapCreateBulk(slice any, setFunc func(*CreditTransactionCreate, int)) *CreditTransactionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CreditTransactionCreateBulk{err: fmt.Errorf("calling to CreditTransactionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CreditTransactionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CreditTransactionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CreditTransaction.
+func (c *CreditTransactionClient) Update() *CreditTransactionUpdate {
+	mutation := newCreditTransactionMutation(c.config, OpUpdate)
+	return &CreditTransactionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CreditTransactionClient) UpdateOne(_m *CreditTransaction) *CreditTransactionUpdateOne {
+	mutation := newCreditTransactionMutation(c.config, OpUpdateOne, withCreditTransaction(_m))
+	return &CreditTransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CreditTransactionClient) UpdateOneID(id uuid.UUID) *CreditTransactionUpdateOne {
+	mutation := newCreditTransactionMutation(c.config, OpUpdateOne, withCreditTransactionID(id))
+	return &CreditTransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CreditTransaction.
+func (c *CreditTransactionClient) Delete() *CreditTransactionDelete {
+	mutation := newCreditTransactionMutation(c.config, OpDelete)
+	return &CreditTransactionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CreditTransactionClient) DeleteOne(_m *CreditTransaction) *CreditTransactionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CreditTransactionClient) DeleteOneID(id uuid.UUID) *CreditTransactionDeleteOne {
+	builder := c.Delete().Where(credittransaction.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CreditTransactionDeleteOne{builder}
+}
+
+// Query returns a query builder for CreditTransaction.
+func (c *CreditTransactionClient) Query() *CreditTransactionQuery {
+	return &CreditTransactionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCreditTransaction},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CreditTransaction entity by its id.
+func (c *CreditTransactionClient) Get(ctx context.Context, id uuid.UUID) (*CreditTransaction, error) {
+	return c.Query().Where(credittransaction.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CreditTransactionClient) GetX(ctx context.Context, id uuid.UUID) *CreditTransaction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CreditTransactionClient) Hooks() []Hook {
+	return c.hooks.CreditTransaction
+}
+
+// Interceptors returns the client interceptors.
+func (c *CreditTransactionClient) Interceptors() []Interceptor {
+	return c.inters.CreditTransaction
+}
+
+func (c *CreditTransactionClient) mutate(ctx context.Context, m *CreditTransactionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CreditTransactionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CreditTransactionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CreditTransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CreditTransactionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CreditTransaction mutation op: %q", m.Op())
+	}
+}
+
 // ExchangeClient is a client for the Exchange schema.
 type ExchangeClient struct {
 	config
@@ -1969,6 +2259,139 @@ func (c *StrategyClient) mutate(ctx context.Context, m *StrategyMutation) (Value
 	}
 }
 
+// StripeSubscriptionClient is a client for the StripeSubscription schema.
+type StripeSubscriptionClient struct {
+	config
+}
+
+// NewStripeSubscriptionClient returns a client for the StripeSubscription from the given config.
+func NewStripeSubscriptionClient(c config) *StripeSubscriptionClient {
+	return &StripeSubscriptionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `stripesubscription.Hooks(f(g(h())))`.
+func (c *StripeSubscriptionClient) Use(hooks ...Hook) {
+	c.hooks.StripeSubscription = append(c.hooks.StripeSubscription, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `stripesubscription.Intercept(f(g(h())))`.
+func (c *StripeSubscriptionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.StripeSubscription = append(c.inters.StripeSubscription, interceptors...)
+}
+
+// Create returns a builder for creating a StripeSubscription entity.
+func (c *StripeSubscriptionClient) Create() *StripeSubscriptionCreate {
+	mutation := newStripeSubscriptionMutation(c.config, OpCreate)
+	return &StripeSubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of StripeSubscription entities.
+func (c *StripeSubscriptionClient) CreateBulk(builders ...*StripeSubscriptionCreate) *StripeSubscriptionCreateBulk {
+	return &StripeSubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *StripeSubscriptionClient) MapCreateBulk(slice any, setFunc func(*StripeSubscriptionCreate, int)) *StripeSubscriptionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &StripeSubscriptionCreateBulk{err: fmt.Errorf("calling to StripeSubscriptionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*StripeSubscriptionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &StripeSubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for StripeSubscription.
+func (c *StripeSubscriptionClient) Update() *StripeSubscriptionUpdate {
+	mutation := newStripeSubscriptionMutation(c.config, OpUpdate)
+	return &StripeSubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StripeSubscriptionClient) UpdateOne(_m *StripeSubscription) *StripeSubscriptionUpdateOne {
+	mutation := newStripeSubscriptionMutation(c.config, OpUpdateOne, withStripeSubscription(_m))
+	return &StripeSubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StripeSubscriptionClient) UpdateOneID(id uuid.UUID) *StripeSubscriptionUpdateOne {
+	mutation := newStripeSubscriptionMutation(c.config, OpUpdateOne, withStripeSubscriptionID(id))
+	return &StripeSubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for StripeSubscription.
+func (c *StripeSubscriptionClient) Delete() *StripeSubscriptionDelete {
+	mutation := newStripeSubscriptionMutation(c.config, OpDelete)
+	return &StripeSubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StripeSubscriptionClient) DeleteOne(_m *StripeSubscription) *StripeSubscriptionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StripeSubscriptionClient) DeleteOneID(id uuid.UUID) *StripeSubscriptionDeleteOne {
+	builder := c.Delete().Where(stripesubscription.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StripeSubscriptionDeleteOne{builder}
+}
+
+// Query returns a query builder for StripeSubscription.
+func (c *StripeSubscriptionClient) Query() *StripeSubscriptionQuery {
+	return &StripeSubscriptionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeStripeSubscription},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a StripeSubscription entity by its id.
+func (c *StripeSubscriptionClient) Get(ctx context.Context, id uuid.UUID) (*StripeSubscription, error) {
+	return c.Query().Where(stripesubscription.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StripeSubscriptionClient) GetX(ctx context.Context, id uuid.UUID) *StripeSubscription {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StripeSubscriptionClient) Hooks() []Hook {
+	return c.hooks.StripeSubscription
+}
+
+// Interceptors returns the client interceptors.
+func (c *StripeSubscriptionClient) Interceptors() []Interceptor {
+	return c.inters.StripeSubscription
+}
+
+func (c *StripeSubscriptionClient) mutate(ctx context.Context, m *StripeSubscriptionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StripeSubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StripeSubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StripeSubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StripeSubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown StripeSubscription mutation op: %q", m.Op())
+	}
+}
+
 // TradeClient is a client for the Trade schema.
 type TradeClient struct {
 	config
@@ -2122,12 +2545,13 @@ func (c *TradeClient) mutate(ctx context.Context, m *TradeMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AlertEvent, AlertRule, Backtest, Bot, BotMetrics, BotRunner, Exchange,
-		ResourceUsageAggregation, ResourceUsageSample, Strategy, Trade []ent.Hook
+		AlertEvent, AlertRule, Backtest, Bot, BotMetrics, BotRunner, CreditBalance,
+		CreditTransaction, Exchange, ResourceUsageAggregation, ResourceUsageSample,
+		Strategy, StripeSubscription, Trade []ent.Hook
 	}
 	inters struct {
-		AlertEvent, AlertRule, Backtest, Bot, BotMetrics, BotRunner, Exchange,
-		ResourceUsageAggregation, ResourceUsageSample, Strategy,
-		Trade []ent.Interceptor
+		AlertEvent, AlertRule, Backtest, Bot, BotMetrics, BotRunner, CreditBalance,
+		CreditTransaction, Exchange, ResourceUsageAggregation, ResourceUsageSample,
+		Strategy, StripeSubscription, Trade []ent.Interceptor
 	}
 )

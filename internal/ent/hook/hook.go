@@ -80,6 +80,30 @@ func (f BotRunnerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BotRunnerMutation", m)
 }
 
+// The CreditBalanceFunc type is an adapter to allow the use of ordinary
+// function as CreditBalance mutator.
+type CreditBalanceFunc func(context.Context, *ent.CreditBalanceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CreditBalanceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CreditBalanceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CreditBalanceMutation", m)
+}
+
+// The CreditTransactionFunc type is an adapter to allow the use of ordinary
+// function as CreditTransaction mutator.
+type CreditTransactionFunc func(context.Context, *ent.CreditTransactionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CreditTransactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CreditTransactionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CreditTransactionMutation", m)
+}
+
 // The ExchangeFunc type is an adapter to allow the use of ordinary
 // function as Exchange mutator.
 type ExchangeFunc func(context.Context, *ent.ExchangeMutation) (ent.Value, error)
@@ -126,6 +150,18 @@ func (f StrategyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StrategyMutation", m)
+}
+
+// The StripeSubscriptionFunc type is an adapter to allow the use of ordinary
+// function as StripeSubscription mutator.
+type StripeSubscriptionFunc func(context.Context, *ent.StripeSubscriptionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StripeSubscriptionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StripeSubscriptionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StripeSubscriptionMutation", m)
 }
 
 // The TradeFunc type is an adapter to allow the use of ordinary

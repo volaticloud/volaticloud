@@ -14,10 +14,13 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/creditbalance"
+	"volaticloud/internal/ent/credittransaction"
 	"volaticloud/internal/ent/exchange"
 	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/stripesubscription"
 	"volaticloud/internal/ent/trade"
 
 	"entgo.io/ent"
@@ -89,10 +92,13 @@ func checkColumn(t, c string) error {
 			bot.Table:                      bot.ValidColumn,
 			botmetrics.Table:               botmetrics.ValidColumn,
 			botrunner.Table:                botrunner.ValidColumn,
+			creditbalance.Table:            creditbalance.ValidColumn,
+			credittransaction.Table:        credittransaction.ValidColumn,
 			exchange.Table:                 exchange.ValidColumn,
 			resourceusageaggregation.Table: resourceusageaggregation.ValidColumn,
 			resourceusagesample.Table:      resourceusagesample.ValidColumn,
 			strategy.Table:                 strategy.ValidColumn,
+			stripesubscription.Table:       stripesubscription.ValidColumn,
 			trade.Table:                    trade.ValidColumn,
 		})
 	})

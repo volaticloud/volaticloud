@@ -39,43 +39,43 @@ func TestGetScopesForType(t *testing.T) {
 		{
 			name:         "Group scopes",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15, // view, edit, delete, mark-alert-as-read, view-users, invite-user, change-user-roles + 4 create scopes + 4 alert scopes
+			wantLen:      17, // view, edit, delete, mark-alert-as-read, view-users, invite-user, change-user-roles + 4 create scopes + 4 alert scopes + 2 billing scopes
 			wantContains: "mark-alert-as-read",
 		},
 		{
 			name:         "Group scopes include invite-user",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15,
+			wantLen:      17,
 			wantContains: "invite-user",
 		},
 		{
 			name:         "Group scopes include change-user-roles",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15,
+			wantLen:      17,
 			wantContains: "change-user-roles",
 		},
 		{
 			name:         "Group scopes include create-strategy",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15,
+			wantLen:      17,
 			wantContains: "create-strategy",
 		},
 		{
 			name:         "Group scopes include create-bot",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15,
+			wantLen:      17,
 			wantContains: "create-bot",
 		},
 		{
 			name:         "Group scopes include create-exchange",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15,
+			wantLen:      17,
 			wantContains: "create-exchange",
 		},
 		{
 			name:         "Group scopes include create-runner",
 			resourceType: ResourceTypeGroup,
-			wantLen:      15,
+			wantLen:      17,
 			wantContains: "create-runner",
 		},
 		{

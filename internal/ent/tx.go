@@ -24,6 +24,10 @@ type Tx struct {
 	BotMetrics *BotMetricsClient
 	// BotRunner is the client for interacting with the BotRunner builders.
 	BotRunner *BotRunnerClient
+	// CreditBalance is the client for interacting with the CreditBalance builders.
+	CreditBalance *CreditBalanceClient
+	// CreditTransaction is the client for interacting with the CreditTransaction builders.
+	CreditTransaction *CreditTransactionClient
 	// Exchange is the client for interacting with the Exchange builders.
 	Exchange *ExchangeClient
 	// ResourceUsageAggregation is the client for interacting with the ResourceUsageAggregation builders.
@@ -32,6 +36,8 @@ type Tx struct {
 	ResourceUsageSample *ResourceUsageSampleClient
 	// Strategy is the client for interacting with the Strategy builders.
 	Strategy *StrategyClient
+	// StripeSubscription is the client for interacting with the StripeSubscription builders.
+	StripeSubscription *StripeSubscriptionClient
 	// Trade is the client for interacting with the Trade builders.
 	Trade *TradeClient
 
@@ -171,10 +177,13 @@ func (tx *Tx) init() {
 	tx.Bot = NewBotClient(tx.config)
 	tx.BotMetrics = NewBotMetricsClient(tx.config)
 	tx.BotRunner = NewBotRunnerClient(tx.config)
+	tx.CreditBalance = NewCreditBalanceClient(tx.config)
+	tx.CreditTransaction = NewCreditTransactionClient(tx.config)
 	tx.Exchange = NewExchangeClient(tx.config)
 	tx.ResourceUsageAggregation = NewResourceUsageAggregationClient(tx.config)
 	tx.ResourceUsageSample = NewResourceUsageSampleClient(tx.config)
 	tx.Strategy = NewStrategyClient(tx.config)
+	tx.StripeSubscription = NewStripeSubscriptionClient(tx.config)
 	tx.Trade = NewTradeClient(tx.config)
 }
 

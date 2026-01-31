@@ -2145,6 +2145,31 @@ export type CreateTradeInput = {
   updatedAt?: InputMaybe<Scalars['Time']['input']>;
 };
 
+export type CreditBalance = {
+  __typename?: 'CreditBalance';
+  balance: Scalars['Float']['output'];
+  suspended: Scalars['Boolean']['output'];
+  suspendedAt?: Maybe<Scalars['Time']['output']>;
+};
+
+export type CreditTransaction = {
+  __typename?: 'CreditTransaction';
+  amount: Scalars['Float']['output'];
+  balanceAfter: Scalars['Float']['output'];
+  createdAt: Scalars['Time']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  referenceID?: Maybe<Scalars['String']['output']>;
+  type: CreditTransactionType;
+};
+
+export enum CreditTransactionType {
+  AdminAdjustment = 'admin_adjustment',
+  ManualDeposit = 'manual_deposit',
+  SubscriptionDeposit = 'subscription_deposit',
+  UsageDeduction = 'usage_deduction'
+}
+
 export type DataDownloadConfigInput = {
   exchanges: Array<DataDownloadExchangeConfigInput>;
 };
@@ -2444,6 +2469,8 @@ export type Mutation = {
    * Requires invite-user permission on the organization
    */
   cancelOrganizationInvitation: Scalars['Boolean']['output'];
+  /** Cancel the subscription for an organization at the end of the current billing period. */
+  cancelSubscription: SubscriptionInfo;
   /**
    * Change a user's role in an organization
    * Replaces all existing roles with the new role
@@ -2451,10 +2478,17 @@ export type Mutation = {
    * Requires change-user-roles permission on the organization
    */
   changeOrganizationUserRole: Scalars['Boolean']['output'];
+  /** Change the subscription plan for an organization. */
+  changeSubscriptionPlan: SubscriptionInfo;
   /** Create a new alert rule */
   createAlertRule: AlertRule;
   createBot: Bot;
   createBotRunner: BotRunner;
+  /**
+   * Create a Stripe Checkout session for manual credit deposit.
+   * Returns the checkout session URL for redirect.
+   */
+  createDepositSession: Scalars['String']['output'];
   createExchange: Exchange;
   /**
    * Create a new organization for the current user
@@ -2467,6 +2501,11 @@ export type Mutation = {
    */
   createOrganization: CreateOrganizationResponse;
   createStrategy: Strategy;
+  /**
+   * Create a Stripe Checkout session for subscribing to a plan.
+   * Returns the checkout session URL for redirect.
+   */
+  createSubscriptionSession: Scalars['String']['output'];
   createTrade: Trade;
   /**
    * Delete an alert rule (soft delete)
@@ -2574,10 +2613,21 @@ export type MutationCancelOrganizationInvitationArgs = {
 };
 
 
+export type MutationCancelSubscriptionArgs = {
+  ownerID: Scalars['String']['input'];
+};
+
+
 export type MutationChangeOrganizationUserRoleArgs = {
   newRole: Scalars['String']['input'];
   organizationId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+};
+
+
+export type MutationChangeSubscriptionPlanArgs = {
+  newPriceID: Scalars['String']['input'];
+  ownerID: Scalars['String']['input'];
 };
 
 
@@ -2596,6 +2646,12 @@ export type MutationCreateBotRunnerArgs = {
 };
 
 
+export type MutationCreateDepositSessionArgs = {
+  amount: Scalars['Float']['input'];
+  ownerID: Scalars['String']['input'];
+};
+
+
 export type MutationCreateExchangeArgs = {
   input: CreateExchangeInput;
 };
@@ -2608,6 +2664,12 @@ export type MutationCreateOrganizationArgs = {
 
 export type MutationCreateStrategyArgs = {
   input: CreateStrategyInput;
+};
+
+
+export type MutationCreateSubscriptionSessionArgs = {
+  ownerID: Scalars['String']['input'];
+  priceID: Scalars['String']['input'];
 };
 
 
@@ -2937,6 +2999,18 @@ export type PermissionCheckResult = {
   scope: Scalars['String']['output'];
 };
 
+export type PlanInfo = {
+  __typename?: 'PlanInfo';
+  description: Scalars['String']['output'];
+  displayName: Scalars['String']['output'];
+  displayOrder: Scalars['Int']['output'];
+  features: Array<Scalars['String']['output']>;
+  monthlyDeposit: Scalars['Float']['output'];
+  priceAmount: Scalars['Float']['output'];
+  priceId: Scalars['String']['output'];
+  productId: Scalars['String']['output'];
+};
+
 /** Position mode for the strategy - determines which signals are generated */
 export enum PositionMode {
   /** Generate both long and short entry/exit signals */
@@ -2980,6 +3054,8 @@ export type Query = {
    * The resourceID is optional and reserved for future smart filtering
    */
   alertTypesForResource: Array<AlertTypeInfo>;
+  /** List all available subscription plans (from Stripe). Public, no auth required. */
+  availablePlans: Array<PlanInfo>;
   backtests: BacktestConnection;
   botMetricsSlice: Array<BotMetrics>;
   botRunners: BotRunnerConnection;
@@ -2995,6 +3071,10 @@ export type Query = {
    * Triggers self-healing if resource scopes are out of sync in Keycloak
    */
   checkPermissions: Array<PermissionCheckResult>;
+  /** Get the credit balance for an organization */
+  creditBalance: CreditBalance;
+  /** Get credit transaction history for an organization */
+  creditTransactions: Array<CreditTransaction>;
   /**
    * Calculate estimated cost for usage over a time range
    * Uses runner-specific pricing rates
@@ -3035,6 +3115,8 @@ export type Query = {
    * Requires view-users permission on the organization resource
    */
   organizationUsers: Array<OrganizationUser>;
+  /** Get payment history (Stripe invoices) for an organization */
+  paymentHistory: Array<StripeInvoice>;
   /**
    * Get paginated members for a resource group
    * Uses Keycloak extension endpoint for efficient server-side filtering, sorting, and pagination
@@ -3052,6 +3134,8 @@ export type Query = {
   strategies: StrategyConnection;
   /** Get all versions of a strategy by name (for version history view) */
   strategyVersions: Array<Strategy>;
+  /** Get subscription info for an organization */
+  subscriptionInfo?: Maybe<SubscriptionInfo>;
   trades: TradeConnection;
 };
 
@@ -3120,6 +3204,18 @@ export type QueryCheckPermissionsArgs = {
 };
 
 
+export type QueryCreditBalanceArgs = {
+  ownerID: Scalars['String']['input'];
+};
+
+
+export type QueryCreditTransactionsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  ownerID: Scalars['String']['input'];
+};
+
+
 export type QueryEstimatedCostArgs = {
   end: Scalars['Time']['input'];
   ownerID: Scalars['String']['input'];
@@ -3181,6 +3277,12 @@ export type QueryOrganizationUsersArgs = {
 };
 
 
+export type QueryPaymentHistoryArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  ownerID: Scalars['String']['input'];
+};
+
+
 export type QueryResourceGroupMembersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -3211,6 +3313,11 @@ export type QueryStrategiesArgs = {
 
 export type QueryStrategyVersionsArgs = {
   name: Scalars['String']['input'];
+};
+
+
+export type QuerySubscriptionInfoArgs = {
+  ownerID: Scalars['String']['input'];
 };
 
 
@@ -4084,6 +4191,20 @@ export type StrategyWhereInput = {
   versionNumberNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
+export type StripeInvoice = {
+  __typename?: 'StripeInvoice';
+  amountPaid: Scalars['Float']['output'];
+  billingReason?: Maybe<Scalars['String']['output']>;
+  created: Scalars['Time']['output'];
+  hostedInvoiceUrl?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  invoicePdf?: Maybe<Scalars['String']['output']>;
+  number?: Maybe<Scalars['String']['output']>;
+  periodEnd: Scalars['Time']['output'];
+  periodStart: Scalars['Time']['output'];
+  status: Scalars['String']['output'];
+};
+
 /**
  * Real-time subscriptions for monitoring status changes.
  * All subscriptions require authentication via connection_init payload.
@@ -4211,6 +4332,15 @@ export type SubscriptionTradeChangedArgs = {
  */
 export type SubscriptionTradeUpdatedArgs = {
   botId: Scalars['ID']['input'];
+};
+
+export type SubscriptionInfo = {
+  __typename?: 'SubscriptionInfo';
+  currentPeriodEnd: Scalars['Time']['output'];
+  features: Array<Scalars['String']['output']>;
+  monthlyDeposit: Scalars['Float']['output'];
+  planName?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
 };
 
 /** Time field options for TIME operands */

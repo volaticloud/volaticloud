@@ -10,11 +10,14 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/creditbalance"
+	"volaticloud/internal/ent/credittransaction"
 	"volaticloud/internal/ent/exchange"
 	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/schema"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/stripesubscription"
 	"volaticloud/internal/ent/trade"
 
 	"github.com/google/uuid"
@@ -212,6 +215,48 @@ func init() {
 	botrunnerDescID := botrunnerFields[0].Descriptor()
 	// botrunner.DefaultID holds the default value on creation for the id field.
 	botrunner.DefaultID = botrunnerDescID.Default.(func() uuid.UUID)
+	creditbalanceFields := schema.CreditBalance{}.Fields()
+	_ = creditbalanceFields
+	// creditbalanceDescOwnerID is the schema descriptor for owner_id field.
+	creditbalanceDescOwnerID := creditbalanceFields[1].Descriptor()
+	// creditbalance.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	creditbalance.OwnerIDValidator = creditbalanceDescOwnerID.Validators[0].(func(string) error)
+	// creditbalanceDescBalance is the schema descriptor for balance field.
+	creditbalanceDescBalance := creditbalanceFields[2].Descriptor()
+	// creditbalance.DefaultBalance holds the default value on creation for the balance field.
+	creditbalance.DefaultBalance = creditbalanceDescBalance.Default.(float64)
+	// creditbalanceDescSuspended is the schema descriptor for suspended field.
+	creditbalanceDescSuspended := creditbalanceFields[3].Descriptor()
+	// creditbalance.DefaultSuspended holds the default value on creation for the suspended field.
+	creditbalance.DefaultSuspended = creditbalanceDescSuspended.Default.(bool)
+	// creditbalanceDescCreatedAt is the schema descriptor for created_at field.
+	creditbalanceDescCreatedAt := creditbalanceFields[5].Descriptor()
+	// creditbalance.DefaultCreatedAt holds the default value on creation for the created_at field.
+	creditbalance.DefaultCreatedAt = creditbalanceDescCreatedAt.Default.(func() time.Time)
+	// creditbalanceDescUpdatedAt is the schema descriptor for updated_at field.
+	creditbalanceDescUpdatedAt := creditbalanceFields[6].Descriptor()
+	// creditbalance.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	creditbalance.DefaultUpdatedAt = creditbalanceDescUpdatedAt.Default.(func() time.Time)
+	// creditbalance.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	creditbalance.UpdateDefaultUpdatedAt = creditbalanceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// creditbalanceDescID is the schema descriptor for id field.
+	creditbalanceDescID := creditbalanceFields[0].Descriptor()
+	// creditbalance.DefaultID holds the default value on creation for the id field.
+	creditbalance.DefaultID = creditbalanceDescID.Default.(func() uuid.UUID)
+	credittransactionFields := schema.CreditTransaction{}.Fields()
+	_ = credittransactionFields
+	// credittransactionDescOwnerID is the schema descriptor for owner_id field.
+	credittransactionDescOwnerID := credittransactionFields[1].Descriptor()
+	// credittransaction.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	credittransaction.OwnerIDValidator = credittransactionDescOwnerID.Validators[0].(func(string) error)
+	// credittransactionDescCreatedAt is the schema descriptor for created_at field.
+	credittransactionDescCreatedAt := credittransactionFields[7].Descriptor()
+	// credittransaction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	credittransaction.DefaultCreatedAt = credittransactionDescCreatedAt.Default.(func() time.Time)
+	// credittransactionDescID is the schema descriptor for id field.
+	credittransactionDescID := credittransactionFields[0].Descriptor()
+	// credittransaction.DefaultID holds the default value on creation for the id field.
+	credittransaction.DefaultID = credittransactionDescID.Default.(func() uuid.UUID)
 	exchangeMixin := schema.Exchange{}.Mixin()
 	exchangeHooks := schema.Exchange{}.Hooks()
 	exchange.Hooks[0] = exchangeHooks[0]
@@ -378,6 +423,42 @@ func init() {
 	strategyDescID := strategyFields[0].Descriptor()
 	// strategy.DefaultID holds the default value on creation for the id field.
 	strategy.DefaultID = strategyDescID.Default.(func() uuid.UUID)
+	stripesubscriptionFields := schema.StripeSubscription{}.Fields()
+	_ = stripesubscriptionFields
+	// stripesubscriptionDescOwnerID is the schema descriptor for owner_id field.
+	stripesubscriptionDescOwnerID := stripesubscriptionFields[1].Descriptor()
+	// stripesubscription.OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
+	stripesubscription.OwnerIDValidator = stripesubscriptionDescOwnerID.Validators[0].(func(string) error)
+	// stripesubscriptionDescStripeCustomerID is the schema descriptor for stripe_customer_id field.
+	stripesubscriptionDescStripeCustomerID := stripesubscriptionFields[2].Descriptor()
+	// stripesubscription.StripeCustomerIDValidator is a validator for the "stripe_customer_id" field. It is called by the builders before save.
+	stripesubscription.StripeCustomerIDValidator = stripesubscriptionDescStripeCustomerID.Validators[0].(func(string) error)
+	// stripesubscriptionDescStripeSubscriptionID is the schema descriptor for stripe_subscription_id field.
+	stripesubscriptionDescStripeSubscriptionID := stripesubscriptionFields[3].Descriptor()
+	// stripesubscription.StripeSubscriptionIDValidator is a validator for the "stripe_subscription_id" field. It is called by the builders before save.
+	stripesubscription.StripeSubscriptionIDValidator = stripesubscriptionDescStripeSubscriptionID.Validators[0].(func(string) error)
+	// stripesubscriptionDescStripePriceID is the schema descriptor for stripe_price_id field.
+	stripesubscriptionDescStripePriceID := stripesubscriptionFields[4].Descriptor()
+	// stripesubscription.StripePriceIDValidator is a validator for the "stripe_price_id" field. It is called by the builders before save.
+	stripesubscription.StripePriceIDValidator = stripesubscriptionDescStripePriceID.Validators[0].(func(string) error)
+	// stripesubscriptionDescPlanName is the schema descriptor for plan_name field.
+	stripesubscriptionDescPlanName := stripesubscriptionFields[5].Descriptor()
+	// stripesubscription.PlanNameValidator is a validator for the "plan_name" field. It is called by the builders before save.
+	stripesubscription.PlanNameValidator = stripesubscriptionDescPlanName.Validators[0].(func(string) error)
+	// stripesubscriptionDescCreatedAt is the schema descriptor for created_at field.
+	stripesubscriptionDescCreatedAt := stripesubscriptionFields[11].Descriptor()
+	// stripesubscription.DefaultCreatedAt holds the default value on creation for the created_at field.
+	stripesubscription.DefaultCreatedAt = stripesubscriptionDescCreatedAt.Default.(func() time.Time)
+	// stripesubscriptionDescUpdatedAt is the schema descriptor for updated_at field.
+	stripesubscriptionDescUpdatedAt := stripesubscriptionFields[12].Descriptor()
+	// stripesubscription.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	stripesubscription.DefaultUpdatedAt = stripesubscriptionDescUpdatedAt.Default.(func() time.Time)
+	// stripesubscription.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	stripesubscription.UpdateDefaultUpdatedAt = stripesubscriptionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// stripesubscriptionDescID is the schema descriptor for id field.
+	stripesubscriptionDescID := stripesubscriptionFields[0].Descriptor()
+	// stripesubscription.DefaultID holds the default value on creation for the id field.
+	stripesubscription.DefaultID = stripesubscriptionDescID.Default.(func() uuid.UUID)
 	tradeMixin := schema.Trade{}.Mixin()
 	tradeMixinInters0 := tradeMixin[0].Interceptors()
 	trade.Interceptors[0] = tradeMixinInters0[0]

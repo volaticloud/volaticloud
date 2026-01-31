@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,6 +27,7 @@ import (
 	"volaticloud/internal/alert/channel"
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
+	"volaticloud/internal/billing"
 	"volaticloud/internal/db"
 	_ "volaticloud/internal/docker" // Register Docker runtime creator
 	"volaticloud/internal/ent"
@@ -138,6 +140,17 @@ func main() {
 				Value:   time.Hour,
 				EnvVars: []string{"VOLATICLOUD_ALERT_BATCH_INTERVAL"},
 			},
+			// Stripe billing configuration
+			&cli.StringFlag{
+				Name:    "stripe-api-key",
+				Usage:   "Stripe API key for billing",
+				EnvVars: []string{"VOLATICLOUD_STRIPE_API_KEY"},
+			},
+			&cli.StringFlag{
+				Name:    "stripe-webhook-secret",
+				Usage:   "Stripe webhook signing secret",
+				EnvVars: []string{"VOLATICLOUD_STRIPE_WEBHOOK_SECRET"},
+			},
 			// Redis configuration for subscriptions
 			&cli.StringFlag{
 				Name:    "redis-url",
@@ -150,6 +163,11 @@ func main() {
 				Usage:   "Allowed CORS origins (comma-separated)",
 				Value:   cli.NewStringSlice("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"),
 				EnvVars: []string{"VOLATICLOUD_CORS_ORIGINS"},
+			},
+			&cli.StringFlag{
+				Name:    "frontend-url",
+				Usage:   "Frontend URL for Stripe redirect URLs (e.g., https://app.volaticloud.com). Falls back to Origin header if not set",
+				EnvVars: []string{"VOLATICLOUD_FRONTEND_URL"},
 			},
 		},
 		Action: runServer,
@@ -327,6 +345,17 @@ func runServer(c *cli.Context) error {
 		log.Println("⚠ Alert manager disabled (VOLATICLOUD_SENDGRID_API_KEY not set)")
 	}
 
+	// Initialize Stripe billing client (optional)
+	var stripeClient *billing.StripeClient
+	stripeAPIKey := c.String("stripe-api-key")
+	stripeWebhookSecret := c.String("stripe-webhook-secret")
+	if stripeAPIKey != "" {
+		stripeClient = billing.NewStripeClient(stripeAPIKey)
+		log.Println("✓ Stripe billing initialized")
+	} else {
+		log.Println("⚠ Stripe billing disabled (VOLATICLOUD_STRIPE_API_KEY not set)")
+	}
+
 	// Start monitor manager (inject alert manager into context if available)
 	monitorCtx := ctx
 	if alertManager != nil {
@@ -395,6 +424,7 @@ func runServer(c *cli.Context) error {
 			Directives: graph.DirectiveRoot{
 				IsAuthenticated: graph.IsAuthenticatedDirective,
 				HasScope:        graph.HasScopeDirective,
+				RequiresFeature: graph.RequiresFeatureDirective,
 			},
 		}),
 		graph.WebSocketConfig{
@@ -447,6 +477,14 @@ func runServer(c *cli.Context) error {
 			if alertManager != nil {
 				ctx = alert.SetManagerInContext(ctx, alertManager)
 			}
+			// Inject Stripe billing client (only if configured)
+			if stripeClient != nil {
+				ctx = billing.SetStripeClientInContext(ctx, stripeClient)
+			}
+			// Inject frontend URL (for Stripe redirect URLs)
+			if frontendURL := c.String("frontend-url"); frontendURL != "" {
+				ctx = billing.SetFrontendURLInContext(ctx, frontendURL)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -474,6 +512,11 @@ func runServer(c *cli.Context) error {
 			r.Handle("/*", botProxy.Handler())
 			r.Handle("/", botProxy.Handler())
 		})
+
+		// Stripe webhook endpoint - NO auth (uses Stripe signature verification)
+		if stripeClient != nil && stripeWebhookSecret != "" {
+			gw.With(httprate.LimitByIP(100, 1*time.Minute)).Post("/webhooks/stripe", billing.NewWebhookHandler(client, stripeClient, stripeWebhookSecret))
+		}
 	})
 
 	// HTTP server

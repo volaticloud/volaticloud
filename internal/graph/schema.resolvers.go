@@ -15,13 +15,17 @@ import (
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
 	backtest1 "volaticloud/internal/backtest"
+	"volaticloud/internal/billing"
 	bot1 "volaticloud/internal/bot"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/alertevent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/ent/bot"
+	"volaticloud/internal/ent/creditbalance"
+	"volaticloud/internal/ent/credittransaction"
 	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/stripesubscription"
 	"volaticloud/internal/enum"
 	"volaticloud/internal/freqtrade"
 	"volaticloud/internal/graph/model"
@@ -34,6 +38,7 @@ import (
 	strategy1 "volaticloud/internal/strategy"
 	"volaticloud/internal/usage"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 )
 
@@ -258,6 +263,11 @@ func (r *mutationResolver) CreateBot(ctx context.Context, input ent.CreateBotInp
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
+	// Step 1.5: Check billing - ensure org is not suspended
+	if err := billing.EnsureSufficientCredits(ctx, r.client, input.OwnerID); err != nil {
+		return nil, err
+	}
+
 	// Step 2: Basic validation - just ensure config is provided
 	// Note: Full schema validation is available in validateFreqtradeConfigWithSchema()
 	// but requires a complete merged config (Exchange + Strategy + Bot)
@@ -371,6 +381,16 @@ func (r *mutationResolver) StartBot(ctx context.Context, id uuid.UUID) (*ent.Bot
 		Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load bot: %w", err)
+	}
+
+	// Check billing - ensure org is not suspended
+	if err := billing.EnsureSufficientCredits(ctx, r.client, b.OwnerID); err != nil {
+		return nil, err
+	}
+
+	// Check feature gating - ensure subscription includes live trading
+	if err := billing.HasFeature(ctx, r.client, b.OwnerID, "live_trading"); err != nil {
+		return nil, err
 	}
 
 	// Get the runner
@@ -578,6 +598,11 @@ func (r *mutationResolver) CreateBotRunner(ctx context.Context, input ent.Create
 		return nil, fmt.Errorf("user context not found: %w", err)
 	}
 
+	// Check billing - ensure org is not suspended
+	if err := billing.EnsureSufficientCredits(ctx, r.client, input.OwnerID); err != nil {
+		return nil, err
+	}
+
 	// Create bot runner - ENT hook handles Keycloak resource sync automatically
 	// OwnerID comes from the input and represents the selected group/organization
 	return r.client.BotRunner.Create().SetInput(input).Save(ctx)
@@ -757,6 +782,16 @@ func (r *mutationResolver) RunBacktest(ctx context.Context, input ent.CreateBack
 
 		if err != nil {
 			return fmt.Errorf("failed to load strategy: %w", err)
+		}
+
+		// Check billing - ensure org is not suspended
+		if err := billing.EnsureSufficientCredits(ctx, r.client, existingStrategy.OwnerID); err != nil {
+			return err
+		}
+
+		// Check feature gating - ensure subscription includes backtesting
+		if err := billing.HasFeature(ctx, r.client, existingStrategy.OwnerID, "backtesting"); err != nil {
+			return err
 		}
 
 		// If strategy already has a backtest, automatically create a new version
@@ -1015,6 +1050,11 @@ func (r *mutationResolver) CreateAlertRule(ctx context.Context, input ent.Create
 		return nil, fmt.Errorf("alert service not available")
 	}
 
+	// Check billing - ensure org is not suspended
+	if err := billing.EnsureSufficientCredits(ctx, r.client, input.OwnerID); err != nil {
+		return nil, err
+	}
+
 	return alertSvc.CreateRule(ctx, input)
 }
 
@@ -1118,6 +1158,20 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.C
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// Initialize billing: create zero-balance record and assign starter plan if first org
+	if r.Resolver != nil && r.client != nil {
+		if err := billing.EnsureBalanceExists(ctx, r.client, response.Alias); err != nil {
+			log.Printf("Failed to create billing balance for org %s: %v", response.Alias, err)
+		}
+
+		stripeClient := billing.GetStripeClientFromContext(ctx)
+		if stripeClient != nil {
+			if err := billing.AssignStarterPlanIfFirstOrg(ctx, r.client, stripeClient, userCtx.UserID, response.Alias, ""); err != nil {
+				log.Printf("Failed to assign starter plan for org %s: %v", response.Alias, err)
+			}
+		}
 	}
 
 	return &model.CreateOrganizationResponse{
@@ -1356,6 +1410,214 @@ func (r *mutationResolver) EnableOrganization(ctx context.Context, organizationI
 
 	log.Printf("[AUDIT] Organization %s was re-enabled", organizationID)
 	return true, nil
+}
+
+func (r *mutationResolver) CreateDepositSession(ctx context.Context, ownerID string, amount float64) (string, error) {
+	if amount < 5 {
+		return "", fmt.Errorf("minimum deposit amount is $5")
+	}
+	if amount > 10000 {
+		return "", fmt.Errorf("maximum deposit amount is $10,000")
+	}
+
+	stripeClient := billing.GetStripeClientFromContext(ctx)
+	if stripeClient == nil {
+		return "", fmt.Errorf("billing not configured")
+	}
+
+	ownerIDStr := ownerID
+
+	// Get Stripe customer ID from subscription, or create a new customer
+	var customerID string
+	sub, err := r.client.StripeSubscription.Query().
+		Where(stripesubscription.OwnerID(ownerIDStr)).
+		Only(ctx)
+	if err != nil {
+		if !ent.IsNotFound(err) {
+			return "", fmt.Errorf("failed to query subscription: %w", err)
+		}
+		// No subscription — create a Stripe customer for this org
+		userCtx, err := auth.GetUserContext(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to get user context: %w", err)
+		}
+		cust, err := stripeClient.CreateCustomer(ownerIDStr, userCtx.Email)
+		if err != nil {
+			return "", fmt.Errorf("failed to create Stripe customer: %w", err)
+		}
+		customerID = cust.ID
+	} else {
+		customerID = sub.StripeCustomerID
+	}
+
+	// Resolve frontend URL: configured env var → Origin header → localhost fallback
+	baseURL := billing.GetFrontendURLFromContext(ctx)
+	if baseURL == "" {
+		if opCtx := graphql.GetOperationContext(ctx); opCtx != nil {
+			if origin := opCtx.Headers.Get("Origin"); origin != "" {
+				baseURL = origin
+			}
+		}
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+
+	amountCents := int64(amount * 100)
+	session, err := stripeClient.CreateCheckoutSession(
+		customerID, ownerIDStr, amountCents,
+		fmt.Sprintf("%s/organization/billing?orgId=%s&deposit=success", baseURL, ownerIDStr),
+		fmt.Sprintf("%s/organization/billing?orgId=%s&deposit=cancel", baseURL, ownerIDStr),
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create checkout session: %w", err)
+	}
+
+	return session.URL, nil
+}
+
+func (r *mutationResolver) CreateSubscriptionSession(ctx context.Context, ownerID string, priceID string) (string, error) {
+	stripeClient := billing.GetStripeClientFromContext(ctx)
+	if stripeClient == nil {
+		return "", fmt.Errorf("billing not configured")
+	}
+
+	// Check no active/canceling subscription exists
+	existingSub, err := r.client.StripeSubscription.Query().
+		Where(
+			stripesubscription.OwnerID(ownerID),
+			stripesubscription.StatusIn(enum.StripeSubActive, enum.StripeSubCanceling),
+		).
+		Only(ctx)
+	if err == nil && existingSub != nil {
+		return "", fmt.Errorf("organization already has an active subscription")
+	}
+
+	// Look for existing customer ID from a canceled subscription record
+	var customerID string
+	canceledSub, err := r.client.StripeSubscription.Query().
+		Where(stripesubscription.OwnerID(ownerID)).
+		Only(ctx)
+	if err == nil && canceledSub != nil {
+		customerID = canceledSub.StripeCustomerID
+	} else {
+		// Create new Stripe customer
+		userCtx, err := auth.GetUserContext(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to get user context: %w", err)
+		}
+		cust, err := stripeClient.CreateCustomer(ownerID, userCtx.Email)
+		if err != nil {
+			return "", fmt.Errorf("failed to create Stripe customer: %w", err)
+		}
+		customerID = cust.ID
+	}
+
+	// Resolve frontend URL: configured env var → Origin header → localhost fallback
+	baseURL := billing.GetFrontendURLFromContext(ctx)
+	if baseURL == "" {
+		if opCtx := graphql.GetOperationContext(ctx); opCtx != nil {
+			if origin := opCtx.Headers.Get("Origin"); origin != "" {
+				baseURL = origin
+			}
+		}
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+
+	sess, err := stripeClient.CreateSubscriptionCheckoutSession(
+		customerID, priceID, ownerID,
+		fmt.Sprintf("%s/organization/billing?orgId=%s&subscription=success", baseURL, ownerID),
+		fmt.Sprintf("%s/organization/billing?orgId=%s&subscription=cancel", baseURL, ownerID),
+	)
+	if err != nil {
+		return "", err
+	}
+	return sess.URL, nil
+}
+
+func (r *mutationResolver) ChangeSubscriptionPlan(ctx context.Context, ownerID string, newPriceID string) (*model.SubscriptionInfo, error) {
+	stripeClient := billing.GetStripeClientFromContext(ctx)
+	if stripeClient == nil {
+		return nil, fmt.Errorf("billing not configured")
+	}
+
+	sub, err := r.client.StripeSubscription.Query().
+		Where(
+			stripesubscription.OwnerID(ownerID),
+			stripesubscription.StatusIn(enum.StripeSubActive, enum.StripeSubCanceling),
+		).
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("no active subscription found: %w", err)
+	}
+
+	updatedStripeSub, err := stripeClient.UpdateSubscriptionPrice(sub.StripeSubscriptionID, newPriceID)
+	if err != nil {
+		return nil, err
+	}
+
+	planName, monthlyDeposit, features := billing.ExtractPlanMetadata(updatedStripeSub)
+
+	updated, err := r.client.StripeSubscription.UpdateOneID(sub.ID).
+		SetStripePriceID(newPriceID).
+		SetPlanName(planName).
+		SetMonthlyDeposit(monthlyDeposit).
+		SetFeatures(features).
+		SetStatus(enum.StripeSubActive).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update subscription record: %w", err)
+	}
+
+	log.Printf("[BILLING] action=plan_change owner=%s plan=%s deposit=%.2f", ownerID, planName, monthlyDeposit)
+
+	return &model.SubscriptionInfo{
+		PlanName:         &updated.PlanName,
+		MonthlyDeposit:   updated.MonthlyDeposit,
+		Status:           string(updated.Status),
+		CurrentPeriodEnd: updated.CurrentPeriodEnd,
+		Features:         updated.Features,
+	}, nil
+}
+
+func (r *mutationResolver) CancelSubscription(ctx context.Context, ownerID string) (*model.SubscriptionInfo, error) {
+	stripeClient := billing.GetStripeClientFromContext(ctx)
+	if stripeClient == nil {
+		return nil, fmt.Errorf("billing not configured")
+	}
+
+	sub, err := r.client.StripeSubscription.Query().
+		Where(
+			stripesubscription.OwnerID(ownerID),
+			stripesubscription.StatusEQ(enum.StripeSubActive),
+		).
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("no active subscription found: %w", err)
+	}
+
+	if _, err := stripeClient.CancelSubscriptionAtPeriodEnd(sub.StripeSubscriptionID); err != nil {
+		return nil, err
+	}
+
+	updated, err := r.client.StripeSubscription.UpdateOneID(sub.ID).
+		SetStatus(enum.StripeSubCanceling).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update subscription status: %w", err)
+	}
+
+	log.Printf("[BILLING] action=cancellation_request owner=%s sub=%s", ownerID, sub.StripeSubscriptionID)
+
+	return &model.SubscriptionInfo{
+		PlanName:         &updated.PlanName,
+		MonthlyDeposit:   updated.MonthlyDeposit,
+		Status:           string(updated.Status),
+		CurrentPeriodEnd: updated.CurrentPeriodEnd,
+		Features:         updated.Features,
+	}, nil
 }
 
 func (r *queryResolver) GetBotRunnerStatus(ctx context.Context, id uuid.UUID) (*runner.BotStatus, error) {
@@ -1801,6 +2063,143 @@ func (r *queryResolver) OrganizationInvitations(ctx context.Context, organizatio
 		Invitations: invitations,
 		TotalCount:  response.Total,
 	}, nil
+}
+
+func (r *queryResolver) AvailablePlans(ctx context.Context) ([]*model.PlanInfo, error) {
+	stripeClient := billing.GetStripeClientFromContext(ctx)
+	if stripeClient == nil {
+		return nil, fmt.Errorf("billing not configured")
+	}
+
+	plans, err := stripeClient.ListAvailablePlans()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list available plans: %w", err)
+	}
+
+	result := make([]*model.PlanInfo, len(plans))
+	for i, p := range plans {
+		result[i] = &model.PlanInfo{
+			PriceID:        p.PriceID,
+			ProductID:      p.ProductID,
+			DisplayName:    p.DisplayName,
+			Description:    p.Description,
+			PriceAmount:    p.PriceAmount,
+			MonthlyDeposit: p.MonthlyDeposit,
+			Features:       p.Features,
+			DisplayOrder:   p.DisplayOrder,
+		}
+	}
+	return result, nil
+}
+
+func (r *queryResolver) CreditBalance(ctx context.Context, ownerID string) (*ent.CreditBalance, error) {
+	ownerIDStr := ownerID
+	bal, err := r.client.CreditBalance.Query().
+		Where(creditbalance.OwnerID(ownerIDStr)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			// Return zero balance for orgs created before billing
+			return &ent.CreditBalance{Balance: 0, Suspended: false}, nil
+		}
+		return nil, fmt.Errorf("failed to get credit balance: %w", err)
+	}
+	return bal, nil
+}
+
+func (r *queryResolver) CreditTransactions(ctx context.Context, ownerID string, limit *int, offset *int) ([]*ent.CreditTransaction, error) {
+	ownerIDStr := ownerID
+	query := r.client.CreditTransaction.Query().
+		Where(credittransaction.OwnerID(ownerIDStr)).
+		Order(ent.Desc(credittransaction.FieldCreatedAt))
+
+	if offset != nil && *offset > 0 {
+		query = query.Offset(*offset)
+	}
+
+	queryLimit := 50 // default
+	if limit != nil && *limit > 0 && *limit <= 100 {
+		queryLimit = *limit
+	}
+	query = query.Limit(queryLimit)
+
+	return query.All(ctx)
+}
+
+func (r *queryResolver) SubscriptionInfo(ctx context.Context, ownerID string) (*model.SubscriptionInfo, error) {
+	ownerIDStr := ownerID
+	sub, err := r.client.StripeSubscription.Query().
+		Where(stripesubscription.OwnerID(ownerIDStr)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil // No subscription
+		}
+		return nil, fmt.Errorf("failed to get subscription: %w", err)
+	}
+
+	return &model.SubscriptionInfo{
+		PlanName:         &sub.PlanName,
+		MonthlyDeposit:   sub.MonthlyDeposit,
+		Status:           string(sub.Status),
+		CurrentPeriodEnd: sub.CurrentPeriodEnd,
+		Features:         sub.Features,
+	}, nil
+}
+
+func (r *queryResolver) PaymentHistory(ctx context.Context, ownerID string, limit *int) ([]*model.StripeInvoice, error) {
+	stripeClient := billing.GetStripeClientFromContext(ctx)
+	if stripeClient == nil {
+		return nil, fmt.Errorf("billing is not configured")
+	}
+
+	// Look up the Stripe customer ID from the subscription record
+	sub, err := r.client.StripeSubscription.Query().
+		Where(stripesubscription.OwnerID(ownerID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return []*model.StripeInvoice{}, nil
+		}
+		return nil, fmt.Errorf("failed to get subscription: %w", err)
+	}
+
+	invoiceLimit := int64(20)
+	if limit != nil && *limit > 0 && *limit <= 100 {
+		invoiceLimit = int64(*limit)
+	}
+
+	invoices, err := stripeClient.ListInvoices(sub.StripeCustomerID, invoiceLimit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list invoices: %w", err)
+	}
+
+	result := make([]*model.StripeInvoice, 0, len(invoices))
+	for _, inv := range invoices {
+		si := &model.StripeInvoice{
+			ID:          inv.ID,
+			AmountPaid:  float64(inv.AmountPaid) / 100.0,
+			Status:      string(inv.Status),
+			Created:     time.Unix(inv.Created, 0),
+			PeriodStart: time.Unix(inv.PeriodStart, 0),
+			PeriodEnd:   time.Unix(inv.PeriodEnd, 0),
+		}
+		if inv.Number != "" {
+			si.Number = &inv.Number
+		}
+		if inv.HostedInvoiceURL != "" {
+			si.HostedInvoiceURL = &inv.HostedInvoiceURL
+		}
+		if inv.InvoicePDF != "" {
+			si.InvoicePDF = &inv.InvoicePDF
+		}
+		if inv.BillingReason != "" {
+			reason := string(inv.BillingReason)
+			si.BillingReason = &reason
+		}
+		result = append(result, si)
+	}
+	return result, nil
 }
 
 func (r *subscriptionResolver) BotStatusChanged(ctx context.Context, botID uuid.UUID) (<-chan *ent.Bot, error) {

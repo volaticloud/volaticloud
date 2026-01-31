@@ -17,12 +17,18 @@ const (
 	DefaultSampleRetention = 7 * 24 * time.Hour // 7 days
 )
 
+// BillingDeductor is the interface for deducting hourly costs from billing.
+type BillingDeductor interface {
+	DeductHourlyCosts(ctx context.Context, bucketStart time.Time) error
+}
+
 // UsageAggregatorWorker periodically aggregates usage samples into hourly/daily summaries
 type UsageAggregatorWorker struct {
-	dbClient   *ent.Client
-	aggregator usage.Aggregator
-	interval   time.Duration
-	retention  time.Duration
+	dbClient        *ent.Client
+	aggregator      usage.Aggregator
+	billingDeductor BillingDeductor
+	interval        time.Duration
+	retention       time.Duration
 
 	stopChan chan struct{}
 	doneChan chan struct{}
@@ -48,6 +54,11 @@ func (w *UsageAggregatorWorker) SetInterval(interval time.Duration) {
 // SetRetention sets the sample retention period
 func (w *UsageAggregatorWorker) SetRetention(retention time.Duration) {
 	w.retention = retention
+}
+
+// SetBillingDeductor sets the billing deductor for hourly cost deduction
+func (w *UsageAggregatorWorker) SetBillingDeductor(deductor BillingDeductor) {
+	w.billingDeductor = deductor
 }
 
 // Start begins the aggregation loop
@@ -118,6 +129,13 @@ func (w *UsageAggregatorWorker) runAggregation(ctx context.Context) {
 		log.Printf("Failed to aggregate hourly usage: %v", err)
 	} else {
 		log.Printf("Successfully aggregated usage for hour: %v", previousHour)
+	}
+
+	// Deduct hourly costs from organization credit balances
+	if w.billingDeductor != nil {
+		if err := w.billingDeductor.DeductHourlyCosts(ctx, previousHour); err != nil {
+			log.Printf("Failed to deduct hourly costs: %v", err)
+		}
 	}
 
 	// If it's the start of a new day (midnight-1am), also run daily aggregation
