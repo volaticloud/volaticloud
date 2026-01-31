@@ -54,7 +54,8 @@ var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-p
 // Alert rule scopes are included for organization-wide alerts
 var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user", "change-user-roles",
 	"create-strategy", "create-bot", "create-exchange", "create-runner",
-	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules",
+	"view-billing", "manage-billing"}
 
 // GetScopesForType returns the permission scopes for a given resource type
 func GetScopesForType(resourceType ResourceType) []string {

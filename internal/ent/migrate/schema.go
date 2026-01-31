@@ -288,6 +288,58 @@ var (
 			},
 		},
 	}
+	// CreditBalancesColumns holds the columns for the "credit_balances" table.
+	CreditBalancesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "owner_id", Type: field.TypeString, Unique: true},
+		{Name: "balance", Type: field.TypeFloat64, Default: 0},
+		{Name: "suspended", Type: field.TypeBool, Default: false},
+		{Name: "suspended_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// CreditBalancesTable holds the schema information for the "credit_balances" table.
+	CreditBalancesTable = &schema.Table{
+		Name:       "credit_balances",
+		Columns:    CreditBalancesColumns,
+		PrimaryKey: []*schema.Column{CreditBalancesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "creditbalance_owner_id",
+				Unique:  true,
+				Columns: []*schema.Column{CreditBalancesColumns[1]},
+			},
+		},
+	}
+	// CreditTransactionsColumns holds the columns for the "credit_transactions" table.
+	CreditTransactionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "owner_id", Type: field.TypeString},
+		{Name: "amount", Type: field.TypeFloat64},
+		{Name: "balance_after", Type: field.TypeFloat64},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"subscription_deposit", "manual_deposit", "usage_deduction", "admin_adjustment"}},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "reference_id", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// CreditTransactionsTable holds the schema information for the "credit_transactions" table.
+	CreditTransactionsTable = &schema.Table{
+		Name:       "credit_transactions",
+		Columns:    CreditTransactionsColumns,
+		PrimaryKey: []*schema.Column{CreditTransactionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "credittransaction_owner_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{CreditTransactionsColumns[1], CreditTransactionsColumns[7]},
+			},
+			{
+				Name:    "credittransaction_reference_id",
+				Unique:  true,
+				Columns: []*schema.Column{CreditTransactionsColumns[6]},
+			},
+		},
+	}
 	// ExchangesColumns holds the columns for the "exchanges" table.
 	ExchangesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -482,6 +534,40 @@ var (
 			},
 		},
 	}
+	// StripeSubscriptionsColumns holds the columns for the "stripe_subscriptions" table.
+	StripeSubscriptionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "owner_id", Type: field.TypeString, Unique: true},
+		{Name: "stripe_customer_id", Type: field.TypeString},
+		{Name: "stripe_subscription_id", Type: field.TypeString, Unique: true},
+		{Name: "stripe_price_id", Type: field.TypeString},
+		{Name: "plan_name", Type: field.TypeString},
+		{Name: "monthly_deposit", Type: field.TypeFloat64},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "past_due", "canceling", "canceled"}, Default: "active"},
+		{Name: "features", Type: field.TypeJSON, Nullable: true},
+		{Name: "current_period_start", Type: field.TypeTime},
+		{Name: "current_period_end", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// StripeSubscriptionsTable holds the schema information for the "stripe_subscriptions" table.
+	StripeSubscriptionsTable = &schema.Table{
+		Name:       "stripe_subscriptions",
+		Columns:    StripeSubscriptionsColumns,
+		PrimaryKey: []*schema.Column{StripeSubscriptionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "stripesubscription_owner_id",
+				Unique:  true,
+				Columns: []*schema.Column{StripeSubscriptionsColumns[1]},
+			},
+			{
+				Name:    "stripesubscription_stripe_subscription_id",
+				Unique:  true,
+				Columns: []*schema.Column{StripeSubscriptionsColumns[3]},
+			},
+		},
+	}
 	// TradesColumns holds the columns for the "trades" table.
 	TradesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -544,10 +630,13 @@ var (
 		BotsTable,
 		BotMetricsTable,
 		BotRunnersTable,
+		CreditBalancesTable,
+		CreditTransactionsTable,
 		ExchangesTable,
 		ResourceUsageAggregationsTable,
 		ResourceUsageSamplesTable,
 		StrategiesTable,
+		StripeSubscriptionsTable,
 		TradesTable,
 	}
 )

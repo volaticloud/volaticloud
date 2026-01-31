@@ -342,6 +342,23 @@ directive @hasScope(
   fromParent: Boolean = false
 ) on FIELD_DEFINITION
 
+"""
+Requires the organization's subscription to include a specific feature.
+Checks the StripeSubscription.features field for the given feature name.
+Returns an error if the feature is not available on the current plan.
+"""
+directive @requiresFeature(
+  """
+  The feature name to check (e.g., "live_trading", "code_mode", "team_management")
+  """
+  feature: String!
+
+  """
+  The argument path to extract the owner ID from (supports dot notation, e.g., "input.ownerID")
+  """
+  ownerIDArg: String!
+) on FIELD_DEFINITION
+
 # Runner configuration inputs
 
 input RegistryAuthInput {
@@ -611,7 +628,7 @@ type Mutation {
   previewStrategyCode(config: Map!, className: String!): PreviewCodeResult! @isAuthenticated
 
   # Bot mutations
-  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot", resourceType: ORGANIZATION)
+  createBot(input: CreateBotInput!): Bot! @hasScope(resource: "input.ownerID", scope: "create-bot", resourceType: ORGANIZATION) @requiresFeature(feature: "live_trading", ownerIDArg: "input.ownerID")
   updateBot(id: ID!, input: UpdateBotInput!): Bot! @hasScope(resource: "id", scope: "edit", resourceType: BOT)
   deleteBot(id: ID!): Boolean! @hasScope(resource: "id", scope: "delete", resourceType: BOT)
 
@@ -762,7 +779,7 @@ extend type Mutation {
   """
   Create a new alert rule
   """
-  createAlertRule(input: CreateAlertRuleInput!): AlertRule! @isAuthenticated
+  createAlertRule(input: CreateAlertRuleInput!): AlertRule! @isAuthenticated @requiresFeature(feature: "alerting", ownerIDArg: "input.ownerID")
 
   """
   Update an existing alert rule
@@ -1516,4 +1533,125 @@ type Subscription {
   Receives notifications when any runner in the organization is created, updated, or changes status.
   """
   runnerChanged(ownerId: String!): BotRunner! @hasScope(resource: "ownerId", scope: "view", resourceType: ORGANIZATION)
+}
+
+# ==============================================================================
+# Billing Types
+# ==============================================================================
+
+type CreditBalance {
+  balance: Float!
+  suspended: Boolean!
+  suspendedAt: Time
+}
+
+type CreditTransaction {
+  id: ID!
+  amount: Float!
+  balanceAfter: Float!
+  type: CreditTransactionType!
+  description: String
+  referenceID: String
+  createdAt: Time!
+}
+
+type StripeInvoice {
+  id: String!
+  number: String
+  amountPaid: Float!
+  status: String!
+  created: Time!
+  hostedInvoiceUrl: String
+  invoicePdf: String
+  billingReason: String
+  periodStart: Time!
+  periodEnd: Time!
+}
+
+enum CreditTransactionType {
+  subscription_deposit
+  manual_deposit
+  usage_deduction
+  admin_adjustment
+}
+
+type SubscriptionInfo {
+  planName: String
+  monthlyDeposit: Float!
+  status: String!
+  currentPeriodEnd: Time!
+  features: [String!]!
+}
+
+type PlanInfo {
+  priceId: String!
+  productId: String!
+  displayName: String!
+  description: String!
+  priceAmount: Float!
+  monthlyDeposit: Float!
+  features: [String!]!
+  displayOrder: Int!
+}
+
+# ==============================================================================
+# Billing Queries & Mutations
+# ==============================================================================
+
+extend type Query {
+  """
+  List all available subscription plans (from Stripe). Public, no auth required.
+  """
+  availablePlans: [PlanInfo!]!
+  """
+  Get the credit balance for an organization
+  """
+  creditBalance(ownerID: String!): CreditBalance!
+    @hasScope(resource: "ownerID", scope: "view-billing", resourceType: ORGANIZATION)
+
+  """
+  Get credit transaction history for an organization
+  """
+  creditTransactions(ownerID: String!, limit: Int, offset: Int): [CreditTransaction!]!
+    @hasScope(resource: "ownerID", scope: "view-billing", resourceType: ORGANIZATION)
+
+  """
+  Get subscription info for an organization
+  """
+  subscriptionInfo(ownerID: String!): SubscriptionInfo
+    @hasScope(resource: "ownerID", scope: "view-billing", resourceType: ORGANIZATION)
+
+  """
+  Get payment history (Stripe invoices) for an organization
+  """
+  paymentHistory(ownerID: String!, limit: Int): [StripeInvoice!]!
+    @hasScope(resource: "ownerID", scope: "view-billing", resourceType: ORGANIZATION)
+}
+
+extend type Mutation {
+  """
+  Create a Stripe Checkout session for manual credit deposit.
+  Returns the checkout session URL for redirect.
+  """
+  createDepositSession(ownerID: String!, amount: Float!): String!
+    @hasScope(resource: "ownerID", scope: "manage-billing", resourceType: ORGANIZATION)
+
+  """
+  Create a Stripe Checkout session for subscribing to a plan.
+  Returns the checkout session URL for redirect.
+  """
+  createSubscriptionSession(ownerID: String!, priceID: String!): String!
+    @hasScope(resource: "ownerID", scope: "manage-billing", resourceType: ORGANIZATION)
+
+  """
+  Change the subscription plan for an organization.
+  """
+  changeSubscriptionPlan(ownerID: String!, newPriceID: String!): SubscriptionInfo!
+    @hasScope(resource: "ownerID", scope: "manage-billing", resourceType: ORGANIZATION)
+
+  """
+  Cancel the subscription for an organization at the end of the current billing period.
+  """
+  cancelSubscription(ownerID: String!): SubscriptionInfo!
+    @hasScope(resource: "ownerID", scope: "manage-billing", resourceType: ORGANIZATION)
 }

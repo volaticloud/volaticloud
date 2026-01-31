@@ -273,11 +273,16 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         requestedPermissions.current.delete(key);
       }
 
+      // Don't schedule requests until auth is ready — otherwise the batch fires
+      // without a token, backend returns an auth error, and the key gets cached
+      // as denied for 5 minutes.
+      if (!auth.isAuthenticated) return false;
+
       // Not cached or expired - schedule a request and return false for now
       scheduleRequest(resourceId, scope);
       return false;
     },
-    [permissions, scheduleRequest]
+    [permissions, scheduleRequest, auth.isAuthenticated]
   );
 
   // Refresh all previously requested permissions
@@ -347,22 +352,12 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     }
   }, [auth.isAuthenticated]);
 
-  // Cleanup timeout and retry counters on unmount
-  useEffect(() => {
-    return () => {
-      if (batchTimeoutRef.current) {
-        clearTimeout(batchTimeoutRef.current);
-        batchTimeoutRef.current = null;
-      }
-      // Clear pending requests from requested set so they can be re-scheduled on remount
-      // This is needed for React Strict Mode which unmounts and remounts components
-      for (const key of pendingRequests.current) {
-        requestedPermissions.current.delete(key);
-      }
-      pendingRequests.current = new Set();
-      retryCount.current.clear();
-    };
-  }, []);
+  // Note: No cleanup effect for the batch timeout. React Strict Mode's
+  // doubleInvokeEffectsOnFiber disconnects ALL passive effects (including [] deps)
+  // on every commit, which would cancel the batch timeout scheduled during render.
+  // Since can() is called during render (not effects), the batch could never fire.
+  // The timeout firing after unmount is harmless (setState on unmounted component is a no-op).
+  // The auth logout effect above handles cleanup on actual logout.
 
   const value = useMemo(
     () => ({

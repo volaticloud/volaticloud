@@ -1,0 +1,85 @@
+query GetCreditBalance($ownerID: String!) {
+  creditBalance(ownerID: $ownerID) {
+    balance
+    suspended
+    suspendedAt
+  }
+}
+
+query GetCreditTransactions($ownerID: String!, $limit: Int, $offset: Int) {
+  creditTransactions(ownerID: $ownerID, limit: $limit, offset: $offset) {
+    id
+    amount
+    balanceAfter
+    type
+    description
+    referenceID
+    createdAt
+  }
+}
+
+query GetSubscriptionInfo($ownerID: String!) {
+  subscriptionInfo(ownerID: $ownerID) {
+    planName
+    monthlyDeposit
+    status
+    currentPeriodEnd
+    features
+  }
+}
+
+query GetAvailablePlans {
+  availablePlans {
+    priceId
+    productId
+    displayName
+    description
+    priceAmount
+    monthlyDeposit
+    features
+    displayOrder
+  }
+}
+
+mutation CreateDepositSession($ownerID: String!, $amount: Float!) {
+  createDepositSession(ownerID: $ownerID, amount: $amount)
+}
+
+mutation CreateSubscriptionSession($ownerID: String!, $priceID: String!) {
+  createSubscriptionSession(ownerID: $ownerID, priceID: $priceID)
+}
+
+mutation ChangeSubscriptionPlan($ownerID: String!, $newPriceID: String!) {
+  changeSubscriptionPlan(ownerID: $ownerID, newPriceID: $newPriceID) {
+    planName
+    monthlyDeposit
+    status
+    currentPeriodEnd
+    features
+  }
+}
+
+mutation CancelSubscription($ownerID: String!) {
+  cancelSubscription(ownerID: $ownerID) {
+    planName
+    monthlyDeposit
+    status
+    currentPeriodEnd
+    features
+  }
+}
+
+query GetPaymentHistory($ownerID: String!, $limit: Int) {
+  paymentHistory(ownerID: $ownerID, limit: $limit) {
+    id
+    number
+    amountPaid
+    status
+    created
+    hostedInvoiceUrl
+    invoicePdf
+    billingReason
+    periodStart
+    periodEnd
+  }
+}

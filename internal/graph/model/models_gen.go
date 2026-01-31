@@ -280,6 +280,17 @@ type PermissionCheckResult struct {
 	Granted bool `json:"granted"`
 }
 
+type PlanInfo struct {
+	PriceID        string   `json:"priceId"`
+	ProductID      string   `json:"productId"`
+	DisplayName    string   `json:"displayName"`
+	Description    string   `json:"description"`
+	PriceAmount    float64  `json:"priceAmount"`
+	MonthlyDeposit float64  `json:"monthlyDeposit"`
+	Features       []string `json:"features"`
+	DisplayOrder   int      `json:"displayOrder"`
+}
+
 // Result of strategy code preview generation
 type PreviewCodeResult struct {
 	// Whether the code generation was successful
@@ -449,10 +460,31 @@ type SignalConfigInput struct {
 	ExitConditions map[string]any `json:"exitConditions"`
 }
 
+type StripeInvoice struct {
+	ID               string    `json:"id"`
+	Number           *string   `json:"number,omitempty"`
+	AmountPaid       float64   `json:"amountPaid"`
+	Status           string    `json:"status"`
+	Created          time.Time `json:"created"`
+	HostedInvoiceURL *string   `json:"hostedInvoiceUrl,omitempty"`
+	InvoicePDF       *string   `json:"invoicePdf,omitempty"`
+	BillingReason    *string   `json:"billingReason,omitempty"`
+	PeriodStart      time.Time `json:"periodStart"`
+	PeriodEnd        time.Time `json:"periodEnd"`
+}
+
 // Real-time subscriptions for monitoring status changes.
 // All subscriptions require authentication via connection_init payload.
 // Authorization is checked per the @hasScope directive on each subscription.
 type Subscription struct {
+}
+
+type SubscriptionInfo struct {
+	PlanName         *string   `json:"planName,omitempty"`
+	MonthlyDeposit   float64   `json:"monthlyDeposit"`
+	Status           string    `json:"status"`
+	CurrentPeriodEnd time.Time `json:"currentPeriodEnd"`
+	Features         []string  `json:"features"`
 }
 
 // Estimated cost breakdown for resource usage
@@ -739,6 +771,65 @@ func (e *ConditionNodeType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ConditionNodeType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CreditTransactionType string
+
+const (
+	CreditTransactionTypeSubscriptionDeposit CreditTransactionType = "subscription_deposit"
+	CreditTransactionTypeManualDeposit       CreditTransactionType = "manual_deposit"
+	CreditTransactionTypeUsageDeduction      CreditTransactionType = "usage_deduction"
+	CreditTransactionTypeAdminAdjustment     CreditTransactionType = "admin_adjustment"
+)
+
+var AllCreditTransactionType = []CreditTransactionType{
+	CreditTransactionTypeSubscriptionDeposit,
+	CreditTransactionTypeManualDeposit,
+	CreditTransactionTypeUsageDeduction,
+	CreditTransactionTypeAdminAdjustment,
+}
+
+func (e CreditTransactionType) IsValid() bool {
+	switch e {
+	case CreditTransactionTypeSubscriptionDeposit, CreditTransactionTypeManualDeposit, CreditTransactionTypeUsageDeduction, CreditTransactionTypeAdminAdjustment:
+		return true
+	}
+	return false
+}
+
+func (e CreditTransactionType) String() string {
+	return string(e)
+}
+
+func (e *CreditTransactionType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CreditTransactionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CreditTransactionType", str)
+	}
+	return nil
+}
+
+func (e CreditTransactionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CreditTransactionType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CreditTransactionType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

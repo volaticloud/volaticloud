@@ -27,6 +27,9 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0019](0019-internal-backend-architecture.md) | Internal Backend Architecture | Accepted | 2026-01-27 |
 | [0020](0020-leverage-configuration-system.md) | Leverage Configuration System | Accepted | 2026-01-28 |
 | [0021](0021-landing-page-architecture.md) | Landing Page Architecture | Accepted | 2026-01-30 |
+| [0022](0022-credit-based-billing.md) | Credit-Based Billing System | Accepted | 2026-01-31 |
+| [0023](0023-self-service-subscription-management.md) | Self-Service Subscription Management | Accepted | 2026-01-31 |
+| [0024](0024-billing-deposit-security.md) | Billing Deposit Security — Preventing Credit Leaks | Accepted | 2026-01-31 |
 
 ## What is an ADR?
 

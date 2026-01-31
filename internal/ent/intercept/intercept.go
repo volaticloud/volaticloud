@@ -13,11 +13,14 @@ import (
 	"volaticloud/internal/ent/bot"
 	"volaticloud/internal/ent/botmetrics"
 	"volaticloud/internal/ent/botrunner"
+	"volaticloud/internal/ent/creditbalance"
+	"volaticloud/internal/ent/credittransaction"
 	"volaticloud/internal/ent/exchange"
 	"volaticloud/internal/ent/predicate"
 	"volaticloud/internal/ent/resourceusageaggregation"
 	"volaticloud/internal/ent/resourceusagesample"
 	"volaticloud/internal/ent/strategy"
+	"volaticloud/internal/ent/stripesubscription"
 	"volaticloud/internal/ent/trade"
 
 	"entgo.io/ent/dialect/sql"
@@ -241,6 +244,60 @@ func (f TraverseBotRunner) Traverse(ctx context.Context, q ent.Query) error {
 	return fmt.Errorf("unexpected query type %T. expect *ent.BotRunnerQuery", q)
 }
 
+// The CreditBalanceFunc type is an adapter to allow the use of ordinary function as a Querier.
+type CreditBalanceFunc func(context.Context, *ent.CreditBalanceQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f CreditBalanceFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.CreditBalanceQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.CreditBalanceQuery", q)
+}
+
+// The TraverseCreditBalance type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseCreditBalance func(context.Context, *ent.CreditBalanceQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseCreditBalance) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseCreditBalance) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.CreditBalanceQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.CreditBalanceQuery", q)
+}
+
+// The CreditTransactionFunc type is an adapter to allow the use of ordinary function as a Querier.
+type CreditTransactionFunc func(context.Context, *ent.CreditTransactionQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f CreditTransactionFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.CreditTransactionQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.CreditTransactionQuery", q)
+}
+
+// The TraverseCreditTransaction type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseCreditTransaction func(context.Context, *ent.CreditTransactionQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseCreditTransaction) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseCreditTransaction) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.CreditTransactionQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.CreditTransactionQuery", q)
+}
+
 // The ExchangeFunc type is an adapter to allow the use of ordinary function as a Querier.
 type ExchangeFunc func(context.Context, *ent.ExchangeQuery) (ent.Value, error)
 
@@ -349,6 +406,33 @@ func (f TraverseStrategy) Traverse(ctx context.Context, q ent.Query) error {
 	return fmt.Errorf("unexpected query type %T. expect *ent.StrategyQuery", q)
 }
 
+// The StripeSubscriptionFunc type is an adapter to allow the use of ordinary function as a Querier.
+type StripeSubscriptionFunc func(context.Context, *ent.StripeSubscriptionQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f StripeSubscriptionFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.StripeSubscriptionQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.StripeSubscriptionQuery", q)
+}
+
+// The TraverseStripeSubscription type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseStripeSubscription func(context.Context, *ent.StripeSubscriptionQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseStripeSubscription) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseStripeSubscription) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.StripeSubscriptionQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.StripeSubscriptionQuery", q)
+}
+
 // The TradeFunc type is an adapter to allow the use of ordinary function as a Querier.
 type TradeFunc func(context.Context, *ent.TradeQuery) (ent.Value, error)
 
@@ -391,6 +475,10 @@ func NewQuery(q ent.Query) (Query, error) {
 		return &query[*ent.BotMetricsQuery, predicate.BotMetrics, botmetrics.OrderOption]{typ: ent.TypeBotMetrics, tq: q}, nil
 	case *ent.BotRunnerQuery:
 		return &query[*ent.BotRunnerQuery, predicate.BotRunner, botrunner.OrderOption]{typ: ent.TypeBotRunner, tq: q}, nil
+	case *ent.CreditBalanceQuery:
+		return &query[*ent.CreditBalanceQuery, predicate.CreditBalance, creditbalance.OrderOption]{typ: ent.TypeCreditBalance, tq: q}, nil
+	case *ent.CreditTransactionQuery:
+		return &query[*ent.CreditTransactionQuery, predicate.CreditTransaction, credittransaction.OrderOption]{typ: ent.TypeCreditTransaction, tq: q}, nil
 	case *ent.ExchangeQuery:
 		return &query[*ent.ExchangeQuery, predicate.Exchange, exchange.OrderOption]{typ: ent.TypeExchange, tq: q}, nil
 	case *ent.ResourceUsageAggregationQuery:
@@ -399,6 +487,8 @@ func NewQuery(q ent.Query) (Query, error) {
 		return &query[*ent.ResourceUsageSampleQuery, predicate.ResourceUsageSample, resourceusagesample.OrderOption]{typ: ent.TypeResourceUsageSample, tq: q}, nil
 	case *ent.StrategyQuery:
 		return &query[*ent.StrategyQuery, predicate.Strategy, strategy.OrderOption]{typ: ent.TypeStrategy, tq: q}, nil
+	case *ent.StripeSubscriptionQuery:
+		return &query[*ent.StripeSubscriptionQuery, predicate.StripeSubscription, stripesubscription.OrderOption]{typ: ent.TypeStripeSubscription, tq: q}, nil
 	case *ent.TradeQuery:
 		return &query[*ent.TradeQuery, predicate.Trade, trade.OrderOption]{typ: ent.TypeTrade, tq: q}, nil
 	default:

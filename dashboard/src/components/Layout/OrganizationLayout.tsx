@@ -10,6 +10,7 @@ import { Sidebar } from './Sidebar';
 import { drawerWidth, collapsedDrawerWidth, type MenuItem } from './sidebarConfig';
 import { Header } from './Header';
 import { useSidebar } from '../../contexts/SidebarContext';
+import { SuspendedBanner } from '../Billing/SuspendedBanner';
 
 const organizationMenuItems: MenuItem[] = [
   { text: 'Organization Details', icon: <BusinessIcon />, path: '/organization/details' },
@@ -66,6 +67,7 @@ export const OrganizationLayout = ({ darkMode, onToggleDarkMode }: OrganizationL
         }}
       >
         <Toolbar /> {/* Spacer for fixed AppBar */}
+        <SuspendedBanner />
         <Outlet />
       </Box>
     </Box>
