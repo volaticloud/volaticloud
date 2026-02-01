@@ -11,6 +11,7 @@ Accepted
 ADR-0022 established the credit-based billing system with Stripe integration, but subscription management (subscribe, change plan, cancel) required admin intervention. Users need self-service flows to manage their own subscriptions from the billing page.
 
 Key questions this ADR addresses:
+
 - How does subscribing work?
 - What happens when a user cancels?
 - What happens to credits and money when switching plans?
@@ -53,6 +54,7 @@ sequenceDiagram
 ```
 
 **Guard rails:**
+
 - If org already has an active or canceling subscription, the mutation returns an error
 - If org previously had a canceled subscription, the existing Stripe customer ID is reused
 - If no prior subscription exists, a new Stripe customer is created
@@ -81,6 +83,7 @@ sequenceDiagram
 ```
 
 **Proration behavior (`create_prorations`):**
+
 - **Upgrading** (e.g., Starter -> Pro): User is charged the prorated difference for the remaining days on the next invoice. The new higher monthly deposit takes effect at the next renewal.
 - **Downgrading** (e.g., Pro -> Starter): User receives a prorated credit on the next invoice. The new lower monthly deposit takes effect at the next renewal.
 - **Credits are NOT adjusted** during plan change. Existing credit balance is untouched. Only the `monthlyDeposit` amount changes for future renewals.

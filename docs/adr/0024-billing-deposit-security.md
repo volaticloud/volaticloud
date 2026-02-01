@@ -26,6 +26,7 @@ Every path that adds credits to a balance must be accounted for:
 #### V1: Double Deposit on Initial Subscription (CRITICAL)
 
 When a user subscribes via Checkout, Stripe fires **two** events:
+
 1. `checkout.session.completed` → deposits with reference `session.ID`
 2. `invoice.payment_succeeded` (billing_reason=`subscription_create`) → deposits with reference `invoice.ID`
 
@@ -34,6 +35,7 @@ Different reference IDs bypass idempotency → **2× the monthly deposit**.
 #### V2: Proration Invoice Triggers Full Deposit (CRITICAL)
 
 When a user upgrades plans (e.g., Starter $5/mo → Enterprise $200/mo):
+
 1. `ChangeSubscriptionPlan` calls Stripe with `ProrationBehavior: "create_prorations"`
 2. Stripe charges the prorated price difference (e.g., $77)
 3. Stripe fires `invoice.payment_succeeded` (billing_reason=`subscription_update`)
@@ -112,16 +114,19 @@ This single filter eliminates V1, V2, V3, and V4 simultaneously.
 ## Consequences
 
 ### Positive
+
 - Eliminates all identified credit leak vectors
 - Single, auditable filter point for deposit authorization
 - Each lifecycle event has exactly one deposit path — no ambiguity
 - Idempotency provides defense-in-depth against webhook retries
 
 ### Negative
+
 - Admin-assigned subscriptions no longer get automatic initial deposits (must use `AdminAddCredits`)
 - If Stripe changes `BillingReason` semantics, deposits could silently stop — monitoring recommended
 
 ### Future Considerations
+
 - Add alerting/monitoring on skipped invoices to detect anomalies
 - Consider a plan change cooldown if Stripe processing fee abuse becomes a concern
 - Consider rate-limiting `ChangeSubscriptionPlan` to prevent rapid switching
