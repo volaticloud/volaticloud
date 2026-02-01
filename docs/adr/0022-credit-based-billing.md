@@ -81,3 +81,5 @@ New `@requiresFeature` GraphQL directive checks subscription features before res
 
 - Stripe API availability affects subscription creation (not existing operations)
 - Need monitoring for webhook delivery failures
+- **Multi-org starter plan abuse**: Users can create multiple organizations to receive a starter plan deposit per org. Bounded by Keycloak rate limits on org creation and the small deposit amount ($5). Cross-org checks would require Keycloak lookups at the resolver layer; accepted risk for now
+- **Credit enforcement race window**: `EnsureSufficientCredits` is a best-effort guard, not a transactional lock. Between the check and the actual operation, credits could be depleted by hourly deduction. Worst case: one extra resource starts and runs for up to 1 hour before the next deduction cycle stops it. ENT does not support `SELECT FOR UPDATE`, and distributed locks would add significant complexity for minimal benefit

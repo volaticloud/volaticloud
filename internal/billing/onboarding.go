@@ -18,8 +18,10 @@ import (
 // All plan details are read from Stripe product metadata.
 //
 // NOTE: Anti-abuse for multi-org users (creating multiple orgs for multiple starter plans)
-// should be handled at the resolver layer by checking the user's Keycloak group memberships
-// against existing subscriptions, since user→org mappings are not stored in the billing DB.
+// is a known limitation documented in ADR-0022 Risks. Each new org gets a starter plan with
+// a small credit deposit ($5). User→org mappings are in Keycloak, not the billing DB, so
+// cross-org checks would require a Keycloak lookup at the resolver layer. Accepted risk:
+// abuse is bounded by Keycloak rate limits on org creation and the small deposit amount.
 func AssignStarterPlanIfFirstOrg(ctx context.Context, client *ent.Client, stripeClient *StripeClient, userID string, ownerID string, email string) error {
 	// Check if this org already has a subscription
 	existingSub, _ := client.StripeSubscription.Query().

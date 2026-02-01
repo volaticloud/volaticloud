@@ -16,10 +16,13 @@ import (
 	"volaticloud/internal/enum"
 )
 
+// MaxWebhookBodySize is the maximum size in bytes for incoming Stripe webhook payloads (64KB).
+const MaxWebhookBodySize = 65536
+
 // NewWebhookHandler returns an HTTP handler for Stripe webhooks.
 func NewWebhookHandler(client *ent.Client, stripeClient StripeAPI, webhookSecret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(io.LimitReader(r.Body, 65536))
+		body, err := io.ReadAll(io.LimitReader(r.Body, MaxWebhookBodySize))
 		if err != nil {
 			http.Error(w, "failed to read body", http.StatusBadRequest)
 			return

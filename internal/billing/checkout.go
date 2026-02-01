@@ -46,7 +46,7 @@ func CreateDepositCheckoutSession(ctx context.Context, client *ent.Client, strip
 	return session.URL, nil
 }
 
-// CreateSubscriptionCheckoutSession creates a Stripe Checkout session for subscribing to a plan.
+// CreateSubscriptionCheckout creates a Stripe Checkout session for subscribing to a plan.
 // It validates no active subscription exists, resolves or creates a customer, and returns the checkout URL.
 func CreateSubscriptionCheckout(ctx context.Context, client *ent.Client, stripeClient *StripeClient, ownerID string, priceID string, frontendURL string, email string) (string, error) {
 	// Check no active/canceling subscription exists
