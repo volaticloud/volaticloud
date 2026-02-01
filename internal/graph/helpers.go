@@ -284,9 +284,9 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 	return bt, nil
 }
 
-// resolveFrontendURL resolves the frontend URL from context, Origin header, or fallback.
-func resolveFrontendURL(ctx context.Context) string {
-	baseURL := billing.GetFrontendURLFromContext(ctx)
+// resolveConsoleURL resolves the console URL from context, Origin header, or fallback.
+func resolveConsoleURL(ctx context.Context) string {
+	baseURL := billing.GetConsoleURLFromContext(ctx)
 	if baseURL == "" {
 		if opCtx := graphql.GetOperationContext(ctx); opCtx != nil {
 			if origin := opCtx.Headers.Get("Origin"); origin != "" {

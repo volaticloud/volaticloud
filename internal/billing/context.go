@@ -6,7 +6,7 @@ type contextKey string
 
 const (
 	stripeClientKey contextKey = "stripeClient"
-	frontendURLKey  contextKey = "frontendURL"
+	consoleURLKey  contextKey = "consoleURL"
 )
 
 // SetStripeClientInContext stores the Stripe client in context.
@@ -20,13 +20,13 @@ func GetStripeClientFromContext(ctx context.Context) *StripeClient {
 	return client
 }
 
-// SetFrontendURLInContext stores the configured frontend URL in context.
-func SetFrontendURLInContext(ctx context.Context, url string) context.Context {
-	return context.WithValue(ctx, frontendURLKey, url)
+// SetConsoleURLInContext stores the configured console URL in context.
+func SetConsoleURLInContext(ctx context.Context, url string) context.Context {
+	return context.WithValue(ctx, consoleURLKey, url)
 }
 
-// GetFrontendURLFromContext retrieves the configured frontend URL from context.
-func GetFrontendURLFromContext(ctx context.Context) string {
-	url, _ := ctx.Value(frontendURLKey).(string)
+// GetConsoleURLFromContext retrieves the configured console URL from context.
+func GetConsoleURLFromContext(ctx context.Context) string {
+	url, _ := ctx.Value(consoleURLKey).(string)
 	return url
 }

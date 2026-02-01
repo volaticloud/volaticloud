@@ -165,9 +165,9 @@ func main() {
 				EnvVars: []string{"VOLATICLOUD_CORS_ORIGINS"},
 			},
 			&cli.StringFlag{
-				Name:    "frontend-url",
-				Usage:   "Frontend URL for Stripe redirect URLs (e.g., https://app.volaticloud.com). Falls back to Origin header if not set",
-				EnvVars: []string{"VOLATICLOUD_FRONTEND_URL"},
+				Name:    "console-url",
+				Usage:   "Console URL for Stripe redirect URLs (e.g., https://console.volaticloud.com). Falls back to Origin header if not set",
+				EnvVars: []string{"VOLATICLOUD_CONSOLE_URL"},
 			},
 		},
 		Action: runServer,
@@ -481,9 +481,9 @@ func runServer(c *cli.Context) error {
 			if stripeClient != nil {
 				ctx = billing.SetStripeClientInContext(ctx, stripeClient)
 			}
-			// Inject frontend URL (for Stripe redirect URLs)
-			if frontendURL := c.String("frontend-url"); frontendURL != "" {
-				ctx = billing.SetFrontendURLInContext(ctx, frontendURL)
+			// Inject console URL (for Stripe redirect URLs)
+			if consoleURL := c.String("console-url"); consoleURL != "" {
+				ctx = billing.SetConsoleURLInContext(ctx, consoleURL)
 			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

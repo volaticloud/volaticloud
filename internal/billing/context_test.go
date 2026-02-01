@@ -22,16 +22,16 @@ func TestStripeClientContext(t *testing.T) {
 	})
 }
 
-func TestFrontendURLContext(t *testing.T) {
-	t.Run("round-trips frontend URL through context", func(t *testing.T) {
-		ctx := SetFrontendURLInContext(context.Background(), "https://app.example.com")
+func TestConsoleURLContext(t *testing.T) {
+	t.Run("round-trips console URL through context", func(t *testing.T) {
+		ctx := SetConsoleURLInContext(context.Background(), "https://console.volaticloud.com")
 
-		got := GetFrontendURLFromContext(ctx)
-		assert.Equal(t, "https://app.example.com", got)
+		got := GetConsoleURLFromContext(ctx)
+		assert.Equal(t, "https://console.volaticloud.com", got)
 	})
 
 	t.Run("returns empty string when not set", func(t *testing.T) {
-		got := GetFrontendURLFromContext(context.Background())
+		got := GetConsoleURLFromContext(context.Background())
 		assert.Equal(t, "", got)
 	})
 }

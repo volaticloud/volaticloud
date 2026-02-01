@@ -1420,7 +1420,7 @@ func (r *mutationResolver) CreateDepositSession(ctx context.Context, ownerID str
 	if err != nil {
 		return "", fmt.Errorf("failed to get user context: %w", err)
 	}
-	frontendURL := resolveFrontendURL(ctx)
+	frontendURL := resolveConsoleURL(ctx)
 	return billing.CreateDepositCheckoutSession(ctx, r.client, stripeClient, ownerID, amount, frontendURL, userCtx.Email)
 }
 
@@ -1433,7 +1433,7 @@ func (r *mutationResolver) CreateSubscriptionSession(ctx context.Context, ownerI
 	if err != nil {
 		return "", fmt.Errorf("failed to get user context: %w", err)
 	}
-	frontendURL := resolveFrontendURL(ctx)
+	frontendURL := resolveConsoleURL(ctx)
 	return billing.CreateSubscriptionCheckout(ctx, r.client, stripeClient, ownerID, priceID, frontendURL, userCtx.Email)
 }
 
