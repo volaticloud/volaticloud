@@ -181,6 +181,9 @@ func TestRunBacktest_ErrorsWhenBacktestExists(t *testing.T) {
 
 	ctx := context.Background()
 
+	// Create billing records so billing enforcement passes
+	CreateTestBillingRecords(t, ctx, client, testOwnerID)
+
 	// Define backtest config that will be stored in the strategy
 	backtestConfig := map[string]interface{}{
 		"pairs":           []string{"BTC/USDT"},
