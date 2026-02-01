@@ -36,6 +36,9 @@ deployments:
           # Required for WebSocket origin validation (even though HTTP goes through same-origin Caddy)
           - name: VOLATICLOUD_CORS_ORIGINS
             value: "https://console.volaticloud.com"
+          # Console URL for Stripe checkout redirect URLs
+          - name: VOLATICLOUD_CONSOLE_URL
+            value: "https://console.volaticloud.com"
 
         envsFromSecret:
           volaticloud-secrets:
@@ -48,6 +51,8 @@ deployments:
             - VOLATICLOUD_ALERT_FROM_EMAIL
             - VOLATICLOUD_ALERT_FROM_NAME
             - VOLATICLOUD_REDIS_URL
+            - VOLATICLOUD_STRIPE_API_KEY
+            - VOLATICLOUD_STRIPE_WEBHOOK_SECRET
 
         livenessProbe:
           httpGet:
