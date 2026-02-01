@@ -21,7 +21,7 @@ import {
   CreditCard as CreditCardIcon,
   Check as CheckIcon,
 } from '@mui/icons-material';
-import { useActiveOrganization, useOrganizationNavigate } from '../../contexts/OrganizationContext';
+import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import {
   useGetAvailablePlansQuery,
   useCreateSubscriptionSessionMutation,
@@ -39,7 +39,6 @@ const featureLabels: Record<string, string> = {
 
 export function NoSubscriptionView() {
   const { activeOrganizationId } = useActiveOrganization();
-  const navigate = useOrganizationNavigate();
   const [searchParams] = useSearchParams();
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'error' | 'success' }>({
     open: false,
@@ -164,13 +163,6 @@ export function NoSubscriptionView() {
               </Box>
             )}
 
-            <Button
-              variant="text"
-              sx={{ mt: 3 }}
-              onClick={() => navigate('/organization/billing')}
-            >
-              Go to Billing Management
-            </Button>
           </Paper>
         </Container>
       </Box>
