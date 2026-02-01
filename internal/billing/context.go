@@ -6,7 +6,7 @@ type contextKey string
 
 const (
 	stripeClientKey contextKey = "stripeClient"
-	consoleURLKey  contextKey = "consoleURL"
+	consoleURLKey   contextKey = "consoleURL"
 )
 
 // SetStripeClientInContext stores the Stripe client in context.
