@@ -84,7 +84,7 @@ Org creation calls `AddCredits` with reference `starter_init:{ownerID}`. Then St
 ```
 
 > **Why `subscription_create` is ALLOWED:** Stripe fires `invoice.payment_succeeded` (billing_reason=`subscription_create`) before `checkout.session.completed` arrives. If we skip `subscription_create`, the checkout handler must always deposit — but the subscription record may not exist yet when the invoice webhook fires. By allowing both paths and using the **same invoice ID as referenceID**, idempotency guarantees exactly one deposit regardless of webhook ordering. This also ensures admin-assigned subscriptions (which have no checkout event) receive their initial deposit.
-
+>
 > **Defense in depth:** Even if both checkout and invoice webhooks process the same initial invoice, `AddCredits` checks `referenceID` uniqueness inside the transaction — the second call is a no-op. See `TestBillingFlow_CheckoutThenInvoiceIdempotency` for the test covering this race.
 
 ### Implementation
