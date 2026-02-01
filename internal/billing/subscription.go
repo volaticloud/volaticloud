@@ -23,12 +23,12 @@ func ProcessSubscriptionDeposit(ctx context.Context, client *ent.Client, ownerID
 	}
 
 	if sub.Status != enum.StripeSubActive {
-		log.Printf("Skipping deposit for %s: subscription status is %s", ownerID, sub.Status)
+		log.Printf("[BILLING] action=deposit_skip owner=%s reason=inactive status=%s", ownerID, sub.Status)
 		return nil
 	}
 
 	if sub.MonthlyDeposit <= 0 {
-		log.Printf("Skipping deposit for %s: monthly deposit is $%.2f", ownerID, sub.MonthlyDeposit)
+		log.Printf("[BILLING] action=deposit_skip owner=%s reason=zero_deposit amount=%.2f", ownerID, sub.MonthlyDeposit)
 		return nil
 	}
 
