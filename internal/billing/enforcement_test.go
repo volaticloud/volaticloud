@@ -17,9 +17,10 @@ func TestEnsureSufficientCredits(t *testing.T) {
 	defer client.Close()
 	ctx := context.Background()
 
-	t.Run("allows when no balance record (pre-billing org)", func(t *testing.T) {
+	t.Run("rejects when no balance record (no subscription)", func(t *testing.T) {
 		err := EnsureSufficientCredits(ctx, client, "org-no-record")
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no credit balance")
 	})
 
 	t.Run("allows when balance is positive and not suspended", func(t *testing.T) {

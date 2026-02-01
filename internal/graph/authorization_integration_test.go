@@ -260,6 +260,9 @@ func TestAuthorizationIntegration_MultiEntity(t *testing.T) {
 	userID := uuid.NewString()
 	groupID := uuid.NewString()
 
+	// Create billing records so billing enforcement passes for bot lifecycle
+	CreateTestBillingRecords(t, env.Context, env.Client, groupID)
+
 	t.Run("Exchange_CRUD_WithPermissions", func(t *testing.T) {
 		// Create exchange - must grant create-exchange permission on the group
 		createMutation := `

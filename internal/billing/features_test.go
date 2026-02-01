@@ -49,9 +49,10 @@ func TestHasFeature(t *testing.T) {
 		assert.Contains(t, err.Error(), "not available")
 	})
 
-	t.Run("allows org with no subscription (billing not configured)", func(t *testing.T) {
+	t.Run("rejects org with no subscription", func(t *testing.T) {
 		err := HasFeature(ctx, client, "org-no-sub", "live_trading")
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no active subscription")
 	})
 
 	t.Run("allows features for canceling subscription (active until period end)", func(t *testing.T) {

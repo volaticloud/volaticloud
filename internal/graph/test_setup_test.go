@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/99designs/gqlgen/graphql"
@@ -12,6 +13,7 @@ import (
 
 	"volaticloud/internal/auth"
 	"volaticloud/internal/ent"
+	"volaticloud/internal/enum"
 	"volaticloud/internal/keycloak"
 )
 
@@ -101,6 +103,32 @@ func (te *TestEnv) WithAuth(userID, groupID string, permissions map[string][]str
 	ctx = SetAdminClientInContext(ctx, te.MockAdmin)
 
 	return ctx
+}
+
+// CreateTestBillingRecords creates a subscription and credit balance for an org so
+// billing enforcement passes. Call this before operations that check billing.
+func CreateTestBillingRecords(t *testing.T, ctx context.Context, entClient *ent.Client, ownerID string) {
+	t.Helper()
+	_, err := entClient.StripeSubscription.Create().
+		SetOwnerID(ownerID).
+		SetStripeCustomerID("cus_test_" + ownerID).
+		SetStripeSubscriptionID("sub_test_" + ownerID).
+		SetStripePriceID("price_test").
+		SetPlanName("starter").
+		SetMonthlyDeposit(10).
+		SetStatus(enum.StripeSubActive).
+		SetFeatures([]string{"live_trading", "backtesting", "code_mode", "alerting"}).
+		SetCurrentPeriodStart(time.Now()).
+		SetCurrentPeriodEnd(time.Now().Add(30 * 24 * time.Hour)).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, err = entClient.CreditBalance.Create().
+		SetOwnerID(ownerID).
+		SetBalance(100).
+		SetSuspended(false).
+		Save(ctx)
+	require.NoError(t, err)
 }
 
 // WithoutAuth returns a context without authentication

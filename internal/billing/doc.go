@@ -43,4 +43,12 @@
 //   - AssignStarterPlanIfFirstOrg — onboarding flow (onboarding.go)
 //   - HasFeature — feature gating check (features.go)
 //   - NewWebhookHandler — Stripe webhook HTTP handler (webhook.go)
+//
+// # Enforcement Policy
+//
+// Subscriptions are mandatory for all app access (see ADR-0025):
+//   - EnsureSufficientCredits rejects orgs without CreditBalance records
+//   - HasFeature rejects orgs without active/canceling subscriptions
+//   - Frontend SubscriptionGate blocks dashboard routes for orgs without subscriptions
+//   - Organization settings and billing pages remain accessible for self-service subscribe
 package billing

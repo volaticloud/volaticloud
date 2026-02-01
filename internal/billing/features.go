@@ -18,9 +18,7 @@ func HasFeature(ctx context.Context, client *ent.Client, ownerID string, feature
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			// No subscription record at all — org was created before billing system.
-			// Allow access; actual credit enforcement is handled by EnsureSufficientCredits.
-			return nil
+			return fmt.Errorf("no active subscription — please subscribe to access %q", feature)
 		}
 		return fmt.Errorf("failed to check subscription: %w", err)
 	}
