@@ -1586,7 +1586,8 @@ func (c *CreditTransactionClient) GetX(ctx context.Context, id uuid.UUID) *Credi
 
 // Hooks returns the client hooks.
 func (c *CreditTransactionClient) Hooks() []Hook {
-	return c.hooks.CreditTransaction
+	hooks := c.hooks.CreditTransaction
+	return append(hooks[:len(hooks):len(hooks)], credittransaction.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

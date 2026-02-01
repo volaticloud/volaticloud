@@ -243,6 +243,8 @@ func init() {
 	creditbalanceDescID := creditbalanceFields[0].Descriptor()
 	// creditbalance.DefaultID holds the default value on creation for the id field.
 	creditbalance.DefaultID = creditbalanceDescID.Default.(func() uuid.UUID)
+	credittransactionHooks := schema.CreditTransaction{}.Hooks()
+	credittransaction.Hooks[0] = credittransactionHooks[0]
 	credittransactionFields := schema.CreditTransaction{}.Fields()
 	_ = credittransactionFields
 	// credittransactionDescOwnerID is the schema descriptor for owner_id field.

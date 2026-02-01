@@ -7,6 +7,7 @@ import (
 	"time"
 	"volaticloud/internal/enum"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
@@ -57,7 +58,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "volaticloud/internal/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// OwnerIDValidator is a validator for the "owner_id" field. It is called by the builders before save.
 	OwnerIDValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.

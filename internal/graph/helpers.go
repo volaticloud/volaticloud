@@ -7,7 +7,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
+
 	backtest1 "volaticloud/internal/backtest"
+	"volaticloud/internal/billing"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/enum"
@@ -279,4 +282,20 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 	}
 
 	return bt, nil
+}
+
+// resolveFrontendURL resolves the frontend URL from context, Origin header, or fallback.
+func resolveFrontendURL(ctx context.Context) string {
+	baseURL := billing.GetFrontendURLFromContext(ctx)
+	if baseURL == "" {
+		if opCtx := graphql.GetOperationContext(ctx); opCtx != nil {
+			if origin := opCtx.Headers.Get("Origin"); origin != "" {
+				baseURL = origin
+			}
+		}
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+	return baseURL
 }

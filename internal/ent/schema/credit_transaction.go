@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"entgo.io/contrib/entgql"
@@ -57,6 +59,23 @@ func (CreditTransaction) Indexes() []ent.Index {
 		index.Fields("owner_id", "created_at"),
 		index.Fields("reference_id").Unique(),
 	}
+}
+
+// Hooks of the CreditTransaction.
+func (CreditTransaction) Hooks() []ent.Hook {
+	return []ent.Hook{
+		rejectCreditTransactionDelete,
+	}
+}
+
+// rejectCreditTransactionDelete prevents deletion of credit transactions (append-only ledger).
+func rejectCreditTransactionDelete(next ent.Mutator) ent.Mutator {
+	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+		if m.Op().Is(ent.OpDelete | ent.OpDeleteOne) {
+			return nil, fmt.Errorf("credit transactions are append-only and cannot be deleted")
+		}
+		return next.Mutate(ctx, m)
+	})
 }
 
 // Annotations of the CreditTransaction.

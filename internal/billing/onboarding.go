@@ -14,27 +14,19 @@ import (
 )
 
 // AssignStarterPlanIfFirstOrg assigns the starter plan (lowest display_order in Stripe)
-// to the first organization a user creates. Additional organizations start with zero
-// credits and no plan (anti-abuse). All plan details are read from Stripe product metadata.
+// to a new organization if it doesn't already have a subscription.
+// All plan details are read from Stripe product metadata.
+//
+// NOTE: Anti-abuse for multi-org users (creating multiple orgs for multiple starter plans)
+// should be handled at the resolver layer by checking the user's Keycloak group memberships
+// against existing subscriptions, since user→org mappings are not stored in the billing DB.
 func AssignStarterPlanIfFirstOrg(ctx context.Context, client *ent.Client, stripeClient *StripeClient, userID string, ownerID string, email string) error {
-	// Check if user already has any org with a subscription
-	count, err := client.StripeSubscription.Query().
-		Where(stripesubscription.StatusEQ(enum.StripeSubActive)).
-		Count(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to check existing subscriptions: %w", err)
-	}
-
+	// Check if this org already has a subscription
 	existingSub, _ := client.StripeSubscription.Query().
 		Where(stripesubscription.OwnerID(ownerID)).
 		Only(ctx)
 	if existingSub != nil {
 		log.Printf("Organization %s already has a subscription", ownerID)
-		return nil
-	}
-
-	if count > 0 {
-		log.Printf("User already has %d active subscription(s), skipping auto-assign for %s", count, ownerID)
 		return nil
 	}
 

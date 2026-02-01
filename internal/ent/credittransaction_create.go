@@ -112,7 +112,9 @@ func (_c *CreditTransactionCreate) Mutation() *CreditTransactionMutation {
 
 // Save creates the CreditTransaction in the database.
 func (_c *CreditTransactionCreate) Save(ctx context.Context) (*CreditTransaction, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -139,15 +141,22 @@ func (_c *CreditTransactionCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *CreditTransactionCreate) defaults() {
+func (_c *CreditTransactionCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if credittransaction.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized credittransaction.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := credittransaction.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if credittransaction.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized credittransaction.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := credittransaction.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

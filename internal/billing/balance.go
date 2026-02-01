@@ -55,20 +55,6 @@ func AddCredits(ctx context.Context, client *ent.Client, ownerID string, amount 
 		return nil, fmt.Errorf("credit amount must be positive, got %f", amount)
 	}
 
-	// Check idempotency if reference_id is provided (outside tx for fast path)
-	if referenceID != "" {
-		exists, err := client.CreditTransaction.Query().
-			Where(credittransaction.ReferenceID(referenceID)).
-			Exist(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to check idempotency: %w", err)
-		}
-		if exists {
-			log.Printf("[BILLING] action=add_credits_skip owner=%s ref=%s reason=duplicate", ownerID, referenceID)
-			return GetBalance(ctx, client, ownerID)
-		}
-	}
-
 	// Ensure balance record exists (auto-create if first deposit)
 	if err := EnsureBalanceExists(ctx, client, ownerID); err != nil {
 		return nil, err
@@ -156,20 +142,6 @@ func addCreditsInTx(ctx context.Context, tx *ent.Tx, ownerID string, amount floa
 func DeductCredits(ctx context.Context, client *ent.Client, ownerID string, amount float64, description string, referenceID string) (*ent.CreditBalance, error) {
 	if amount <= 0 {
 		return nil, fmt.Errorf("deduction amount must be positive, got %f", amount)
-	}
-
-	// Check idempotency (outside tx for fast path)
-	if referenceID != "" {
-		exists, err := client.CreditTransaction.Query().
-			Where(credittransaction.ReferenceID(referenceID)).
-			Exist(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to check idempotency: %w", err)
-		}
-		if exists {
-			log.Printf("[BILLING] action=deduct_credits_skip owner=%s ref=%s reason=duplicate", ownerID, referenceID)
-			return GetBalance(ctx, client, ownerID)
-		}
 	}
 
 	var updatedBal *ent.CreditBalance
