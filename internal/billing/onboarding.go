@@ -68,10 +68,9 @@ func AssignStarterPlanIfFirstOrg(ctx context.Context, client *ent.Client, stripe
 		return fmt.Errorf("failed to save subscription record: %w", err)
 	}
 
-	// NOTE: No credit deposit here. The invoice.payment_succeeded webhook is the
-	// single source of truth for ALL subscription credit deposits (see ADR-0024).
-	// Stripe fires invoice.payment_succeeded with billing_reason=subscription_create
-	// immediately after subscription creation, which triggers ProcessSubscriptionDeposit.
+	// NOTE: No credit deposit here. Stripe fires invoice.payment_succeeded with
+	// billing_reason=subscription_create after subscription creation, which triggers
+	// ProcessSubscriptionDeposit via the webhook handler (see ADR-0024).
 	log.Printf("[BILLING] action=starter_plan_assigned owner=%s plan=%s deposit_via=webhook", ownerID, planName)
 	return nil
 }

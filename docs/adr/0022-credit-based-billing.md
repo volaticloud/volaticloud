@@ -27,7 +27,7 @@ Implement a prepaid credit/deposit system where:
 
 **Renewal rule:** The full monthly deposit is always added to the balance on each renewal. Manual deposits are independent and do not reduce the subscription deposit.
 
-**Anti-abuse:** Only the first organization a user creates gets auto-assigned the Starter plan.
+**Auto-assign:** Each new organization gets auto-assigned the Starter plan if it doesn't already have a subscription. Multi-org abuse (users creating many orgs for free credits) should be addressed at the resolver layer via Keycloak group membership checks — see `onboarding.go` for details.
 
 ### Architecture
 

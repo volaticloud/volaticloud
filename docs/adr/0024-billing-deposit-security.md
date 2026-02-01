@@ -59,15 +59,18 @@ Org creation calls `AddCredits` with reference `starter_init:{ownerID}`. Then St
 ┌─────────────────────────┬──────────────────────────────┬─────────────────────────┐
 │ Event                   │ Deposit Path                 │ invoice.payment_succeeded│
 ├─────────────────────────┼──────────────────────────────┼─────────────────────────┤
-│ User subscribes         │ checkout.session.completed    │ SKIP (subscription_     │
-│ (via Checkout)          │ → handleSubscriptionCheckout  │ create)                 │
+│ User subscribes         │ checkout.session.completed    │ ALLOW (subscription_    │
+│ (via Checkout)          │ → handleSubscriptionCheckout  │ create) — idempotent    │
+│                         │ → ProcessSubscriptionDeposit  │ via same invoice.ID     │
+│                         │   (uses LatestInvoice.ID)     │ as referenceID          │
 ├─────────────────────────┼──────────────────────────────┼─────────────────────────┤
-│ Auto-assign starter     │ AssignStarterPlanIfFirstOrg   │ SKIP (subscription_     │
-│ (org creation)          │ → AddCredits                  │ create)                 │
+│ Auto-assign starter     │ AssignStarterPlanIfFirstOrg   │ ALLOW (subscription_    │
+│ (org creation)          │ → AddCredits                  │ create) — idempotent    │
+│                         │   (uses starter_init:{org})   │ via same invoice.ID     │
 ├─────────────────────────┼──────────────────────────────┼─────────────────────────┤
-│ Admin assigns plan      │ invoice.payment_succeeded     │ SKIP (subscription_     │
-│                         │ (no local deposit in admin    │ create) — deposit comes │
-│                         │ resolver)                     │ from nowhere! See note. │
+│ Admin assigns plan      │ invoice.payment_succeeded     │ ALLOW (subscription_    │
+│                         │ (no local deposit in admin    │ create) — this is the   │
+│                         │ resolver)                     │ only deposit path       │
 ├─────────────────────────┼──────────────────────────────┼─────────────────────────┤
 │ Monthly renewal         │ invoice.payment_succeeded     │ ALLOW (subscription_    │
 │                         │ → ProcessSubscriptionDeposit  │ cycle)                  │
@@ -80,30 +83,46 @@ Org creation calls `AddCredits` with reference `starter_init:{ownerID}`. Then St
 └─────────────────────────┴──────────────────────────────┴─────────────────────────┘
 ```
 
-> **Note on AdminAssignSubscription:** After this fix, admin-assigned subscriptions do NOT receive an initial deposit because `invoice.payment_succeeded` with `subscription_create` is now skipped, and the admin resolver doesn't call `ProcessSubscriptionDeposit`. This is intentional — admins should use `AdminAddCredits` separately if an initial deposit is needed. This prevents accidental double-deposits if the admin flow is later refactored.
+> **Why `subscription_create` is ALLOWED:** Stripe fires `invoice.payment_succeeded` (billing_reason=`subscription_create`) before `checkout.session.completed` arrives. If we skip `subscription_create`, the checkout handler must always deposit — but the subscription record may not exist yet when the invoice webhook fires. By allowing both paths and using the **same invoice ID as referenceID**, idempotency guarantees exactly one deposit regardless of webhook ordering. This also ensures admin-assigned subscriptions (which have no checkout event) receive their initial deposit.
+
+> **Defense in depth:** Even if both checkout and invoice webhooks process the same initial invoice, `AddCredits` checks `referenceID` uniqueness inside the transaction — the second call is a no-op. See `TestBillingFlow_CheckoutThenInvoiceIdempotency` for the test covering this race.
 
 ### Implementation
 
 **`handleInvoicePaymentSucceeded` in `internal/billing/webhook.go`:**
 
 ```go
-// SECURITY: Only deposit credits for recurring subscription renewals.
-if invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionCycle {
-    log.Printf("Skipping deposit for invoice %s (billing_reason=%s)", invoice.ID, invoice.BillingReason)
+// Deposit credits for subscription invoices.
+//
+// billing_reason values we process:
+//   - subscription_cycle:  Monthly/annual renewal → deposit credits
+//   - subscription_create: Initial subscription invoice → deposit credits
+//     (idempotent via invoice.ID — safe even if checkout also deposits)
+//
+// billing_reason values we skip:
+//   - subscription_update: Proration from plan change → SKIP (prevents V2)
+//   - manual:              One-off invoice → SKIP
+switch invoice.BillingReason {
+case stripe.InvoiceBillingReasonSubscriptionCycle,
+    stripe.InvoiceBillingReasonSubscriptionCreate:
+    // OK — process deposit
+default:
+    log.Printf("[BILLING] action=deposit_skip invoice=%s billing_reason=%s",
+        invoice.ID, invoice.BillingReason)
     return nil
 }
 ```
 
-This single filter eliminates V1, V2, V3, and V4 simultaneously.
+This filter eliminates V2 (proration exploit) directly. V1 and V3 are eliminated by idempotency — both the checkout/onboarding path and the invoice webhook use the same `invoice.ID` as referenceID, so only one deposit succeeds. V4 is resolved by allowing `subscription_create`, which gives admin-assigned subscriptions their initial deposit.
 
 ### Idempotency (Defense in Depth)
 
 `AddCredits` checks `referenceID` uniqueness before depositing. This prevents duplicate processing if Stripe retries a webhook. Every deposit path provides a unique, stable reference:
 
-- Checkout subscription: `session.ID`
-- Starter auto-assign: `starter_init:{ownerID}`
+- Checkout subscription: `LatestInvoice.ID` (same as invoice webhook → idempotent)
+- Starter auto-assign: `starter_init:{ownerID}` (onboarding path, invoice webhook uses `invoice.ID`)
 - Manual deposit: `session.ID`
-- Renewal: `invoice.ID`
+- Invoice webhook (create/cycle): `invoice.ID`
 
 ### What Stripe's `create_prorations` Does
 

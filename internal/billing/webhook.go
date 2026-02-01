@@ -105,16 +105,20 @@ func handleInvoicePaymentSucceeded(ctx context.Context, client *ent.Client, stri
 
 	// Deposit credits for subscription invoices.
 	//
-	// billing_reason values from Stripe:
+	// billing_reason values we process:
 	//   - subscription_cycle:  Monthly/annual renewal → deposit credits
 	//   - subscription_create: Initial subscription invoice → deposit credits
+	//     (Stripe may fire this before checkout.session.completed creates the
+	//      subscription record, so we handle both paths. Idempotency via
+	//      invoice.ID as referenceID prevents double-deposits.)
+	//
+	// billing_reason values we skip:
 	//   - subscription_update: Proration from plan change → SKIP (prevents
-	//     upgrade/downgrade abuse where user gets full deposit from a proration invoice)
+	//     upgrade/downgrade abuse where user gets full deposit for a proration)
 	//   - manual:              One-off invoice → SKIP
 	//
-	// This handler is the SINGLE SOURCE OF TRUTH for all subscription credit deposits.
-	// Neither handleSubscriptionCheckout nor AssignStarterPlanIfFirstOrg deposit credits
-	// directly — they rely on this webhook to avoid double-deposit bugs.
+	// handleSubscriptionCheckout also deposits via ProcessSubscriptionDeposit
+	// using LatestInvoice.ID — same referenceID ensures exactly one deposit.
 	//
 	// See ADR-0024 for full threat model.
 	switch invoice.BillingReason {
