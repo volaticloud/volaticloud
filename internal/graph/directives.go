@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"volaticloud/internal/auth"
 	"volaticloud/internal/authz"
+	"volaticloud/internal/billing"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/graph/model"
 	"volaticloud/internal/keycloak"
@@ -460,4 +461,29 @@ func SetAdminClientInContext(ctx context.Context, client keycloak.AdminClientInt
 // GetAdminClientFromContext retrieves the Keycloak Admin client from context
 func GetAdminClientFromContext(ctx context.Context) keycloak.AdminClientInterface {
 	return authz.GetAdminClientFromContext(ctx)
+}
+
+// RequiresFeatureDirective checks if an organization's subscription includes a specific feature.
+func RequiresFeatureDirective(ctx context.Context, obj interface{}, next graphql.Resolver, feature string, ownerIDArg string) (interface{}, error) {
+	// Extract ownerID from resolver arguments (supports dot notation like "input.ownerID")
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return nil, fmt.Errorf("no field context available")
+	}
+
+	ownerID, err := extractArgumentValue(fc.Args, ownerIDArg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract owner ID from argument '%s': %w", ownerIDArg, err)
+	}
+
+	client := authz.GetEntClientFromContext(ctx)
+	if client == nil {
+		return nil, fmt.Errorf("database client not available")
+	}
+
+	if err := billing.HasFeature(ctx, client, ownerID, feature); err != nil {
+		return nil, err
+	}
+
+	return next(ctx)
 }

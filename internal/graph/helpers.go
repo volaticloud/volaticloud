@@ -7,7 +7,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
+
 	backtest1 "volaticloud/internal/backtest"
+	"volaticloud/internal/billing"
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/backtest"
 	"volaticloud/internal/enum"
@@ -279,4 +282,20 @@ func (r *mutationResolver) runBacktestHelper(ctx context.Context, bt *ent.Backte
 	}
 
 	return bt, nil
+}
+
+// resolveConsoleURL resolves the console URL from context, Origin header, or fallback.
+func resolveConsoleURL(ctx context.Context) string {
+	baseURL := billing.GetConsoleURLFromContext(ctx)
+	if baseURL == "" {
+		if opCtx := graphql.GetOperationContext(ctx); opCtx != nil {
+			if origin := opCtx.Headers.Get("Origin"); origin != "" {
+				baseURL = origin
+			}
+		}
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+	return baseURL
 }

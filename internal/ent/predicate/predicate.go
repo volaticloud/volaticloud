@@ -24,6 +24,12 @@ type BotMetrics func(*sql.Selector)
 // BotRunner is the predicate function for botrunner builders.
 type BotRunner func(*sql.Selector)
 
+// CreditBalance is the predicate function for creditbalance builders.
+type CreditBalance func(*sql.Selector)
+
+// CreditTransaction is the predicate function for credittransaction builders.
+type CreditTransaction func(*sql.Selector)
+
 // Exchange is the predicate function for exchange builders.
 type Exchange func(*sql.Selector)
 
@@ -35,6 +41,9 @@ type ResourceUsageSample func(*sql.Selector)
 
 // Strategy is the predicate function for strategy builders.
 type Strategy func(*sql.Selector)
+
+// StripeSubscription is the predicate function for stripesubscription builders.
+type StripeSubscription func(*sql.Selector)
 
 // Trade is the predicate function for trade builders.
 type Trade func(*sql.Selector)

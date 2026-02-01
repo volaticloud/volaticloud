@@ -52,9 +52,12 @@ var BotRunnerScopes = []string{"view", "view-secrets", "edit", "delete", "make-p
 // change-user-roles is for changing user roles within the organization
 // create-* scopes are for creating new entities within the organization
 // Alert rule scopes are included for organization-wide alerts
+// view-billing is for viewing billing info (balance, transactions, subscription)
+// manage-billing is for managing subscriptions (subscribe, change plan, cancel, deposit)
 var GroupScopes = []string{"view", "edit", "delete", "mark-alert-as-read", "view-users", "invite-user", "change-user-roles",
 	"create-strategy", "create-bot", "create-exchange", "create-runner",
-	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules"}
+	"create-alert-rule", "update-alert-rule", "delete-alert-rule", "view-alert-rules",
+	"view-billing", "manage-billing"}
 
 // GetScopesForType returns the permission scopes for a given resource type
 func GetScopesForType(resourceType ResourceType) []string {
