@@ -3,20 +3,28 @@ package billing
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/ent/stripesubscription"
 	"volaticloud/internal/enum"
 )
 
+const (
+	// MinDepositAmount is the minimum manual deposit in dollars.
+	MinDepositAmount = 5.0
+	// MaxDepositAmount is the maximum manual deposit in dollars.
+	MaxDepositAmount = 10000.0
+)
+
 // CreateDepositCheckoutSession creates a Stripe Checkout session for a manual credit deposit.
 // It validates the amount, resolves or creates a Stripe customer, and returns the checkout URL.
 func CreateDepositCheckoutSession(ctx context.Context, client *ent.Client, stripeClient *StripeClient, ownerID string, amount float64, frontendURL string, email string) (string, error) {
-	if amount < 5 {
-		return "", fmt.Errorf("minimum deposit amount is $5")
+	if amount < MinDepositAmount {
+		return "", fmt.Errorf("minimum deposit amount is $%.0f", MinDepositAmount)
 	}
-	if amount > 10000 {
-		return "", fmt.Errorf("maximum deposit amount is $10,000")
+	if amount > MaxDepositAmount {
+		return "", fmt.Errorf("maximum deposit amount is $%.0f", MaxDepositAmount)
 	}
 
 	// Get Stripe customer ID from subscription, or create a new customer
@@ -25,7 +33,7 @@ func CreateDepositCheckoutSession(ctx context.Context, client *ent.Client, strip
 		return "", err
 	}
 
-	amountCents := int64(amount * 100)
+	amountCents := int64(math.Round(amount * 100))
 	session, err := stripeClient.CreateCheckoutSession(
 		customerID, ownerID, amountCents,
 		fmt.Sprintf("%s/organization/billing?orgId=%s&deposit=success", frontendURL, ownerID),
@@ -51,12 +59,15 @@ func CreateSubscriptionCheckout(ctx context.Context, client *ent.Client, stripeC
 	if err == nil && existingSub != nil {
 		return "", fmt.Errorf("organization already has an active subscription")
 	}
+	if err != nil && !ent.IsNotFound(err) {
+		return "", fmt.Errorf("failed to check existing subscription: %w", err)
+	}
 
-	// Look for existing customer ID from a canceled subscription record
+	// Look for existing customer ID from a previous subscription record
 	var customerID string
 	canceledSub, err := client.StripeSubscription.Query().
 		Where(stripesubscription.OwnerID(ownerID)).
-		Only(ctx)
+		First(ctx)
 	if err == nil && canceledSub != nil {
 		customerID = canceledSub.StripeCustomerID
 	} else {

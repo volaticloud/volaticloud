@@ -59,7 +59,7 @@ func TestProcessSubscriptionDeposit(t *testing.T) {
 		assert.Equal(t, 0.0, bal.Balance)
 	})
 
-	t.Run("skips deposit for canceling subscription", func(t *testing.T) {
+	t.Run("deposits for canceling subscription (paid through period end)", func(t *testing.T) {
 		createSub(t, "org-canceling", enum.StripeSubCanceling, 60.0)
 
 		err := ProcessSubscriptionDeposit(ctx, client, "org-canceling", "inv_003")
@@ -67,7 +67,7 @@ func TestProcessSubscriptionDeposit(t *testing.T) {
 
 		bal, err := GetBalance(ctx, client, "org-canceling")
 		require.NoError(t, err)
-		assert.Equal(t, 0.0, bal.Balance)
+		assert.Equal(t, 60.0, bal.Balance)
 	})
 
 	t.Run("skips deposit for past_due subscription", func(t *testing.T) {

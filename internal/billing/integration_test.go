@@ -205,8 +205,10 @@ func TestBillingFlow_SubscriptionLifecycle(t *testing.T) {
 		Where(stripesubscription.OwnerID(ownerID)).Only(ctx)
 	assert.Equal(t, enum.StripeSubCanceled, sub.Status)
 
-	// No subscription = allow per graceful degradation
-	assert.NoError(t, HasFeature(ctx, client, ownerID, "live_trading"))
+	// Canceled subscription blocks feature access
+	err = HasFeature(ctx, client, ownerID, "live_trading")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "canceled")
 }
 
 func TestBillingFlow_CreditDepletion(t *testing.T) {

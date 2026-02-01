@@ -1167,7 +1167,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.C
 
 		stripeClient := billing.GetStripeClientFromContext(ctx)
 		if stripeClient != nil {
-			if err := billing.AssignStarterPlanIfFirstOrg(ctx, r.client, stripeClient, userCtx.UserID, response.Alias, ""); err != nil {
+			if err := billing.AssignStarterPlanIfFirstOrg(ctx, r.client, stripeClient, userCtx.UserID, response.Alias, userCtx.Email); err != nil {
 				log.Printf("Failed to assign starter plan for org %s: %v", response.Alias, err)
 			}
 		}
@@ -1950,9 +1950,8 @@ func (r *queryResolver) AvailablePlans(ctx context.Context) ([]*model.PlanInfo, 
 }
 
 func (r *queryResolver) CreditBalance(ctx context.Context, ownerID string) (*ent.CreditBalance, error) {
-	ownerIDStr := ownerID
 	bal, err := r.client.CreditBalance.Query().
-		Where(creditbalance.OwnerID(ownerIDStr)).
+		Where(creditbalance.OwnerID(ownerID)).
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -1965,9 +1964,8 @@ func (r *queryResolver) CreditBalance(ctx context.Context, ownerID string) (*ent
 }
 
 func (r *queryResolver) CreditTransactions(ctx context.Context, ownerID string, limit *int, offset *int) ([]*ent.CreditTransaction, error) {
-	ownerIDStr := ownerID
 	query := r.client.CreditTransaction.Query().
-		Where(credittransaction.OwnerID(ownerIDStr)).
+		Where(credittransaction.OwnerID(ownerID)).
 		Order(ent.Desc(credittransaction.FieldCreatedAt))
 
 	if offset != nil && *offset > 0 {
@@ -1984,9 +1982,8 @@ func (r *queryResolver) CreditTransactions(ctx context.Context, ownerID string, 
 }
 
 func (r *queryResolver) SubscriptionInfo(ctx context.Context, ownerID string) (*model.SubscriptionInfo, error) {
-	ownerIDStr := ownerID
 	sub, err := r.client.StripeSubscription.Query().
-		Where(stripesubscription.OwnerID(ownerIDStr)).
+		Where(stripesubscription.OwnerID(ownerID)).
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {

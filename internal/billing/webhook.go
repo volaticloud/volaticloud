@@ -88,7 +88,7 @@ func handleInvoicePaymentFailed(event stripe.Event) {
 		customerID = invoice.Customer.ID
 	}
 
-	log.Printf("[BILLING] action=payment_failed invoice=%s customer=%s amount=%.2f reason=%s",
+	log.Printf("[BILLING] action=payment_failed invoice=%s customer=%s amount=%.2f reason=%v",
 		invoice.ID, customerID, float64(invoice.AmountDue)/100.0, invoice.LastFinalizationError)
 }
 

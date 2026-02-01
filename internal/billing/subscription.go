@@ -22,7 +22,9 @@ func ProcessSubscriptionDeposit(ctx context.Context, client *ent.Client, ownerID
 		return fmt.Errorf("failed to get subscription for %s: %w", ownerID, err)
 	}
 
-	if sub.Status != enum.StripeSubActive {
+	// Allow deposits for active and canceling subscriptions.
+	// Canceling means cancel_at_period_end=true — the user has paid for the current period.
+	if sub.Status != enum.StripeSubActive && sub.Status != enum.StripeSubCanceling {
 		log.Printf("[BILLING] action=deposit_skip owner=%s reason=inactive status=%s", ownerID, sub.Status)
 		return nil
 	}
@@ -38,6 +40,6 @@ func ProcessSubscriptionDeposit(ctx context.Context, client *ent.Client, ownerID
 		return fmt.Errorf("failed to add subscription deposit: %w", err)
 	}
 
-	log.Printf("Deposited $%.2f for %s (%s plan)", sub.MonthlyDeposit, ownerID, sub.PlanName)
+	log.Printf("[BILLING] action=deposit owner=%s amount=%.2f plan=%s invoice=%s", ownerID, sub.MonthlyDeposit, sub.PlanName, invoiceID)
 	return nil
 }

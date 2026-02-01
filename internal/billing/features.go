@@ -12,19 +12,29 @@ import (
 
 // HasFeature checks if an organization's subscription includes a specific feature.
 func HasFeature(ctx context.Context, client *ent.Client, ownerID string, feature string) error {
+	// Query any subscription record for this org (regardless of status)
 	sub, err := client.StripeSubscription.Query().
-		Where(
-			stripesubscription.OwnerID(ownerID),
-			stripesubscription.StatusIn(enum.StripeSubActive, enum.StripeSubCanceling),
-		).
+		Where(stripesubscription.OwnerID(ownerID)).
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			// No subscription means billing is not configured for this org — allow access.
-			// Actual credit enforcement is handled separately by EnsureSufficientCredits.
+			// No subscription record at all — org was created before billing system.
+			// Allow access; actual credit enforcement is handled by EnsureSufficientCredits.
 			return nil
 		}
 		return fmt.Errorf("failed to check subscription: %w", err)
+	}
+
+	// Only active and canceling subscriptions grant feature access
+	switch sub.Status {
+	case enum.StripeSubActive, enum.StripeSubCanceling:
+		// OK — check features below
+	case enum.StripeSubCanceled:
+		return fmt.Errorf("subscription canceled — please resubscribe to access %q", feature)
+	case enum.StripeSubPastDue:
+		return fmt.Errorf("subscription past due — please update payment method to access %q", feature)
+	default:
+		return fmt.Errorf("subscription inactive (status: %s)", sub.Status)
 	}
 
 	for _, f := range sub.Features {

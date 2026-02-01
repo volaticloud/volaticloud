@@ -10,15 +10,6 @@ import (
 	"volaticloud/internal/enum"
 )
 
-// SubscriptionResult holds the updated subscription info after a plan change or cancellation.
-type SubscriptionResult struct {
-	PlanName         string
-	MonthlyDeposit   float64
-	Status           enum.StripeSubStatus
-	CurrentPeriodEnd interface{} // time.Time from ENT
-	Features         []string
-}
-
 // ChangeSubscriptionPlan changes the price on an existing active/canceling subscription.
 // It updates Stripe, extracts new plan metadata, and updates the local DB record.
 func ChangeSubscriptionPlan(ctx context.Context, client *ent.Client, stripeClient *StripeClient, ownerID string, newPriceID string) (*ent.StripeSubscription, error) {

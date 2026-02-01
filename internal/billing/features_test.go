@@ -88,10 +88,9 @@ func TestHasFeature(t *testing.T) {
 			Save(ctx)
 		require.NoError(t, err)
 
-		// Canceled subscription = no subscription found (filtered out by status query)
-		// Falls through to "no subscription" path → allows access
 		err = HasFeature(ctx, client, "org-canceled", "live_trading")
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "canceled")
 	})
 
 	t.Run("rejects features for past_due subscription", func(t *testing.T) {
@@ -109,9 +108,9 @@ func TestHasFeature(t *testing.T) {
 			Save(ctx)
 		require.NoError(t, err)
 
-		// past_due is not in the StatusIn filter → treated as no subscription → allows
 		err = HasFeature(ctx, client, "org-pastdue", "live_trading")
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "past due")
 	})
 
 	t.Run("error message includes plan name", func(t *testing.T) {

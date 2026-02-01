@@ -37,8 +37,14 @@ func (t *CreditTransactionType) UnmarshalGQL(v interface{}) error {
 	if !ok {
 		return fmt.Errorf("credit transaction type must be a string")
 	}
-	*t = CreditTransactionType(str)
-	return nil
+	val := CreditTransactionType(str)
+	for _, valid := range val.Values() {
+		if str == valid {
+			*t = val
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid credit transaction type: %q", str)
 }
 
 // StripeSubStatus represents the status of a Stripe subscription
@@ -72,6 +78,12 @@ func (s *StripeSubStatus) UnmarshalGQL(v interface{}) error {
 	if !ok {
 		return fmt.Errorf("stripe subscription status must be a string")
 	}
-	*s = StripeSubStatus(str)
-	return nil
+	val := StripeSubStatus(str)
+	for _, valid := range val.Values() {
+		if str == valid {
+			*s = val
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid stripe subscription status: %q", str)
 }

@@ -26,7 +26,7 @@ func AssignStarterPlanIfFirstOrg(ctx context.Context, client *ent.Client, stripe
 		Where(stripesubscription.OwnerID(ownerID)).
 		Only(ctx)
 	if existingSub != nil {
-		log.Printf("Organization %s already has a subscription", ownerID)
+		log.Printf("[BILLING] action=starter_skip owner=%s reason=existing_subscription", ownerID)
 		return nil
 	}
 

@@ -14,6 +14,8 @@ import (
 )
 
 // EnsureBalanceExists creates a zero-balance record for an organization if it doesn't exist.
+// Handles the TOCTOU race condition by treating unique constraint violations as success
+// (another concurrent request created the record between our check and create).
 func EnsureBalanceExists(ctx context.Context, client *ent.Client, ownerID string) error {
 	exists, err := client.CreditBalance.Query().
 		Where(creditbalance.OwnerID(ownerID)).
@@ -31,6 +33,14 @@ func EnsureBalanceExists(ctx context.Context, client *ent.Client, ownerID string
 		SetSuspended(false).
 		Save(ctx)
 	if err != nil {
+		// Handle race condition: if another goroutine created the record between
+		// our Exist() check and Create(), the unique constraint will fail.
+		// Re-check existence and treat as success if the record now exists.
+		if exists, checkErr := client.CreditBalance.Query().
+			Where(creditbalance.OwnerID(ownerID)).
+			Exist(ctx); checkErr == nil && exists {
+			return nil
+		}
 		return fmt.Errorf("failed to create credit balance: %w", err)
 	}
 	return nil
