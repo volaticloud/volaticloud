@@ -23,8 +23,7 @@ func EnsureSufficientCredits(ctx context.Context, client *ent.Client, ownerID st
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			// No balance record means org was created before billing system — allow
-			return nil
+			return fmt.Errorf("no credit balance — please subscribe to continue")
 		}
 		return fmt.Errorf("failed to check credit balance: %w", err)
 	}

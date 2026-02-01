@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { drawerWidth, collapsedDrawerWidth, mainMenuItems, settingsMenuItems } from './sidebarConfig';
 import { Header } from './Header';
 import { useSidebar } from '../../contexts/SidebarContext';
+import { SubscriptionGate } from '../Billing/SubscriptionGate';
 
 interface DashboardLayoutProps {
   darkMode: boolean;
@@ -53,7 +54,9 @@ export const DashboardLayout = ({ darkMode, onToggleDarkMode }: DashboardLayoutP
         }}
       >
         <Toolbar /> {/* Spacer for fixed AppBar */}
-        <Outlet />
+        <SubscriptionGate>
+          <Outlet />
+        </SubscriptionGate>
       </Box>
     </Box>
   );
