@@ -31,6 +31,7 @@ This directory contains Architecture Decision Records for VolatiCloud. ADRs docu
 | [0023](0023-self-service-subscription-management.md) | Self-Service Subscription Management | Accepted | 2026-01-31 |
 | [0024](0024-billing-deposit-security.md) | Billing Deposit Security — Preventing Credit Leaks | Accepted | 2026-01-31 |
 | [0025](0025-mandatory-subscription-enforcement.md) | Mandatory Subscription Enforcement | Accepted | 2026-02-01 |
+| [0026](0026-field-level-encryption.md) | Field-Level Encryption for Config Secrets | Accepted | 2026-02-02 |
 
 ## What is an ADR?
 

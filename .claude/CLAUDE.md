@@ -42,6 +42,7 @@
 | `strategy/codegen` | Strategy code generation from UI Builder |
 | `exchange` | Exchange config validation |
 | `billing` | Stripe integration, credits, subscriptions, enforcement |
+| `secrets` | Field-level AES-256-GCM encryption for config secrets |
 | `db` | Database transactions |
 
 See `internal/{package}/doc.go` for comprehensive package documentation.
@@ -93,6 +94,7 @@ See `/docs/adr/README.md` for complete index.
 - [ADR-0017](../docs/adr/0017-hybrid-testing-strategy.md) - Hybrid Testing Strategy (mocks + testcontainers)
 - [ADR-0018](../docs/adr/0018-graphql-websocket-subscriptions.md) - GraphQL WebSocket Subscriptions (real-time updates)
 - [ADR-0019](../docs/adr/0019-internal-backend-architecture.md) - Internal Backend Architecture (no external API ingress)
+- [ADR-0026](../docs/adr/0026-field-level-encryption.md) - Field-Level Encryption for Config Secrets
 
 ## Project Structure
 
