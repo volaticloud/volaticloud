@@ -16,7 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCreateOrganizationMutation } from './organization.generated';
+import { useCreateOrganizationMutation, CreateOrganizationMutation } from './organization.generated';
 import { useDialogUnsavedChanges } from '../../hooks/useDialogUnsavedChanges';
 import { UnsavedChangesDrawer } from '../shared/UnsavedChangesDrawer';
 
@@ -127,7 +127,7 @@ export function CreateOrganizationDrawer({
   });
 
   const [createOrganization, { loading }] = useCreateOrganizationMutation({
-    onCompleted: async () => {
+    onCompleted: async (data: CreateOrganizationMutation) => {
       // Organization created in Keycloak, but the current session's refresh token
       // is bound to the OLD claims (without the new org membership).
       // signinSilent() reuses the existing session and won't pick up new org claims.
@@ -135,8 +135,10 @@ export function CreateOrganizationDrawer({
       // that includes the updated organization membership in the JWT.
       // Since the user already has an active Keycloak SSO session, this redirect
       // is instant (no password prompt) — Keycloak auto-issues a new token.
+      // Pass the new org's alias as state so onSigninCallback redirects to it.
       try {
-        await auth.signinRedirect();
+        const newOrgId = data.createOrganization?.alias;
+        await auth.signinRedirect({ state: newOrgId ? { orgId: newOrgId } : undefined });
       } catch (err) {
         console.error('Failed to redirect for re-authentication:', err);
         setError(

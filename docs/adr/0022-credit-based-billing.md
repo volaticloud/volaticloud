@@ -27,7 +27,7 @@ Implement a prepaid credit/deposit system where:
 
 **Renewal rule:** The full monthly deposit is always added to the balance on each renewal. Manual deposits are independent and do not reduce the subscription deposit.
 
-**Auto-assign:** Each new organization gets auto-assigned the Starter plan if it doesn't already have a subscription. Multi-org abuse (users creating many orgs for free credits) should be addressed at the resolver layer via Keycloak group membership checks — see `onboarding.go` for details.
+**No auto-assign:** Subscriptions are not auto-assigned on org creation. Users must manually subscribe via Stripe Checkout (which requires payment credentials). New organizations start with a zero-balance record and are blocked by the `SubscriptionGate` until the user subscribes (see ADR-0025).
 
 ### Architecture
 
@@ -40,8 +40,7 @@ flowchart TD
     Ded --> Bal
     Res[GraphQL Resolvers] -->|EnsureSufficientCredits| Enf[enforcement.go]
     Enf --> Bal
-    OrgCreate[organization.Create] -->|AssignStarterPlanIfFirstOrg| Onb[onboarding.go]
-    Onb --> Stripe
+    OrgCreate[organization.Create] -->|EnsureBalanceExists| Bal
 ```
 
 ### New ENT Schemas
@@ -57,7 +56,7 @@ New `@requiresFeature` GraphQL directive checks subscription features before res
 ### Integration Points
 
 1. **Hourly deduction** — `UsageAggregatorWorker.runAggregation()` calls `BillingService.DeductHourlyCosts()`
-2. **Org creation** — `CreateOrganization` resolver creates balance record and assigns Starter plan
+2. **Org creation** — `CreateOrganization` resolver creates zero-balance record (subscription created separately via Stripe Checkout)
 3. **Resource enforcement** — `CreateBot`, `StartBot`, `RestartBot`, `RunBacktest` check `EnsureSufficientCredits`
 4. **Webhook endpoint** — `/gateway/v1/webhooks/stripe` handles Stripe events
 
@@ -81,5 +80,5 @@ New `@requiresFeature` GraphQL directive checks subscription features before res
 
 - Stripe API availability affects subscription creation (not existing operations)
 - Need monitoring for webhook delivery failures
-- **Multi-org starter plan abuse**: Users can create multiple organizations to receive a starter plan deposit per org. Bounded by Keycloak rate limits on org creation and the small deposit amount ($5). Cross-org checks would require Keycloak lookups at the resolver layer; accepted risk for now
+- **Multi-org abuse**: No longer a risk since subscriptions require manual Stripe Checkout with payment credentials
 - **Credit enforcement race window**: `EnsureSufficientCredits` is a best-effort guard, not a transactional lock. Between the check and the actual operation, credits could be depleted by hourly deduction. Worst case: one extra resource starts and runs for up to 1 hour before the next deduction cycle stops it. ENT does not support `SELECT FOR UPDATE`, and distributed locks would add significant complexity for minimal benefit

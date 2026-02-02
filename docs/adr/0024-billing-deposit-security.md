@@ -18,7 +18,7 @@ Every path that adds credits to a balance must be accounted for:
 | 1 | User subscribes via Checkout | `handleSubscriptionCheckout` → `ProcessSubscriptionDeposit` | Initial subscription |
 | 2 | Stripe fires `invoice.payment_succeeded` | `handleInvoicePaymentSucceeded` → `ProcessSubscriptionDeposit` | Every paid invoice |
 | 3 | User pays manual deposit via Checkout | `handleCheckoutCompleted` → `AddCredits` | One-time deposit |
-| 4 | First org auto-assign | `AssignStarterPlanIfFirstOrg` → `AddCredits` | Org creation |
+| 4 | ~~First org auto-assign~~ | ~~Removed~~ | No longer applies (subscriptions require manual Checkout) |
 | 5 | Admin adds credits | `AdminAddCredits` → `AddCredits` | Manual admin action |
 
 ### Identified Vulnerabilities (Pre-Fix)
@@ -43,9 +43,9 @@ When a user upgrades plans (e.g., Starter $5/mo → Enterprise $200/mo):
 
 **Exploit:** Upgrade → get $200 deposit for $77 → immediately downgrade → Stripe credits ~$77 back. Net cost ≈ $0, net credits = $200.
 
-#### V3: Double Deposit on Starter Auto-Assign (MODERATE)
+#### V3: Double Deposit on Starter Auto-Assign (ELIMINATED)
 
-Org creation calls `AddCredits` with reference `starter_init:{ownerID}`. Then Stripe fires `invoice.payment_succeeded` (billing_reason=`subscription_create`) with reference `invoice.ID`. Different references → **2× starter deposit**.
+~~Org creation calls `AddCredits` with reference `starter_init:{ownerID}`.~~ No longer applies — subscriptions are not auto-assigned on org creation. Users must subscribe via Stripe Checkout, which is handled by the standard checkout flow (V1 fix).
 
 #### V4: Admin-Assigned Subscription Invoice (LOW)
 
@@ -64,9 +64,8 @@ Org creation calls `AddCredits` with reference `starter_init:{ownerID}`. Then St
 │                         │ → ProcessSubscriptionDeposit  │ via same invoice.ID     │
 │                         │   (uses LatestInvoice.ID)     │ as referenceID          │
 ├─────────────────────────┼──────────────────────────────┼─────────────────────────┤
-│ Auto-assign starter     │ AssignStarterPlanIfFirstOrg   │ ALLOW (subscription_    │
-│ (org creation)          │ → AddCredits                  │ create) — idempotent    │
-│                         │   (uses starter_init:{org})   │ via same invoice.ID     │
+│ (Auto-assign starter    │ (Removed — subscriptions      │                         │
+│  — removed)             │  require manual Checkout)      │                         │
 ├─────────────────────────┼──────────────────────────────┼─────────────────────────┤
 │ Admin assigns plan      │ invoice.payment_succeeded     │ ALLOW (subscription_    │
 │                         │ (no local deposit in admin    │ create) — this is the   │
@@ -113,14 +112,14 @@ default:
 }
 ```
 
-This filter eliminates V2 (proration exploit) directly. V1 and V3 are eliminated by idempotency — both the checkout/onboarding path and the invoice webhook use the same `invoice.ID` as referenceID, so only one deposit succeeds. V4 is resolved by allowing `subscription_create`, which gives admin-assigned subscriptions their initial deposit.
+This filter eliminates V2 (proration exploit) directly. V1 is eliminated by idempotency — the checkout path and the invoice webhook use the same `invoice.ID` as referenceID, so only one deposit succeeds. V3 is eliminated by removing auto-assign (subscriptions require manual Checkout). V4 is resolved by allowing `subscription_create`, which gives admin-assigned subscriptions their initial deposit.
 
 ### Idempotency (Defense in Depth)
 
 `AddCredits` checks `referenceID` uniqueness before depositing. This prevents duplicate processing if Stripe retries a webhook. Every deposit path provides a unique, stable reference:
 
 - Checkout subscription: `LatestInvoice.ID` (same as invoice webhook → idempotent)
-- Starter auto-assign: `starter_init:{ownerID}` (onboarding path, invoice webhook uses `invoice.ID`)
+- ~~Starter auto-assign: removed~~ (subscriptions require manual Checkout)
 - Manual deposit: `session.ID`
 - Invoice webhook (create/cycle): `invoice.ID`
 

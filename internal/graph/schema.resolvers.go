@@ -1159,17 +1159,12 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.C
 		return nil, err
 	}
 
-	// Initialize billing: create zero-balance record and assign starter plan if first org
+	// Initialize billing: create zero-balance record for the new organization.
+	// Subscription creation is NOT automatic — users must subscribe via the UI
+	// (Stripe Checkout) which requires providing payment credentials.
 	if r.Resolver != nil && r.client != nil {
 		if err := billing.EnsureBalanceExists(ctx, r.client, response.Alias); err != nil {
 			log.Printf("Failed to create billing balance for org %s: %v", response.Alias, err)
-		}
-
-		stripeClient := billing.GetStripeClientFromContext(ctx)
-		if stripeClient != nil {
-			if err := billing.AssignStarterPlanIfFirstOrg(ctx, r.client, stripeClient, userCtx.UserID, response.Alias, userCtx.Email); err != nil {
-				log.Printf("Failed to assign starter plan for org %s: %v", response.Alias, err)
-			}
 		}
 	}
 
