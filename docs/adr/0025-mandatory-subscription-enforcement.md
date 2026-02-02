@@ -10,7 +10,7 @@ Accepted
 
 ADR-0022 introduced credit-based billing with subscriptions and credit balances. The initial implementation included escape hatches in `HasFeature` and `EnsureSufficientCredits` that returned `nil` (allowed access) when no subscription or balance record existed. This was intended as a migration path for organizations created before the billing system, but it creates an indefinite bypass — any org without a subscription gets unlimited free access with no enforcement.
 
-The Starter plan is free and auto-assigned on org creation (via `AssignStarterPlanIfFirstOrg` in `onboarding.go`), so there is no legitimate reason for an org to lack a subscription. The escape hatches are a liability.
+Subscriptions are no longer auto-assigned on org creation. Users must subscribe manually via Stripe Checkout (which requires payment credentials). New organizations are blocked by the `SubscriptionGate` until the user subscribes. The escape hatches are a liability.
 
 ## Decision Drivers
 
@@ -49,7 +49,7 @@ Keep escape hatches temporarily, add a migration job that assigns Starter plans 
 
 - Complexity of migration job
 - Escape hatches remain in codebase during grace period
-- Starter plan is already auto-assigned on org creation, so affected orgs are unlikely to exist
+- Subscriptions require manual Checkout, so affected orgs are unlikely to exist
 
 ### Option 3: Frontend-only gate (keep backend escape hatches)
 
@@ -66,7 +66,7 @@ Add the `SubscriptionGate` UI but leave backend escape hatches intact.
 
 ## Decision Outcome
 
-Chosen option: **Option 1 — Remove escape hatches + frontend gate**, because the Starter plan is free and auto-assigned, making the escape hatches unnecessary. Fail-closed enforcement at both layers is the safest approach.
+Chosen option: **Option 1 — Remove escape hatches + frontend gate**. Subscriptions require manual Stripe Checkout with payment credentials, and fail-closed enforcement at both layers is the safest approach.
 
 ### Frontend Gate
 
@@ -101,7 +101,7 @@ Chosen option: **Option 1 — Remove escape hatches + frontend gate**, because t
 
 **Negative:**
 
-- Any org without a subscription is immediately blocked (mitigated: Starter plan is free, subscribe flow is on the blocking page)
+- Any org without a subscription is immediately blocked (mitigated: subscribe flow is on the blocking page)
 - Graph integration tests need billing records in setup
 
 ## Implementation

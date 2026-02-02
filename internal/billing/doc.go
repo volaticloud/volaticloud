@@ -30,8 +30,7 @@
 //	    Ded --> Bal
 //	    Res[GraphQL Resolvers] -->|EnsureSufficientCredits| Enf[enforcement.go]
 //	    Enf --> Bal
-//	    OrgCreate[organization.Create] -->|AssignStarterPlanIfFirstOrg| Onb[onboarding.go]
-//	    Onb --> Stripe
+//	    OrgCreate[organization.Create] -->|EnsureBalanceExists| Bal
 //	```
 //
 // # Key Functions
@@ -40,7 +39,7 @@
 //   - EnsureSufficientCredits — enforcement gate for resolvers (enforcement.go)
 //   - DeductHourlyCosts — hourly cost deduction from aggregations (deduction.go)
 //   - ProcessSubscriptionDeposit — top-up logic on payment (subscription.go)
-//   - AssignStarterPlanIfFirstOrg — onboarding flow (onboarding.go)
+//   - ExtractPlanMetadata — read plan details from Stripe subscription (onboarding.go)
 //   - HasFeature — feature gating check (features.go)
 //   - NewWebhookHandler — Stripe webhook HTTP handler (webhook.go)
 //

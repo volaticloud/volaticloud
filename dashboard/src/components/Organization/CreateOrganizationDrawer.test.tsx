@@ -528,7 +528,38 @@ describe('CreateOrganizationDrawer', () => {
 
       await waitFor(() => {
         // signinRedirect() creates a new Keycloak session with updated org claims
-        expect(mockSigninRedirect).toHaveBeenCalled();
+        // and passes the new org alias as state for post-redirect navigation
+        expect(mockSigninRedirect).toHaveBeenCalledWith({
+          state: { orgId: 'my-organization' },
+        });
+      });
+    });
+
+    it('passes custom alias as orgId state in signinRedirect', async () => {
+      const user = userEvent.setup();
+      render(
+        <MockedProvider mocks={[mockSuccessWithAliasResponse]} addTypename={false}>
+          <CreateOrganizationDrawer {...defaultProps} />
+        </MockedProvider>
+      );
+
+      const titleInput = screen.getByLabelText(/organization title/i);
+      await user.type(titleInput, 'My Organization');
+
+      // Open advanced section and enter custom ID
+      const customizeButton = screen.getByRole('button', { name: /customize id/i });
+      await user.click(customizeButton);
+
+      const idInput = screen.getByLabelText(/organization id/i);
+      await user.type(idInput, 'custom-alias');
+
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockSigninRedirect).toHaveBeenCalledWith({
+          state: { orgId: 'custom-alias' },
+        });
       });
     });
 
@@ -595,7 +626,10 @@ describe('CreateOrganizationDrawer', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockSigninRedirect).toHaveBeenCalled();
+        // Verifies mutation was sent with custom alias and redirect includes org state
+        expect(mockSigninRedirect).toHaveBeenCalledWith({
+          state: { orgId: 'custom-alias' },
+        });
       });
     });
   });
