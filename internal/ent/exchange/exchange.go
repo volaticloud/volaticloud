@@ -68,7 +68,7 @@ func ValidColumn(column string) bool {
 //
 //	import _ "volaticloud/internal/ent/runtime"
 var (
-	Hooks        [1]ent.Hook
+	Hooks        [2]ent.Hook
 	Interceptors [1]ent.Interceptor
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error

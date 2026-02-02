@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 
 	entmixin "volaticloud/internal/ent/mixin"
+	"volaticloud/internal/exchange"
+	"volaticloud/internal/secrets"
 )
 
 // Exchange holds the schema definition for the Exchange entity.
@@ -76,6 +78,7 @@ func (Exchange) Annotations() []schema.Annotation {
 func (Exchange) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateExchangeConfig,
+		secrets.EncryptHook("config", exchange.SecretConfigPaths),
 	}
 }
 

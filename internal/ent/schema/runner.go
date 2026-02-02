@@ -13,6 +13,8 @@ import (
 
 	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/runner"
+	"volaticloud/internal/secrets"
 )
 
 // BotRunner holds the schema definition for the BotRunner entity.
@@ -160,6 +162,8 @@ func (BotRunner) Hooks() []ent.Hook {
 	return []ent.Hook{
 		validateRunnerConfig,
 		validateDataDownloadConfig,
+		secrets.EncryptHook("config", runner.SecretConfigPaths),
+		secrets.EncryptHook("s3_config", runner.SecretS3ConfigPaths),
 	}
 }
 

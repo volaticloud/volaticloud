@@ -152,7 +152,7 @@ func ValidColumn(column string) bool {
 //
 //	import _ "volaticloud/internal/ent/runtime"
 var (
-	Hooks        [2]ent.Hook
+	Hooks        [4]ent.Hook
 	Interceptors [1]ent.Interceptor
 	// DefaultPublic holds the default value on creation for the "public" field.
 	DefaultPublic bool
