@@ -108,6 +108,8 @@ func init() {
 	// backtest.DefaultID holds the default value on creation for the id field.
 	backtest.DefaultID = backtestDescID.Default.(func() uuid.UUID)
 	botMixin := schema.Bot{}.Mixin()
+	botHooks := schema.Bot{}.Hooks()
+	bot.Hooks[0] = botHooks[0]
 	botMixinInters1 := botMixin[1].Interceptors()
 	bot.Interceptors[0] = botMixinInters1[0]
 	botMixinFields0 := botMixin[0].Fields()
@@ -175,6 +177,8 @@ func init() {
 	botrunnerHooks := schema.BotRunner{}.Hooks()
 	botrunner.Hooks[0] = botrunnerHooks[0]
 	botrunner.Hooks[1] = botrunnerHooks[1]
+	botrunner.Hooks[2] = botrunnerHooks[2]
+	botrunner.Hooks[3] = botrunnerHooks[3]
 	botrunnerMixinInters1 := botrunnerMixin[1].Interceptors()
 	botrunner.Interceptors[0] = botrunnerMixinInters1[0]
 	botrunnerMixinFields0 := botrunnerMixin[0].Fields()
@@ -262,6 +266,7 @@ func init() {
 	exchangeMixin := schema.Exchange{}.Mixin()
 	exchangeHooks := schema.Exchange{}.Hooks()
 	exchange.Hooks[0] = exchangeHooks[0]
+	exchange.Hooks[1] = exchangeHooks[1]
 	exchangeMixinInters0 := exchangeMixin[0].Interceptors()
 	exchange.Interceptors[0] = exchangeMixinInters0[0]
 	exchangeFields := schema.Exchange{}.Fields()

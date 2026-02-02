@@ -39,6 +39,7 @@ import (
 	"volaticloud/internal/monitor"
 	"volaticloud/internal/proxy"
 	"volaticloud/internal/pubsub"
+	"volaticloud/internal/secrets"
 )
 
 func main() {
@@ -169,6 +170,16 @@ func main() {
 				Usage:   "Console URL for Stripe redirect URLs (e.g., https://console.volaticloud.com). Falls back to Origin header if not set",
 				EnvVars: []string{"VOLATICLOUD_CONSOLE_URL"},
 			},
+			&cli.StringFlag{
+				Name:    "encryption-key",
+				Usage:   "Base64-encoded 32-byte AES-256 key for config field encryption. If not set, encryption is disabled",
+				EnvVars: []string{"VOLATICLOUD_ENCRYPTION_KEY"},
+			},
+			&cli.StringFlag{
+				Name:    "old-encryption-keys",
+				Usage:   "Comma-separated base64-encoded old encryption keys for key rotation (decryption only)",
+				EnvVars: []string{"VOLATICLOUD_OLD_ENCRYPTION_KEYS"},
+			},
 		},
 		Action: runServer,
 	}
@@ -249,6 +260,25 @@ func runServer(c *cli.Context) error {
 
 	// Setup soft-delete hooks - converts Delete() to UPDATE SET deleted_at
 	db.SetupSoftDelete(client)
+
+	// Initialize field-level encryption for config secrets
+	if encKey := c.String("encryption-key"); encKey != "" {
+		var oldKeys []string
+		if oldKeysStr := c.String("old-encryption-keys"); oldKeysStr != "" {
+			oldKeys = strings.Split(oldKeysStr, ",")
+		}
+		if err := secrets.Init(encKey, oldKeys...); err != nil {
+			return fmt.Errorf("failed to initialize encryption: %w", err)
+		}
+		if len(oldKeys) > 0 {
+			log.Printf("✓ Field-level encryption enabled (with %d old key(s) for rotation)", len(oldKeys))
+		} else {
+			log.Println("✓ Field-level encryption enabled")
+		}
+		secrets.RegisterDecryptInterceptors(client)
+	} else {
+		log.Println("⚠ Field-level encryption disabled (VOLATICLOUD_ENCRYPTION_KEY not set)")
+	}
 
 	host := c.String("host")
 	port := c.Int("port")
@@ -516,6 +546,9 @@ func runServer(c *cli.Context) error {
 		// Stripe webhook endpoint - NO auth (uses Stripe signature verification)
 		if stripeClient != nil && stripeWebhookSecret != "" {
 			gw.With(httprate.LimitByIP(100, 1*time.Minute)).Post("/webhooks/stripe", billing.NewWebhookHandler(client, stripeClient, stripeWebhookSecret))
+			log.Println("✓ Stripe webhook endpoint registered at /gateway/v1/webhooks/stripe")
+		} else if stripeClient != nil {
+			log.Println("⚠ Stripe webhook disabled (VOLATICLOUD_STRIPE_WEBHOOK_SECRET not set)")
 		}
 	})
 

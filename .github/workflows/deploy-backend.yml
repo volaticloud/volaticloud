@@ -86,6 +86,8 @@ jobs:
             --from-literal=VOLATICLOUD_REDIS_URL="${{ secrets.VOLATICLOUD_REDIS_URL }}" \
             --from-literal=VOLATICLOUD_STRIPE_API_KEY="${{ secrets.VOLATICLOUD_STRIPE_API_KEY }}" \
             --from-literal=VOLATICLOUD_STRIPE_WEBHOOK_SECRET="${{ secrets.VOLATICLOUD_STRIPE_WEBHOOK_SECRET }}" \
+            --from-literal=VOLATICLOUD_ENCRYPTION_KEY="${{ secrets.VOLATICLOUD_ENCRYPTION_KEY }}" \
+            --from-literal=VOLATICLOUD_OLD_ENCRYPTION_KEYS="${{ secrets.VOLATICLOUD_OLD_ENCRYPTION_KEYS }}" \
             --namespace=volaticloud \
             --dry-run=client -o yaml | kubectl apply -f -
 

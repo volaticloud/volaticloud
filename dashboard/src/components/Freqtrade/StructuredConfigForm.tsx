@@ -3,6 +3,8 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
+  Chip,
   FormControl,
   FormControlLabel,
   FormHelperText,
@@ -23,16 +25,22 @@ import {
   ExpandMore as ExpandMoreIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  Settings as SettingsIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import {
   FreqtradeConfig,
+  ExchangeConnectionConfig,
   PricingConfig,
   OrderTypesConfig,
   OrderTimeInForceConfig,
   STAKE_CURRENCIES,
   TIMEFRAMES,
   PRICE_SIDES,
+  EXCHANGE_PROVIDERS,
   ConfigSection,
   ALL_SECTIONS,
 } from './defaultConfig';
@@ -102,6 +110,7 @@ export function StructuredConfigForm({
   extendedMode = false,
 }: StructuredConfigFormProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    exchange: true,
     basic: true,
     trading: false,
     orders: false,
@@ -111,10 +120,12 @@ export function StructuredConfigForm({
   });
 
   // Determine which sections to show
-  const hasDefaultSections = defaultSections && defaultSections.length < ALL_SECTIONS.length;
+  const hasExchangeSection = defaultSections?.includes('exchange');
+  const allSections = hasExchangeSection ? ['exchange' as ConfigSection, ...ALL_SECTIONS] : ALL_SECTIONS;
+  const hasDefaultSections = defaultSections && defaultSections.length < allSections.length;
   const visibleSections = hasDefaultSections && !extendedMode
     ? defaultSections
-    : ALL_SECTIONS;
+    : allSections;
 
   const handleSectionChange = (section: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedSections(prev => ({ ...prev, [section]: isExpanded }));
@@ -163,6 +174,65 @@ export function StructuredConfigForm({
     });
   };
 
+  const updateExchange = <K extends keyof ExchangeConnectionConfig>(
+    field: K,
+    newValue: ExchangeConnectionConfig[K]
+  ) => {
+    onChange({
+      ...value,
+      exchange: {
+        name: 'binance',
+        key: '',
+        secret: '',
+        pair_whitelist: [],
+        ...value.exchange,
+        [field]: newValue,
+      },
+    });
+  };
+
+  const [newWhitelistPair, setNewWhitelistPair] = useState('');
+  const [newBlacklistPair, setNewBlacklistPair] = useState('');
+
+  const addWhitelistPair = () => {
+    const pair = newWhitelistPair.trim().toUpperCase();
+    if (pair && !value.exchange?.pair_whitelist?.includes(pair)) {
+      updateExchange('pair_whitelist', [...(value.exchange?.pair_whitelist || []), pair]);
+    }
+    setNewWhitelistPair('');
+  };
+
+  const removeWhitelistPair = (pair: string) => {
+    updateExchange('pair_whitelist', (value.exchange?.pair_whitelist || []).filter(p => p !== pair));
+  };
+
+  const setAllPairsWildcard = () => {
+    updateExchange('pair_whitelist', ['.*']);
+  };
+
+  const addBlacklistPair = () => {
+    const pair = newBlacklistPair.trim().toUpperCase();
+    if (pair && !value.exchange?.pair_blacklist?.includes(pair)) {
+      updateExchange('pair_blacklist', [...(value.exchange?.pair_blacklist || []), pair]);
+    }
+    setNewBlacklistPair('');
+  };
+
+  const removeBlacklistPair = (pair: string) => {
+    updateExchange('pair_blacklist', (value.exchange?.pair_blacklist || []).filter(p => p !== pair));
+  };
+
+  const setBlacklistWildcard = () => {
+    updateExchange('pair_blacklist', [...(value.exchange?.pair_blacklist || []), '.*DOWN/.*', '.*UP/.*']);
+  };
+
+  const [showAdvancedExchange, setShowAdvancedExchange] = useState(false);
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
+
+  const toggleSecretVisibility = (field: string) => {
+    setVisibleSecrets(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
   // Helper to determine if section should have connected border (no top border)
   const shouldConnectBorder = (section: ConfigSection): boolean => {
     const sectionIndex = visibleSections.indexOf(section);
@@ -190,6 +260,405 @@ export function StructuredConfigForm({
 
   return (
     <Box>
+      {/* Exchange Settings Section */}
+      {visibleSections.includes('exchange') && (
+      <Accordion
+        expanded={expandedSections.exchange}
+        onChange={handleSectionChange('exchange')}
+        disableGutters
+        elevation={0}
+        sx={{ border: 1, borderTop: shouldConnectBorder('exchange') ? 0 : 1, borderColor: 'divider', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography fontWeight={500}>Exchange Connection</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={2}>
+            {/* Exchange Provider */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl fullWidth size="small" disabled={readOnly}>
+                <InputLabel>Exchange</InputLabel>
+                <Select
+                  value={value.exchange?.name || 'binance'}
+                  label="Exchange"
+                  onChange={(e: SelectChangeEvent) => updateExchange('name', e.target.value)}
+                >
+                  {EXCHANGE_PROVIDERS.map(ex => (
+                    <MenuItem key={ex.value} value={ex.value}>{ex.label}</MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Exchange provider</FormHelperText>
+              </FormControl>
+            </Grid>
+
+            {/* Spacer */}
+            <Grid size={{ xs: 12, sm: 6 }} />
+
+            {/* Encryption notice */}
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <LockIcon sx={{ fontSize: '0.875rem' }} />
+                API credentials are encrypted at rest
+              </Typography>
+            </Grid>
+
+            {/* API Key */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="API Key"
+                type={visibleSecrets['key'] ? 'text' : 'password'}
+                value={value.exchange?.key || ''}
+                onChange={(e) => updateExchange('key', e.target.value)}
+                fullWidth
+                size="small"
+                disabled={readOnly}
+                autoComplete="off"
+                placeholder="Enter your API key"
+                helperText="Exchange API key"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => toggleSecretVisibility('key')} edge="end">
+                          {visibleSecrets['key'] ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Grid>
+
+            {/* API Secret */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="API Secret"
+                type={visibleSecrets['secret'] ? 'text' : 'password'}
+                value={value.exchange?.secret || ''}
+                onChange={(e) => updateExchange('secret', e.target.value)}
+                fullWidth
+                size="small"
+                disabled={readOnly}
+                autoComplete="off"
+                placeholder="Enter your API secret"
+                helperText="Exchange API secret"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => toggleSecretVisibility('secret')} edge="end">
+                          {visibleSecrets['secret'] ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Grid>
+
+            {/* Password (optional, for OKX etc.) */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Password / Passphrase"
+                type={visibleSecrets['password'] ? 'text' : 'password'}
+                value={value.exchange?.password || ''}
+                onChange={(e) => updateExchange('password', e.target.value || undefined)}
+                fullWidth
+                size="small"
+                disabled={readOnly}
+                autoComplete="off"
+                placeholder="Optional"
+                helperText="Required by some exchanges (e.g., OKX)"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => toggleSecretVisibility('password')} edge="end">
+                          {visibleSecrets['password'] ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }} />
+
+            {/* Pair Whitelist */}
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                <Typography variant="subtitle2">Pair Whitelist</Typography>
+                {!readOnly && (
+                  <Button
+                    size="small"
+                    onClick={setAllPairsWildcard}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    All pairs (wildcard)
+                  </Button>
+                )}
+              </Box>
+              <FormHelperText sx={{ mb: 1 }}>
+                Pairs the bot is allowed to trade. Use wildcard to include all pairs for a quote currency.
+              </FormHelperText>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                {(value.exchange?.pair_whitelist || []).map(pair => (
+                  <Chip
+                    key={pair}
+                    label={pair}
+                    size="small"
+                    onDelete={readOnly ? undefined : () => removeWhitelistPair(pair)}
+                  />
+                ))}
+              </Box>
+              {!readOnly && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    size="small"
+                    placeholder="e.g., BTC/USDT"
+                    value={newWhitelistPair}
+                    onChange={(e) => setNewWhitelistPair(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addWhitelistPair();
+                      }
+                    }}
+                    sx={{ width: 200 }}
+                  />
+                  <IconButton size="small" onClick={addWhitelistPair} disabled={!newWhitelistPair.trim()}>
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+            </Grid>
+
+            {/* Pair Blacklist */}
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                <Typography variant="subtitle2">Pair Blacklist</Typography>
+                {!readOnly && (
+                  <Button
+                    size="small"
+                    onClick={setBlacklistWildcard}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Exclude leveraged tokens
+                  </Button>
+                )}
+              </Box>
+              <FormHelperText sx={{ mb: 1 }}>
+                Pairs excluded from trading, even if matched by the whitelist.
+              </FormHelperText>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                {(value.exchange?.pair_blacklist || []).map(pair => (
+                  <Chip
+                    key={pair}
+                    label={pair}
+                    size="small"
+                    onDelete={readOnly ? undefined : () => removeBlacklistPair(pair)}
+                  />
+                ))}
+              </Box>
+              {!readOnly && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    size="small"
+                    placeholder="e.g., BNB/BTC"
+                    value={newBlacklistPair}
+                    onChange={(e) => setNewBlacklistPair(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addBlacklistPair();
+                      }
+                    }}
+                    sx={{ width: 200 }}
+                  />
+                  <IconButton size="small" onClick={addBlacklistPair} disabled={!newBlacklistPair.trim()}>
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+            </Grid>
+
+            {/* Advanced Exchange Settings Toggle */}
+            <Grid size={{ xs: 12 }}>
+              <Button
+                size="small"
+                startIcon={<SettingsIcon />}
+                onClick={() => setShowAdvancedExchange(!showAdvancedExchange)}
+                color={showAdvancedExchange ? 'primary' : 'inherit'}
+                sx={{ textTransform: 'none' }}
+              >
+                {showAdvancedExchange ? 'Hide Advanced' : 'Advanced Exchange Settings'}
+              </Button>
+            </Grid>
+
+            {showAdvancedExchange && (
+              <>
+                {/* UID */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="UID"
+                    value={value.exchange?.uid || ''}
+                    onChange={(e) => updateExchange('uid', e.target.value || undefined)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    autoComplete="off"
+                    placeholder="Optional"
+                    helperText="User ID, if required by the exchange"
+                  />
+                </Grid>
+
+                {/* Account ID */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Account ID"
+                    value={value.exchange?.account_id || ''}
+                    onChange={(e) => updateExchange('account_id', e.target.value || undefined)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    autoComplete="off"
+                    placeholder="Optional"
+                    helperText="Account ID, if required by the exchange"
+                  />
+                </Grid>
+
+                {/* Wallet Address (DEX) */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Wallet Address"
+                    value={value.exchange?.wallet_address || ''}
+                    onChange={(e) => updateExchange('wallet_address', e.target.value || undefined)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    autoComplete="off"
+                    placeholder="Optional"
+                    helperText="Wallet address, usually for DEX exchanges"
+                  />
+                </Grid>
+
+                {/* Private Key (DEX) */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Private Key"
+                    type={visibleSecrets['private_key'] ? 'text' : 'password'}
+                    value={value.exchange?.private_key || ''}
+                    onChange={(e) => updateExchange('private_key', e.target.value || undefined)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    autoComplete="off"
+                    placeholder="Optional"
+                    helperText="Private key, usually for DEX exchanges"
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton size="small" onClick={() => toggleSecretVisibility('private_key')} edge="end">
+                              {visibleSecrets['private_key'] ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                </Grid>
+
+                {/* Enable WebSocket */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={value.exchange?.enable_ws ?? true}
+                        onChange={(e) => updateExchange('enable_ws', e.target.checked)}
+                        disabled={readOnly}
+                      />
+                    }
+                    label="Enable WebSocket"
+                  />
+                  <FormHelperText>WebSocket connections to the exchange</FormHelperText>
+                </Grid>
+
+                {/* Log Responses */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={value.exchange?.log_responses ?? false}
+                        onChange={(e) => updateExchange('log_responses', e.target.checked)}
+                        disabled={readOnly}
+                      />
+                    }
+                    label="Log Responses"
+                  />
+                  <FormHelperText>Log exchange API responses (for debugging)</FormHelperText>
+                </Grid>
+
+                {/* Unknown Fee Rate */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Unknown Fee Rate"
+                    type="number"
+                    value={value.exchange?.unknown_fee_rate ?? ''}
+                    onChange={(e) => updateExchange('unknown_fee_rate', e.target.value ? parseFloat(e.target.value) : undefined)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    placeholder="Optional"
+                    slotProps={{ htmlInput: { min: 0, step: 0.001 } }}
+                    helperText="Fee rate for unknown markets"
+                  />
+                </Grid>
+
+                {/* Outdated Offset */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Outdated Offset"
+                    type="number"
+                    value={value.exchange?.outdated_offset ?? ''}
+                    onChange={(e) => updateExchange('outdated_offset', e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    placeholder="Optional"
+                    slotProps={{
+                      input: { endAdornment: <InputAdornment position="end">min</InputAdornment> },
+                      htmlInput: { min: 0, step: 1 },
+                    }}
+                    helperText="Offset for outdated data detection"
+                  />
+                </Grid>
+
+                {/* Markets Refresh Interval */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Markets Refresh Interval"
+                    type="number"
+                    value={value.exchange?.markets_refresh_interval ?? 60}
+                    onChange={(e) => updateExchange('markets_refresh_interval', parseInt(e.target.value, 10) || 60)}
+                    fullWidth
+                    size="small"
+                    disabled={readOnly}
+                    slotProps={{
+                      input: { endAdornment: <InputAdornment position="end">min</InputAdornment> },
+                      htmlInput: { min: 1, step: 1 },
+                    }}
+                    helperText="How often to refresh market data"
+                  />
+                </Grid>
+              </>
+            )}
+          </Grid>
+        </AccordionDetails>
+      </Accordion>
+      )}
+
       {/* Basic Settings Section */}
       {visibleSections.includes('basic') && (
       <Accordion

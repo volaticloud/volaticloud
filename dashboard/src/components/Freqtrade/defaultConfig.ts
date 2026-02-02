@@ -69,8 +69,32 @@ export interface FreqtradeConfig {
   exit_profit_offset?: number;
   ignore_roi_if_entry_signal?: boolean;
 
+  // Exchange settings
+  exchange?: ExchangeConnectionConfig;
+
   // Allow additional fields from Freqtrade schema
   [key: string]: unknown;
+}
+
+export interface ExchangeConnectionConfig {
+  name: string;
+  key: string;
+  secret: string;
+  password?: string;
+  uid?: string;
+  account_id?: string;
+  wallet_address?: string;
+  private_key?: string;
+  pair_whitelist: string[];
+  pair_blacklist?: string[];
+  log_responses?: boolean;
+  enable_ws?: boolean;
+  unknown_fee_rate?: number;
+  outdated_offset?: number;
+  markets_refresh_interval?: number;
+  ccxt_config?: Record<string, unknown>;
+  ccxt_async_config?: Record<string, unknown>;
+  ccxt_sync_config?: Record<string, unknown>;
 }
 
 /**
@@ -170,10 +194,10 @@ export const PRICE_SIDES = [
  * - risk: Stop loss and trailing stop settings
  * - exits: Exit strategy behavior (use_exit_signal, exit_profit_only, etc.)
  */
-export type ConfigSection = 'basic' | 'trading' | 'orders' | 'pricing' | 'risk' | 'exits';
+export type ConfigSection = 'exchange' | 'basic' | 'trading' | 'orders' | 'pricing' | 'risk' | 'exits';
 
 /**
- * All available sections in the structured config form
+ * All available sections in the structured config form (excluding exchange)
  */
 export const ALL_SECTIONS: ConfigSection[] = ['basic', 'trading', 'orders', 'pricing', 'risk', 'exits'];
 
@@ -192,3 +216,74 @@ export const STRATEGY_SECTIONS: ConfigSection[] = ['basic', 'risk', 'exits'];
  * - orders: Order types configuration
  */
 export const BOT_SECTIONS: ConfigSection[] = ['basic', 'trading', 'orders'];
+
+/**
+ * Recommended sections for exchange configuration
+ * - exchange: Exchange credentials and pair whitelist
+ */
+export const EXCHANGE_SECTIONS: ConfigSection[] = ['exchange'];
+
+/**
+ * All sections including exchange (for exchange management context)
+ */
+export const ALL_SECTIONS_WITH_EXCHANGE: ConfigSection[] = ['exchange', ...ALL_SECTIONS];
+
+/**
+ * Supported exchange providers for the dropdown
+ */
+export const EXCHANGE_PROVIDERS = [
+  { value: 'binance', label: 'Binance' },
+  { value: 'binanceus', label: 'Binance US' },
+  { value: 'bybit', label: 'Bybit' },
+  { value: 'okx', label: 'OKX' },
+  { value: 'kraken', label: 'Kraken' },
+  { value: 'kucoin', label: 'KuCoin' },
+  { value: 'bitget', label: 'Bitget' },
+  { value: 'gate', label: 'Gate.io' },
+  { value: 'huobi', label: 'Huobi' },
+] as const;
+
+/**
+ * Mapping of each config section to the FreqtradeConfig keys it owns.
+ * Used to filter the config object to only include fields from enabled sections.
+ */
+export const SECTION_FIELDS: Record<ConfigSection, string[]> = {
+  exchange: ['exchange'],
+  basic: ['stake_currency', 'stake_amount', 'timeframe', 'max_open_trades'],
+  trading: ['dry_run', 'dry_run_wallet', 'trading_mode', 'margin_mode', 'liquidation_buffer'],
+  orders: ['order_types', 'order_time_in_force'],
+  pricing: ['entry_pricing', 'exit_pricing'],
+  risk: ['stoploss', 'trailing_stop', 'trailing_stop_positive', 'trailing_stop_positive_offset', 'trailing_only_offset_is_reached', 'minimal_roi'],
+  exits: ['use_exit_signal', 'exit_profit_only', 'exit_profit_offset', 'ignore_roi_if_entry_signal'],
+};
+
+/**
+ * Filters a config object to only include fields belonging to the given sections.
+ * If enabledSections is undefined or empty, returns the config unchanged.
+ */
+export function filterConfigBySections(
+  config: Record<string, unknown>,
+  enabledSections?: ConfigSection[],
+): Record<string, unknown> {
+  if (!enabledSections || enabledSections.length === 0) {
+    return config;
+  }
+  const allowedKeys = new Set(enabledSections.flatMap(s => SECTION_FIELDS[s]));
+  return Object.fromEntries(
+    Object.entries(config).filter(([key]) => allowedKeys.has(key)),
+  );
+}
+
+/**
+ * Creates a default exchange configuration
+ */
+export function createDefaultExchangeConfig(): Partial<FreqtradeConfig> {
+  return {
+    exchange: {
+      name: 'binance',
+      key: '',
+      secret: '',
+      pair_whitelist: ['.*'],
+    },
+  };
+}
