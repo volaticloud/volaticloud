@@ -5,7 +5,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import CodeIcon from '@mui/icons-material/Code';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { StructuredConfigForm } from './StructuredConfigForm';
-import { FreqtradeConfig, mergeWithDefaults, ConfigSection, ALL_SECTIONS } from './defaultConfig';
+import { FreqtradeConfig, mergeWithDefaults, filterConfigBySections, ConfigSection, ALL_SECTIONS, ALL_SECTIONS_WITH_EXCHANGE } from './defaultConfig';
 
 interface FreqtradeConfigFormProps {
   value: object | null;
@@ -28,6 +28,17 @@ interface FreqtradeConfigFormProps {
   defaultSections?: ConfigSection[];
   /** Whether to show the "Advanced Settings" toggle. Defaults to true. */
   showExtendedToggle?: boolean;
+  /**
+   * Restrict config to only include fields from these sections.
+   * When set, the JSON view and onChange output will only contain
+   * fields belonging to the specified sections.
+   * If empty or not provided, all fields are included.
+   *
+   * @example
+   * // Only exchange fields in the final config
+   * enabledSections={['exchange']}
+   */
+  enabledSections?: ConfigSection[];
 }
 
 /**
@@ -56,21 +67,32 @@ export function FreqtradeConfigForm({
   readOnly = false,
   defaultSections,
   showExtendedToggle = true,
+  enabledSections,
 }: FreqtradeConfigFormProps) {
   // Default to form mode for better UX
   const [mode, setMode] = useState<'form' | 'json'>('form');
   const [extendedMode, setExtendedMode] = useState(false);
 
   // Merge incoming value with defaults to ensure all mandatory fields are present
-  const configWithDefaults = mergeWithDefaults(value as Partial<FreqtradeConfig> | null);
+  const fullConfig = mergeWithDefaults(value as Partial<FreqtradeConfig> | null);
+  // Filter to only enabled sections' fields (for JSON view)
+  const configWithDefaults = enabledSections && enabledSections.length > 0
+    ? filterConfigBySections(fullConfig as unknown as Record<string, unknown>, enabledSections) as unknown as FreqtradeConfig
+    : fullConfig;
 
   // Determine if we should show the extended toggle
-  const hasDefaultSections = defaultSections && defaultSections.length < ALL_SECTIONS.length;
+  const hasExchangeSection = defaultSections?.includes('exchange');
+  const allSections = hasExchangeSection ? ALL_SECTIONS_WITH_EXCHANGE : ALL_SECTIONS;
+  const hasDefaultSections = defaultSections && defaultSections.length < allSections.length;
   const shouldShowExtendedToggle = showExtendedToggle && hasDefaultSections && mode === 'form';
 
   const handleChange = (newValue: FreqtradeConfig | object | null) => {
     if (newValue) {
-      onChange(newValue);
+      // Filter output to only include enabled sections' fields
+      const filtered = enabledSections && enabledSections.length > 0
+        ? filterConfigBySections(newValue as Record<string, unknown>, enabledSections)
+        : newValue;
+      onChange(filtered);
     }
   };
 

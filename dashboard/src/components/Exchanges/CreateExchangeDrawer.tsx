@@ -12,10 +12,11 @@ import {
 import { Close } from '@mui/icons-material';
 import { useState, useMemo } from 'react';
 import { useCreateExchangeMutation } from './exchanges.generated';
-import { JSONEditor } from '../JSONEditor';
 import { useActiveOrganization } from '../../contexts/OrganizationContext';
 import { useDialogUnsavedChanges } from '../../hooks';
 import { UnsavedChangesDrawer } from '../shared';
+import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
+import { createDefaultExchangeConfig, EXCHANGE_SECTIONS } from '../Freqtrade/defaultConfig';
 
 interface CreateExchangeDrawerProps {
   open: boolean;
@@ -23,28 +24,19 @@ interface CreateExchangeDrawerProps {
   onSuccess: () => void;
 }
 
-const DEFAULT_EXCHANGE_CONFIG = {
-  exchange: {
-    name: 'binance',
-    key: 'your-api-key',
-    secret: 'your-api-secret',
-    ccxt_config: {},
-    ccxt_async_config: {},
-    pair_whitelist: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT'],
-  },
-};
+const DEFAULT_CONFIG = createDefaultExchangeConfig();
 
 export const CreateExchangeDrawer = ({ open, onClose, onSuccess }: CreateExchangeDrawerProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const [name, setName] = useState('');
-  const [config, setConfig] = useState<object | null>(DEFAULT_EXCHANGE_CONFIG);
+  const [config, setConfig] = useState<object>(DEFAULT_CONFIG);
 
   const [createExchange, { loading, error }] = useCreateExchangeMutation();
 
   // Track if form has been modified
   const hasChanges = useMemo(() => {
     if (name !== '') return true;
-    if (JSON.stringify(config) !== JSON.stringify(DEFAULT_EXCHANGE_CONFIG)) return true;
+    if (JSON.stringify(config) !== JSON.stringify(DEFAULT_CONFIG)) return true;
     return false;
   }, [name, config]);
 
@@ -73,15 +65,13 @@ export const CreateExchangeDrawer = ({ open, onClose, onSuccess }: CreateExchang
       if (result.data?.createExchange) {
         // Reset form
         setName('');
-        setConfig(DEFAULT_EXCHANGE_CONFIG);
+        setConfig(DEFAULT_CONFIG);
 
         onSuccess();
         onClose();
       }
-      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to create exchange:', err);
-      // Error will be displayed via the error state from the mutation hook
     }
   };
 
@@ -93,7 +83,7 @@ export const CreateExchangeDrawer = ({ open, onClose, onSuccess }: CreateExchang
         onClose={handleClose}
         PaperProps={{
           sx: {
-            width: { xs: '100%', sm: 600 },
+            width: { xs: '100%', sm: 700 },
             maxWidth: '100%',
           },
         }}
@@ -139,21 +129,13 @@ export const CreateExchangeDrawer = ({ open, onClose, onSuccess }: CreateExchang
               helperText="A descriptive name to identify this exchange configuration"
             />
 
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                Freqtrade Exchange Configuration
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                Complete freqtrade exchange config including credentials and pair whitelist.
-                This config will be written to <code>config.exchange.json</code> and passed to freqtrade via <code>--config</code> parameter.
-              </Typography>
-              <JSONEditor
-                value={config}
-                onChange={setConfig}
-                height="400px"
-                helperText="Required fields: exchange.name, exchange.key, exchange.secret, exchange.pair_whitelist"
-              />
-            </Box>
+            <FreqtradeConfigForm
+              value={config}
+              onChange={setConfig}
+              defaultSections={EXCHANGE_SECTIONS}
+              enabledSections={EXCHANGE_SECTIONS}
+              showExtendedToggle={false}
+            />
 
             {error && (
               <FormHelperText error>

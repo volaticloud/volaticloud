@@ -12,9 +12,10 @@ import {
 import { Close } from '@mui/icons-material';
 import { useState, useEffect, useMemo } from 'react';
 import { useUpdateExchangeMutation } from './exchanges.generated';
-import { JSONEditor } from '../JSONEditor';
 import { useDialogUnsavedChanges } from '../../hooks';
 import { UnsavedChangesDrawer } from '../shared';
+import { FreqtradeConfigForm } from '../Freqtrade/FreqtradeConfigForm';
+import { EXCHANGE_SECTIONS } from '../Freqtrade/defaultConfig';
 
 interface EditExchangeDrawerProps {
   open: boolean;
@@ -50,7 +51,6 @@ export const EditExchangeDrawer = ({ open, onClose, onSuccess, exchange }: EditE
   useEffect(() => {
     if (exchange) {
       setName(exchange.name);
-      // Populate config if it exists
       setConfig(exchange.config || null);
     }
   }, [exchange]);
@@ -61,7 +61,6 @@ export const EditExchangeDrawer = ({ open, onClose, onSuccess, exchange }: EditE
     try {
       const input: Record<string, unknown> = {};
 
-      // Only update fields that are provided
       if (name !== exchange.name) {
         input.name = name;
       }
@@ -70,7 +69,6 @@ export const EditExchangeDrawer = ({ open, onClose, onSuccess, exchange }: EditE
         input.config = config;
       }
 
-      // If nothing changed, close without making request
       if (Object.keys(input).length === 0) {
         onClose();
         return;
@@ -83,19 +81,15 @@ export const EditExchangeDrawer = ({ open, onClose, onSuccess, exchange }: EditE
         },
       });
 
-      // Only close if mutation was successful
       if (result.data?.updateExchange) {
-        // Reset form
         setName('');
         setConfig(null);
 
         onSuccess();
         onClose();
       }
-      // If there are errors, they will be displayed via the error state
     } catch (err) {
       console.error('Failed to update exchange:', err);
-      // Error will be displayed via the error state from the mutation hook
     }
   };
 
@@ -109,7 +103,7 @@ export const EditExchangeDrawer = ({ open, onClose, onSuccess, exchange }: EditE
         onClose={handleClose}
         PaperProps={{
           sx: {
-            width: { xs: '100%', sm: 600 },
+            width: { xs: '100%', sm: 700 },
             maxWidth: '100%',
           },
         }}
@@ -154,21 +148,13 @@ export const EditExchangeDrawer = ({ open, onClose, onSuccess, exchange }: EditE
               helperText="A descriptive name to identify this exchange configuration"
             />
 
-            <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                Freqtrade Exchange Configuration (Optional)
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                Leave empty to keep existing configuration. Provide new JSON to update.
-              </Typography>
-              <JSONEditor
-                value={config}
-                onChange={setConfig}
-                height="400px"
-                placeholder={`{\n  "exchange": {\n    "name": "binance",\n    "key": "your-api-key",\n    "secret": "your-api-secret",\n    "pair_whitelist": ["BTC/USDT", "ETH/USDT"]\n  }\n}`}
-                helperText="Complete freqtrade exchange config including credentials"
-              />
-            </Box>
+            <FreqtradeConfigForm
+              value={config}
+              onChange={setConfig}
+              defaultSections={EXCHANGE_SECTIONS}
+              enabledSections={EXCHANGE_SECTIONS}
+              showExtendedToggle={false}
+            />
 
             {error && (
               <FormHelperText error>
