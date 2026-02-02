@@ -25,10 +25,12 @@ VolatiCloud stores sensitive credentials (exchange API keys, Docker TLS certific
 Encrypt the entire JSON config column.
 
 **Pros:**
+
 - Simple implementation — encrypt/decrypt the whole blob
 - No need to track which fields are secret
 
 **Cons:**
+
 - Loses ability to query or inspect non-secret fields
 - All-or-nothing — can't partially decrypt for debugging
 - Larger encrypted payloads
@@ -38,12 +40,14 @@ Encrypt the entire JSON config column.
 Encrypt only sensitive fields within the JSON config, identified by dot-separated paths.
 
 **Pros:**
+
 - Non-secret fields remain plaintext and queryable
 - Granular control over what gets encrypted
 - Smaller encrypted payloads
 - Easy to add new secret paths per domain
 
 **Cons:**
+
 - More complex traversal logic
 - Must maintain list of secret field paths per entity
 
@@ -52,10 +56,12 @@ Encrypt only sensitive fields within the JSON config, identified by dot-separate
 Store secrets in an external secrets manager, reference by ID in config.
 
 **Pros:**
+
 - Industry-standard key management
 - Built-in audit logging and rotation
 
 **Cons:**
+
 - Adds infrastructure dependency
 - Significant refactoring of config read/write paths
 - Higher operational complexity for self-hosted deployments
@@ -67,23 +73,27 @@ Chosen option: **Field-Level AES-256-GCM Encryption**, because it provides targe
 ### Consequences
 
 **Positive:**
+
 - Sensitive credentials encrypted at rest with authenticated encryption
 - Transparent to application code via ENT hooks/interceptors
 - Graceful migration — plaintext passes through unchanged, encrypted on next write
 - Each domain package owns its secret field definitions
 
 **Negative:**
+
 - Encryption key must be managed securely (env var for now)
 - Key rotation requires re-encrypting all data (no key versioning yet)
 - If encryption key is lost, encrypted data is unrecoverable
 
 **Neutral:**
+
 - Small performance overhead for encrypt/decrypt on config read/write
 - Database backups contain encrypted values (good for security, requires key for restore)
 
 ## Implementation
 
 ### Key Files
+
 - `internal/secrets/encrypt.go` — AES-256-GCM singleton encryptor, `$vc_enc$` prefix
 - `internal/secrets/transform.go` — Dot-path traversal for nested JSON maps
 - `internal/secrets/hooks.go` — ENT mutation hook (encrypt on write) and interceptors (decrypt on read)
@@ -130,6 +140,7 @@ $vc_enc$<base64(nonce || ciphertext || tag)>
 ### Key Rotation (Future Work)
 
 Current limitation: single key with no versioning. Future improvements:
+
 1. Add key version to prefix: `$vc_enc$v2$<base64>`
 2. Support multiple decryption keys (current + old)
 3. Bulk re-encryption command for key rotation
