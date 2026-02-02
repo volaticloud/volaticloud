@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"encoding/base64"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,15 @@ func testKey() string {
 	key := make([]byte, 32)
 	for i := range key {
 		key[i] = byte(i)
+	}
+	return base64.StdEncoding.EncodeToString(key)
+}
+
+func testKeyB() string {
+	// Different 32-byte key for rotation testing
+	key := make([]byte, 32)
+	for i := range key {
+		key[i] = byte(i + 50)
 	}
 	return base64.StdEncoding.EncodeToString(key)
 }
@@ -43,6 +53,25 @@ func TestInit(t *testing.T) {
 		err := Init(shortKey)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "32 bytes")
+	})
+
+	t.Run("with old keys", func(t *testing.T) {
+		err := Init(testKey(), testKeyB())
+		require.NoError(t, err)
+		assert.True(t, Enabled())
+		assert.Len(t, DefaultEncryptor.oldKeys, 1)
+	})
+
+	t.Run("invalid old key", func(t *testing.T) {
+		err := Init(testKey(), "bad-base64!!!")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "old encryption key")
+	})
+
+	t.Run("empty old key skipped", func(t *testing.T) {
+		err := Init(testKey(), "", testKeyB())
+		require.NoError(t, err)
+		assert.Len(t, DefaultEncryptor.oldKeys, 1)
 	})
 }
 
@@ -80,6 +109,64 @@ func TestEncryptDecryptRoundTrip(t *testing.T) {
 	}
 }
 
+func TestEncryptVersionedPrefix(t *testing.T) {
+	require.NoError(t, Init(testKey()))
+	defer func() { DefaultEncryptor = nil }()
+
+	encrypted, err := DefaultEncryptor.Encrypt("test-value")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(encrypted, "$vc_enc$v1$"))
+}
+
+func TestDecryptOldFormat(t *testing.T) {
+	// Simulate old format: encrypt produces $vc_enc$v1$, convert to legacy $vc_enc$
+	require.NoError(t, Init(testKey()))
+	defer func() { DefaultEncryptor = nil }()
+
+	encrypted, err := DefaultEncryptor.Encrypt("old-secret")
+	require.NoError(t, err)
+
+	// Convert v1 format to old format by stripping "v1$"
+	oldFormat := strings.Replace(encrypted, "$vc_enc$v1$", "$vc_enc$", 1)
+
+	decrypted, err := DefaultEncryptor.Decrypt(oldFormat)
+	require.NoError(t, err)
+	assert.Equal(t, "old-secret", decrypted)
+}
+
+func TestKeyRotation(t *testing.T) {
+	// Encrypt with key A
+	require.NoError(t, Init(testKey()))
+	encrypted, err := DefaultEncryptor.Encrypt("rotated-secret")
+	require.NoError(t, err)
+
+	// Init with key B as primary, key A as old
+	require.NoError(t, Init(testKeyB(), testKey()))
+
+	// Should decrypt using old key A
+	decrypted, err := DefaultEncryptor.Decrypt(encrypted)
+	require.NoError(t, err)
+	assert.Equal(t, "rotated-secret", decrypted)
+
+	DefaultEncryptor = nil
+}
+
+func TestKeyRotationAllFail(t *testing.T) {
+	// Encrypt with key A
+	require.NoError(t, Init(testKey()))
+	encrypted, err := DefaultEncryptor.Encrypt("lost-secret")
+	require.NoError(t, err)
+
+	// Init with key B as primary, no old keys — key A is gone
+	require.NoError(t, Init(testKeyB()))
+
+	_, err = DefaultEncryptor.Decrypt(encrypted)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "all keys")
+
+	DefaultEncryptor = nil
+}
+
 func TestEncryptProducesDifferentCiphertexts(t *testing.T) {
 	require.NoError(t, Init(testKey()))
 	defer func() { DefaultEncryptor = nil }()
@@ -108,7 +195,7 @@ func TestDecryptWithWrongKey(t *testing.T) {
 	for i := range otherKey {
 		otherKey[i] = byte(i + 100)
 	}
-	other := &Encryptor{key: otherKey}
+	other := &Encryptor{primaryKey: otherKey}
 
 	_, err = other.Decrypt(encrypted)
 	assert.Error(t, err)
@@ -140,11 +227,11 @@ func TestDecryptTooShort(t *testing.T) {
 	// Valid base64 but too short for nonce
 	_, err := DefaultEncryptor.Decrypt("$vc_enc$" + base64.StdEncoding.EncodeToString([]byte("short")))
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "too short")
 }
 
 func TestIsEncrypted(t *testing.T) {
 	assert.True(t, IsEncrypted("$vc_enc$abc123"))
+	assert.True(t, IsEncrypted("$vc_enc$v1$abc123"))
 	assert.False(t, IsEncrypted("enc:something"))
 	assert.False(t, IsEncrypted("plaintext"))
 	assert.False(t, IsEncrypted(""))

@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 
+	"volaticloud/internal/bot"
 	entmixin "volaticloud/internal/ent/mixin"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/secrets"
 )
 
 // Bot holds the schema definition for the Bot entity.
@@ -114,6 +116,13 @@ func (Bot) Annotations() []schema.Annotation {
 		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
+	}
+}
+
+// Hooks of the Bot.
+func (Bot) Hooks() []ent.Hook {
+	return []ent.Hook{
+		secrets.EncryptHook("secure_config", bot.SecretConfigPaths),
 	}
 }
 

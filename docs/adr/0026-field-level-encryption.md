@@ -82,7 +82,7 @@ Chosen option: **Field-Level AES-256-GCM Encryption**, because it provides targe
 **Negative:**
 
 - Encryption key must be managed securely (env var for now)
-- Key rotation requires re-encrypting all data (no key versioning yet)
+- Key rotation supported via versioned format and old key fallback
 - If encryption key is lost, encrypted data is unrecoverable
 
 **Neutral:**
@@ -94,12 +94,13 @@ Chosen option: **Field-Level AES-256-GCM Encryption**, because it provides targe
 
 ### Key Files
 
-- `internal/secrets/encrypt.go` — AES-256-GCM singleton encryptor, `$vc_enc$` prefix
+- `internal/secrets/encrypt.go` — AES-256-GCM singleton encryptor, versioned `$vc_enc$v1$` prefix, multi-key support
 - `internal/secrets/transform.go` — Dot-path traversal for nested JSON maps
 - `internal/secrets/hooks.go` — ENT mutation hook (encrypt on write) and interceptors (decrypt on read)
 - `internal/exchange/secrets.go` — Exchange secret field paths
 - `internal/runner/secrets.go` — Runner and S3 secret field paths
-- `cmd/server/main.go` — `VOLATICLOUD_ENCRYPTION_KEY` initialization
+- `internal/bot/secrets.go` — Bot secure_config secret field paths
+- `cmd/server/main.go` — `VOLATICLOUD_ENCRYPTION_KEY` and `VOLATICLOUD_OLD_ENCRYPTION_KEYS` initialization
 
 ### Architecture
 
@@ -120,16 +121,22 @@ flowchart TD
 | Exchange | `config` | `exchange.key`, `exchange.secret`, `exchange.password`, `exchange.private_key` |
 | BotRunner | `config` | `docker.certPEM`, `docker.keyPEM`, `docker.caPEM`, `docker.registryAuth.username`, `docker.registryAuth.password`, `kubernetes.kubeconfig` |
 | BotRunner | `s3_config` | `accessKeyId`, `secretAccessKey` |
+| Bot | `secure_config` | `api_server.username`, `api_server.password`, `api_server.jwt_secret_key` |
 
 ### Encryption Format
 
+New encryptions use the versioned format:
+
 ```
-$vc_enc$<base64(nonce || ciphertext || tag)>
+$vc_enc$v1$<base64(nonce || ciphertext || tag)>
 ```
+
+Legacy format (`$vc_enc$<base64>`) is still supported for decryption (backward compatible).
 
 - AES-256-GCM with 12-byte random nonce
 - Same plaintext produces different ciphertext each time (random nonce)
 - `$vc_enc$` prefix enables idempotent encryption and plaintext detection
+- Version tag (`v1$`) enables future format evolution
 
 ### Migration Strategy
 
@@ -137,14 +144,23 @@ $vc_enc$<base64(nonce || ciphertext || tag)>
 2. **Lazy migration** — on next update, plaintext is encrypted automatically
 3. **Bulk migration** — optional admin command can encrypt all existing data
 
-### Key Rotation (Future Work)
+### Key Rotation
 
-Current limitation: single key with no versioning. Future improvements:
+Key rotation is supported via `VOLATICLOUD_OLD_ENCRYPTION_KEYS` (comma-separated base64 keys).
 
-1. Add key version to prefix: `$vc_enc$v2$<base64>`
-2. Support multiple decryption keys (current + old)
-3. Bulk re-encryption command for key rotation
-4. Consider KMS integration for production key management
+**Rotation procedure:**
+
+1. Generate a new 32-byte AES key: `openssl rand -base64 32`
+2. Move the current `VOLATICLOUD_ENCRYPTION_KEY` value to `VOLATICLOUD_OLD_ENCRYPTION_KEYS`
+3. Set the new key as `VOLATICLOUD_ENCRYPTION_KEY`
+4. Deploy — decryption tries the primary key first, then falls back to old keys
+5. Data is re-encrypted with the new key on next write (lazy migration)
+6. After all data has been re-encrypted, remove old keys from `VOLATICLOUD_OLD_ENCRYPTION_KEYS`
+
+**Future improvements:**
+
+- Bulk re-encryption command for immediate rotation
+- Consider KMS integration for production key management
 
 ## Validation
 

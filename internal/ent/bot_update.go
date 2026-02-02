@@ -352,7 +352,9 @@ func (_u *BotUpdate) ClearMetrics() *BotUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *BotUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -379,11 +381,15 @@ func (_u *BotUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *BotUpdate) defaults() {
+func (_u *BotUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if bot.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized bot.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := bot.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -994,7 +1000,9 @@ func (_u *BotUpdateOne) Select(field string, fields ...string) *BotUpdateOne {
 
 // Save executes the query and returns the updated Bot entity.
 func (_u *BotUpdateOne) Save(ctx context.Context) (*Bot, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1021,11 +1029,15 @@ func (_u *BotUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *BotUpdateOne) defaults() {
+func (_u *BotUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if bot.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized bot.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := bot.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

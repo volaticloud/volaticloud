@@ -266,3 +266,65 @@ func TestDecryptRunnerResults_UnknownType(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 42, result)
 }
+
+func TestDecryptBotResults_Slice(t *testing.T) {
+	setupEncryptor(t)
+
+	secureConfig := map[string]interface{}{
+		"api_server": map[string]interface{}{
+			"username":       "freqtrader",
+			"password":       "super-secret-pw",
+			"jwt_secret_key": "jwt-key-123",
+		},
+	}
+	require.NoError(t, EncryptFields(secureConfig, []string{"api_server.username", "api_server.password", "api_server.jwt_secret_key"}))
+
+	bots := []*entgen.Bot{
+		{ID: uuid.New(), SecureConfig: secureConfig},
+		{ID: uuid.New(), SecureConfig: nil},
+	}
+
+	result, err := decryptBotResults(bots)
+	require.NoError(t, err)
+
+	decrypted := result.([]*entgen.Bot)
+	apiServer := decrypted[0].SecureConfig["api_server"].(map[string]interface{})
+	assert.Equal(t, "freqtrader", apiServer["username"])
+	assert.Equal(t, "super-secret-pw", apiServer["password"])
+	assert.Equal(t, "jwt-key-123", apiServer["jwt_secret_key"])
+}
+
+func TestDecryptBotResults_Single(t *testing.T) {
+	setupEncryptor(t)
+
+	secureConfig := map[string]interface{}{
+		"api_server": map[string]interface{}{
+			"password": "my-password",
+		},
+	}
+	require.NoError(t, EncryptFields(secureConfig, []string{"api_server.password"}))
+
+	b := &entgen.Bot{ID: uuid.New(), SecureConfig: secureConfig}
+	result, err := decryptBotResults(b)
+	require.NoError(t, err)
+
+	decrypted := result.(*entgen.Bot)
+	apiServer := decrypted.SecureConfig["api_server"].(map[string]interface{})
+	assert.Equal(t, "my-password", apiServer["password"])
+}
+
+func TestDecryptBotResults_NilSingle(t *testing.T) {
+	setupEncryptor(t)
+
+	result, err := decryptBotResults((*entgen.Bot)(nil))
+	require.NoError(t, err)
+	assert.Nil(t, result.(*entgen.Bot))
+}
+
+func TestDecryptBotResults_UnknownType(t *testing.T) {
+	setupEncryptor(t)
+
+	result, err := decryptBotResults("not-a-bot")
+	require.NoError(t, err)
+	assert.Equal(t, "not-a-bot", result)
+}

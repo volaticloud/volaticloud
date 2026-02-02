@@ -175,6 +175,11 @@ func main() {
 				Usage:   "Base64-encoded 32-byte AES-256 key for config field encryption. If not set, encryption is disabled",
 				EnvVars: []string{"VOLATICLOUD_ENCRYPTION_KEY"},
 			},
+			&cli.StringFlag{
+				Name:    "old-encryption-keys",
+				Usage:   "Comma-separated base64-encoded old encryption keys for key rotation (decryption only)",
+				EnvVars: []string{"VOLATICLOUD_OLD_ENCRYPTION_KEYS"},
+			},
 		},
 		Action: runServer,
 	}
@@ -258,10 +263,18 @@ func runServer(c *cli.Context) error {
 
 	// Initialize field-level encryption for config secrets
 	if encKey := c.String("encryption-key"); encKey != "" {
-		if err := secrets.Init(encKey); err != nil {
+		var oldKeys []string
+		if oldKeysStr := c.String("old-encryption-keys"); oldKeysStr != "" {
+			oldKeys = strings.Split(oldKeysStr, ",")
+		}
+		if err := secrets.Init(encKey, oldKeys...); err != nil {
 			return fmt.Errorf("failed to initialize encryption: %w", err)
 		}
-		log.Println("✓ Field-level encryption enabled")
+		if len(oldKeys) > 0 {
+			log.Printf("✓ Field-level encryption enabled (with %d old key(s) for rotation)", len(oldKeys))
+		} else {
+			log.Println("✓ Field-level encryption enabled")
+		}
 		secrets.RegisterDecryptInterceptors(client)
 	} else {
 		log.Println("⚠ Field-level encryption disabled (VOLATICLOUD_ENCRYPTION_KEY not set)")

@@ -970,7 +970,8 @@ func (c *BotClient) QueryMetrics(_m *Bot) *BotMetricsQuery {
 
 // Hooks returns the client hooks.
 func (c *BotClient) Hooks() []Hook {
-	return c.hooks.Bot
+	hooks := c.hooks.Bot
+	return append(hooks[:len(hooks):len(hooks)], bot.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
