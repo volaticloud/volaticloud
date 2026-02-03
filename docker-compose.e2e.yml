@@ -1,11 +1,12 @@
 # E2E Test Environment - Production-like setup
 # Usage: make e2e
 #
-# Requires /etc/hosts entries:
-#   127.0.0.1 console.volaticloud.loc auth.volaticloud.loc
+# All services use HTTPS through Caddy reverse proxy for consistent behavior.
+# Caddy provides network aliases so containers can reach auth.volaticloud.loc
+# and console.volaticloud.loc via HTTPS internally.
 #
-# All services run on a named network so spawned containers (data download, backtest)
-# can reach MinIO and other services by hostname.
+# Requires /etc/hosts entries on host for browser access:
+#   127.0.0.1 console.volaticloud.loc auth.volaticloud.loc
 
 name: volaticloud-e2e
 
@@ -28,6 +29,7 @@ services:
     build:
       context: ./keycloak
       dockerfile: Dockerfile
+      target: prod
     command: start-dev --import-realm --health-enabled=true
     environment:
       KEYCLOAK_ADMIN: admin
@@ -42,7 +44,6 @@ services:
       KC_HTTP_ENABLED: "true"
     volumes:
       - ./internal/testutil/testdata/volaticloud-realm.json:/opt/keycloak/data/import/volaticloud-realm.json:ro
-      - ./keycloak/themes/volaticloud:/opt/keycloak/themes/volaticloud:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,37 +87,6 @@ services:
     networks:
       - volaticloud-e2e
 
-  keycloak-init:
-    image: curlimages/curl:latest
-    depends_on:
-      keycloak:
-        condition: service_healthy
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        echo 'Configuring dashboard client for E2E...'
-        TOKEN=$$(curl -sf -X POST http://keycloak:8080/realms/master/protocol/openid-connect/token -d grant_type=password -d client_id=admin-cli -d username=admin -d password=admin | sed 's/.*access_token":"//;s/".*//')
-        CLIENT_ID=$$(curl -sf -H "Authorization: Bearer $$TOKEN" 'http://keycloak:8080/admin/realms/volaticloud/clients?clientId=dashboard' | sed 's/.*"id":"//;s/".*//')
-        CLIENT_JSON=$$(curl -sf -H "Authorization: Bearer $$TOKEN" "http://keycloak:8080/admin/realms/volaticloud/clients/$$CLIENT_ID")
-        UPDATED=$$(echo "$$CLIENT_JSON" | sed 's/"directAccessGrantsEnabled":false/"directAccessGrantsEnabled":true/' | sed 's/"redirectUris":\[[^]]*\]/"redirectUris":["http:\/\/localhost:5173\/*","https:\/\/console.volaticloud.loc\/*"]/' | sed 's/"post.logout.redirect.uris":"[^"]*"/"post.logout.redirect.uris":"http:\/\/localhost:5173\/*##https:\/\/console.volaticloud.loc\/*"/')
-        curl -sf -X PUT -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' "http://keycloak:8080/admin/realms/volaticloud/clients/$$CLIENT_ID" -d "$$UPDATED"
-        echo 'Dashboard client updated.'
-        echo 'Setting volaticloud client secret...'
-        VC_CLIENT_ID=$$(curl -sf -H "Authorization: Bearer $$TOKEN" 'http://keycloak:8080/admin/realms/volaticloud/clients?clientId=volaticloud' | sed 's/.*"id":"//;s/".*//')
-        VC_CLIENT_JSON=$$(curl -sf -H "Authorization: Bearer $$TOKEN" "http://keycloak:8080/admin/realms/volaticloud/clients/$$VC_CLIENT_ID")
-        VC_UPDATED=$$(echo "$$VC_CLIENT_JSON" | sed 's/"secret":"[^"]*"/"secret":"test-secret"/')
-        curl -sf -X PUT -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' "http://keycloak:8080/admin/realms/volaticloud/clients/$$VC_CLIENT_ID" -d "$$VC_UPDATED"
-        echo 'Volaticloud client updated.'
-        echo 'Setting test user password...'
-        USER_ID=$$(curl -sf -H "Authorization: Bearer $$TOKEN" 'http://keycloak:8080/admin/realms/volaticloud/users?username=test@test.com' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
-        echo "User ID: $$USER_ID"
-        printf '{"type":"password","value":"TestPass123","temporary":false}' > /tmp/pass.json
-        curl -sf -X PUT -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' "http://keycloak:8080/admin/realms/volaticloud/users/$$USER_ID/reset-password" -d @/tmp/pass.json
-        echo 'Done.'
-    networks:
-      - volaticloud-e2e
-
   minio-init:
     image: minio/mc
     depends_on:
@@ -131,35 +101,56 @@ services:
     networks:
       - volaticloud-e2e
 
+  # Reverse proxy - starts early, provides HTTPS endpoints for all services
+  # Network aliases allow internal services to reach auth/console via HTTPS
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile.e2e:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      # Just check if Caddy is listening - upstreams may not be ready yet
+      test: ["CMD-SHELL", "nc -z localhost 443"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      volaticloud-e2e:
+        aliases:
+          - auth.volaticloud.loc
+          - console.volaticloud.loc
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     command: ["server"]
+    env_file:
+      - .env
     environment:
-      # Database
+      # Database (override .env for E2E)
       VOLATICLOUD_DATABASE: "postgresql://volaticloud:volaticloud@postgres:5432/volaticloud?sslmode=disable"
-      # Keycloak - backend talks directly to Keycloak
-      VOLATICLOUD_KEYCLOAK_URL: http://keycloak:8080
-      # Expected issuer for tokens (browser goes through HTTPS proxy)
-      VOLATICLOUD_KEYCLOAK_ISSUER_URL: https://auth.volaticloud.loc
+      # Keycloak - all access through Caddy HTTPS for consistent token issuer
+      VOLATICLOUD_KEYCLOAK_URL: https://auth.volaticloud.loc
       VOLATICLOUD_KEYCLOAK_REALM: volaticloud
       VOLATICLOUD_KEYCLOAK_CLIENT_ID: volaticloud
       VOLATICLOUD_KEYCLOAK_CLIENT_SECRET: test-secret
+      VOLATICLOUD_KEYCLOAK_TLS_SKIP_VERIFY: "true"
       # etcd
       VOLATICLOUD_ETCD_ENDPOINTS: etcd:2379
       # Encryption
       VOLATICLOUD_ENCRYPTION_KEY: "ZTJlLXRlc3QtZW5jcnlwdGlvbi1rZXktMzJieXRlcyE="
-      # Stripe (test mode - optional, set via .env if needed)
-      VOLATICLOUD_STRIPE_API_KEY: ${STRIPE_API_KEY:-}
-      VOLATICLOUD_STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Stripe keys loaded from .env file
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      keycloak:
+      caddy:
         condition: service_healthy
-      keycloak-init:
-        condition: service_completed_successfully
       etcd:
         condition: service_healthy
       minio-init:
@@ -194,33 +185,11 @@ services:
     networks:
       - volaticloud-e2e
 
-  # Reverse proxy - single entry point with proper TLS
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "443:443"
-    volumes:
-      - ./Caddyfile.e2e:/etc/caddy/Caddyfile:ro
-      - ./certs:/certs:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      dashboard:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://console.volaticloud.loc/"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    extra_hosts:
-      - "console.volaticloud.loc:127.0.0.1"
-      - "auth.volaticloud.loc:127.0.0.1"
-    networks:
-      - volaticloud-e2e
-
   stripe-cli:
     image: stripe/stripe-cli
-    command: listen --forward-to http://backend:8080/gateway/v1/webhooks/stripe --api-key ${STRIPE_API_KEY:-sk_test_placeholder}
+    env_file:
+      - .env
+    command: listen --forward-to http://backend:8080/gateway/v1/webhooks/stripe --api-key ${VOLATICLOUD_STRIPE_API_KEY}
     depends_on:
       backend:
         condition: service_healthy
@@ -248,14 +217,12 @@ services:
     depends_on:
       caddy:
         condition: service_healthy
+      dashboard:
+        condition: service_healthy
     networks:
       - volaticloud-e2e
     profiles:
       - test
-
-volumes:
-  caddy_data:
-  caddy_config:
 
 networks:
   volaticloud-e2e:

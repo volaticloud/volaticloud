@@ -6,7 +6,7 @@
 import { Page } from '@playwright/test';
 
 const KEYCLOAK_USERNAME = process.env.E2E_USERNAME || 'test@test.com';
-const KEYCLOAK_PASSWORD = process.env.E2E_PASSWORD || 'TestPass123';
+const KEYCLOAK_PASSWORD = process.env.E2E_PASSWORD || 'Test123!';
 // OIDC authority URL (used in sessionStorage key - must match what the dashboard uses)
 const KEYCLOAK_URL = process.env.E2E_KEYCLOAK_URL || 'https://auth.volaticloud.loc';
 // Internal URL for server-side token requests (bypasses TLS issues with self-signed certs)
@@ -18,7 +18,7 @@ const KEYCLOAK_CLIENT_ID = 'dashboard';
  * Sign in using direct password grant (Resource Owner Password Credentials).
  * Gets a token from Keycloak server-side, then injects it into the browser's sessionStorage.
  */
-async function signInDirectGrant(page: Page): Promise<void> {
+export async function signInDirectGrant(page: Page): Promise<void> {
   const tokenUrl = `${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
 
   // Get token via password grant from within the Playwright Node.js process
@@ -157,12 +157,15 @@ async function signInBrowser(page: Page): Promise<void> {
   }
 
   // Wait for redirect back to dashboard (not Keycloak)
-  // The URL should contain 'dashboard' but NOT '/realms/' (which indicates Keycloak pages)
+  // The URL should be console.volaticloud.loc (not auth.volaticloud.loc)
   console.log('Waiting for redirect back to dashboard...');
   await page.waitForFunction(
     () => {
       const url = window.location.href;
-      return url.includes('dashboard') && !url.includes('/realms/') && !url.includes('/login-actions/');
+      // Check we're on console domain, not auth/keycloak domain
+      return (url.includes('console.volaticloud.loc') || url.includes('localhost:5173'))
+        && !url.includes('/realms/')
+        && !url.includes('/login-actions/');
     },
     { timeout: 30_000 }
   );

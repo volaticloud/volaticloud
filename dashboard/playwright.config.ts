@@ -15,11 +15,11 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.E2E_BASE_URL || 'https://console.volaticloud.loc',
     screenshot: 'only-on-failure',
     trace: 'off',
-    // Accept self-signed certs from Caddy internal CA in containerized E2E
-    ignoreHTTPSErrors: !!process.env.E2E_BASE_URL,
+    // Use system Chrome which has the CA certificate installed
+    channel: 'chrome',
   },
   projects: [
     {

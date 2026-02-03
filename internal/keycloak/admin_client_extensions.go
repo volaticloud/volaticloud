@@ -121,7 +121,7 @@ func (a *AdminClient) GetResourceGroups(
 	req.Header.Set("Accept", "application/json")
 
 	// Execute request
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
@@ -222,7 +222,7 @@ func (a *AdminClient) GetResourceGroupMembers(
 	req.Header.Set("Accept", "application/json")
 
 	// Execute request
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}

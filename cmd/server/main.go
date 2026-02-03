@@ -91,8 +91,13 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:    "keycloak-url",
-				Usage:   "Keycloak server URL (e.g., https://keycloak.volaticloud.com)",
+				Usage:   "Keycloak server URL for API calls (e.g., https://keycloak.volaticloud.com)",
 				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_URL"},
+			},
+			&cli.StringFlag{
+				Name:    "keycloak-issuer-url",
+				Usage:   "Expected token issuer URL base (if different from keycloak-url, e.g., behind proxy)",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_ISSUER_URL"},
 			},
 			&cli.StringFlag{
 				Name:    "keycloak-realm",
@@ -116,6 +121,11 @@ func main() {
 				Usage:   "Keycloak client ID for the dashboard (used in invitation redirects)",
 				Value:   "dashboard",
 				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_DASHBOARD_CLIENT_ID"},
+			},
+			&cli.BoolFlag{
+				Name:    "keycloak-tls-skip-verify",
+				Usage:   "Skip TLS certificate verification for Keycloak (E2E tests only)",
+				EnvVars: []string{"VOLATICLOUD_KEYCLOAK_TLS_SKIP_VERIFY"},
 			},
 			// Alert configuration
 			&cli.StringFlag{
@@ -287,10 +297,12 @@ func runServer(c *cli.Context) error {
 	// Must be initialized before alert manager and monitor manager
 	keycloakConfig := auth.KeycloakConfig{
 		URL:               c.String("keycloak-url"),
+		IssuerURL:         c.String("keycloak-issuer-url"),
 		Realm:             c.String("keycloak-realm"),
 		ClientID:          c.String("keycloak-client-id"),
 		ClientSecret:      c.String("keycloak-client-secret"),
 		DashboardClientID: c.String("keycloak-dashboard-client-id"),
+		TLSSkipVerify:     c.Bool("keycloak-tls-skip-verify"),
 	}
 
 	// Validate that Keycloak is configured
@@ -309,6 +321,7 @@ func runServer(c *cli.Context) error {
 		keycloakConfig.Realm,
 		keycloakConfig.ClientID,
 		keycloakConfig.ClientSecret,
+		keycloakConfig.TLSSkipVerify,
 	)
 	log.Println("✓ Keycloak UMA 2.0 authorization enabled")
 

@@ -24,8 +24,9 @@ var _ runner.DataDownloader = (*DataDownloader)(nil)
 // DataDownloader implements runner.DataDownloader for Docker.
 // It runs data download containers on the remote Docker host.
 type DataDownloader struct {
-	client *client.Client
-	config *Config
+	client  *client.Client
+	config  *Config
+	network string
 }
 
 // NewDataDownloader creates a new Docker data downloader.
@@ -46,9 +47,15 @@ func NewDataDownloader(ctx context.Context, config *Config) (*DataDownloader, er
 		return nil, fmt.Errorf("failed to connect to Docker host: %w", err)
 	}
 
+	network := config.Network
+	if network == "" {
+		network = "bridge"
+	}
+
 	return &DataDownloader{
-		client: cli,
-		config: config,
+		client:  cli,
+		config:  config,
+		network: network,
 	}, nil
 }
 
@@ -86,7 +93,8 @@ func (d *DataDownloader) StartDownload(ctx context.Context, spec runner.DataDown
 	}
 
 	hostConfig := &container.HostConfig{
-		AutoRemove: false, // Keep container for log retrieval
+		NetworkMode: container.NetworkMode(d.network),
+		AutoRemove:  false, // Keep container for log retrieval
 	}
 
 	resp, err := d.client.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)

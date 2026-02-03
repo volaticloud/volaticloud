@@ -3,11 +3,15 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": true,
-  "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": false,
+  "registrationEmailAsUsername": true,
+  "rememberMe": true,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "loginTheme": "volaticloud",
   "defaultRole": {
     "id": "d628cc79-4de9-4211-a855-f7e6dc292454",
     "name": "default-roles-dev",
@@ -953,8 +957,7 @@
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
         "http://localhost:5173/*",
-        "http://dashboard:8080/*",
-        "https://dashboard/*"
+        "https://console.volaticloud.loc/*"
       ],
       "webOrigins": [
         "+"
