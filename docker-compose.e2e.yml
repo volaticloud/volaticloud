@@ -1,0 +1,262 @@
+# E2E Test Environment - Production-like setup
+# Usage: make e2e
+#
+# Requires /etc/hosts entries:
+#   127.0.0.1 console.volaticloud.loc auth.volaticloud.loc
+#
+# All services run on a named network so spawned containers (data download, backtest)
+# can reach MinIO and other services by hostname.
+
+name: volaticloud-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: volaticloud
+      POSTGRES_PASSWORD: volaticloud
+      POSTGRES_DB: volaticloud
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U volaticloud"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  keycloak:
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+    command: start-dev --import-realm --health-enabled=true
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/volaticloud
+      KC_DB_USERNAME: volaticloud
+      KC_DB_PASSWORD: volaticloud
+      KC_HOSTNAME: auth.volaticloud.loc
+      KC_HOSTNAME_ADMIN_URL: http://keycloak:8080
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./internal/testutil/testdata/volaticloud-realm.json:/opt/keycloak/data/import/volaticloud-realm.json:ro
+      - ./keycloak/themes/volaticloud:/opt/keycloak/themes/volaticloud:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && timeout 2 cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    networks:
+      - volaticloud-e2e
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.12
+    command:
+      - /usr/local/bin/etcd
+      - --name=volaticloud-etcd
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  keycloak-init:
+    image: curlimages/curl:latest
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo 'Configuring dashboard client for E2E...'
+        TOKEN=$$(curl -sf -X POST http://keycloak:8080/realms/master/protocol/openid-connect/token -d grant_type=password -d client_id=admin-cli -d username=admin -d password=admin | sed 's/.*access_token":"//;s/".*//')
+        CLIENT_ID=$$(curl -sf -H "Authorization: Bearer $$TOKEN" 'http://keycloak:8080/admin/realms/volaticloud/clients?clientId=dashboard' | sed 's/.*"id":"//;s/".*//')
+        CLIENT_JSON=$$(curl -sf -H "Authorization: Bearer $$TOKEN" "http://keycloak:8080/admin/realms/volaticloud/clients/$$CLIENT_ID")
+        UPDATED=$$(echo "$$CLIENT_JSON" | sed 's/"directAccessGrantsEnabled":false/"directAccessGrantsEnabled":true/' | sed 's/"redirectUris":\[[^]]*\]/"redirectUris":["http:\/\/localhost:5173\/*","https:\/\/console.volaticloud.loc\/*"]/' | sed 's/"post.logout.redirect.uris":"[^"]*"/"post.logout.redirect.uris":"http:\/\/localhost:5173\/*##https:\/\/console.volaticloud.loc\/*"/')
+        curl -sf -X PUT -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' "http://keycloak:8080/admin/realms/volaticloud/clients/$$CLIENT_ID" -d "$$UPDATED"
+        echo 'Dashboard client updated.'
+        echo 'Setting volaticloud client secret...'
+        VC_CLIENT_ID=$$(curl -sf -H "Authorization: Bearer $$TOKEN" 'http://keycloak:8080/admin/realms/volaticloud/clients?clientId=volaticloud' | sed 's/.*"id":"//;s/".*//')
+        VC_CLIENT_JSON=$$(curl -sf -H "Authorization: Bearer $$TOKEN" "http://keycloak:8080/admin/realms/volaticloud/clients/$$VC_CLIENT_ID")
+        VC_UPDATED=$$(echo "$$VC_CLIENT_JSON" | sed 's/"secret":"[^"]*"/"secret":"test-secret"/')
+        curl -sf -X PUT -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' "http://keycloak:8080/admin/realms/volaticloud/clients/$$VC_CLIENT_ID" -d "$$VC_UPDATED"
+        echo 'Volaticloud client updated.'
+        echo 'Setting test user password...'
+        USER_ID=$$(curl -sf -H "Authorization: Bearer $$TOKEN" 'http://keycloak:8080/admin/realms/volaticloud/users?username=test@test.com' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
+        echo "User ID: $$USER_ID"
+        printf '{"type":"password","value":"TestPass123","temporary":false}' > /tmp/pass.json
+        curl -sf -X PUT -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' "http://keycloak:8080/admin/realms/volaticloud/users/$$USER_ID/reset-password" -d @/tmp/pass.json
+        echo 'Done.'
+    networks:
+      - volaticloud-e2e
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb --ignore-existing myminio/volaticloud-data;
+      exit 0;
+      "
+    networks:
+      - volaticloud-e2e
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["server"]
+    environment:
+      # Database
+      VOLATICLOUD_DATABASE: "postgresql://volaticloud:volaticloud@postgres:5432/volaticloud?sslmode=disable"
+      # Keycloak - backend talks directly to Keycloak
+      VOLATICLOUD_KEYCLOAK_URL: http://keycloak:8080
+      # Expected issuer for tokens (browser goes through HTTPS proxy)
+      VOLATICLOUD_KEYCLOAK_ISSUER_URL: https://auth.volaticloud.loc
+      VOLATICLOUD_KEYCLOAK_REALM: volaticloud
+      VOLATICLOUD_KEYCLOAK_CLIENT_ID: volaticloud
+      VOLATICLOUD_KEYCLOAK_CLIENT_SECRET: test-secret
+      # etcd
+      VOLATICLOUD_ETCD_ENDPOINTS: etcd:2379
+      # Encryption
+      VOLATICLOUD_ENCRYPTION_KEY: "ZTJlLXRlc3QtZW5jcnlwdGlvbi1rZXktMzJieXRlcyE="
+      # Stripe (test mode - optional, set via .env if needed)
+      VOLATICLOUD_STRIPE_API_KEY: ${STRIPE_API_KEY:-}
+      VOLATICLOUD_STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      keycloak-init:
+        condition: service_completed_successfully
+      etcd:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/gateway/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    networks:
+      - volaticloud-e2e
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    environment:
+      # OIDC authority - Keycloak via Caddy reverse proxy
+      VOLATICLOUD__KEYCLOAK_AUTHORITY: https://auth.volaticloud.loc/realms/volaticloud
+      VOLATICLOUD__KEYCLOAK_CLIENT_ID: dashboard
+      VOLATICLOUD__KEYCLOAK_REDIRECT_URI: https://console.volaticloud.loc/
+      VOLATICLOUD__KEYCLOAK_POST_LOGOUT_REDIRECT_URI: https://console.volaticloud.loc/
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  # Reverse proxy - single entry point with proper TLS
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile.e2e:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      dashboard:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://console.volaticloud.loc/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    extra_hosts:
+      - "console.volaticloud.loc:127.0.0.1"
+      - "auth.volaticloud.loc:127.0.0.1"
+    networks:
+      - volaticloud-e2e
+
+  stripe-cli:
+    image: stripe/stripe-cli
+    command: listen --forward-to http://backend:8080/gateway/v1/webhooks/stripe --api-key ${STRIPE_API_KEY:-sk_test_placeholder}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - volaticloud-e2e
+    profiles:
+      - stripe
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.58.1-noble
+    working_dir: /app
+    command: bash -c "npm ci && npx playwright test --project=strategy-scenarios"
+    environment:
+      E2E_BASE_URL: https://console.volaticloud.loc
+      E2E_GRAPHQL_ENDPOINT: https://console.volaticloud.loc/gateway/v1/query
+      E2E_WS_ENDPOINT: wss://console.volaticloud.loc/gateway/v1/query
+      E2E_KEYCLOAK_URL: https://auth.volaticloud.loc
+      E2E_KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      CI: "true"
+    volumes:
+      - ./dashboard:/app
+    extra_hosts:
+      - "console.volaticloud.loc:host-gateway"
+      - "auth.volaticloud.loc:host-gateway"
+    depends_on:
+      caddy:
+        condition: service_healthy
+    networks:
+      - volaticloud-e2e
+    profiles:
+      - test
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  volaticloud-e2e:
+    name: volaticloud-e2e

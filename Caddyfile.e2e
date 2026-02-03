@@ -1,0 +1,60 @@
+# E2E Test Environment - Production-like setup
+# Requires /etc/hosts entries:
+#   127.0.0.1 console.volaticloud.loc auth.volaticloud.loc
+#
+# Install CA certificate: make e2e-install-ca
+
+# Dashboard/Console
+https://console.volaticloud.loc {
+	tls /certs/server.crt /certs/server.key
+
+	encode gzip
+
+	# Proxy API/GraphQL to backend
+	handle /gateway/* {
+		reverse_proxy backend:8080 {
+			flush_interval -1
+			transport http {
+				read_timeout 0
+				write_timeout 0
+			}
+		}
+	}
+
+	# Proxy all other requests to dashboard container (serves static files)
+	handle {
+		reverse_proxy dashboard:8080
+	}
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	@not_frequi {
+		not path /frequi/*
+	}
+	header @not_frequi X-Frame-Options "DENY"
+
+	log {
+		output stdout
+		format json
+	}
+}
+
+# Keycloak Auth Server
+https://auth.volaticloud.loc {
+	tls /certs/server.crt /certs/server.key
+
+	reverse_proxy keycloak:8080 {
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-Host auth.volaticloud.loc
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

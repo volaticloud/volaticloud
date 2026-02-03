@@ -1,4 +1,4 @@
-.PHONY: help setup dev test test-authz test-integration test-all coverage lint generate migrate clean build docs-generate docs-verify docs-quality
+.PHONY: help setup dev test test-authz test-integration test-all coverage lint generate migrate clean build docs-generate docs-verify docs-quality e2e e2e-certs e2e-install-ca e2e-install-hosts
 
 # Default target
 help:
@@ -29,6 +29,13 @@ help:
 	@echo "  make docs-lint-fix - Fix markdown lint issues"
 	@echo "  make docs-links    - Check markdown links"
 	@echo "  make docs-verify   - Verify documentation structure"
+	@echo ""
+	@echo "E2E Testing:"
+	@echo "  make e2e              - Run fully containerized E2E tests (Docker required)"
+	@echo "  make e2e-setup        - Setup E2E environment (install CA + hosts entries)"
+	@echo "  make e2e-certs        - Regenerate TLS certificates for E2E"
+	@echo "  make e2e-install-ca   - Install CA certificate as trusted root (requires sudo)"
+	@echo "  make e2e-install-hosts - Add required /etc/hosts entries (requires sudo)"
 	@echo ""
 	@echo "Other:"
 	@echo "  make clean        - Clean generated files and build artifacts"
@@ -215,3 +222,60 @@ docs-quality:
 	@./scripts/assess-docs-quality.sh
 	@echo ""
 	@echo "Detailed report: docs/quality-report.md"
+
+# Run fully containerized E2E tests
+e2e:
+	@echo "Running containerized E2E tests..."
+	@chmod +x scripts/e2e.sh
+	@./scripts/e2e.sh
+
+# Setup E2E environment (install CA + hosts entries)
+e2e-setup: e2e-install-ca e2e-install-hosts
+	@echo ""
+	@echo "E2E environment setup complete!"
+	@echo "You can now run: make e2e"
+
+# Generate TLS certificates for E2E testing
+e2e-certs:
+	@echo "Generating E2E TLS certificates..."
+	@mkdir -p certs
+	@openssl genrsa -out certs/ca.key 4096
+	@openssl req -x509 -new -nodes -key certs/ca.key -sha256 -days 3650 \
+		-out certs/ca.crt -config certs/openssl.cnf
+	@openssl genrsa -out certs/server.key 2048
+	@openssl req -new -key certs/server.key -out certs/server.csr \
+		-config certs/openssl.cnf -reqexts server_req_ext \
+		-subj "/C=US/ST=California/L=San Francisco/O=VolatiCloud/OU=Development/CN=*.volaticloud.loc"
+	@openssl x509 -req -in certs/server.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial \
+		-out certs/server.crt -days 730 -sha256 \
+		-extfile certs/openssl.cnf -extensions server_cert
+	@openssl verify -CAfile certs/ca.crt certs/server.crt
+	@echo "Certificates generated in certs/"
+
+# Install CA certificate as trusted root
+e2e-install-ca:
+	@echo "Installing VolatiCloud E2E CA certificate..."
+ifeq ($(shell uname),Darwin)
+	@echo "Detected macOS - installing to System Keychain (requires sudo)..."
+	@sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain certs/ca.crt
+	@echo "CA certificate installed. You may need to restart your browser."
+else ifeq ($(shell uname),Linux)
+	@echo "Detected Linux - installing to system trust store (requires sudo)..."
+	@sudo cp certs/ca.crt /usr/local/share/ca-certificates/volaticloud-e2e-ca.crt
+	@sudo update-ca-certificates
+	@echo "CA certificate installed. For Chrome/Chromium, you may also need to import manually:"
+	@echo "  chrome://settings/certificates -> Authorities -> Import -> certs/ca.crt"
+else
+	@echo "Unsupported OS. Please manually install certs/ca.crt as a trusted root CA."
+endif
+
+# Add required /etc/hosts entries
+e2e-install-hosts:
+	@echo "Checking /etc/hosts entries..."
+	@if grep -q "console.volaticloud.loc" /etc/hosts; then \
+		echo "Hosts entries already exist."; \
+	else \
+		echo "Adding hosts entries (requires sudo)..."; \
+		echo "127.0.0.1 console.volaticloud.loc auth.volaticloud.loc" | sudo tee -a /etc/hosts > /dev/null; \
+		echo "Hosts entries added."; \
+	fi
