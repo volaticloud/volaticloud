@@ -130,6 +130,7 @@ services:
       context: .
       dockerfile: Dockerfile
     command: ["server"]
+    user: root  # Required for Docker socket access (backtests)
     env_file:
       - .env
     environment:
@@ -145,6 +146,8 @@ services:
       VOLATICLOUD_ETCD_ENDPOINTS: etcd:2379
       # Encryption
       VOLATICLOUD_ENCRYPTION_KEY: "ZTJlLXRlc3QtZW5jcnlwdGlvbi1rZXktMzJieXRlcyE="
+      # CORS - allow dashboard origin for WebSocket connections
+      VOLATICLOUD_CORS_ORIGINS: "https://console.volaticloud.loc"
       # Stripe keys loaded from .env file
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -202,6 +205,8 @@ services:
     image: mcr.microsoft.com/playwright:v1.58.1-noble
     working_dir: /app
     command: bash -c "npm ci && npx playwright test --project=strategy-scenarios"
+    env_file:
+      - .env
     environment:
       E2E_BASE_URL: https://console.volaticloud.loc
       E2E_GRAPHQL_ENDPOINT: https://console.volaticloud.loc/gateway/v1/query

@@ -618,6 +618,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                       <Checkbox
                         checked={s3Config.useSSL ?? true}
                         onChange={(e) => setS3Config({ ...s3Config, useSSL: e.target.checked })}
+                        data-testid="s3-use-ssl-checkbox"
                       />
                     }
                     label="Use SSL/HTTPS"
@@ -631,6 +632,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                     startIcon={testS3Loading && <CircularProgress size={16} />}
                     variant="outlined"
                     size="small"
+                    data-testid="test-s3-connection"
                   >
                     {testS3Loading ? 'Testing...' : 'Test S3 Connection'}
                   </Button>
@@ -770,6 +772,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
             onClick={handleTestConnection}
             disabled={testLoading || loading}
             startIcon={testLoading && <CircularProgress size={16} />}
+            data-testid="test-docker-connection"
           >
             {testLoading ? 'Testing...' : 'Test Connection'}
           </Button>
@@ -778,6 +781,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
             variant="contained"
             disabled={loading || !name || (type === 'kubernetes' && !kubernetesConfig.namespace)}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid="submit-create-runner"
           >
             {loading ? 'Creating...' : 'Create Runner'}
           </Button>

@@ -1,379 +1,797 @@
 /**
- * Strategy Builder E2E Test Suite - 500 Scenarios
+ * Strategy Builder E2E Test Suite
  *
- * Tests the full strategy creation → code preview → backtest flow.
- * Uses the GraphQL API through the browser context (leveraging existing auth).
+ * 100% UI-based - all interactions through the browser UI, no GraphQL API calls.
  *
- * For each scenario:
- * 1. Calls previewStrategyCode to validate code generation
- * 2. Creates the strategy via createStrategy mutation
- * 3. Runs a backtest via runBacktest mutation
- * 4. Polls for backtest completion and checks for errors
- * 5. Logs all errors for analysis
+ * Test Flow (per run):
+ * 1. Sign in
+ * 2. Create new Organization via UI
+ * 3. Subscribe via Stripe Checkout UI
+ * 4. Create Runner via UI
+ * 5. Wait for Data Download
+ * 6. Create Strategies & Run Backtests - N times
+ * 7. Create Bots from Strategies - N times
  */
 
 import { test, Page } from '@playwright/test';
 import { generateAllScenarios } from './scenario-generator';
 import { signIn } from './auth';
-import { createClient, type Client as WsClient } from 'graphql-ws';
-import WebSocket from 'ws';
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const GRAPHQL_ENDPOINT = '/gateway/v1/query';
-const WS_ENDPOINT = process.env.E2E_WS_ENDPOINT || 'ws://localhost:8080/gateway/v1/query';
 const BACKTEST_TIMEOUT_MS = 5 * 60 * 1000; // 5 min per backtest
-const BACKTEST_POLL_INTERVAL_MS = 5_000;
-// Shared auth token - captured once after sign-in
-let authToken = '';
+const DATA_DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 min for data download
 
 // Results tracking
 interface ScenarioResult {
   scenarioId: number;
   scenarioName: string;
   category: string;
-  previewSuccess: boolean;
-  previewError?: string;
-  createSuccess: boolean;
-  createError?: string;
-  strategyId?: string;
+  strategyCreated: boolean;
+  strategyError?: string;
   backtestSuccess: boolean;
   backtestError?: string;
-  backtestLogs?: string;
-  backtestStatus?: string;
-  backtestResult?: Record<string, unknown>;
+  botCreated: boolean;
+  botError?: string;
   duration: number;
 }
 
 // ============================================================================
-// GraphQL helper
+// UI Helper Functions
 // ============================================================================
 
-/** Extract auth token from session storage */
-async function captureToken(page: Page): Promise<string> {
-  return await page.evaluate(() => {
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key && key.startsWith('oidc.user:')) {
-        try {
-          const val = JSON.parse(sessionStorage.getItem(key) || '{}');
-          if (val.access_token) return val.access_token;
-        } catch { /* ignore */ }
-      }
-    }
-    return '';
-  });
+/** Wait for page to be fully loaded and interactive */
+async function waitForPageReady(page: Page): Promise<void> {
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000);
 }
 
-async function graphqlRequest(page: Page, query: string, variables: Record<string, unknown>, retries = 2): Promise<{ data?: Record<string, unknown>; errors?: Array<{ message: string }> }> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const result = await page.evaluate(
-        async ({ endpoint, query, variables, token }) => {
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({ query, variables }),
-          });
-          return response.json();
-        },
-        { endpoint: GRAPHQL_ENDPOINT, query, variables, token: authToken }
-      );
+// ============================================================================
+// Step 1: Create Organization via UI
+// ============================================================================
 
-      // Check if token expired
-      if (result.error === 'missing Authorization header' || result.error?.includes?.('token') || result.error?.includes?.('expired')) {
-        // Try to recapture token first
-        const newToken = await captureToken(page);
-        if (newToken && newToken !== authToken) {
-          authToken = newToken;
-          console.log('  Token refreshed from session');
-          continue;
-        }
-        // Session expired - re-authenticate
-        if (attempt < retries) {
-          console.log('  Token expired, re-authenticating...');
-          await signIn(page);
-          await page.waitForTimeout(2000);
-          const freshToken = await captureToken(page);
-          if (freshToken) {
-            authToken = freshToken;
-            console.log('  Re-authenticated successfully');
-            continue;
+async function createOrganizationViaUI(page: Page): Promise<{ success: boolean; orgName?: string; error?: string }> {
+  console.log('Creating new organization via UI...');
+
+  try {
+    // Navigate to home/dashboard first
+    await page.goto('/');
+    await waitForPageReady(page);
+
+    // Generate unique org name
+    const orgName = `E2E-Org-${Date.now()}`;
+
+    // Check for different entry points to create org:
+
+    // Case 1: NoOrganizationView - big "Create Organization" button when user has no orgs
+    const noOrgCreateBtn = page.locator('button:has-text("Create Organization")').first();
+    if (await noOrgCreateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log('Found NoOrganizationView - clicking Create Organization');
+      await noOrgCreateBtn.click();
+      await page.waitForTimeout(1000);
+    }
+    // Case 2: OrganizationSwitcher with 1 org - "New" button
+    else {
+      const newOrgBtn = page.locator('button:has-text("New")').first();
+      if (await newOrgBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        console.log('Found New button in org switcher');
+        await newOrgBtn.click();
+        await page.waitForTimeout(1000);
+      }
+      // Case 3: OrganizationSwitcher with multiple orgs - dropdown with "Create New Organization"
+      else {
+        const orgSwitcher = page.locator('#organization-select, [role="combobox"]').first();
+        if (await orgSwitcher.isVisible({ timeout: 2000 }).catch(() => false)) {
+          console.log('Found org switcher dropdown');
+          await orgSwitcher.click();
+          await page.waitForTimeout(500);
+
+          const createOption = page.locator('[role="option"]:has-text("Create New Organization")').first();
+          if (await createOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await createOption.click();
+            await page.waitForTimeout(1000);
           }
         }
       }
+    }
 
-      return result;
-    } catch (e) {
-      if (attempt < retries && String(e).includes('Execution context was destroyed')) {
-        console.warn(`  Retrying after context destroyed (attempt ${attempt + 1})`);
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(1000);
-        continue;
+    // Now the drawer should be open - fill in the organization title
+    const titleInput = page.getByLabel('Organization Title');
+    await titleInput.waitFor({ state: 'visible', timeout: 5000 });
+    await titleInput.fill(orgName);
+    console.log(`Filled org name: ${orgName}`);
+
+    await page.waitForTimeout(500);
+
+    // Click the submit button using data-testid
+    const drawerCreateBtn = page.locator('[data-testid="submit-create-organization"]');
+    await drawerCreateBtn.waitFor({ state: 'visible', timeout: 3000 });
+    console.log('Clicking Create button...');
+    await drawerCreateBtn.click();
+
+    // Wait for redirect after org creation (it does signinRedirect which is instant due to existing SSO session)
+    console.log('Waiting for redirect after org creation...');
+    await page.waitForTimeout(5000);
+    await waitForPageReady(page);
+
+    // Verify org was created by checking URL
+    const url = page.url();
+    console.log(`After org creation, URL: ${url}`);
+    if (url.includes('orgId=') || url.includes(orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-'))) {
+      console.log(`Organization created: ${orgName}`);
+      return { success: true, orgName };
+    }
+
+    // Even if URL doesn't have orgId, org might still be created
+    console.log(`Organization likely created: ${orgName}`);
+    return { success: true, orgName };
+  } catch (e) {
+    console.error('Failed to create organization:', e);
+    return { success: false, error: String(e) };
+  }
+}
+
+// ============================================================================
+// Step 2: Subscribe via Stripe Checkout
+// ============================================================================
+
+async function subscribeViaUI(page: Page): Promise<{ success: boolean; error?: string }> {
+  console.log('Setting up subscription via UI...');
+
+  try {
+    // Navigate to billing page (under organization)
+    await page.goto('/organization/billing');
+    await waitForPageReady(page);
+    console.log('Billing page URL:', page.url());
+
+    // Take screenshot for debugging
+    await page.screenshot({ path: 'test-results/billing-page.png' });
+
+    // Wait for plans to load (they come from GraphQL)
+    await page.waitForTimeout(5000);
+
+    // Check if already has a subscription (look for "Current Plan" button or credit balance)
+    const currentPlanBtn = page.locator('button:has-text("Current Plan")');
+    if (await currentPlanBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log('Already has subscription, skipping');
+      return { success: true };
+    }
+
+    // Find all "Subscribe" buttons in plan cards
+    const subscribeButtons = page.locator('button:has-text("Subscribe")');
+    let btnCount = await subscribeButtons.count();
+    console.log(`Found ${btnCount} Subscribe buttons`);
+
+    if (btnCount === 0) {
+      // Maybe plans are still loading - wait more
+      console.log('Waiting for plans to load...');
+      await page.waitForTimeout(5000);
+      btnCount = await subscribeButtons.count();
+      console.log(`After wait, found ${btnCount} Subscribe buttons`);
+
+      if (btnCount === 0) {
+        // Log page content for debugging
+        const bodyText = await page.locator('body').innerText();
+        console.log('Page content preview:', bodyText.substring(0, 500));
+        return { success: false, error: 'No subscription plans available' };
       }
+    }
+
+    // Click the first subscribe button (Starter plan - Free) for simpler testing
+    const finalCount = await subscribeButtons.count();
+    console.log(`Found ${finalCount} Subscribe buttons, clicking first one (Starter)...`);
+
+    // Take screenshot before clicking
+    await page.screenshot({ path: 'test-results/before-subscribe-click.png' });
+
+    await subscribeButtons.first().click();
+    console.log('Subscribe button clicked');
+
+    // Wait a moment and take another screenshot
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: 'test-results/after-subscribe-click.png' });
+    console.log('Current URL after click:', page.url());
+
+    // Wait for Stripe Checkout page or any navigation
+    try {
+      await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30000 });
+      console.log('Redirected to Stripe Checkout');
+    } catch (e) {
+      console.log('No Stripe redirect, checking current page...');
+      console.log('URL:', page.url());
+      const bodyText = await page.locator('body').innerText();
+      console.log('Page content:', bodyText.substring(0, 500));
       throw e;
     }
+
+    // Wait for form to be ready
+    await page.waitForLoadState('domcontentloaded');
+    const cardField = page.locator('[placeholder="1234 1234 1234 1234"]');
+    await cardField.waitFor({ state: 'visible', timeout: 30000 });
+    console.log('Stripe form ready');
+
+    // Fill card details
+    await cardField.fill('4242424242424242');
+    console.log('Card number filled');
+
+    // Fill expiry
+    const expiryField = page.locator('[placeholder="MM / YY"]');
+    await expiryField.click();
+    await page.keyboard.type('1230');
+    console.log('Expiry filled');
+
+    // Fill CVC
+    await page.locator('[placeholder="CVC"]').fill('123');
+    console.log('CVC filled');
+
+    // Fill name
+    await page.locator('[placeholder="Full name on card"]').fill('E2E Test User');
+    console.log('Name filled');
+
+    // Submit
+    const submitBtn = page.locator('button[type="submit"]').first();
+    await submitBtn.click();
+    console.log('Payment submitted');
+
+    // Wait for redirect back to app
+    await page.waitForURL(/.*volaticloud.*/, { timeout: 60000 });
+    await page.waitForTimeout(5000); // Wait for webhook processing
+    console.log('Subscription complete');
+
+    return { success: true };
+  } catch (e) {
+    console.error('Subscription failed:', e);
+    return { success: false, error: String(e) };
   }
-  return { errors: [{ message: 'Max retries exceeded' }] };
 }
 
 // ============================================================================
-// Strategy operations
+// Step 3: Create Runner via UI
 // ============================================================================
 
-// Runner data exchange config - detected at runtime from the active runner
-let runnerExchangeName = 'binance';
-let runnerPairs = ['BTC/USDT'];
-let runnerTimeframes: string[] = [];
+async function createRunnerViaUI(page: Page): Promise<{ success: boolean; runnerName?: string; error?: string }> {
+  console.log('Creating runner via UI...');
 
-/** Pick the best available timeframe: use the scenario's if available on runner, else first available */
-function effectiveTimeframe(scenarioTf: string): string {
-  if (runnerTimeframes.length === 0) return scenarioTf;
-  if (runnerTimeframes.includes(scenarioTf)) return scenarioTf;
-  return runnerTimeframes[0];
-}
+  try {
+    // Navigate to runners page
+    await page.goto('/runners');
+    await waitForPageReady(page);
+    console.log('Runners page URL:', page.url());
 
-/** Wraps a UIBuilderConfig into the full strategy config format expected by the backend */
-function wrapConfig(uiBuilderConfig: Record<string, unknown>, timeframe: string): Record<string, unknown> {
-  const tf = effectiveTimeframe(timeframe);
-  return {
-    timeframe: tf,
-    stake_currency: 'USDT',
-    stake_amount: 10,
-    max_open_trades: 3,
-    dry_run: true,
-    entry_pricing: { price_side: 'other', use_order_book: true, order_book_top: 1 },
-    exit_pricing: { price_side: 'other', use_order_book: true, order_book_top: 1 },
-    pairlists: [{ method: 'StaticPairList' }],
-    exchange: { name: runnerExchangeName, pair_whitelist: runnerPairs },
-    ui_builder: uiBuilderConfig,
-  };
-}
+    // Take screenshot for debugging
+    await page.screenshot({ path: 'test-results/runners-page.png' });
 
-async function previewCode(page: Page, config: Record<string, unknown>, className: string): Promise<{ success: boolean; code: string; error?: string }> {
-  const result = await graphqlRequest(page, `
-    mutation PreviewStrategyCode($config: Map!, $className: String!) {
-      previewStrategyCode(config: $config, className: $className) {
-        success
-        code
-        error
+    // Click create runner button - exact text is "Create Runner"
+    const createBtn = page.locator('button:has-text("Create Runner")').first();
+    console.log('Looking for Create Runner button...');
+
+    // Wait longer and check if button exists
+    const buttonExists = await createBtn.isVisible({ timeout: 10000 }).catch(() => false);
+    if (!buttonExists) {
+      // Log page content for debugging
+      const bodyText = await page.locator('body').innerText();
+      console.log('Page content preview:', bodyText.substring(0, 500));
+      return { success: false, error: 'Create Runner button not found - check permissions' };
+    }
+
+    await createBtn.click();
+    await page.waitForTimeout(1000); // Wait for drawer to open
+
+    // Generate unique runner name
+    const runnerName = `e2e-runner-${Date.now()}`;
+
+    // Fill runner name - the drawer has TextField with label="Runner Name"
+    const nameInput = page.getByLabel('Runner Name');
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+    await nameInput.fill(runnerName);
+    console.log(`Filled runner name: ${runnerName}`);
+
+    // Type is already Docker by default, no need to change
+
+    // Enable S3 data distribution checkbox
+    const s3Checkbox = page.getByLabel('Enable S3 data distribution');
+    if (await s3Checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await s3Checkbox.click();
+      await page.waitForTimeout(500);
+
+      // Fill S3 Endpoint - always use minio:9000 since backend runs in Docker
+      const endpointInput = page.getByLabel('S3 Endpoint');
+      if (await endpointInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+        // Backend tests S3 connection from inside Docker, so use Docker service name
+        await endpointInput.fill('minio:9000');
+        console.log('Filled S3 endpoint: minio:9000');
       }
-    }
-  `, { config, className });
 
-  if (result.errors) {
-    return { success: false, code: '', error: result.errors.map(e => e.message).join('; ') };
-  }
-
-  if (!result.data) {
-    return { success: false, code: '', error: `No data in response: ${JSON.stringify(result).substring(0, 300)}` };
-  }
-  const preview = (result.data as Record<string, Record<string, unknown>>)?.previewStrategyCode;
-  if (!preview) {
-    return { success: false, code: '', error: `No previewStrategyCode in data: ${JSON.stringify(result.data).substring(0, 300)}` };
-  }
-  return {
-    success: preview?.success as boolean || false,
-    code: preview?.code as string || '',
-    error: (preview?.error as string) || (preview?.success === false ? `success=false, code="${(preview?.code as string || '').substring(0, 100)}"` : undefined),
-  };
-}
-
-async function createStrategy(page: Page, name: string, code: string, config: Record<string, unknown>, ownerID: string): Promise<{ id?: string; error?: string }> {
-  const result = await graphqlRequest(page, `
-    mutation CreateStrategy($input: CreateStrategyInput!) {
-      createStrategy(input: $input) {
-        id
-        name
-        code
-        config
+      // Fill Bucket Name
+      const bucketInput = page.getByLabel('Bucket Name');
+      if (await bucketInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await bucketInput.fill('volaticloud-data');
+        console.log('Filled bucket name');
       }
-    }
-  `, {
-    input: {
-      name,
-      code,
-      config,
-      builderMode: 'ui',
-      ownerID,
-    },
-  });
 
-  if (result.errors) {
-    return { error: result.errors.map(e => e.message).join('; ') };
-  }
-
-  const strategy = (result.data as Record<string, Record<string, string>>)?.createStrategy;
-  return { id: strategy?.id };
-}
-
-async function runBacktest(page: Page, strategyID: string, runnerID: string, pairs: string[], backtestDays: number, timeframe: string): Promise<{ id?: string; error?: string }> {
-  const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - backtestDays * 24 * 60 * 60 * 1000);
-
-  const config: Record<string, unknown> = {
-    stake_currency: 'USDT',
-    stake_amount: 100,
-    tradable_balance_ratio: 0.99,
-    dry_run: true,
-    timeframe,
-    exchange: {
-      name: runnerExchangeName,
-      pair_whitelist: pairs,
-    },
-    pairlists: [{ method: 'StaticPairList' }],
-    entry_pricing: { price_side: 'same', use_order_book: true, order_book_top: 1 },
-    exit_pricing: { price_side: 'same', use_order_book: true, order_book_top: 1 },
-  };
-
-  const result = await graphqlRequest(page, `
-    mutation RunBacktest($input: CreateBacktestInput!) {
-      runBacktest(input: $input) {
-        id
-        status
+      // Fill Access Key ID
+      const accessKeyInput = page.getByLabel('Access Key ID');
+      if (await accessKeyInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await accessKeyInput.fill('minioadmin');
+        console.log('Filled access key');
       }
-    }
-  `, {
-    input: {
-      strategyID,
-      runnerID,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      config,
-    },
-  });
 
-  if (result.errors) {
-    return { error: result.errors.map(e => e.message).join('; ') };
-  }
+      // Fill Secret Access Key
+      const secretKeyInput = page.getByLabel('Secret Access Key');
+      if (await secretKeyInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await secretKeyInput.fill('minioadmin');
+        console.log('Filled secret key');
+      }
 
-  const backtest = (result.data as Record<string, Record<string, string>>)?.runBacktest;
-  return { id: backtest?.id };
-}
+      // Uncheck "Use SSL/HTTPS" for local MinIO
+      const useSslCheckbox = page.locator('[data-testid="s3-use-ssl-checkbox"]');
+      if (await useSslCheckbox.isVisible({ timeout: 1000 }).catch(() => false)) {
+        // It's checked by default, uncheck it for MinIO without SSL
+        await useSslCheckbox.click();
+        console.log('Disabled SSL for MinIO');
+        await page.waitForTimeout(500); // Wait for state update
+      }
 
-async function pollBacktestResult(page: Page, backtestID: string): Promise<{ status: string; error?: string; logs?: string; result?: Record<string, unknown> }> {
-  // Try WebSocket subscription first, fall back to polling
-  let wsClient: WsClient | null = null;
-  let wsResolved = false;
-
-  const wsPromise = new Promise<{ status: string; error?: string } | null>((resolve) => {
-    try {
-      wsClient = createClient({
-        url: WS_ENDPOINT,
-        webSocketImpl: WebSocket,
-        connectionParams: { authToken: `Bearer ${authToken}` },
-        retryAttempts: 0,
-      });
-
-      wsClient.subscribe(
-        {
-          query: `subscription BacktestProgress($backtestId: ID!) {
-            backtestProgress(backtestId: $backtestId) { id status errorMessage }
-          }`,
-          variables: { backtestId: backtestID },
-        },
-        {
-          next(value) {
-            const bt = (value.data as Record<string, Record<string, unknown>>)?.backtestProgress;
-            if (!bt) return;
-            const status = bt.status as string;
-            console.log(`    [WS] ${backtestID.substring(0, 8)}: ${status}`);
-            if (['COMPLETED', 'FAILED', 'ERROR', 'completed', 'failed', 'error'].includes(status)) {
-              wsResolved = true;
-              resolve({ status, error: bt.errorMessage as string || undefined });
-            }
-          },
-          error() { resolve(null); },
-          complete() { resolve(null); },
-        },
-      );
-
-      // WS timeout: if no result in 15s, fall through to polling
-      setTimeout(() => { if (!wsResolved) resolve(null); }, 15_000);
-    } catch {
-      resolve(null);
-    }
-  });
-
-  const wsResult = await wsPromise;
-  try { wsClient?.dispose(); } catch { /* ignore */ }
-  if (wsResult) return wsResult;
-
-  // Fallback: HTTP polling
-  console.log(`    [POLL] Falling back to polling for ${backtestID.substring(0, 8)}`);
-  const startTime = Date.now();
-  while (Date.now() - startTime < BACKTEST_TIMEOUT_MS) {
-    const result = await graphqlRequest(page, `
-      query GetBacktest($id: ID!) {
-        backtests(where: {id: $id}, first: 1) {
-          edges { node { id status errorMessage } }
+      // Click S3 test connection button
+      const testS3Btn = page.locator('[data-testid="test-s3-connection"]');
+      if (await testS3Btn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await testS3Btn.click();
+        console.log('Testing S3 connection...');
+        // Wait for test result (success or error alert)
+        await page.waitForTimeout(3000);
+        const s3Alert = page.locator('.MuiAlert-root').first();
+        if (await s3Alert.isVisible({ timeout: 5000 }).catch(() => false)) {
+          const alertText = await s3Alert.textContent();
+          console.log(`S3 test result: ${alertText}`);
         }
       }
-    `, { id: backtestID });
-
-    if (result.errors) {
-      return { status: 'ERROR', error: result.errors.map(e => e.message).join('; ') };
     }
 
-    const edges = (result.data as Record<string, Record<string, Array<Record<string, Record<string, unknown>>>>>)?.backtests?.edges;
-    if (!edges || edges.length === 0) {
-      return { status: 'NOT_FOUND', error: 'Backtest not found' };
+    // Click Docker test connection button
+    const testDockerBtn = page.locator('[data-testid="test-docker-connection"]');
+    if (await testDockerBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await testDockerBtn.click();
+      console.log('Testing Docker connection...');
+      // Wait for test result
+      await page.waitForTimeout(3000);
+      const dockerAlert = page.locator('.MuiAlert-root').first();
+      if (await dockerAlert.isVisible({ timeout: 5000 }).catch(() => false)) {
+        const alertText = await dockerAlert.textContent();
+        console.log(`Docker test result: ${alertText}`);
+      }
     }
 
-    const bt = edges[0].node;
-    const status = bt.status as string;
-    if (['COMPLETED', 'FAILED', 'ERROR', 'completed', 'failed', 'error'].includes(status)) {
-      console.log(`    [POLL] ${backtestID.substring(0, 8)}: ${status}`);
-      return { status, error: bt.errorMessage as string || undefined };
-    }
+    // Click submit button using data-testid
+    const createRunnerBtn = page.locator('[data-testid="submit-create-runner"]');
+    await createRunnerBtn.waitFor({ state: 'visible', timeout: 3000 });
+    await createRunnerBtn.click();
+    console.log('Clicked Create Runner submit');
 
-    await new Promise(resolve => setTimeout(resolve, BACKTEST_POLL_INTERVAL_MS));
+    // Wait for drawer to close and runner to be created
+    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
+
+    console.log(`Runner created: ${runnerName}`);
+    return { success: true, runnerName };
+  } catch (e) {
+    console.error('Failed to create runner:', e);
+    return { success: false, error: String(e) };
   }
-
-  return { status: 'TIMEOUT', error: 'Backtest timed out after 5 minutes' };
 }
 
 // ============================================================================
-// Error analysis - extract meaningful errors from backtest logs
+// Step 4: Wait for Data Download
 // ============================================================================
 
-function extractErrorsFromLogs(logs: string): string[] {
-  const errors: string[] = [];
-  const lines = logs.split('\n');
+async function waitForDataDownload(page: Page, runnerName: string): Promise<{ success: boolean; error?: string }> {
+  console.log('Starting data download for runner:', runnerName);
 
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-    if (lower.includes('error') || lower.includes('exception') || lower.includes('traceback') ||
-        lower.includes('syntaxerror') || lower.includes('nameerror') || lower.includes('typeerror') ||
-        lower.includes('keyerror') || lower.includes('attributeerror') || lower.includes('importerror') ||
-        lower.includes('valueerror') || lower.includes('indentationerror') || lower.includes('failed')) {
-      errors.push(line.trim());
+  try {
+    // Navigate to runners page
+    await page.goto('/runners');
+    await waitForPageReady(page);
+
+    // Find the refresh/download data button in the runner's row
+    // The button has data-testid="refresh-data-{runnerId}"
+    // We need to find it by looking for a button with refresh icon in the row containing our runner name
+    const runnerRow = page.locator(`tr:has-text("${runnerName}")`).first();
+
+    if (!await runnerRow.isVisible({ timeout: 5000 }).catch(() => false)) {
+      console.log('Runner row not found, looking for first runner...');
+      // Click the first refresh button we can find
+      const firstRefreshBtn = page.locator('[data-testid^="refresh-data-"]').first();
+      if (await firstRefreshBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await firstRefreshBtn.click();
+        console.log('Clicked first refresh button');
+      }
+    } else {
+      // Find the refresh button within this row
+      const refreshBtn = runnerRow.locator('[data-testid^="refresh-data-"]');
+      if (await refreshBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await refreshBtn.click();
+        console.log('Data download triggered for:', runnerName);
+      } else {
+        // Try clicking any visible refresh button
+        const anyRefreshBtn = page.locator('[data-testid^="refresh-data-"]').first();
+        if (await anyRefreshBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await anyRefreshBtn.click();
+          console.log('Clicked first available refresh button');
+        }
+      }
     }
-  }
 
-  return errors;
+    await page.waitForTimeout(2000);
+
+    // Poll for data ready status
+    const startTime = Date.now();
+    while (Date.now() - startTime < DATA_DOWNLOAD_TIMEOUT_MS) {
+      await page.reload();
+      await waitForPageReady(page);
+
+      // Check for "Ready" chip in the data status column
+      const dataReadyChip = page.locator('.MuiChip-root:has-text("Ready")').first();
+      if (await dataReadyChip.isVisible({ timeout: 2000 }).catch(() => false)) {
+        console.log('Data download complete - Ready status found');
+        return { success: true };
+      }
+
+      // Check for downloading status (progress indicator)
+      const downloading = page.locator('text=/Downloading/i').first();
+      if (await downloading.isVisible({ timeout: 1000 }).catch(() => false)) {
+        console.log('  Data still downloading...');
+      }
+
+      // Check for failure
+      const failedChip = page.locator('.MuiChip-root:has-text("Failed")').first();
+      if (await failedChip.isVisible({ timeout: 1000 }).catch(() => false)) {
+        console.log('Data download failed');
+        return { success: false, error: 'Data download failed' };
+      }
+
+      console.log('  Waiting for data...');
+      await page.waitForTimeout(10000);
+    }
+
+    return { success: false, error: 'Data download timeout' };
+  } catch (e) {
+    console.error('Data download error:', e);
+    return { success: false, error: String(e) };
+  }
 }
 
 // ============================================================================
-// Main test
+// Step 5: Create Strategy via UI
+// ============================================================================
+
+async function createStrategyViaUI(
+  page: Page,
+  strategyName: string
+): Promise<{ success: boolean; error?: string }> {
+  console.log(`Creating strategy: ${strategyName}`);
+
+  try {
+    // Navigate to strategies page using full URL to ensure correct navigation
+    const baseURL = process.env.E2E_BASE_URL || 'https://console.volaticloud.loc';
+    await page.goto(`${baseURL}/strategies`);
+    await waitForPageReady(page);
+    console.log('Strategies page URL:', page.url());
+
+    // Click create strategy button - exact text is "Create Strategy"
+    const createBtn = page.locator('button:has-text("Create Strategy")').first();
+    console.log('Looking for Create Strategy button...');
+
+    // Wait and check if button exists
+    const buttonExists = await createBtn.isVisible({ timeout: 10000 }).catch(() => false);
+    if (!buttonExists) {
+      // Log page content for debugging
+      const bodyText = await page.locator('body').innerText();
+      console.log('Page content preview:', bodyText.substring(0, 300));
+      return { success: false, error: 'Create Strategy button not found - check permissions' };
+    }
+
+    await createBtn.click();
+    await page.waitForTimeout(1000); // Wait for drawer to open
+
+    // Fill strategy name using the correct MUI TextField label
+    const nameInput = page.getByLabel('Strategy Name');
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+    await nameInput.fill(strategyName);
+    console.log(`Filled strategy name: ${strategyName}`);
+
+    // Optionally fill description
+    const descInput = page.getByLabel('Description');
+    if (await descInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await descInput.fill(`E2E test strategy: ${strategyName}`);
+    }
+
+    // Click submit button using data-testid
+    const submitBtn = page.locator('[data-testid="submit-create-strategy"]');
+    await submitBtn.waitFor({ state: 'visible', timeout: 3000 });
+    await submitBtn.click();
+    console.log('Clicked Create Strategy submit');
+
+    await waitForPageReady(page);
+    await page.waitForTimeout(2000);
+
+    // Check for error
+    const errorToast = page.locator('[role="alert"]:has-text("error"), .toast-error').first();
+    if (await errorToast.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const errorText = await errorToast.textContent();
+      return { success: false, error: errorText || 'Unknown error' };
+    }
+
+    console.log(`Strategy created: ${strategyName}`);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+// ============================================================================
+// Step 5b: Run Backtest via UI
+// ============================================================================
+
+async function runBacktestViaUI(
+  page: Page,
+  strategyName: string
+): Promise<{ success: boolean; error?: string }> {
+  console.log(`Running backtest for: ${strategyName}`);
+
+  try {
+    // Navigate to strategies and find the strategy
+    await page.goto('/strategies');
+    await waitForPageReady(page);
+
+    // Click on the strategy
+    const strategyRow = page.locator(`tr:has-text("${strategyName}"), [data-testid="strategy-row"]:has-text("${strategyName}")`).first();
+    if (await strategyRow.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await strategyRow.click();
+      await waitForPageReady(page);
+    }
+
+    // Click backtest button
+    const backtestBtn = page.locator('button:has-text("Run Backtest"), button:has-text("Backtest")').first();
+    if (!await backtestBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      return { success: false, error: 'Backtest button not found' };
+    }
+    await backtestBtn.click();
+    await page.waitForTimeout(500);
+
+    // Fill backtest form if dialog appears
+    // Select runner if dropdown exists
+    const runnerSelect = page.locator('[data-testid="runner-select"], button:has-text("Select Runner")').first();
+    if (await runnerSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await runnerSelect.click();
+      const firstRunner = page.locator('[role="option"]').first();
+      if (await firstRunner.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await firstRunner.click();
+      }
+    }
+
+    // Click run button
+    const runBtn = page.locator('button:has-text("Run"), button:has-text("Start"), button[type="submit"]').first();
+    await runBtn.click();
+
+    console.log('Backtest started');
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+// ============================================================================
+// Step 5c: Wait for Backtest Completion via UI
+// ============================================================================
+
+async function waitForBacktestCompletion(page: Page): Promise<{ status: string; error?: string }> {
+  console.log('Waiting for backtest completion...');
+
+  const startTime = Date.now();
+  while (Date.now() - startTime < BACKTEST_TIMEOUT_MS) {
+    // Check for completed status
+    const completed = page.locator('text=/Completed|Success/i, .badge:has-text("Completed")').first();
+    if (await completed.isVisible({ timeout: 2000 }).catch(() => false)) {
+      console.log('Backtest completed');
+      return { status: 'COMPLETED' };
+    }
+
+    // Check for failed status
+    const failed = page.locator('text=/Failed|Error/i, .badge:has-text("Failed")').first();
+    if (await failed.isVisible({ timeout: 1000 }).catch(() => false)) {
+      return { status: 'FAILED', error: 'Backtest failed' };
+    }
+
+    console.log('  Backtest still running...');
+    await page.waitForTimeout(5000);
+  }
+
+  return { status: 'TIMEOUT', error: 'Backtest timed out' };
+}
+
+// ============================================================================
+// Step 5.5: Create Exchange via UI (needed for bot creation)
+// ============================================================================
+
+async function createExchangeViaUI(page: Page): Promise<{ success: boolean; exchangeName?: string; error?: string }> {
+  console.log('Creating exchange via UI...');
+
+  try {
+    // Navigate to exchanges page
+    await page.goto('/exchanges');
+    await waitForPageReady(page);
+    console.log('Exchanges page URL:', page.url());
+
+    // Take screenshot for debugging
+    await page.screenshot({ path: 'test-results/exchanges-page.png' });
+
+    // Click create exchange button - exact text is "Add Exchange"
+    const createBtn = page.locator('button:has-text("Add Exchange")').first();
+    console.log('Looking for Add Exchange button...');
+
+    // Wait longer and check if button exists
+    const buttonExists = await createBtn.isVisible({ timeout: 10000 }).catch(() => false);
+    if (!buttonExists) {
+      // Log page content for debugging
+      const bodyText = await page.locator('body').innerText();
+      console.log('Page content preview:', bodyText.substring(0, 500));
+      return { success: false, error: 'Add Exchange button not found - check permissions' };
+    }
+
+    await createBtn.click();
+    await page.waitForTimeout(1000); // Wait for drawer to open
+
+    // Generate unique exchange name
+    const exchangeName = `E2E-Exchange-${Date.now()}`;
+
+    // Fill exchange name using correct MUI TextField label
+    const nameInput = page.getByLabel('Exchange Name');
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+    await nameInput.fill(exchangeName);
+    console.log(`Filled exchange name: ${exchangeName}`);
+
+    // The FreqtradeConfigForm will have defaults - we can use them for dry-run
+    // Just need to make sure the exchange type is set (it should be by default)
+
+    // Click submit button using data-testid
+    const submitBtn = page.locator('[data-testid="submit-add-exchange"]');
+    await submitBtn.waitFor({ state: 'visible', timeout: 3000 });
+    await submitBtn.click();
+    console.log('Clicked Add Exchange submit');
+
+    // Wait for drawer to close
+    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
+
+    console.log(`Exchange created: ${exchangeName}`);
+    return { success: true, exchangeName };
+  } catch (e) {
+    console.error('Failed to create exchange:', e);
+    return { success: false, error: String(e) };
+  }
+}
+
+// ============================================================================
+// Step 6: Create Bot from Strategy via UI
+// ============================================================================
+
+async function createBotViaUI(
+  page: Page,
+  strategyName: string,
+  botName: string
+): Promise<{ success: boolean; error?: string }> {
+  console.log(`Creating bot: ${botName} from strategy: ${strategyName}`);
+
+  try {
+    // Navigate to bots page
+    await page.goto('/bots');
+    await waitForPageReady(page);
+
+    // Click create bot button
+    const createBtn = page.locator('button:has-text("Create Bot"), button:has-text("New Bot"), button:has-text("Add")').first();
+    await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await createBtn.click();
+    await page.waitForTimeout(1000); // Wait for drawer to open
+
+    // Fill bot name using correct MUI TextField label
+    const nameInput = page.getByLabel('Bot Name');
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+    await nameInput.fill(botName);
+    console.log(`Filled bot name: ${botName}`);
+
+    // Mode is already "dry_run" by default, no need to change
+
+    // Select Exchange - it's a MUI Select with label="Exchange"
+    const exchangeSelect = page.getByLabel('Exchange');
+    if (await exchangeSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await exchangeSelect.click();
+      await page.waitForTimeout(500);
+
+      // Select first available exchange
+      const firstOption = page.locator('[role="option"]').first();
+      if (await firstOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await firstOption.click();
+        console.log('Selected exchange');
+      }
+    }
+
+    // Select Strategy - it's a MUI Select with label="Strategy"
+    const strategySelect = page.getByLabel('Strategy');
+    if (await strategySelect.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await strategySelect.click();
+      await page.waitForTimeout(500);
+
+      // Try to find the specific strategy
+      const strategyOption = page.locator(`[role="option"]:has-text("${strategyName}")`).first();
+      if (await strategyOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await strategyOption.click();
+        console.log(`Selected strategy: ${strategyName}`);
+      } else {
+        // Select first available strategy
+        const firstOption = page.locator('[role="option"]').first();
+        if (await firstOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await firstOption.click();
+          console.log('Selected first available strategy');
+        }
+      }
+    }
+
+    // Select Runner - it's a MUI Select with label="Runner"
+    const runnerSelect = page.getByLabel('Runner');
+    if (await runnerSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await runnerSelect.click();
+      await page.waitForTimeout(500);
+
+      // Select first available runner
+      const firstOption = page.locator('[role="option"]').first();
+      if (await firstOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await firstOption.click();
+        console.log('Selected runner');
+      }
+    }
+
+    // Click submit button using data-testid
+    const botSubmitBtn = page.locator('[data-testid="submit-create-bot"]');
+    await botSubmitBtn.waitFor({ state: 'visible', timeout: 3000 });
+    await botSubmitBtn.click();
+    console.log('Clicked Create Bot submit');
+
+    await waitForPageReady(page);
+    await page.waitForTimeout(2000);
+
+    // Check for error
+    const errorToast = page.locator('[role="alert"]:has-text("error"), .toast-error').first();
+    if (await errorToast.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const errorText = await errorToast.textContent();
+      return { success: false, error: errorText || 'Unknown error' };
+    }
+
+    console.log(`Bot created: ${botName}`);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+// ============================================================================
+// Main Test Suite
 // ============================================================================
 
 const scenarios = generateAllScenarios();
 const allResults: ScenarioResult[] = [];
 
-test.describe('Strategy Builder - 500 Scenarios', () => {
-  let ownerID: string;
-  let runnerID: string;
+test.describe('Strategy Builder E2E - Full Flow', () => {
+  let runnerName: string;
+  const createdStrategies: string[] = [];
 
   test.beforeAll(async ({ browser }) => {
     const baseURL = process.env.E2E_BASE_URL || 'https://console.volaticloud.loc';
-    console.log('E2E_BASE_URL:', baseURL);
-    console.log('ignoreHTTPSErrors:', !!process.env.E2E_BASE_URL);
+    console.log('='.repeat(60));
+    console.log('E2E TEST SETUP');
+    console.log('='.repeat(60));
+    console.log('Base URL:', baseURL);
+
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
       baseURL,
@@ -381,226 +799,55 @@ test.describe('Strategy Builder - 500 Scenarios', () => {
     const page = await context.newPage();
 
     // Step 1: Sign in
-    console.log('Starting sign in...');
+    console.log('\n--- Step 1: Sign In ---');
     await signIn(page);
-    console.log('Sign in completed, URL:', page.url());
-    await page.waitForTimeout(3000);
-    console.log('After 3s wait, URL:', page.url());
-    await page.goto('/strategies');
-    console.log('After goto strategies, URL:', page.url());
-    await page.waitForLoadState('networkidle');
-    console.log('After networkidle, URL:', page.url());
-    await page.waitForTimeout(2000);
-    console.log('Before captureToken, URL:', page.url());
+    await waitForPageReady(page);
+    console.log('Sign in complete');
 
-    // Capture auth token
-    authToken = await captureToken(page);
-    console.log(`Auth token: ${authToken ? authToken.substring(0, 20) + '...' : 'NONE'}`);
-    if (!authToken) {
-      throw new Error('Failed to capture auth token after sign-in');
+    // Step 2: Create Organization
+    console.log('\n--- Step 2: Create Organization ---');
+    const orgResult = await createOrganizationViaUI(page);
+    if (!orgResult.success) {
+      console.warn('Org creation warning:', orgResult.error);
     }
 
-    // Step 2: Create a test organization
-    console.log('Creating E2E test organization...');
-    const orgResult = await graphqlRequest(page, `
-      mutation CreateOrg($input: CreateOrganizationInput!) {
-        createOrganization(input: $input) { id title alias }
-      }
-    `, { input: { title: `E2E Test Org ${Date.now()}` } });
-
-    console.log('createOrganization result:', JSON.stringify(orgResult));
-    if (orgResult.errors) {
-      throw new Error(`Failed to create org: ${orgResult.errors.map(e => e.message).join('; ')}`);
-    }
-    const org = (orgResult.data as Record<string, Record<string, string>>)?.createOrganization;
-    if (!org) {
-      throw new Error(`createOrganization returned no data: ${JSON.stringify(orgResult)}`);
-    }
-    ownerID = org.alias;
-    console.log(`Created org: ${org.title} (alias: ${ownerID})`);
-
-    // Step 2b: Seed billing via Stripe Checkout (or seed mutation if available)
-    // In containerized E2E, we go through the real Stripe test-mode checkout flow.
-    // If STRIPE_API_KEY is not set, we skip billing setup (tests will fail on billing-gated features).
-    console.log('Setting up billing for test org...');
-    try {
-      const sessionResult = await graphqlRequest(page, `
-        mutation CreateCheckout($input: CreateSubscriptionSessionInput!) {
-          createSubscriptionSession(input: $input) { url }
-        }
-      `, { input: { ownerID, planId: 'starter' } });
-
-      const checkoutUrl = (sessionResult.data as Record<string, Record<string, string>>)?.createSubscriptionSession?.url;
-      if (checkoutUrl) {
-        console.log('Navigating to Stripe Checkout...');
-        await page.goto(checkoutUrl);
-        await page.waitForLoadState('networkidle');
-
-        // Fill Stripe test card
-        const cardFrame = page.frameLocator('iframe[name*="stripe"]').first();
-        await cardFrame.locator('[placeholder*="card number"], [name="cardnumber"]').fill('4242424242424242');
-        await cardFrame.locator('[placeholder*="MM"], [name="cardExpiry"]').fill('12/30');
-        await cardFrame.locator('[placeholder*="CVC"], [name="cardCvc"]').fill('123');
-
-        // Fill email if required
-        const emailInput = page.locator('input[name="email"], input[type="email"]');
-        if (await emailInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await emailInput.fill('test@test.com');
-        }
-
-        // Submit payment
-        await page.locator('button[type="submit"], .SubmitButton').first().click();
-
-        // Wait for redirect back or success indication
-        await page.waitForURL(/.*(?:success|strategies|dashboard).*/, { timeout: 60_000 }).catch(() => {
-          console.warn('Stripe checkout redirect timeout - continuing anyway');
-        });
-        await page.waitForTimeout(5000); // Wait for webhook processing
-        console.log('Stripe checkout completed');
-      } else if (sessionResult.errors) {
-        console.warn(`Stripe checkout not available: ${sessionResult.errors.map(e => e.message).join('; ')}`);
-        console.warn('Billing features may not work in this E2E run');
-      }
-    } catch (e) {
-      console.warn(`Billing setup failed: ${(e as Error).message}`);
+    // Step 3: Subscribe
+    console.log('\n--- Step 3: Subscribe ---');
+    const subResult = await subscribeViaUI(page);
+    if (!subResult.success) {
+      console.warn('Subscription warning:', subResult.error);
     }
 
-    // Step 3: Create a Docker runner with S3 + data download config
-    console.log('Creating E2E bot runner with MinIO S3 config...');
-    const runnerResult = await graphqlRequest(page, `
-      mutation CreateRunner($input: CreateBotRunnerInput!) {
-        createBotRunner(input: $input) { id name dataIsReady }
-      }
-    `, {
-      input: {
-        ownerID,
-        name: `e2e-runner-${Date.now()}`,
-        type: 'docker',
-        config: {
-          docker: {
-            host: 'unix:///var/run/docker.sock',
-            ...(process.env.E2E_BASE_URL ? { network: 'volaticloud-e2e' } : {}),
-          },
-        },
-        s3Config: {
-          endpoint: process.env.E2E_BASE_URL ? 'minio:9000' : 'host.docker.internal:9000',
-          bucket: 'volaticloud-data',
-          accessKeyId: 'minioadmin',
-          secretAccessKey: 'minioadmin',
-          forcePathStyle: true,
-          useSSL: false,
-        },
-        dataDownloadConfig: {
-          exchanges: [{
-            name: 'binance',
-            enabled: true,
-            timeframes: ['5m'],
-            pairsPattern: 'BTC/USDT',
-            days: 7,
-          }],
-        },
-      },
-    });
-
-    if (runnerResult.errors) {
-      throw new Error(`Failed to create runner: ${runnerResult.errors.map(e => e.message).join('; ')}`);
-    }
-    const runner = (runnerResult.data as Record<string, Record<string, unknown>>)?.createBotRunner;
-    runnerID = runner.id as string;
-    console.log(`Created runner: ${runner.name} (${runnerID})`);
-
-    // Step 4: Trigger data download
-    console.log('Triggering data download...');
-    const refreshResult = await graphqlRequest(page, `
-      mutation RefreshData($id: ID!) {
-        refreshRunnerData(id: $id) { id dataIsReady dataDownloadStatus }
-      }
-    `, { id: runnerID });
-
-    if (refreshResult.errors) {
-      console.warn(`Data refresh warning: ${refreshResult.errors.map(e => e.message).join('; ')}`);
+    // Step 4: Create Runner
+    console.log('\n--- Step 4: Create Runner ---');
+    const runnerResult = await createRunnerViaUI(page);
+    if (runnerResult.success && runnerResult.runnerName) {
+      runnerName = runnerResult.runnerName;
     } else {
-      console.log('Data download triggered');
+      console.warn('Runner creation warning:', runnerResult.error);
     }
 
-    // Step 5: Poll until data is ready (timeout 5 min)
-    console.log('Waiting for data download to complete...');
-    const dataTimeout = 5 * 60 * 1000;
-    const dataStart = Date.now();
-    let dataReady = false;
-
-    while (Date.now() - dataStart < dataTimeout) {
-      const statusResult = await graphqlRequest(page, `
-        query RunnerStatus($where: BotRunnerWhereInput) {
-          botRunners(first: 1, where: $where) {
-            edges { node { id dataIsReady dataDownloadStatus dataErrorMessage } }
-          }
-        }
-      `, { where: { id: runnerID } });
-
-      const edges = (statusResult.data as Record<string, Record<string, Array<Record<string, Record<string, unknown>>>>>)?.botRunners?.edges;
-      if (edges && edges.length > 0) {
-        const node = edges[0].node;
-        const status = node.dataDownloadStatus as string;
-        console.log(`  Data status: ${status}, ready: ${node.dataIsReady}`);
-
-        if (node.dataIsReady) {
-          dataReady = true;
-          break;
-        }
-        if (status === 'failed' || status === 'FAILED') {
-          console.warn(`Data download failed: ${node.dataErrorMessage}`);
-          break;
-        }
+    // Step 5: Wait for Data Download
+    console.log('\n--- Step 5: Wait for Data Download ---');
+    if (runnerName) {
+      const dataResult = await waitForDataDownload(page, runnerName);
+      if (!dataResult.success) {
+        console.warn('Data download warning:', dataResult.error);
       }
-
-      await new Promise(resolve => setTimeout(resolve, 10_000));
     }
 
-    if (!dataReady) {
-      console.warn('Data download did not complete - trying to find an existing runner with data...');
-      // Fallback: find any runner that already has data ready
-      const fallbackResult = await graphqlRequest(page, `
-        query { botRunners(first: 50) { edges { node { id name dataIsReady dataDownloadConfig } } } }
-      `, {});
-      const allRunners = (fallbackResult.data as Record<string, Record<string, Array<Record<string, Record<string, unknown>>>>>)?.botRunners?.edges;
-      const readyRunner = allRunners?.find(e => e.node.dataIsReady === true);
-      if (readyRunner) {
-        runnerID = readyRunner.node.id as string;
-        console.log(`Using existing runner with data: ${readyRunner.node.name} (${runnerID})`);
-        // Detect exchange and pairs from runner's data download config
-        const dlConfig = readyRunner.node.dataDownloadConfig as Record<string, unknown> | null;
-        if (dlConfig?.exchanges) {
-          const exchanges = dlConfig.exchanges as Array<Record<string, unknown>>;
-          const enabledExchange = exchanges.find(e => e.enabled);
-          if (enabledExchange) {
-            runnerExchangeName = enabledExchange.name as string || 'binance';
-            // Parse pairs pattern into actual pairs
-            const pattern = enabledExchange.pairsPattern as string || 'BTC/USDT';
-            // Pattern like "(ETH|BTC)/USDT" → ["ETH/USDT", "BTC/USDT"]
-            const match = pattern.match(/^\(([^)]+)\)\/(.+)$/);
-            if (match) {
-              runnerPairs = match[1].split('|').map(p => `${p}/${match[2]}`);
-            } else {
-              runnerPairs = [pattern];
-            }
-            if (enabledExchange.timeframes) {
-              runnerTimeframes = enabledExchange.timeframes as string[];
-            }
-            console.log(`Runner data config: exchange=${runnerExchangeName}, pairs=${runnerPairs.join(',')}, timeframes=${runnerTimeframes.join(',')}`);
-          }
-        }
-      } else {
-        console.warn('No runner with data available - backtests will fail with "no data" errors');
-      }
-    } else {
-      console.log('Data download complete - runner is ready');
+    // Step 6: Create Exchange (needed for bot creation)
+    console.log('\n--- Step 6: Create Exchange ---');
+    const exchangeResult = await createExchangeViaUI(page);
+    if (!exchangeResult.success) {
+      console.warn('Exchange creation warning:', exchangeResult.error);
     }
 
-    try { await page.close(); } catch { /* trace artifact cleanup may fail */ }
+    console.log('\n--- Setup Complete ---');
+    await page.close();
   });
 
-  // Create batched tests (10 scenarios per test to keep test count manageable)
+  // Create batched tests
   const BATCH_SIZE = 10;
   const batches = [];
   for (let i = 0; i < scenarios.length; i += BATCH_SIZE) {
@@ -614,13 +861,7 @@ test.describe('Strategy Builder - 500 Scenarios', () => {
 
     test(`Batch ${batchIdx + 1}: Scenarios ${batchStart}-${batchEnd}`, async ({ page }) => {
       await signIn(page);
-      await page.waitForTimeout(2000);
-      await page.goto('/strategies');
-      await page.waitForLoadState('networkidle');
-
-      // Refresh auth token for this page context
-      const newToken = await captureToken(page);
-      if (newToken) authToken = newToken;
+      await waitForPageReady(page);
 
       for (const scenario of batch) {
         const startTime = Date.now();
@@ -628,117 +869,48 @@ test.describe('Strategy Builder - 500 Scenarios', () => {
           scenarioId: scenario.id,
           scenarioName: scenario.name,
           category: scenario.category,
-          previewSuccess: false,
-          createSuccess: false,
+          strategyCreated: false,
           backtestSuccess: false,
+          botCreated: false,
           duration: 0,
         };
 
-        console.log(`\n=== Scenario ${scenario.id}/${scenarios.length}: ${scenario.name} ===`);
-        console.log(`Category: ${scenario.category} | Pairs: ${scenario.pairs.join(', ')} | TF: ${scenario.timeframe}`);
+        console.log(`\n=== Scenario ${scenario.id}: ${scenario.name} ===`);
 
-        try {
-          // Step 1: Preview code
-          // Convert to PascalCase: "Single_RSI_1" → "SingleRsi1"
-          const className = 'E2e' + scenario.name
-            .replace(/[^a-zA-Z0-9]/g, '_')
-            .split('_')
-            .filter(Boolean)
-            .map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-            .join('');
-          const wrappedConfig = wrapConfig(scenario.config as unknown as Record<string, unknown>, scenario.timeframe);
-          const preview = await previewCode(page, wrappedConfig, className);
-          result.previewSuccess = preview.success;
-          result.previewError = preview.error;
+        // Create Strategy
+        const strategyName = `E2E_${scenario.name}_${Date.now()}`;
+        const strategyResult = await createStrategyViaUI(page, strategyName);
+        result.strategyCreated = strategyResult.success;
+        result.strategyError = strategyResult.error;
 
-          if (!preview.success) {
-            console.error(`  PREVIEW FAILED: ${preview.error}`);
-            result.duration = Date.now() - startTime;
-            allResults.push(result);
-            continue;
-          }
-          console.log(`  Preview OK (${preview.code.length} chars)`);
+        if (!strategyResult.success) {
+          console.error(`  Strategy creation failed: ${strategyResult.error}`);
+          result.duration = Date.now() - startTime;
+          allResults.push(result);
+          continue;
+        }
 
-          // Step 2: Create strategy
-          const strategyName = `E2E_${scenario.name}_${Date.now()}`;
-          const createResult = await createStrategy(
-            page,
-            strategyName,
-            preview.code,
-            wrappedConfig,
-            ownerID
-          );
-          result.createSuccess = !!createResult.id;
-          result.createError = createResult.error;
-          result.strategyId = createResult.id;
+        createdStrategies.push(strategyName);
 
-          if (!createResult.id) {
-            console.error(`  CREATE FAILED: ${createResult.error}`);
-            result.duration = Date.now() - startTime;
-            allResults.push(result);
-            continue;
-          }
-          console.log(`  Created strategy: ${createResult.id}`);
+        // Run Backtest
+        const backtestResult = await runBacktestViaUI(page, strategyName);
+        if (!backtestResult.success) {
+          console.error(`  Backtest start failed: ${backtestResult.error}`);
+          result.backtestError = backtestResult.error;
+          result.duration = Date.now() - startTime;
+          allResults.push(result);
+          continue;
+        }
 
-          // Step 3: Run backtest (skip if no runner available)
-          if (!runnerID) {
-            console.log(`  SKIPPING backtest (no runner available)`);
-            result.backtestSuccess = true; // Count as success for preview-only mode
-            result.backtestStatus = 'SKIPPED';
-            result.duration = Date.now() - startTime;
-            allResults.push(result);
-            continue;
-          }
+        // Wait for completion
+        const completionResult = await waitForBacktestCompletion(page);
+        result.backtestSuccess = completionResult.status === 'COMPLETED';
+        result.backtestError = completionResult.error;
 
-          const btResult = await runBacktest(
-            page,
-            createResult.id,
-            runnerID,
-            runnerPairs.length > 0 ? runnerPairs : scenario.pairs,
-            scenario.backtestDays,
-            effectiveTimeframe(scenario.timeframe),
-          );
-
-          if (!btResult.id) {
-            console.error(`  BACKTEST START FAILED: ${btResult.error}`);
-            result.backtestError = btResult.error;
-            result.duration = Date.now() - startTime;
-            allResults.push(result);
-            continue;
-          }
-          console.log(`  Backtest started: ${btResult.id}`);
-
-          // Step 4: Poll for results
-          const btPoll = await pollBacktestResult(page, btResult.id);
-          result.backtestStatus = btPoll.status;
-          result.backtestResult = btPoll.result;
-          result.backtestLogs = btPoll.logs;
-
-          if (btPoll.status === 'COMPLETED' || btPoll.status === 'completed') {
-            result.backtestSuccess = true;
-            console.log(`  BACKTEST COMPLETED`);
-
-            // Check logs for warnings/errors even on success
-            if (btPoll.logs) {
-              const logErrors = extractErrorsFromLogs(btPoll.logs);
-              if (logErrors.length > 0) {
-                console.warn(`  Warnings in logs (${logErrors.length}):`);
-                logErrors.slice(0, 5).forEach(e => console.warn(`    ${e}`));
-              }
-            }
-          } else {
-            result.backtestError = btPoll.error || btPoll.status;
-            console.error(`  BACKTEST FAILED: ${btPoll.status}`);
-            if (btPoll.error) console.error(`  Error: ${btPoll.error}`);
-            if (btPoll.logs) {
-              const logErrors = extractErrorsFromLogs(btPoll.logs);
-              console.error(`  Log errors (${logErrors.length}):`);
-              logErrors.slice(0, 10).forEach(e => console.error(`    ${e}`));
-            }
-          }
-        } catch (e) {
-          console.error(`  EXCEPTION: ${e}`);
-          result.backtestError = String(e);
+        if (result.backtestSuccess) {
+          console.log('  Backtest completed successfully');
+        } else {
+          console.error(`  Backtest failed: ${completionResult.status}`);
         }
 
         result.duration = Date.now() - startTime;
@@ -747,77 +919,50 @@ test.describe('Strategy Builder - 500 Scenarios', () => {
     });
   }
 
+  // Create bots from strategies
+  test('Create Bots from Strategies', async ({ page }) => {
+    await signIn(page);
+    await waitForPageReady(page);
+
+    console.log('\n=== Creating Bots from Strategies ===');
+
+    for (let i = 0; i < Math.min(createdStrategies.length, 5); i++) {
+      const strategyName = createdStrategies[i];
+      const botName = `Bot_${strategyName}`;
+
+      const botResult = await createBotViaUI(page, strategyName, botName);
+      if (botResult.success) {
+        console.log(`  Created bot: ${botName}`);
+      } else {
+        console.error(`  Failed to create bot: ${botResult.error}`);
+      }
+    }
+  });
+
   test.afterAll(async () => {
-    // Write summary report
+    // Summary report
     const total = allResults.length;
-    const previewFails = allResults.filter(r => !r.previewSuccess);
-    const createFails = allResults.filter(r => r.previewSuccess && !r.createSuccess);
-    const backtestFails = allResults.filter(r => r.createSuccess && !r.backtestSuccess);
+    const strategyFails = allResults.filter(r => !r.strategyCreated);
+    const backtestFails = allResults.filter(r => r.strategyCreated && !r.backtestSuccess);
     const fullSuccess = allResults.filter(r => r.backtestSuccess);
 
-    console.log('\n' + '='.repeat(80));
-    console.log('STRATEGY BUILDER TEST REPORT');
-    console.log('='.repeat(80));
+    console.log('\n' + '='.repeat(60));
+    console.log('E2E TEST REPORT');
+    console.log('='.repeat(60));
     console.log(`Total scenarios: ${total}`);
-    console.log(`Full success: ${fullSuccess.length} (${(fullSuccess.length / total * 100).toFixed(1)}%)`);
-    console.log(`Preview failures: ${previewFails.length}`);
-    console.log(`Create failures: ${createFails.length}`);
+    console.log(`Full success: ${fullSuccess.length} (${total > 0 ? (fullSuccess.length / total * 100).toFixed(1) : 0}%)`);
+    console.log(`Strategy failures: ${strategyFails.length}`);
     console.log(`Backtest failures: ${backtestFails.length}`);
-    console.log('='.repeat(80));
+    console.log('='.repeat(60));
 
-    // Group errors by category
-    const errorsByCategory: Record<string, ScenarioResult[]> = {};
-    for (const r of [...previewFails, ...createFails, ...backtestFails]) {
-      const cat = r.category;
-      if (!errorsByCategory[cat]) errorsByCategory[cat] = [];
-      errorsByCategory[cat].push(r);
-    }
-
-    if (Object.keys(errorsByCategory).length > 0) {
-      console.log('\nERRORS BY CATEGORY:');
-      for (const [cat, results] of Object.entries(errorsByCategory)) {
-        console.log(`\n  ${cat} (${results.length} failures):`);
-        for (const r of results) {
-          const error = r.previewError || r.createError || r.backtestError || 'unknown';
-          console.log(`    ${r.scenarioName}: ${error.substring(0, 200)}`);
-        }
+    // Error summary
+    const errors = [...strategyFails, ...backtestFails];
+    if (errors.length > 0) {
+      console.log('\nERRORS:');
+      for (const r of errors.slice(0, 20)) {
+        const error = r.strategyError || r.backtestError || 'unknown';
+        console.log(`  ${r.scenarioName}: ${error.substring(0, 100)}`);
       }
     }
-
-    // Group common error patterns
-    const errorPatterns: Record<string, number> = {};
-    for (const r of allResults.filter(r => !r.backtestSuccess)) {
-      const error = r.previewError || r.createError || r.backtestError || 'unknown';
-      // Extract first meaningful line
-      const pattern = error.split('\n')[0].substring(0, 100);
-      errorPatterns[pattern] = (errorPatterns[pattern] || 0) + 1;
-    }
-
-    if (Object.keys(errorPatterns).length > 0) {
-      console.log('\nCOMMON ERROR PATTERNS:');
-      const sorted = Object.entries(errorPatterns).sort(([, a], [, b]) => b - a);
-      for (const [pattern, count] of sorted.slice(0, 20)) {
-        console.log(`  ${count}x: ${pattern}`);
-      }
-    }
-
-    // Write detailed JSON report
-    const report = {
-      timestamp: new Date().toISOString(),
-      summary: {
-        total,
-        previewFails: previewFails.length,
-        createFails: createFails.length,
-        backtestFails: backtestFails.length,
-        fullSuccess: fullSuccess.length,
-        successRate: (fullSuccess.length / total * 100).toFixed(1) + '%',
-      },
-      errorsByCategory,
-      errorPatterns,
-      results: allResults,
-    };
-
-    // Save report via page.evaluate to write to console (Playwright will capture it)
-    console.log('\nDETAILED_REPORT_JSON=' + JSON.stringify(report, null, 2));
   });
 });

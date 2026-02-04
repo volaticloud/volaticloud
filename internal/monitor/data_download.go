@@ -10,6 +10,7 @@ import (
 
 	"volaticloud/internal/ent"
 	"volaticloud/internal/enum"
+	"volaticloud/internal/pubsub"
 	"volaticloud/internal/runner"
 	"volaticloud/internal/s3"
 )
@@ -24,7 +25,8 @@ const (
 
 // DownloadRunnerData downloads historical data for a runner using the runner's infrastructure.
 // Data is downloaded on the runner (Docker host or K8s cluster) and uploaded to S3.
-func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRunner) error {
+// If ps is provided, progress events will be published for real-time updates.
+func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRunner, ps pubsub.PubSub) error {
 	log.Printf("Runner %s: starting remote data download", r.Name)
 
 	// Validate S3 config
@@ -115,6 +117,25 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 				SetDataDownloadProgress(progress).
 				Save(context.Background()); updateErr != nil {
 				log.Printf("Runner %s: failed to update progress: %v", r.Name, updateErr)
+			}
+
+			// Publish progress event for real-time UI updates
+			if ps != nil {
+				event := pubsub.RunnerEvent{
+					Type:      pubsub.EventTypeRunnerProgress,
+					RunnerID:  r.ID.String(),
+					Status:    string(enum.DataDownloadStatusDownloading),
+					Progress:  status.Progress,
+					Timestamp: time.Now(),
+				}
+				// Publish to runner-specific topic
+				if pubErr := ps.Publish(context.Background(), pubsub.RunnerTopic(r.ID.String()), event); pubErr != nil {
+					log.Printf("Runner %s: failed to publish progress event: %v", r.Name, pubErr)
+				}
+				// Publish to org-level topic for list views
+				if pubErr := ps.Publish(context.Background(), pubsub.OrgRunnersTopic(r.OwnerID), event); pubErr != nil {
+					log.Printf("Runner %s: failed to publish org progress event: %v", r.Name, pubErr)
+				}
 			}
 
 			switch status.Status {

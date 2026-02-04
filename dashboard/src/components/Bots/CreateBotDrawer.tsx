@@ -244,6 +244,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
             variant="contained"
             disabled={loading || !name || !exchangeID || !strategyID || !runnerID}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid="submit-create-bot"
           >
             {loading ? 'Creating...' : 'Create Bot'}
           </Button>

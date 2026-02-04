@@ -302,6 +302,7 @@ export function CreateOrganizationDrawer({
               variant="contained"
               disabled={loading || !title.trim() || !!idError}
               startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
+              data-testid="submit-create-organization"
             >
               {loading ? 'Creating...' : 'Create'}
             </Button>

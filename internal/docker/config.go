@@ -3,6 +3,7 @@ package docker
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -95,6 +96,14 @@ func ParseConfig(configData map[string]interface{}) (*Config, error) {
 	var config Config
 	if err := json.Unmarshal(configJSON, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
+	}
+
+	// If no network is specified, check for default from environment
+	// This allows E2E tests to specify the Docker network for container connectivity
+	if config.Network == "" {
+		if defaultNetwork := os.Getenv("VOLATICLOUD_DEFAULT_DOCKER_NETWORK"); defaultNetwork != "" {
+			config.Network = defaultNetwork
+		}
 	}
 
 	if err := ValidateConfig(&config); err != nil {

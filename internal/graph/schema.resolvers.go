@@ -632,7 +632,7 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 
 	// Update status to downloading and clear any previous errors
 	startedAt := time.Now()
-	runner, err = r.client.BotRunner.UpdateOneID(id).
+	_, err = r.client.BotRunner.UpdateOneID(id).
 		SetDataDownloadStatus(enum.DataDownloadStatusDownloading).
 		SetDataDownloadStartedAt(startedAt).
 		SetDataDownloadProgress(map[string]interface{}{
@@ -647,12 +647,18 @@ func (r *mutationResolver) RefreshRunnerData(ctx context.Context, id uuid.UUID) 
 		return nil, fmt.Errorf("failed to update runner status: %w", err)
 	}
 
+	// Re-query to get decrypted secrets (Save() return doesn't go through interceptors)
+	runner, err = r.client.BotRunner.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload runner: %w", err)
+	}
+
 	// Trigger download in background goroutine
 	go func() {
 		downloadCtx, cancel := context.WithTimeout(context.Background(), monitor.DefaultDataDownloadTimeout)
 		defer cancel()
 
-		if err := monitor.DownloadRunnerData(downloadCtx, r.client, runner); err != nil {
+		if err := monitor.DownloadRunnerData(downloadCtx, r.client, runner, r.pubsub); err != nil {
 			log.Printf("Runner %s: data download failed: %v", runner.Name, err)
 
 			// Update status to failed

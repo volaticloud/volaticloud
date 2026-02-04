@@ -162,6 +162,7 @@ export const CreateExchangeDrawer = ({ open, onClose, onSuccess }: CreateExchang
             variant="contained"
             disabled={loading || !name || !config}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid="submit-add-exchange"
           >
             {loading ? 'Adding...' : 'Add Exchange'}
           </Button>

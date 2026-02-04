@@ -233,6 +233,7 @@ export const RunnersList = () => {
                 color="primary"
                 onClick={() => handleRefreshData(params.row.id, params.row.name)}
                 deniedTooltip="No permission to refresh data"
+                data-testid={`refresh-data-${params.row.id}`}
               >
                 <RefreshIcon fontSize="small" />
               </ProtectedIconButton>
