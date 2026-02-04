@@ -91,3 +91,22 @@ type DataDownloadStatus struct {
 
 // DataDownloaderCreator is a factory function for creating DataDownloader instances.
 type DataDownloaderCreator func(ctx context.Context, config map[string]interface{}) (DataDownloader, error)
+
+// ShellEscape escapes a string for safe use in shell commands.
+// It wraps the string in single quotes and escapes any embedded single quotes.
+// This prevents shell injection attacks when inserting user input into shell scripts.
+func ShellEscape(s string) string {
+	// Single quotes prevent all shell interpretation except for single quotes themselves.
+	// To include a single quote, we end the quoted string, add an escaped single quote,
+	// and start a new quoted string: 'foo'\''bar' represents foo'bar
+	escaped := "'"
+	for _, c := range s {
+		if c == '\'' {
+			escaped += `'\''`
+		} else {
+			escaped += string(c)
+		}
+	}
+	escaped += "'"
+	return escaped
+}

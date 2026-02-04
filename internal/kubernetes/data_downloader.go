@@ -285,14 +285,23 @@ func buildK8sDownloadScript(spec runner.DataDownloadSpec) string {
 	// Phase 2: Download new data for each exchange
 	sb.WriteString("# Phase 2: Download new data for each exchange\n")
 	for _, exch := range spec.ExchangeConfigs {
+		// Shell-escape user-controlled values to prevent injection
+		escapedName := runner.ShellEscape(exch.Name)
+		escapedPairs := runner.ShellEscape(exch.PairsPattern)
+		escapedMode := runner.ShellEscape(exch.TradingMode)
+		var escapedTimeframes []string
+		for _, tf := range exch.Timeframes {
+			escapedTimeframes = append(escapedTimeframes, runner.ShellEscape(tf))
+		}
+
 		sb.WriteString(fmt.Sprintf("echo \"Downloading %s data...\"\n", exch.Name))
 		sb.WriteString("freqtrade download-data \\\n")
 		sb.WriteString("    --userdir /freqtrade/user_data \\\n")
-		sb.WriteString(fmt.Sprintf("    --exchange %s \\\n", exch.Name))
-		sb.WriteString(fmt.Sprintf("    --pairs \"%s\" \\\n", exch.PairsPattern))
-		sb.WriteString(fmt.Sprintf("    --timeframes %s \\\n", strings.Join(exch.Timeframes, " ")))
+		sb.WriteString(fmt.Sprintf("    --exchange %s \\\n", escapedName))
+		sb.WriteString(fmt.Sprintf("    --pairs %s \\\n", escapedPairs))
+		sb.WriteString(fmt.Sprintf("    --timeframes %s \\\n", strings.Join(escapedTimeframes, " ")))
 		sb.WriteString(fmt.Sprintf("    --days %d \\\n", exch.Days))
-		sb.WriteString(fmt.Sprintf("    --trading-mode %s \\\n", exch.TradingMode))
+		sb.WriteString(fmt.Sprintf("    --trading-mode %s \\\n", escapedMode))
 		sb.WriteString("    --data-format-ohlcv json\n\n")
 	}
 

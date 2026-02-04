@@ -115,7 +115,7 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 			}
 			if _, updateErr := dbClient.BotRunner.UpdateOne(r).
 				SetDataDownloadProgress(progress).
-				Save(context.Background()); updateErr != nil {
+				Save(ctx); updateErr != nil {
 				log.Printf("Runner %s: failed to update progress: %v", r.Name, updateErr)
 			}
 
@@ -129,11 +129,11 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 					Timestamp: time.Now(),
 				}
 				// Publish to runner-specific topic
-				if pubErr := ps.Publish(context.Background(), pubsub.RunnerTopic(r.ID.String()), event); pubErr != nil {
+				if pubErr := ps.Publish(ctx, pubsub.RunnerTopic(r.ID.String()), event); pubErr != nil {
 					log.Printf("Runner %s: failed to publish progress event: %v", r.Name, pubErr)
 				}
 				// Publish to org-level topic for list views
-				if pubErr := ps.Publish(context.Background(), pubsub.OrgRunnersTopic(r.OwnerID), event); pubErr != nil {
+				if pubErr := ps.Publish(ctx, pubsub.OrgRunnersTopic(r.OwnerID), event); pubErr != nil {
 					log.Printf("Runner %s: failed to publish org progress event: %v", r.Name, pubErr)
 				}
 			}
@@ -143,7 +143,10 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 				log.Printf("Runner %s: remote download completed", r.Name)
 
 				// Get logs to extract data availability metadata
-				logs, _ := downloader.GetDownloadLogs(ctx, taskID)
+				logs, logErr := downloader.GetDownloadLogs(ctx, taskID)
+				if logErr != nil {
+					log.Printf("Runner %s: failed to get download logs: %v", r.Name, logErr)
+				}
 				dataAvailable := parseDataAvailableFromLogs(logs)
 				if dataAvailable != nil {
 					log.Printf("Runner %s: extracted data availability metadata", r.Name)
@@ -163,15 +166,17 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 				if dataAvailable != nil {
 					update = update.SetDataAvailable(dataAvailable)
 				}
-				if _, updateErr := update.Save(context.Background()); updateErr != nil {
+				if _, updateErr := update.Save(ctx); updateErr != nil {
 					log.Printf("Runner %s: failed to update S3 info: %v", r.Name, updateErr)
 				}
 				return nil
 
 			case enum.DataDownloadStatusFailed:
 				// Get logs for debugging
-				logs, _ := downloader.GetDownloadLogs(ctx, taskID)
-				if logs != "" {
+				logs, logErr := downloader.GetDownloadLogs(ctx, taskID)
+				if logErr != nil {
+					log.Printf("Runner %s: failed to get download logs: %v", r.Name, logErr)
+				} else if logs != "" {
 					log.Printf("Runner %s: download logs: %s", r.Name, logs)
 				}
 				// Cleanup download task
