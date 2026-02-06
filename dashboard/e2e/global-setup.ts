@@ -45,6 +45,7 @@ export default async function globalSetup(config: FullConfig) {
 
   const context = await browser.newContext({
     baseURL: config.projects[0]?.use?.baseURL || 'https://console.volaticloud.loc',
+    ignoreHTTPSErrors: true, // Trust self-signed certs in E2E
   });
 
   const page = await context.newPage();
