@@ -27,10 +27,12 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'https://console.volaticloud.loc',
     screenshot: 'only-on-failure',
     trace: 'off',
-    // Use system Chrome which has the CA certificate installed
-    channel: 'chrome',
+    // Use system Chrome locally, bundled Chromium in CI
+    channel: process.env.CI === 'true' ? undefined : 'chrome',
     // Headless mode (default: false for local dev, true for CI)
     headless: process.env.E2E_HEADLESS !== 'false',
+    // Trust self-signed certs in E2E
+    ignoreHTTPSErrors: true,
     // Reuse auth state from global setup
     storageState: AUTH_FILE,
   },
