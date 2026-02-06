@@ -74,6 +74,19 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Fill card details
   await page.waitForLoadState('domcontentloaded');
   const cardField = page.locator('[placeholder="1234 1234 1234 1234"]');
+
+  // Check if card field is directly visible, or if we need to select Card payment method first
+  const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
+  if (!isCardFieldVisible) {
+    // Stripe may show payment method selector (Card/Cash App/Klarna) - click Card row to expand
+    // Use the accordion button or the text "Card" to click (radio is intercepted by button overlay)
+    const cardOption = page.locator('button[data-testid="card-accordion-item-button"], [class*="AccordionItem"]:has-text("Card")').first();
+    if (await cardOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await cardOption.click();
+      console.log('Selected Card payment method');
+    }
+  }
+
   await cardField.waitFor({ state: 'visible', timeout: 30000 });
 
   await cardField.fill('4242424242424242');
@@ -84,6 +97,23 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
 
   await page.locator('[placeholder="CVC"]').fill('123');
   await page.locator('[placeholder="Full name on card"]').fill('E2E Test User');
+
+  // Fill ZIP code if required (US)
+  const zipField = page.locator('[placeholder="ZIP"]');
+  if (await zipField.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await zipField.fill('10001');
+    console.log('Filled ZIP code');
+  }
+
+  // Uncheck "Save my information for faster checkout" if checked
+  const saveInfoCheckbox = page.getByRole('checkbox', { name: /save my information/i });
+  if (await saveInfoCheckbox.isVisible({ timeout: 2000 }).catch(() => false)) {
+    const isChecked = await saveInfoCheckbox.isChecked();
+    if (isChecked) {
+      await saveInfoCheckbox.uncheck();
+      console.log('Unchecked save info checkbox');
+    }
+  }
 
   // Submit payment
   await page.locator('button[type="submit"]').first().click();

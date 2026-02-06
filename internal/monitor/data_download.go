@@ -94,10 +94,12 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 	for {
 		select {
 		case <-ctx.Done():
-			// Context cancelled or deadline exceeded - try to cancel the download
-			if cancelErr := downloader.CancelDownload(context.Background(), taskID); cancelErr != nil {
+			// Context cancelled or deadline exceeded - try to cancel the download with a bounded timeout
+			cancelCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if cancelErr := downloader.CancelDownload(cancelCtx, taskID); cancelErr != nil {
 				log.Printf("Runner %s: failed to cancel download: %v", r.Name, cancelErr)
 			}
+			cancel()
 			return fmt.Errorf("download cancelled or timed out: %w", ctx.Err())
 
 		case <-ticker.C:
@@ -122,11 +124,12 @@ func DownloadRunnerData(ctx context.Context, dbClient *ent.Client, r *ent.BotRun
 			// Publish progress event for real-time UI updates
 			if ps != nil {
 				event := pubsub.RunnerEvent{
-					Type:      pubsub.EventTypeRunnerProgress,
-					RunnerID:  r.ID.String(),
-					Status:    string(enum.DataDownloadStatusDownloading),
-					Progress:  status.Progress,
-					Timestamp: time.Now(),
+					Type:         pubsub.EventTypeRunnerProgress,
+					RunnerID:     r.ID.String(),
+					Status:       string(enum.DataDownloadStatusDownloading),
+					Progress:     status.Progress,
+					CurrentPhase: status.CurrentPhase,
+					Timestamp:    time.Now(),
 				}
 				// Publish to runner-specific topic
 				if pubErr := ps.Publish(ctx, pubsub.RunnerTopic(r.ID.String()), event); pubErr != nil {

@@ -62,10 +62,11 @@ type TradeEvent struct {
 
 // RunnerEvent represents a runner status change or progress update.
 type RunnerEvent struct {
-	Type      EventType `json:"type"`
-	RunnerID  string    `json:"runner_id"`
-	Status    string    `json:"status"`             // DataDownloadStatus enum value
-	Progress  float64   `json:"progress,omitempty"` // 0.0 to 100.0 for download progress
-	Error     string    `json:"error,omitempty"`
-	Timestamp time.Time `json:"timestamp"`
+	Type         EventType `json:"type"`
+	RunnerID     string    `json:"runner_id"`
+	Status       string    `json:"status"`                    // DataDownloadStatus enum value
+	Progress     float64   `json:"progress,omitempty"`        // 0.0 to 100.0 for download progress
+	CurrentPhase string    `json:"current_phase,omitempty"`   // Current phase (e.g., "downloading binance", "packaging")
+	Error        string    `json:"error,omitempty"`
+	Timestamp    time.Time `json:"timestamp"`
 }
