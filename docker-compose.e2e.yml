@@ -198,13 +198,11 @@ services:
         condition: service_healthy
     networks:
       - volaticloud-e2e
-    profiles:
-      - stripe
 
   playwright:
     image: mcr.microsoft.com/playwright:v1.58.1-noble
     working_dir: /app
-    command: bash -c "npm ci && npx playwright test --project=strategy-scenarios"
+    command: bash -c "npm ci && npx playwright test --project=pipeline"
     env_file:
       - .env
     environment:

@@ -26,11 +26,16 @@ on:
       test-project:
         description: 'Playwright project to run'
         required: false
-        default: 'strategy-scenarios'
+        default: 'pipeline'
         type: choice
         options:
-          - strategy-scenarios
-          - all
+          - pipeline
+          - smoke
+          - setup
+          - organization
+          - runner
+          - strategy
+          - bot
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -113,7 +118,7 @@ jobs:
 
       - name: Run Playwright tests
         run: |
-          TEST_PROJECT="${{ github.event.inputs.test-project || 'strategy-scenarios' }}"
+          TEST_PROJECT="${{ github.event.inputs.test-project || 'pipeline' }}"
           docker compose -f $COMPOSE_FILE --profile test run --rm \
             -e CI=true \
             playwright bash -c "npm ci && npx playwright test --project=$TEST_PROJECT"
