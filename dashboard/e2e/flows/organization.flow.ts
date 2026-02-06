@@ -78,20 +78,45 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
-    // US Stripe shows payment method selector (Card/Cash App/Klarna) with "Pay with X" buttons
-    // Click the "Pay with card" button to expand card fields
-    const payWithCardBtn = page.locator('button:has-text("Pay with card")').first();
-    if (await payWithCardBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await payWithCardBtn.click();
-      console.log('Clicked Pay with card button');
-    } else {
-      // Fallback: try clicking the Card radio button directly
-      const cardRadio = page.getByRole('radio', { name: 'Card' });
-      if (await cardRadio.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await cardRadio.click();
-        console.log('Clicked Card radio button');
+    // Stripe shows payment method selector - click to expand card fields
+    // Use JavaScript click to bypass viewport restrictions
+    const clicked = await page.evaluate(() => {
+      // Try testid first (local dev with VPN)
+      let btn = document.querySelector('[data-testid="card-accordion-item-button"]') as HTMLElement;
+      if (btn) {
+        btn.click();
+        return 'testid';
       }
+      // Try aria-label
+      btn = document.querySelector('button[aria-label="Pay with card"]') as HTMLElement;
+      if (btn) {
+        btn.click();
+        return 'aria-label';
+      }
+      // Try by text content
+      const buttons = Array.from(document.querySelectorAll('button'));
+      btn = buttons.find(b => b.textContent?.includes('Pay with card')) as HTMLElement;
+      if (btn) {
+        btn.click();
+        return 'text';
+      }
+      // Last resort: click Card radio
+      const radio = document.querySelector('input[type="radio"][value="card"]') as HTMLElement;
+      if (radio) {
+        radio.click();
+        return 'radio';
+      }
+      return null;
+    });
+
+    if (clicked) {
+      console.log(`Clicked card payment via: ${clicked}`);
+    } else {
+      console.log('Warning: Could not find card payment selector');
     }
+
+    // Wait for accordion animation
+    await page.waitForTimeout(1000);
   }
 
   await cardField.waitFor({ state: 'visible', timeout: 30000 });
