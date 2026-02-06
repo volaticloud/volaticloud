@@ -1,7 +1,7 @@
 /**
  * Exchange Flow Helpers
  */
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { waitForPageReady } from './auth.flow';
 
 export interface ExchangeConfig {
@@ -17,14 +17,14 @@ export async function createExchange(page: Page, config: ExchangeConfig): Promis
   await page.goto('/exchanges');
   await waitForPageReady(page);
 
-  // Click add exchange button
-  const addBtn = page.locator('button:has-text("Add Exchange")').first();
+  // Click add exchange button using data-testid
+  const addBtn = page.locator('[data-testid="add-exchange-button"]').first();
   await addBtn.waitFor({ state: 'visible', timeout: 10000 });
   await addBtn.click();
   await page.waitForTimeout(1000);
 
-  // Fill exchange name
-  await page.getByLabel('Exchange Name').fill(config.name);
+  // Fill exchange name using data-testid
+  await page.locator('[data-testid="exchange-name-input"]').fill(config.name);
 
   // The FreqtradeConfigForm has defaults for dry-run mode
   // Only fill API keys if provided (for live trading)
@@ -42,8 +42,11 @@ export async function createExchange(page: Page, config: ExchangeConfig): Promis
     }
   }
 
-  // Submit
-  await page.locator('[data-testid="submit-add-exchange"]').click();
+  // Submit using testid with proper waiting
+  const submitBtn = page.locator('[data-testid="submit-add-exchange"]');
+  await submitBtn.scrollIntoViewIfNeeded();
+  await expect(submitBtn).toBeEnabled({ timeout: 10000 });
+  await submitBtn.click();
   await page.waitForTimeout(3000);
   await waitForPageReady(page);
 

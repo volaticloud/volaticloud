@@ -1,7 +1,7 @@
 /**
  * Bot Management Flow Helpers
  */
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { waitForPageReady } from './auth.flow';
 
 export interface BotConfig {
@@ -20,19 +20,19 @@ export async function createBot(page: Page, config: BotConfig): Promise<void> {
   await page.goto('/bots');
   await waitForPageReady(page);
 
-  // Click create bot button
-  const createBtn = page.locator('button:has-text("Create Bot")').first();
+  // Click create bot button using data-testid
+  const createBtn = page.locator('[data-testid="create-bot-button"]').first();
   await createBtn.waitFor({ state: 'visible', timeout: 10000 });
   await createBtn.click();
   await page.waitForTimeout(1000);
 
-  // Fill bot name
-  const nameInput = page.getByLabel('Bot Name');
+  // Fill bot name using data-testid
+  const nameInput = page.locator('[data-testid="bot-name-input"]').first();
   await nameInput.waitFor({ state: 'visible', timeout: 5000 });
   await nameInput.fill(config.name);
 
   // Select strategy
-  const strategySelect = page.locator('label:has-text("Strategy") ~ [role="combobox"], [data-testid*="strategy-select"]').first();
+  const strategySelect = page.locator('[data-testid="bot-strategy-select"], label:has-text("Strategy") ~ [role="combobox"]').first();
   if (await strategySelect.isVisible({ timeout: 3000 })) {
     await strategySelect.click();
     await page.waitForTimeout(500);
@@ -40,8 +40,8 @@ export async function createBot(page: Page, config: BotConfig): Promise<void> {
     await page.waitForTimeout(500);
   }
 
-  // Select exchange
-  const exchangeSelect = page.locator('label:has-text("Exchange") ~ [role="combobox"], [data-testid*="exchange-select"]').first();
+  // Select exchange using data-testid
+  const exchangeSelect = page.locator('[data-testid="bot-exchange-select"]').first();
   if (await exchangeSelect.isVisible({ timeout: 3000 })) {
     await exchangeSelect.click();
     await page.waitForTimeout(500);
@@ -50,7 +50,7 @@ export async function createBot(page: Page, config: BotConfig): Promise<void> {
   }
 
   // Select runner
-  const runnerSelect = page.locator('label:has-text("Runner") ~ [role="combobox"], [data-testid*="runner-select"]').first();
+  const runnerSelect = page.locator('[data-testid="bot-runner-select"], label:has-text("Runner") ~ [role="combobox"]').first();
   if (await runnerSelect.isVisible({ timeout: 3000 })) {
     await runnerSelect.click();
     await page.waitForTimeout(500);
@@ -76,8 +76,11 @@ export async function createBot(page: Page, config: BotConfig): Promise<void> {
     }
   }
 
-  // Submit
-  await page.locator('[data-testid="submit-create-bot"], button[type="submit"]:has-text("Create")').first().click();
+  // Submit using testid with proper waiting
+  const submitBtn = page.locator('[data-testid="submit-create-bot"]');
+  await submitBtn.scrollIntoViewIfNeeded();
+  await expect(submitBtn).toBeEnabled({ timeout: 10000 });
+  await submitBtn.click();
   await page.waitForTimeout(3000);
   await waitForPageReady(page);
 

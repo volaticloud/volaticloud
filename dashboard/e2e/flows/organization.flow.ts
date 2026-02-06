@@ -31,13 +31,16 @@ export async function createOrganization(page: Page, orgName: string): Promise<v
 
   await page.waitForTimeout(1000);
 
-  // Fill organization title
-  const titleInput = page.getByLabel('Organization Title');
+  // Fill organization title using data-testid
+  const titleInput = page.locator('[data-testid="organization-title-input"]').first();
   await titleInput.waitFor({ state: 'visible', timeout: 5000 });
   await titleInput.fill(orgName);
 
-  // Submit
-  await page.locator('[data-testid="submit-create-organization"]').click();
+  // Submit using testid with proper waiting
+  const submitBtn = page.locator('[data-testid="submit-create-organization"]');
+  await submitBtn.scrollIntoViewIfNeeded();
+  await expect(submitBtn).toBeEnabled({ timeout: 10000 });
+  await submitBtn.click();
 
   // Wait for redirect (signinRedirect is instant due to existing SSO)
   await page.waitForTimeout(5000);

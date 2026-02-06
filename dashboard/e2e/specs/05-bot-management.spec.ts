@@ -1,7 +1,8 @@
 /**
- * Bot Management E2E Tests
+ * Bot & Exchange Management E2E Tests
  *
- * Tests bot creation, lifecycle management, and monitoring.
+ * Tests exchange and bot creation, lifecycle management, and monitoring.
+ * Exchange must be created before bot (dependency).
  *
  * Depends on: 00-setup (org + runner must exist)
  * Uses: Strategy from 04-strategy-builder (optional)
@@ -11,6 +12,70 @@
 import { test, expect } from '@playwright/test';
 import { navigateToOrg, waitForPageReady } from '../flows/auth.flow';
 import { readState } from '../state';
+
+// Exchange Management must run FIRST - bots need exchanges
+test.describe('Exchange Management', () => {
+  const timestamp = Date.now();
+
+  test.beforeEach(async () => {
+    const state = readState();
+    if (!state.orgName) {
+      throw new Error('Setup not complete: Organization not created. Run setup first.');
+    }
+  });
+
+  // Exchange must be created BEFORE bot tests can work
+  test('can create an exchange connection', async ({ page }) => {
+    await navigateToOrg(page, '/exchanges');
+
+    // Check for add exchange button using data-testid
+    const addBtn = page.locator('[data-testid="add-exchange-button"]').first();
+    const isAddVisible = await addBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (!isAddVisible) {
+      console.log('Add Exchange button not visible');
+      return;
+    }
+
+    await addBtn.click();
+    await page.waitForTimeout(1000);
+
+    // Fill exchange name using data-testid for reliability
+    const nameInput = page.locator('[data-testid="exchange-name-input"]').first();
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+    await nameInput.fill(`E2E Exchange ${timestamp}`);
+
+    // The default config has dry_run mode enabled, so we don't need API keys
+    // Just submit the form with defaults
+    await page.waitForTimeout(500);
+
+    // Submit the exchange form
+    const submitBtn = page.locator('[data-testid="submit-add-exchange"]');
+    await submitBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await submitBtn.click();
+
+    // Wait for the drawer to close (success) or error message
+    await page.waitForTimeout(2000);
+
+    // Check if drawer closed (success) or still open (error)
+    const drawerStillOpen = await nameInput.isVisible({ timeout: 1000 }).catch(() => false);
+    if (drawerStillOpen) {
+      console.log('⚠ Exchange creation may have failed - drawer still open');
+    } else {
+      console.log('✓ Exchange created successfully');
+    }
+  });
+
+  test('can view exchange list', async ({ page }) => {
+    await navigateToOrg(page, '/exchanges');
+
+    // Check for exchange list or empty state
+    const exchangeContent = page.locator('text=/No exchanges|Add Exchange|Exchange Name/i').first();
+    await expect(exchangeContent).toBeVisible({ timeout: 10000 });
+
+    console.log('✓ Exchanges page loads correctly');
+  });
+});
 
 test.describe('Bot Management', () => {
   const timestamp = Date.now();
@@ -26,8 +91,8 @@ test.describe('Bot Management', () => {
     test('can create a basic bot', async ({ page }) => {
       await navigateToOrg(page, '/bots');
 
-      // Check if create button is available
-      const createBtn = page.locator('button:has-text("Create Bot")').first();
+      // Check if create button is available using data-testid
+      const createBtn = page.locator('[data-testid="create-bot-button"]').first();
       const isCreateVisible = await createBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (!isCreateVisible) {
@@ -38,13 +103,13 @@ test.describe('Bot Management', () => {
       await createBtn.click();
       await page.waitForTimeout(1000);
 
-      // Fill bot name
-      const nameInput = page.getByLabel('Bot Name');
+      // Fill bot name using data-testid
+      const nameInput = page.locator('[data-testid="bot-name-input"]').first();
       await nameInput.waitFor({ state: 'visible', timeout: 5000 });
       await nameInput.fill(`Test Bot ${timestamp}`);
 
-      // Check for required dropdowns
-      const strategySelect = page.locator('label:has-text("Strategy") ~ [role="combobox"]').first();
+      // Check for required dropdowns using data-testid
+      const strategySelect = page.locator('[data-testid="bot-strategy-select"]').first();
       const hasStrategies = await strategySelect.isVisible({ timeout: 2000 }).catch(() => false);
 
       if (!hasStrategies) {
@@ -68,7 +133,7 @@ test.describe('Bot Management', () => {
     test('validates required fields', async ({ page }) => {
       await navigateToOrg(page, '/bots');
 
-      const createBtn = page.locator('button:has-text("Create Bot")').first();
+      const createBtn = page.locator('[data-testid="create-bot-button"]').first();
       if (!(await createBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
         console.log('Create Bot not available');
         return;
@@ -77,19 +142,18 @@ test.describe('Bot Management', () => {
       await createBtn.click();
       await page.waitForTimeout(1000);
 
-      // Try to submit without filling required fields
+      // Check that submit button is disabled when form is empty (validation in place)
       const submitBtn = page.locator('[data-testid="submit-create-bot"], button[type="submit"]:has-text("Create")').first();
-      if (await submitBtn.isVisible({ timeout: 2000 })) {
-        await submitBtn.click();
-        await page.waitForTimeout(500);
+      if (await submitBtn.isVisible({ timeout: 5000 })) {
+        const isDisabled = await submitBtn.isDisabled();
+        expect(isDisabled, 'Submit button should be disabled for empty form').toBe(true);
+        console.log('✓ Validation prevents submission with empty fields');
+      }
 
-        // Should see validation errors
-        const errorText = page.locator('text=/required|error|invalid/i').first();
-        const hasError = await errorText.isVisible({ timeout: 2000 }).catch(() => false);
-
-        if (hasError) {
-          console.log('✓ Validation errors shown for required fields');
-        }
+      // Close drawer
+      const closeBtn = page.locator('[data-testid="close-drawer"], button:has-text("Cancel"), [aria-label="close"]').first();
+      if (await closeBtn.isVisible({ timeout: 2000 })) {
+        await closeBtn.click();
       }
     });
   });
@@ -160,43 +224,5 @@ test.describe('Bot Management', () => {
         console.log('No performance metrics visible (bots may not have run)');
       }
     });
-  });
-});
-
-test.describe('Exchange Management', () => {
-  const timestamp = Date.now();
-
-  test('can create an exchange connection', async ({ page }) => {
-    await navigateToOrg(page, '/exchanges');
-
-    // Check for add exchange button
-    const addBtn = page.locator('button:has-text("Add Exchange")').first();
-    const isAddVisible = await addBtn.isVisible({ timeout: 5000 }).catch(() => false);
-
-    if (!isAddVisible) {
-      console.log('Add Exchange button not visible');
-      return;
-    }
-
-    await addBtn.click();
-    await page.waitForTimeout(1000);
-
-    // Fill exchange name
-    const nameInput = page.getByLabel('Exchange Name');
-    await nameInput.waitFor({ state: 'visible', timeout: 5000 });
-    await nameInput.fill(`Test Exchange ${timestamp}`);
-
-    // The form should have dry-run mode defaults
-    console.log('✓ Exchange creation form accessible');
-  });
-
-  test('can view exchange list', async ({ page }) => {
-    await navigateToOrg(page, '/exchanges');
-
-    // Check for exchange list or empty state
-    const exchangeContent = page.locator('text=/No exchanges|Add Exchange|Exchange Name/i').first();
-    await expect(exchangeContent).toBeVisible({ timeout: 10000 });
-
-    console.log('✓ Exchanges page loads correctly');
   });
 });

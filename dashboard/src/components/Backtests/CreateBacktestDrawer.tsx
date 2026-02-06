@@ -717,6 +717,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
         open={open}
         onClose={onClose}
         PaperProps={{
+          'data-testid': 'backtest-drawer-paper',
           sx: {
             width: { xs: '100%', sm: 600 },
             maxWidth: '100%',
@@ -735,7 +736,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
             borderColor: 'divider',
           }}
         >
-          <Typography variant="h6" component="h2">
+          <Typography variant="h6" component="h2" data-testid="backtest-drawer-title">
             Create New Backtest
           </Typography>
           <IconButton onClick={onClose} size="small" aria-label="close">
@@ -763,12 +764,14 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
               isOptionEqualToValue={(option, value) => option.id === value.id}
               loading={searchLoading}
               filterOptions={(x) => x} // Disable built-in filtering, we filter server-side
+              data-testid="backtest-strategy-select"
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Strategy"
                   required
                   placeholder="Search strategies..."
+                  data-testid="backtest-strategy-input"
                   slotProps={{
                     input: {
                       ...params.InputProps,
@@ -815,6 +818,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
               onChange={setRunnerID}
               required
               onDataAvailableLoaded={handleRunnerDataLoaded}
+              data-testid="backtest-runner-select"
             />
 
             {/* Config Section - show when runner is selected */}
@@ -904,6 +908,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                             disabled={areAllPairsSelected(effectivePairs, availablePairs)}
                             aria-label="Select all available trading pairs"
                             sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.75rem' }}
+                            data-testid="backtest-select-all-pairs"
                           >
                             Select All ({availablePairs.length})
                           </Button>
@@ -982,6 +987,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                           onDelete={() => setTimeframeOverride(strategyConfigFields.timeframe ?? '5m')}
                           deleteIcon={<EditIcon fontSize="small" />}
                           sx={{ cursor: 'pointer' }}
+                          data-testid="backtest-timeframe-inherited-chip"
                         />
                       )}
                     </Box>
@@ -992,6 +998,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                           value={effectiveTimeframe ?? ''}
                           onChange={(e) => setTimeframeOverride(e.target.value || null)}
                           displayEmpty
+                          data-testid="backtest-timeframe-select"
                         >
                           <MenuItem value="">
                             <em>Use strategy default</em>
@@ -1023,13 +1030,13 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
                   </Box>
 
                   {availableDateRange && (
-                    <Alert severity="info" sx={{ py: 0 }}>
+                    <Alert severity="info" sx={{ py: 0 }} data-testid="backtest-data-available-info">
                       Data available from {dayjs(availableDateRange.from).format('YYYY-MM-DD')} to {dayjs(availableDateRange.to).format('YYYY-MM-DD')}
                       {effectivePairs.length > 0 && effectiveTimeframe && ' for selected pairs/timeframe'}
                     </Alert>
                   )}
                   {!availableDateRange && runnerDataAvailable && effectivePairs.length > 0 && (
-                    <Alert severity="warning" sx={{ py: 0 }}>
+                    <Alert severity="warning" sx={{ py: 0 }} data-testid="backtest-no-data-warning">
                       No overlapping data range found for the selected pairs
                       {effectiveTimeframe ? ` and ${effectiveTimeframe} timeframe` : ''}.
                       Try selecting fewer pairs or a different timeframe.
@@ -1162,6 +1169,7 @@ export const CreateBacktestDrawer = ({ open, onClose, onSuccess, onBacktestCreat
             variant="contained"
             disabled={isSubmitDisabled}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid="backtest-submit-button"
           >
             {loading ? 'Creating...' : 'Create Backtest'}
           </Button>

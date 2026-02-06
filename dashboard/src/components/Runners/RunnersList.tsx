@@ -247,6 +247,7 @@ export const RunnersList = () => {
                   setVisibilityDrawerOpen(true);
                 }}
                 deniedTooltip="No permission to change visibility"
+                data-testid={`visibility-toggle-${params.row.id}`}
               >
                 {params.row.public ? <PublicIcon fontSize="small" /> : <LockIcon fontSize="small" />}
               </ProtectedIconButton>
@@ -263,6 +264,7 @@ export const RunnersList = () => {
                   }
                 }}
                 deniedTooltip="No permission to edit"
+                data-testid={`edit-runner-${params.row.id}`}
               >
                 <EditIcon fontSize="small" />
               </ProtectedIconButton>
@@ -276,6 +278,7 @@ export const RunnersList = () => {
                   setDeleteDrawerOpen(true);
                 }}
                 deniedTooltip="No permission to delete"
+                data-testid={`delete-runner-${params.row.id}`}
               >
                 <DeleteIcon fontSize="small" />
               </ProtectedIconButton>
@@ -329,6 +332,7 @@ export const RunnersList = () => {
                   onClick={() => setCreateDrawerOpen(true)}
                   disabled={!canCreateRunner}
                   sx={{ flexShrink: 0 }}
+                  data-testid="create-runner-button"
                 >
                   Create Runner
                 </Button>
@@ -343,6 +347,7 @@ export const RunnersList = () => {
         pagination={pagination}
         emptyMessage="No runners yet. Create your first runner to get started."
         isPolling={!pagination.loading && data !== undefined}
+        testIdPrefix="runner"
       />
 
       <CreateRunnerDrawer

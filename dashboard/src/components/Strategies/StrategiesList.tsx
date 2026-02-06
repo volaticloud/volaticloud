@@ -248,6 +248,7 @@ export const StrategiesList = () => {
                   onClick={() => setCreateDrawerOpen(true)}
                   disabled={!canCreateStrategy}
                   sx={{ flexShrink: 0 }}
+                  data-testid="create-strategy-button"
                 >
                   Create Strategy
                 </Button>
@@ -262,6 +263,7 @@ export const StrategiesList = () => {
         pagination={pagination}
         emptyMessage="No strategies yet. Create your first strategy to get started."
         onRowClick={(row) => navigate(`/strategies/${row.id}`)}
+        testIdPrefix="strategy"
       />
 
       {selectedStrategy && (

@@ -105,9 +105,10 @@ export function getOrgUrl(path: string): string {
     return path;
   }
 
-  // Add orgId param to path
-  const separator = path.includes('?') ? '&' : '?';
-  return `${path}${separator}orgId=${orgAlias}`;
+  // Use URL API for proper URL construction (avoids manual string concatenation bugs)
+  const url = new URL(path, 'https://placeholder.local');
+  url.searchParams.set('orgId', orgAlias);
+  return url.pathname + url.search;
 }
 
 /**

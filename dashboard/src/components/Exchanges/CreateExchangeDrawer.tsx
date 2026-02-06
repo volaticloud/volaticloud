@@ -127,6 +127,7 @@ export const CreateExchangeDrawer = ({ open, onClose, onSuccess }: CreateExchang
               autoComplete="off"
               placeholder="e.g., Binance Production, Coinbase Testnet"
               helperText="A descriptive name to identify this exchange configuration"
+              inputProps={{ 'data-testid': 'exchange-name-input' }}
             />
 
             <FreqtradeConfigForm

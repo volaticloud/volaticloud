@@ -30,6 +30,8 @@ export interface PaginatedDataGridProps<TRow extends GridValidRowModel> {
   height?: string | number;
   /** Optional: Minimum height */
   minHeight?: string | number;
+  /** Optional: Test ID prefix for E2E tests (e.g., "strategy" → "strategy-row-{id}") */
+  testIdPrefix?: string;
 }
 
 /**
@@ -75,6 +77,7 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
   isPolling = false,
   height,
   minHeight,
+  testIdPrefix,
 }: PaginatedDataGridProps<TRow>) {
   const rows: GridRowsProp<TRow> = pagination.items;
 
@@ -92,11 +95,14 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
   }
 
   return (
-    <Box sx={{
-      width: '100%',
-      height: height ?? 'calc(100vh - 200px)',
-      minHeight: minHeight ?? 400
-    }}>
+    <Box
+      sx={{
+        width: '100%',
+        height: height ?? 'calc(100vh - 200px)',
+        minHeight: minHeight ?? 400
+      }}
+      data-testid={testIdPrefix ? `${testIdPrefix}-datagrid` : undefined}
+    >
       <DataGrid<TRow>
         rows={rows}
         columns={columns}
@@ -127,6 +133,12 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
         hideFooter={hideFooter}
         // Disable column menu and filters for cleaner UI
         disableColumnMenu
+        // Add testids to rows for E2E testing
+        slotProps={testIdPrefix ? {
+          row: {
+            'data-testid': testIdPrefix ? `${testIdPrefix}-row` : undefined,
+          } as React.HTMLAttributes<HTMLDivElement>,
+        } : undefined}
         // Custom styles
         sx={{
           // Remove border around grid

@@ -158,6 +158,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
               required
               fullWidth
               autoFocus
+              inputProps={{ 'data-testid': 'bot-name-input' }}
             />
 
             <FormControl fullWidth required>
@@ -166,6 +167,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
                 value={mode}
                 onChange={(e) => setMode(e.target.value as 'live' | 'dry_run')}
                 label="Mode"
+                data-testid="bot-mode-select"
               >
                 <MenuItem value="dry_run">Dry Run (Paper Trading)</MenuItem>
                 <MenuItem value="live">Live Trading</MenuItem>
@@ -179,6 +181,7 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
                 value={exchangeID}
                 onChange={(e) => setExchangeID(e.target.value)}
                 label="Exchange"
+                data-testid="bot-exchange-select"
               >
                 {exchanges.map((exchange) => (
                   <MenuItem key={exchange.id} value={exchange.id}>
@@ -197,12 +200,14 @@ export const CreateBotDrawer = ({ open, onClose, onSuccess }: CreateBotDrawerPro
               value={strategyID}
               onChange={setStrategyID}
               required
+              data-testid="bot-strategy-select"
             />
 
             <RunnerSelector
               value={runnerID}
               onChange={setRunnerID}
               required
+              data-testid="bot-runner-select"
             />
 
             <Box>

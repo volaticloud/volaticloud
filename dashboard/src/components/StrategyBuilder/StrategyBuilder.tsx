@@ -309,6 +309,7 @@ export function StrategyBuilder({
             <Tab
               key={tab.id}
               icon={tab.icon}
+              data-testid={`tab-${tab.id}`}
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tab.label}

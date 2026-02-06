@@ -112,6 +112,7 @@ export const ToolbarActions = ({
             size={size}
             onClick={action.onClick}
             disabled={action.disabled || action.loading}
+            data-testid={`toolbar-action-${action.id}`}
           >
             {action.loading ? <CircularProgress size={20} /> : action.icon}
           </IconButton>
@@ -124,6 +125,7 @@ export const ToolbarActions = ({
             startIcon={action.loading ? <CircularProgress size={16} /> : action.icon}
             onClick={action.onClick}
             disabled={action.disabled || action.loading}
+            data-testid={`toolbar-action-${action.id}`}
           >
             {action.loading && action.loadingLabel ? action.loadingLabel : action.label}
           </Button>
@@ -149,6 +151,7 @@ export const ToolbarActions = ({
               aria-controls={menuOpen ? 'toolbar-overflow-menu' : undefined}
               aria-haspopup="true"
               aria-expanded={menuOpen ? 'true' : undefined}
+              data-testid="toolbar-more-actions"
             >
               <MoreVert />
             </IconButton>
@@ -244,6 +247,7 @@ export const OverflowMenu = ({
           aria-controls={menuOpen ? 'overflow-menu' : undefined}
           aria-haspopup="true"
           aria-expanded={menuOpen ? 'true' : undefined}
+          data-testid="toolbar-more-actions"
         >
           {icon || <MoreVert />}
         </IconButton>
@@ -297,7 +301,11 @@ const MenuItemContent = ({
   return (
     <Fragment>
       {action.dividerBefore && index > 0 && <Divider />}
-      <MenuItem onClick={handleClick} disabled={action.disabled || action.loading}>
+      <MenuItem
+        onClick={handleClick}
+        disabled={action.disabled || action.loading}
+        data-testid={`toolbar-menu-item-${action.id}`}
+      >
         {action.icon && (
           <ListItemIcon sx={{ color: action.color ? `${action.color}.main` : undefined }}>
             {action.loading ? <CircularProgress size={20} /> : action.icon}

@@ -6,11 +6,40 @@
  */
 import { Page } from '@playwright/test';
 import { signIn } from '../auth';
-import { getOrgUrl } from '../state';
+import { getOrgUrl, readState } from '../state';
 
 export async function waitForPageReady(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500);
+}
+
+/**
+ * Check if we're on the "No Organization" blocker page.
+ * This appears when a user is authenticated but has no organizations.
+ */
+export async function isNoOrganizationPage(page: Page): Promise<boolean> {
+  const createOrgButton = page.locator('button:has-text("Create Organization")');
+  const noOrgText = page.locator('text="You don\'t have any organizations yet"');
+
+  const [hasButton, hasText] = await Promise.all([
+    createOrgButton.isVisible({ timeout: 1000 }).catch(() => false),
+    noOrgText.isVisible({ timeout: 1000 }).catch(() => false),
+  ]);
+
+  return hasButton && hasText;
+}
+
+/**
+ * Handle the "No Organization" blocker page by throwing an informative error.
+ * Setup tests should handle this case by creating an organization first.
+ */
+export async function handleNoOrganizationPage(page: Page): Promise<void> {
+  if (await isNoOrganizationPage(page)) {
+    throw new Error(
+      'Landed on "No Organization" page. Run setup (00-setup.spec.ts) first to create an organization, ' +
+      'or the E2E environment may need to be reset.'
+    );
+  }
 }
 
 /**
@@ -36,6 +65,22 @@ async function ensureAuthenticated(page: Page): Promise<void> {
   if (page.url() === 'about:blank') {
     await page.goto('/');
     await waitForPageReady(page);
+  }
+
+  // Check if we landed on the "No Organization" blocker page
+  if (await isNoOrganizationPage(page)) {
+    // Check if state has an org - if not, setup hasn't run
+    const state = readState();
+    if (!state.orgAlias) {
+      throw new Error(
+        'No organization exists. Run setup tests first (00-setup.spec.ts) or the E2E environment needs initialization.'
+      );
+    }
+    // State has org but we're on blocker page - session may be stale, re-authenticate
+    console.log('On No Organization page but state has org - re-authenticating...');
+    await signIn(page);
+    await waitForPageReady(page);
+    return;
   }
 
   // Check if already authenticated

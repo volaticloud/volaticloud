@@ -239,6 +239,7 @@ export function CreateOrganizationDrawer({
               placeholder="My Trading Organization"
               disabled={loading}
               margin="dense"
+              inputProps={{ 'data-testid': 'organization-title-input' }}
             />
 
             {/* Show auto-generated ID preview */}
@@ -273,6 +274,7 @@ export function CreateOrganizationDrawer({
                     idError ||
                     'URL-friendly identifier (3-50 chars, lowercase, hyphens allowed). Cannot be changed after creation.'
                   }
+                  inputProps={{ 'data-testid': 'organization-id-input' }}
                 />
                 {!customId && title && (
                   <Typography variant="caption" color="text.secondary">

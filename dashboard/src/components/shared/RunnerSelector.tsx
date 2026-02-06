@@ -52,6 +52,8 @@ interface RunnerSelectorProps {
   disabled?: boolean;
   /** Callback when runner's data availability is loaded */
   onDataAvailableLoaded?: (data: RunnerDataAvailable | null) => void;
+  /** data-testid for E2E testing */
+  'data-testid'?: string;
 }
 
 interface RunnerOption {
@@ -73,6 +75,7 @@ export const RunnerSelector = ({
   dataReadyOnly = false,
   disabled = false,
   onDataAvailableLoaded,
+  'data-testid': testId,
 }: RunnerSelectorProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const [showPublicRunners, setShowPublicRunners] = useState(true);
@@ -212,6 +215,7 @@ export const RunnerSelector = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           label={label}
+          data-testid={testId}
           MenuProps={{
             PaperProps: {
               onScroll: handleScroll,
@@ -241,7 +245,7 @@ export const RunnerSelector = ({
             />
           </ListSubheader>
           {runners.map((runner) => (
-            <MenuItem key={runner.id} value={runner.id}>
+            <MenuItem key={runner.id} value={runner.id} data-testid={`runner-option-${runner.id}`}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography>{runner.name}</Typography>

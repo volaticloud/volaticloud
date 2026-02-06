@@ -12,7 +12,7 @@
  * We use navigateToOrg/navigateInOrg for navigation with org context.
  */
 import { test, expect } from '../fixtures';
-import { waitForPageReady, navigateToOrg, navigateInOrg } from '../flows/auth.flow';
+import { waitForPageReady, navigateToOrg, navigateInOrg, isNoOrganizationPage } from '../flows/auth.flow';
 import { createOrganization, subscribeWithStripe } from '../flows/organization.flow';
 import { createRunner, triggerDataDownload, waitForDataReady, RunnerConfig } from '../flows/runner.flow';
 import { clearState, writeState, readState } from '../state';
@@ -35,11 +35,18 @@ test.describe('E2E Setup', () => {
   });
 
   test('1. Create organization', async ({ page, consoleTracker }) => {
-    // Navigate to dashboard (auth via storageState)
-    await navigateToOrg(page, '/');
+    // Navigate to root - may land on "No Organization" blocker page or dashboard
+    // Don't use navigateToOrg here since there's no org yet
+    await page.goto('/');
+    await waitForPageReady(page);
 
     // Verify no errors on initial load
     console.log(consoleTracker.getSummary());
+
+    // Check if we landed on the no-organization blocker page
+    if (await isNoOrganizationPage(page)) {
+      console.log('Detected "No Organization" page - proceeding with org creation');
+    }
 
     await createOrganization(page, testOrgName);
     await waitForPageReady(page);

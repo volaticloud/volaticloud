@@ -11,9 +11,9 @@ export default defineConfig({
   expect: {
     timeout: 30_000,
   },
-  fullyParallel: false, // Run sequentially to avoid overloading the runner
+  fullyParallel: process.env.E2E_PARALLEL === 'true',
   retries: 0,
-  workers: 1,
+  workers: process.env.E2E_WORKERS ? parseInt(process.env.E2E_WORKERS) : 1,
   reporter: [
     ['html', { open: 'never', outputFolder: 'e2e-report' }],
     ['json', { outputFile: 'e2e-report/results.json' }],
@@ -29,8 +29,8 @@ export default defineConfig({
     trace: 'off',
     // Use system Chrome which has the CA certificate installed
     channel: 'chrome',
-    // Run in headed mode for visibility
-    headless: false,
+    // Headless mode (default: false for local dev, true for CI)
+    headless: process.env.E2E_HEADLESS !== 'false',
     // Reuse auth state from global setup
     storageState: AUTH_FILE,
   },
@@ -70,10 +70,12 @@ export default defineConfig({
       testMatch: 'specs/05-bot-management.spec.ts',
       dependencies: ['setup'],
     },
-    // Run full pipeline (setup + all tests)
+    // Run full pipeline (all tests except setup - setup runs via dependencies)
     {
       name: 'pipeline',
       testMatch: 'specs/*.spec.ts',
+      testIgnore: 'specs/00-setup.spec.ts', // Exclude setup - it runs via dependencies
+      dependencies: ['setup'],
     },
 
     //

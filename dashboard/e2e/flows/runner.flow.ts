@@ -1,7 +1,7 @@
 /**
  * Runner & Data Download Flow Helpers
  */
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { waitForPageReady, navigateInOrg } from './auth.flow';
 
 const DATA_DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -36,14 +36,14 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
 
   await navigateInOrg(page, '/runners');
 
-  // Click create runner button
-  const createBtn = page.locator('button:has-text("Create Runner")').first();
+  // Click create runner button using data-testid
+  const createBtn = page.locator('[data-testid="create-runner-button"]').first();
   await createBtn.waitFor({ state: 'visible', timeout: 10000 });
   await createBtn.click();
   await page.waitForTimeout(1000);
 
-  // Fill runner name
-  const nameInput = page.getByLabel('Runner Name');
+  // Fill runner name using data-testid
+  const nameInput = page.locator('[data-testid="runner-name-input"]').first();
   await nameInput.waitFor({ state: 'visible', timeout: 5000 });
   await nameInput.fill(config.name);
   console.log(`Filled runner name: ${config.name}`);
@@ -51,7 +51,7 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
   // Configure Docker network if specified (required for E2E to reach MinIO)
   if (config.network) {
     console.log(`Setting Docker network: ${config.network}`);
-    const networkInput = page.getByLabel('Network (optional)');
+    const networkInput = page.locator('[data-testid="docker-network-input"]').first();
     await networkInput.scrollIntoViewIfNeeded();
     await networkInput.fill(config.network);
   }
@@ -62,9 +62,12 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
 
     for (const exchange of config.dataDownload.exchanges) {
       // Click "Add Exchange" button
-      const addExchangeBtn = page.locator('button:has-text("Add Exchange")').first();
+      console.log(`Adding exchange: ${exchange.name}`);
+      const addExchangeBtn = page.locator('[data-testid="add-exchange-button"]').first();
       await addExchangeBtn.waitFor({ state: 'visible', timeout: 5000 });
+      console.log('Add Exchange button found, clicking...');
       await addExchangeBtn.click();
+      console.log('Add Exchange button clicked');
       await page.waitForTimeout(500);
 
       // The exchange is added with default values, we may need to configure it
@@ -72,10 +75,18 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
       const accordions = page.locator('.MuiAccordion-root');
       const lastAccordion = accordions.last();
 
-      // Expand it if collapsed
+      // Expand it if collapsed - check for expanded state
       const expandBtn = lastAccordion.locator('.MuiAccordionSummary-root').first();
-      await expandBtn.click();
-      await page.waitForTimeout(300);
+      const isExpanded = await lastAccordion.getAttribute('class').then(cls => cls?.includes('Mui-expanded'));
+      if (!isExpanded) {
+        await expandBtn.click();
+        // Wait for accordion to expand
+        await page.waitForTimeout(500);
+      }
+
+      // Wait for accordion content to be visible
+      const accordionDetails = lastAccordion.locator('.MuiAccordionDetails-root').first();
+      await accordionDetails.waitFor({ state: 'visible', timeout: 5000 });
 
       // Select exchange name if different from default
       if (exchange.name !== 'binance') {
@@ -99,21 +110,44 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
         }
       }
 
+      // Get the accordion index (zero-based)
+      const accordionCount = await accordions.count();
+      const accordionIndex = accordionCount - 1;
+
       // Configure pairs pattern if specified
       if (exchange.pairsPattern) {
-        const pairsInput = lastAccordion.locator('input[placeholder*="pairs"], label:has-text("Pairs") ~ div input').first();
-        if (await pairsInput.isVisible({ timeout: 1000 })) {
+        // Use testid with index (data-testid="exchange-0-pairs-input" for first exchange)
+        const pairsInput = page.locator(`[data-testid="exchange-${accordionIndex}-pairs-input"]`).first();
+        if (await pairsInput.isVisible({ timeout: 3000 }).catch(() => false)) {
           await pairsInput.clear();
           await pairsInput.fill(exchange.pairsPattern);
+          console.log(`Set pairs pattern to: ${exchange.pairsPattern}`);
+        } else {
+          // Fallback: try label-based selector within accordion
+          const fallbackInput = lastAccordion.locator('label:has-text("Pairs Pattern")').locator('..').locator('input').first();
+          if (await fallbackInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await fallbackInput.clear();
+            await fallbackInput.fill(exchange.pairsPattern);
+            console.log(`Set pairs pattern to: ${exchange.pairsPattern} (fallback)`);
+          }
         }
       }
 
       // Configure days if specified
       if (exchange.days) {
-        const daysInput = lastAccordion.locator('label:has-text("Days") ~ div input, input[type="number"]').first();
-        if (await daysInput.isVisible({ timeout: 1000 })) {
+        const daysInput = page.locator(`[data-testid="exchange-${accordionIndex}-days-input"]`).first();
+        if (await daysInput.isVisible({ timeout: 3000 }).catch(() => false)) {
           await daysInput.clear();
           await daysInput.fill(String(exchange.days));
+          console.log(`Set days to: ${exchange.days}`);
+        } else {
+          // Fallback
+          const fallbackInput = lastAccordion.locator('label:has-text("Days")').locator('..').locator('input').first();
+          if (await fallbackInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await fallbackInput.clear();
+            await fallbackInput.fill(String(exchange.days));
+            console.log(`Set days to: ${exchange.days} (fallback)`);
+          }
         }
       }
     }
@@ -123,18 +157,53 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
   if (config.s3) {
     console.log('Configuring S3...');
 
-    // Scroll down to S3 section (it's a Typography, not a heading)
+    // Scroll down to S3 section
     const s3Section = page.locator('text="S3 Data Distribution"').first();
     await s3Section.scrollIntoViewIfNeeded();
-
-    const s3Checkbox = page.getByLabel('Enable S3 data distribution');
-    await s3Checkbox.click();
     await page.waitForTimeout(500);
 
-    await page.getByLabel('S3 Endpoint').fill(config.s3.endpoint);
-    await page.getByLabel('Bucket Name').fill(config.s3.bucket);
-    await page.getByLabel('Access Key ID').fill(config.s3.accessKeyId);
-    await page.getByLabel('Secret Access Key').fill(config.s3.secretAccessKey);
+    // Try multiple approaches to click the S3 checkbox
+    // First try the label with testid
+    let s3Clicked = false;
+    const s3EnableLabel = page.locator('[data-testid="s3-enable-label"]');
+    if (await s3EnableLabel.isVisible({ timeout: 2000 }).catch(() => false)) {
+      console.log('Found S3 label with testid, clicking...');
+      await s3EnableLabel.click();
+      s3Clicked = true;
+    } else {
+      // Fallback: click by label text
+      console.log('S3 testid not found, trying label text...');
+      const s3LabelByText = page.locator('label:has-text("Enable S3 data distribution")').first();
+      if (await s3LabelByText.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await s3LabelByText.click();
+        s3Clicked = true;
+        console.log('Clicked S3 checkbox via label text');
+      } else {
+        // Last resort: click checkbox directly with force
+        console.log('Trying direct checkbox click with force...');
+        const s3Checkbox = page.locator('[data-testid="s3-enable-checkbox"]');
+        if (await s3Checkbox.count() > 0) {
+          await s3Checkbox.click({ force: true });
+          s3Clicked = true;
+          console.log('Clicked S3 checkbox with force');
+        }
+      }
+    }
+
+    if (!s3Clicked) {
+      console.log('WARNING: Could not click S3 checkbox, continuing anyway...');
+    }
+    await page.waitForTimeout(500);
+
+    // Wait for S3 fields to appear (they're in a Collapse component)
+    const s3EndpointInput = page.locator('[data-testid="s3-endpoint-input"]');
+    await s3EndpointInput.waitFor({ state: 'visible', timeout: 5000 });
+    console.log('S3 fields visible, filling values...');
+
+    await s3EndpointInput.fill(config.s3.endpoint);
+    await page.locator('[data-testid="s3-bucket-input"]').fill(config.s3.bucket);
+    await page.locator('[data-testid="s3-access-key-input"]').fill(config.s3.accessKeyId);
+    await page.locator('[data-testid="s3-secret-key-input"]').fill(config.s3.secretAccessKey);
 
     if (!config.s3.useSSL) {
       // Use the data-testid for the SSL checkbox (label is "Use SSL/HTTPS")
@@ -189,24 +258,13 @@ export async function createRunner(page: Page, config: RunnerConfig): Promise<st
     console.log('Docker test button not found, skipping...');
   }
 
-  // Submit - use the specific data-testid in the drawer
+  // Submit using testid with proper waiting
   console.log('Submitting runner form...');
   const submitBtn = page.locator('[data-testid="submit-create-runner"]');
   await submitBtn.scrollIntoViewIfNeeded();
-  await submitBtn.waitFor({ state: 'visible', timeout: 5000 });
-
-  // Check if button is enabled
-  const isDisabled = await submitBtn.isDisabled();
-  if (isDisabled) {
-    console.log('WARNING: Submit button is disabled. Checking form state...');
-    // Log any visible error messages
-    const errors = await page.locator('.MuiFormHelperText-root.Mui-error').allTextContents();
-    if (errors.length > 0) {
-      console.log('Form errors:', errors);
-    }
-  }
-
+  await expect(submitBtn).toBeEnabled({ timeout: 15000 });
   await submitBtn.click();
+  console.log('Clicked submit button');
   await page.waitForTimeout(3000);
   await waitForPageReady(page);
 

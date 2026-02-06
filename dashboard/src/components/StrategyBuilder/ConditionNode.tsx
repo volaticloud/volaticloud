@@ -317,6 +317,7 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                 onClick={handleAddCondition}
                 variant="outlined"
                 disabled={isDisabled}
+                data-testid="add-condition-button"
               >
                 Condition
               </Button>
@@ -326,6 +327,7 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                 onClick={handleAddGroup}
                 variant="outlined"
                 disabled={isDisabled}
+                data-testid="add-group-button"
               >
                 Group
               </Button>
@@ -337,6 +339,7 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                     onClick={handleAddCrossover}
                     variant="outlined"
                     disabled={isDisabled}
+                    data-testid="add-crossover-button"
                   >
                     Crossover
                   </Button>
@@ -346,6 +349,7 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                     onClick={handleAddCrossunder}
                     variant="outlined"
                     disabled={isDisabled}
+                    data-testid="add-crossunder-button"
                   >
                     Crossunder
                   </Button>
@@ -559,9 +563,10 @@ export const ConditionNodeEditor = memo(function ConditionNodeEditor({
                 onChange({ ...cmpNode, operator: e.target.value as ComparisonOperator })
               }
               disabled={isDisabled || readOnly}
+              data-testid="condition-operator-select"
             >
               {Object.entries(availableOperators).map(([op, symbol]) => (
-                <MenuItem key={op} value={op}>
+                <MenuItem key={op} value={op} data-testid={`operator-option-${op}`}>
                   {symbol}
                 </MenuItem>
               ))}
