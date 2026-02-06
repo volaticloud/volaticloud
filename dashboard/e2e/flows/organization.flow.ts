@@ -78,45 +78,27 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
-    // Stripe shows payment method selector - click to expand card fields
-    // Use JavaScript click to bypass viewport restrictions
-    const clicked = await page.evaluate(() => {
-      // Try testid first (local dev with VPN)
-      let btn = document.querySelector('[data-testid="card-accordion-item-button"]') as HTMLElement;
-      if (btn) {
-        btn.click();
-        return 'testid';
-      }
-      // Try aria-label
-      btn = document.querySelector('button[aria-label="Pay with card"]') as HTMLElement;
-      if (btn) {
-        btn.click();
-        return 'aria-label';
-      }
-      // Try by text content
-      const buttons = Array.from(document.querySelectorAll('button'));
-      btn = buttons.find(b => b.textContent?.includes('Pay with card')) as HTMLElement;
-      if (btn) {
-        btn.click();
-        return 'text';
-      }
-      // Last resort: click Card radio
-      const radio = document.querySelector('input[type="radio"][value="card"]') as HTMLElement;
-      if (radio) {
-        radio.click();
-        return 'radio';
-      }
-      return null;
-    });
+    // Stripe shows different HTML based on region - try multiple selectors
+    const selectors = [
+      'button[data-testid="card-accordion-item-button"]', // Stripe variant 1
+      '[class*="AccordionItem"]:has-text("Card")',        // Stripe variant 2
+      'button:has-text("Pay with card")',                 // Stripe variant 3 (CI/US)
+    ];
 
-    if (clicked) {
-      console.log(`Clicked card payment via: ${clicked}`);
-    } else {
-      console.log('Warning: Could not find card payment selector');
+    let clicked = false;
+    for (const selector of selectors) {
+      const element = page.locator(selector).first();
+      if (await element.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await element.click();
+        console.log(`Selected Card payment method via: ${selector}`);
+        clicked = true;
+        break;
+      }
     }
 
-    // Wait for accordion animation
-    await page.waitForTimeout(1000);
+    if (!clicked) {
+      console.log('Warning: Could not find card payment selector, card field may already be visible');
+    }
   }
 
   await cardField.waitFor({ state: 'visible', timeout: 30000 });
