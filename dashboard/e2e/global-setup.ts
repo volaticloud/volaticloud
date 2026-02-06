@@ -36,9 +36,11 @@ export default async function globalSetup(config: FullConfig) {
 
   console.log('[Global Setup] Authenticating...');
 
+  const isCI = process.env.CI === 'true';
   const browser = await chromium.launch({
-    channel: 'chrome',
-    headless: false,
+    // Use bundled Chromium in CI, Chrome locally if available
+    channel: isCI ? undefined : 'chrome',
+    headless: isCI,
   });
 
   const context = await browser.newContext({
