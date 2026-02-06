@@ -78,12 +78,19 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
-    // Stripe may show payment method selector (Card/Cash App/Klarna) - click Card row to expand
-    // Use the accordion button or the text "Card" to click (radio is intercepted by button overlay)
-    const cardOption = page.locator('button[data-testid="card-accordion-item-button"], [class*="AccordionItem"]:has-text("Card")').first();
-    if (await cardOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await cardOption.click();
-      console.log('Selected Card payment method');
+    // US Stripe shows payment method selector (Card/Cash App/Klarna) with "Pay with X" buttons
+    // Click the "Pay with card" button to expand card fields
+    const payWithCardBtn = page.locator('button:has-text("Pay with card")').first();
+    if (await payWithCardBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await payWithCardBtn.click();
+      console.log('Clicked Pay with card button');
+    } else {
+      // Fallback: try clicking the Card radio button directly
+      const cardRadio = page.getByRole('radio', { name: 'Card' });
+      if (await cardRadio.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await cardRadio.click();
+        console.log('Clicked Card radio button');
+      }
     }
   }
 
