@@ -136,8 +136,8 @@ export function PaginatedDataGrid<TRow extends GridValidRowModel>({
         // Add testids to rows for E2E testing
         slotProps={testIdPrefix ? {
           row: {
-            'data-testid': testIdPrefix ? `${testIdPrefix}-row` : undefined,
-          } as React.HTMLAttributes<HTMLDivElement>,
+            'data-testid': `${testIdPrefix}-row`,
+          },
         } : undefined}
         // Custom styles
         sx={{
