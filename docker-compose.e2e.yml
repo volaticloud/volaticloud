@@ -26,6 +26,7 @@ services:
       - volaticloud-e2e
 
   keycloak:
+    image: volaticloud-e2e-keycloak:latest
     build:
       context: ./keycloak
       dockerfile: Dockerfile
@@ -126,6 +127,7 @@ services:
           - console.volaticloud.loc
 
   backend:
+    image: volaticloud-e2e-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -168,6 +170,7 @@ services:
       - volaticloud-e2e
 
   dashboard:
+    image: volaticloud-e2e-dashboard:latest
     build:
       context: ./dashboard
       dockerfile: Dockerfile

@@ -43,6 +43,8 @@ concurrency:
 
 env:
   COMPOSE_FILE: docker-compose.e2e.yml
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
   e2e:
@@ -53,6 +55,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:master
+            network=host
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Generate TLS certificates
         run: |
@@ -97,10 +114,35 @@ jobs:
         run: |
           echo "127.0.0.1 console.volaticloud.loc auth.volaticloud.loc" | sudo tee -a /etc/hosts
 
+      - name: Build images with cache
+        run: |
+          # Build backend
+          docker buildx build \
+            --cache-from type=local,src=/tmp/.buildx-cache/backend \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new/backend,mode=max \
+            --load -t volaticloud-e2e-backend:latest .
+
+          # Build dashboard
+          docker buildx build \
+            --cache-from type=local,src=/tmp/.buildx-cache/dashboard \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new/dashboard,mode=max \
+            --load -t volaticloud-e2e-dashboard:latest ./dashboard
+
+          # Build keycloak
+          docker buildx build \
+            --cache-from type=local,src=/tmp/.buildx-cache/keycloak \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new/keycloak,mode=max \
+            --target prod --load -t volaticloud-e2e-keycloak:latest ./keycloak
+
+          # Move cache (prevents cache from growing indefinitely)
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+        timeout-minutes: 10
+
       - name: Start E2E environment
         run: |
-          docker compose -f $COMPOSE_FILE up -d --build --wait
-        timeout-minutes: 15
+          docker compose -f $COMPOSE_FILE up -d --wait
+        timeout-minutes: 5
 
       - name: Wait for services to stabilize
         run: |
@@ -121,6 +163,8 @@ jobs:
           TEST_PROJECT="${{ github.event.inputs.test-project || 'pipeline' }}"
           docker compose -f $COMPOSE_FILE --profile test run --rm \
             -e CI=true \
+            -e E2E_PARALLEL=true \
+            -e E2E_WORKERS=3 \
             playwright bash -c "npm ci && npx playwright test --project=$TEST_PROJECT"
         timeout-minutes: 20
 
