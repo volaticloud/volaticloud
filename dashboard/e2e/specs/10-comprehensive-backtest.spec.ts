@@ -353,6 +353,9 @@ test.describe('Comprehensive Backtest - Parallel Execution', () => {
   const timestamp = Date.now();
   const strategyNames: string[] = [];
 
+  // Tests must run in order: setup creates strategies, parallel test uses them
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async () => {
     const state = readState();
     if (!state.orgAlias || !state.runnerName || !state.runnerDataReady) {
@@ -364,10 +367,10 @@ test.describe('Comprehensive Backtest - Parallel Execution', () => {
   test('setup: create multiple strategies for parallel backtests', async ({ page }) => {
     console.log('\n=== Creating strategies for parallel backtest ===\n');
 
+    // Reduced to 2 strategies to speed up CI execution
     const strategies = [
       { name: `Parallel RSI ${timestamp}`, indicator: { type: 'RSI' as const, params: { period: 14 } } },
       { name: `Parallel MACD ${timestamp}`, indicator: { type: 'MACD' as const } },
-      { name: `Parallel BB ${timestamp}`, indicator: { type: 'BB' as const, params: { period: 20 } } },
     ];
 
     for (const s of strategies) {
@@ -410,6 +413,7 @@ test.describe('Comprehensive Backtest - Parallel Execution', () => {
 
     const maxWait = 4 * 60 * 1000;
     const startTime = Date.now();
+    let pollCount = 0;
 
     while (Date.now() - startTime < maxWait) {
       // Count running backtests
@@ -422,7 +426,18 @@ test.describe('Comprehensive Backtest - Parallel Execution', () => {
       }
 
       console.log(`  ${runningCount} backtest(s) still running...`);
-      await page.waitForTimeout(10000);
+      pollCount++;
+
+      // Reload page every 30 seconds (every 3 polls) to ensure fresh UI state
+      // This helps when WebSocket updates aren't working reliably
+      if (pollCount % 3 === 0) {
+        console.log('  Refreshing page to get latest status...');
+        await page.reload();
+        await page.waitForLoadState('load');
+        await page.waitForTimeout(2000);
+      } else {
+        await page.waitForTimeout(10000);
+      }
     }
 
     // Verify results

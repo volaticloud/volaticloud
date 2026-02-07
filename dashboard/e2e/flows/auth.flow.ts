@@ -9,7 +9,10 @@ import { signIn } from '../auth';
 import { getOrgUrl, readState } from '../state';
 
 export async function waitForPageReady(page: Page): Promise<void> {
-  await page.waitForLoadState('networkidle');
+  // Use 'load' instead of 'networkidle' because WebSocket subscriptions
+  // keep the network active, causing 'networkidle' to never resolve
+  await page.waitForLoadState('load');
+  // Wait for React to finish rendering
   await page.waitForTimeout(500);
 }
 
