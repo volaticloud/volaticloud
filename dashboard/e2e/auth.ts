@@ -88,9 +88,12 @@ async function signInBrowser(page: Page): Promise<void> {
     console.log('signInBrowser: Already on page:', page.url());
   }
 
-  // Wait for the page to stabilize - either login form or dashboard
-  await page.waitForLoadState('domcontentloaded');
-  console.log('signInBrowser: domcontentloaded, url:', page.url());
+  // Wait for the page to fully stabilize - either login form or dashboard
+  // Use 'load' instead of 'domcontentloaded' to ensure all resources are loaded
+  await page.waitForLoadState('load');
+  // Allow OIDC redirect to complete before checking sessionStorage
+  await page.waitForTimeout(500);
+  console.log('signInBrowser: page loaded, url:', page.url());
 
   // Check if we ended up on an error page
   const currentUrl = page.url();
