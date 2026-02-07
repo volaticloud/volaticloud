@@ -15,8 +15,7 @@ import { readState } from '../state';
 
 test.describe('Permission Boundaries', () => {
   test.beforeEach(async () => {
-    const state = readState();
-    if (!state.orgAlias) {
+    if (!readState().orgAlias) {
       throw new Error('Setup not complete: Organization not created. Run setup first.');
     }
   });

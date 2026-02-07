@@ -739,12 +739,12 @@ this function to ensure consistent behavior.
 
 Script Phases:
 
-	1. Download existing data from S3 (incremental update)
-	2. Extract existing data to /freqtrade/user_data/data
-	3. Run freqtrade download-data for each exchange
-	4. Package data as tar.gz
-	5. Upload to S3 using presigned PUT URL
-	6. Output metadata markers for parsing
+ 1. Download existing data from S3 (incremental update)
+ 2. Extract existing data to /freqtrade/user_data/data
+ 3. Run freqtrade download-data for each exchange
+ 4. Package data as tar.gz
+ 5. Upload to S3 using presigned PUT URL
+ 6. Output metadata markers for parsing
 
 Metadata Markers:
 
@@ -765,21 +765,21 @@ ShellEscape uses single-quote escaping:
 	// Output: ''\''; rm -rf / #'
 
 The function wraps strings in single quotes and escapes embedded single quotes
-using the '\'' pattern (end quote, escaped quote, start new quote).
+using the '\” pattern (end quote, escaped quote, start new quote).
 
 All these values are escaped in BuildDownloadScript:
 
-	- Exchange name (e.g., "binance")
-	- Pairs pattern (e.g., "BTC/USDT:USDT")
-	- Trading mode (e.g., "spot", "futures")
-	- Timeframes (e.g., "1h", "4h")
+  - Exchange name (e.g., "binance")
+  - Pairs pattern (e.g., "BTC/USDT:USDT")
+  - Trading mode (e.g., "spot", "futures")
+  - Timeframes (e.g., "1h", "4h")
 
 Unit tests in data_downloader_test.go verify:
 
-	- Basic escaping: quotes, spaces
-	- Injection attempts: $(cmd), `cmd`, $((...))
-	- Pipe/redirect attacks: | cat, > /tmp/x
-	- Special characters: newlines, backslashes
+  - Basic escaping: quotes, spaces
+  - Injection attempts: $(cmd), `cmd`, $((...))
+  - Pipe/redirect attacks: | cat, > /tmp/x
+  - Special characters: newlines, backslashes
 
 # Related Packages
 

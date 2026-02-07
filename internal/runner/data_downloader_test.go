@@ -94,8 +94,8 @@ func TestBuildDownloadScript(t *testing.T) {
 		{
 			name: "basic single exchange",
 			spec: DataDownloadSpec{
-				RunnerID:      "test-runner",
-				UploadURL:     "https://s3.example.com/upload",
+				RunnerID:       "test-runner",
+				UploadURL:      "https://s3.example.com/upload",
 				FreqtradeImage: "freqtradeorg/freqtrade:stable",
 				ExchangeConfigs: []ExchangeDownloadConfig{
 					{
@@ -120,14 +120,14 @@ func TestBuildDownloadScript(t *testing.T) {
 				"Upload completed",
 			},
 			wantExclude: []string{
-				"UPLOAD_URL:",  // Verbose output
+				"UPLOAD_URL:", // Verbose output
 			},
 		},
 		{
 			name: "verbose mode shows debug output",
 			spec: DataDownloadSpec{
-				RunnerID:      "test-runner",
-				UploadURL:     "https://s3.example.com/upload",
+				RunnerID:       "test-runner",
+				UploadURL:      "https://s3.example.com/upload",
 				FreqtradeImage: "freqtradeorg/freqtrade:stable",
 				ExchangeConfigs: []ExchangeDownloadConfig{
 					{
@@ -149,8 +149,8 @@ func TestBuildDownloadScript(t *testing.T) {
 		{
 			name: "multiple exchanges",
 			spec: DataDownloadSpec{
-				RunnerID:      "test-runner",
-				UploadURL:     "https://s3.example.com/upload",
+				RunnerID:       "test-runner",
+				UploadURL:      "https://s3.example.com/upload",
 				FreqtradeImage: "freqtradeorg/freqtrade:stable",
 				ExchangeConfigs: []ExchangeDownloadConfig{
 					{
@@ -208,8 +208,8 @@ func TestBuildDownloadScript(t *testing.T) {
 		{
 			name: "command substitution in pairs is escaped",
 			spec: DataDownloadSpec{
-				RunnerID:      "test-runner",
-				UploadURL:     "https://s3.example.com/upload",
+				RunnerID:       "test-runner",
+				UploadURL:      "https://s3.example.com/upload",
 				FreqtradeImage: "freqtradeorg/freqtrade:stable",
 				ExchangeConfigs: []ExchangeDownloadConfig{
 					{
@@ -230,8 +230,8 @@ func TestBuildDownloadScript(t *testing.T) {
 		{
 			name: "regex pattern in pairs is preserved",
 			spec: DataDownloadSpec{
-				RunnerID:      "test-runner",
-				UploadURL:     "https://s3.example.com/upload",
+				RunnerID:       "test-runner",
+				UploadURL:      "https://s3.example.com/upload",
 				FreqtradeImage: "freqtradeorg/freqtrade:stable",
 				ExchangeConfigs: []ExchangeDownloadConfig{
 					{
@@ -297,8 +297,8 @@ func TestBuildDownloadScript(t *testing.T) {
 
 func TestBuildDownloadScript_ScriptStructure(t *testing.T) {
 	spec := DataDownloadSpec{
-		RunnerID:      "test-runner",
-		UploadURL:     "https://s3.example.com/upload",
+		RunnerID:       "test-runner",
+		UploadURL:      "https://s3.example.com/upload",
 		FreqtradeImage: "freqtradeorg/freqtrade:stable",
 		ExchangeConfigs: []ExchangeDownloadConfig{
 			{
