@@ -15,6 +15,14 @@ const KEYCLOAK_REALM = 'volaticloud';
 const KEYCLOAK_CLIENT_ID = 'dashboard';
 
 /**
+ * Time to wait for OIDC redirects to complete after navigation.
+ * This prevents race conditions where page.evaluate() is called while
+ * the page is still redirecting through the OIDC flow.
+ * See PR #179 for details on the navigation race condition.
+ */
+export const OIDC_SETTLE_TIME_MS = 500;
+
+/**
  * Sign in using direct password grant (Resource Owner Password Credentials).
  * Gets a token from Keycloak server-side, then injects it into the browser's sessionStorage.
  */
@@ -92,7 +100,7 @@ async function signInBrowser(page: Page): Promise<void> {
   // Use 'load' instead of 'domcontentloaded' to ensure all resources are loaded
   await page.waitForLoadState('load');
   // Allow OIDC redirect to complete before checking sessionStorage
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(OIDC_SETTLE_TIME_MS);
   console.log('signInBrowser: page loaded, url:', page.url());
 
   // Check if we ended up on an error page

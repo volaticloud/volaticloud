@@ -5,7 +5,7 @@
  * These helpers handle navigation with org context.
  */
 import { Page } from '@playwright/test';
-import { signIn } from '../auth';
+import { signIn, OIDC_SETTLE_TIME_MS } from '../auth';
 import { getOrgUrl, readState } from '../state';
 
 export async function waitForPageReady(page: Page): Promise<void> {
@@ -71,8 +71,9 @@ async function ensureAuthenticated(page: Page): Promise<void> {
   if (onBlankPage) {
     await page.goto('/');
     // Wait for navigation to fully settle, including any OIDC redirects
+    // See PR #179 for details on the navigation race condition
     await page.waitForLoadState('load');
-    await page.waitForTimeout(500); // Allow OIDC to complete
+    await page.waitForTimeout(OIDC_SETTLE_TIME_MS);
   }
 
   // Check if we landed on the "No Organization" blocker page
