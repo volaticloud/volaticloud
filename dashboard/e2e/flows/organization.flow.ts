@@ -78,28 +78,39 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
-    // Stripe shows different HTML based on region - try multiple selectors
-    // Some buttons may exist but not be "visible" (collapsed accordion), use force:true
-    const selectors = [
-      'button[data-testid="card-accordion-item-button"]', // Stripe variant 1
-      '[class*="AccordionItem"]:has-text("Card")',        // Stripe variant 2
-      'button:has-text("Pay with card")',                 // Stripe variant 3 (CI/US)
-    ];
-
+    // Stripe shows different HTML based on region - try multiple approaches
     let clicked = false;
-    for (const selector of selectors) {
-      const element = page.locator(selector).first();
-      const count = await element.count();
-      if (count > 0) {
-        await element.click({ force: true, timeout: 5000 });
-        console.log(`Selected Card payment method via: ${selector}`);
+
+    // Approach 1: Try data-testid (some Stripe versions)
+    const testIdBtn = page.locator('button[data-testid="card-accordion-item-button"]').first();
+    if (await testIdBtn.count() > 0) {
+      await testIdBtn.click({ force: true });
+      console.log('Selected Card via data-testid');
+      clicked = true;
+    }
+
+    // Approach 2: Try getByRole for "Pay with card" button (accessibility name)
+    if (!clicked) {
+      const payBtn = page.getByRole('button', { name: 'Pay with card' });
+      if (await payBtn.count() > 0) {
+        await payBtn.click({ force: true });
+        console.log('Selected Card via getByRole button');
         clicked = true;
-        break;
+      }
+    }
+
+    // Approach 3: Click the Card radio directly
+    if (!clicked) {
+      const cardRadio = page.getByRole('radio', { name: 'Card' });
+      if (await cardRadio.count() > 0) {
+        await cardRadio.click({ force: true });
+        console.log('Selected Card via radio');
+        clicked = true;
       }
     }
 
     if (!clicked) {
-      console.log('Warning: Could not find card payment selector, card field may already be visible');
+      console.log('Warning: Could not find card payment selector');
     }
 
     // Wait for accordion animation
