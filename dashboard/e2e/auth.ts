@@ -15,6 +15,14 @@ const KEYCLOAK_REALM = 'volaticloud';
 const KEYCLOAK_CLIENT_ID = 'dashboard';
 
 /**
+ * Time to wait for OIDC redirects to complete after navigation.
+ * This prevents race conditions where page.evaluate() is called while
+ * the page is still redirecting through the OIDC flow.
+ * See PR #179 for details on the navigation race condition.
+ */
+export const OIDC_SETTLE_TIME_MS = 500;
+
+/**
  * Sign in using direct password grant (Resource Owner Password Credentials).
  * Gets a token from Keycloak server-side, then injects it into the browser's sessionStorage.
  */
@@ -78,13 +86,22 @@ export async function signInDirectGrant(page: Page): Promise<void> {
  * Sign in via browser-based Keycloak login (for local dev).
  */
 async function signInBrowser(page: Page): Promise<void> {
-  console.log('signInBrowser: Navigating to /');
-  const response = await page.goto('/');
-  console.log('signInBrowser: goto completed, status:', response?.status(), 'url:', page.url());
+  // Only navigate if on blank page - otherwise we're already on a page
+  // (possibly Keycloak login after OIDC redirect)
+  if (page.url() === 'about:blank') {
+    console.log('signInBrowser: Navigating to /');
+    const response = await page.goto('/');
+    console.log('signInBrowser: goto completed, status:', response?.status(), 'url:', page.url());
+  } else {
+    console.log('signInBrowser: Already on page:', page.url());
+  }
 
-  // Wait for the page to stabilize - either login form or dashboard
-  await page.waitForLoadState('domcontentloaded');
-  console.log('signInBrowser: domcontentloaded, url:', page.url());
+  // Wait for the page to fully stabilize - either login form or dashboard
+  // Use 'load' instead of 'domcontentloaded' to ensure all resources are loaded
+  await page.waitForLoadState('load');
+  // Allow OIDC redirect to complete before checking sessionStorage
+  await page.waitForTimeout(OIDC_SETTLE_TIME_MS);
+  console.log('signInBrowser: page loaded, url:', page.url());
 
   // Check if we ended up on an error page
   const currentUrl = page.url();
