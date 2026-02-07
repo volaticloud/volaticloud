@@ -211,7 +211,7 @@ func TestDataDownloader_GetDownloadStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create fake clientset with the test job
-			clientset := fake.NewSimpleClientset(tt.job)
+			clientset := fake.NewClientset(tt.job)
 
 			d := &DataDownloader{
 				config: &Config{
@@ -237,7 +237,7 @@ func TestDataDownloader_GetDownloadStatus(t *testing.T) {
 }
 
 func TestDataDownloader_GetDownloadStatus_NotFound(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	d := &DataDownloader{
 		config: &Config{
@@ -264,7 +264,7 @@ func TestDataDownloader_CancelDownload(t *testing.T) {
 		},
 	}
 
-	clientset := fake.NewSimpleClientset(job)
+	clientset := fake.NewClientset(job)
 
 	d := &DataDownloader{
 		config: &Config{
@@ -287,7 +287,7 @@ func TestDataDownloader_CancelDownload(t *testing.T) {
 }
 
 func TestDataDownloader_CancelDownload_NotFound(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	d := &DataDownloader{
 		config: &Config{
@@ -311,7 +311,7 @@ func TestDataDownloader_CleanupDownload(t *testing.T) {
 		},
 	}
 
-	clientset := fake.NewSimpleClientset(job)
+	clientset := fake.NewClientset(job)
 
 	d := &DataDownloader{
 		config: &Config{
