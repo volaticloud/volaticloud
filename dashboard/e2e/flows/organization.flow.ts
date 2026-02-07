@@ -79,6 +79,7 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
     // Stripe shows different HTML based on region - try multiple selectors
+    // Some buttons may exist but not be "visible" (collapsed accordion), use force:true
     const selectors = [
       'button[data-testid="card-accordion-item-button"]', // Stripe variant 1
       '[class*="AccordionItem"]:has-text("Card")',        // Stripe variant 2
@@ -88,8 +89,9 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
     let clicked = false;
     for (const selector of selectors) {
       const element = page.locator(selector).first();
-      if (await element.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await element.click();
+      const count = await element.count();
+      if (count > 0) {
+        await element.click({ force: true, timeout: 5000 });
         console.log(`Selected Card payment method via: ${selector}`);
         clicked = true;
         break;
@@ -99,6 +101,9 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
     if (!clicked) {
       console.log('Warning: Could not find card payment selector, card field may already be visible');
     }
+
+    // Wait for accordion animation
+    await page.waitForTimeout(500);
   }
 
   await cardField.waitFor({ state: 'visible', timeout: 30000 });
