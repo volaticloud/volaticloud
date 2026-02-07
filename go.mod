@@ -1,6 +1,6 @@
 module volaticloud
 
-go 1.25.6
+go 1.25.7
 
 require (
 	entgo.io/contrib v0.7.0

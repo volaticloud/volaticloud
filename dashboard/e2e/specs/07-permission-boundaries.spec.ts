@@ -43,8 +43,6 @@ test.describe('Permission Boundaries', () => {
     });
 
     test('cannot access other organization via URL manipulation', async ({ page }) => {
-      const state = readState();
-
       // Set shorter timeout
       page.setDefaultTimeout(30000);
 
