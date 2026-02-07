@@ -154,7 +154,7 @@ test.describe('Concurrent Operations', () => {
     test('logout in one tab affects other tabs', async ({ browser }) => {
       // Create new context for this test (fresh session)
       const context = await browser.newContext({
-        storageState: 'dashboard/e2e/.auth/user.json'
+        storageState: 'e2e/.auth/user.json'
       });
 
       const page1 = await context.newPage();
