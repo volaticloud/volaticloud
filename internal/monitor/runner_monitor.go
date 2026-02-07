@@ -237,7 +237,7 @@ func (m *RunnerMonitor) markDownloadFailed(ctx context.Context, runner *ent.BotR
 func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunner) error {
 	// Update status to downloading with start timestamp
 	now := time.Now()
-	r, err := m.dbClient.BotRunner.UpdateOne(r).
+	_, err := m.dbClient.BotRunner.UpdateOne(r).
 		SetDataDownloadStatus(enum.DataDownloadStatusDownloading).
 		SetDataDownloadStartedAt(now).
 		SetDataDownloadProgress(map[string]interface{}{
@@ -252,6 +252,12 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunne
 		return fmt.Errorf("failed to update runner status: %w", err)
 	}
 
+	// Re-query to get decrypted secrets (Save() return doesn't go through interceptors)
+	r, err = m.dbClient.BotRunner.Get(ctx, r.ID)
+	if err != nil {
+		return fmt.Errorf("failed to reload runner: %w", err)
+	}
+
 	// Publish status change event
 	m.publishRunnerStatusEvent(ctx, r, enum.DataDownloadStatusDownloading, "")
 
@@ -260,7 +266,7 @@ func (m *RunnerMonitor) triggerDataDownload(ctx context.Context, r *ent.BotRunne
 		downloadCtx, cancel := context.WithTimeout(context.Background(), m.dataDownloadTimeout)
 		defer cancel()
 
-		if err := DownloadRunnerData(downloadCtx, m.dbClient, r); err != nil {
+		if err := DownloadRunnerData(downloadCtx, m.dbClient, r, m.pubsub); err != nil {
 			log.Printf("Runner %s: data download failed: %v", r.Name, err)
 
 			// Update status to failed

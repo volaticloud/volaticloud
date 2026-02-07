@@ -50,6 +50,13 @@ func NewWebhookHandler(client *ent.Client, stripeClient StripeAPI, webhookSecret
 		case "invoice.payment_failed":
 			handleInvoicePaymentFailed(event)
 
+		case "customer.subscription.created":
+			if err := handleSubscriptionCreated(ctx, client, stripeClient, event); err != nil {
+				log.Printf("[BILLING] action=webhook_fail event=customer.subscription.created error=%v", err)
+				http.Error(w, "processing failed", http.StatusInternalServerError)
+				return
+			}
+
 		case "customer.subscription.updated":
 			if err := handleSubscriptionUpdated(ctx, client, stripeClient, event); err != nil {
 				log.Printf("[BILLING] action=webhook_fail event=customer.subscription.updated error=%v", err)
@@ -144,6 +151,88 @@ func handleInvoicePaymentSucceeded(ctx context.Context, client *ent.Client, stri
 	}
 
 	return ProcessSubscriptionDeposit(ctx, client, sub.OwnerID, invoice.ID)
+}
+
+// handleSubscriptionCreated handles subscriptions created directly via Stripe API
+// (not through checkout). This is useful for E2E tests and API-based subscription creation.
+// It looks up the owner_id from the customer's metadata.
+func handleSubscriptionCreated(ctx context.Context, client *ent.Client, stripeClient StripeAPI, event stripe.Event) error {
+	var webhookSub stripe.Subscription
+	if err := json.Unmarshal(event.Data.Raw, &webhookSub); err != nil {
+		return fmt.Errorf("failed to unmarshal subscription: %w", err)
+	}
+
+	// Check if subscription already exists (e.g., created via checkout.session.completed)
+	existing, err := client.StripeSubscription.Query().
+		Where(stripesubscription.StripeSubscriptionID(webhookSub.ID)).
+		Only(ctx)
+	if err == nil && existing != nil {
+		log.Printf("[BILLING] action=subscription_created_skip sub=%s reason=already_exists", webhookSub.ID)
+		return nil
+	}
+
+	// Get owner_id from customer metadata
+	if webhookSub.Customer == nil {
+		return fmt.Errorf("subscription has no customer")
+	}
+	customerID := webhookSub.Customer.ID
+
+	// Fetch customer to get owner_id from metadata
+	cust, err := stripeClient.GetCustomer(customerID)
+	if err != nil {
+		return fmt.Errorf("failed to get customer %s: %w", customerID, err)
+	}
+
+	ownerID, ok := cust.Metadata["owner_id"]
+	if !ok || ownerID == "" {
+		log.Printf("[BILLING] action=subscription_created_skip sub=%s reason=no_owner_id customer=%s", webhookSub.ID, customerID)
+		return nil // Not an error, just a subscription we don't manage
+	}
+
+	// Fetch the full subscription with expanded product metadata
+	stripeSub, err := stripeClient.GetSubscription(webhookSub.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get subscription %s: %w", webhookSub.ID, err)
+	}
+
+	// Extract plan metadata from expanded subscription
+	planName, monthlyDeposit, features := ExtractPlanMetadata(stripeSub)
+	priceID := ""
+	if len(stripeSub.Items.Data) > 0 && stripeSub.Items.Data[0].Price != nil {
+		priceID = stripeSub.Items.Data[0].Price.ID
+	}
+
+	// Ensure credit balance exists
+	if err := EnsureBalanceExists(ctx, client, ownerID); err != nil {
+		return err
+	}
+
+	// Create subscription record
+	_, err = client.StripeSubscription.Create().
+		SetOwnerID(ownerID).
+		SetStripeCustomerID(customerID).
+		SetStripeSubscriptionID(stripeSub.ID).
+		SetStripePriceID(priceID).
+		SetPlanName(planName).
+		SetMonthlyDeposit(monthlyDeposit).
+		SetFeatures(features).
+		SetStatus(enum.StripeSubActive).
+		SetCurrentPeriodStart(subscriptionPeriodStart(stripeSub)).
+		SetCurrentPeriodEnd(subscriptionPeriodEnd(stripeSub)).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create subscription record: %w", err)
+	}
+
+	// Deposit initial credits
+	if stripeSub.LatestInvoice != nil && stripeSub.LatestInvoice.ID != "" {
+		if err := ProcessSubscriptionDeposit(ctx, client, ownerID, stripeSub.LatestInvoice.ID); err != nil {
+			log.Printf("[BILLING] action=initial_deposit_fail owner=%s error=%v", ownerID, err)
+		}
+	}
+
+	log.Printf("[BILLING] action=subscription_created owner=%s plan=%s sub=%s", ownerID, planName, stripeSub.ID)
+	return nil
 }
 
 func handleSubscriptionUpdated(ctx context.Context, client *ent.Client, stripeClient StripeAPI, event stripe.Event) error {

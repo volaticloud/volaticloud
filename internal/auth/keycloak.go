@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/golang-jwt/jwt/v5"
@@ -11,11 +13,13 @@ import (
 
 // KeycloakConfig contains Keycloak client configuration
 type KeycloakConfig struct {
-	URL               string // Keycloak server URL (e.g., https://keycloak.volaticloud.com)
+	URL               string // Keycloak server URL for API calls (e.g., https://keycloak.volaticloud.com)
+	IssuerURL         string // Expected token issuer URL (if different from URL, e.g., behind proxy)
 	Realm             string // Realm name (e.g., volaticloud)
 	ClientID          string // Client ID for this backend API
 	ClientSecret      string // Client secret for UMA resource management
 	DashboardClientID string // Client ID for dashboard (used in invitation redirects)
+	TLSSkipVerify     bool   // Skip TLS certificate verification (for E2E tests with self-signed certs)
 }
 
 // KeycloakClient handles JWT validation and UMA operations
@@ -38,11 +42,28 @@ func NewKeycloakClient(ctx context.Context, config KeycloakConfig) (*KeycloakCli
 		return nil, fmt.Errorf("keycloak client ID is required")
 	}
 
-	// Construct issuer URL
-	issuerURL := fmt.Sprintf("%s/realms/%s", config.URL, config.Realm)
+	// Construct discovery URL (where to fetch OIDC config from)
+	discoveryURL := fmt.Sprintf("%s/realms/%s", config.URL, config.Realm)
+
+	// If IssuerURL is different (e.g., behind proxy), use InsecureIssuerURLContext
+	// to accept tokens with a different issuer than the discovery URL
+	if config.IssuerURL != "" && config.IssuerURL != config.URL {
+		expectedIssuer := fmt.Sprintf("%s/realms/%s", config.IssuerURL, config.Realm)
+		ctx = oidc.InsecureIssuerURLContext(ctx, expectedIssuer)
+	}
+
+	// Use insecure HTTP client for E2E tests with self-signed certs
+	if config.TLSSkipVerify {
+		insecureClient := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // E2E only
+			},
+		}
+		ctx = oidc.ClientContext(ctx, insecureClient)
+	}
 
 	// Discover OIDC provider configuration
-	provider, err := oidc.NewProvider(ctx, issuerURL)
+	provider, err := oidc.NewProvider(ctx, discoveryURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover OIDC provider: %w", err)
 	}

@@ -263,6 +263,7 @@ export const BotsList = () => {
                   onClick={() => setCreateDrawerOpen(true)}
                   disabled={!canCreateBot}
                   sx={{ flexShrink: 0 }}
+                  data-testid="create-bot-button"
                 >
                   Create Bot
                 </Button>
@@ -278,6 +279,7 @@ export const BotsList = () => {
         emptyMessage="No bots yet. Create your first bot to get started."
         onRowClick={(row) => navigate(`/bots/${row.id}`)}
         isPolling={!pagination.loading && data !== undefined}
+        testIdPrefix="bot"
       />
 
       <CreateBotDrawer

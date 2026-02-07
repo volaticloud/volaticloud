@@ -11,6 +11,7 @@ const (
 	EventTypeAlertCreated     EventType = "alert_created"
 	EventTypeTradeUpdated     EventType = "trade_updated"
 	EventTypeRunnerStatus     EventType = "runner_status"
+	EventTypeRunnerProgress   EventType = "runner_progress"
 )
 
 // BotEvent represents a bot status change event.
@@ -59,11 +60,13 @@ type TradeEvent struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// RunnerEvent represents a runner status change.
+// RunnerEvent represents a runner status change or progress update.
 type RunnerEvent struct {
-	Type      EventType `json:"type"`
-	RunnerID  string    `json:"runner_id"`
-	Status    string    `json:"status"` // RunnerStatus enum value
-	Error     string    `json:"error,omitempty"`
-	Timestamp time.Time `json:"timestamp"`
+	Type         EventType `json:"type"`
+	RunnerID     string    `json:"runner_id"`
+	Status       string    `json:"status"`                  // DataDownloadStatus enum value
+	Progress     float64   `json:"progress,omitempty"`      // 0.0 to 100.0 for download progress
+	CurrentPhase string    `json:"current_phase,omitempty"` // Current phase (e.g., "downloading binance", "packaging")
+	Error        string    `json:"error,omitempty"`
+	Timestamp    time.Time `json:"timestamp"`
 }

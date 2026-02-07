@@ -1,0 +1,245 @@
+# E2E Test Environment - Production-like setup
+# Usage: make e2e
+#
+# All services use HTTPS through Caddy reverse proxy for consistent behavior.
+# Caddy provides network aliases so containers can reach auth.volaticloud.loc
+# and console.volaticloud.loc via HTTPS internally.
+#
+# Requires /etc/hosts entries on host for browser access:
+#   127.0.0.1 console.volaticloud.loc auth.volaticloud.loc
+
+name: volaticloud-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: volaticloud
+      POSTGRES_PASSWORD: volaticloud
+      POSTGRES_DB: volaticloud
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U volaticloud"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  keycloak:
+    image: volaticloud-e2e-keycloak:latest
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+      target: prod
+    command: start-dev --import-realm --health-enabled=true
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/volaticloud
+      KC_DB_USERNAME: volaticloud
+      KC_DB_PASSWORD: volaticloud
+      KC_HOSTNAME: auth.volaticloud.loc
+      KC_HOSTNAME_ADMIN_URL: http://keycloak:8080
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./internal/testutil/testdata/volaticloud-realm.json:/opt/keycloak/data/import/volaticloud-realm.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && timeout 2 cat <&3 | grep -q '200 OK'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - volaticloud-e2e
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.12
+    command:
+      - /usr/local/bin/etcd
+      - --name=volaticloud-etcd
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb --ignore-existing myminio/volaticloud-data;
+      exit 0;
+      "
+    networks:
+      - volaticloud-e2e
+
+  # Reverse proxy - starts early, provides HTTPS endpoints for all services
+  # Network aliases allow internal services to reach auth/console via HTTPS
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile.e2e:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      # Just check if Caddy is listening - upstreams may not be ready yet
+      test: ["CMD-SHELL", "nc -z localhost 443"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      volaticloud-e2e:
+        aliases:
+          - auth.volaticloud.loc
+          - console.volaticloud.loc
+
+  backend:
+    image: volaticloud-e2e-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["server"]
+    user: root  # Required for Docker socket access (backtests)
+    env_file:
+      - .env
+    environment:
+      # Database (override .env for E2E)
+      VOLATICLOUD_DATABASE: "postgresql://volaticloud:volaticloud@postgres:5432/volaticloud?sslmode=disable"
+      # Keycloak - all access through Caddy HTTPS for consistent token issuer
+      VOLATICLOUD_KEYCLOAK_URL: https://auth.volaticloud.loc
+      VOLATICLOUD_KEYCLOAK_REALM: volaticloud
+      VOLATICLOUD_KEYCLOAK_CLIENT_ID: volaticloud
+      VOLATICLOUD_KEYCLOAK_CLIENT_SECRET: test-secret
+      VOLATICLOUD_KEYCLOAK_TLS_SKIP_VERIFY: "true"
+      # etcd
+      VOLATICLOUD_ETCD_ENDPOINTS: etcd:2379
+      # Encryption
+      VOLATICLOUD_ENCRYPTION_KEY: "ZTJlLXRlc3QtZW5jcnlwdGlvbi1rZXktMzJieXRlcyE="
+      # CORS - allow dashboard origin for WebSocket connections
+      VOLATICLOUD_CORS_ORIGINS: "https://console.volaticloud.loc"
+      # Stripe keys loaded from .env file
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      caddy:
+        condition: service_healthy
+      etcd:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/gateway/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    networks:
+      - volaticloud-e2e
+
+  dashboard:
+    image: volaticloud-e2e-dashboard:latest
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile.e2e  # Lightweight build without FreqUI
+    environment:
+      # OIDC authority - Keycloak via Caddy reverse proxy
+      VOLATICLOUD__KEYCLOAK_AUTHORITY: https://auth.volaticloud.loc/realms/volaticloud
+      VOLATICLOUD__KEYCLOAK_CLIENT_ID: dashboard
+      VOLATICLOUD__KEYCLOAK_REDIRECT_URI: https://console.volaticloud.loc/
+      VOLATICLOUD__KEYCLOAK_POST_LOGOUT_REDIRECT_URI: https://console.volaticloud.loc/
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - volaticloud-e2e
+
+  stripe-cli:
+    image: stripe/stripe-cli
+    env_file:
+      - .env
+    command: listen --forward-to http://backend:8080/gateway/v1/webhooks/stripe --api-key ${VOLATICLOUD_STRIPE_API_KEY}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - volaticloud-e2e
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.58.1-noble
+    working_dir: /app
+    # Use npm ci --prefer-offline to leverage cached packages
+    command: bash -c "npm ci --prefer-offline && npx playwright test --project=pipeline"
+    env_file:
+      - .env
+    environment:
+      E2E_BASE_URL: https://console.volaticloud.loc
+      E2E_GRAPHQL_ENDPOINT: https://console.volaticloud.loc/gateway/v1/query
+      E2E_WS_ENDPOINT: wss://console.volaticloud.loc/gateway/v1/query
+      E2E_KEYCLOAK_URL: https://auth.volaticloud.loc
+      E2E_KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      CI: "true"
+      # Speed up npm
+      npm_config_fund: "false"
+      npm_config_audit: "false"
+    volumes:
+      - ./dashboard:/app
+      # Cache node_modules between runs
+      - playwright-node-modules:/app/node_modules
+    extra_hosts:
+      - "console.volaticloud.loc:host-gateway"
+      - "auth.volaticloud.loc:host-gateway"
+    depends_on:
+      caddy:
+        condition: service_healthy
+      dashboard:
+        condition: service_healthy
+    networks:
+      - volaticloud-e2e
+    profiles:
+      - test
+
+networks:
+  volaticloud-e2e:
+    name: volaticloud-e2e
+
+volumes:
+  # Persistent cache for Playwright node_modules between runs
+  playwright-node-modules:

@@ -3,11 +3,15 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": true,
-  "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": false,
+  "registrationEmailAsUsername": true,
+  "rememberMe": true,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "loginTheme": "volaticloud",
   "defaultRole": {
     "id": "d628cc79-4de9-4211-a855-f7e6dc292454",
     "name": "default-roles-dev",
@@ -952,7 +956,8 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost:5173/*"
+        "http://localhost:5173/*",
+        "https://console.volaticloud.loc/*"
       ],
       "webOrigins": [
         "+"
@@ -962,7 +967,7 @@
       "consentRequired": false,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
       "publicClient": true,
       "frontchannelLogout": true,
@@ -1334,6 +1339,21 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "notBefore": 0
+    },
+    {
+      "username": "test@test.com",
+      "email": "test@test.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "E2E",
+      "lastName": "Test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Test123!",
+          "temporary": false
+        }
+      ]
     }
   ],
   "organizationsEnabled": true,

@@ -305,6 +305,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
               required
               fullWidth
               autoFocus
+              inputProps={{ 'data-testid': 'runner-name-input' }}
             />
 
             <FormControl fullWidth required>
@@ -313,6 +314,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                 value={type}
                 onChange={(e) => setType(e.target.value as 'docker' | 'kubernetes' | 'local')}
                 label="Type"
+                data-testid="runner-type-select"
               >
                 <MenuItem value="docker">Docker</MenuItem>
                 <MenuItem value="kubernetes">Kubernetes</MenuItem>
@@ -337,6 +339,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                   required
                   fullWidth
                   helperText="Docker daemon socket (e.g., unix:///var/run/docker.sock or tcp://host:2375)"
+                  inputProps={{ 'data-testid': 'docker-host-input' }}
                 />
 
                 <FormControlLabel
@@ -400,6 +403,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                   onChange={(e) => setDockerConfig({ ...dockerConfig, network: e.target.value || undefined })}
                   fullWidth
                   helperText="Docker network to use for containers"
+                  inputProps={{ 'data-testid': 'docker-network-input' }}
                 />
               </Box>
             )}
@@ -522,10 +526,12 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
             </Typography>
 
             <FormControlLabel
+              data-testid="s3-enable-label"
               control={
                 <Checkbox
                   checked={s3Enabled}
                   onChange={(e) => setS3Enabled(e.target.checked)}
+                  data-testid="s3-enable-checkbox"
                 />
               }
               label="Enable S3 data distribution"
@@ -544,6 +550,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                   fullWidth
                   helperText="S3 endpoint URL (e.g., s3.amazonaws.com, minio.example.com:9000)"
                   placeholder="s3.amazonaws.com"
+                  inputProps={{ 'data-testid': 's3-endpoint-input' }}
                 />
 
                 <TextField
@@ -553,6 +560,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                   required
                   fullWidth
                   helperText="S3 bucket for storing runner data"
+                  inputProps={{ 'data-testid': 's3-bucket-input' }}
                 />
 
                 <Box sx={{ display: 'flex', gap: 2 }}>
@@ -562,6 +570,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                     onChange={(e) => setS3Config({ ...s3Config, accessKeyId: e.target.value })}
                     required
                     fullWidth
+                    inputProps={{ 'data-testid': 's3-access-key-input' }}
                   />
 
                   <TextField
@@ -571,6 +580,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                     onChange={(e) => setS3Config({ ...s3Config, secretAccessKey: e.target.value })}
                     required
                     fullWidth
+                    inputProps={{ 'data-testid': 's3-secret-key-input' }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -618,6 +628,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                       <Checkbox
                         checked={s3Config.useSSL ?? true}
                         onChange={(e) => setS3Config({ ...s3Config, useSSL: e.target.checked })}
+                        data-testid="s3-use-ssl-checkbox"
                       />
                     }
                     label="Use SSL/HTTPS"
@@ -631,6 +642,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
                     startIcon={testS3Loading && <CircularProgress size={16} />}
                     variant="outlined"
                     size="small"
+                    data-testid="test-s3-connection"
                   >
                     {testS3Loading ? 'Testing...' : 'Test S3 Connection'}
                   </Button>
@@ -770,6 +782,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
             onClick={handleTestConnection}
             disabled={testLoading || loading}
             startIcon={testLoading && <CircularProgress size={16} />}
+            data-testid="test-docker-connection"
           >
             {testLoading ? 'Testing...' : 'Test Connection'}
           </Button>
@@ -778,6 +791,7 @@ export const CreateRunnerDrawer = ({ open, onClose, onSuccess }: CreateRunnerDra
             variant="contained"
             disabled={loading || !name || (type === 'kubernetes' && !kubernetesConfig.namespace)}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid="submit-create-runner"
           >
             {loading ? 'Creating...' : 'Create Runner'}
           </Button>

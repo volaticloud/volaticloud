@@ -3,6 +3,7 @@ package keycloak
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -134,9 +135,17 @@ var _ AdminClientInterface = (*AdminClient)(nil)
 // NewAdminClient creates a new Keycloak admin API client
 func NewAdminClient(config auth.KeycloakConfig) *AdminClient {
 	client := gocloak.NewClient(config.URL)
+	httpClient := &http.Client{}
+	if config.TLSSkipVerify {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // E2E only
+		}
+		client.RestyClient().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}) //nolint:gosec // E2E only
+		httpClient.Transport = transport
+	}
 	return &AdminClient{
 		client:     client,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		config:     config,
 	}
 }

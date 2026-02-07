@@ -151,6 +151,7 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
         key={meta.type}
         onClick={() => handleAddIndicator(meta)}
         sx={{ pl: 4 }}
+        data-testid={`indicator-item-${meta.type.toLowerCase()}`}
       >
         <ListItemIcon sx={{ minWidth: 36 }}>
           <Icon fontSize="small" color="action" />
@@ -238,6 +239,7 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         fullWidth
+        data-testid="indicator-search-input"
         slotProps={{
           input: {
             startAdornment: (
@@ -284,11 +286,13 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
         anchor="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        data-testid="indicator-drawer"
         PaperProps={{
           sx: {
             width: { xs: '100%', sm: 400 },
             maxWidth: '100%',
           },
+          'data-testid': 'indicator-drawer-paper',
         }}
       >
         {/* Header */}
@@ -334,6 +338,7 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
                 size="small"
                 fullWidth
                 helperText="Custom name for this indicator instance"
+                data-testid="indicator-label-input"
               />
 
               {/* Parameters */}
@@ -420,8 +425,12 @@ export function IndicatorSelector({ indicators, onChange }: IndicatorSelectorPro
             py: 2,
           }}
         >
-          <Button onClick={() => setDrawerOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveIndicator}>
+          <Button onClick={() => setDrawerOpen(false)} data-testid="cancel-indicator">Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveIndicator}
+            data-testid="submit-indicator"
+          >
             {editingIndicator && indicators.find((i) => i.id === editingIndicator.id)
               ? 'Update'
               : 'Add'}

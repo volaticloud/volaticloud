@@ -174,6 +174,7 @@ func (kc *KeycloakContainer) NewUMAClient() *keycloak.UMAClient {
 		kc.Config.Realm,
 		kc.Config.ClientID,
 		kc.Config.ClientSecret,
+		false, // testcontainers use HTTP, no TLS skip needed
 	)
 }
 

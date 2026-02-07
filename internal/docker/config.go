@@ -3,6 +3,7 @@ package docker
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -28,6 +29,10 @@ type Config struct {
 
 	// Network is the Docker network to use for containers
 	Network string `json:"network,omitempty"`
+
+	// Verbose enables verbose debug output in download scripts.
+	// Can also be set via VOLATICLOUD_DOCKER_VERBOSE environment variable.
+	Verbose bool `json:"verbose,omitempty"`
 
 	// RegistryAuth holds registry authentication if needed for private images
 	RegistryAuth *RegistryAuth `json:"registryAuth,omitempty"`
@@ -95,6 +100,22 @@ func ParseConfig(configData map[string]interface{}) (*Config, error) {
 	var config Config
 	if err := json.Unmarshal(configJSON, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse Docker config: %w", err)
+	}
+
+	// If no network is specified, check for default from environment
+	// This allows E2E tests to specify the Docker network for container connectivity
+	if config.Network == "" {
+		if defaultNetwork := os.Getenv("VOLATICLOUD_DEFAULT_DOCKER_NETWORK"); defaultNetwork != "" {
+			config.Network = defaultNetwork
+		}
+	}
+
+	// Check for verbose mode from environment variable
+	// This allows enabling debug output without config changes
+	if !config.Verbose {
+		if verboseEnv := os.Getenv("VOLATICLOUD_DOCKER_VERBOSE"); verboseEnv == "true" || verboseEnv == "1" {
+			config.Verbose = true
+		}
 	}
 
 	if err := ValidateConfig(&config); err != nil {

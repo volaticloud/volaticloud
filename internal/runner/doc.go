@@ -731,6 +731,56 @@ DataDownloader implementations are in their respective packages:
 	internal/docker/data_downloader.go      - Docker implementation
 	internal/kubernetes/data_downloader.go  - Kubernetes implementation
 
+# Data Download Script Generation
+
+BuildDownloadScript generates the shell script executed inside freqtrade containers
+for downloading historical data. Both Docker and Kubernetes implementations share
+this function to ensure consistent behavior.
+
+Script Phases:
+
+ 1. Download existing data from S3 (incremental update)
+ 2. Extract existing data to /freqtrade/user_data/data
+ 3. Run freqtrade download-data for each exchange
+ 4. Package data as tar.gz
+ 5. Upload to S3 using presigned PUT URL
+ 6. Output metadata markers for parsing
+
+Metadata Markers:
+
+The script outputs special markers that can be parsed from logs:
+
+	VOLATICLOUD_DATA_AVAILABLE_START={...}VOLATICLOUD_DATA_AVAILABLE_END
+
+This JSON contains data availability information per exchange/timeframe/pair.
+
+# Shell Injection Prevention
+
+All user-controlled values are escaped using ShellEscape before insertion
+into the download script. This prevents shell injection attacks.
+
+ShellEscape uses single-quote escaping:
+
+	// Input: "'; rm -rf / #"
+	// Output: ''\''; rm -rf / #'
+
+The function wraps strings in single quotes and escapes embedded single quotes
+using the '\” pattern (end quote, escaped quote, start new quote).
+
+All these values are escaped in BuildDownloadScript:
+
+  - Exchange name (e.g., "binance")
+  - Pairs pattern (e.g., "BTC/USDT:USDT")
+  - Trading mode (e.g., "spot", "futures")
+  - Timeframes (e.g., "1h", "4h")
+
+Unit tests in data_downloader_test.go verify:
+
+  - Basic escaping: quotes, spaces
+  - Injection attempts: $(cmd), `cmd`, $((...))
+  - Pipe/redirect attacks: | cat, > /tmp/x
+  - Special characters: newlines, backslashes
+
 # Related Packages
 
 	internal/monitor        - Bot monitoring and metrics collection

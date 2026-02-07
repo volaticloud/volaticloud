@@ -70,3 +70,8 @@ docker-compose.override.yml
 /dashboard/node_modules
 /dashboard/dist
 /dashboard/.env
+
+# E2E test certificates - private keys generated on demand
+certs/*.key
+certs/*.csr
+certs/*.srl

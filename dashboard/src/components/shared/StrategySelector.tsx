@@ -33,6 +33,8 @@ interface StrategySelectorProps {
   disabled?: boolean;
   /** Initial state for latest only filter (default: true) */
   defaultLatestOnly?: boolean;
+  /** data-testid for E2E testing */
+  'data-testid'?: string;
 }
 
 interface StrategyOption {
@@ -53,6 +55,7 @@ export const StrategySelector = ({
   error = false,
   disabled = false,
   defaultLatestOnly = true,
+  'data-testid': testId,
 }: StrategySelectorProps) => {
   const { activeOrganizationId } = useActiveOrganization();
   const [showPublicStrategies, setShowPublicStrategies] = useState(false);
@@ -199,6 +202,7 @@ export const StrategySelector = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           label={label}
+          data-testid={testId}
           MenuProps={{
             PaperProps: {
               onScroll: handleScroll,

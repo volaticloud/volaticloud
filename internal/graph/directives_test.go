@@ -165,7 +165,7 @@ func TestHasScopeDirective_FromParent(t *testing.T) {
 					RawToken: rawToken,
 					Email:    "user@test.com",
 				})
-				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("", "", "", ""))
+				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("", "", "", "", false))
 				return ctx
 			},
 			obj:          nil,
@@ -185,7 +185,7 @@ func TestHasScopeDirective_FromParent(t *testing.T) {
 					RawToken: rawToken,
 					Email:    "user@test.com",
 				})
-				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 				return ctx
 			},
 			obj: &ent.Strategy{
@@ -265,7 +265,7 @@ func TestVerifyStrategyPermission_Integration(t *testing.T) {
 func TestContextHelpers(t *testing.T) {
 	t.Run("SetUMAClientInContext and GetUMAClientFromContext", func(t *testing.T) {
 		ctx := context.Background()
-		testClient := keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret")
+		testClient := keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false)
 
 		// Set UMA client
 		ctx = SetUMAClientInContext(ctx, testClient)
@@ -357,7 +357,7 @@ func TestHasScopeDirective_AllEntityTypes(t *testing.T) {
 			Email:    "user@test.com",
 		})
 		// Add UMA client but NOT ENT client - this will cause "database client not available" error
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 		return ctx
 	}
 
@@ -704,7 +704,7 @@ func TestHasScopeDirective_ArgumentMode(t *testing.T) {
 					RawToken: rawToken,
 					Email:    "user@test.com",
 				})
-				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+				ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 				return ctx
 			},
 			obj:          nil,
@@ -759,7 +759,7 @@ func TestHasScopeDirective_CrossResourcePermission(t *testing.T) {
 			RawToken: rawToken,
 			Email:    "user@test.com",
 		})
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 		return ctx
 	}
 
@@ -850,7 +850,7 @@ func TestHasScopeDirective_EdgeCases(t *testing.T) {
 			RawToken: rawToken,
 			Email:    "user@test.com",
 		})
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 		// Don't set ENT client - test nil case
 
 		strategy := &ent.Strategy{
@@ -880,7 +880,7 @@ func TestHasScopeDirective_EdgeCases(t *testing.T) {
 			RawToken: rawToken,
 			Email:    "user@test.com",
 		})
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 
 		// Use Backtest because Strategy/Bot/Exchange/BotRunner have fast paths that always return ID
 		backtest := &ent.Backtest{
@@ -909,7 +909,7 @@ func TestHasScopeDirective_EdgeCases(t *testing.T) {
 			RawToken: rawToken,
 			Email:    "user@test.com",
 		})
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 
 		intVal := 42
 		_, err := HasScopeDirective(
@@ -1029,7 +1029,7 @@ func TestHasScopeDirective_AllResourceTypes(t *testing.T) {
 			RawToken: rawToken,
 			Email:    "user@test.com",
 		})
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 		return ctx
 	}
 
@@ -1128,7 +1128,7 @@ func TestHasScopeDirective_ScopeVariations(t *testing.T) {
 			RawToken: rawToken,
 			Email:    "user@test.com",
 		})
-		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret"))
+		ctx = SetUMAClientInContext(ctx, keycloak.NewUMAClient("http://test", "test-realm", "test-client", "test-secret", false))
 		return ctx
 	}
 

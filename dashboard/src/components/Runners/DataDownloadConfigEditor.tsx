@@ -97,6 +97,7 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
           onClick={handleAddExchange}
           variant="outlined"
           size="small"
+          data-testid="add-exchange-button"
         >
           Add Exchange
         </Button>
@@ -192,6 +193,7 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
                         size="small"
                         fullWidth
                         helperText="Use .*/USDT for all USDT pairs, or specify pairs like BTC/USDT ETH/USDT"
+                        inputProps={{ 'data-testid': `exchange-${index}-pairs-input` }}
                       />
 
                       <TextField
@@ -201,7 +203,7 @@ export const DataDownloadConfigEditor = ({ value, onChange }: DataDownloadConfig
                         onChange={(e) => handleExchangeChange(index, 'days', parseInt(e.target.value))}
                         size="small"
                         fullWidth
-                        inputProps={{ min: 1, max: 730 }}
+                        inputProps={{ min: 1, max: 730, 'data-testid': `exchange-${index}-days-input` }}
                         helperText="Number of days of historical data to download (1-730)"
                       />
 

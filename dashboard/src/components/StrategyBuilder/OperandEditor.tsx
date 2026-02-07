@@ -269,6 +269,7 @@ export function OperandEditor({
             slotProps={{
               htmlInput: { step: 'any' }
             }}
+            data-testid="operand-constant-value"
           />
         );
       }
@@ -288,11 +289,12 @@ export function OperandEditor({
                   onChange(createIndicatorOperand(e.target.value, undefined, indOp.offset))
                 }
                 label="Indicator"
+                data-testid="operand-indicator-select"
               >
                 {indicators.map((ind) => {
                   const indMeta = INDICATORS[ind.type];
                   return (
-                    <MenuItem key={ind.id} value={ind.id}>
+                    <MenuItem key={ind.id} value={ind.id} data-testid={`indicator-option-${ind.id}`}>
                       {ind.label || indMeta?.name || ind.type}
                     </MenuItem>
                   );
@@ -455,6 +457,7 @@ export function OperandEditor({
         onClick={readOnly ? undefined : (e) => setAnchorEl(e.currentTarget)}
         sx={{ cursor: readOnly ? 'default' : 'pointer' }}
         disabled={readOnly}
+        data-testid="operand-type-chip"
       />
 
       {/* Value editor */}
@@ -468,7 +471,7 @@ export function OperandEditor({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
         <List dense sx={{ minWidth: 200 }}>
-          <ListItemButton onClick={() => handleTypeSelect(OperandType.Constant)}>
+          <ListItemButton onClick={() => handleTypeSelect(OperandType.Constant)} data-testid="operand-type-constant">
             <ListItemIcon sx={{ minWidth: 36 }}>
               <Functions fontSize="small" />
             </ListItemIcon>
@@ -476,7 +479,7 @@ export function OperandEditor({
           </ListItemButton>
 
           {indicators.length > 0 && (
-            <ListItemButton onClick={() => handleTypeSelect(OperandType.Indicator)}>
+            <ListItemButton onClick={() => handleTypeSelect(OperandType.Indicator)} data-testid="operand-type-indicator">
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <ShowChart fontSize="small" />
               </ListItemIcon>
@@ -484,7 +487,7 @@ export function OperandEditor({
             </ListItemButton>
           )}
 
-          <ListItemButton onClick={() => handleTypeSelect(OperandType.Price)}>
+          <ListItemButton onClick={() => handleTypeSelect(OperandType.Price)} data-testid="operand-type-price">
             <ListItemIcon sx={{ minWidth: 36 }}>
               <AttachMoney fontSize="small" />
             </ListItemIcon>
@@ -493,7 +496,7 @@ export function OperandEditor({
 
           <Divider />
 
-          <ListItemButton onClick={() => handleTypeSelect(OperandType.Time)}>
+          <ListItemButton onClick={() => handleTypeSelect(OperandType.Time)} data-testid="operand-type-time">
             <ListItemIcon sx={{ minWidth: 36 }}>
               <AccessTime fontSize="small" />
             </ListItemIcon>
@@ -501,7 +504,7 @@ export function OperandEditor({
           </ListItemButton>
 
           {showTradeContext && (
-            <ListItemButton onClick={() => handleTypeSelect(OperandType.TradeContext)}>
+            <ListItemButton onClick={() => handleTypeSelect(OperandType.TradeContext)} data-testid="operand-type-trade-context">
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <TrendingUp fontSize="small" />
               </ListItemIcon>

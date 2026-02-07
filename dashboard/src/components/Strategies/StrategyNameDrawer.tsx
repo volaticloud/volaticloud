@@ -163,6 +163,7 @@ export const StrategyNameDrawer = ({
               autoFocus
               placeholder="e.g., RSI Momentum Strategy"
               helperText={config.nameHelperText}
+              inputProps={{ 'data-testid': 'strategy-name-input' }}
             />
 
             <TextField
@@ -174,6 +175,7 @@ export const StrategyNameDrawer = ({
               rows={3}
               placeholder="Briefly describe what this strategy does..."
               helperText={config.descriptionHelperText}
+              inputProps={{ 'data-testid': 'strategy-description-input' }}
             />
 
             {error && (
@@ -201,6 +203,7 @@ export const StrategyNameDrawer = ({
             variant="contained"
             disabled={!canSubmit}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid={mode === 'create' ? 'submit-create-strategy' : 'submit-rename-strategy'}
           >
             {loading ? config.loadingText : config.submitText}
           </Button>

@@ -83,6 +83,7 @@ Selected Redis for:
 | `backtestProgress(backtestId)` | Progress updates | Strategy Studio |
 | `tradeUpdated(botId)` | Trade events | Bot trades list |
 | `runnerStatusChanged(runnerId)` | Runner status | Runner detail page |
+| `runnerProgress(runnerId)` | Data download progress | Runner detail page |
 
 **Organization-Level Subscriptions:**
 
@@ -209,6 +210,46 @@ Events are published from the following locations:
 | Alert Manager | `internal/alert/manager.go` | `alertEventCreated` |
 | Trade Monitor | `internal/monitor/trade_monitor.go` | `tradeUpdated`, `tradeChanged` |
 | Runner Monitor | `internal/monitor/runner_monitor.go` | `runnerStatusChanged`, `runnerChanged` |
+| Data Download | `internal/monitor/data_download.go` | `runnerProgress` |
+
+### Runner Progress Events
+
+The `EventTypeRunnerProgress` event provides real-time progress updates during data download:
+
+```go
+type RunnerEvent struct {
+    Type         EventType `json:"type"`           // "runner_progress"
+    RunnerID     string    `json:"runner_id"`
+    Status       string    `json:"status"`         // DataDownloadStatus enum
+    Progress     float64   `json:"progress"`       // 0.0 to 100.0
+    CurrentPhase string    `json:"current_phase"`  // e.g., "downloading binance"
+    Error        string    `json:"error,omitempty"`
+    Timestamp    time.Time `json:"timestamp"`
+}
+```
+
+**Publishing Pattern:**
+
+Progress events are published during the polling loop in `DownloadRunnerData()`:
+
+1. Every 10 seconds during download, progress is extracted from container status
+2. Events are published to both runner-specific and org-level topics
+3. Publish errors are logged but don't interrupt the download
+
+**Dual-Topic Publishing:**
+
+```go
+// Runner-specific topic for detail view
+ps.Publish(ctx, pubsub.RunnerTopic(r.ID.String()), event)
+
+// Org-level topic for list view
+ps.Publish(ctx, pubsub.OrgRunnersTopic(r.OwnerID), event)
+```
+
+This enables:
+
+- Runner detail page: Subscribe to `runnerProgress(runnerId)` for specific runner
+- Runners list page: Subscribe to `runnerChanged(ownerId)` for all runners in org
 
 ### Topic Schema
 
@@ -325,6 +366,37 @@ const apolloClient = useMemo(() => {
 **Trade-off:** If a token becomes invalid between refreshes, individual requests may fail with 401
 until the next OIDC silent refresh cycle. This is acceptable because OIDC handles refresh
 automatically and the window is brief.
+
+### CORS Configuration for WebSocket Support
+
+WebSocket connections require proper CORS configuration. The backend configures CORS via environment variables:
+
+```bash
+# Production: restrict to dashboard origin
+VOLATICLOUD_CORS_ALLOWED_ORIGINS=https://console.volaticloud.com
+
+# Development: allow local development servers
+VOLATICLOUD_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+**Configuration in `cmd/server/main.go`:**
+
+```go
+corsOrigins := strings.Split(os.Getenv("VOLATICLOUD_CORS_ALLOWED_ORIGINS"), ",")
+corsHandler := cors.New(cors.Options{
+    AllowedOrigins:   corsOrigins,
+    AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+    AllowedHeaders:   []string{"*"},
+    AllowCredentials: true,
+})
+```
+
+**Important Notes:**
+
+- WebSocket upgrade requests include `Origin` header validated by CORS middleware
+- `AllowCredentials: true` is required for cookies and authorization headers
+- In production, always specify explicit origins (never use `*` with credentials)
+- The WebSocket endpoint (`/query`) uses the same CORS configuration as GraphQL HTTP
 
 ## References
 

@@ -177,6 +177,7 @@ export const ExchangesList = () => {
               onClick={() => setCreateDrawerOpen(true)}
               disabled={!canCreateExchange}
               sx={{ flexShrink: 0 }}
+              data-testid="add-exchange-button"
             >
               Add Exchange
             </Button>
@@ -188,6 +189,7 @@ export const ExchangesList = () => {
         columns={columns}
         pagination={pagination}
         emptyMessage="No exchanges configured. Add an exchange to connect to trading platforms."
+        testIdPrefix="exchange"
       />
 
       <CreateExchangeDrawer

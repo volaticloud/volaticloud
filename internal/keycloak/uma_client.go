@@ -2,6 +2,7 @@ package keycloak
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 
@@ -32,8 +33,11 @@ type UMAClient struct {
 var _ UMAClientInterface = (*UMAClient)(nil)
 
 // NewUMAClient creates a new UMA client for Keycloak authorization services
-func NewUMAClient(keycloakURL, realm, clientID, clientSecret string) *UMAClient {
+func NewUMAClient(keycloakURL, realm, clientID, clientSecret string, tlsSkipVerify bool) *UMAClient {
 	client := gocloak.NewClient(keycloakURL)
+	if tlsSkipVerify {
+		client.RestyClient().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}) //nolint:gosec // E2E only
+	}
 
 	return &UMAClient{
 		client:       client,

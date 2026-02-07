@@ -133,6 +133,7 @@ export const CreateStrategyDrawer = ({ open, onClose, onSuccess }: CreateStrateg
               required
               fullWidth
               autoFocus
+              inputProps={{ 'data-testid': 'strategy-name-input' }}
             />
 
             <TextField
@@ -142,6 +143,7 @@ export const CreateStrategyDrawer = ({ open, onClose, onSuccess }: CreateStrateg
               fullWidth
               multiline
               rows={3}
+              inputProps={{ 'data-testid': 'strategy-description-input' }}
             />
 
             <PythonCodeEditor
@@ -189,6 +191,7 @@ export const CreateStrategyDrawer = ({ open, onClose, onSuccess }: CreateStrateg
             variant="contained"
             disabled={loading || !name || !code || !config || !activeOrganizationId}
             startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            data-testid="submit-create-strategy"
           >
             {loading ? 'Creating...' : 'Create Strategy'}
           </Button>
