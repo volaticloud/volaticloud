@@ -61,7 +61,7 @@ func NewDataDownloader(ctx context.Context, config *Config) (*DataDownloader, er
 // StartDownload starts a data download container on the Docker host.
 func (d *DataDownloader) StartDownload(ctx context.Context, spec runner.DataDownloadSpec) (string, error) {
 	// Build the download script
-	script := buildDownloadScript(spec)
+	script := buildDownloadScript(spec, d.config.Verbose)
 
 	// Ensure image is available
 	if err := d.pullImage(ctx, spec.FreqtradeImage); err != nil {
@@ -237,9 +237,10 @@ func (d *DataDownloader) pullImage(ctx context.Context, imageName string) error 
 }
 
 // buildDownloadScript creates the shell script for data download.
-// Delegates to the shared runner.BuildDownloadScript with verbose=true for Docker debugging.
-func buildDownloadScript(spec runner.DataDownloadSpec) string {
-	return runner.BuildDownloadScript(spec, true) // verbose=true for Docker debugging
+// Delegates to the shared runner.BuildDownloadScript.
+// Verbose mode can be enabled via config or VOLATICLOUD_DOCKER_VERBOSE environment variable.
+func buildDownloadScript(spec runner.DataDownloadSpec, verbose bool) string {
+	return runner.BuildDownloadScript(spec, verbose)
 }
 
 // CreateDataDownloaderFromConfig is a factory function for creating DataDownloader.

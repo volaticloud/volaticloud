@@ -13,15 +13,15 @@ export const test = base.extend<{
   signedInPage: void;
 }>({
   // Console tracker fixture - automatically attached to each test
+  // Fails the test if critical JavaScript errors are detected
   consoleTracker: async ({ page }, callback) => {
     const tracker = trackConsole(page);
     await callback(tracker);
 
-    // After test: report any errors found
-    const summary = tracker.getSummary();
+    // After test: fail if critical errors were found
     if (tracker.hasCriticalErrors()) {
-      console.error('Console errors detected during test:');
-      console.error(summary);
+      const summary = tracker.getSummary();
+      throw new Error(`Critical JavaScript errors detected during test:\n${summary}`);
     }
   },
 

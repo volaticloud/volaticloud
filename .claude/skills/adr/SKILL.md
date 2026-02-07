@@ -53,6 +53,17 @@ When user asks about architectural guidance or which patterns to follow:
 | 0014 | Backtest Config | Backtest configuration layer separation |
 | 0015 | Dialog to Drawer | UI pattern migration |
 | 0016 | Responsive Panel Layout | Panel layout system |
+| 0017 | Hybrid Testing | Mocks for unit tests, testcontainers for integration |
+| 0018 | WebSocket Subscriptions | GraphQL subscriptions with Redis pub/sub |
+| 0019 | Internal Backend | No external API ingress, internal-only architecture |
+| 0020 | Leverage Config | Leverage configuration system |
+| 0021 | Landing Page | Landing page architecture |
+| 0022 | Credit Billing | Credit-based billing system |
+| 0023 | Self-Service Subs | Self-service subscription management |
+| 0024 | Billing Security | Billing deposit security |
+| 0025 | Subscription Enforcement | Mandatory subscription enforcement |
+| 0026 | Field Encryption | AES-256-GCM field-level encryption for secrets |
+| 0027 | E2E Testing | Playwright E2E testing framework |
 
 ### 3. Validate Code Against ADRs
 

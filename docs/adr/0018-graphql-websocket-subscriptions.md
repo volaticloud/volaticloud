@@ -367,6 +367,37 @@ const apolloClient = useMemo(() => {
 until the next OIDC silent refresh cycle. This is acceptable because OIDC handles refresh
 automatically and the window is brief.
 
+### CORS Configuration for WebSocket Support
+
+WebSocket connections require proper CORS configuration. The backend configures CORS via environment variables:
+
+```bash
+# Production: restrict to dashboard origin
+VOLATICLOUD_CORS_ALLOWED_ORIGINS=https://console.volaticloud.com
+
+# Development: allow local development servers
+VOLATICLOUD_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+**Configuration in `cmd/server/main.go`:**
+
+```go
+corsOrigins := strings.Split(os.Getenv("VOLATICLOUD_CORS_ALLOWED_ORIGINS"), ",")
+corsHandler := cors.New(cors.Options{
+    AllowedOrigins:   corsOrigins,
+    AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+    AllowedHeaders:   []string{"*"},
+    AllowCredentials: true,
+})
+```
+
+**Important Notes:**
+
+- WebSocket upgrade requests include `Origin` header validated by CORS middleware
+- `AllowCredentials: true` is required for cookies and authorization headers
+- In production, always specify explicit origins (never use `*` with credentials)
+- The WebSocket endpoint (`/query`) uses the same CORS configuration as GraphQL HTTP
+
 ## References
 
 - [Apollo Subscriptions Documentation](https://www.apollographql.com/docs/react/data/subscriptions)

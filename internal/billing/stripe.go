@@ -14,6 +14,7 @@ import (
 // StripeAPI defines the subset of Stripe operations used by webhook handlers.
 type StripeAPI interface {
 	GetSubscription(subscriptionID string) (*stripe.Subscription, error)
+	GetCustomer(customerID string) (*stripe.Customer, error)
 	CancelSubscription(subscriptionID string) (*stripe.Subscription, error)
 }
 
@@ -207,6 +208,15 @@ func (s *StripeClient) GetSubscription(subscriptionID string) (*stripe.Subscript
 		return nil, fmt.Errorf("failed to get Stripe subscription: %w", err)
 	}
 	return sub, nil
+}
+
+// GetCustomer retrieves a Stripe customer by ID.
+func (s *StripeClient) GetCustomer(customerID string) (*stripe.Customer, error) {
+	cust, err := customer.Get(customerID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Stripe customer: %w", err)
+	}
+	return cust, nil
 }
 
 // ListInvoices retrieves recent invoices for a Stripe customer.

@@ -23,6 +23,7 @@ import (
 // mockStripeAPI implements StripeAPI for testing.
 type mockStripeAPI struct {
 	getSubscriptionFn    func(id string) (*stripe.Subscription, error)
+	getCustomerFn        func(id string) (*stripe.Customer, error)
 	cancelSubscriptionFn func(id string) (*stripe.Subscription, error)
 }
 
@@ -31,6 +32,13 @@ func (m *mockStripeAPI) GetSubscription(id string) (*stripe.Subscription, error)
 		return m.getSubscriptionFn(id)
 	}
 	return nil, fmt.Errorf("GetSubscription not mocked")
+}
+
+func (m *mockStripeAPI) GetCustomer(id string) (*stripe.Customer, error) {
+	if m.getCustomerFn != nil {
+		return m.getCustomerFn(id)
+	}
+	return nil, fmt.Errorf("GetCustomer not mocked")
 }
 
 func (m *mockStripeAPI) CancelSubscription(id string) (*stripe.Subscription, error) {

@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/stripe/stripe-go/v82"
-	"github.com/stripe/stripe-go/v82/customer"
 	"github.com/stripe/stripe-go/v82/webhook"
 
 	"volaticloud/internal/ent"
@@ -179,7 +178,7 @@ func handleSubscriptionCreated(ctx context.Context, client *ent.Client, stripeCl
 	customerID := webhookSub.Customer.ID
 
 	// Fetch customer to get owner_id from metadata
-	cust, err := customer.Get(customerID, nil)
+	cust, err := stripeClient.GetCustomer(customerID)
 	if err != nil {
 		return fmt.Errorf("failed to get customer %s: %w", customerID, err)
 	}
