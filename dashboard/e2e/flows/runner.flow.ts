@@ -383,7 +383,7 @@ export async function createE2ERunner(page: Page, name: string): Promise<string>
     dataDownload: {
       exchanges: [
         {
-          name: 'binance',
+          name: 'okx',  // Using OKX instead of Binance (Binance blocks US GitHub servers)
           timeframes: ['5m', '15m', '1h', '4h'],  // Multiple timeframes for testing
           pairsPattern: '(BTC|ETH)/USDT',  // Only 2 pairs for fast download
           days: 7,  // Only 7 days for fast E2E tests

@@ -141,7 +141,7 @@ test.describe('E2E Setup', () => {
       dataDownload: {
         exchanges: [
           {
-            name: 'binance',
+            name: 'okx',  // Using OKX instead of Binance (Binance blocks US GitHub servers)
             timeframes: ['5m', '15m', '1h', '4h'],
             pairsPattern: '(BTC|ETH)/USDT',
             days: 7,
