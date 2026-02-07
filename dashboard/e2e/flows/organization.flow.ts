@@ -78,6 +78,9 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
+    // Wait for Stripe payment form to fully load
+    await page.waitForTimeout(2000);
+
     // Stripe shows different HTML based on region - try multiple approaches
     let clicked = false;
 
@@ -109,8 +112,11 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
       }
     }
 
+    // Approach 4: Debug - log what we can find
     if (!clicked) {
-      console.log('Warning: Could not find card payment selector');
+      const allButtons = await page.getByRole('button').all();
+      const buttonNames = await Promise.all(allButtons.map(b => b.textContent().catch(() => 'unknown')));
+      console.log(`Warning: Could not find card selector. Found ${allButtons.length} buttons: ${buttonNames.slice(0, 5).join(', ')}`);
     }
 
     // Wait for accordion animation
