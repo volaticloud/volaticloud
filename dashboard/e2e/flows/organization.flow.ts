@@ -78,46 +78,69 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
-    // Stripe shows different HTML based on region - try multiple approaches
-    let clicked = false;
+    console.log('Card field not visible, attempting to expand Card payment section...');
 
-    // Approach 1: Try data-testid (some Stripe versions)
-    const testIdBtn = page.locator('button[data-testid="card-accordion-item-button"]').first();
-    if (await testIdBtn.count() > 0) {
-      await testIdBtn.scrollIntoViewIfNeeded();
-      await testIdBtn.click({ force: true });
-      console.log('Selected Card via data-testid');
-      clicked = true;
-    }
-
-    // Approach 2: Try getByRole for "Pay with card" button
-    if (!clicked) {
-      const payBtn = page.getByRole('button', { name: 'Pay with card' });
-      if (await payBtn.count() > 0) {
-        await payBtn.scrollIntoViewIfNeeded();
-        await payBtn.click({ force: true });
-        console.log('Selected Card via getByRole button');
-        clicked = true;
+    // Use JavaScript to directly click and expand the Card accordion
+    // This bypasses Playwright's click mechanism which may not trigger Stripe's React handlers
+    const expanded = await page.evaluate(() => {
+      // Try clicking the Card radio button
+      const cardRadio = document.querySelector('input[type="radio"][value="card"]') as HTMLInputElement;
+      if (cardRadio) {
+        cardRadio.click();
+        console.log('Clicked card radio via JS');
+        return 'radio';
       }
-    }
 
-    // Approach 3: Click the Card radio directly
-    if (!clicked) {
-      const cardRadio = page.getByRole('radio', { name: 'Card' });
-      if (await cardRadio.count() > 0) {
-        await cardRadio.scrollIntoViewIfNeeded();
-        await cardRadio.click({ force: true });
-        console.log('Selected Card via radio');
-        clicked = true;
+      // Try finding and clicking the list item containing "Card"
+      const listItems = document.querySelectorAll('li, [role="listitem"]');
+      for (const item of listItems) {
+        if (item.textContent?.includes('Card') && !item.textContent?.includes('Cash App')) {
+          (item as HTMLElement).click();
+          console.log('Clicked Card listitem via JS');
+          return 'listitem';
+        }
       }
-    }
 
-    if (!clicked) {
-      console.log('Warning: Could not find card payment selector');
+      // Try clicking any element with "Pay with card" text
+      const buttons = document.querySelectorAll('button');
+      for (const btn of buttons) {
+        if (btn.textContent?.includes('Pay with card')) {
+          btn.click();
+          console.log('Clicked Pay with card button via JS');
+          return 'button';
+        }
+      }
+
+      return null;
+    });
+
+    if (expanded) {
+      console.log(`Expanded card section via JS: ${expanded}`);
+    } else {
+      // Fallback: Try Playwright selectors
+      console.log('JS click failed, trying Playwright selectors...');
+
+      // Try clicking the listitem that contains the Card radio
+      const cardListItem = page.locator('li:has(input[type="radio"])').filter({ hasText: 'Card' }).first();
+      if (await cardListItem.count() > 0) {
+        await cardListItem.scrollIntoViewIfNeeded();
+        await cardListItem.click({ force: true });
+        console.log('Clicked Card listitem via Playwright');
+      } else {
+        // Try getByRole for radio
+        const cardRadio = page.getByRole('radio', { name: 'Card' });
+        if (await cardRadio.count() > 0) {
+          await cardRadio.scrollIntoViewIfNeeded();
+          await cardRadio.click({ force: true });
+          console.log('Clicked Card radio via Playwright');
+        } else {
+          console.log('Warning: Could not find card payment selector');
+        }
+      }
     }
 
     // Wait for accordion animation
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
   }
 
   await cardField.waitFor({ state: 'visible', timeout: 30000 });
