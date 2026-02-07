@@ -64,10 +64,15 @@ async function isAuthenticated(page: Page): Promise<boolean> {
  * With storageState, this usually does nothing (already authenticated).
  */
 async function ensureAuthenticated(page: Page): Promise<void> {
-  // First, navigate to trigger cookie restoration from storageState
-  if (page.url() === 'about:blank') {
+  const onBlankPage = page.url() === 'about:blank';
+
+  // If on blank page, we need to navigate to load storageState
+  // Do a single navigation and let it settle (handles OIDC redirect)
+  if (onBlankPage) {
     await page.goto('/');
-    await waitForPageReady(page);
+    // Wait for navigation to fully settle, including any OIDC redirects
+    await page.waitForLoadState('load');
+    await page.waitForTimeout(500); // Allow OIDC to complete
   }
 
   // Check if we landed on the "No Organization" blocker page
@@ -86,12 +91,14 @@ async function ensureAuthenticated(page: Page): Promise<void> {
     return;
   }
 
-  // Check if already authenticated
+  // Check if already authenticated (on actual page now, not blank)
   if (await isAuthenticated(page)) {
     return;
   }
 
   // Not authenticated - need to sign in
+  // Note: signIn also navigates to '/', but we're no longer on about:blank
+  // so the page is already loaded and OIDC state is known
   console.log('Session not valid, re-authenticating...');
   await signIn(page);
   await waitForPageReady(page);

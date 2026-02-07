@@ -78,9 +78,15 @@ export async function signInDirectGrant(page: Page): Promise<void> {
  * Sign in via browser-based Keycloak login (for local dev).
  */
 async function signInBrowser(page: Page): Promise<void> {
-  console.log('signInBrowser: Navigating to /');
-  const response = await page.goto('/');
-  console.log('signInBrowser: goto completed, status:', response?.status(), 'url:', page.url());
+  // Only navigate if on blank page - otherwise we're already on a page
+  // (possibly Keycloak login after OIDC redirect)
+  if (page.url() === 'about:blank') {
+    console.log('signInBrowser: Navigating to /');
+    const response = await page.goto('/');
+    console.log('signInBrowser: goto completed, status:', response?.status(), 'url:', page.url());
+  } else {
+    console.log('signInBrowser: Already on page:', page.url());
+  }
 
   // Wait for the page to stabilize - either login form or dashboard
   await page.waitForLoadState('domcontentloaded');
