@@ -50,10 +50,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && timeout 2 cat <&3 | grep -q '200 OK'"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 15
-      start_period: 60s
+      retries: 20
+      start_period: 30s
     networks:
       - volaticloud-e2e
 
@@ -173,7 +173,7 @@ services:
     image: volaticloud-e2e-dashboard:latest
     build:
       context: ./dashboard
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.e2e  # Lightweight build without FreqUI
     environment:
       # OIDC authority - Keycloak via Caddy reverse proxy
       VOLATICLOUD__KEYCLOAK_AUTHORITY: https://auth.volaticloud.loc/realms/volaticloud
@@ -205,7 +205,8 @@ services:
   playwright:
     image: mcr.microsoft.com/playwright:v1.58.1-noble
     working_dir: /app
-    command: bash -c "npm ci && npx playwright test --project=pipeline"
+    # Use npm ci --prefer-offline to leverage cached packages
+    command: bash -c "npm ci --prefer-offline && npx playwright test --project=pipeline"
     env_file:
       - .env
     environment:
@@ -215,8 +216,13 @@ services:
       E2E_KEYCLOAK_URL: https://auth.volaticloud.loc
       E2E_KEYCLOAK_INTERNAL_URL: http://keycloak:8080
       CI: "true"
+      # Speed up npm
+      npm_config_fund: "false"
+      npm_config_audit: "false"
     volumes:
       - ./dashboard:/app
+      # Cache node_modules between runs
+      - playwright-node-modules:/app/node_modules
     extra_hosts:
       - "console.volaticloud.loc:host-gateway"
       - "auth.volaticloud.loc:host-gateway"
@@ -233,3 +239,7 @@ services:
 networks:
   volaticloud-e2e:
     name: volaticloud-e2e
+
+volumes:
+  # Persistent cache for Playwright node_modules between runs
+  playwright-node-modules:

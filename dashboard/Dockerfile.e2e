@@ -1,0 +1,46 @@
+# Lightweight E2E Dashboard Dockerfile
+# Skips FreqUI build to speed up E2E test environment setup
+# FreqUI is not needed for E2E testing
+
+# Stage 1: Build the React dashboard
+FROM node:20-alpine AS dashboard-builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Serve with Caddy (no FreqUI)
+FROM caddy:2-alpine
+
+# Install jq for JSON processing
+RUN apk add --no-cache jq
+
+# Copy dashboard build to /srv (root)
+COPY --from=dashboard-builder /app/dist /srv
+
+# Create empty frequi directory (in case something references it)
+RUN mkdir -p /srv/frequi
+
+# Copy Caddyfile
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Expose port
+EXPOSE 8080
+
+# Use custom entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]

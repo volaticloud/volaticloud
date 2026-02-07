@@ -15,8 +15,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Building and starting E2E services..."
-docker compose -f "$COMPOSE_FILE" $PROFILES up -d --build --wait
+# Build or skip based on E2E_SKIP_BUILD env var
+BUILD_FLAG="--build"
+if [ "${E2E_SKIP_BUILD:-}" = "1" ]; then
+  BUILD_FLAG=""
+  echo "Skipping image rebuild (E2E_SKIP_BUILD=1)"
+fi
+
+echo "Starting E2E services..."
+docker compose -f "$COMPOSE_FILE" $PROFILES up -d $BUILD_FLAG --wait
 
 echo "All services healthy. Running E2E tests..."
 docker compose -f "$COMPOSE_FILE" --profile test run --rm playwright

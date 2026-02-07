@@ -1,4 +1,4 @@
-.PHONY: help setup dev test test-authz test-integration test-all coverage lint generate migrate clean build docs-generate docs-verify docs-quality e2e e2e-certs e2e-install-ca e2e-install-hosts
+.PHONY: help setup dev test test-authz test-integration test-all coverage lint generate migrate clean build docs-generate docs-verify docs-quality e2e e2e-build e2e-run e2e-certs e2e-install-ca e2e-install-hosts
 
 # Default target
 help:
@@ -31,7 +31,9 @@ help:
 	@echo "  make docs-verify   - Verify documentation structure"
 	@echo ""
 	@echo "E2E Testing:"
-	@echo "  make e2e              - Run fully containerized E2E tests (Docker required)"
+	@echo "  make e2e              - Run fully containerized E2E tests (builds + runs)"
+	@echo "  make e2e-build        - Build E2E Docker images only (cache for faster runs)"
+	@echo "  make e2e-run          - Run E2E tests without rebuilding (fastest iteration)"
 	@echo "  make e2e-setup        - Setup E2E environment (install CA + hosts entries)"
 	@echo "  make e2e-certs        - Regenerate TLS certificates for E2E"
 	@echo "  make e2e-install-ca   - Install CA certificate as trusted root (requires sudo)"
@@ -223,11 +225,22 @@ docs-quality:
 	@echo ""
 	@echo "Detailed report: docs/quality-report.md"
 
-# Run fully containerized E2E tests
+# Run fully containerized E2E tests (builds if needed)
 e2e:
 	@echo "Running containerized E2E tests..."
 	@chmod +x scripts/e2e.sh
 	@./scripts/e2e.sh
+
+# Build E2E images only (useful to cache before running tests)
+e2e-build:
+	@echo "Building E2E Docker images..."
+	@docker compose -f docker-compose.e2e.yml build
+
+# Run E2E tests without rebuilding (faster for iterating)
+e2e-run:
+	@echo "Running E2E tests (no rebuild)..."
+	@chmod +x scripts/e2e.sh
+	@E2E_SKIP_BUILD=1 ./scripts/e2e.sh
 
 # Setup E2E environment (install CA + hosts entries)
 e2e-setup: e2e-install-ca e2e-install-hosts
