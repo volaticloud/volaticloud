@@ -233,6 +233,7 @@ docker compose -f docker-compose.e2e.yml up -d
 E2E tests run automatically on PRs to `main`. See `.github/workflows/e2e.yml`.
 
 Features:
+
 - Docker layer caching for faster builds
 - Parallel test execution (3 workers)
 - Artifact retention for 7 days

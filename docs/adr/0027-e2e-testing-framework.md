@@ -9,6 +9,7 @@ Accepted
 ## Context and Problem Statement
 
 VolatiCloud is a complex full-stack application with:
+
 - React dashboard with real-time WebSocket updates
 - Go backend with GraphQL API
 - Keycloak authentication with SSO
@@ -29,11 +30,13 @@ VolatiCloud is a complex full-stack application with:
 ### Option 1: Cypress
 
 **Pros:**
+
 - Excellent debugging experience with time-travel
 - Large community and ecosystem
 - Built-in retry mechanisms
 
 **Cons:**
+
 - Limited to Chromium-based browsers
 - Slower execution for large test suites
 - Component testing approach differs from E2E
@@ -41,10 +44,12 @@ VolatiCloud is a complex full-stack application with:
 ### Option 2: Selenium/WebDriver
 
 **Pros:**
+
 - Industry standard, well-documented
 - Multi-browser support
 
 **Cons:**
+
 - Complex setup with drivers
 - Slower execution
 - Verbose API
@@ -52,6 +57,7 @@ VolatiCloud is a complex full-stack application with:
 ### Option 3: Playwright (Chosen)
 
 **Pros:**
+
 - **Fast execution** with parallel test support
 - **Multi-browser** support (Chromium, Firefox, WebKit)
 - **Auto-waiting** for elements reduces flakiness
@@ -61,6 +67,7 @@ VolatiCloud is a complex full-stack application with:
 - **Trace viewer** for debugging failures
 
 **Cons:**
+
 - Smaller community than Cypress
 - Steeper learning curve
 
@@ -137,6 +144,7 @@ interface E2EState {
 ```
 
 **Why JSON files?**
+
 - Survives process boundaries (parallel workers)
 - Easy to debug (human-readable)
 - No database dependency
@@ -159,6 +167,7 @@ export async function createRunnerWithDataDownload(
 ```
 
 **Benefits:**
+
 - DRY principle - interactions defined once
 - Consistent error handling
 - Easy to update when UI changes
@@ -181,6 +190,7 @@ test.extend({
 ```
 
 **Catches:**
+
 - Unhandled promise rejections
 - React rendering errors
 - Network failures

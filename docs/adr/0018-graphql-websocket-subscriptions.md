@@ -247,6 +247,7 @@ ps.Publish(ctx, pubsub.OrgRunnersTopic(r.OwnerID), event)
 ```
 
 This enables:
+
 - Runner detail page: Subscribe to `runnerProgress(runnerId)` for specific runner
 - Runners list page: Subscribe to `runnerChanged(ownerId)` for all runners in org
 
