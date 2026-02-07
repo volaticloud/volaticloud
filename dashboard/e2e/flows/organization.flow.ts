@@ -78,24 +78,23 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
   // Check if card field is directly visible, or if we need to select Card payment method first
   const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
   if (!isCardFieldVisible) {
-    // Wait for Stripe payment form to fully load
-    await page.waitForTimeout(2000);
-
     // Stripe shows different HTML based on region - try multiple approaches
     let clicked = false;
 
     // Approach 1: Try data-testid (some Stripe versions)
     const testIdBtn = page.locator('button[data-testid="card-accordion-item-button"]').first();
     if (await testIdBtn.count() > 0) {
+      await testIdBtn.scrollIntoViewIfNeeded();
       await testIdBtn.click({ force: true });
       console.log('Selected Card via data-testid');
       clicked = true;
     }
 
-    // Approach 2: Try getByRole for "Pay with card" button (accessibility name)
+    // Approach 2: Try getByRole for "Pay with card" button
     if (!clicked) {
       const payBtn = page.getByRole('button', { name: 'Pay with card' });
       if (await payBtn.count() > 0) {
+        await payBtn.scrollIntoViewIfNeeded();
         await payBtn.click({ force: true });
         console.log('Selected Card via getByRole button');
         clicked = true;
@@ -106,21 +105,19 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
     if (!clicked) {
       const cardRadio = page.getByRole('radio', { name: 'Card' });
       if (await cardRadio.count() > 0) {
+        await cardRadio.scrollIntoViewIfNeeded();
         await cardRadio.click({ force: true });
         console.log('Selected Card via radio');
         clicked = true;
       }
     }
 
-    // Approach 4: Debug - log what we can find
     if (!clicked) {
-      const allButtons = await page.getByRole('button').all();
-      const buttonNames = await Promise.all(allButtons.map(b => b.textContent().catch(() => 'unknown')));
-      console.log(`Warning: Could not find card selector. Found ${allButtons.length} buttons: ${buttonNames.slice(0, 5).join(', ')}`);
+      console.log('Warning: Could not find card payment selector');
     }
 
     // Wait for accordion animation
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
   }
 
   await cardField.waitFor({ state: 'visible', timeout: 30000 });
