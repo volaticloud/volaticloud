@@ -1,7 +1,7 @@
 /**
  * Organization & Billing Flow Helpers
  */
-import { Page, expect } from '@playwright/test';
+import { Page, expect, request } from '@playwright/test';
 import { waitForPageReady, navigateInOrg } from './auth.flow';
 
 export async function createOrganization(page: Page, orgName: string): Promise<void> {
@@ -49,8 +49,22 @@ export async function createOrganization(page: Page, orgName: string): Promise<v
   console.log(`Organization created: ${orgName}`);
 }
 
+/**
+ * Subscribe via Stripe API directly, bypassing Checkout UI.
+ *
+ * Stripe's Checkout page has anti-automation measures that prevent E2E testing
+ * (see https://docs.stripe.com/automated-testing). Instead, we:
+ * 1. Get org's Stripe customer ID and price ID from our API
+ * 2. Attach test payment method and create subscription via Stripe API
+ * 3. Refresh page to see active subscription
+ */
 export async function subscribeWithStripe(page: Page): Promise<void> {
-  console.log('Subscribing via Stripe...');
+  console.log('Subscribing via Stripe API (bypassing Checkout UI)...');
+
+  const stripeApiKey = process.env.VOLATICLOUD_STRIPE_API_KEY;
+  if (!stripeApiKey) {
+    throw new Error('VOLATICLOUD_STRIPE_API_KEY environment variable is required');
+  }
 
   await navigateInOrg(page, '/organization/billing');
   await page.waitForTimeout(3000); // Wait for plans to load
@@ -62,121 +76,110 @@ export async function subscribeWithStripe(page: Page): Promise<void> {
     return;
   }
 
-  // Find and click subscribe button
-  const subscribeBtn = page.locator('button:has-text("Subscribe")').first();
-  await subscribeBtn.waitFor({ state: 'visible', timeout: 10000 });
-  await subscribeBtn.click();
+  // Get orgId from URL
+  const url = new URL(page.url());
+  const orgId = url.searchParams.get('orgId');
+  if (!orgId) {
+    throw new Error('Could not get orgId from URL');
+  }
+  console.log('Organization ID:', orgId);
 
-  // Wait for Stripe Checkout
-  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30000 });
-  console.log('Redirected to Stripe Checkout');
+  // Get available plans to find price ID (public query, no auth needed)
+  const apiContext = await request.newContext({
+    baseURL: 'https://api.stripe.com',
+    extraHTTPHeaders: {
+      'Authorization': `Bearer ${stripeApiKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
 
-  // Fill card details
-  await page.waitForLoadState('domcontentloaded');
-  const cardField = page.locator('[placeholder="1234 1234 1234 1234"]');
+  // Get prices from Stripe directly
+  const pricesResponse = await apiContext.get('/v1/prices?active=true&type=recurring&limit=10');
+  if (!pricesResponse.ok()) {
+    throw new Error(`Failed to get prices: ${await pricesResponse.text()}`);
+  }
+  const pricesData = await pricesResponse.json();
+  const starterPrice = pricesData.data?.find((p: { nickname?: string; unit_amount: number }) =>
+    p.nickname?.toLowerCase().includes('starter') || p.unit_amount === 0
+  ) || pricesData.data?.[0];
 
-  // Check if card field is directly visible, or if we need to select Card payment method first
-  const isCardFieldVisible = await cardField.isVisible({ timeout: 3000 }).catch(() => false);
-  if (!isCardFieldVisible) {
-    console.log('Card field not visible, attempting to expand Card payment section...');
+  if (!starterPrice?.id) {
+    throw new Error('Could not find starter plan price ID');
+  }
+  const priceId = starterPrice.id;
+  console.log('Price ID:', priceId);
 
-    // Use JavaScript to directly click and expand the Card accordion
-    // This bypasses Playwright's click mechanism which may not trigger Stripe's React handlers
-    const expanded = await page.evaluate(() => {
-      // Try clicking the Card radio button
-      const cardRadio = document.querySelector('input[type="radio"][value="card"]') as HTMLInputElement;
-      if (cardRadio) {
-        cardRadio.click();
-        console.log('Clicked card radio via JS');
-        return 'radio';
-      }
+  try {
+    // Search for customer by org ID in metadata
+    const searchResponse = await apiContext.get(`/v1/customers/search?query=metadata["owner_id"]:"${orgId}"`);
+    if (!searchResponse.ok()) {
+      throw new Error(`Failed to search customers: ${await searchResponse.text()}`);
+    }
+    const searchResult = await searchResponse.json();
 
-      // Try finding and clicking the list item containing "Card"
-      const listItems = document.querySelectorAll('li, [role="listitem"]');
-      for (const item of listItems) {
-        if (item.textContent?.includes('Card') && !item.textContent?.includes('Cash App')) {
-          (item as HTMLElement).click();
-          console.log('Clicked Card listitem via JS');
-          return 'listitem';
-        }
-      }
-
-      // Try clicking any element with "Pay with card" text
-      const buttons = document.querySelectorAll('button');
-      for (const btn of buttons) {
-        if (btn.textContent?.includes('Pay with card')) {
-          btn.click();
-          console.log('Clicked Pay with card button via JS');
-          return 'button';
-        }
-      }
-
-      return null;
-    });
-
-    if (expanded) {
-      console.log(`Expanded card section via JS: ${expanded}`);
+    let customerId: string;
+    if (searchResult.data?.length > 0) {
+      customerId = searchResult.data[0].id;
+      console.log('Found existing customer:', customerId);
     } else {
-      // Fallback: Try Playwright selectors
-      console.log('JS click failed, trying Playwright selectors...');
+      // Create customer if not exists
+      const createResponse = await apiContext.post('/v1/customers', {
+        form: {
+          'metadata[owner_id]': orgId,
+          email: 'test@test.com',
+        },
+      });
+      if (!createResponse.ok()) {
+        throw new Error(`Failed to create customer: ${await createResponse.text()}`);
+      }
+      const customer = await createResponse.json();
+      customerId = customer.id;
+      console.log('Created customer:', customerId);
+    }
 
-      // Try clicking the listitem that contains the Card radio
-      const cardListItem = page.locator('li:has(input[type="radio"])').filter({ hasText: 'Card' }).first();
-      if (await cardListItem.count() > 0) {
-        await cardListItem.scrollIntoViewIfNeeded();
-        await cardListItem.click({ force: true });
-        console.log('Clicked Card listitem via Playwright');
-      } else {
-        // Try getByRole for radio
-        const cardRadio = page.getByRole('radio', { name: 'Card' });
-        if (await cardRadio.count() > 0) {
-          await cardRadio.scrollIntoViewIfNeeded();
-          await cardRadio.click({ force: true });
-          console.log('Clicked Card radio via Playwright');
-        } else {
-          console.log('Warning: Could not find card payment selector');
-        }
+    // Attach test payment method (pm_card_visa) to customer
+    const attachResponse = await apiContext.post('/v1/payment_methods/pm_card_visa/attach', {
+      form: { customer: customerId },
+    });
+    if (!attachResponse.ok()) {
+      const error = await attachResponse.text();
+      if (!error.includes('already been attached')) {
+        throw new Error(`Failed to attach payment method: ${error}`);
       }
     }
+    console.log('Payment method attached');
 
-    // Wait for accordion animation
-    await page.waitForTimeout(500);
-  }
+    // Set as default payment method
+    await apiContext.post(`/v1/customers/${customerId}`, {
+      form: { 'invoice_settings[default_payment_method]': 'pm_card_visa' },
+    });
+    console.log('Default payment method set');
 
-  await cardField.waitFor({ state: 'visible', timeout: 30000 });
-
-  await cardField.fill('4242424242424242');
-
-  const expiryField = page.locator('[placeholder="MM / YY"]');
-  await expiryField.click();
-  await page.keyboard.type('1230');
-
-  await page.locator('[placeholder="CVC"]').fill('123');
-  await page.locator('[placeholder="Full name on card"]').fill('E2E Test User');
-
-  // Fill ZIP code if required (US)
-  const zipField = page.locator('[placeholder="ZIP"]');
-  if (await zipField.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await zipField.fill('10001');
-    console.log('Filled ZIP code');
-  }
-
-  // Uncheck "Save my information for faster checkout" if checked
-  const saveInfoCheckbox = page.getByRole('checkbox', { name: /save my information/i });
-  if (await saveInfoCheckbox.isVisible({ timeout: 2000 }).catch(() => false)) {
-    const isChecked = await saveInfoCheckbox.isChecked();
-    if (isChecked) {
-      await saveInfoCheckbox.uncheck();
-      console.log('Unchecked save info checkbox');
+    // Create subscription directly
+    const subResponse = await apiContext.post('/v1/subscriptions', {
+      form: {
+        customer: customerId,
+        'items[0][price]': priceId,
+        'expand[0]': 'latest_invoice.payment_intent',
+      },
+    });
+    if (!subResponse.ok()) {
+      throw new Error(`Failed to create subscription: ${await subResponse.text()}`);
     }
+    const subscription = await subResponse.json();
+    console.log('Subscription created:', subscription.id, 'Status:', subscription.status);
+
+    // The customer.subscription.created webhook will be triggered by Stripe
+    // and handled by our backend to save the subscription record
+
+  } finally {
+    await apiContext.dispose();
   }
 
-  // Submit payment
-  await page.locator('button[type="submit"]').first().click();
-
-  // Wait for redirect back
-  await page.waitForURL(/.*volaticloud.*/, { timeout: 60000 });
-  await page.waitForTimeout(5000); // Wait for webhook processing
+  // Wait for webhook to be processed, then refresh
+  await page.waitForTimeout(3000);
+  await page.reload();
+  await page.waitForTimeout(2000);
 
   console.log('Subscription complete');
 }
